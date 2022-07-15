@@ -11,13 +11,10 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.ide.impl.OpenResult.Companion.cancel
-import com.intellij.ide.impl.OpenResult.Companion.failure
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
@@ -57,8 +54,11 @@ import com.intellij.util.io.basicAttributesIfExists
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.annotations.SystemDependent
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import java.awt.Frame
 import java.awt.KeyboardFocusManager
@@ -139,92 +139,9 @@ object ProjectUtil {
   @JvmStatic
   @JvmOverloads
   fun openOrImport(file: Path, options: OpenProjectTask = OpenProjectTask()): Project? {
-    val openResult = tryOpenOrImport(file, options)
-    return if (openResult is OpenResult.Success) openResult.project else null
-  }
-
-  @ApiStatus.Experimental
-  @JvmStatic
-  fun tryOpenOrImport(file: Path, options: OpenProjectTask): OpenResult {
-    if (!options.forceOpenInNewFrame) {
-      val existing = findAndFocusExistingProjectForPath(file)
-      if (existing != null) {
-        return OpenResult.Success(existing)
-      }
+    return runUnderModalProgressIfIsEdt {
+      openOrImportAsync(file, options)
     }
-
-    val lazyVirtualFile = lazy { ProjectUtilCore.getFileAndRefresh(file) }
-    if (!runUnderModalProgressIfIsEdt { confirmOpeningAndSetProjectTrustedStateIfNeeded(file) }) {
-      return cancel()
-    }
-
-    for (provider in ProjectOpenProcessor.EXTENSION_POINT_NAME.iterable) {
-      if (!provider.isStrongProjectInfoHolder) {
-        continue
-      }
-
-      // `PlatformProjectOpenProcessor` is not a strong project info holder, so there is no need to optimize (VFS not required)
-      val virtualFile = lazyVirtualFile.value ?: return failure()
-      if (provider.canOpenProject(virtualFile)) {
-        val project = chooseProcessorAndOpen(mutableListOf(provider), virtualFile, options)
-        return openResult(project, cancel())
-      }
-    }
-
-    if (ProjectUtilCore.isValidProjectPath(file)) {
-      // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
-      val project = ProjectManagerEx.getInstanceEx().openProject(file, options.withRunConfigurators())
-      return openResult(project, failure())
-    }
-
-    if (!options.preventIprLookup && Files.isDirectory(file)) {
-      try {
-        Files.newDirectoryStream(file).use { directoryStream ->
-          for (child in directoryStream) {
-            val childPath = child.toString()
-            if (childPath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-              val project = openProject(Path.of(childPath), options)
-              return openResult(project, failure())
-            }
-          }
-        }
-      }
-      catch (ignore: IOException) {
-      }
-    }
-
-    val processors = computeProcessors(file, lazyVirtualFile)
-    if (processors.isEmpty()) {
-      return failure()
-    }
-
-    val project = if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
-      ProjectManagerEx.getInstanceEx().openProject(
-        projectStoreBaseDir = file,
-        options = options.copy(
-          isNewProject = true,
-          useDefaultProjectAsTemplate = true,
-          runConfigurators = true,
-          beforeOpen = {
-            it.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
-            true
-          }
-        )
-      )
-    }
-    else {
-      val virtualFile = lazyVirtualFile.value ?: return failure()
-      chooseProcessorAndOpen(processors, virtualFile, options)
-    }
-    if (project == null) {
-      return failure()
-    }
-    postProcess(project)
-    return OpenResult.Success(project)
-  }
-
-  private fun openResult(project: Project?, alternative: OpenResult): OpenResult {
-    return if (project == null) alternative else OpenResult.Success(project)
   }
 
   suspend fun openOrImportAsync(file: Path, options: OpenProjectTask = OpenProjectTask()): Project? {
@@ -325,41 +242,6 @@ object ProjectUtil {
       }
     }
     return project
-  }
-
-  private fun chooseProcessorAndOpen(processors: MutableList<ProjectOpenProcessor>,
-                                     virtualFile: VirtualFile,
-                                     options: OpenProjectTask): Project? {
-    var processor: ProjectOpenProcessor? = null
-    if (processors.size == 1) {
-      processor = processors[0]
-    }
-    else {
-      processors.removeIf { it is PlatformProjectOpenProcessor }
-      if (processors.size == 1) {
-        processor = processors.first()
-      }
-      else {
-        val chooser = options.processorChooser
-        if (chooser != null) {
-          LOG.info("options.openProcessorChooser will handle the open processor dilemma")
-          processor = chooser(processors) as ProjectOpenProcessor
-        }
-        else {
-          ApplicationManager.getApplication().invokeAndWait {
-            processor = SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile)
-          }
-          if (processor == null) {
-            return null
-          }
-        }
-      }
-    }
-    var result: Project? = null
-    ApplicationManager.getApplication().invokeAndWait {
-      result = processor!!.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
-    }
-    return result
   }
 
   fun openProject(path: String, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
@@ -601,55 +483,6 @@ object ProjectUtil {
       ApplicationNamesInfo.getInstance().lowercaseProductName
     }
     return SystemProperties.getUserHome().replace('/', File.separatorChar) + File.separator + productName + "Projects"
-  }
-
-  @JvmStatic
-  fun tryOpenFiles(project: Project?, list: List<Path>, location: String): Project? {
-    try {
-      for (file in list) {
-        val openResult = tryOpenOrImport(file, OpenProjectTask {
-          projectToClose = project
-          forceOpenInNewFrame = true
-        })
-        if (openResult is OpenResult.Success) {
-          LOG.debug("$location: load project from ", file)
-          return openResult.project
-        }
-        else if (openResult is OpenResult.Cancel) {
-          LOG.debug("$location: canceled project opening")
-          return null
-        }
-      }
-    }
-    catch (e: ProcessCanceledException) {
-      LOG.debug("$location: skip project opening")
-      return null
-    }
-
-    var result: Project? = null
-    for (file in list) {
-      if (!Files.exists(file)) {
-        continue
-      }
-      LOG.debug("$location: open file ", file)
-      if (project != null) {
-        val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(file.toString()))
-        if (virtualFile != null && virtualFile.isValid) {
-          OpenFileAction.openFile(virtualFile, project)
-        }
-        result = project
-      }
-      else {
-        val processor = CommandLineProjectOpenProcessor.getInstanceIfExists()
-        if (processor != null) {
-          val opened = processor.openProjectAndFile(file, -1, -1, false)
-          if (opened != null && result == null) {
-            result = opened
-          }
-        }
-      }
-    }
-    return result
   }
 
   suspend fun openOrImportFilesAsync(list: List<Path>, location: String, projectToClose: Project? = null): Project? {

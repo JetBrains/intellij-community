@@ -181,7 +181,7 @@ open class IdeStarter : ModernApplicationStarter() {
                                              app: ApplicationEx,
                                              lifecyclePublisher: AppLifecycleListener) {
       val project = when {
-        filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
+        filesToLoad.isNotEmpty() -> ProjectUtil.openOrImportFilesAsync(list = filesToLoad, location = "MacMenu")
         args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
         else -> null
       }

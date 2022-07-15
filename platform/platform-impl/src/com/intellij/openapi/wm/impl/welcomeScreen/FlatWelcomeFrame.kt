@@ -1,536 +1,479 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl.welcomeScreen;
+package com.intellij.openapi.wm.impl.welcomeScreen
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.RecentProjectListActionProvider;
-import com.intellij.ide.dnd.FileCopyPasteUtil;
-import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.lightEdit.LightEditServiceListener;
-import com.intellij.ide.plugins.PluginDropHandler;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.idea.SplashManager;
-import com.intellij.notification.NotificationsManager;
-import com.intellij.notification.impl.NotificationsManagerImpl;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.WindowStateService;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.impl.IdeFrameDecorator;
-import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
-import com.intellij.openapi.wm.impl.IdeMenuBar;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.DefaultFrameHeader;
-import com.intellij.ui.*;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBTextField;
-import com.intellij.ui.components.labels.ActionLink;
-import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.components.panels.VerticalLayout;
-import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.mac.touchbar.Touchbar;
-import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.IconUtil;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.*;
-import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
-import com.intellij.util.ui.update.UiNotifyConnector;
-import com.jetbrains.JBR;
-import net.miginfocom.swing.MigLayout;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.accessibility.AccessibleContext;
-import javax.swing.*;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
-import java.awt.*;
-import java.awt.datatransfer.Transferable;
-import java.awt.dnd.*;
-import java.awt.event.*;
-import java.nio.file.Path;
-import java.util.List;
-
-import static com.intellij.util.ObjectUtils.chooseNotNull;
+import com.intellij.icons.AllIcons
+import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.DataManager
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.RecentProjectListActionProvider
+import com.intellij.ide.dnd.FileCopyPasteUtil
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.lightEdit.LightEditServiceListener
+import com.intellij.ide.plugins.PluginDropHandler
+import com.intellij.ide.ui.LafManagerListener
+import com.intellij.idea.SplashManager
+import com.intellij.notification.NotificationsManager
+import com.intellij.notification.impl.NotificationsManagerImpl
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.MnemonicHelper
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.WindowStateService
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
+import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent.Companion.getCustomContentHolder
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.DefaultFrameHeader
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.JActionLinkPanel
+import com.intellij.ui.*
+import com.intellij.ui.components.JBList
+import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.labels.ActionLink
+import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.mac.touchbar.Touchbar
+import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.IconUtil
+import com.intellij.util.ui.*
+import com.intellij.util.ui.accessibility.AccessibleContextAccessor
+import com.intellij.util.ui.update.UiNotifyConnector
+import com.jetbrains.JBR
+import kotlinx.coroutines.launch
+import net.miginfocom.swing.MigLayout
+import java.awt.*
+import java.awt.dnd.*
+import java.awt.event.*
+import javax.swing.*
+import javax.swing.event.ListDataEvent
+import javax.swing.event.ListDataListener
 
 /**
  * @author Konstantin Bulenkov
  */
-public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, AccessibleContextAccessor {
-  @SuppressWarnings("StaticNonFinalField")
-  public static boolean USE_TABBED_WELCOME_SCREEN = Boolean.parseBoolean(System.getProperty("use.tabbed.welcome.screen", "true"));
+@Suppress("LeakingThis")
+open class FlatWelcomeFrame @JvmOverloads constructor(
+  suggestedScreen: AbstractWelcomeScreen? = if (USE_TABBED_WELCOME_SCREEN) TabbedWelcomeScreen() else null
+) : JFrame(), IdeFrame, Disposable, AccessibleContextAccessor {
+  val screen: AbstractWelcomeScreen
+  private val content: Wrapper
+  private var balloonLayout: WelcomeBalloonLayoutImpl?
+  private var isDisposed = false
+  private var header: DefaultFrameHeader? = null
 
-  public static final String BOTTOM_PANEL = "BOTTOM_PANEL";
-  public static final int DEFAULT_HEIGHT = USE_TABBED_WELCOME_SCREEN ? 650 : 460;
-  public static final int MAX_DEFAULT_WIDTH = 800;
-  private final AbstractWelcomeScreen myScreen;
-  private final Wrapper myContent;
-  private WelcomeBalloonLayoutImpl myBalloonLayout;
-  private boolean myDisposed;
-  private DefaultFrameHeader myHeader;
+  companion object {
+    @JvmField
+    var USE_TABBED_WELCOME_SCREEN = java.lang.Boolean.parseBoolean(System.getProperty("use.tabbed.welcome.screen", "true"))
+    const val BOTTOM_PANEL = "BOTTOM_PANEL"
+    @JvmField
+    val DEFAULT_HEIGHT = if (USE_TABBED_WELCOME_SCREEN) 650 else 460
+    const val MAX_DEFAULT_WIDTH = 800
 
-  public FlatWelcomeFrame() {
-    this(USE_TABBED_WELCOME_SCREEN ? new TabbedWelcomeScreen() : null);
+    private fun saveSizeAndLocation(location: Rectangle) {
+      val middle = Point(location.x + location.width / 2, location.y + location.height / 2)
+      WindowStateService.getInstance().putLocation(WelcomeFrame.DIMENSION_KEY, middle)
+      WindowStateService.getInstance().putSize(WelcomeFrame.DIMENSION_KEY, location.size)
+    }
+
+    @JvmStatic
+    fun getPreferredFocusedComponent(pair: Pair<JPanel?, JBList<AnAction?>>): JComponent {
+      if (pair.second.model.size == 1) {
+        val textField = UIUtil.uiTraverser(pair.first).filter(JBTextField::class.java).first()
+        if (textField != null) {
+          return textField
+        }
+      }
+      return pair.second
+    }
   }
 
-  public FlatWelcomeFrame(AbstractWelcomeScreen screen) {
-    SplashManager.hideBeforeShow(this);
-
-    JRootPane rootPane = getRootPane();
-    myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
-    if (screen != null) {
-      myScreen = screen;
-    }
-    else {
-      myScreen = new FlatWelcomeScreen();
-    }
-
-    myContent = new Wrapper();
-    setContentPane(myContent);
-
+  init {
+    SplashManager.hideBeforeShow(this)
+    val rootPane = getRootPane()
+    balloonLayout = WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8))
+    screen = suggestedScreen ?: FlatWelcomeScreen(frame = this)
+    content = Wrapper()
+    contentPane = content
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      myHeader = new DefaultFrameHeader(this);
-      myContent.setContent(CustomFrameDialogContent.getCustomContentHolder(this, myScreen.getWelcomePanel(), myHeader));
+      header = DefaultFrameHeader(this)
+      content.setContent(getCustomContentHolder(this, screen.welcomePanel, header!!))
     }
     else {
       if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
-        rootPane.setJMenuBar(new WelcomeFrameMenuBar().setFrame(this));
+        rootPane.jMenuBar = WelcomeFrameMenuBar().setFrame(this)
       }
-      myContent.setContent(myScreen.getWelcomePanel());
+      content.setContent(screen.welcomePanel)
     }
-
-    IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane);
-    setGlassPane(glassPane);
-    glassPane.setVisible(false);
-
-    updateComponentsAndResize();
+    val glassPane = IdeGlassPaneImpl(rootPane)
+    setGlassPane(glassPane)
+    glassPane.isVisible = false
+    updateComponentsAndResize()
 
     // at this point, window insets may be unavailable, so we need to resize the window when it is shown
-    UiNotifyConnector.doWhenFirstShown(this, this::pack);
-
-    Application app = ApplicationManager.getApplication();
-    MessageBusConnection connection = app.getMessageBus().connect(this);
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        Disposer.dispose(FlatWelcomeFrame.this);
+    UiNotifyConnector.doWhenFirstShown(this, ::pack)
+    val app = ApplicationManager.getApplication()
+    val connection = app.messageBus.connect(this)
+    connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      @Suppress("OVERRIDE_DEPRECATION")
+      override fun projectOpened(project: Project) {
+        Disposer.dispose(this@FlatWelcomeFrame)
       }
-    });
-    connection.subscribe(LightEditServiceListener.TOPIC, new LightEditServiceListener() {
-      @Override
-      public void lightEditWindowOpened(@NotNull Project project) {
-        Disposer.dispose(FlatWelcomeFrame.this);
+    })
+    connection.subscribe(LightEditServiceListener.TOPIC, object : LightEditServiceListener {
+      override fun lightEditWindowOpened(project: Project) {
+        Disposer.dispose(this@FlatWelcomeFrame)
       }
-    });
-    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-      @Override
-      public void appClosing() {
-        saveSizeAndLocation(getBounds());
+    })
+    connection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+      override fun appClosing() {
+        saveSizeAndLocation(bounds)
       }
-    });
-    connection.subscribe(LafManagerListener.TOPIC, new LafManagerListener() {
-      @Override
-      public void lookAndFeelChanged(@NotNull LafManager source) {
-        if (myBalloonLayout != null) {
-          Disposer.dispose(myBalloonLayout);
-        }
-        myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
-        updateComponentsAndResize();
-        repaint();
+    })
+    connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      if (balloonLayout != null) {
+        Disposer.dispose(balloonLayout!!)
       }
-    });
-
-    addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent componentEvent) {
+      balloonLayout = WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8))
+      updateComponentsAndResize()
+      repaint()
+    })
+    addComponentListener(object : ComponentAdapter() {
+      override fun componentResized(componentEvent: ComponentEvent) {
         if (WindowStateService.getInstance().getSize(WelcomeFrame.DIMENSION_KEY) != null) {
-          saveSizeAndLocation(getBounds());
+          saveSizeAndLocation(bounds)
         }
       }
-    });
+    })
 
-    setupCloseAction();
-    MnemonicHelper.init(this);
-    Disposer.register(app, this);
-
-    UIUtil.decorateWindowHeader(getRootPane());
-    ToolbarUtil.setTransparentTitleBar(this, getRootPane(), runnable -> Disposer.register(this, () -> runnable.run()));
-
-    app.invokeLater(
-      () -> ((NotificationsManagerImpl)NotificationsManager.getNotificationsManager()).dispatchEarlyNotifications(),
-      ModalityState.NON_MODAL);
+    setupCloseAction()
+    MnemonicHelper.init(this)
+    Disposer.register(app, this)
+    UIUtil.decorateWindowHeader(getRootPane())
+    ToolbarUtil.setTransparentTitleBar(this, getRootPane()) { runnable -> Disposer.register(this) { runnable.run() } }
+    app.invokeLater({ (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).dispatchEarlyNotifications() },
+                    ModalityState.NON_MODAL)
   }
 
-  protected void setupCloseAction() {
-    WelcomeFrame.setupCloseAction(this);
+  protected open fun setupCloseAction() {
+    WelcomeFrame.setupCloseAction(this)
   }
 
-  public @NotNull AbstractWelcomeScreen getScreen() {
-    return myScreen;
-  }
-
-  private void updateComponentsAndResize() {
-    int defaultHeight = DEFAULT_HEIGHT;
+  private fun updateComponentsAndResize() {
+    val defaultHeight = DEFAULT_HEIGHT
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      Color backgroundColor = UIManager.getColor("WelcomeScreen.background");
+      val backgroundColor = UIManager.getColor("WelcomeScreen.background")
       if (backgroundColor != null) {
-        myHeader.setBackground(backgroundColor);
+        header!!.background = backgroundColor
       }
     }
     else {
       if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
-        rootPane.setJMenuBar(new WelcomeFrameMenuBar().setFrame(this));
+        rootPane.jMenuBar = WelcomeFrameMenuBar().setFrame(this)
       }
-      myContent.setContent(myScreen.getWelcomePanel());
+      content.setContent(screen.welcomePanel)
     }
     if (USE_TABBED_WELCOME_SCREEN) {
-      JBDimension defaultSize = JBUI.size(MAX_DEFAULT_WIDTH, defaultHeight);
-      setPreferredSize(chooseNotNull(WindowStateService.getInstance().getSize(WelcomeFrame.DIMENSION_KEY), defaultSize));
-      setMinimumSize(defaultSize);
+      val defaultSize = JBUI.size(MAX_DEFAULT_WIDTH, defaultHeight)
+      preferredSize = WindowStateService.getInstance().getSize(WelcomeFrame.DIMENSION_KEY) ?: defaultSize
+      minimumSize = defaultSize
     }
     else {
-      int width = RecentProjectListActionProvider.getInstance().getActions(false).size() == 0 ? 666 : MAX_DEFAULT_WIDTH;
-      setPreferredSize(JBUI.size(width, defaultHeight));
+      val width = if (RecentProjectListActionProvider.getInstance().getActions(addClearListItem = false).isEmpty()) {
+        666
+      }
+      else {
+        MAX_DEFAULT_WIDTH
+      }
+      preferredSize = JBUI.size(width, defaultHeight)
     }
-    setResizable(USE_TABBED_WELCOME_SCREEN);
-
-    Dimension size = getPreferredSize();
-    Point location = WindowStateService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY);
-    Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
+    isResizable = USE_TABBED_WELCOME_SCREEN
+    val size = preferredSize
+    val location = WindowStateService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY)
+    val screenBounds = ScreenUtil.getScreenRectangle(location ?: Point(0, 0))
     setBounds(
       screenBounds.x + (screenBounds.width - size.width) / 2,
       screenBounds.y + (screenBounds.height - size.height) / 3,
       size.width,
       size.height
-    );
-    UIUtil.decorateWindowHeader(getRootPane());
-    setTitle("");
-    setTitle(getWelcomeFrameTitle());
-    AppUIUtil.updateWindowIcon(this);
+    )
+    UIUtil.decorateWindowHeader(getRootPane())
+    title = ""
+    title = welcomeFrameTitle
+    AppUIUtil.updateWindowIcon(this)
   }
 
-  @Override
-  public void addNotify() {
+  override fun addNotify() {
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true);
+      JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true)
     }
-    super.addNotify();
+    super.addNotify()
   }
 
-  @Override
-  public void dispose() {
-    if (myDisposed) {
-      return;
+  override fun dispose() {
+    if (isDisposed) {
+      return
     }
-    myDisposed = true;
-    super.dispose();
-    if (myBalloonLayout != null) {
-      Disposer.dispose((myBalloonLayout));
-      myBalloonLayout = null;
+
+    isDisposed = true
+    super.dispose()
+    balloonLayout?.let {
+      balloonLayout = null
+      Disposer.dispose(it)
     }
-    Disposer.dispose(myScreen);
-    WelcomeFrame.resetInstance();
+    Disposer.dispose(screen)
+    WelcomeFrame.resetInstance()
   }
 
-  private static void saveSizeAndLocation(@NotNull Rectangle location) {
-    Point middle = new Point(location.x + location.width / 2, location.y + location.height / 2);
-    WindowStateService.getInstance().putLocation(WelcomeFrame.DIMENSION_KEY, middle);
-    WindowStateService.getInstance().putSize(WelcomeFrame.DIMENSION_KEY, location.getSize());
+  override fun getStatusBar(): StatusBar? = null
+
+  override fun getCurrentAccessibleContext() = accessibleContext
+
+  protected val welcomeFrameTitle: String
+    get() = WelcomeScreenComponentFactory.getApplicationTitle()
+
+  @Suppress("unused")
+  protected fun extendActionsGroup(panel: JPanel?) {
   }
 
-  @Override
-  public @Nullable StatusBar getStatusBar() {
-    return null;
+  @Suppress("unused")
+  protected fun onFirstActionShown(action: Component) {
   }
 
-  @Override
-  public AccessibleContext getCurrentAccessibleContext() {
-    return accessibleContext;
+  override fun getBalloonLayout(): BalloonLayout? = balloonLayout
+
+  override fun suggestChildFrameBounds(): Rectangle = bounds
+
+  override fun getProject(): Project? {
+    return if (ApplicationManager.getApplication().isDisposed) null else ProjectManager.getInstance().defaultProject
   }
 
-  @SuppressWarnings("WeakerAccess")
-  protected String getWelcomeFrameTitle() {
-    return WelcomeScreenComponentFactory.getApplicationTitle();
+  override fun setFrameTitle(title: String) {
+    setTitle(title)
   }
 
-  public static @NotNull JComponent getPreferredFocusedComponent(@NotNull Pair<JPanel, JBList<AnAction>> pair) {
-    if (pair.second.getModel().getSize() == 1) {
-      JBTextField textField = UIUtil.uiTraverser(pair.first).filter(JBTextField.class).first();
-      if (textField != null) {
-        return textField;
-      }
-    }
-    return pair.second;
-  }
+  override fun getComponent(): JComponent = getRootPane()
 
-  private final class FlatWelcomeScreen extends AbstractWelcomeScreen {
-    private final DefaultActionGroup myTouchbarActions = new DefaultActionGroup();
-    private boolean inDnd;
+  private class FlatWelcomeScreen(private val frame: FlatWelcomeFrame) : AbstractWelcomeScreen() {
+    private val touchbarActions = DefaultActionGroup()
+    private var inDnd = false
 
-    private FlatWelcomeScreen() {
-      setBackground(WelcomeScreenUIManager.getMainBackground());
-      if (RecentProjectListActionProvider.getInstance().getActions(false, true).size() > 0) {
-        JComponent recentProjects = WelcomeScreenComponentFactory.createRecentProjects(this);
-        add(recentProjects, BorderLayout.WEST);
-        JList<?> projectsList = UIUtil.findComponentOfType(recentProjects, JList.class);
+    init {
+      background = WelcomeScreenUIManager.getMainBackground()
+      if (RecentProjectListActionProvider.getInstance().getActions(addClearListItem = false, useGroups = true).isNotEmpty()) {
+        val recentProjects = WelcomeScreenComponentFactory.createRecentProjects(this)
+        add(recentProjects, BorderLayout.WEST)
+        val projectsList = UIUtil.findComponentOfType(recentProjects, JList::class.java)
         if (projectsList != null) {
-          projectsList.getModel().addListDataListener(new ListDataListener() {
-            @Override
-            public void intervalAdded(ListDataEvent e) {
+          projectsList.model.addListDataListener(object : ListDataListener {
+            override fun intervalAdded(e: ListDataEvent) {}
+            override fun intervalRemoved(e: ListDataEvent) {
+              removeIfNeeded()
             }
 
-            @Override
-            public void intervalRemoved(ListDataEvent e) {
-              removeIfNeeded();
-            }
-
-            private void removeIfNeeded() {
-              if (RecentProjectListActionProvider.getInstance().getActions(false, true).size() == 0) {
-                FlatWelcomeScreen.this.remove(recentProjects);
-                FlatWelcomeScreen.this.revalidate();
-                FlatWelcomeScreen.this.repaint();
+            private fun removeIfNeeded() {
+              if (RecentProjectListActionProvider.getInstance().getActions(addClearListItem = false, useGroups = true).isEmpty()) {
+                this@FlatWelcomeScreen.remove(recentProjects)
+                this@FlatWelcomeScreen.revalidate()
+                this@FlatWelcomeScreen.repaint()
               }
             }
 
-            @Override
-            public void contentsChanged(ListDataEvent e) {
-              removeIfNeeded();
+            override fun contentsChanged(e: ListDataEvent) {
+              removeIfNeeded()
             }
-          });
-          projectsList.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-              projectsList.repaint();
+          })
+          projectsList.addFocusListener(object : FocusListener {
+            override fun focusGained(e: FocusEvent) {
+              projectsList.repaint()
             }
 
-            @Override
-            public void focusLost(FocusEvent e) {
-              projectsList.repaint();
+            override fun focusLost(e: FocusEvent) {
+              projectsList.repaint()
             }
-          });
+          })
         }
       }
-      add(createBody(), BorderLayout.CENTER);
-      setDropTarget(new DropTarget(this, new DropTargetAdapter() {
-        @Override
-        public void dragEnter(DropTargetDragEvent e) {
-          setDnd(true);
+      add(createBody(), BorderLayout.CENTER)
+      dropTarget = DropTarget(this, object : DropTargetAdapter() {
+        override fun dragEnter(e: DropTargetDragEvent) {
+          setDnd(true)
         }
 
-        @Override
-        public void dragExit(DropTargetEvent e) {
-          setDnd(false);
+        override fun dragExit(e: DropTargetEvent) {
+          setDnd(false)
         }
 
-        @Override
-        public void drop(DropTargetDropEvent e) {
-          setDnd(false);
-          e.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
-          Transferable transferable = e.getTransferable();
-          List<Path> list = FileCopyPasteUtil.getFiles(transferable);
-          if (list != null && list.size() > 0) {
-            PluginDropHandler pluginHandler = new PluginDropHandler();
+        override fun drop(e: DropTargetDropEvent) {
+          setDnd(false)
+          e.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE)
+          val transferable = e.transferable
+          val list = FileCopyPasteUtil.getFiles(transferable)
+          if (list != null && list.size > 0) {
+            val pluginHandler = PluginDropHandler()
             if (!pluginHandler.canHandle(transferable, null) || !pluginHandler.handleDrop(transferable, null, null)) {
-              ProjectUtil.tryOpenFiles(null, list, "WelcomeFrame");
+              ApplicationManager.getApplication().coroutineScope.launch {
+                ProjectUtil.openOrImportFilesAsync(list, "WelcomeFrame")
+              }
             }
-            e.dropComplete(true);
-            return;
+            e.dropComplete(true)
+            return
           }
-          e.dropComplete(false);
+          e.dropComplete(false)
         }
 
-        private void setDnd(boolean dnd) {
-          inDnd = dnd;
-          repaint();
+        private fun setDnd(dnd: Boolean) {
+          inDnd = dnd
+          repaint()
         }
-      }));
-
-      TouchbarActionCustomizations.setShowText(myTouchbarActions, true);
-      Touchbar.setActions(this, myTouchbarActions);
+      })
+      TouchbarActionCustomizations.setShowText(touchbarActions, true)
+      Touchbar.setActions(this, touchbarActions)
     }
 
-    @Override
-    public void paint(Graphics g) {
-      super.paint(g);
-      if (inDnd) {
-        Rectangle bounds = getBounds();
-        g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
-        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-
-        Color backgroundBorder = JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR;
-        g.setColor(backgroundBorder);
-        g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
-        g.drawRect(bounds.x + 1, bounds.y + 1, bounds.width - 2, bounds.height - 2);
-
-        Color foreground = JBUI.CurrentTheme.DragAndDrop.Area.FOREGROUND;
-        g.setColor(foreground);
-        Font labelFont = StartupUiUtil.getLabelFont();
-        Font font = labelFont.deriveFont(labelFont.getSize() + 5.0f);
-        String drop = IdeBundle.message("welcome.screen.drop.files.to.open.text");
-        g.setFont(font);
-        int dropWidth = g.getFontMetrics().stringWidth(drop);
-        int dropHeight = g.getFontMetrics().getHeight();
-        g.drawString(drop, bounds.x + (bounds.width - dropWidth) / 2, (int)(bounds.y + (bounds.height - dropHeight) * 0.45));
+    override fun paint(g: Graphics) {
+      super.paint(g)
+      if (!inDnd) {
+        return
       }
+
+      val bounds = bounds
+      g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
+      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height)
+      val backgroundBorder = JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR
+      g.color = backgroundBorder
+      g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height)
+      g.drawRect(bounds.x + 1, bounds.y + 1, bounds.width - 2, bounds.height - 2)
+      val foreground = JBUI.CurrentTheme.DragAndDrop.Area.FOREGROUND
+      g.color = foreground
+
+      val labelFont = StartupUiUtil.getLabelFont()
+      val font = labelFont.deriveFont(labelFont.size + 5.0f)
+      val drop = IdeBundle.message("welcome.screen.drop.files.to.open.text")
+      g.font = font
+
+      val dropWidth = g.fontMetrics.stringWidth(drop)
+      val dropHeight = g.fontMetrics.height
+      g.drawString(drop, bounds.x + (bounds.width - dropWidth) / 2, (bounds.y + (bounds.height - dropHeight) * 0.45).toInt())
     }
 
-    private @NotNull JComponent createBody() {
-      NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-      panel.add(WelcomeScreenComponentFactory.createLogo(), BorderLayout.NORTH);
-      myTouchbarActions.removeAll();
-      ActionPanel actionPanel = createQuickStartActionPanel();
-      panel.add(actionPanel, BorderLayout.CENTER);
-      myTouchbarActions.addAll(actionPanel.getActions());
-      panel.add(createSettingsAndDocsPanel(FlatWelcomeFrame.this), BorderLayout.SOUTH);
-      return panel;
+    private fun createBody(): JComponent {
+      val panel = NonOpaquePanel(BorderLayout())
+      panel.add(WelcomeScreenComponentFactory.createLogo(), BorderLayout.NORTH)
+      touchbarActions.removeAll()
+      val actionPanel = createQuickStartActionPanel()
+      panel.add(actionPanel, BorderLayout.CENTER)
+      touchbarActions.addAll(actionPanel.actions)
+      panel.add(createSettingsAndDocsPanel(frame), BorderLayout.SOUTH)
+      return panel
     }
 
-    private JComponent createSettingsAndDocsPanel(JFrame frame) {
-      JPanel panel = new NonOpaquePanel(new BorderLayout());
-      NonOpaquePanel toolbar = new NonOpaquePanel();
-
-      toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
-      toolbar.add(WelcomeScreenComponentFactory.createErrorsLink(this));
-      toolbar.add(createEventsLink());
+    private fun createSettingsAndDocsPanel(frame: JFrame): JComponent {
+      val panel: JPanel = NonOpaquePanel(BorderLayout())
+      val toolbar = NonOpaquePanel()
+      toolbar.layout = BoxLayout(toolbar, BoxLayout.X_AXIS)
+      toolbar.add(WelcomeScreenComponentFactory.createErrorsLink(this))
+      toolbar.add(createEventsLink())
       toolbar.add(WelcomeScreenComponentFactory.createActionLink(
-        FlatWelcomeFrame.this, IdeBundle.message("action.Anonymous.text.configure"), IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE, AllIcons.General.GearPlain,
-        UIUtil.findComponentOfType(frame.getRootPane(), JList.class)));
-      toolbar.add(WelcomeScreenComponentFactory.createActionLink(
-        FlatWelcomeFrame.this, IdeBundle.message("action.GetHelp"), IdeActions.GROUP_WELCOME_SCREEN_DOC, null, null));
-      panel.add(toolbar, BorderLayout.EAST);
-
-      panel.setBorder(JBUI.Borders.empty(0, 0, 8, 11));
-      return panel;
+        frame,
+        IdeBundle.message("action.Anonymous.text.configure"),
+        IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE,
+        AllIcons.General.GearPlain,
+        UIUtil.findComponentOfType(frame.rootPane, JList::class.java))
+      )
+      toolbar.add(WelcomeScreenComponentFactory.createActionLink(frame, IdeBundle.message("action.GetHelp"), IdeActions.GROUP_WELCOME_SCREEN_DOC, null, null))
+      panel.add(toolbar, BorderLayout.EAST)
+      panel.border = JBUI.Borders.empty(0, 0, 8, 11)
+      return panel
     }
 
-    private Component createEventsLink() {
-      return WelcomeScreenComponentFactory.createEventLink(IdeBundle.message("action.Events"), FlatWelcomeFrame.this);
+    private fun createEventsLink(): Component {
+      return WelcomeScreenComponentFactory.createEventLink(IdeBundle.message("action.Events"), frame)
     }
 
-    private @NotNull ActionPanel createQuickStartActionPanel() {
-      DefaultActionGroup group = new DefaultActionGroup();
-      ActionGroup quickStart = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
-      WelcomeScreenActionsUtil.collectAllActions(group, quickStart);
-
-      @SuppressWarnings("SpellCheckingInspection") ActionPanel mainPanel =
-        new ActionPanel(new MigLayout("ins 0, novisualpadding, gap " + JBUI.scale(5) + ", flowy", "push[pref!, center]push"));
-      mainPanel.setOpaque(false);
-
-      JPanel panel = new JPanel(new VerticalLayout(JBUI.scale(5))) {
-        private Component firstAction = null;
-
-        @Override
-        public Component add(Component comp) {
-          Component cmp = super.add(comp);
+    private fun createQuickStartActionPanel(): ActionPanel {
+      val group = DefaultActionGroup()
+      val quickStart = ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART) as ActionGroup
+      WelcomeScreenActionsUtil.collectAllActions(group, quickStart)
+      @Suppress("SpellCheckingInspection")
+      val mainPanel = ActionPanel(MigLayout("ins 0, novisualpadding, gap " + JBUI.scale(5) + ", flowy", "push[pref!, center]push"))
+      mainPanel.isOpaque = false
+      val panel = object : JPanel(VerticalLayout(JBUI.scale(5))) {
+        private var firstAction: Component? = null
+        override fun add(comp: Component): Component {
+          val cmp = super.add(comp)
           if (firstAction == null) {
-            firstAction = cmp;
+            firstAction = cmp
           }
-          return cmp;
+          return cmp
         }
 
-        @Override
-        public void addNotify() {
-          super.addNotify();
+        override fun addNotify() {
+          super.addNotify()
           if (firstAction != null) {
-            onFirstActionShown(firstAction);
+            frame.onFirstActionShown(firstAction!!)
           }
-        }
-      };
-      panel.setOpaque(false);
-
-      extendActionsGroup(mainPanel);
-      mainPanel.add(panel);
-
-      for (AnAction action : group.getChildren(null)) {
-        AnActionEvent e =
-          AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this));
-        action.update(e);
-        Presentation presentation = e.getPresentation();
-        if (presentation.isVisible()) {
-          @SuppressWarnings("DialogTitleCapitalization") String text = presentation.getText();
-          if (text != null && text.endsWith("...")) {
-            text = text.substring(0, text.length() - 3);
-          }
-          Icon icon = presentation.getIcon();
-          if (icon == null || icon.getIconHeight() != JBUIScale.scale(16) || icon.getIconWidth() != JBUIScale.scale(16)) {
-            icon = icon != null ? IconUtil.scale(icon, null, 16f / icon.getIconWidth()) : JBUIScale.scaleIcon(EmptyIcon.create(16));
-            icon = IconUtil.colorize(icon, new JBColor(0x6e6e6e, 0xafb1b3));
-          }
-          action = ActionGroupPanelWrapper.wrapGroups(action, this);
-          ActionLink link = new ActionLink(text, icon, action, null, ActionPlaces.WELCOME_SCREEN);
-          link.setFocusable(false);  // don't allow focus, as the containing panel is going to be focusable
-          link.setPaintUnderline(false);
-          link.setNormalColor(WelcomeScreenUIManager.getLinkNormalColor());
-          WelcomeScreenComponentFactory.JActionLinkPanel button = new WelcomeScreenComponentFactory.JActionLinkPanel(link);
-          button.setBorder(JBUI.Borders.empty(8, 20));
-          if (action instanceof WelcomePopupAction) {
-            button.add(WelcomeScreenComponentFactory.createArrow(link), BorderLayout.EAST);
-            TouchbarActionCustomizations.setComponent(action, link);
-          }
-          WelcomeScreenFocusManager.installFocusable(FlatWelcomeFrame.this, button, action, KeyEvent.VK_DOWN, KeyEvent.VK_UP,
-                                                     UIUtil.findComponentOfType(FlatWelcomeFrame.this.getComponent(), JList.class)
-          );
-
-          panel.add(button);
-          mainPanel.addAction(action);
         }
       }
 
-      return mainPanel;
+      panel.isOpaque = false
+      frame.extendActionsGroup(mainPanel)
+      mainPanel.add(panel)
+      for (item in group.getChildren(null)) {
+        var action = item
+        val e = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this))
+        action.update(e)
+        val presentation = e.presentation
+        if (presentation.isVisible) {
+          var text = presentation.text
+          if (text != null && text.endsWith("...")) {
+            text = text.substring(0, text.length - 3)
+          }
+          var icon = presentation.icon
+          if (icon == null || icon.iconHeight != JBUIScale.scale(16) || icon.iconWidth != JBUIScale.scale(16)) {
+            icon = if (icon == null) JBUIScale.scaleIcon(EmptyIcon.create(16)) else IconUtil.scale(icon, null, 16f / icon.iconWidth)
+            icon = IconUtil.colorize(icon, JBColor(0x6e6e6e, 0xafb1b3))
+          }
+          action = ActionGroupPanelWrapper.wrapGroups(action, this)
+          val link = ActionLink(text, icon, action, null, ActionPlaces.WELCOME_SCREEN)
+          link.isFocusable = false // don't allow focus, as the containing panel is going to be focusable
+          link.setPaintUnderline(false)
+          link.setNormalColor(WelcomeScreenUIManager.getLinkNormalColor())
+          val button = JActionLinkPanel(link)
+          button.border = JBUI.Borders.empty(8, 20)
+          if (action is WelcomePopupAction) {
+            button.add(WelcomeScreenComponentFactory.createArrow(link), BorderLayout.EAST)
+            TouchbarActionCustomizations.setComponent(action, link)
+          }
+          WelcomeScreenFocusManager.installFocusable(
+            frame,
+            button,
+            action,
+            KeyEvent.VK_DOWN,
+            KeyEvent.VK_UP,
+            UIUtil.findComponentOfType(frame.component, JList::class.java)
+          )
+          panel.add(button)
+          mainPanel.addAction(action)
+        }
+      }
+      return mainPanel
     }
   }
+}
 
-  @SuppressWarnings({"unused", "IdentifierGrammar", "WeakerAccess"})
-  protected void extendActionsGroup(JPanel panel) { }
-
-  @SuppressWarnings({"unused", "WeakerAccess"})
-  protected void onFirstActionShown(@NotNull Component action) { }
-
-  @Override
-  public @Nullable BalloonLayout getBalloonLayout() {
-    return myBalloonLayout;
-  }
-
-  @Override
-  public @NotNull Rectangle suggestChildFrameBounds() {
-    return getBounds();
-  }
-
-  @Override
-  public @Nullable Project getProject() {
-    return ApplicationManager.getApplication().isDisposed() ? null : ProjectManager.getInstance().getDefaultProject();
-  }
-
-  @Override
-  public void setFrameTitle(String title) {
-    setTitle(title);
-  }
-
-  @Override
-  public JComponent getComponent() {
-    return getRootPane();
-  }
-
-  private static class WelcomeFrameMenuBar extends IdeMenuBar {
-    @Override
-    public @NotNull ActionGroup getMainMenuActionGroup() {
-      ActionManager manager = ActionManager.getInstance();
-      return new DefaultActionGroup(manager.getAction(IdeActions.GROUP_FILE), manager.getAction(IdeActions.GROUP_HELP_MENU));
-    }
+private class WelcomeFrameMenuBar : IdeMenuBar() {
+  override fun getMainMenuActionGroup(): ActionGroup {
+    val manager = ActionManager.getInstance()
+    return DefaultActionGroup(manager.getAction(IdeActions.GROUP_FILE), manager.getAction(IdeActions.GROUP_HELP_MENU))
   }
 }

@@ -75,7 +75,7 @@ abstract class ProjectOpenProcessor {
   abstract fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project?
 
   /**
-   * Return true if supported.
+   * Return not null Optional if supported.
    */
   open suspend fun openProjectAsync(virtualFile: VirtualFile,
                                     projectToClose: Project?,
