@@ -8,7 +8,6 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElementVisitor;
@@ -22,15 +21,12 @@ import javax.swing.*;
 
 public class MarkedForRemovalInspection extends DeprecationInspectionBase {
 
-  public boolean IGNORE_PROJECT_CLASSES = false;
-
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     PsiFile file = holder.getFile();
     DeprecatedApiUsageProcessor processor =
-      new DeprecatedApiUsageProcessor(holder, false, false, false, false, IGNORE_IN_SAME_OUTERMOST_CLASS, true, IGNORE_PROJECT_CLASSES,
-                                      getCurrentSeverity(file));
+      new DeprecatedApiUsageProcessor(holder, false, false, false, false, IGNORE_IN_SAME_OUTERMOST_CLASS, true, getCurrentSeverity(file));
     return new UastVisitorAdapter(new ApiUsageUastVisitor(processor), true);
   }
 
@@ -58,7 +54,6 @@ public class MarkedForRemovalInspection extends DeprecationInspectionBase {
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     addSameOutermostClassCheckBox(panel);
-    panel.addCheckbox(JavaAnalysisBundle.message("ignore.in.the.same.project"), "IGNORE_PROJECT_CLASSES");
     return panel;
   }
 

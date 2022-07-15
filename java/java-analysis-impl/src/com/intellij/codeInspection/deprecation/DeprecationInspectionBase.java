@@ -49,7 +49,6 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
                                      boolean ignoreInSameOutermostClass,
                                      @NotNull ProblemsHolder holder,
                                      boolean forRemoval,
-                                     boolean ignoreApiDeclaredInThisProject, 
                                      @NotNull ProblemHighlightType highlightType) {
     if (PsiImplUtil.isDeprecated(element)) {
       if (forRemoval != isForRemovalAttributeSet(element)) {
@@ -61,17 +60,12 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
         PsiClass containingClass = element instanceof PsiMember ? ((PsiMember)element).getContainingClass() : null;
         if (containingClass != null) {
           checkDeprecated(containingClass, elementToHighlight, rangeInElement, ignoreInsideDeprecated, ignoreImportStatements,
-                          false, ignoreInSameOutermostClass, holder, forRemoval, ignoreApiDeclaredInThisProject, highlightType);
+                          false, ignoreInSameOutermostClass, holder, forRemoval, highlightType);
         }
       }
       return;
     }
 
-    if (ignoreApiDeclaredInThisProject && element.getManager().isInProject(element) && forRemoval) {
-      forRemoval = false;
-      highlightType = ProblemHighlightType.LIKE_DEPRECATED;
-    }
-    
     if (ignoreInSameOutermostClass && areElementsInSameOutermostClass(element, elementToHighlight)) return;
 
     if (ignoreInsideDeprecated && isElementInsideDeprecated(elementToHighlight)) return;

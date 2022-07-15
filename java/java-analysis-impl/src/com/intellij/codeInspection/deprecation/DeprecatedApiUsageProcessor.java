@@ -30,7 +30,6 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
   private final boolean myIgnoreMethodsOfDeprecated;
   private final boolean myIgnoreInSameOutermostClass;
   private final boolean myForRemoval;
-  private final boolean myIgnoreApiDeclaredInThisProject;
   private final ProblemHighlightType myHighlightType;
 
   public DeprecatedApiUsageProcessor(@NotNull ProblemsHolder holder,
@@ -40,7 +39,7 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
                                      boolean ignoreMethodsOfDeprecated,
                                      boolean ignoreInSameOutermostClass,
                                      boolean forRemoval,
-                                     boolean ignoreApiDeclaredInThisProject, @Nullable HighlightSeverity severity) {
+                                     @Nullable HighlightSeverity severity) {
     myHolder = holder;
     myIgnoreInsideDeprecated = ignoreInsideDeprecated;
     myIgnoreAbstractDeprecatedOverrides = ignoreAbstractDeprecatedOverrides;
@@ -48,7 +47,6 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
     myIgnoreMethodsOfDeprecated = ignoreMethodsOfDeprecated;
     myIgnoreInSameOutermostClass = ignoreInSameOutermostClass;
     myForRemoval = forRemoval;
-    myIgnoreApiDeclaredInThisProject = ignoreApiDeclaredInThisProject;
     myHighlightType = forRemoval && severity == HighlightSeverity.ERROR
                       ? ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL
                       : ProblemHighlightType.LIKE_DEPRECATED;
@@ -74,7 +72,7 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
 
   private void checkTargetDeprecated(@NotNull PsiElement elementToHighlight, @NotNull PsiModifierListOwner target) {
     checkDeprecated(target, elementToHighlight, null, myIgnoreInsideDeprecated, myIgnoreImportStatements,
-                    myIgnoreMethodsOfDeprecated, myIgnoreInSameOutermostClass, myHolder, myForRemoval, myIgnoreApiDeclaredInThisProject, myHighlightType);
+                    myIgnoreMethodsOfDeprecated, myIgnoreInSameOutermostClass, myHolder, myForRemoval, myHighlightType);
   }
 
   @Override
@@ -116,13 +114,10 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
     }
 
     if (overriddenMethod.isDeprecated() && myForRemoval == isForRemovalAttributeSet(overriddenMethod)) {
-      ProblemHighlightType highlightType = myHighlightType;
-      if (myIgnoreApiDeclaredInThisProject && myForRemoval && overriddenMethod.getManager().isInProject(overriddenMethod)) {
-        highlightType = ProblemHighlightType.LIKE_DEPRECATED;
-      }
       String description = JavaErrorBundle.message(myForRemoval ? "overrides.marked.for.removal.method" : "overrides.deprecated.method",
                                                    getPresentableName(aClass));
-      myHolder.registerProblem(methodNameElement, getDescription(description, highlightType == ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL, highlightType), highlightType);
+      boolean forRemoval = myHighlightType == ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL;
+      myHolder.registerProblem(methodNameElement, getDescription(description, forRemoval, myHighlightType), myHighlightType);
     }
   }
 
