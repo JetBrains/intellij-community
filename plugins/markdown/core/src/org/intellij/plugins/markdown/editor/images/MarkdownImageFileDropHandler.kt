@@ -2,11 +2,9 @@
 package org.intellij.plugins.markdown.editor.images
 
 import com.intellij.ide.dnd.FileCopyPasteUtil
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.editor.CustomFileDropHandler
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ReadOnlyFragmentModificationException
-import com.intellij.openapi.editor.ReadOnlyModificationException
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
@@ -20,7 +18,7 @@ import kotlin.io.path.extension
 
 internal class MarkdownImageFileDropHandler: CustomFileDropHandler() {
   override fun canHandle(transferable: Transferable, editor: Editor?): Boolean {
-    if (editor?.document?.isWritable != true) {
+    if (editor == null || !editor.document.isWritable) {
       return false
     }
     val files = FileCopyPasteUtil.getFiles(transferable) ?: return false
@@ -30,29 +28,38 @@ internal class MarkdownImageFileDropHandler: CustomFileDropHandler() {
   }
 
   override fun handleDrop(transferable: Transferable, editor: Editor?, project: Project?): Boolean {
-    if (editor?.document?.isWritable != true) {
+    if (editor == null || !editor.document.isWritable) {
       return false
     }
-    val droppedFiles = FileCopyPasteUtil.getFileList(transferable) ?: return false
+    val files = FileCopyPasteUtil.getFileList(transferable) ?: return false
     val document = editor.document
     val currentDirectory = MarkdownFileUtil.getDirectory(project, document)
-    val caret = editor.caretModel.currentCaret
-    try {
-      val commandName = MarkdownBundle.message("markdown.image.file.drop.handler.drop.command.name")
-      WriteCommandAction.runWriteCommandAction(project, commandName, null, {
-        for (droppedFile in droppedFiles) {
-          val imageText = ImageUtils.createMarkdownImageText(
-            path = MarkdownFileUtil.getPathForMarkdownImage(droppedFile.path, currentDirectory)
-          )
-          document.insertString(caret.offset, imageText)
-          caret.moveToOffset(caret.offset + imageText.length)
+    val content = files.joinToString(separator = "\n") {
+      ImageUtils.createMarkdownImageText(path = MarkdownFileUtil.getPathForMarkdownImage(it.toString(), currentDirectory))
+    }
+    runWriteAction {
+      try {
+        executeCommand(project, commandName) {
+          editor.caretModel.runForEachCaret(reverseOrder = true) { caret ->
+            document.insertString(caret.offset, content)
+            caret.moveToOffset(content.length)
+          }
         }
-      })
-    } catch (exception: ReadOnlyModificationException) {
-      Messages.showErrorDialog(project, exception.localizedMessage, RefactoringBundle.message("error.title"))
-    } catch (exception: ReadOnlyFragmentModificationException) {
-      EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(exception)
+      } catch (exception: ReadOnlyModificationException) {
+        Messages.showErrorDialog(project, exception.localizedMessage, RefactoringBundle.message("error.title"))
+      } catch (exception: ReadOnlyFragmentModificationException) {
+        EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(exception)
+      }
     }
     return true
   }
+
+  companion object {
+    private val commandName
+      get() = MarkdownBundle.message("markdown.image.file.drop.handler.drop.command.name")
+
+      private fun CaretModel.runForEachCaret(reverseOrder: Boolean = false, block: (Caret) -> Unit) {
+        runForEachCaret(block, reverseOrder)
+      }
+    }
 }
