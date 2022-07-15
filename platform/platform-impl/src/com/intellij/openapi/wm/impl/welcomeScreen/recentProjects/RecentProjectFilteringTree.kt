@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.addKeyboardAction
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -347,7 +348,7 @@ class RecentProjectFilteringTree(
         get() = RecentProjectsManagerBase.instanceEx
 
       private val projectNameLabel = JLabel()
-      private val projectPathLabel = JLabel().apply {
+      private val projectPathLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
         foreground = UIUtil.getInactiveTextColor()
       }
       private val projectIconLabel = JLabel().apply {
@@ -456,7 +457,7 @@ class RecentProjectFilteringTree(
       private val projectNameLabel = JLabel().apply {
         foreground = UIUtil.getInactiveTextColor()
       }
-      private val projectPathLabel = JLabel().apply {
+      private val projectPathLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
         foreground = UIUtil.getInactiveTextColor()
       }
       private val projectNamePanel = JBUI.Panels.simplePanel().apply {
