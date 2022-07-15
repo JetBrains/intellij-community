@@ -110,7 +110,6 @@
     <module old-name="gradle-tooling-extension-impl" new-name="intellij.gradle.toolingExtension.impl" />
     <module old-name="gradle-tooling-extension-tests" new-name="intellij.gradle.toolingExtension.tests" />
     <module old-name="groovy-psi" new-name="intellij.groovy.psi" />
-    <module old-name="groovy-uast-tests" new-name="intellij.groovy.uast.tests" />
     <module old-name="hg4idea" new-name="intellij.vcs.hg" />
     <module old-name="icons" new-name="intellij.platform.icons" />
     <module old-name="idea-ui" new-name="intellij.java.ui" />
@@ -283,9 +282,6 @@
     <module old-name="testutils" new-name="android.sdktools.testutils" />
     <module old-name="textmate" new-name="intellij.textmate" />
     <module old-name="typeMigration" new-name="intellij.java.typeMigration" />
-    <module old-name="uast-common" new-name="intellij.platform.uast" />
-    <module old-name="uast-java" new-name="intellij.java.uast" />
-    <module old-name="uast-tests" new-name="intellij.platform.uast.tests" />
     <module old-name="ui-designer" new-name="intellij.java.guiForms.designer" />
     <module old-name="ui-designer-core" new-name="intellij.uiDesigner" />
     <module old-name="uitest-framework" new-name="intellij.android.guiTestFramework" />

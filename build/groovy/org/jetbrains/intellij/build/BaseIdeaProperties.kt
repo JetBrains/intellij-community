@@ -17,7 +17,6 @@ import java.util.function.BiConsumer
 
 private val JAVA_IDE_API_MODULES: List<String> = java.util.List.of(
   "intellij.xml.dom",
-  "intellij.platform.uast.tests",
   "intellij.jsp.base"
 )
 
@@ -153,6 +152,7 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
         "intellij.platform.testFramework.common",
         "intellij.platform.testFramework.junit5",
         "intellij.platform.testFramework",
+        "intellij.platform.uast.tests",
       )) {
         if (!productLayout.productApiModules.contains(moduleName)) {
           layout.withModule(moduleName, "testFramework.jar")
