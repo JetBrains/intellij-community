@@ -243,14 +243,20 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       }
 
       for (project in openProjects) {
-        val path = getProjectPath(project)
-        val info = path?.let { state.additionalInfo.get(it) } ?: continue
-        info.opened = true
-        info.projectOpenTimestamp = System.currentTimeMillis()
-        info.displayName = getProjectDisplayName(project)
+        updateProjectOpenedState(project, updateTime = false)
       }
       state.validateRecentProjects(modCounter)
     }
+  }
+
+  private fun updateProjectOpenedState(project: Project, updateTime: Boolean) {
+    val path = getProjectPath(project) ?: return
+    val info = state.additionalInfo.get(path) ?: return
+    info.opened = true
+    if (updateTime) {
+      info.projectOpenTimestamp = System.currentTimeMillis()
+    }
+    info.displayName = getProjectDisplayName(project)
   }
 
   protected open fun getProjectDisplayName(project: Project): String? = null
@@ -281,7 +287,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
       // remove instead of get to re-order
       val info = state.additionalInfo.remove(path) ?: RecentProjectMetaInfo()
-      state.additionalInfo[path] = info
+      state.additionalInfo.put(path, info)
       modCounter.incrementAndGet()
       val appInfo = ApplicationInfoEx.getInstanceEx()
       info.displayName = getProjectDisplayName(project)
@@ -375,11 +381,15 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       }
 
       manager.getProjectPath(project)?.let { path ->
-        manager.findAndRemoveNewlyClonedProject(path)
-        manager.markPathRecent(path, project)
-        manager.setLastOpenedProject(path)
+        synchronized(manager.stateLock) {
+          manager.findAndRemoveNewlyClonedProject(path)
+          manager.markPathRecent(path, project)
+          manager.setLastOpenedProject(path)
+
+          manager.updateProjectOpenedState(project, updateTime = true)
+          manager.state.validateRecentProjects(manager.modCounter)
+        }
       }
-      manager.updateLastProjectPath()
       updateSystemDockMenu()
     }
 

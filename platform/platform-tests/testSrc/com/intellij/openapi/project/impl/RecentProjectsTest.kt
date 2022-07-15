@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.project.impl
 
 import com.intellij.ide.*
@@ -83,9 +85,9 @@ class RecentProjectsTest {
     val z1 = tempDir.newPath("z1")
     var project = PlatformTestUtil.loadAndOpenProject(z1, disposableRule.disposable)
     try {
+      val timestamp = getProjectOpenTimestamp("z1")
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
       project = PlatformTestUtil.loadAndOpenProject(z1, disposableRule.disposable)
-      val timestamp = getProjectOpenTimestamp("z1")
       RecentProjectsManagerBase.getInstanceEx().updateLastProjectPath()
       // "Timestamp for opened project has not been updated"
       assertThat(getProjectOpenTimestamp("z1")).isGreaterThan(timestamp)
