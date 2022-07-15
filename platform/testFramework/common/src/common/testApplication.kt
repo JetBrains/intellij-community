@@ -42,6 +42,7 @@ import com.intellij.psi.impl.DocumentCommitThread
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.UITestUtil
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.FileBasedIndex
@@ -144,6 +145,32 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   }
 }
 
+/**
+ * This function is intended to be run after each test.
+ *
+ * This function combines various clean up and assertion pieces,
+ * which were spread across TestCase inheritors and fixtures (JUnit 3).
+ * JUnit 5 integration uses only this function to clean up the state of the shared application.
+ */
+@TestOnly
+@Internal
+fun Application.cleanApplicationState() {
+  val errors = ArrayList<Throwable>()
+  runCatching {
+    waitForAppLeakingThreads(this, 10, TimeUnit.SECONDS)
+  }.onFailure {
+    errors += it
+  }
+  errors += cleanApplicationStateCatching()
+  errors += checkEditorsReleasedCatching()
+  runCatching {
+    cleanupApplicationCaches()
+  }.onFailure {
+    errors += it
+  }
+  errors.reduceAndThrow()
+}
+
 private inline fun <reified T : Any> Application.serviceIfCreated(): T? = this.getServiceIfCreated(T::class.java)
 
 @TestOnly
@@ -153,7 +180,11 @@ fun Application.cleanApplicationStateCatching(): List<Throwable> {
     { (serviceIfCreated<FileTypeManager>() as? FileTypeManagerImpl)?.drainReDetectQueue() },
     { clearEncodingManagerDocumentQueue() },
     { (serviceIfCreated<HintManager>() as? HintManagerImpl)?.cleanup() },
-    { (serviceIfCreated<UndoManager>() as? UndoManagerImpl)?.dropHistoryInTests() },
+    {
+      runInEdtAndWait {
+        (serviceIfCreated<UndoManager>() as? UndoManagerImpl)?.dropHistoryInTests()
+      }
+    },
     { (serviceIfCreated<DocumentReferenceManager>() as? DocumentReferenceManagerImpl)?.cleanupForNextTest() },
     { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() },
     { UiInterceptors.clear() },
@@ -202,7 +233,9 @@ fun Application.cleanupApplicationCaches() {
   if (serviceIfCreated<VirtualFileManager>() != null) {
     val localFileSystem = LocalFileSystem.getInstance()
     if (localFileSystem != null) {
-      (localFileSystem as LocalFileSystemBase).cleanupForNextTest()
+      runInEdtAndWait {
+        (localFileSystem as LocalFileSystemBase).cleanupForNextTest()
+      }
     }
   }
 }

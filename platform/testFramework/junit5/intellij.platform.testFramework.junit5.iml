@@ -11,9 +11,12 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="JUnit5" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="JUnit5Launcher" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" exported="" />
   </component>
 </module>

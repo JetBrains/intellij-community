@@ -65,7 +65,7 @@ fun Sequence<() -> Unit>.runAllCatching(): List<Throwable> {
   }
 }
 
-private fun List<Throwable>.reduceAndThrow() {
+fun List<Throwable>.reduceAndThrow() {
   if (isEmpty()) {
     return
   }
