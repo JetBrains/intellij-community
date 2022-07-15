@@ -37,7 +37,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
@@ -202,17 +201,7 @@ class TestApplicationManager private constructor() {
 
       val l = edtThrowables + runAllCatching(
         {
-          try {
-            Disposer.assertIsEmpty(true)
-          }
-          catch (e: AssertionError) {
-            publishHeapDump("disposerNonEmpty")
-            throw e
-          }
-          catch (e: Exception) {
-            publishHeapDump("disposerNonEmpty")
-            throw e
-          }
+          assertDisposerEmpty()
         }
       )
 
