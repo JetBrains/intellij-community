@@ -36,6 +36,7 @@ import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
+import java.util.*
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -52,10 +53,11 @@ abstract class ToolWindowHeader internal constructor(
 ) :
   BorderLayoutPanel(),
   UISettingsListener, DataProvider, PropertyChangeListener {
-  private var image: BufferedImage? = null
+  private var inactiveImageFlags: Array<Any>? = null
+  private var activeImageFlags: Array<Any>? = null
+  private var inactiveImage: BufferedImage? = null
   private var activeImage: BufferedImage? = null
-  private var imageType: ToolWindowType? = null
-  private var drawBottomLine: Boolean? = null
+
   private val actionGroup = DefaultActionGroup()
   private val actionGroupWest = DefaultActionGroup()
   private val toolbar: ActionToolbar
@@ -269,37 +271,37 @@ abstract class ToolWindowHeader internal constructor(
     val type = toolWindow.type
     val image: Image?
     val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(this@ToolWindowHeader)
+    val isNewUi = toolWindow.toolWindowManager.isNewUi
+    val height = r.height
     val drawTopLine = type != ToolWindowType.FLOATING && !ClientProperty.isTrue(nearestDecorator, InternalDecoratorImpl.INACTIVE_LOOK)
     var drawBottomLine = true
 
-    if (toolWindow.toolWindowManager.isNewUi) {
+    if (isNewUi) {
       val scrolled = ClientProperty.isTrue(nearestDecorator, SimpleToolWindowPanel.SCROLLED_STATE)
       drawBottomLine = (toolWindow.anchor == ToolWindowAnchor.BOTTOM
                         || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && toolWindow.contentManager.contentCount > 1)
                         || ToggleToolbarAction.hasVisibleToolwindowToolbars(toolWindow)
                         || scrolled)
-
-      if (this.drawBottomLine != drawBottomLine) {
-        //no active header for new UI
-        activeImage = drawToBuffer(g2d, false, r.height, drawTopLine, drawBottomLine)
-        this.image = drawToBuffer(g2d, false, r.height, drawTopLine, drawBottomLine)
-        this.drawBottomLine = drawBottomLine
-      }
     }
 
+    val imageFlags = arrayOf<Any>(type, isNewUi, height, drawTopLine, drawBottomLine)
     if (isActive) {
-      if (activeImage == null ||  /*myActiveImage.getHeight() != r.height ||*/type != imageType) {
-        activeImage = drawToBuffer(g2d, true, r.height, drawTopLine, drawBottomLine)
+      activeImage = when {
+        activeImage != null && Arrays.equals(activeImageFlags, imageFlags) -> activeImage
+        else -> drawToBuffer(g2d, !isNewUi, height, drawTopLine, drawBottomLine)
       }
+      activeImageFlags = imageFlags
       image = activeImage
     }
     else {
-      if (this.image == null ||  /*myImage.getHeight() != r.height ||*/type != imageType) {
-        this.image = drawToBuffer(g2d, false, r.height, drawTopLine, drawBottomLine)
+      inactiveImage = when {
+        inactiveImage != null && Arrays.equals(inactiveImageFlags, imageFlags) -> inactiveImage
+        else -> drawToBuffer(g2d, false, height, drawTopLine, drawBottomLine)
       }
-      image = this.image
+      inactiveImageFlags = imageFlags
+      image = inactiveImage
     }
-    imageType = type
+
     val clipBounds = clip.bounds
     var x = clipBounds.x
     while (x < clipBounds.x + clipBounds.width) {
@@ -314,7 +316,7 @@ abstract class ToolWindowHeader internal constructor(
   }
 
   fun clearCaches() {
-    image = null
+    inactiveImage = null
     activeImage = null
   }
 
