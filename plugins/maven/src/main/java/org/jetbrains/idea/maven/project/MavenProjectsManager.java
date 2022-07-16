@@ -583,9 +583,13 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private void projectClosed() {
     initLock.lock();
     try {
-      if (!isInitialized.getAndSet(false)) return;
+      if (!isInitialized.getAndSet(false)) {
+        return;
+      }
 
-      Disposer.dispose(myImportingQueue);
+      if (myImportingQueue != null) {
+        Disposer.dispose(myImportingQueue);
+      }
 
       myWatcher.stop();
 

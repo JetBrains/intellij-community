@@ -8,6 +8,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.startup.StartupManagerEx
+import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
@@ -17,12 +18,12 @@ import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl
-import com.intellij.openapi.project.impl.runStartupActivities
+import com.intellij.openapi.project.impl.runInitProjectActivities
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.TestApplicationManager.Companion.publishHeapDump
@@ -31,7 +32,6 @@ import com.intellij.util.containers.UnsafeWeakList
 import com.intellij.util.ref.GCUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NotNull
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -118,13 +118,12 @@ open class TestProjectManager : ProjectManagerImpl() {
     }
 
     val app = ApplicationManager.getApplication()
-
     try {
       runUnderModalProgressIfIsEdt {
-        runStartupActivities(project = project,
-                             indicator = ProgressManager.getInstance().progressIndicator,
-                             runStartUpActivities = isRunStartUpActivitiesEnabled(project),
-                             waitEdtActivity = null)
+        runInitProjectActivities(project = project)
+        if (isRunStartUpActivitiesEnabled(project)) {
+          (StartupManager.getInstance(project) as StartupManagerImpl).runStartupActivities()
+        }
       }
     }
     catch (e: ProcessCanceledException) {
@@ -142,7 +141,7 @@ open class TestProjectManager : ProjectManagerImpl() {
     return project
   }
 
-  private fun trackProject(project: @NotNull Project) {
+  private fun trackProject(project: Project) {
     if (isTracking) {
       synchronized(this) {
         if (isTracking) {

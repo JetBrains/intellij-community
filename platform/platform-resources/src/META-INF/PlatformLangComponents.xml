@@ -47,6 +47,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <startupActivity
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge$ModuleManagerInitProjectActivity"
+      order="first"/>
+
     <applicationService serviceInterface="com.intellij.openapi.command.undo.UndoManager"
                         serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="await"/>
 
@@ -125,6 +129,8 @@
     <applicationService serviceImplementation="com.intellij.ide.IdeTooltipManager" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringUiService" serviceImplementation="com.intellij.refactoring.RefactoringUiServiceImpl"/>
+    
+    <postStartupActivity implementation="com.intellij.ide.RecentProjectsManagerBase$MyProjectPostStartupActivity"/>
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->

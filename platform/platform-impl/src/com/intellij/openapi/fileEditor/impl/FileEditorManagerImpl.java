@@ -198,16 +198,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     });
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectOpened(@NotNull Project project) {
-        if (project == myProject) {
-          FileEditorManagerImpl.this.projectOpened(connection);
-        }
-      }
-
-      @Override
       public void projectClosing(@NotNull Project project) {
         if (project == myProject) {
-          // Dispose created editors. We do not use use closeEditor method because
+          // Dispose created editors. We do not use closeEditor method because
           // it fires event and changes history.
           closeAllFiles();
         }
@@ -545,6 +538,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     getActiveSplittersAsync().onSuccess(splitters -> splitters.updateFileName(null));
   }
 
+  @SuppressWarnings("removal")
   @Override
   public VirtualFile getFile(@NotNull FileEditor editor) {
     EditorComposite editorComposite = getComposite(editor);
@@ -940,7 +934,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   /**
    * @param file    to be opened. Unlike openFile method, file can be
-   *                invalid. For example, all file were invalidate and they are being
+   *                invalid. For example, all file where invalidate, and they are being
    *                removed one by one. If we have removed one invalid file, then another
    *                invalid file become selected. That's why we do not require that
    *                passed file is valid.
@@ -1202,7 +1196,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     }
     if (state == null && newEditor) {
       // We have to try to get state from the history only in case
-      // if editor is not opened. Otherwise history entry might have a state
+      // if editor is not opened. Otherwise, history entry might have a state
       // out of sync with the current editor state.
       state = EditorHistoryManager.getInstance(myProject).getState(file, provider);
     }
@@ -1415,7 +1409,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     return getSelectedTextEditor(false);
   }
 
-  public Editor getSelectedTextEditor(boolean lockfree) {
+  public Editor getSelectedTextEditor(boolean isLockFree) {
     if (!ClientId.isCurrentlyUnderLocalId()) {
       ClientFileEditorManager clientManager = getClientFileEditorManager();
       if (clientManager == null) {
@@ -1425,11 +1419,11 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       return selectedEditor instanceof TextEditor ? ((TextEditor)selectedEditor).getEditor() : null;
     }
 
-    if (!lockfree) {
+    if (!isLockFree) {
       assertDispatchThread();
     }
 
-    EditorWindow currentWindow = lockfree ? getMainSplitters().getCurrentWindow() : getSplitters().getCurrentWindow();
+    EditorWindow currentWindow = isLockFree ? getMainSplitters().getCurrentWindow() : getSplitters().getCurrentWindow();
     if (currentWindow != null) {
       EditorComposite selectedEditor = currentWindow.getSelectedComposite();
       if (selectedEditor != null && selectedEditor.getSelectedEditor() instanceof TextEditor) {
@@ -1686,7 +1680,8 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     myListenerList.remove(listener);
   }
 
-  protected void projectOpened(@NotNull MessageBusConnection connection) {
+  @ApiStatus.Internal
+  public final void init() {
     //myFocusWatcher.install(myWindows.getComponent ());
     getMainSplitters().startListeningFocus();
 
@@ -1695,6 +1690,8 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       // updates tabs colors
       fileStatusManager.addFileStatusListener(new MyFileStatusListener(), myProject);
     }
+
+    MessageBusConnection connection = myProject.getMessageBus().connect(this);
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootsListener());
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC, new MyRootsListener());
@@ -2127,7 +2124,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   /**
    * Gets notifications from UISetting component to track changes of RECENT_FILES_LIMIT
-   * and EDITOR_TAB_LIMIT, etc values.
+   * and EDITOR_TAB_LIMIT, etc. values.
    */
   private final class MyUISettingsListener implements UISettingsListener {
     @Override

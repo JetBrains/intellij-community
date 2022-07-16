@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectView
 
 import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -55,18 +56,20 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
     """.trimIndent()
     assertStructureEqual(expected)
 
-    ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded", "unloaded-inner"))
+    runUnderModalProgressIfIsEdt {
+      ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded", "unloaded-inner"))
+    }
     assertStructureEqual("""
-      Project
-       loaded
-        unloaded-inner
-         subdir
-         y.txt
-       unloaded
-        loaded-inner
-         subdir
-         z.txt
-    """.trimIndent())
+    Project
+     loaded
+      unloaded-inner
+       subdir
+       y.txt
+     unloaded
+      loaded-inner
+       subdir
+       z.txt
+  """.trimIndent())
   }
 
   fun `test unloaded module with qualified name`() {
@@ -93,7 +96,9 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
     """.trimIndent()
     assertStructureEqual(expected)
 
-    ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded"))
+    runUnderModalProgressIfIsEdt {
+      ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded"))
+    }
     assertStructureEqual(expected)
   }
 

@@ -21,10 +21,12 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.*
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -317,10 +319,6 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     }
   }
 
-  fun setLastOpenedProject(path: String) {
-    state.lastOpenedProject = path
-  }
-
   fun getLastOpenedProject() = state.lastOpenedProject
 
   init {
@@ -336,28 +334,42 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       }, AWTEvent.WINDOW_EVENT_MASK)
   }
 
+  @VisibleForTesting
+  suspend fun runProjectPostStartupActivity(project: Project) {
+    if (disableUpdatingRecentInfo.get() || LightEdit.owns(project)) {
+      return
+    }
+
+    val projectPath = getProjectPath(project) ?: return
+    synchronized(stateLock) {
+      findAndRemoveNewlyClonedProject(projectPath)
+      markPathRecent(projectPath, project)
+      state.lastOpenedProject = projectPath
+
+      updateProjectOpenedState(project, updateTime = true)
+      state.validateRecentProjects(modCounter)
+    }
+
+    withContext(Dispatchers.EDT) {
+      updateSystemDockMenu()
+    }
+  }
+
+  internal class MyProjectPostStartupActivity : ProjectPostStartupActivity {
+    init {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        throw ExtensionNotApplicableException.create()
+      }
+    }
+
+    override suspend fun execute(project: Project) {
+      getInstanceEx().runProjectPostStartupActivity(project)
+    }
+  }
+
   @Internal
   @VisibleForTesting
   class MyProjectListener : ProjectManagerListener {
-    override fun projectOpened(project: Project) {
-      val manager = getInstanceEx()
-      if (manager.disableUpdatingRecentInfo.get() || LightEdit.owns(project)) {
-        return
-      }
-
-      manager.getProjectPath(project)?.let { path ->
-        synchronized(manager.stateLock) {
-          manager.findAndRemoveNewlyClonedProject(path)
-          manager.markPathRecent(path, project)
-          manager.setLastOpenedProject(path)
-
-          manager.updateProjectOpenedState(project, updateTime = true)
-          manager.state.validateRecentProjects(manager.modCounter)
-        }
-      }
-      updateSystemDockMenu()
-    }
-
     override fun projectClosing(project: Project) {
       val app = ApplicationManagerEx.getApplicationEx()
       if (app.isExitInProgress) {
@@ -385,7 +397,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
   fun getRecentPaths(): List<String> {
     synchronized(stateLock) {
       state.validateRecentProjects(modCounter)
-      return state.additionalInfo.keys.toList().asReversed()
+      return state.additionalInfo.keys.reversed()
     }
   }
 

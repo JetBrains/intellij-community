@@ -97,10 +97,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect()
     connection.subscribe(TOPIC, object : ProjectManagerListener {
+      @Suppress("removal")
       override fun projectOpened(project: Project) {
         for (listener in getAllListeners(project)) {
           try {
-            @Suppress("DEPRECATION")
+            @Suppress("DEPRECATION", "removal")
             listener.projectOpened(project)
           }
           catch (e: Exception) {
@@ -292,6 +293,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     app.assertIsWriteThread()
+    @Suppress("TestOnlyProblems")
     if (isLight(project)) {
       // if we close project at the end of the test, just mark it closed;
       // if we are shutting down the entire test framework, proceed to full dispose
@@ -562,18 +564,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
               throw CancellationException("not trusted")
             }
 
-            val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
-            val indicator = ProgressManager.getInstance().progressIndicator
-            if (indicator != null) {
-              indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..."  // NON-NLS (internal mode)
-              else ProjectBundle.message("project.preparing.workspace")
-              indicator.isIndeterminate = true
-            }
-
             tracer.spanBuilder("open project")
               .setAttribute(AttributeKey.stringKey("project"), project.name)
               .useWithScope {
-                runStartupActivities(project, indicator, isRunStartUpActivitiesEnabled(project), waitEdtActivity)
+                runInitProjectActivities(project)
               }
           }
 
@@ -612,6 +606,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     finally {
       disableAutoSaveToken.finish()
     }
+
+    if (isRunStartUpActivitiesEnabled(project)) {
+      (StartupManager.getInstance(project) as StartupManagerImpl).runStartupActivities()
+    }
+    LifecycleUsageTriggerCollector.onProjectOpened(project)
 
     options.callback?.projectOpened(project, module ?: ModuleManager.getInstance(project).modules[0])
     return project
@@ -848,69 +847,51 @@ private fun message(e: Throwable): String {
 
 @Internal
 @VisibleForTesting
-suspend fun runStartupActivities(project: Project,
-                                 indicator: ProgressIndicator?,
-                                 runStartUpActivities: Boolean,
-                                 waitEdtActivity: Activity?) {
+suspend fun runInitProjectActivities(project: Project) {
   val traceContext = Context.current()
-  withContext(Dispatchers.EDT) {
-    waitEdtActivity?.end()
-
-    if (indicator != null && ApplicationManager.getApplication().isInternal) {
-      indicator.text = "Running project opened tasks..."  // NON-NLS (internal mode)
+  coroutineScope {
+    launch {
+      (StartupManager.getInstance(project) as StartupManagerImpl).initProject(null)
     }
 
-    LOG.debug("projectOpened")
+    val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
+    launch(Dispatchers.EDT) {
+      waitEdtActivity.end()
 
-    val activity = StartUpMeasurer.startActivity("project opened callbacks")
-
-    runActivity("projectOpened event executing") {
-      tracer.spanBuilder("execute projectOpened handlers").setParent(traceContext).useWithScope {
-        @Suppress("DEPRECATION")
-        ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
-      }
-    }
-
-    coroutineContext.ensureActive()
-
-    @Suppress("DEPRECATION")
-    (project as ComponentManagerImpl)
-      .processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
-        coroutineContext.ensureActive()
-        try {
-          val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
-                                                                pluginDescriptor.pluginId.idString)
-          component.projectOpened()
-          componentActivity.end()
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
+      val activity = StartUpMeasurer.startActivity("project opened callbacks")
+      runActivity("projectOpened event executing") {
+        tracer.spanBuilder("execute projectOpened handlers").setParent(traceContext).useWithScope {
+          @Suppress("DEPRECATION", "removal")
+          ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
         }
       }
 
-    activity.end()
-  }
+      coroutineContext.ensureActive()
 
-  ProjectImpl.ourClassesAreLoaded = true
+      @Suppress("DEPRECATION")
+      (project as ComponentManagerImpl)
+        .processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
+          coroutineContext.ensureActive()
+          try {
+            val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
+                                                                  pluginDescriptor.pluginId.idString)
+            component.projectOpened()
+            componentActivity.end()
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: ProcessCanceledException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            LOG.error(e)
+          }
+        }
 
-  if (runStartUpActivities) {
-    val app = ApplicationManager.getApplication()
-    if (indicator != null && app.isInternal) {
-      indicator.text = IdeBundle.message("startup.indicator.text.running.startup.activities")
+      activity.end()
     }
-
-    tracer.spanBuilder("StartupManager.projectOpened").useWithScope {
-      (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
-    }
   }
-
-  LifecycleUsageTriggerCollector.onProjectOpened(project)
 }
 
 private val LOG = logger<ProjectManagerImpl>()
@@ -992,6 +973,7 @@ private fun ensureCouldCloseIfUnableToSave(project: Project): Boolean {
     }
   }
 
+  @Suppress("HardCodedStringLiteral")
   return Messages.showYesNoDialog(project, message.toString(),
                                   IdeUICustomization.getInstance().projectMessage("dialog.title.unsaved.project"),
                                   Messages.getWarningIcon()) == Messages.YES

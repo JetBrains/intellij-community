@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectListActionProvider;
-import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -15,7 +14,6 @@ import com.intellij.openapi.wm.impl.SystemDock;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 
 /**
  * @author Denis Fokin
@@ -57,14 +55,9 @@ public final class MacDockDelegate implements SystemDock.Delegate {
 
   @Override
   public void updateRecentProjectsMenu () {
-    RecentProjectsManager projectsManager = RecentProjectsManager.getInstance();
-    if (projectsManager == null) {
-      return;
-    }
-    List<AnAction> recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(false);
     recentProjectsMenu.removeAll();
 
-    for (AnAction action : recentProjectActions) {
+    for (AnAction action : RecentProjectListActionProvider.getInstance().getActions(false)) {
       MenuItem menuItem = new MenuItem(((ReopenProjectAction)action).getProjectNameToDisplay());
       menuItem.addActionListener(new ActionListener() {
         @Override

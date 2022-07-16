@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.ProjectTopics;
@@ -22,10 +21,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
-  public ModuleDefaultVcsRootPolicy(@NotNull Project project) {
+final class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
+  ModuleDefaultVcsRootPolicy(@NotNull Project project) {
     super(project);
 
     MyModulesListener listener = new MyModulesListener();
@@ -66,14 +66,14 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     return result;
   }
 
-  private class MyModulesListener implements ModuleRootListener, ModuleListener, AdditionalLibraryRootsListener {
+  private final class MyModulesListener implements ModuleRootListener, ModuleListener, AdditionalLibraryRootsListener {
     @Override
     public void rootsChanged(@NotNull ModuleRootEvent event) {
       scheduleMappedRootsUpdate();
     }
 
     @Override
-    public void moduleAdded(@NotNull Project project, @NotNull Module module) {
+    public void modulesAdded(@NotNull Project project, @NotNull List<Module> modules) {
       scheduleMappedRootsUpdate();
     }
 

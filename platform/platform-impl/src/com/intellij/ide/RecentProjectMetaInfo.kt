@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.ide
 
 import com.intellij.openapi.components.BaseState
@@ -60,7 +62,7 @@ class RecentProjectManagerState : BaseState() {
 
   fun validateRecentProjects(modCounter: AtomicLong) {
     val limit = AdvancedSettings.getInt("ide.max.recent.projects")
-    if (additionalInfo.size <= limit) {
+    if (additionalInfo.size <= limit || limit < 1) {
       return
     }
 
@@ -68,7 +70,7 @@ class RecentProjectManagerState : BaseState() {
       val iterator = additionalInfo.keys.iterator()
       while (iterator.hasNext()) {
         val path = iterator.next()
-        if (!additionalInfo[path]!!.opened) {
+        if (!additionalInfo.get(path)!!.opened) {
           iterator.remove()
           break
         }

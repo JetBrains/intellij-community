@@ -18,12 +18,17 @@ import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.startup.InitProjectActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class OpenFilesActivity : InitProjectActivity {
   override suspend fun run(project: Project) {
     ProgressManager.getInstance().progressIndicator?.text = IdeBundle.message("progress.text.reopening.files")
 
     val fileEditorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return
+    withContext(Dispatchers.EDT) {
+      fileEditorManager.init()
+    }
+
     val editorSplitters = fileEditorManager.mainSplitters
     val panel = editorSplitters.restoreEditors()
     (project as ProjectEx).coroutineScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {

@@ -209,7 +209,6 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
   }
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 private suspend fun prepareStart(app: ApplicationImpl, initAppActivity: Activity, pluginSet: PluginSet, mainScope: CoroutineScope) {
   coroutineScope {
     app.preloadServices(
@@ -243,10 +242,9 @@ private suspend fun prepareStart(app: ApplicationImpl, initAppActivity: Activity
         createAppLocatorFile()
       }
 
-      if (!app.isUnitTestMode && !app.isHeadlessEnvironment &&
-          java.lang.Boolean.parseBoolean(System.getProperty("enable.activity.preloading", "true"))) {
+      if (!app.isUnitTestMode && !app.isHeadlessEnvironment && System.getProperty("enable.activity.preloading", "true").toBoolean()) {
         // do not execute as a single long task, make sure that other more important tasks may slip in between
-        launchAndMeasure("preloading activity executing", Dispatchers.Default.limitedParallelism(1)) {
+        launchAndMeasure("preloading activity executing") {
           executePreloadActivities(app)
         }
       }

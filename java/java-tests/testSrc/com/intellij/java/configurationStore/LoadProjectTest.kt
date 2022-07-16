@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.configurationStore
 
 import com.intellij.ProjectTopics
@@ -78,7 +78,7 @@ class LoadProjectTest {
       val fooModule = ModuleManager.getInstance(project).modules.single()
       assertThat(fooModule.name).isEqualTo("foo")
       runWriteActionAndWait {
-        val model = ModuleManager.getInstance(project).modifiableModel
+        val model = ModuleManager.getInstance(project).getModifiableModel()
         model.loadModule("${project.basePath}/bar/bar.iml")
         model.commit()
       }

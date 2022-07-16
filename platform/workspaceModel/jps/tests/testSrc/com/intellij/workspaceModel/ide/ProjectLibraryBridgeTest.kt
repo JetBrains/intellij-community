@@ -335,7 +335,7 @@ class ProjectLibraryBridgeTest {
     assertTrue(iprFile.readText().contains(antLibraryName))
 
     WriteCommandAction.runWriteCommandAction(project) {
-      val module = ModuleManager.getInstance(project).modifiableModel.let {
+      val module = ModuleManager.getInstance(project).getModifiableModel().let {
         val module = it.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
         it.commit()
         module
@@ -386,7 +386,7 @@ class ProjectLibraryBridgeTest {
     val moduleFile = File(project.basePath, "$moduleName.iml")
     val library = runBlocking { createProjectLibrary(antLibraryName, withRoots = false) }
     WriteCommandAction.runWriteCommandAction(project) {
-      val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+      val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
         val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
         moduleModel.commit()
         module

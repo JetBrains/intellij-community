@@ -105,7 +105,7 @@ val Project.modules: Array<Module>
   get() = ModuleManager.getInstance(this).modules
 
 inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() -> T): T {
-  val model = ModuleManager.getInstance(this).modifiableModel
+  val model = ModuleManager.getInstance(this).getModifiableModel()
   val result = model.task()
   runWriteAction {
     model.commit()

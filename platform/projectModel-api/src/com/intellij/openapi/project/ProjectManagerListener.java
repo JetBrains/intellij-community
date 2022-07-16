@@ -17,6 +17,7 @@ public interface ProjectManagerListener extends EventListener {
    * <a href=" https://plugins.jetbrains.com/docs/intellij/plugin-components.html#comintellijpoststartupactivity">Post start-up activity</a>
    * maybe an alternative.
    */
+  @Deprecated(forRemoval = true)
   default void projectOpened(@NotNull Project project) {
   }
 

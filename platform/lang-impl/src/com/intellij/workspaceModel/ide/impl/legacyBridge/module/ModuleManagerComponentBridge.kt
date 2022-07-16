@@ -1,22 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.ProjectTopics
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.AutomaticModuleUnloader
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -32,32 +35,50 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRoot
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Paths
 
 class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerBridgeImpl(project) {
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
+  internal class ModuleManagerInitProjectActivity : InitProjectActivity {
+    override suspend fun run(project: Project) {
+      val activity = StartUpMeasurer.startActivity("firing modules_added event", ActivityCategory.DEFAULT)
+      val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
+      val modules = moduleManager.modules().toList()
+      withContext(Dispatchers.EDT) {
+        ApplicationManager.getApplication().runWriteAction {
+          for (module in modules) {
+            if (!module.isLoaded) {
+              module.moduleAdded()
+            }
+          }
+        }
+
+        moduleManager.fireModulesAdded(modules)
+
+        for (module in modules) {
+          module.projectOpened()
+        }
+      }
+      activity.end()
+    }
+  }
+
   init {
     // default project doesn't have modules
     if (!project.isDefault) {
       val busConnection = project.messageBus.connect(this)
       busConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-        override fun projectOpened(eventProject: Project) {
-          val activity = StartUpMeasurer.startActivity("firing modules_added event", ActivityCategory.DEFAULT)
-          if (project == eventProject) {
-            fireModulesAdded()
-            for (module in modules()) {
-              module.projectOpened()
-            }
-          }
-          activity.end()
-        }
-
         override fun projectClosed(eventProject: Project) {
           if (project == eventProject) {
             for (module in modules()) {
@@ -172,7 +193,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
                                   oldModuleNames: MutableMap<Module, String>, event: VersionedStorageChange) {
     when (change) {
       is EntityChange.Removed -> {
-        // It's possible case then idToModule doesn't contain element e.g if unloaded module was removed
+        // It's possible case then idToModule doesn't contain element e.g. if unloaded module was removed
         val module = event.storageBefore.findModuleByEntity(change.entity)
         if (module != null) {
           fireEventAndDisposeModule(module)
@@ -271,23 +292,17 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
   private fun List<EntityChange<LibraryEntity>>.filterModuleLibraryChanges() = filter { it.isModuleLibrary() }
 
-  private fun fireModulesAdded() {
-    for (module in modules()) {
-      fireModuleAddedInWriteAction(module)
-    }
-  }
-
   private fun fireModuleAddedInWriteAction(module: ModuleEx) {
     ApplicationManager.getApplication().runWriteAction {
       if (!module.isLoaded) {
         module.moduleAdded()
-        fireModuleAdded(module)
+        fireModulesAdded(listOf(module))
       }
     }
   }
 
-  private fun fireModuleAdded(module: Module) {
-    project.messageBus.syncPublisher(ProjectTopics.MODULES).moduleAdded(project, module)
+  private fun fireModulesAdded(modules: List<Module>) {
+    project.messageBus.syncPublisher(ProjectTopics.MODULES).modulesAdded(project, modules)
   }
 
   override fun registerNonPersistentModuleStore(module: ModuleBridge) {

@@ -92,7 +92,7 @@ internal val Project.trustedProjectFlow: Flow<Boolean>
 internal val Project.nativeModulesFlow: Flow<List<Module>>
     get() = messageBusFlow(ProjectTopics.MODULES, { getNativeModules() }) {
         object : ModuleListener {
-            override fun moduleAdded(project: Project, module: Module) {
+            override fun modulesAdded(project: Project, modules: List<Module>) {
                 trySend(getNativeModules())
             }
 

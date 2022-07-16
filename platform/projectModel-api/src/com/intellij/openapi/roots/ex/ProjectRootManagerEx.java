@@ -28,6 +28,8 @@ public abstract class ProjectRootManagerEx extends ProjectRootManager {
 
   public abstract void makeRootsChange(@NotNull Runnable runnable, @NotNull RootsChangeRescanningInfo changes);
 
+  public abstract @NotNull AutoCloseable withRootsChange(@NotNull RootsChangeRescanningInfo changes);
+
   public abstract void markRootsForRefresh();
 
   public abstract void mergeRootsChangesDuring(@NotNull Runnable runnable);

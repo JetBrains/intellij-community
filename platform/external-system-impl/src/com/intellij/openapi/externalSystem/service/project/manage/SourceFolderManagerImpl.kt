@@ -153,12 +153,14 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     })
 
     project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
-      override fun moduleAdded(project: Project, module: Module) {
+      override fun modulesAdded(project: Project, modules: List<Module>) {
         synchronized(mutex) {
-          moduleNamesToSourceFolderState[module.name].forEach {
-            loadSourceFolderState(it, module)
+          for (module in modules) {
+            moduleNamesToSourceFolderState[module.name].forEach {
+              loadSourceFolderState(it, module)
+            }
+            moduleNamesToSourceFolderState.remove(module.name)
           }
-          moduleNamesToSourceFolderState.remove(module.name)
         }
       }
     })

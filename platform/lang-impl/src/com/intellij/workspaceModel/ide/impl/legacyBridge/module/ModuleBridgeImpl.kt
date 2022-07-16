@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.configurationStore.RenameableStateStorageManager
+import com.intellij.facet.Facet
 import com.intellij.facet.FacetManager
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
@@ -23,16 +24,17 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
+@Suppress("OVERRIDE_DEPRECATION")
 internal class ModuleBridgeImpl(
   override var moduleEntityId: ModuleId,
   name: String,
@@ -97,7 +99,7 @@ internal class ModuleBridgeImpl(
   }
 
   override fun initFacets() {
-    FacetManager.getInstance(this).allFacets.forEach { it.initFacet() }
+    FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
   }
 
   override fun registerComponents(corePlugin: IdeaPluginDescriptor?,
@@ -163,6 +165,7 @@ internal class ModuleBridgeImpl(
       }
     }
     else {
+      @Suppress("DEPRECATION")
       if (getOptionValue(key) != value) {
         WriteAction.runAndWait<RuntimeException> {
           WorkspaceModel.getInstance(project).updateProjectModel { builder ->
@@ -177,6 +180,4 @@ internal class ModuleBridgeImpl(
     return
 
   }
-
-  override fun getOptionsModificationCount(): Long = 0
 }

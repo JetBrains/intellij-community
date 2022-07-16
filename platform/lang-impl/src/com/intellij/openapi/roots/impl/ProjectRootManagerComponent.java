@@ -67,6 +67,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
   private final static ExtensionPointName<WatchedRootsProvider> WATCHED_ROOTS_PROVIDER_EP_NAME = new ExtensionPointName<>("com.intellij.roots.watchedRootsProvider");
 
+  private boolean isStartupActivityPerformed;
+
   private final ExecutorService myExecutor = ApplicationManager.getApplication().isUnitTestMode()
                                              ? ConcurrencyUtil.newSameThreadExecutorService()
                                              : AppExecutorUtil.createBoundedApplicationPoolExecutor("Project Root Manager", 1);
@@ -119,7 +121,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       }
     });
 
-    StartupManager.getInstance(myProject).registerStartupActivity(() -> myStartupActivityPerformed = true);
+    StartupManager.getInstance(myProject).registerStartupActivity(() -> isStartupActivityPerformed = true);
 
     connection.subscribe(BatchUpdateListener.TOPIC, new BatchUpdateListener() {
       @Override
@@ -209,7 +211,9 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       isFiringEvent = false;
     }
 
-    synchronizeRoots(indexingInfos);
+    if (isStartupActivityPerformed) {
+      EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos);
+    }
     addRootsToWatch();
   }
 
@@ -292,11 +296,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
         recursivePaths.add(extractLocalPath(url));
       }
     }
-  }
-
-  private void synchronizeRoots(@NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) {
-    if (!myStartupActivityPerformed) return;
-    EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos);
   }
 
   @Override

@@ -1,16 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots
 
 import com.intellij.facet.FacetManager
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
@@ -46,12 +45,16 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     ModuleRootModificationUtil.addContentRoot(a, contentRootPath)
     ModuleRootModificationUtil.addDependency(a, b)
     val moduleManager = ModuleManager.getInstance(project)
-    moduleManager.setUnloadedModules(listOf("a"))
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf("a"))
+    }
     assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
     assertNull(moduleManager.findModuleByName("a"))
     assertNotNull(moduleManager.findModuleByName("b"))
 
-    moduleManager.setUnloadedModules(listOf("b"))
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf("b"))
+    }
     assertEquals("b", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
     val newA = moduleManager.findModuleByName("a")
     assertNotNull(newA)
@@ -73,12 +76,16 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     }
 
     val moduleManager = ModuleManager.getInstance(project)
-    moduleManager.setUnloadedModules(listOf("a"))
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf("a"))
+    }
     assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
     assertNull(moduleManager.findModuleByName("a"))
     assertNotNull(moduleManager.findModuleByName("b"))
 
-    moduleManager.setUnloadedModules(listOf())
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf())
+    }
 
     val moduleA = ModuleManager.getInstance(project).findModuleByName("a")!!
     val allFacets = FacetManager.getInstance(moduleA).allFacets
@@ -92,7 +99,9 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     val a = createModule("a")
     val aImlPath = a.moduleFilePath
     val moduleManager = ModuleManager.getInstance(project)
-    moduleManager.setUnloadedModules(listOf("a"))
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf("a"))
+    }
     assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
 
     runWriteAction {
@@ -105,16 +114,16 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     createModule("a")
     val b = createModule("b")
     val moduleManager = ModuleManager.getInstance(project)
-    moduleManager.setUnloadedModules(listOf("a"))
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf("a"))
+    }
     assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
 
     runWriteAction {
-      val model = moduleManager.modifiableModel
+      val model = moduleManager.getModifiableModel()
       model.renameModule(b, "a")
       model.commit()
     }
     assertEmpty(moduleManager.unloadedModuleDescriptions)
   }
-
-  private fun getProjectManager() = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
 }

@@ -49,7 +49,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   private final OrderRootsCache myRootsCache;
 
-  protected boolean myStartupActivityPerformed;
   private boolean myStateLoaded;
 
   @ApiStatus.Internal
@@ -448,6 +447,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     finally {
       myRootsChanged.rootsChanged(changes);
     }
+  }
+
+  @Override
+  public @NotNull AutoCloseable withRootsChange(@NotNull RootsChangeRescanningInfo changes) {
+    myRootsChanged.beforeRootsChanged();
+    return () -> myRootsChanged.rootsChanged(changes);
   }
 
   protected boolean isFiringEvent;

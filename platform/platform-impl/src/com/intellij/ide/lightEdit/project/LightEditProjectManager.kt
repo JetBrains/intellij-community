@@ -1,88 +1,79 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.lightEdit.project;
+package com.intellij.ide.lightEdit.project
 
-import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.util.TimeoutUtil;
-import kotlin.coroutines.EmptyCoroutineContext;
-import kotlinx.coroutines.BuildersKt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.ide.startup.impl.StartupManagerImpl
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.startup.StartupManager
+import com.intellij.util.TimeoutUtil
 
-public final class LightEditProjectManager {
-  private static final Logger LOG = Logger.getInstance(LightEditProjectManager.class);
-  private static final Object LOCK = new Object();
+class LightEditProjectManager {
+  companion object {
+    private val LOG = logger<LightEditProjectManager>()
+    private val LOCK = Any()
 
-  private volatile LightEditProjectImpl myProject;
+    private fun fireProjectOpened(project: Project) {
+      val app = ApplicationManager.getApplication()
+      val fireRunnable = Runnable {
+        // similar to com.intellij.openapi.project.impl.ProjectManagerExImplKt.openProject
+        app.messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
+        runUnderModalProgressIfIsEdt {
+          val startupManager = StartupManager.getInstance(project) as StartupManagerImpl
+          startupManager.initProject(null)
+          startupManager.runStartupActivities()
+        }
+      }
+      if (app.isDispatchThread || app.isUnitTestMode) {
+        fireRunnable.run()
+      }
+      else {
+        // Initialize ActionManager out of EDT to pass "assert !app.isDispatchThread()" in ActionManagerImpl
+        ActionManager.getInstance()
+        app.invokeLater(fireRunnable)
+      }
+    }
 
-  public @Nullable Project getProject() {
-    return myProject;
+    private fun createProject(): LightEditProjectImpl {
+      val start = System.nanoTime()
+      val project = LightEditProjectImpl()
+      LOG.info(LightEditProjectImpl::class.java.simpleName + " loaded in " + TimeoutUtil.getDurationMillis(start) + " ms")
+      return project
+    }
   }
 
-  public @NotNull Project getOrCreateProject() {
-    LightEditProjectImpl project = myProject;
+  @Volatile
+  private var projectImpl: LightEditProjectImpl? = null
+
+  val project: Project?
+    get() = projectImpl
+
+  fun getOrCreateProject(): Project {
+    var project = projectImpl
     if (project == null) {
-      boolean created = false;
-      synchronized (LOCK) {
-        if (myProject == null) {
-          myProject = createProject();
-          created = true;
+      var created = false
+      synchronized(LOCK) {
+        if (projectImpl == null) {
+          projectImpl = createProject()
+          created = true
         }
-        project = myProject;
+        project = projectImpl
       }
       if (created) {
-        fireProjectOpened(project);
-        ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-          @Override
-          public void projectClosed(@NotNull Project project) {
-            if (project == myProject) {
-              synchronized (LOCK) {
-                myProject = null;
-              }
+        fireProjectOpened(project!!)
+        ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+          override fun projectClosed(project: Project) {
+            if (project === projectImpl) {
+              synchronized(LOCK) { projectImpl = null }
             }
           }
-        });
+        })
       }
     }
-    return project;
-  }
-
-  private static void fireProjectOpened(@NotNull Project project) {
-    Application app = ApplicationManager.getApplication();
-    Runnable fireRunnable = () -> {
-      // similar to com.intellij.openapi.project.impl.ProjectManagerExImplKt.openProject
-      app.getMessageBus().syncPublisher(ProjectManager.TOPIC).projectOpened(project);
-      try {
-        BuildersKt.runBlocking(EmptyCoroutineContext.INSTANCE, (scope, continuation) -> {
-          ((StartupManagerImpl)StartupManager.getInstance(project)).projectOpened(null, continuation);
-          return null;
-        });
-      }
-      catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-    };
-    if (app.isDispatchThread() || app.isUnitTestMode()) {
-      fireRunnable.run();
-    }
-    else {
-      // Initialize ActionManager out of EDT to pass "assert !app.isDispatchThread()" in ActionManagerImpl
-      ActionManager.getInstance();
-      app.invokeLater(fireRunnable);
-    }
-  }
-
-  private static @NotNull LightEditProjectImpl createProject() {
-    long start = System.nanoTime();
-    LightEditProjectImpl project = new LightEditProjectImpl();
-    LOG.info(LightEditProjectImpl.class.getSimpleName() + " loaded in " + TimeoutUtil.getDurationMillis(start) + " ms");
-    return project;
+    return project!!
   }
 }

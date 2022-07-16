@@ -4,6 +4,7 @@ package com.intellij.openapi.project.impl
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
 import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
@@ -358,7 +359,7 @@ open class ProjectImpl(filePath: Path, projectName: String?)
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl) = pluginDescriptor.projectContainerDescriptor
 
   override fun setProgressDuringInit(indicator: ProgressIndicator) {
-    indicator.fraction = getPercentageOfComponentsLoaded() / if (ourClassesAreLoaded) 10 else 2
+    indicator.fraction = getPercentageOfComponentsLoaded() / if (LoadingState.PROJECT_OPENED.isOccurred) 10 else 2
   }
 
   override fun save() {

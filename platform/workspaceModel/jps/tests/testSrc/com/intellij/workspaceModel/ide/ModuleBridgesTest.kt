@@ -82,7 +82,7 @@ class ModuleBridgesTest {
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)
 
-      val module = moduleManager.modifiableModel.let {
+      val module = moduleManager.getModifiableModel().let {
         val m = it.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id) as ModuleBridge
         it.commit()
         m
@@ -103,7 +103,7 @@ class ModuleBridgesTest {
         arrayOf(contentRootUrl.url)
       )
 
-      moduleManager.modifiableModel.let {
+      moduleManager.getModifiableModel().let {
         it.disposeModule(module)
         it.commit()
       }
@@ -115,7 +115,7 @@ class ModuleBridgesTest {
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)
 
-      val modulesModifiableModel = moduleManager.modifiableModel
+      val modulesModifiableModel = moduleManager.getModifiableModel()
       try {
         val m = modulesModifiableModel.newModule(File(project.basePath, "xxx.iml").path, ModuleType.EMPTY.id) as ModuleBridge
         val rootModel = m.rootManager.modifiableModel
@@ -143,7 +143,7 @@ class ModuleBridgesTest {
     runBlocking {
       val module = withContext(Dispatchers.EDT) {
         runWriteAction {
-          val model = moduleManager.modifiableModel
+          val model = moduleManager.getModifiableModel()
           val module = model.newModule(oldNameFile.path, ModuleType.EMPTY.id)
           model.commit()
           module
@@ -159,7 +159,7 @@ class ModuleBridgesTest {
 
       withContext(Dispatchers.EDT) {
         ApplicationManager.getApplication().runWriteAction {
-          val model = moduleManager.modifiableModel
+          val model = moduleManager.getModifiableModel()
           assertSame(module, model.findModuleByName(oldModuleName))
           assertNull(model.getModuleToBeRenamed(oldModuleName))
 
@@ -212,7 +212,7 @@ class ModuleBridgesTest {
 
     val (antModule, mavenModule) = withContext(Dispatchers.EDT) {
       runWriteAction {
-        val model = moduleManager.modifiableModel
+        val model = moduleManager.getModifiableModel()
         val antModule = model.newModule(antModuleFile.path, ModuleType.EMPTY.id)
         val mavenModule = model.newModule(mavenModuleFile.path, ModuleType.EMPTY.id)
         model.commit()
@@ -232,7 +232,7 @@ class ModuleBridgesTest {
 
     withContext(Dispatchers.EDT) {
       ApplicationManager.getApplication().runWriteAction {
-        val model = moduleManager.modifiableModel
+        val model = moduleManager.getModifiableModel()
         model.renameModule(antModule, gradleModuleName)
         model.commit()
       }
@@ -287,7 +287,7 @@ class ModuleBridgesTest {
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)
 
-      val module = moduleManager.modifiableModel.let {
+      val module = moduleManager.getModifiableModel().let {
         val m = it.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id) as ModuleBridge
         it.commit()
         m
@@ -314,7 +314,7 @@ class ModuleBridgesTest {
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)
 
-      val module = moduleManager.modifiableModel.let {
+      val module = moduleManager.getModifiableModel().let {
         val m = it.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id) as ModuleBridge
         it.commit()
         m
@@ -631,7 +631,7 @@ class ModuleBridgesTest {
 
     val module = withContext(Dispatchers.EDT) {
       runWriteAction {
-        val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+        val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
           val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
           moduleModel.commit()
           module
@@ -674,7 +674,7 @@ class ModuleBridgesTest {
     val antLibraryFolder = "ant-lib"
 
     val moduleFile = File(project.basePath, "$moduleName.iml")
-    val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+    val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
       val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
       moduleModel.commit()
       module
@@ -705,7 +705,7 @@ class ModuleBridgesTest {
   fun `test disposed module doesn't appear in rootsChanged`() = WriteCommandAction.runWriteCommandAction(project) {
     val moduleName = "build"
     val moduleFile = File(project.basePath, "$moduleName.iml")
-    val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+    val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
       val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
       moduleModel.commit()
       module
@@ -726,7 +726,7 @@ class ModuleBridgesTest {
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project) as ModuleManagerBridgeImpl
 
-      moduleManager.modifiableModel.let { modifiableModel ->
+      moduleManager.getModifiableModel().let { modifiableModel ->
         modifiableModel.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id) as ModuleBridge
         modifiableModel.commit()
       }
@@ -754,7 +754,7 @@ class ModuleBridgesTest {
   fun `remove module without removing module library`() = WriteCommandAction.runWriteCommandAction(project) {
     val moduleManager = ModuleManager.getInstance(project) as ModuleManagerBridgeImpl
 
-    val module = moduleManager.modifiableModel.let { modifiableModel ->
+    val module = moduleManager.getModifiableModel().let { modifiableModel ->
       val module = modifiableModel.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id)
       modifiableModel.commit()
       module as ModuleBridge
@@ -785,13 +785,13 @@ class ModuleBridgesTest {
   fun `readd module`() = WriteCommandAction.runWriteCommandAction(project) {
     val moduleManager = ModuleManager.getInstance(project)
 
-    val module = moduleManager.modifiableModel.let { modifiableModel ->
+    val module = moduleManager.getModifiableModel().let { modifiableModel ->
       val module = modifiableModel.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id)
       modifiableModel.commit()
       module as ModuleBridge
     }
 
-    val newModule = moduleManager.modifiableModel.let { modifiableModel ->
+    val newModule = moduleManager.getModifiableModel().let { modifiableModel ->
       modifiableModel.disposeModule(module)
       val newModule = modifiableModel.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id)
       modifiableModel.commit()

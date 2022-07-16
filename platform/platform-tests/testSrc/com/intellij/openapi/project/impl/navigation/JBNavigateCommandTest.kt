@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.project.impl.navigation
 
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.navigation.areOriginsEqual
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.JBProtocolCommand
@@ -61,18 +62,17 @@ class JBNavigateCommandTest : NavigationTestBase() {
   @Test
   fun pathOpenProject(): Unit = runBlocking {
     val projectManager = ProjectManagerEx.getInstanceEx()
+    val prevProjects = projectManager.openProjects.toHashSet()
+
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
       setUpProject(project)
+      RecentProjectsManagerBase.getInstanceEx().runProjectPostStartupActivity(project)
     }
-
-    val prevProjects = projectManager.openProjects.toHashSet()
     try {
-      ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project)
       val result = withContext(Dispatchers.EDT) {
         navigate(mapOf("path" to "A.java"))
       }
       assertThat(result).isNull()
-      yield()
       withContext(Dispatchers.EDT) {
         yield()
       }

@@ -24,37 +24,52 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootMana
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 internal class ModuleBridgeLoaderService(private val project: Project) {
+  companion object {
+    private val LOG = logger<ModuleBridgeLoaderService>()
+  }
+
   private var storeToEntitySources: Pair<EntityStorage, List<EntitySource>>? = null
   private var activity: Activity? = null
 
+  private val loadModuleJob: Job
+
   init {
-    if (!project.isDefault) {
-      val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
+    if (project.isDefault) {
+      loadModuleJob = CompletableDeferred(value = null)
+    }
+    else {
       val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
-      if (projectModelSynchronizer != null) {
-        if (workspaceModel.loadedFromCache && projectModelSynchronizer.hasNoSerializedJpsModules()) {
-          LOG.warn("Loaded from cache, but no serialized modules found. Workspace model cache will be ignored, project structure will be recreated.")
-          workspaceModel.ignoreCache() // sets `WorkspaceModelImpl#loadedFromCache` to `false`
-          project.putUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES, true)
+      if (projectModelSynchronizer == null) {
+        loadModuleJob = CompletableDeferred(value = null)
+      }
+      else {
+        val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
+        if (workspaceModel.loadedFromCache) {
+          if (projectModelSynchronizer.hasNoSerializedJpsModules()) {
+            LOG.warn("Loaded from cache, but no serialized modules found. Workspace model cache will be ignored, project structure will be recreated.")
+            workspaceModel.ignoreCache() // sets `WorkspaceModelImpl#loadedFromCache` to `false`
+            project.putUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES, true)
+          }
+
+          activity = StartUpMeasurer.startActivity("modules loading with cache", ActivityCategory.DEFAULT)
+          loadModuleJob = project.coroutineScope.async {
+            loadModules()
+          }
         }
-        if (!workspaceModel.loadedFromCache) {
+        else {
           LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
           activity = StartUpMeasurer.startActivity("modules loading without cache", ActivityCategory.DEFAULT)
           storeToEntitySources = projectModelSynchronizer.loadProjectToEmptyStorage(project)
-        }
-        else {
-          activity = StartUpMeasurer.startActivity("modules loading with cache", ActivityCategory.DEFAULT)
-          loadModules()
+          loadModuleJob = CompletableDeferred(value = null)
         }
       }
     }
   }
 
-  private fun loadModules() {
+  private suspend fun loadModules() {
     val childActivity = activity?.startChild("modules instantiation")
     val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
     val entities = moduleManager.entityStore.current.entities(ModuleEntity::class.java)
@@ -72,8 +87,11 @@ internal class ModuleBridgeLoaderService(private val project: Project) {
     override suspend fun serviceCreated(project: Project) {
       LOG.debug { "Project component initialized" }
       val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
+
+      val moduleLoaderService = project.getService(ModuleBridgeLoaderService::class.java)
+      moduleLoaderService.loadModuleJob.join()
+
       if (!workspaceModel.loadedFromCache) {
-        val moduleLoaderService = project.getService(ModuleBridgeLoaderService::class.java)
         val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project) ?: return
         projectModelSynchronizer.applyLoadedStorage(moduleLoaderService.storeToEntitySources)
         project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
@@ -88,13 +106,5 @@ internal class ModuleBridgeLoaderService(private val project: Project) {
       }
       WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
     }
-
-    companion object {
-      private val LOG = logger<ModuleBridgeProjectServiceInitializedListener>()
-    }
-  }
-
-  companion object {
-    private val LOG = logger<ModuleBridgeLoaderService>()
   }
 }

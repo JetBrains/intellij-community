@@ -18,6 +18,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.launch
 
 /**
  * If some modules were unloaded and new modules appears after loading project configuration, automatically unloads those which
@@ -119,7 +120,9 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
       val moduleManager = ModuleManager.getInstance(project)
       moduleManager.unloadedModuleDescriptions.mapTo(unloaded) { it.name }
       action(unloaded)
-      moduleManager.setUnloadedModules(unloaded)
+      project.coroutineScope.launch {
+        moduleManager.setUnloadedModules(unloaded)
+      }
       notification.expire()
     }
   }
