@@ -29,7 +29,9 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMeth
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
@@ -65,7 +67,7 @@ internal fun <T> getOverriddenDeclarations(mappingToJava: MutableMap<PsiElement,
 }
 
 // Module-specific version of MarkerType.getSubclassedClassTooltip
-fun getSubclassedClassTooltip(klass: PsiClass): String? {
+fun getModuleSpecificSubclassedClassTooltip(klass: PsiClass): String? {
     val processor = PsiElementProcessor.CollectElementsWithLimit(5, HashSet<PsiClass>())
     ClassInheritorsSearch.search(klass).forEach(PsiElementProcessorAdapter(processor))
 
@@ -101,10 +103,10 @@ fun getSubclassedClassTooltip(klass: PsiClass): String? {
     return subclasses.toList().sortedWith(comparator).joinToString(
         prefix = "<html><body>$start", postfix = "$postfix</body</html>", separator = "<br>"
     ) { clazz ->
-        val moduleNameRequired = if (clazz is KtLightClass) {
-            val origin = clazz.kotlinOrigin
-            origin?.hasActualModifier() == true || origin?.isExpectDeclaration() == true
-        } else false
+        val moduleNameRequired =
+            (clazz.safeAs<KtLightClass>()?.kotlinOrigin ?: clazz.safeAs<KtClassOrObject>())?.let { origin ->
+                origin.hasActualModifier() || origin.isExpectDeclaration()
+            } ?: false
         val moduleName = clazz.module?.name
         val elementText = renderer.getElementText(clazz) + (moduleName?.takeIf { moduleNameRequired }?.let { " [$it]" } ?: "")
         val refText = (moduleName?.let { "$it:" } ?: "") + ClassPresentationUtil.getNameForClass(clazz, /* qualified = */ true)

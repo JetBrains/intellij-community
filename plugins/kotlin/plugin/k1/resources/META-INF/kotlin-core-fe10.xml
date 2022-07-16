@@ -223,6 +223,7 @@
     <structuralsearch.filterProvider implementation="org.jetbrains.kotlin.idea.structuralsearch.filters.KotlinFilterProvider"/>
 
     <lang.findUsagesProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesProvider"/>
+    <classInheritorsSearch implementation="org.jetbrains.kotlin.idea.findUsages.KotlinInnerClassInheritorsSearcher"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport"
                     serviceImplementation="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupportImpl"/>

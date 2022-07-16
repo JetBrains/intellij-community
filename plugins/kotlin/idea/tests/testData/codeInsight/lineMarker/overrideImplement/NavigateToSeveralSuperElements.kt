@@ -11,7 +11,7 @@ class C1: A1, B1 {
 }
 
 /*
-LINEMARKER: Implements function in 'A1'<br/>Implements function in 'B1'
+LINEMARKER: descr='Implements function in 'A1' Implements function in 'B1''
 TARGETS:
 NavigateToSeveralSuperElements.kt
     fun <1>foo()

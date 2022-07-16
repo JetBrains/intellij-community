@@ -15,6 +15,9 @@ import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
+import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
+import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
+import org.jetbrains.kotlin.idea.codeMetaInfo.models.LineMarkerCodeMetaInfo
 import org.jetbrains.kotlin.idea.highlighter.markers.TestableLineMarkerNavigator
 import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
 import org.jetbrains.kotlin.idea.test.*
@@ -54,9 +57,7 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
             for (suffix in dependencySuffixes) {
                 val dependencyPath = fileName().replace(".kt", suffix)
                 if (File(testDataDirectory, dependencyPath).exists()) {
-                    val file = myFixture.configureByFile(dependencyPath)
-                    val text = file.text
-                    Unit
+                    myFixture.configureByFile(dependencyPath)
                 }
             }
 
@@ -90,25 +91,64 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
         private const val LINE_MARKER_PREFIX = "LINEMARKER:"
         private const val TARGETS_PREFIX = "TARGETS"
 
+        class InnerLineMarkerConfiguration: AbstractCodeMetaInfoRenderConfiguration() {
+            override fun asString(codeMetaInfo: CodeMetaInfo): String {
+                if (codeMetaInfo !is InnerLineMarkerCodeMetaInfo) return ""
+                val params = mutableListOf<String>()
+
+                codeMetaInfo.lineMarker.lineMarkerTooltip?.apply {
+                    params.add("descr='${sanitizeLineMarkerTooltip(this)}'")
+                }
+
+                params.add(getAdditionalParams(codeMetaInfo))
+
+                return params.filter { it.isNotEmpty() }.joinToString("; ")
+            }
+        }
+
+        class InnerLineMarkerCodeMetaInfo(
+            override val renderConfiguration: AbstractCodeMetaInfoRenderConfiguration,
+            val lineMarker: LineMarkerInfo<*>
+        ) : CodeMetaInfo {
+            override val start: Int
+                get() = lineMarker.startOffset
+            override val end: Int
+                get() = lineMarker.endOffset
+
+            override val tag: String = "LINE_MARKER"
+
+            override val attributes: MutableList<String> = mutableListOf()
+
+            override fun asString(): String = renderConfiguration.asString(this)
+        }
+
+
         fun assertNavigationElements(project: Project, file: KtFile, markers: List<LineMarkerInfo<*>>) {
             val navigationDataComments = KotlinTestUtils.getLastCommentsInFile(
                 file, KotlinTestUtils.CommentType.BLOCK_COMMENT, false
             )
             if (navigationDataComments.isEmpty()) return
 
+            val markerConfiguration = InnerLineMarkerConfiguration()
+            val markerCodeMetaInfos = markers.map { InnerLineMarkerCodeMetaInfo(markerConfiguration, it) }
+
             for ((navigationCommentIndex, navigationComment) in navigationDataComments.reversed().withIndex()) {
                 val description = getLineMarkerDescription(navigationComment)
-                val navigateMarkers = markers.filter { it.lineMarkerTooltip?.startsWith(description) == true }
+                val navigateMarkers = markerCodeMetaInfos.filter { it.asString() == description }
                 val navigateMarker = navigateMarkers.singleOrNull() ?: navigateMarkers.getOrNull(navigationCommentIndex)
 
                 TestCase.assertNotNull(
-                    String.format("Can't find marker for navigation check with description \"%s\"", description),
+                    String.format("Can't find marker for navigation check with description \"%s\"\n\navailable: \n\n%s",
+                                  description,
+                                  markerCodeMetaInfos.joinToString("\n\n") { it.asString() }),
                     navigateMarker
                 )
 
-                val handler = navigateMarker!!.navigationHandler
+                val lineMarker = navigateMarker!!.lineMarker
+
+                val handler = lineMarker.navigationHandler
                 if (handler is TestableLineMarkerNavigator) {
-                    val navigateElements = handler.getTargetsPopupDescriptor(navigateMarker.element)?.targets?.sortedBy {
+                    val navigateElements = handler.getTargetsPopupDescriptor(lineMarker.element)?.targets?.sortedBy {
                         it.renderAsGotoImplementation()
                     }
                     val actualNavigationData = NavigationTestUtils.getNavigateElementsText(project, navigateElements)

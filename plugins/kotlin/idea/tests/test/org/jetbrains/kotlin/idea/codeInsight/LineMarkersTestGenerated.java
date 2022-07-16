@@ -112,6 +112,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/overrideImplement/FakeOverridesForTraitFunWithImpl.kt");
         }
 
+        @TestMetadata("NavigateFromPrivateAbstractClass.kt")
+        public void testNavigateFromPrivateAbstractClass() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/NavigateFromPrivateAbstractClass.kt");
+        }
+
         @TestMetadata("NavigateToSeveralSuperElements.kt")
         public void testNavigateToSeveralSuperElements() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/NavigateToSeveralSuperElements.kt");
