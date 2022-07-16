@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import java.awt.Component
 import java.awt.GraphicsEnvironment
-import java.awt.Window
 import javax.swing.SwingUtilities
 
 internal class PlatformTaskSupport : TaskSupport {
@@ -33,8 +32,6 @@ internal class PlatformTaskSupport : TaskSupport {
   override fun taskCancellationCancellableInternal(): TaskCancellation.Cancellable = defaultCancellable
 
   override fun modalTaskOwner(component: Component): ModalTaskOwner = ComponentModalTaskOwner(component)
-
-  override fun modalTaskOwner(window: Deferred<Lazy<Window>>): ModalTaskOwner = WindowModalTaskOwner(window)
 
   override fun modalTaskOwner(project: Project): ModalTaskOwner = ProjectModalTaskOwner(project)
 
@@ -193,7 +190,7 @@ private fun CoroutineScope.showModalIndicator(
   }
 }
 
-private suspend fun ProgressDialogUI.updateFromSink(stateFlow: Flow<ProgressState>): Nothing {
+internal suspend fun ProgressDialogUI.updateFromSink(stateFlow: Flow<ProgressState>): Nothing {
   stateFlow
     .throttle(50)
     .flowOn(Dispatchers.IO)

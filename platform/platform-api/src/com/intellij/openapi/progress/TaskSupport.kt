@@ -4,10 +4,8 @@ package com.intellij.openapi.progress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
-import java.awt.Window
 
 @Internal
 interface TaskSupport {
@@ -19,8 +17,6 @@ interface TaskSupport {
   fun modalTaskOwner(project: Project): ModalTaskOwner
 
   fun modalTaskOwner(component: Component): ModalTaskOwner
-
-  fun modalTaskOwner(window: Deferred<Lazy<Window>>): ModalTaskOwner
 
   suspend fun <T> withBackgroundProgressIndicatorInternal(
     project: Project,

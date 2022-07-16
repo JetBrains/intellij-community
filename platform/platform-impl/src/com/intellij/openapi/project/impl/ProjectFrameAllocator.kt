@@ -13,15 +13,22 @@ import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.service
+import com.intellij.openapi.application.impl.withModalContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.progress.TaskSupport
-import com.intellij.openapi.progress.withModalProgressIndicator
+import com.intellij.openapi.progress.TaskCancellation
+import com.intellij.openapi.progress.asContextElement
+import com.intellij.openapi.progress.impl.FlowProgressSink
+import com.intellij.openapi.progress.impl.ProgressState
+import com.intellij.openapi.progress.impl.updateFromSink
+import com.intellij.openapi.progress.util.ProgressDialogUI
+import com.intellij.openapi.progress.util.ProgressDialogWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
@@ -34,6 +41,7 @@ import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.ScaleContext
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Frame
@@ -41,6 +49,7 @@ import java.awt.Image
 import java.awt.Window
 import java.io.EOFException
 import java.nio.file.Path
+import javax.swing.SwingUtilities
 import kotlin.math.min
 
 internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
@@ -79,16 +88,32 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       val deferredWindow = async {
         val frameManager = createFrameManager()
         deferredProjectFrameHelper.complete(frameManager.init(this@ProjectUiFrameAllocator))
-        // executed in EDT only
-        lazy(LazyThreadSafetyMode.NONE) {
-          val window = frameManager.getWindow()
-          window.isVisible = true
-          window
+        val window = frameManager.getWindow()
+        if (options.implOptions == null) {
+          // not via recents project - show frame immediately
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            window.isVisible = true
+          }
         }
+        window
       }
 
-      withModalProgressIndicator(owner = service<TaskSupport>().modalTaskOwner(deferredWindow), title = getProgressTitle()) {
-        task()
+      withModalContext {
+        val sink = FlowProgressSink()
+        val showIndicatorJob = showModalIndicatorForProjectLoading(
+          windowDeferred = deferredWindow,
+          title = getProgressTitle(),
+          cancellation = TaskCancellation.cancellable(),
+          stateFlow = sink.stateFlow
+        )
+        try {
+          withContext(sink.asContextElement()) {
+            task()
+          }
+        }
+        finally {
+          showIndicatorJob.cancel()
+        }
       }
     }
   }
@@ -189,6 +214,53 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         }
       }
     }
+  }
+}
+
+@Suppress("DuplicatedCode")
+private fun CoroutineScope.showModalIndicatorForProjectLoading(
+  windowDeferred: Deferred<Window>,
+  title: @NlsContexts.ProgressTitle String,
+  cancellation: TaskCancellation,
+  stateFlow: Flow<ProgressState>,
+): Job = launch(Dispatchers.IO) {
+  delay(300L)
+  val mainJob = this@showModalIndicatorForProjectLoading.coroutineContext.job
+  val window = windowDeferred.await()
+  withContext(Dispatchers.EDT) {
+    val ui = ProgressDialogUI()
+    ui.initCancellation(cancellation) {
+      mainJob.cancel("button cancel")
+    }
+    ui.backgroundButton.isVisible = false
+    ui.updateTitle(title)
+    launch {
+      ui.updateFromSink(stateFlow)
+    }
+    val dialog = ProgressDialogWrapper(
+      panel = ui.panel,
+      cancelAction = {
+        mainJob.cancel("dialog cancel")
+      },
+      peerFactory = DialogWrapper.PeerFactory { GlassPaneDialogWrapperPeer(window, it) }
+    )
+    dialog.setUndecorated(true)
+    dialog.pack()
+    launch { // will be run in an inner event loop
+      val focusComponent = ui.cancelButton
+      val previousFocusOwner = SwingUtilities.getWindowAncestor(focusComponent)?.mostRecentFocusOwner
+      focusComponent.requestFocusInWindow()
+      try {
+        awaitCancellation()
+      }
+      finally {
+        dialog.close(DialogWrapper.OK_EXIT_CODE)
+        previousFocusOwner?.requestFocusInWindow()
+      }
+    }
+    window.isVisible = true
+    // will spin an inner event loop
+    dialog.show()
   }
 }
 

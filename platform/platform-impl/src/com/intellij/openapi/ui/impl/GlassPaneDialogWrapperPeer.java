@@ -30,6 +30,7 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +76,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
   }
 
   public GlassPaneDialogWrapperPeer(@NotNull DialogWrapper wrapper) throws GlasspanePeerUnavailableException {
-    this(null, wrapper);
+    this((Project)null, wrapper);
   }
 
   public GlassPaneDialogWrapperPeer(DialogWrapper wrapper, @NotNull Component parent) throws GlasspanePeerUnavailableException {
@@ -92,7 +93,13 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     createDialog(owner);
   }
 
-  private void createDialog(final Window owner) throws GlasspanePeerUnavailableException {
+  @ApiStatus.Internal
+  public GlassPaneDialogWrapperPeer(@NotNull Window owner, @NotNull DialogWrapper wrapper) throws GlasspanePeerUnavailableException {
+    myWrapper = wrapper;
+    createDialog(owner);
+  }
+
+  private void createDialog(@NotNull Window owner) throws GlasspanePeerUnavailableException {
     Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     if (active instanceof JDialog || !(owner instanceof IdeFrame)) {
       throw new GlasspanePeerUnavailableException();
