@@ -2,6 +2,7 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
@@ -54,6 +55,25 @@ public class MakeMethodFinalFix extends InspectionGadgetsFix {
         method.navigate(true);
       }
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    final PsiElement element = previewDescriptor.getPsiElement().getParent();
+    if (element instanceof PsiMethod) {
+      final PsiModifierList modifierList = ((PsiMethod)element).getModifierList();
+      modifierList.setModifierProperty(PsiModifier.FINAL, true);
+      return IntentionPreviewInfo.DIFF;
+    }
+    final PsiElement parent = element.getParent();
+    if (parent instanceof PsiMethodCallExpression) {
+      final PsiMethod method = ((PsiMethodCallExpression)parent).resolveMethod();
+      if (method != null && method.getContainingFile() == parent.getContainingFile()) {
+        method.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+        return IntentionPreviewInfo.DIFF;
+      }
+    }
+    return IntentionPreviewInfo.EMPTY;
   }
 
   @Override
