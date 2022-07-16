@@ -15,7 +15,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -40,6 +39,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.lang.ref.WeakReference;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author spleaner
@@ -258,14 +258,14 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
   }
 
   @Override
-  public ActionCallback show() {
+  public CompletableFuture<?> show() {
     LOG.assertTrue(EDT.isCurrentThreadEdt(), "Access is allowed from event dispatch thread only");
 
     hidePopupsIfNeeded();
 
     myDialog.setVisible(true);
 
-    return ActionCallback.DONE;
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override
