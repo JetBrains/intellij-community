@@ -118,12 +118,14 @@ object EventFields {
   @JvmStatic
   fun Class(@NonNls name: String): ClassEventField = ClassEventField(name)
 
+  val defaultEnumTransform: (Any) -> String = { it.toString() }
+
   @JvmStatic
   @JvmOverloads
-  fun <T : Enum<*>> Enum(@NonNls name: String, enumClass: Class<T>, transform: (T) -> String = { it.toString() }): EnumEventField<T> =
+  fun <T : Enum<*>> Enum(@NonNls name: String, enumClass: Class<T>, transform: (T) -> String = defaultEnumTransform): EnumEventField<T> =
     EnumEventField(name, enumClass, transform)
 
-  inline fun <reified T : Enum<*>> Enum(@NonNls name: String, noinline transform: (T) -> String = { it.toString() }): EnumEventField<T> =
+  inline fun <reified T : Enum<*>> Enum(@NonNls name: String, noinline transform: (T) -> String = defaultEnumTransform): EnumEventField<T> =
     EnumEventField(name, T::class.java, transform)
 
   /**
