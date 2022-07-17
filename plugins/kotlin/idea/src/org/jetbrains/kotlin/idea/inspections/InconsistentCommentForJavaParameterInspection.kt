@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.blockCommentWithName
-import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.toCommentedParameterName
+import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.isParameterNameComment
+import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.toParameterNameComment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -33,12 +34,11 @@ class InconsistentCommentForJavaParameterInspection: AbstractKotlinInspection() 
 
             for ((argument, descriptor)  in valueDescriptorByValueArgument) {
                 val comment = argument.blockCommentWithName() ?: continue
-                val commentedParameterName = descriptor.toCommentedParameterName()
-                if (commentedParameterName == comment.text) continue
+                if (comment.isParameterNameComment(descriptor)) continue
                 holder.registerProblem(
                     comment,
                     KotlinBundle.message("inspection.message.inconsistent.parameter.name.for.0", descriptor.name.asString()),
-                    CorrectNamesInCommentsToJavaCallArgumentsFix(commentedParameterName)
+                    CorrectNamesInCommentsToJavaCallArgumentsFix(descriptor.toParameterNameComment())
                 )
             }
         }
