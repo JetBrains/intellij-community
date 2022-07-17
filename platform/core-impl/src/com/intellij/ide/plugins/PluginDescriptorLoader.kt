@@ -34,8 +34,8 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
-import java.util.concurrent.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ExecutionException
 import java.util.function.BiConsumer
 import java.util.function.Supplier
 import java.util.zip.ZipFile
@@ -519,7 +519,13 @@ private suspend fun loadDescriptorsFromDirs(
   val classLoader = DescriptorListLoadingContext::class.java.classLoader
   var activity = StartUpMeasurer.startActivity("platform plugin collecting", ActivityCategory.DEFAULT)
 
-  val platformPrefix = PlatformUtils.getPlatformPrefix()
+  val platformPrefixProperty = PlatformUtils.getPlatformPrefix()
+  val platformPrefix = if (platformPrefixProperty == PlatformUtils.QODANA_PREFIX) {
+    System.getProperty("idea.parent.prefix", PlatformUtils.IDEA_PREFIX)
+  } else {
+    platformPrefixProperty
+  }
+
   val isInDevServerMode = java.lang.Boolean.getBoolean("idea.use.dev.build.server")
   val pathResolver = ClassPathXmlPathResolver(
     classLoader = classLoader,
