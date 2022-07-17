@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowInfo;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -35,25 +36,42 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
       String left = UIBundle.message("tool.window.move.to.left.action.name");
       String bottom = UIBundle.message("tool.window.move.to.bottom.action.name");
       String right = UIBundle.message("tool.window.move.to.right.action.name");
-      switch (this) {
-        case LeftTop:
-          return left + " " + top;
-        case LeftBottom:
-          return left + " " + bottom;
-        case BottomLeft:
-          return bottom + " " + left;
-        case BottomRight:
-          return bottom + " " + right;
-        case RightBottom:
-          return right + " " + bottom;
-        case RightTop:
-          return right + " " + top;
-        case TopRight:
-          return top + " " + right;
-        case TopLeft:
-          return top + " " + left;
+      if (ExperimentalUI.isNewUI()) {
+        switch (this) {
+          case LeftTop:
+            return left + " " + top;
+          case BottomLeft:
+            return left + " " + bottom;
+          case BottomRight:
+            return right + " " + bottom;
+          case RightTop:
+            return right + " " + top;
+          default:
+            throw new IllegalStateException("Should not be invoked");
+        }
       }
-      throw new IllegalStateException("Should not be invoked");
+      else {
+        switch (this) {
+          case LeftTop:
+            return left + " " + top;
+          case LeftBottom:
+            return left + " " + bottom;
+          case BottomLeft:
+            return bottom + " " + left;
+          case BottomRight:
+            return bottom + " " + right;
+          case RightBottom:
+            return right + " " + bottom;
+          case RightTop:
+            return right + " " + top;
+          case TopRight:
+            return top + " " + right;
+          case TopLeft:
+            return top + " " + left;
+          default:
+            throw new IllegalStateException("Should not be invoked");
+        }
+      }
     }
 
     @NotNull
