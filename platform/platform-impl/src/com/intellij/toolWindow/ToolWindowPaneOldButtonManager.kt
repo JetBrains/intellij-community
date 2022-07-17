@@ -113,7 +113,7 @@ internal class ToolWindowPaneOldButtonManager(paneId: String) : ToolWindowButton
 
   override fun getBottomHeight() = if (bottomStripe.isVisible) bottomStripe.height else 0
 
-  override fun getStripeFor(anchor: ToolWindowAnchor): Stripe {
+  override fun getStripeFor(anchor: ToolWindowAnchor, isSplit: Boolean?): Stripe {
     return when(anchor) {
       ToolWindowAnchor.TOP -> topStripe
       ToolWindowAnchor.BOTTOM -> bottomStripe
@@ -137,14 +137,14 @@ internal class ToolWindowPaneOldButtonManager(paneId: String) : ToolWindowButton
   }
 
   override fun getStripeWidth(anchor: ToolWindowAnchor): Int {
-    val stripe = getStripeFor(anchor)
+    val stripe = getStripeFor(anchor, null)
     return if (stripe.isVisible && stripe.isShowing) stripe.width else 0
   }
 
   override fun getStripeHeight(anchor: ToolWindowAnchor): Int {
     // We no longer support the top stripe
     if (anchor == ToolWindowAnchor.TOP) return 0
-    val stripe = getStripeFor(anchor)
+    val stripe = getStripeFor(anchor, null)
     return if (stripe.isVisible && stripe.isShowing) stripe.height else 0
   }
 
@@ -172,7 +172,7 @@ internal class ToolWindowPaneOldButtonManager(paneId: String) : ToolWindowButton
     val button = StripeButton(toolWindow)
     button.isSelected = info.isVisible
     button.updatePresentation()
-    val stripe = getStripeFor(info.anchor)
+    val stripe = getStripeFor(info.anchor, info.isSplit)
     val manager = object : StripeButtonManager {
       override val id: String = toolWindow.id
       override val toolWindow = toolWindow

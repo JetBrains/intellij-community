@@ -73,6 +73,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
 
   abstract val isNewStripes: Boolean
   abstract val anchor: ToolWindowAnchor
+  open val split: Boolean = false
 
   private val stripeButtonManagerComparator by lazy(LazyThreadSafetyMode.NONE) { createButtonLayoutComparator(isNewStripes, anchor) }
 
@@ -169,7 +170,8 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       if (isNewStripes && anchor == ToolWindowAnchor.BOTTOM) {
         order++
       }
-      manager.setSideToolAndAnchor(it.id, paneId, anchor, order, !isNewStripes && lastLayoutData.dragToSide)
+      val isSplit = if (isNewStripes) split else lastLayoutData.dragToSide
+      manager.setSideToolAndAnchor(it.id, paneId, anchor, order, isSplit)
     }
     manager.invokeLater { resetDrop() }
   }
@@ -243,7 +245,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       val insertOrder = windowInfo.order
       val isSplit = windowInfo.isSplit
 
-      if (!sidesStarted && isSplit) {
+      if (!sidesStarted && isSplit && !isNewStripes) {
         if (processDrop && !data.dragTargetChosen) {
           tryDroppingOnGap(data, gap, insertOrder)
         }

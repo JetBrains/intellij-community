@@ -111,7 +111,7 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
         continue
       }
 
-      if (info.isSplit && isNewUi) {
+      if (isNewUi && info.isSplit && info.anchor != ToolWindowAnchor.BOTTOM) {
         info.isSplit = false
       }
 

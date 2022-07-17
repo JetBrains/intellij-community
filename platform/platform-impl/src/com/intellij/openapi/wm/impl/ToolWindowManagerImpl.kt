@@ -542,7 +542,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     ), toolWindowPane.buttonManager)
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)
 
-    toolWindowPane.buttonManager.getStripeFor(anchor).revalidate()
+    toolWindowPane.buttonManager.getStripeFor(anchor, sideTool).revalidate()
     toolWindowPane.validate()
     toolWindowPane.repaint()
   }
@@ -996,7 +996,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     val entry = registerToolWindow(task, buttonManager = toolWindowPane.buttonManager)
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)
 
-    toolWindowPane.buttonManager.getStripeFor(entry.toolWindow.anchor).revalidate()
+    toolWindowPane.buttonManager.getStripeFor(entry.toolWindow.anchor, entry.toolWindow.isSplitMode).revalidate()
 
     toolWindowPane.validate()
     toolWindowPane.repaint()
@@ -1308,8 +1308,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     get() = IdeFocusManager.getInstance(project)!!
 
   override fun canShowNotification(toolWindowId: String): Boolean {
-    val anchor = idToEntry.get(toolWindowId)?.readOnlyWindowInfo?.anchor ?: return false
-    return toolWindowPanes.values.firstNotNullOfOrNull { it.buttonManager.getStripeFor(anchor).getButtonFor(toolWindowId) } != null
+    val readOnlyWindowInfo = idToEntry.get(toolWindowId)?.readOnlyWindowInfo
+    val anchor = readOnlyWindowInfo?.anchor ?: return false
+    val isSplit = readOnlyWindowInfo?.isSplit ?: return false
+    return toolWindowPanes.values.firstNotNullOfOrNull { it.buttonManager.getStripeFor(anchor, isSplit).getButtonFor(toolWindowId) } != null
   }
 
   override fun notifyByBalloon(options: ToolWindowBalloonShowOptions) {
@@ -1324,7 +1326,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
 
     val toolWindowPane = getToolWindowPane(entry.toolWindow)
-    val stripe = toolWindowPane.buttonManager.getStripeFor(entry.readOnlyWindowInfo.anchor)
+    val stripe = toolWindowPane.buttonManager.getStripeFor(entry.readOnlyWindowInfo.anchor, entry.readOnlyWindowInfo.isSplit)
     if (!entry.toolWindow.isAvailable) {
       entry.toolWindow.isPlaceholderMode = true
       stripe.updatePresentation()
@@ -1589,7 +1591,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
         otherEntry.applyWindowInfo((layoutState.getInfo(otherEntry.id) ?: continue).copy())
       }
     }
-    getToolWindowPane(info.safeToolWindowPaneId).buttonManager.getStripeFor(entry.readOnlyWindowInfo.anchor).revalidate()
+    getToolWindowPane(info.safeToolWindowPaneId).buttonManager.getStripeFor(entry.readOnlyWindowInfo.anchor,
+                                                                            entry.readOnlyWindowInfo.isSplit).revalidate()
   }
 
   fun setContentUiType(id: String, type: ToolWindowContentUiType) {

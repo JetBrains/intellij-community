@@ -4,13 +4,16 @@ package com.intellij.openapi.wm.impl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
+import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
+import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
@@ -30,9 +33,11 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
   companion object {
     fun createMoveGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {
       val result = DefaultActionGroup.createPopupGroup(Supplier { UIBundle.message("tool.window.new.stripe.move.to.action.group.name") })
-      result.add(MoveToAction(toolWindow, ToolWindowAnchor.LEFT))
-      result.add(MoveToAction(toolWindow, ToolWindowAnchor.RIGHT))
-      result.add(MoveToAction(toolWindow, ToolWindowAnchor.BOTTOM))
+      result.add(MoveToAction(toolWindow, ToolWindowMoveAction.Anchor.LeftTop))
+      result.add(MoveToAction(toolWindow, ToolWindowMoveAction.Anchor.BottomLeft))
+      result.add(MoveToAction(toolWindow, ToolWindowMoveAction.Anchor.RightTop))
+      result.add(MoveToAction(toolWindow, ToolWindowMoveAction.Anchor.BottomRight))
+
       return result
     }
   }
@@ -135,13 +140,19 @@ private fun createPopupGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {
 }
 
 private class MoveToAction(private val toolWindow: ToolWindowImpl,
-                           private val anchor: ToolWindowAnchor) : AnAction(anchor.capitalizedDisplayName), DumbAware {
+                           private val targetAnchor: ToolWindowMoveAction.Anchor) : AnAction(targetAnchor.toString()), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    toolWindow.setAnchor(anchor = anchor, runnable = null)
+    val toolWindowManager = toolWindow.toolWindowManager
+    val info = toolWindowManager.getLayout().getInfo(toolWindow.id)
+    toolWindowManager.setSideToolAndAnchor(id = toolWindow.id,
+                                           paneId = info?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID,
+                                           anchor = targetAnchor.anchor,
+                                           order = -1,
+                                           isSplit = targetAnchor.isSplit)
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = toolWindow.anchor != anchor
+    e.presentation.isEnabledAndVisible = targetAnchor.anchor != toolWindow.anchor || toolWindow.isSplitMode != targetAnchor.isSplit
   }
 }
 

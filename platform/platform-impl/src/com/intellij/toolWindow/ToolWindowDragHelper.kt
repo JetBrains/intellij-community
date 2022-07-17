@@ -42,6 +42,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
   private var toolWindowRef: WeakReference<ToolWindowImpl?>? = null
   private var initialAnchor: ToolWindowAnchor? = null
+  private var initialIsSplit: Boolean? = null
   private var initialStripeButton: StripeButtonManager? = null
   private val initialOffset = Point()
   private val floatingWindowSize = Dimension()
@@ -101,8 +102,9 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
     toolWindowRef = WeakReference(toolWindow)
     initialAnchor = toolWindow.anchor
+    initialIsSplit = toolWindow.isSplitMode
 
-    getSourceStripe(toolWindow.anchor).let {
+    getSourceStripe(toolWindow.anchor, toolWindow.isSplitMode).let {
       lastStripe = it
       // The returned button might not be showing if stripes are hidden. This is not supported for new UI
       initialStripeButton = if (it.isShowing || !it.isNewStripes) it.getButtonFor(toolWindow.id) else null
@@ -221,7 +223,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       dialog.size = originalDialogSize
     }
 
-    val preferredStripe = getSourceStripe(toolWindow.anchor)
+    val preferredStripe = getSourceStripe(toolWindow.anchor, toolWindow.isSplitMode)
     val targetStripe = getTargetStripeByDropLocation(eventDevicePoint, preferredStripe)
                        ?: if (!isNewUi && isPointInVisibleDockedToolWindow(eventDevicePoint)) preferredStripe else null
     lastStripe?.let {
@@ -264,7 +266,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
       if (!isNewUi) {
         SwingUtilities.invokeLater(Runnable {
-          if (initialAnchor == null) return@Runnable
+          if (initialAnchor == null || initialIsSplit == null) return@Runnable
 
           // Get the bounds of the drop target highlight. If the point is inside the drop target bounds, use those bounds. If it's not, but
           // it's inside the bounds of the tool window (and the tool window is visible), then use the tool window bounds. Note that when
@@ -315,7 +317,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
     try {
       val devicePoint = DevicePoint(event)
-      val preferredStripe = getSourceStripe(initialAnchor!!)
+      val preferredStripe = getSourceStripe(initialAnchor!!, initialIsSplit!!)
 
       // If the drop point is not inside a stripe bounds, but is inside the visible tool window bounds, do nothing - we're not moving.
       // Note that we must check the stripe because we might be moving from top to bottom or left to right
@@ -345,7 +347,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
                                                             paneId = info?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID,
                                                             anchor = preferredStripe.anchor,
                                                             order = info?.order ?: -1,
-                                                            isSplit = false)
+                                                            isSplit = preferredStripe.split)
         }
       }
     }
@@ -375,6 +377,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     dragImageDialog = null
     toolWindowRef = null
     initialAnchor = null
+    initialIsSplit = null
     lastStripe?.resetDrop()
     lastStripe = null
     lastDropTargetPaneId = null
@@ -495,10 +498,10 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   private fun getStripeHeight(pane: ToolWindowPane, anchor: ToolWindowAnchor) = pane.buttonManager.getStripeHeight(anchor)
 
   private fun getStripeButtonForToolWindow(window: ToolWindowImpl?): JComponent? {
-    return window?.let { dragSourcePane.buttonManager.getStripeFor(it.anchor).getButtonFor(it.id)?.getComponent() }
+    return window?.let { dragSourcePane.buttonManager.getStripeFor(it.anchor, it.isSplitMode).getButtonFor(it.id)?.getComponent() }
   }
 
-  private fun getSourceStripe(anchor: ToolWindowAnchor) = dragSourcePane.buttonManager.getStripeFor(anchor)
+  private fun getSourceStripe(anchor: ToolWindowAnchor, isSplit: Boolean) = dragSourcePane.buttonManager.getStripeFor(anchor, isSplit)
 
   /**
    * Finds the stripe whose drop area contains the screen point. Prioritises the initial anchor to avoid overlaps

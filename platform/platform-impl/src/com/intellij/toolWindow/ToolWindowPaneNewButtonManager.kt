@@ -52,9 +52,11 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
 
   override fun getBottomHeight() = 0
 
-  override fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe {
+  override fun getStripeFor(anchor: ToolWindowAnchor, isSplit: Boolean?): AbstractDroppableStripe {
     return when (anchor) {
-      ToolWindowAnchor.LEFT, ToolWindowAnchor.BOTTOM -> left.getStripeFor(anchor)
+      ToolWindowAnchor.LEFT -> left.getStripeFor(anchor)
+      ToolWindowAnchor.BOTTOM -> isSplit?.let { if (it) right.getStripeFor(anchor) else left.getStripeFor(anchor) }
+                                 ?: throw IllegalArgumentException("Split mode isn't expected to be used here, anchor: " + anchor.displayName)
       ToolWindowAnchor.RIGHT -> right.getStripeFor(anchor)
       else -> throw IllegalArgumentException("Anchor=$anchor")
     }
@@ -72,7 +74,7 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
 
   override fun getStripeWidth(anchor: ToolWindowAnchor): Int {
     if (anchor == ToolWindowAnchor.BOTTOM || anchor == ToolWindowAnchor.TOP) return 0
-    val stripe = getStripeFor(anchor)
+    val stripe = getStripeFor(anchor, null)
     return if (stripe.isVisible && stripe.isShowing) stripe.width else 0
   }
 
@@ -117,7 +119,13 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
     right.repaint()
   }
 
-  private fun findToolbar(anchor: ToolWindowAnchor): ToolWindowToolbar = if (anchor == ToolWindowAnchor.RIGHT) right else left
+  private fun findToolbar(anchor: ToolWindowAnchor, isSplit: Boolean) =
+    when (anchor) {
+      ToolWindowAnchor.LEFT -> left
+      ToolWindowAnchor.BOTTOM -> if (isSplit) right else left
+      ToolWindowAnchor.RIGHT -> right
+      else -> throw IllegalArgumentException("Anchor=$anchor")
+    }
 
   override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager {
     val squareStripeButton = SquareStripeButton(toolWindow)
@@ -141,7 +149,7 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
       }
 
       override fun remove() {
-        findToolbar(toolWindow.anchor).getStripeFor(toolWindow.windowInfo.anchor).removeButton(this)
+        findToolbar(toolWindow.anchor, toolWindow.isSplitMode).getStripeFor(toolWindow.windowInfo.anchor).removeButton(this)
       }
 
       override fun getComponent() = squareStripeButton
@@ -150,7 +158,7 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
         return "SquareStripeButtonManager(windowInfo=${toolWindow.windowInfo})"
       }
     }
-    findToolbar(toolWindow.anchor).getStripeFor(toolWindow.windowInfo.anchor).addButton(manager)
+    findToolbar(toolWindow.anchor, toolWindow.isSplitMode).getStripeFor(toolWindow.windowInfo.anchor).addButton(manager)
     return manager
   }
 

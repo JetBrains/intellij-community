@@ -73,7 +73,7 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     }
 
     @NotNull
-    private ToolWindowAnchor getAnchor() {
+    public ToolWindowAnchor getAnchor() {
       switch (this) {
         case LeftTop:
         case LeftBottom:
@@ -89,7 +89,7 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
       }
     }
 
-    private boolean isSplit() {
+    public boolean isSplit() {
       return Arrays.asList(LeftBottom, BottomRight, RightBottom, TopRight).contains(this);
     }
 
