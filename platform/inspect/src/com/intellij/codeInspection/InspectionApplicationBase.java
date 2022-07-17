@@ -225,13 +225,11 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.opening.project"));
     ConversionService conversionService = ConversionService.getInstance();
     StringBuilder convertErrorBuffer = new StringBuilder();
-    /* Temp disable QD-3558
     if (conversionService != null &&
         conversionService.convertSilently(projectPath, createConversionListener(convertErrorBuffer)).openingIsCanceled()) {
       onFailure(convertErrorBuffer.toString());
       return null;
-    }*/
-
+    }
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getExtensionList()) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, null);
       if (configurator.isApplicable(context)) {
