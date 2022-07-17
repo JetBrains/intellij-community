@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,8 +22,7 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import java.util.List;
 
-import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByExtensionPoint;
-import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByPsiClass;
+import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.*;
 
 @TestDataPath("$CONTENT_ROOT/testData/util/extensionLocator")
 public class ExtensionLocatorTest extends LightJavaCodeInsightFixtureTestCase {
@@ -44,9 +43,9 @@ public class ExtensionLocatorTest extends LightJavaCodeInsightFixtureTestCase {
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(virtualFile);
     XmlFile xmlFile = assertInstanceOf(psiFile, XmlFile.class);
     IdeaPlugin ideaPlugin = DescriptorUtil.getIdeaPlugin(xmlFile);
-    List<ExtensionPoints> epGroups = ideaPlugin.getExtensionPoints();
+    List<? extends ExtensionPoints> epGroups = ideaPlugin.getExtensionPoints();
     assertSize(1, epGroups);
-    List<ExtensionPoint> extensionPoints = epGroups.get(0).getExtensionPoints();
+    List<? extends ExtensionPoint> extensionPoints = epGroups.get(0).getExtensionPoints();
     assertSize(2, extensionPoints);
 
     ExtensionPoint namedEp = extensionPoints.get(0);
@@ -56,6 +55,11 @@ public class ExtensionLocatorTest extends LightJavaCodeInsightFixtureTestCase {
 
     verifyLocator(locateExtensionsByExtensionPoint(namedEp), 2);
     verifyLocator(locateExtensionsByExtensionPoint(qualifiedNamedEp), 2);
+
+    verifyLocator(locateExtensionsByExtensionPointAndId(namedEp, "myNamedExtension1").findCandidates(), 1);
+    verifyLocator(locateExtensionsByExtensionPointAndId(namedEp, "myNamedExtension2").findCandidates(), 1);
+    verifyLocator(locateExtensionsByExtensionPointAndId(qualifiedNamedEp, "myQualifiedNameExtension1").findCandidates(), 1);
+    verifyLocator(locateExtensionsByExtensionPointAndId(qualifiedNamedEp, "myQualifiedNamedExtension2").findCandidates(), 1);
   }
 
   public void testByPsiClass() {

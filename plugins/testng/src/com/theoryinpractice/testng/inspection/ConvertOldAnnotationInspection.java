@@ -44,7 +44,7 @@ public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspect
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitAnnotation(final PsiAnnotation annotation) {
+      @Override public void visitAnnotation(final @NotNull PsiAnnotation annotation) {
         final String qualifiedName = annotation.getQualifiedName();
         if (Comparing.strEqual(qualifiedName, "org.testng.annotations.Configuration")) {
           holder.registerProblem(annotation, TestngBundle.message("inspection.message.old.testng.annotation.configuration.used"), new ConvertOldAnnotationsQuickfix());

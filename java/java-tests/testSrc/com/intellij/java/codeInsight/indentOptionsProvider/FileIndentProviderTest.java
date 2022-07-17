@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class FileIndentProviderTest extends BasePlatformTestCase {
   private final FileIndentOptionsProvider TEST_FILE_INDENT_OPTIONS_PROVIDER = new TestIndentOptionsProvider();
   private CommonCodeStyleSettings.IndentOptions myTestIndentOptions;

@@ -354,7 +354,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   }
 
   public void testTypeQualifierNickname() {
-    myFixture.addClass("package javax.annotation.meta; public @interface TypeQualifierNickname {}");
     addJavaxNullabilityAnnotations(myFixture);
     myFixture.addClass(barNullableNick());
 
@@ -386,6 +385,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   }
 
   public static void addJavaxNullabilityAnnotations(final JavaCodeInsightTestFixture fixture) {
+    fixture.addClass("package javax.annotation.meta; public @interface TypeQualifierNickname {}");
     fixture.addClass("package javax.annotation.meta;" +
                      "public @interface TypeQualifierDefault { java.lang.annotation.ElementType[] value() default {};}");
     fixture.addClass("package javax.annotation.meta;" +
@@ -630,7 +630,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testImplicitUnboxingExtendsInteger() { doTest(); }
 
   public void testIncompleteArrayAccessInLoop() { doTest(); }
-  public void testSameArguments() { doTest(); }
   public void testMaxLoop() { doTest(); }
   public void testExplicitBoxing() { doTest(); }
   public void testBoxedBoolean() { doTest(); }
@@ -688,6 +687,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testInferenceInPrivateOrLocalClass() { doTest(); }
   public void testArraysCopyOf() { doTest(); }
   public void testArrayNegativeSize() { doTest(); }
+  public void testArrayWriteFlush() { doTest(); }
   public void testPresizedList() { doTest(); }
   public void testCollectionToArray() { doTest(); }
   public void testStringToCharArray() { doTest(); }
@@ -698,6 +698,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testBoxedDivisionComparison() { doTest(); }
   public void testUnknownComparedToNullable() { doTest(); }
   public void testCastInCatch() { doTest(); }
+  public void testFieldUpdateViaSetter() { doTest(); }
   public void testInitArrayInConstructor() { doTest(); }
   public void testGetterNullityAfterCheck() { doTest(); }
   public void testInferenceNullityMismatch() { doTestWith(insp -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false); }
@@ -710,4 +711,15 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testTypeParameterAsSuperClass() { doTest(); }
   public void testSuppressConstantBooleans() { doTestWith(insp -> insp.REPORT_CONSTANT_REFERENCE_VALUES = true); }
   public void testTempVarsInContracts() { doTest(); }
+  public void testNestedUnrolledLoopNotComplex() { doTest(); }
+  public void testEnumOrdinal() { doTest(); }
+  public void testThisInEnumSubclass() { doTest(); }
+  public void testVarargConstructorNoArgs() { doTest(); }
+  public void testStringBuilderLengthReturn() { doTest(); }
+  public void testEqualsTwoFields() { doTest();}
+  public void testPureMethodReadsMutableArray() { doTest(); }
+  public void testBoxingInConstructorArguments() { doTest(); }
+  public void testBoxingInArrayDeclaration() { doTest(); }
+  public void testNestedVersusSuper() { doTest(); }
+  public void testChangeFieldUsedInPureMethod() { doTest(); }
 }

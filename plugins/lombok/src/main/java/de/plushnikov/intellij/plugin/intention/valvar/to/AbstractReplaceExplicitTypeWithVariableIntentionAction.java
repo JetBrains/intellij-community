@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.intention.valvar.AbstractValVarIntentionAction;
 import org.jetbrains.annotations.Nls;
@@ -79,7 +79,7 @@ public abstract class AbstractReplaceExplicitTypeWithVariableIntentionAction ext
       return;
     }
     PsiJavaCodeReferenceElement referenceElementByFQClassName = elementFactory.createReferenceElementByFQClassName(variableClassName, psiVariable.getResolveScope());
-    typeElement = (PsiTypeElement) IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElement, typeElement);
+    typeElement = (PsiTypeElement) IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar(typeElement, typeElement);
     typeElement.deleteChildRange(typeElement.getFirstChild(), typeElement.getLastChild());
     typeElement.add(referenceElementByFQClassName);
     RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(psiVariable);

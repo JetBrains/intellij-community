@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -12,9 +12,8 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
@@ -46,6 +45,7 @@ public abstract class LRUPopupBuilder<T> {
   private JBIterable<T> myTopValues = JBIterable.empty();
   private JBIterable<T> myMiddleValues = JBIterable.empty();
   private JBIterable<T> myBottomValues = JBIterable.empty();
+  private Function<? super T, String> myExtraSpeedSearchNamer;
 
   @NotNull
   public static ListPopup forFileLanguages(@NotNull Project project,
@@ -62,7 +62,7 @@ public abstract class LRUPopupBuilder<T> {
   @NotNull
   public static LRUPopupBuilder<Language> languagePopupBuilder(@NotNull Project project,
                                                                @NotNull @PopupTitle String title,
-                                                               @Nullable Function<Language, Icon> iconProvider) {
+                                                               @Nullable Function<? super Language, ? extends Icon> iconProvider) {
     return new LRUPopupBuilder<Language>(project, title) {
       @Override
       public String getDisplayName(Language language) {
@@ -132,8 +132,15 @@ public abstract class LRUPopupBuilder<T> {
     return this;
   }
 
+  @NotNull
   public LRUPopupBuilder<T> withComparator(@Nullable Comparator<? super T> comparator) {
     myComparator = comparator;
+    return this;
+  }
+
+  @NotNull
+  public LRUPopupBuilder<T> withExtraSpeedSearchNamer(@Nullable Function<? super T, String> function) {
+    myExtraSpeedSearchNamer = function;
     return this;
   }
 
@@ -158,8 +165,8 @@ public abstract class LRUPopupBuilder<T> {
       lru.sort(Comparator.comparingInt(o -> ids.indexOf(getStorageId(o))));
     }
     List<T> combinedItems = ContainerUtil.concat(topItems, lru, middleItems, items, bottomItems);
-    T sep1 = combinedItems.get(topItems.size() + lru.size() + middleItems.size());
-    T sep2 = bottomItems.isEmpty() ? null : combinedItems.get(topItems.size() + lru.size() + items.size());
+    T sep1 = ContainerUtil.getOrElse(combinedItems, topItems.size() + lru.size() + middleItems.size(), null);
+    T sep2 = ContainerUtil.getOrElse(combinedItems, topItems.size() + lru.size() + middleItems.size() + items.size(), null);
 
     BaseListPopupStep<T> step =
       new BaseListPopupStep<>(myTitle, combinedItems) {
@@ -177,6 +184,13 @@ public abstract class LRUPopupBuilder<T> {
         @Override
         public boolean isSpeedSearchEnabled() {
           return true;
+        }
+
+        @Override
+        public String getIndexedString(T value) {
+          String extra = myExtraSpeedSearchNamer != null ? StringUtil.nullize(myExtraSpeedSearchNamer.apply(value)) : null;
+          if (extra == null) return super.getIndexedString(value);
+          return super.getIndexedString(value) + SpeedSearchUtil.getDefaultHardSeparators() + extra;
         }
 
         @Override
@@ -227,21 +241,25 @@ public abstract class LRUPopupBuilder<T> {
     return popup;
   }
 
-  private String @NotNull [] restoreLRUItems() {
-    return ObjectUtils.notNull(myPropertiesComponent.getValues(getLRUKey()), ArrayUtilRt.EMPTY_STRING_ARRAY);
+  private @NotNull List<String> restoreLRUItems() {
+    return Objects.requireNonNullElse(myPropertiesComponent.getList(getLRUKey()), Collections.emptyList());
   }
 
   private void storeLRUItems(@NotNull T t) {
-    String[] values = myPropertiesComponent.getValues(getLRUKey());
+    List<String> values = myPropertiesComponent.getList(getLRUKey());
     List<String> lastUsed = new ArrayList<>(LRU_ITEMS);
     lastUsed.add(getStorageId(t));
     if (values != null) {
       for (String value : values) {
-        if (!lastUsed.contains(value)) lastUsed.add(value);
-        if (lastUsed.size() == LRU_ITEMS) break;
+        if (!lastUsed.contains(value)) {
+          lastUsed.add(value);
+        }
+        if (lastUsed.size() == LRU_ITEMS) {
+          break;
+        }
       }
     }
-    myPropertiesComponent.setValues(getLRUKey(), ArrayUtilRt.toStringArray(lastUsed));
+    myPropertiesComponent.setList(getLRUKey(), lastUsed);
   }
 
 

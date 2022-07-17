@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -172,25 +173,30 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
   }
 
   public static Document @NotNull [] getDocuments(@NotNull FileEditor editor) {
+    Document[] result;
     if (editor instanceof DocumentsEditor) {
       DocumentsEditor documentsEditor = (DocumentsEditor)editor;
-      return documentsEditor.getDocuments();
+      result = documentsEditor.getDocuments();
     }
-
-    if (editor instanceof TextEditor) {
+    else if (editor instanceof TextEditor) {
       Document document = ((TextEditor)editor).getEditor().getDocument();
-      return new Document[]{document};
+      assert document != null : "TextEditor.getDocument() returned null for "+editor+editor.getClass();
+      result = new Document[]{document};
     }
-
-    VirtualFile file = editor.getFile();
-    if (file != null) {
-      Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (document != null) {
-        return new Document[]{document};
+    else {
+      result = Document.EMPTY_ARRAY;
+      VirtualFile file = editor.getFile();
+      if (file != null) {
+        Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document != null) {
+          result = new Document[]{document};
+        }
       }
     }
-
-    return Document.EMPTY_ARRAY;
+    if (ArrayUtil.contains(null, result)) {
+      LOG.error("FileEditor returned null document for " + editor + " (" + editor.getClass() + "); result='" + Arrays.toString(result) + "'; editor instanceof DocumentsEditor: "+(editor instanceof DocumentsEditor)+"; editor instanceof TextEditor: "+(editor instanceof TextEditor)+"; editor.getFile():"+editor.getFile());
+    }
+    return result;
   }
 
   @ApiStatus.Internal
@@ -350,26 +356,10 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
     public void dispose() { }
 
     @Override
-    public void selectNotify() { }
-
-    @Override
-    public void deselectNotify() { }
-
-    @Override
     public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
     @Override
     public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
-
-    @Override
-    public BackgroundEditorHighlighter getBackgroundHighlighter() {
-      return null;
-    }
-
-    @Override
-    public FileEditorLocation getCurrentLocation() {
-      return null;
-    }
 
     @Override
     public boolean canNavigateTo(@NotNull final Navigatable navigatable) {

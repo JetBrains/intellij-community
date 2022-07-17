@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.actions.NextWordWithSelectionAction;
 import com.intellij.openapi.editor.actions.PreviousWordWithSelectionAction;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.EditorTabPreviewEscapeAction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.commit.CommitActionsPanel;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +28,8 @@ public class VcsActionPromoter implements ActionPromoter {
 
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.MoveChangedLinesToChangelist", "ChangesView.Move");
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.RollbackChangedLines", "ChangesView.Revert");
+    reorderActionPair(reorderedActions, reorderedIds, "Vcs.ShowDiffChangedLines", "Diff.ShowDiff");
+    reorderActionPair(reorderedActions, reorderedIds, "Vcs.ShowDiffChangedLines", "ChangesView.Diff");
 
     Set<AnAction> promoted = new HashSet<>(filter(actions, action ->
       action instanceof ShowMessageHistoryAction || action instanceof CommitActionsPanel.DefaultCommitAction ||
@@ -36,14 +37,9 @@ public class VcsActionPromoter implements ActionPromoter {
         action instanceof PreviousWordWithSelectionAction || action instanceof NextWordWithSelectionAction
       )
     ));
-    Set<AnAction> demoted = new HashSet<>(filter(actions, action ->
-      action instanceof EditorTabPreviewEscapeAction
-    ));
 
     reorderedActions.removeAll(promoted);
-    reorderedActions.removeAll(demoted);
     reorderedActions.addAll(0, promoted);
-    reorderedActions.addAll(demoted);
 
     return reorderedActions;
   }

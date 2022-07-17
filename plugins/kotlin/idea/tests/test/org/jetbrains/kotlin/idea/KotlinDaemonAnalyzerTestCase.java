@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Ref;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 
 import static com.intellij.testFramework.RunAll.runAll;
 

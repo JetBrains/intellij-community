@@ -26,12 +26,12 @@ public class ThrowablePrintedToSystemOutInspectionTest extends LightJavaInspecti
   public void testSimple() {
     doMemberTest("void foo() {\n" +
                  "  final RuntimeException x = new RuntimeException();\n" +
-                 "  System.out.println(/*Throwable argument 'x' to 'System.out.println()' call*/x/**/);\n" +
+                 "  System.out.println(/*'Throwable' argument 'x' to 'System.out.println()' call*/x/**/);\n" +
                  "}\n");
   }
 
   public void testEvenSimpler() {
-    doStatementTest("System.out.println(/*Throwable argument 'new RuntimeException()' to 'System.out.println()' call*/new RuntimeException()/**/);");
+    doStatementTest("System.out.println(/*'Throwable' argument 'new RuntimeException()' to 'System.out.println()' call*/new RuntimeException()/**/);");
   }
 
   @Override

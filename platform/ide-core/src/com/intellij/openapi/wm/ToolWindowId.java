@@ -1,7 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
-
-import org.jetbrains.annotations.ApiStatus;
 
 public interface ToolWindowId {
   String COMMANDER = "Commander";
@@ -9,22 +7,15 @@ public interface ToolWindowId {
   String PROJECT_VIEW = "Project";
   String STRUCTURE_VIEW = "Structure";
   String FAVORITES_VIEW = "Favorites";
+  String BOOKMARKS = "Bookmarks";
   String ANT_BUILD = "Ant";
   String DEBUG = "Debug";
   String RUN = "Run";
 
   /**
-   * @deprecated Use {@link com.intellij.build.BuildContentManager#getOrCreateToolWindow()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  String BUILD = "Build";
-
-  /**
    * @deprecated Use {@link com.intellij.analysis.problemsView.toolWindow.ProblemsView}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   String INSPECTION = "Inspection Results";
 
   String FIND = "Find";
@@ -40,7 +31,6 @@ public interface ToolWindowId {
   String TASKS = "Time Tracking";
   String DATABASE_VIEW = "Database";
   String PREVIEW = "Preview";
-  String RUN_DASHBOARD = "Run Dashboard";
   String SERVICES = "Services";
   String ENDPOINTS = "Endpoints";
 }

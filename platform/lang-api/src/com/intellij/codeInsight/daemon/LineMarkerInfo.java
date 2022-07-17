@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,9 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +39,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public SeparatorPlacement separatorPlacement;
   public RangeHighlighter highlighter;
 
-  public final int updatePass;
+  public int updatePass;
   private final Function<? super T, @NlsContexts.Tooltip String> myTooltipProvider;
   private final Supplier<@Nls @NotNull String> myAccessibleNameProvider;
   private AnAction myNavigateAction = new NavigateAction<>(this);
@@ -54,12 +52,12 @@ public class LineMarkerInfo<T extends PsiElement> {
    * See {@link LineMarkerProvider#getLineMarkerInfo(PsiElement)} javadoc
    * for specific quirks on which elements to use for line markers.
    *
-   * @param element         the element for which the line marker is created.
-   * @param range     the range (relative to beginning of file) with which the marker is associated
-   * @param icon            the icon to show in the gutter for the line marker
+   * @param element the element for which the line marker is created.
+   * @param range the range (relative to beginning of file) with which the marker is associated
+   * @param icon the icon to show in the gutter for the line marker
    * @param tooltipProvider the callback to calculate the tooltip for the gutter icon
-   * @param navHandler      the handler executed when the gutter icon is clicked
-   * @param accessibleNameProvider the callback providing localized accessible name for the icon (for use by screen reader)
+   * @param navHandler the handler executed when the gutter icon is clicked
+   * @param accessibleNameProvider the callback to provide a localized accessible name for the icon (for screen readers)
    */
   public LineMarkerInfo(@NotNull T element,
                         @NotNull TextRange range,
@@ -78,12 +76,12 @@ public class LineMarkerInfo<T extends PsiElement> {
    * @param range     the range (relative to beginning of file) with which the marker is associated
    */
   public LineMarkerInfo(@NotNull T element, @NotNull TextRange range) {
-    this(element, range, null, null, null, null,
-         GutterIconRenderer.Alignment.RIGHT /* doesn't matter, won't be used without an icon */);
+    this(element, range, null, null, null, null, GutterIconRenderer.Alignment.RIGHT /* whatever, won't be used without an icon */);
   }
 
   /**
-   * @deprecated Use {@link #LineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment, Supplier)} or {@link #LineMarkerInfo(PsiElement, TextRange)} instead.
+   * @deprecated Use {@link #LineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment, Supplier)}
+   * or {@link #LineMarkerInfo(PsiElement, TextRange)} instead.
    */
   @Deprecated
   public LineMarkerInfo(@NotNull T element,
@@ -95,8 +93,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     this(element, range, icon, null, tooltipProvider, navHandler, alignment);
   }
 
-  @NotNull
-  private static <T extends PsiElement> SmartPsiElementPointer<T> createElementRef(@NotNull T element, @NotNull TextRange range) {
+  private static @NotNull <T extends PsiElement> SmartPsiElementPointer<T> createElementRef(@NotNull T element, @NotNull TextRange range) {
     PsiFile containingFile = element.getContainingFile();
     Project project = containingFile.getProject();
     TextRange topLevelRange = InjectedLanguageManager.getInstance(project).getTopLevelFile(containingFile).getTextRange();
@@ -148,9 +145,10 @@ public class LineMarkerInfo<T extends PsiElement> {
   }
 
   /**
-   * @deprecated use {@link #LineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment, Supplier)} or {@link #LineMarkerInfo(PsiElement, TextRange)} instead
+   * @deprecated use {@link #LineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment, Supplier)}
+   * or {@link #LineMarkerInfo(PsiElement, TextRange)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public LineMarkerInfo(@NotNull T element,
                         @NotNull TextRange range,
                         Icon icon,
@@ -159,14 +157,15 @@ public class LineMarkerInfo<T extends PsiElement> {
                         @Nullable GutterIconNavigationHandler<T> navHandler,
                         @NotNull GutterIconRenderer.Alignment alignment) {
     this(element, range, icon, null, tooltipProvider, navHandler, alignment);
-    DeprecatedMethodException.report("Please use LineMarkerInfo(T, TextRange, Icon, Function, GutterIconNavigationHandler, Alignment, Supplier) instead");
+    PluginException.reportDeprecatedUsage("#LineMarkerInfo(T, TextRange, Icon, int, Function, GutterIconNavigationHandler, Alignment)",
+                                          "Please use `LineMarkerInfo(T, TextRange, Icon, Function, GutterIconNavigationHandler, Alignment, Supplier)` instead");
   }
 
   /**
-   * @deprecated use {@link #LineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment, Supplier)} or {@link #LineMarkerInfo(PsiElement, TextRange)} instead
+   * @deprecated use {@link #LineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment, Supplier)}
+   * or {@link #LineMarkerInfo(PsiElement, TextRange)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public LineMarkerInfo(@NotNull T element,
                         int startOffset,
                         Icon icon,
@@ -174,7 +173,8 @@ public class LineMarkerInfo<T extends PsiElement> {
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler) {
     this(element, new TextRange(startOffset, startOffset), icon, null, tooltipProvider, navHandler, GutterIconRenderer.Alignment.RIGHT);
-    DeprecatedMethodException.report("Please use LineMarkerInfo(T, TextRange, Icon, Function, GutterIconNavigationHandler, Alignment, Supplier) instead");
+    PluginException.reportDeprecatedUsage("#LineMarkerInfo(T, int, Icon, int, Function, GutterIconNavigationHandler)",
+                                          "Please use `LineMarkerInfo(T, TextRange, Icon, Function, GutterIconNavigationHandler, Alignment, Supplier)` instead");
   }
 
   public Icon getIcon() {
@@ -182,8 +182,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   }
 
   public GutterIconRenderer createGutterRenderer() {
-    if (myIcon == null) return null;
-    return new LineMarkerGutterIconRenderer<>(this);
+    return myIcon == null ? null : new LineMarkerGutterIconRenderer<>(this);
   }
 
   public @NlsContexts.Tooltip String getLineMarkerTooltip() {
@@ -192,8 +191,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     return element == null || !element.isValid() ? null : myTooltipProvider.fun(element);
   }
 
-  @Nullable
-  public T getElement() {
+  public @Nullable T getElement() {
     return elementRef.getElement();
   }
 
@@ -201,8 +199,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     myNavigateAction = navigateAction;
   }
 
-  @NotNull
-  public MarkupEditorFilter getEditorFilter() {
+  public @NotNull MarkupEditorFilter getEditorFilter() {
     return MarkupEditorFilter.EMPTY;
   }
 
@@ -224,21 +221,20 @@ public class LineMarkerInfo<T extends PsiElement> {
       myInfo = info;
     }
 
-    @NotNull
-    public LineMarkerInfo<T> getLineMarkerInfo() {
+    public @NotNull LineMarkerInfo<T> getLineMarkerInfo() {
       return myInfo;
     }
 
     @Override
-    @NotNull
-    public Icon getIcon() {
+    @SuppressWarnings("ConstantConditions")
+    public @NotNull Icon getIcon() {
       return myInfo.myIcon;
     }
 
     @Override
     public @NotNull String getAccessibleName() {
       Supplier<@Nls String> provider = myInfo.myAccessibleNameProvider;
-      return provider == null ?  super.getAccessibleName() : provider.get();
+      return provider == null ? super.getAccessibleName() : provider.get();
     }
 
     @Override
@@ -261,9 +257,8 @@ public class LineMarkerInfo<T extends PsiElement> {
       }
     }
 
-    @NotNull
     @Override
-    public Alignment getAlignment() {
+    public @NotNull Alignment getAlignment() {
       return myInfo.myIconAlignment;
     }
 
@@ -290,6 +285,6 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   @Override
   public String toString() {
-    return "("+startOffset+","+endOffset+") -> "+elementRef +" (icon: "+myIcon+")";
+    return "(" + startOffset + "," + endOffset + ") -> " + elementRef + " (icon: " + myIcon + ")";
   }
 }

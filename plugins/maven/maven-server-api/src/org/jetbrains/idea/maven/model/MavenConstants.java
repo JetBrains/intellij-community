@@ -31,6 +31,8 @@ public final class MavenConstants {
   public static final String SCOPE_SYSTEM = "system";
   public static final String SCOPE_IMPORT = "import";
 
+  public static final String HOME_PROPERTY = "maven.home";
+
   public static final List<String> PHASES =
     Arrays.asList("clean", "validate", "generate-sources", "process-sources", "generate-resources",
                   "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources",

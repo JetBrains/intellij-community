@@ -136,6 +136,49 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
            "class Bar extends Foo {}");
   }
 
+  public void testTypeParameter() {
+    doTest("import java.util.stream.*;\n" +
+           "import java.util.function.*;\n" +
+           "abstract class AbstractStreamWrapper<T extends Cloneable> implements Stream<T> {\n" +
+           "    private final Stream<T> delegate;\n" +
+           "\n" +
+           "    AbstractStreamWrapper(Stream<T> delegate) {\n" +
+           "        this.delegate = delegate;\n" +
+           "    }\n" +
+           "\n" +
+           "    @Override\n" +
+           "    public <A> A[] toArray(IntFunction<A[]> generator) {\n" +
+           "        return delegate.toArray(generator);\n" +
+           "    }\n" +
+           "    public <A extends CharSequence> A[] toArray2(IntFunction<A[]> generator) {\n" +
+           "        return delegate.toArray(/*Array of type 'java.lang.Cloneable[]' expected, 'A[]' found*/generator/**/);\n" +
+           "    }\n" +
+           "    public <A extends Cloneable> A[] toArray3(IntFunction<A[]> generator) {\n" +
+           "        return delegate.toArray(generator);\n" +
+           "    }\n" +
+           "}");
+  }
+
+  public void testStreamFilter() {
+    doTest("import java.util.Arrays;\n" +
+           "class Parent {}\n" +
+           "class Child extends Parent {}\n" +
+           "class Test {\n" +
+           "   void test(Parent[] parent) {\n" +
+           "     Child[] children = Arrays.stream(parent)\n" +
+           "       .filter(t -> t instanceof Child)\n" +
+           "       .toArray(Child[]::new);\n" +
+           "     Child[] children2 = Arrays.stream(parent)\n" +
+           "       .filter(Child.class::isInstance)\n" +
+           "       .toArray(Child[]::new);\n" +
+           "     Child[] children3 = Arrays.stream(parent)\n" +
+           "       .filter(Child.class::isInstance)\n" +
+           "       .filter(c -> c.hashCode() > 0)\n" +
+           "       .toArray(Child[]::new);\n" +
+           "   }\n" +
+           "}");
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

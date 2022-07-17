@@ -18,6 +18,7 @@ package com.jetbrains.python.codeInsight.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.extensions.CaptureExtKt;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 
-public class PyParameterCompletionContributor extends CompletionContributor {
+public class PyParameterCompletionContributor extends CompletionContributor implements DumbAware {
   public PyParameterCompletionContributor() {
     extend(CompletionType.BASIC,
            CaptureExtKt.inParameterList(psiElement()).afterLeaf("*"),

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection;
 
@@ -6,6 +6,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.Tools;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -62,6 +63,15 @@ public interface InspectionProfile extends Comparable {
 
   default boolean isToolEnabled(@Nullable HighlightDisplayKey key) {
     return isToolEnabled(key, null);
+  }
+
+  /**
+   * @return editor attributes if they are different from attributes of chosen severity, {@code null} otherwise
+   */
+  default @Nullable TextAttributesKey getEditorAttributes(@NotNull String shortName, @Nullable PsiElement element) {
+    final InspectionToolWrapper<?, ?> tool = getInspectionTool(shortName, element);
+    String attributesKey = tool.getDefaultEditorAttributes();
+    return attributesKey != null ? TextAttributesKey.find(attributesKey) : null;
   }
 
   boolean isExecutable(@Nullable Project project);

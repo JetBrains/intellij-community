@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.builtins.isFunctionType
-import org.jetbrains.kotlin.cfg.pseudocode.containingDeclarationForPseudocode
+import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.codegen.inline.isInlineOrInsideInline
 import org.jetbrains.kotlin.descriptors.ValueDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 class AddSuspendModifierFix(
     element: KtModifierListOwner,
     private val declarationName: String?
-) : AddModifierFix(element, KtTokens.SUSPEND_KEYWORD) {
+) : AddModifierFixFE10(element, KtTokens.SUSPEND_KEYWORD) {
 
     override fun getText() = when (element) {
         is KtNamedFunction -> {

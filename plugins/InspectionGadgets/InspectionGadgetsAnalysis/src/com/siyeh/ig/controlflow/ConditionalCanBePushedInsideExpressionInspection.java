@@ -87,7 +87,7 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
   private  class ConditionalCanBePushedInsideExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       final PsiExpression thenExpression = expression.getThenExpression();
       if (thenExpression == null) {

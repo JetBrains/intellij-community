@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -39,7 +40,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processLoc
  * @author ven
  */
 public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrCodeBlock, GrControlFlowOwner {
-  private static final Key<CachedValue<Instruction[]>> CONTROL_FLOW = Key.create("Control flow");
+  private static final Key<CachedValue<GroovyControlFlow>> CONTROL_FLOW = Key.create("Control flow");
 
   protected GrBlockImpl(@NotNull IElementType type, CharSequence buffer) {
     super(type, buffer);
@@ -95,13 +96,18 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
 
   @Override
   public Instruction[] getControlFlow() {
+    return getGroovyControlFlow().getFlow();
+  }
+
+  @NotNull
+  public GroovyControlFlow getGroovyControlFlow() {
     PsiUtilCore.ensureValid(this);
-    CachedValue<Instruction[]> controlFlow = getUserData(CONTROL_FLOW);
+    CachedValue<GroovyControlFlow> controlFlow = getUserData(CONTROL_FLOW);
     if (controlFlow == null) {
       controlFlow = CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
         try {
           ResolveProfiler.start();
-          final Instruction[] flow = new ControlFlowBuilder().buildControlFlow(this);
+          final GroovyControlFlow flow = ControlFlowBuilder.buildControlFlow(this);
           return CachedValueProvider.Result.create(flow, getContainingFile(), PsiModificationTracker.MODIFICATION_COUNT);
         }
         finally {

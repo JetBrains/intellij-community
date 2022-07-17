@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.uast
 
 import com.intellij.psi.*
@@ -30,7 +30,7 @@ class GrUClass(val grElement: GrTypeDefinition,
     }
   }
 
-  override val uastAnchor: UIdentifier?
+  override val uastAnchor: UIdentifier
     get() = UIdentifier(grElement.nameIdentifierGroovy, this)
 
   override val uastParent: UElement? by lazy(parentProvider)

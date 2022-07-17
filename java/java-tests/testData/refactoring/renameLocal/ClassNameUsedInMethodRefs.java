@@ -1,5 +1,5 @@
 public class FooBar {
-    private static final class B<caret>ar {
+    static final class B<caret>ar {
         private Bar() {
         }
     }
@@ -13,5 +13,11 @@ public class FooBar {
 
     public static void main(String[] args) throws Exception {
         foo(Bar::new);
+    }
+}
+
+class FooBarBaz {
+     public static void main(String[] args) throws Exception {
+        foo(FooBar.Bar::new);
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
 import com.intellij.jna.DisposableMemory
@@ -202,7 +202,6 @@ private interface SecretLibrary : Library {
   fun secret_error_get_quark(): Int
 }
 
-@Suppress("unused")
 @Structure.FieldOrder("domain", "code", "message")
 internal class GError(p: Pointer) : Structure(p) {
   @JvmField var domain: Int? = null

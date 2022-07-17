@@ -4,6 +4,7 @@ package com.intellij.util.concurrency;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
@@ -250,8 +251,10 @@ public final class QueueProcessor<T> {
         LOG.error(e);
       }
       catch (Throwable e2) {
-        //noinspection CallToPrintStackTrace
-        e2.printStackTrace();
+        if (!ApplicationManager.getApplication().isUnitTestMode() || DefaultLogger.shouldDumpExceptionToStderr()) {
+          //noinspection CallToPrintStackTrace
+          e2.printStackTrace();
+        }
       }
     }
   }

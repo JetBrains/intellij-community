@@ -23,6 +23,7 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
     this(UFile.class, UClass.class, UField.class, UMethod.class);
   }
 
+  @SafeVarargs
   protected AbstractBaseUastLocalInspectionTool(Class<? extends UElement>... uElementsTypesHint) {
     myUElementsTypesHint = uElementsTypesHint;
   }

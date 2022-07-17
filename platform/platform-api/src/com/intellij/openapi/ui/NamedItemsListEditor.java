@@ -12,7 +12,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.*;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,8 +85,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
    * @deprecated override {@link #getCopyDialogTitle()}, {@link #getCreateNewDialogTitle()}, {@link #getNewLabelText()} instead
    */
   @SuppressWarnings({"DeprecatedIsStillUsed", "HardCodedStringLiteral"})
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected String subjDisplayName() {
     return "item";
   }
@@ -161,6 +159,10 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   }
 
   protected boolean canDelete(T item) {
+    return true;
+  }
+
+  protected boolean canCopy(T item) {
     return true;
   }
 
@@ -322,7 +324,8 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     @Override
     public void update(@NotNull AnActionEvent event) {
       super.update(event);
-      event.getPresentation().setEnabled(getSelectedObject() != null);
+      T object = (T)getSelectedObject();
+      event.getPresentation().setEnabled(object != null && canCopy(object));
     }
   }
 

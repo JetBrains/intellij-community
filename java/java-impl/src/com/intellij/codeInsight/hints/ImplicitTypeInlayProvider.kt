@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
@@ -9,7 +9,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 class ImplicitTypeInlayProvider : InlayHintsProvider<NoSettings> {
-  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
+  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector {
     val project = file.project
     return object: FactoryInlayHintsCollector(editor) {
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
@@ -42,10 +42,21 @@ class ImplicitTypeInlayProvider : InlayHintsProvider<NoSettings> {
 
   override val name: String
     get() = JavaBundle.message("settings.inlay.java.implicit.types")
+  override val group: InlayGroup
+    get() = InlayGroup.TYPES_GROUP
   override val key: SettingsKey<NoSettings>
     get() = SettingsKey("java.implicit.types")
-  override val previewText: String?
-    get() = null
+  override val previewText: String
+    get() = "class HintsDemo {\n" +
+            "\n" +
+            "    public static void main(String[] args) {\n" +
+            "        var list = getList(); // List<String> is inferred\n" +
+            "    }\n" +
+            "\n" +
+            "    private static List<String> getList() {\n" +
+            "        return Arrays.asList(\"hello\", \"world\");\n" +
+            "    }\n" +
+            "}"
 
   override fun createConfigurable(settings: NoSettings): ImmediateConfigurable {
     return object : ImmediateConfigurable {
@@ -54,4 +65,7 @@ class ImplicitTypeInlayProvider : InlayHintsProvider<NoSettings> {
       }
     }
   }
+
+  override val description: String
+    get() = JavaBundle.message("settings.inlay.java.implicit.types.description")
 }

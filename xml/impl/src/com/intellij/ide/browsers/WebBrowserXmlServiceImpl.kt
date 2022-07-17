@@ -6,6 +6,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.lang.xhtml.XHTMLLanguage
 import com.intellij.lang.xml.XMLLanguage
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -22,7 +23,7 @@ class WebBrowserXmlServiceImpl : WebBrowserXmlService() {
   }
 
   override fun isHtmlOrXmlFile(psiFile: PsiFile): Boolean {
-    if (!isHtmlFile(psiFile.virtualFile) && psiFile.virtualFile.fileType != XmlFileType.INSTANCE) {
+    if (!isHtmlFile(psiFile.virtualFile) && !FileTypeRegistry.getInstance().isFileOfType(psiFile.virtualFile, XmlFileType.INSTANCE)) {
       return false
     }
     val baseLanguage: Language = psiFile.viewProvider.baseLanguage

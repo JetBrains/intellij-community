@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 'a' is never used
 operator fun String.not(): Boolean {
     return length == 0
 }

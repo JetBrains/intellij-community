@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references.extensions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -27,7 +27,7 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil;
 public class ExtensionPointDocumentationProvider implements DocumentationProvider {
 
   @Override
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     ExtensionPoint extensionPoint = findExtensionPoint(element);
     if (extensionPoint == null) return null;
 
@@ -56,7 +56,7 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
   }
 
   @Override
-  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     ExtensionPoint extensionPoint = findExtensionPoint(element);
     if (extensionPoint == null) return null;
 
@@ -143,7 +143,7 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
   private static HtmlChunk createLink(String refText, @Nls String label) {
     HtmlChunk text = HtmlChunk.text(label).wrapWith("code");
     String link = DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + refText;
-    return HtmlChunk.tag("a").attr("href", link).child(text);
+    return HtmlChunk.link(link, text);
   }
 
   private static HtmlChunk generateClassDoc(@NotNull PsiElement element) {

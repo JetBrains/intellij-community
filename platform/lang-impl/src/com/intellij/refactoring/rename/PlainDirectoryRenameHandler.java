@@ -23,7 +23,7 @@ public class PlainDirectoryRenameHandler extends DirectoryRenameHandlerBase {
 
   public static boolean isPlainDirectory(@NotNull PsiDirectory directory) {
     return !ContainerUtil.exists(EP_NAME.getExtensions(), extension -> extension instanceof DirectoryAsPackageRenameHandlerBase<?> &&
-                                                                         ((DirectoryAsPackageRenameHandlerBase)extension).getPackage(directory) != null);
+                                                                       ((DirectoryAsPackageRenameHandlerBase<?>)extension).getPackage(directory) != null);
   }
 
   @Override

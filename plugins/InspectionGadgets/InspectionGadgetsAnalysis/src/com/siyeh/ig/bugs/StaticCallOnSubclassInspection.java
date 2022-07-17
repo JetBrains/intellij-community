@@ -122,7 +122,7 @@ public class StaticCallOnSubclassInspection extends BaseInspection implements Cl
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       super.visitMethodReferenceExpression(expression);
       if (PsiMethodReferenceUtil.isStaticallyReferenced(expression)) {
         PsiElement resolve = expression.resolve();

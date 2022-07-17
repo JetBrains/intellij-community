@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
@@ -18,6 +19,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
@@ -26,9 +28,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver<PsiMethodReferenceExpressionImpl> {
+  private static final Logger LOG = Logger.getInstance(MethodReferenceResolver.class);
+
   @Override
   public JavaResolveResult @NotNull [] resolve(@NotNull PsiMethodReferenceExpressionImpl reference, @NotNull PsiFile containingFile, boolean incompleteCode) {
     PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(reference);
@@ -96,12 +99,19 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                 @NotNull
                 @Override
                 public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
-                  return includeReturnConstraint ? inferTypeArguments(true)
-                                                 : Objects.requireNonNull(MethodCandidateInfo.ourOverloadGuard
-                                                                            .doPreventingRecursion(reference, false,
-                                                                                                   () -> inferTypeArguments(false)));
+                  if (includeReturnConstraint) {
+                    return inferTypeArguments(true);
+                  }
+                  PsiSubstitutor psiSubstitutor = MethodCandidateInfo.ourOverloadGuard
+                    .doPreventingRecursion(reference, false, () -> inferTypeArguments(false));
+                  if (psiSubstitutor == null) {
+                    LOG.error("Recursive call for: " + ObjectUtils.notNull(LambdaUtil.treeWalkUp(reference), reference).getText());
+                    return substitutor;
+                  }
+                  return psiSubstitutor;
                 }
 
+                @NotNull
                 private PsiSubstitutor inferTypeArguments(boolean includeReturnConstraint) {
                   if (interfaceMethod == null) return substitutor;
                   InferenceSession session = new InferenceSession(method.getTypeParameters(), substitutor, reference.getManager(), reference);
@@ -245,17 +255,31 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       }
 
       if (myQualifierResolveResult.isReferenceTypeQualified() && myReferenceExpression.getReferenceNameElement() instanceof PsiIdentifier) {
+        int firstApplicability = checkApplicability(firstCandidates);
+        ArrayList<CandidateInfo> firstResults = new ArrayList<>(firstCandidates);
+        checkSpecifics(firstResults, firstApplicability, map, 0);
+
+        int secondApplicability = checkApplicability(secondCandidates);
+        ArrayList<CandidateInfo> secondResults = new ArrayList<>(secondCandidates);
+        checkSpecifics(secondResults, secondApplicability, map, 1);
+
         //If the first search produces a static method, and no non-static method is applicable for the second search, then the result of the first search is the compile-time declaration.
-        CandidateInfo candidateInfo = filterStaticCorrectCandidates(firstCandidates, secondCandidates, true);
+        CandidateInfo candidateInfo = filterStaticCorrectCandidates(firstResults, secondCandidates, true);
         if (candidateInfo != null) {
           return candidateInfo;
         }
 
         //If the second search produces a non-static method, and no static method is applicable for the first search, then the result of the second search is the compile-time declaration.
-        candidateInfo = filterStaticCorrectCandidates(secondCandidates, firstCandidates, false);
+        candidateInfo = filterStaticCorrectCandidates(secondResults, firstCandidates, false);
         if (candidateInfo != null) {
           return candidateInfo;
         }
+
+        conflicts.clear();
+        conflicts.addAll(firstResults);
+        conflicts.addAll(secondResults);
+
+        return null;
       }
 
       CandidateInfo candidateInfo = resolveConflicts(firstCandidates, secondCandidates, map, MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY);
@@ -294,6 +318,14 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       boolean varargs = ((MethodCandidateInfo)conflict).isVarargs();
       if (varargs && (!psiMethod.isVarArgs() || functionalMethodVarArgs)) {
         return null;
+      }
+      
+      //prefer statically correct search variant when a vararg method is applicable both as first and second search
+      if (hasReceiver &&
+          varargs &&
+          isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, true, conflict, 0) &&
+          isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, true, conflict, 1)) {
+        return psiMethod.hasModifierProperty(PsiModifier.STATIC);
       }
 
       if ((varargs || functionalInterfaceParamTypes.length == parameterTypes.length) &&

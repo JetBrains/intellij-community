@@ -2,14 +2,11 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.NotificationsManager;
+import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -58,7 +55,6 @@ import static com.intellij.openapi.ui.Messages.showWarningDialog;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.util.ui.JBUI.Borders.empty;
-import static com.intellij.util.ui.JBUI.scale;
 import static java.util.Collections.singletonList;
 import static java.util.Comparator.comparing;
 import static org.jetbrains.idea.svn.SvnBundle.message;
@@ -67,7 +63,7 @@ public class CopiesPanel extends SimpleToolWindowPanel {
 
   private static final Logger LOG = Logger.getInstance(CopiesPanel.class);
 
-  private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Svn Roots Detection Errors", STICKY_BALLOON, true);
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Svn Roots Detection Errors");
 
   private static final String TOOLBAR_GROUP = "Svn.WorkingCopiesView.Toolbar";
   private static final String TOOLBAR_PLACE = "Svn.WorkingCopiesView";
@@ -120,7 +116,7 @@ public class CopiesPanel extends SimpleToolWindowPanel {
 
   @Override
   public @Nullable Object getData(@NotNull String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) return HELP_ID;
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return HELP_ID;
     return super.getData(dataId);
   }
 

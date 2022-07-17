@@ -55,7 +55,7 @@ public final class CloneDvcsValidationUtils {
    * @return null if destination directory is OK.
    */
   @Nullable
-  public static ValidationInfo checkDirectory(String directoryPath, JTextField component) {
+  public static ValidationInfo checkDirectory(@NotNull String directoryPath, @NotNull JComponent component) {
     if (directoryPath.length() == 0) {
       return new ValidationInfo("");
     }
@@ -76,6 +76,14 @@ public final class CloneDvcsValidationUtils {
       return new ValidationInfo(DvcsBundle.message("clone.destination.directory.error.invalid"), component);
     }
     return null;
+  }
+
+  /**
+   * @deprecated use a more general method above
+   */
+  @Deprecated
+  public static @Nullable ValidationInfo checkDirectory(@NotNull String directoryPath, @NotNull JTextField component) {
+    return checkDirectory(directoryPath, (JComponent) component);
   }
 
   private static boolean isDirectoryEmpty(@NotNull Path directory) throws IOException {

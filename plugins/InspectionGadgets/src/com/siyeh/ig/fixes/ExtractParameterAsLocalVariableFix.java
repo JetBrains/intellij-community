@@ -10,7 +10,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -48,7 +48,7 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
     final PsiParameter parameter = (PsiParameter)target;
     final PsiElement declarationScope = parameter.getDeclarationScope();
     if (declarationScope instanceof PsiLambdaExpression) {
-      RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)declarationScope);
+      CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)declarationScope);
     }
     else if (declarationScope instanceof PsiForeachStatement) {
       final PsiStatement body = ((PsiForeachStatement)declarationScope).getBody();

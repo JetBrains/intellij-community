@@ -34,6 +34,14 @@ public class RedundantMethodOverride extends S {
       System.out.println(f);
     }
   }
+
+  @Override
+  void <warning descr="Method 'y()' is identical to its super method">y</warning>() {
+    label1:
+    while(true) {
+      if (true) break label1;
+    }
+  }
 }
 class S {
 
@@ -63,6 +71,13 @@ class S {
     try {
     } catch (RuntimeException e) {
       System.out.println(e);
+    }
+  }
+
+  void y() {
+    label:
+    while(true) {
+      if (true) break label;
     }
   }
 }
@@ -447,5 +462,33 @@ class RedundantSuperBug2 {
 
   public static void main(String[] args) {
     new Sub().foo();
+  }
+}
+class X11 {
+  void x(boolean b) {
+    while (true) {
+      System.out.println();
+      if (b) break;
+    }
+  }
+}
+class X12 extends X11 {
+  @Override
+  void <warning descr="Method 'x()' is identical to its super method">x</warning>(boolean b) {
+    label:
+    while (true) {
+      System.out.println();
+      if  (b) break label;
+    }
+  }
+}
+class X13 extends X11 {
+  @Override
+  void x(boolean b) {
+    label:
+    while (true) {
+      System.out.println("diff");
+      if  (b) break label;
+    }
   }
 }

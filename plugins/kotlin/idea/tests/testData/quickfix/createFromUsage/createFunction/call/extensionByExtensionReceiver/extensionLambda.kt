@@ -1,5 +1,5 @@
 // "Create extension function 'A.foo'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 fun bar(b: Boolean) {
 
 }

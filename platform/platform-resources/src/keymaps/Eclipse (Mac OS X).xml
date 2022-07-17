@@ -1,7 +1,4 @@
 <keymap version="1" name="Eclipse (Mac OS X)" disable-mnemonics="false" parent="Mac OS X 10.5+">
-  <action id="FileChooser.TogglePathShowing">
-    <keyboard-shortcut first-keystroke="meta P"/>
-  </action>
   <action id="$Redo">
     <keyboard-shortcut first-keystroke="meta shift Z"/>
   </action>
@@ -29,8 +26,17 @@
   </action>
   <action id="CloseEditor"/>
   <action id="CodeInspection.OnEditor"/>
+  <action id="CollapseAll">
+    <keyboard-shortcut first-keystroke="shift meta DIVIDE"/>
+  </action>
   <action id="CollapseAllRegions">
     <keyboard-shortcut first-keystroke="shift meta DIVIDE"/>
+  </action>
+  <action id="CollapseRegion">
+    <keyboard-shortcut first-keystroke="meta SUBTRACT"/>
+  </action>
+  <action id="CollapseExpandableComponent">
+    <keyboard-shortcut first-keystroke="meta SUBTRACT"/>
   </action>
   <action id="CommentByBlockComment">
     <keyboard-shortcut first-keystroke="shift control SLASH"/>  <!-- TODO -->
@@ -87,8 +93,17 @@
   <action id="EvaluateExpression">
     <keyboard-shortcut first-keystroke="meta U"/>
   </action>
+  <action id="ExpandAll">
+    <keyboard-shortcut first-keystroke="meta shift MULTIPLY"/>
+  </action>
   <action id="ExpandAllRegions">
     <keyboard-shortcut first-keystroke="meta MULTIPLY"/>
+  </action>
+  <action id="ExpandRegion">
+    <keyboard-shortcut first-keystroke="meta ADD"/>
+  </action>
+  <action id="ExpandExpandableComponent">
+    <keyboard-shortcut first-keystroke="meta ADD"/>
   </action>
   <action id="ExpandAllToLevel1"/>
   <action id="ExpandAllToLevel2"/>
@@ -126,6 +141,7 @@
     <keyboard-shortcut first-keystroke="meta shift U"/>
   </action>
   <action id="FindWordAtCaret"/>
+  <action id="FindPrevWordAtCaret"/>
   <action id="Forward">
     <keyboard-shortcut first-keystroke="meta CLOSE_BRACKET"/>
     <mouse-shortcut keystroke="button5"/>
@@ -322,6 +338,7 @@
 
   <action id="ActivateProjectToolWindow"/>
   <action id="ActivateFavoritesToolWindow"/>
+  <action id="ActivateBookmarksToolWindow"/>
   <action id="ActivateFindToolWindow">
     <keyboard-shortcut first-keystroke="alt meta Q" second-keystroke="S"/>
   </action>
@@ -356,4 +373,12 @@
   <action id="ResizeToolWindowRight"/>
   <action id="ResizeToolWindowUp"/>
   <action id="ResizeToolWindowDown"/>
+
+
+  <action id="EditorDecreaseFontSizeGlobal">
+    <keyboard-shortcut first-keystroke="meta MINUS"/>
+  </action>
+  <action id="EditorIncreaseFontSizeGlobal">
+    <keyboard-shortcut first-keystroke="meta EQUALS"/>
+  </action>
 </keymap>

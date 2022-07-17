@@ -4,17 +4,17 @@ Reports chained equality comparisons.
 <p>Such comparisons may be confusing: <code>a == b == c</code> means <code>(a == b) == c</code>,
   but possibly <code>a == b && a == c</code> is intended.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   boolean chainedEquality(boolean a, boolean b, boolean c) {
     return a == b == c;
   }
-</pre>
+</code></pre>
 <p>You can use parentheses to make the comparison less confusing:</p>
-<pre>
+<pre><code>
   boolean chainedEquality(boolean a, boolean b, boolean c) {
     return (a == b) == c;
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

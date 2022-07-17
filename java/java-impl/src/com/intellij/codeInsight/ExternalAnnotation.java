@@ -1,8 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiNameValuePair;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,8 @@ import java.util.Objects;
  * Wrapper for info about external annotation.
  */
 public class ExternalAnnotation {
+
+  private static final Logger LOG = Logger.getInstance(ExternalAnnotation.class); 
 
   /**
    * Annotation owner
@@ -34,12 +37,21 @@ public class ExternalAnnotation {
   public ExternalAnnotation(@NotNull PsiModifierListOwner owner,
                             @NotNull String annotationFQName,
                             PsiNameValuePair @Nullable [] values) {
-    if (BaseExternalAnnotationsManager.getExternalName(owner) == null) {
-      throw new IllegalArgumentException("Unable to annotate externally element of type " + owner.getClass());
-    }
+    LOG.assertTrue(canBeExternallyAnnotated(owner), "Unable to annotate externally element of type " + owner.getClass());
     this.owner = owner;
     this.annotationFQName = annotationFQName;
     this.values = values;
+  }
+
+  private static boolean canBeExternallyAnnotated(@Nullable PsiModifierListOwner owner) {
+    if (owner instanceof PsiPackage || owner instanceof PsiClass) return true;
+    if (owner instanceof PsiParameter) {
+      owner = PsiTreeUtil.getParentOfType(owner, PsiMethod.class, true);
+    }
+    if (owner instanceof PsiField || owner instanceof PsiMethod) {
+      return PsiTreeUtil.getParentOfType(owner, PsiClass.class, true) != null;
+    }
+    return false;
   }
 
   @NotNull

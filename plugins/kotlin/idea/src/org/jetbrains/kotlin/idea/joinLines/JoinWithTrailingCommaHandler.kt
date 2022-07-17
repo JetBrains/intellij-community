@@ -12,7 +12,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.nextLeaf
-import org.jetbrains.kotlin.idea.core.util.containsLineBreakInRange
+import org.jetbrains.kotlin.idea.base.psi.containsLineBreakInRange
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaState
 import org.jetbrains.kotlin.lexer.KtTokens

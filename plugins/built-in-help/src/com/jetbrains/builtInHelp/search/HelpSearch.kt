@@ -57,7 +57,7 @@ class HelpSearch {
           ApplicationInfo.getInstance()
 
           val searcher = IndexSearcher(reader)
-          val collector: TopScoreDocCollector = TopScoreDocCollector.create(maxHits)
+          val collector: TopScoreDocCollector = TopScoreDocCollector.create(maxHits, maxHits)
 
           val q: Query = QueryParser("contents", analyzer).parse(query)
           searcher.search(q, collector)

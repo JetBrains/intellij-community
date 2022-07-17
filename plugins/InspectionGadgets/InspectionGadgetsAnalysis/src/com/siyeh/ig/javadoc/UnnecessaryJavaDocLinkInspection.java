@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.javadoc;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -35,13 +36,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
+public class UnnecessaryJavaDocLinkInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   private static final int THIS_METHOD = 1;
   private static final int THIS_CLASS = 2;
   private static final int SUPER_METHOD = 3;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreInlineLinkToSuper = false;
 
   @NotNull
@@ -142,7 +143,7 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitDocTag(PsiDocTag tag) {
+    public void visitDocTag(@NotNull PsiDocTag tag) {
       super.visitDocTag(tag);
       @NonNls final String name = tag.getName();
       if ("link".equals(name) || "linkplain".equals(name)) {

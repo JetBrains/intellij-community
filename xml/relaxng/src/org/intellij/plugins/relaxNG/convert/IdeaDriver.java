@@ -162,13 +162,10 @@ public class IdeaDriver {
       errorHandler.error(e);
     } catch (MalformedURLException e) {
       Logger.getInstance(getClass().getName()).error(e);
-    } catch (InputFailedException e) {
+    } catch (InputFailedException | OutputFailedException | InvalidParamsException e) {
       // handled by ErrorHandler
-    } catch (InvalidParamsException e) {
-      // handled by ErrorHandler
-    } catch (OutputFailedException e) {
-      // handled by ErrorHandler
-    } catch (SAXException e) {
+    }
+    catch (SAXException e) {
       // cannot happen or is already handled
     }
   }

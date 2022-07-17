@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.TipsOfTheDayUsagesCollector;
 import com.intellij.ide.util.TipDialog;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -14,5 +15,10 @@ public class ShowTipsAction extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent e) {
     TipsOfTheDayUsagesCollector.triggerDialogShown(TipsOfTheDayUsagesCollector.DialogType.manually);
     TipDialog.showForProject(e.getProject());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

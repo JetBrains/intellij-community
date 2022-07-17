@@ -10,7 +10,6 @@ import com.thoughtworks.xstream.io.xml.XppReader;
 import io.github.xstream.mxparser.MXParser;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,8 +40,7 @@ public final class OfflineViewParseUtil {
   /**
    * @deprecated use {@link #parse(File)} or {@link #parse(Reader)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static Map<String, Set<OfflineProblemDescriptor>> parse(String problemText) {
     return parse(new StringReader(problemText));
   }
@@ -127,8 +125,7 @@ public final class OfflineViewParseUtil {
   /**
    * @deprecated use {@link #parseProfileName(File)} or {@link #parseProfileName(Reader)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable
   public static String parseProfileName(String descriptorText) {
     return parseProfileName(new StringReader(descriptorText));

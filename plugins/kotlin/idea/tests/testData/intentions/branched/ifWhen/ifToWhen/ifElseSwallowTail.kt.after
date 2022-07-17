@@ -3,6 +3,7 @@ fun toInt(s: Number): Int {
         is Int -> {
             foo()
         }
+
         else -> {
             return -1
         }

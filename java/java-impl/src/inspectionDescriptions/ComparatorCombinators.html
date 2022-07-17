@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports the cases where a <code>Comparator</code> is defined as a lambda expression which could be expressed using
-methods like <code>Comparator.comparing()</code>.
-<p>This inspection also reports chain comparisons which can be replaced by <code>Comparator.thenComparing()</code>.</p>
+Reports <code>Comparator</code> instances defined as lambda expressions that could be expressed using
+ <code>Comparator.comparing()</code> calls.
+Chained comparisons which can be replaced by <code>Comparator.thenComparing()</code> expression are also reported.
 <p>Example:</p>
 <pre><code>
   myList.sort((person1, person2) -> person1.getName().compareTo(person2.getName()));

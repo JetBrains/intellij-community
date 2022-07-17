@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBScrollPane;
@@ -42,6 +43,10 @@ class ProcessPopup {
     myIndicatorPanel.setLayout(new VerticalLayout(0));
     myIndicatorPanel.setBorder(JBUI.Borders.empty(10, 0, 18, 0));
     myIndicatorPanel.setFocusable(true);
+    if (ExperimentalUI.isNewUI()) {
+      myIndicatorPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+    }
+
 
     myContentPanel = new JBScrollPane(myIndicatorPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER) {
       @Override
@@ -59,6 +64,9 @@ class ProcessPopup {
     JComponent component = indicator.getComponent();
     if (myIndicatorPanel.getComponentCount() == 0) {
       hideSeparator(component);
+    }
+    if (ExperimentalUI.isNewUI()) {
+      component.setOpaque(false);
     }
     myIndicatorPanel.add(component);
     revalidateAll();

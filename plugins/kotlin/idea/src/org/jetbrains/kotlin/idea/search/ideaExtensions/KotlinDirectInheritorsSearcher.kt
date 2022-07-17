@@ -9,32 +9,32 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.toLightClassWithBuiltinMapping
-import org.jetbrains.kotlin.idea.caches.lightClasses.KtFakeLightClass
-import org.jetbrains.kotlin.idea.search.fileScope
-import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
+import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
+import org.jetbrains.kotlin.asJava.toFakeLightClass
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 
 open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectClassInheritorsSearch.SearchParameters>(true) {
     override fun processQuery(queryParameters: DirectClassInheritorsSearch.SearchParameters, consumer: Processor<in PsiClass>) {
         val baseClass = queryParameters.classToProcess
 
-        val name = baseClass.name ?: return
+        val baseClassName = baseClass.name ?: return
 
         val file = if (baseClass is KtFakeLightClass) baseClass.kotlinOrigin.containingFile else baseClass.containingFile
 
         val originalScope = queryParameters.scope
-        val scope = originalScope as? GlobalSearchScope ?: file.fileScope() ?: return
+        val scope = originalScope as? GlobalSearchScope ?: file.fileScope()
 
-        val names = mutableSetOf(name)
+        val names = mutableSetOf(baseClassName)
         val project = file.project
-
-        val typeAliasIndex = KotlinTypeAliasByExpansionShortNameIndex.getInstance()
 
         fun searchForTypeAliasesRecursively(typeName: String) {
             ProgressManager.checkCanceled()
-            typeAliasIndex[typeName, project, scope].asSequence()
+            KotlinTypeAliasByExpansionShortNameIndex
+                .get(typeName, project, scope)
+                .asSequence()
                 .map { it.name }
                 .filterNotNull()
                 .filter { it !in names }
@@ -42,18 +42,25 @@ open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectCl
                 .forEach(::searchForTypeAliasesRecursively)
         }
 
-        searchForTypeAliasesRecursively(name)
+        searchForTypeAliasesRecursively(baseClassName)
 
-        runReadAction {
-            val noLibrarySourceScope = KotlinSourceFilterScope.projectSourceAndClassFiles(scope, baseClass.project)
-
-            names.forEach { name ->
-                KotlinSuperClassIndex.getInstance()
-                    .get(name, baseClass.project, noLibrarySourceScope).asSequence()
-                    .mapNotNull { candidate -> candidate.toLightClassWithBuiltinMapping() ?: KtFakeLightClass(candidate) }
-                    .filter { candidate -> candidate.isInheritor(baseClass, false) }
-                    .forEach { candidate -> consumer.process(candidate) }
-            }
+        val noLibrarySourceScope = KotlinSourceFilterScope.projectFiles(scope, project)
+        names.forEach { name ->
+            ProgressManager.checkCanceled()
+            KotlinSuperClassIndex
+                .get(name, project, noLibrarySourceScope).asSequence()
+                .map { candidate ->
+                    ProgressManager.checkCanceled()
+                    candidate.toLightClassWithBuiltinMapping() ?: candidate.toFakeLightClass()
+                }
+                .filter { candidate ->
+                    ProgressManager.checkCanceled()
+                    candidate.isInheritor(baseClass, false)
+                }
+                .forEach { candidate ->
+                    ProgressManager.checkCanceled()
+                    consumer.process(candidate)
+                }
         }
     }
 }

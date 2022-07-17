@@ -1,0 +1,32 @@
+// FIR_IDENTICAL
+var <!HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>x<!> = 5
+
+val <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>sq<!> : <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>get<!>() {
+  return this * this
+}
+
+val <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION'")!>y<!> : <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!> = 1
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>get<!>() {
+  return 5.<!HIGHLIGHTING("textAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>sq<!> + <!HIGHLIGHTING("textAttributesKey='KOTLIN_BACKING_FIELD_VARIABLE'")!>field<!> + <!HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>x<!>
+}
+
+class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Foo<!>(
+    val <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>a<!> : <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>,
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>b<!> : <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>String<!>,
+    var <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'"), HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'")!>c<!> : <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>String<!>
+) {
+  <!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>init<!> {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>b<!>
+  }
+
+  fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>f<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>p<!> : <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!> = <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>a<!>) {}
+
+  var <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION'"), HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'")!>v<!> : <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>
+  <!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>get<!>() {
+    return 1;
+  }
+  <!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>set<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>value<!>) {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>value<!>
+  }
+}

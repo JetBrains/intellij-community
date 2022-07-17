@@ -15,6 +15,7 @@ import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -41,26 +42,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public abstract class MavenBuildToolLogTestUtils extends LightIdeaTestCase {
   protected ExternalSystemTaskId myTaskId;
 
-  public interface ThrowingRunnable {
-    void run() throws Throwable;
-  }
-
-
-  public static  void failOnWarns(ThrowingRunnable runnable) throws Throwable {
-    LoggedErrorProcessor oldInstance = LoggedErrorProcessor.getInstance();
-    try {
-      LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
-        @Override
-        public boolean processWarn(@NotNull String category, String message, Throwable t) {
-          fail(message + t);
-          return false;
-        }
-      });
-      runnable.run();
-    }
-    finally {
-      LoggedErrorProcessor.setNewInstance(oldInstance);
-    }
+  public static  void failOnWarns(ThrowableRunnable<Throwable> runnable) throws Throwable {
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
+      @Override
+      public boolean processWarn(@NotNull String category, @NotNull String message, Throwable t) {
+        fail(message + t);
+        return false;
+      }
+    }, runnable);
   }
 
   @Override

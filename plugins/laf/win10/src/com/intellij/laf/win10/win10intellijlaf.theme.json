@@ -28,19 +28,18 @@
       "pressedBorderColor": "#cfcfcf"
     },
 
-    "AssignedMnemonic": {
+    "BookmarkMnemonicAssigned": {
       "background": "#F7C777",
       "borderColor": "#F7C777",
       "foreground": "#000000"
     },
 
-    "AvailableMnemonic": {
+    "BookmarkMnemonicAvailable": {
       "background": "#FFFFFF",
       "borderColor": "#C4C4C4",
       "foreground": "#000000"
     },
 
-    "BookmarkIcon.background": "#F7C777",
     "Borders.ContrastBorderColor": "#C9C9C9",
 
     "Button": {
@@ -90,7 +89,13 @@
       "warningFocusColor": "#e2a53a"
     },
 
-    "CurrentMnemonic": {
+    "ContextHelp": {
+      "fontSizeOffset": {
+        "os.windows": 0
+      }
+    },
+
+    "BookmarkMnemonicCurrent": {
       "background": "#389FD6",
       "borderColor": "#389FD6",
       "foreground": "#FFFFFF"
@@ -171,15 +176,18 @@
 
     "MenuItem": {
       "acceleratorDelimiter": "-",
-      "acceleratorForeground": "#505050",
+      "acceleratorForeground": "#808080",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
       "maxGutterIconWidth": 18
     },
 
-    "MnemonicIcon": {
-      "background": "#FEF7EC",
-      "borderColor": "#F4AF3D",
-      "foreground": "#000000"
+    "Bookmark": {
+      "iconBackground": "#F7C777",
+      "Mnemonic": {
+        "iconForeground": "#000000",
+        "iconBackground": "#FEF7EC",
+        "iconBorderColor": "#F4AF3D"
+      }
     },
 
     "NavBar.borderColor": "#cdcdcd",
@@ -220,10 +228,20 @@
 
     "PopupMenu": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
-      "translucentBackground": "#f2f2f2"
+      "borderInsets": "6,1,6,1",
+      "leftBorderWith": 10,
+      "rightBorderWith": 0,
+      "translucentBackground": "#f2f2f2",
+      "UI": "com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI"
     },
 
-    "PopupMenuSeparatorUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI",
+    "PopupMenuSeparator": {
+      "height": 9,
+      "stripeWidth": 1,
+      "stripeIndent": 4,
+      "withToEdge": 10,
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI"
+    },
 
     "ProgressBar": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarBorder",
@@ -381,6 +399,20 @@
       "selectionBorderColor": "#1a7dc4",
       "textBackground": "#ffffff",
       "UI": "com.intellij.ui.tree.ui.DefaultTreeUI"
+    },
+
+    "ToolbarComboWidget": {
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
+    },
+
+    "MainToolbar": {
+      "background": "#f2f2f2",
+      "Icon.borderInsets": "10,10,10,10",
+      "Dropdown": {
+        "background": "#f2f2f2",
+        "hoverBackground": "#dfdfdf",
+        "borderInsets": "12,6,12,6"
+      }
     },
 
     "control": "#f2f2f2",

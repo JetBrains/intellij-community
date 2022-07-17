@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
@@ -23,11 +22,14 @@ import training.learn.ActionsRecorder
 import training.learn.course.KLesson
 import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
+import training.statistic.LearningInternalProblems
 import training.statistic.StatisticBase
-import training.ui.LearnToolWindowFactory
+import training.ui.LearningUiUtil
 import training.util.WeakReferenceDelegator
+import training.util.getLearnToolWindowForProject
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 internal class LessonExecutor(val lesson: KLesson,
@@ -71,7 +73,9 @@ internal class LessonExecutor(val lesson: KLesson,
   data class TaskData(var shouldRestore: (() -> (() -> Unit)?)? = null,
                       var transparentRestore: Boolean? = null,
                       var highlightPreviousUi: Boolean? = null,
-                      var delayMillis: Int = 0)
+                      var propagateHighlighting: Boolean? = null,
+                      var checkRestoreByTimer: Int? = null,
+                      var delayBeforeRestore: Int = 0)
 
   private val taskActions: MutableList<TaskInfo> = ArrayList()
 
@@ -85,11 +89,13 @@ internal class LessonExecutor(val lesson: KLesson,
     private set
   private var currentVisualIndex = 1
 
-  private val parentDisposable: Disposable = LearnToolWindowFactory.learnWindowPerProject[project]?.parentDisposable ?: project
+  private val parentDisposable: Disposable = getLearnToolWindowForProject(project)?.parentDisposable ?: project
 
   internal val visualIndexNumber: Int get() = taskActions[currentTaskIndex].taskVisualIndex ?: 0
 
-  private var continuePreviousHighlighting: Ref<Boolean> = Ref(true)
+  private var continueHighlighting: Ref<Boolean> = Ref(true)
+
+  internal val internalProblems: MutableSet<LearningInternalProblems> = mutableSetOf()
 
   // Is used from ui detection pooled thread
   @Volatile
@@ -141,14 +147,16 @@ internal class LessonExecutor(val lesson: KLesson,
   }
 
   override fun dispose() {
-    if (!hasBeenStopped) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
-      continuePreviousHighlighting.set(false)
-      clearRestore()
-      disposeRecorders()
-      hasBeenStopped = true
-      taskActions.clear()
-    }
+    if (hasBeenStopped) return
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val lessonPassed = currentTaskIndex == taskActions.size
+    val visualIndex = if(lessonPassed) currentVisualIndex else (taskActions[currentTaskIndex].taskVisualIndex ?: 0)
+    lesson.onStop(project, lessonPassed, currentTaskIndex, visualIndex, internalProblems)
+    continueHighlighting.set(false)
+    clearRestore()
+    disposeRecorders()
+    hasBeenStopped = true
+    taskActions.clear()
   }
 
   fun stopLesson() {
@@ -168,15 +176,7 @@ internal class LessonExecutor(val lesson: KLesson,
 
   fun startLesson() {
     addAllInactiveMessages()
-    if (lesson.properties.canStartInDumbMode) {
-      processNextTask(0)
-    }
-    else {
-      DumbService.getInstance(project).runWhenSmart {
-        if (!hasBeenStopped)
-          processNextTask(0)
-      }
-    }
+    processNextTask(0)
   }
 
   inline fun invokeInBackground(crossinline runnable: () -> Unit) {
@@ -206,8 +206,8 @@ internal class LessonExecutor(val lesson: KLesson,
     // Good example: track of rename refactoring
     taskInvokeLater(ModalityState.any()) {
       disposeRecorders()
-      continuePreviousHighlighting.set(false)
-      continuePreviousHighlighting = Ref(true)
+      continueHighlighting.set(false)
+      continueHighlighting = Ref(true)
       currentTaskIndex = taskIndex
       processNextTask2()
     }
@@ -218,7 +218,6 @@ internal class LessonExecutor(val lesson: KLesson,
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (currentTaskIndex == taskActions.size) {
       LessonManager.instance.passLesson(lesson)
-      disposeRecorders()
       return
     }
     val taskInfo = taskActions[currentTaskIndex]
@@ -257,7 +256,13 @@ internal class LessonExecutor(val lesson: KLesson,
     val taskContext = TaskContextImpl(this, recorder, currentTaskIndex, taskCallbackData)
     taskContext.apply(taskContent)
     if (taskCallbackData.highlightPreviousUi == true) {
-      rehighlightPreviousComponent()
+      val taskInfo = taskActions[currentTaskIndex]
+      rehighlightFoundComponent(taskInfo.userVisibleInfo?.ui, taskInfo.rehighlightComponent)
+    }
+
+    taskActions[currentTaskIndex].let {
+      it.transparentRestore = taskCallbackData.transparentRestore
+      it.highlightPreviousUi = taskCallbackData.highlightPreviousUi
     }
 
     if (taskContext.steps.isEmpty()) {
@@ -270,15 +275,18 @@ internal class LessonExecutor(val lesson: KLesson,
     processTestActions(taskContext)
   }
 
-  private fun rehighlightPreviousComponent() {
-    val taskInfo = taskActions[currentTaskIndex]
-    val function = taskInfo.rehighlightComponent ?: return
-    val condition = continuePreviousHighlighting
+  /**
+   * Will update the highlighting implemented in [highlightingFunction] if provided [component] is null or not showing
+   * Rehighlighting will be stopped at the start of the next task (or after lesson end)
+   */
+  internal fun rehighlightFoundComponent(component: Component?, highlightingFunction: (() -> Component?)?) {
+    if (highlightingFunction == null) return
+    val condition = continueHighlighting
     ApplicationManager.getApplication().executeOnPooledThread {
-      var ui = taskInfo.userVisibleInfo?.ui
+      var ui = component
       while (ActionUpdateEdtExecutor.computeOnEdt { condition.get() } == true) {
-        if (ui == null || !ui.isValid || !ui.isShowing) {
-          ui = function()
+        if (ui == null || !ui.isShowing || ui.bounds.isEmpty) {
+          ui = highlightingFunction()
         }
         Thread.sleep(300)
       }
@@ -296,6 +304,7 @@ internal class LessonExecutor(val lesson: KLesson,
 
   internal fun applyRestore(taskContext: TaskContextImpl, restoreId: TaskContext.TaskId? = null) {
     clearRestore()
+    disposeRecorders()
     taskContext.steps.forEach { it.cancel(true) }
     val restoreIndex = restoreId?.idx ?: taskActions[taskContext.taskIndex].restoreIndex
     for (info in taskActions.subList(restoreIndex + 1, taskActions.size)) {
@@ -305,7 +314,21 @@ internal class LessonExecutor(val lesson: KLesson,
       info.removeAfterDoneMessages.clear()
     }
     val restoreInfo = taskActions[restoreIndex]
-    restoreInfo.rehighlightComponent?.let { it() }
+    val rehighlightComponentFn = restoreInfo.rehighlightComponent
+    if (rehighlightComponentFn != null) {
+      val feature = CompletableFuture<Boolean>()
+      feature.whenCompleteAsync { _, _ -> invokeLater { finishRestore(restoreInfo, restoreIndex) } }
+      feature.completeOnTimeout(true, LearningUiUtil.defaultComponentSearchShortTimeout.duration(), TimeUnit.MILLISECONDS)
+      ApplicationManager.getApplication().executeOnPooledThread {
+        rehighlightComponentFn()
+        feature.complete(true)
+      }
+    } else {
+      finishRestore(restoreInfo, restoreIndex)
+    }
+  }
+
+  private fun finishRestore(restoreInfo: TaskInfo, restoreIndex: Int) {
     LessonManager.instance.resetMessagesNumber(restoreInfo.messagesNumberBeforeStart)
 
     StatisticBase.logRestorePerformed(lesson, currentTaskIndex)
@@ -337,14 +360,18 @@ internal class LessonExecutor(val lesson: KLesson,
           }
         }
       }
-      if (taskData.delayMillis == 0) {
+      if (taskData.delayBeforeRestore == 0) {
         restoreIfNeeded()
       }
       else {
-        Alarm().addRequest(restoreIfNeeded, taskData.delayMillis)
+        Alarm().addRequest(restoreIfNeeded, taskData.delayBeforeRestore)
       }
     }
     currentRestoreFuture = restoreRecorder.futureCheck { checkFunction(); false }
+    taskData.checkRestoreByTimer?.let {
+      restoreRecorder.timerCheck(it) { checkFunction(); false }
+    }
+    ?: checkFunction() // In case of regular restore check we need to check that restore should be performed just after another restore
   }
 
   private fun clearRestore() {
@@ -358,10 +385,6 @@ internal class LessonExecutor(val lesson: KLesson,
   private fun chainNextTask(taskContext: TaskContextImpl,
                             recorder: ActionsRecorder,
                             taskData: TaskData) {
-    val taskInfo = taskActions[currentTaskIndex]
-    taskInfo.transparentRestore = taskData.transparentRestore
-    taskInfo.highlightPreviousUi = taskData.highlightPreviousUi
-
     checkForRestore(taskContext, taskData)
 
     recorder.tryToCheckCallback()
@@ -369,7 +392,7 @@ internal class LessonExecutor(val lesson: KLesson,
     taskContext.steps.forEach { step ->
       step.thenAccept {
         try {
-          stepHasBeenCompleted(taskContext, taskInfo)
+          stepHasBeenCompleted(taskContext, taskActions[currentTaskIndex])
         }
         catch (e: Throwable) {
           thisLogger().error("Step exception: ", e)
@@ -380,12 +403,16 @@ internal class LessonExecutor(val lesson: KLesson,
 
   private fun stepHasBeenCompleted(taskContext: TaskContextImpl, taskInfo: TaskInfo) {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    if (!isTaskCompleted(taskContext)) return
+    // do not process the next step if step is not fully completed
+    // or lesson has been stopped during task completion (dialogs in Recent Files and Restore removed code lessons)
+    if (!isTaskCompleted(taskContext) || hasBeenStopped) return
 
     clearRestore()
     LessonManager.instance.passExercise()
-    if (foundComponent == null) foundComponent = taskInfo.userVisibleInfo?.ui
-    if (rehighlightComponent == null) rehighlightComponent = taskInfo.rehighlightComponent
+    if (taskContext.propagateHighlighting != false) {
+      if (foundComponent == null) foundComponent = taskInfo.userVisibleInfo?.ui
+      if (rehighlightComponent == null) rehighlightComponent = taskInfo.rehighlightComponent
+    }
     for (index in taskInfo.removeAfterDoneMessages) {
       LessonManager.instance.removeMessage(index)
     }
@@ -427,7 +454,8 @@ internal class LessonExecutor(val lesson: KLesson,
     // A little bit hacky here: visual index should be shown only for the first paragraph.
     // But it is passed here for all paragraphs.
     // But... LessonMessagePane will draw number only for the first active paragraph :)
-    LessonManager.instance.addMessage(text, !hasDetection, taskInfo.taskVisualIndex, useInternalParagraphStyle = removeAfterDone, textProperties = textProperties)
+    LessonManager.instance.addMessage(text, !hasDetection, taskInfo.taskVisualIndex, useInternalParagraphStyle = removeAfterDone,
+                                      textProperties = textProperties)
   }
 
   private fun addAllInactiveMessages() {

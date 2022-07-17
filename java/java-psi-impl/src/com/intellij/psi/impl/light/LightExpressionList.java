@@ -27,6 +27,16 @@ public class LightExpressionList extends LightElement implements PsiExpressionLi
   }
 
   @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitExpressionList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+
+  @Override
   public PsiExpression @NotNull [] getExpressions() {
     return myExpressions;
   }

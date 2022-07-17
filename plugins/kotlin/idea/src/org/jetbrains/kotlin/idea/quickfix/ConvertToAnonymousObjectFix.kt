@@ -10,16 +10,18 @@ import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticWithParameters3
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.intentions.SamConversionToAnonymousObjectIntention
+import org.jetbrains.kotlin.idea.intentions.SamConversionToAnonymousObjectIntention.Companion.typeParameters
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.tower.WrongResolutionToClassifier
 import org.jetbrains.kotlin.resolve.sam.getAbstractMembers
-import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
 
 class ConvertToAnonymousObjectFix(element: KtNameReferenceExpression) : KotlinQuickFixAction<KtNameReferenceExpression>(element) {
     override fun getFamilyName() = KotlinBundle.message("convert.to.anonymous.object")
@@ -30,10 +32,14 @@ class ConvertToAnonymousObjectFix(element: KtNameReferenceExpression) : KotlinQu
         val nameReference = element ?: return
         val call = nameReference.parent as? KtCallExpression ?: return
         val lambda = SamConversionToAnonymousObjectIntention.getLambdaExpression(call) ?: return
-        val functionDescriptor = nameReference.analyze().diagnostics.forElement(nameReference).firstNotNullResult {
+        val context = nameReference.analyze()
+        val functionDescriptor = context.diagnostics.forElement(nameReference).firstNotNullOfOrNull {
             if (it.factory == Errors.RESOLUTION_TO_CLASSIFIER) getFunctionDescriptor(Errors.RESOLUTION_TO_CLASSIFIER.cast(it)) else null
         } ?: return
-        SamConversionToAnonymousObjectIntention.convertToAnonymousObject(call, functionDescriptor, lambda)
+        val classDescriptor = functionDescriptor.containingDeclaration as? ClassDescriptor
+        val lambdaDescriptor = context[BindingContext.FUNCTION, lambda.functionLiteral]
+        val typeParameters = typeParameters(call, context, classDescriptor, functionDescriptor, lambdaDescriptor)
+        SamConversionToAnonymousObjectIntention.convertToAnonymousObject(call, typeParameters, functionDescriptor, lambda)
     }
 
     companion object : KotlinSingleIntentionActionFactory() {

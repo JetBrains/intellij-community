@@ -7,12 +7,15 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Experimental
 public interface ServiceEventListener {
   Topic<ServiceEventListener> TOPIC =
     Topic.create("services topic", ServiceEventListener.class, Topic.BroadcastDirection.TO_CHILDREN);
 
-  @ApiStatus.Internal
+  /**
+   * @deprecated has no effect since 2021.2, shall be removed in 2022.1
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   Object POLLING_RESET_TARGET = ObjectUtils.sentinel("pollingResetTarget");
 
   void handle(@NotNull ServiceEvent event);

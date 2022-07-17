@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 package my.sample
 
 fun test() {

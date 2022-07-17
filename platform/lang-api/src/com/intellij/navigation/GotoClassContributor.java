@@ -18,7 +18,7 @@ import java.util.List;
 public interface GotoClassContributor extends ChooseByNameContributor {
   
   @Nullable
-  String getQualifiedName(NavigationItem item);
+  String getQualifiedName(@NotNull NavigationItem item);
 
   @Nullable
   String getQualifiedNameSeparator();
@@ -30,6 +30,7 @@ public interface GotoClassContributor extends ChooseByNameContributor {
    * @see #getElementLanguage()
    */
   @NotNull
+  @Nls
   default String getElementKind() {
     return IdeBundle.message("go.to.class.kind.text");
   }

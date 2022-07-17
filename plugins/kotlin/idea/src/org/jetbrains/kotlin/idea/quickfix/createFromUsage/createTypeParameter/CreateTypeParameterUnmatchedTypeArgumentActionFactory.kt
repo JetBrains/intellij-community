@@ -5,11 +5,11 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.quickfix.KotlinIntentionActionFactoryWithDelegate
 import org.jetbrains.kotlin.idea.quickfix.QuickFixWithDelegateFactory
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.storage.StorageManager
 
@@ -48,7 +48,7 @@ object CreateTypeParameterUnmatchedTypeArgumentActionFactory :
         if (missingParameterCount <= 0) return null
 
         val scope = referencedDeclaration.getResolutionScope()
-        val suggestedNames = KotlinNameSuggester.suggestNamesForTypeParameters(
+        val suggestedNames = Fe10KotlinNameSuggester.suggestNamesForTypeParameters(
             missingParameterCount,
             CollectingNameValidator(referencedDeclaration.typeParameters.mapNotNull { it.name }) {
                 scope.findClassifier(Name.identifier(it), NoLookupLocation.FROM_IDE) == null
@@ -68,11 +68,11 @@ object CreateTypeParameterUnmatchedTypeArgumentActionFactory :
     override fun createFixes(
         originalElementPointer: SmartPsiElementPointer<KtTypeArgumentList>,
         diagnostic: Diagnostic,
-        quickFixDataFactory: () -> CreateTypeParameterData?
+        quickFixDataFactory: (KtTypeArgumentList) -> CreateTypeParameterData?
     ): List<QuickFixWithDelegateFactory> {
         return QuickFixWithDelegateFactory factory@{
             val originalElement = originalElementPointer.element ?: return@factory null
-            val data = quickFixDataFactory() ?: return@factory null
+            val data = quickFixDataFactory(originalElement) ?: return@factory null
             CreateTypeParameterFromUsageFix(originalElement, data, false)
         }.let(::listOf)
     }

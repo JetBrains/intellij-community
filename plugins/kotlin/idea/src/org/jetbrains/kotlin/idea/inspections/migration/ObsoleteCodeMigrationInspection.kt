@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections.migration
 
@@ -8,20 +8,21 @@ import com.intellij.codeInspection.actions.RunInspectionIntention
 import com.intellij.codeInspection.ex.InspectionManagerEx
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolWrapper
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.configuration.MigrationInfo
-import org.jetbrains.kotlin.idea.configuration.isLanguageVersionUpdate
-import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.migration.MigrationInfo
+import org.jetbrains.kotlin.idea.migration.isLanguageVersionUpdate
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -36,13 +37,15 @@ internal abstract class ObsoleteCodeMigrationInspection : AbstractKotlinInspecti
     }
 
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid {
+        val reporters = problemReporters
+
         return simpleNameExpressionVisitor(fun(simpleNameExpression) {
             val versionIsSatisfied = simpleNameExpression.languageVersionSettings.languageVersion >= toVersion
-            if (!versionIsSatisfied && !ApplicationManager.getApplication().isUnitTestMode) {
+            if (!versionIsSatisfied && !isUnitTestMode()) {
                 return
             }
 
-            for (reporter in problemReporters) {
+            for (reporter in reporters) {
                 if (reporter.report(holder, isOnTheFly, simpleNameExpression)) {
                     return
                 }
@@ -88,7 +91,7 @@ internal abstract class ObsoleteCodeInWholeProjectFix : LocalQuickFix {
 
     // Overcome failure during profile creating because of absent tools in tests
     private inline fun <T> runInInspectionProfileInitMode(runnable: () -> T): T {
-        return if (!ApplicationManager.getApplication().isUnitTestMode) {
+        return if (!isUnitTestMode()) {
             runnable()
         } else {
             val old = InspectionProfileImpl.INIT_INSPECTIONS
@@ -122,6 +125,7 @@ internal abstract class ObsoleteImportsUsageReporter : ObsoleteCodeProblemReport
     protected open val importsToRemove: Set<String> = emptySet()
 
     protected abstract val wholeProjectFix: LocalQuickFix
+    @Nls
     protected abstract fun problemMessage(): String
 
     protected abstract fun wrapFix(fix: ObsoleteCodeFix): LocalQuickFix

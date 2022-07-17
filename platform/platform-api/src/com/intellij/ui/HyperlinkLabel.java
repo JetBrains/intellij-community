@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -13,7 +13,10 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleAction;
 import javax.accessibility.AccessibleContext;
@@ -34,7 +37,7 @@ import java.io.StringReader;
 import java.util.List;
 
 public class HyperlinkLabel extends HighlightableComponent {
-  private static final TextAttributes BOLD_ATTRIBUTES = new TextAttributes(new JBColor(() -> {
+  private static final TextAttributes BOLD_ATTRIBUTES = new TextAttributes(JBColor.lazy(() -> {
     final Color foreground1 = UIUtil.getLabelTextForeground();
     return foreground1 == null ? UIUtil.getLabelForeground() : foreground1;
   }), null, null, null, Font.BOLD);
@@ -92,14 +95,13 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   /**
-   * @deprecated please use {@link HyperlinkLabel#setTextWithHyperlink(String) with "beforeLinkText<hyperlink>linkText</hyperlink>" instead}
+   * @deprecated please use {@link HyperlinkLabel#setTextWithHyperlink(String) with "beforeLinkText<hyperlink>linkText</hyperlink>afterLinkText" instead}
    */
   @Deprecated
   public void setHyperlinkText(@LinkLabel String beforeLinkText, @LinkLabel String linkText, @LinkLabel String afterLinkText) {
     doSetHyperLinkText(beforeLinkText, linkText, afterLinkText);
   }
 
-  @ApiStatus.Experimental
   public void setTextWithHyperlink(@NotNull @LinkLabel String text) {
     int startTagOffset = text.indexOf(startTag);
     if (startTagOffset == -1){
@@ -303,7 +305,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   private void applyFont() {
-    setFont(myFontSize == null ? UIUtil.getLabelFont() : UIUtil.getLabelFont(myFontSize));
+    setFont(myFontSize == null ? StartupUiUtil.getLabelFont() : UIUtil.getLabelFont(myFontSize));
   }
 
   @Override
@@ -312,6 +314,12 @@ public class HyperlinkLabel extends HighlightableComponent {
       accessibleContext = new AccessibleHyperlinkLabel();
     }
     return accessibleContext;
+  }
+
+  @Override
+  public void removeNotify() {
+    myMouseHover = false;
+    super.removeNotify();
   }
 
   /**

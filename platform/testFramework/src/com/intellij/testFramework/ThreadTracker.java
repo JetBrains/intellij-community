@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -13,8 +13,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexImpl;
+import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.util.FlushingDaemon;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexEx;
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.NettyUtil;
 import org.junit.Assert;
 
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
@@ -36,36 +35,22 @@ public final class ThreadTracker {
 
   // contains prefixes of the thread names which are known to be long-running (and thus exempted from the leaking threads detection)
   private static final Set<String> wellKnownOffenders;
-  private static final Method getThreads = Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads"));
 
   private final Map<String, Thread> before;
   private final boolean myDefaultProjectInitialized;
 
   @TestOnly
   public ThreadTracker() {
-    before = getThreads();
+    before = ThreadUtil.getThreads();
     myDefaultProjectInitialized = ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized();
   }
 
+  /**
+   * @deprecated moved to {@link ThreadUtil#getThreads()}
+   */
+  @Deprecated
   public static @NotNull Map<String, Thread> getThreads() {
-    Thread[] threads;
-    try {
-      // faster than Thread.getAllStackTraces().keySet()
-      threads = (Thread[])getThreads.invoke(null);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-
-    if (threads.length == 0) {
-      return Collections.emptyMap();
-    }
-
-    Map<String, Thread> map = new HashMap<>(threads.length);
-    for (Thread thread : threads) {
-      map.put(thread.getName(), thread);
-    }
-    return map;
+    return ThreadUtil.getThreads();
   }
 
   static {
@@ -74,12 +59,14 @@ public final class ThreadTracker {
       "AWT-Shutdown",
       "AWT-Windows",
       "Batik CleanerThread",
+      "Cidr Symbol Building Thread", // ForkJoinPool com.jetbrains.cidr.lang.symbols.symtable.building.OCBuildingActivityExecutionService
       "Cleaner-0", // Thread[Cleaner-0,8,InnocuousThreadGroup], java.lang.ref.Cleaner in android layoutlib, Java9+
       "CompilerThread0",
       "dockerjava-netty",
       "External compiler",
       "Finalizer",
       FlushingDaemon.NAME,
+      "HttpClient-", // any usage of HttpClient (from JDK) may leave a thread pool. It's ok since it's not supposed to be disposed to reuse connections
       "IDEA Test Case Thread",
       "Image Fetcher ",
       "InnocuousThreadGroup",
@@ -94,6 +81,7 @@ public final class ThreadTracker {
       "ObjectCleanerThread",
       "OkHttp ConnectionPool", // Dockers okhttp3.internal.connection.RealConnectionPool
       "Okio Watchdog", // Dockers "okio.AsyncTimeout.Watchdog"
+      "rd throttler", // daemon thread created by com.jetbrains.rd.util.AdditionalApiKt.getTimer
       "Reference Handler",
       "RMI GC Daemon",
       "RMI TCP ",
@@ -155,7 +143,7 @@ public final class ThreadTracker {
       }
 
       // compare threads by name because BoundedTaskExecutor reuses application thread pool for different bounded pools, leaks of which we want to find
-      Map<String, Thread> all = getThreads();
+      Map<String, Thread> all = ThreadUtil.getThreads();
       Map<String, Thread> after = new HashMap<>(all);
       after.keySet().removeAll(before.keySet());
       Map<Thread, StackTraceElement[]> stackTraces = ContainerUtil.map2Map(after.values(), thread -> new Pair<>(thread, thread.getStackTrace()));
@@ -338,7 +326,7 @@ public final class ThreadTracker {
   public static void awaitJDIThreadsTermination(int timeout, @NotNull TimeUnit unit) {
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() < start + unit.toMillis(timeout)) {
-      Thread jdiThread = ContainerUtil.find(getThreads().values(), thread -> {
+      Thread jdiThread = ContainerUtil.find(ThreadUtil.getThreads().values(), thread -> {
         ThreadGroup group = thread.getThreadGroup();
         return group != null && group.getParent() != null && "JDI main".equals(group.getParent().getName());
       });

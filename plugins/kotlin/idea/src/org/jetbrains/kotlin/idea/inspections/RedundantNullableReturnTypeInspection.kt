@@ -1,32 +1,40 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.isOverridable
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.resolve.frontendService
+import org.jetbrains.kotlin.idea.util.isEffectivelyActual
+import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunctionDescriptor
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory
+import org.jetbrains.kotlin.resolve.jvm.annotations.TRANSIENT_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
 
-class RedundantNullableReturnTypeInspection : AbstractKotlinInspection() {
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
+class RedundantNullableReturnTypeInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
         override fun visitNamedFunction(function: KtNamedFunction) {
             check(function)
@@ -43,13 +51,14 @@ class RedundantNullableReturnTypeInspection : AbstractKotlinInspection() {
             if (typeElement.innerType == null) return
             val questionMark = typeElement.questionMarkNode as? LeafPsiElement ?: return
 
-            if (declaration.isOverridable()) return
+            if (declaration.isOverridable() || declaration.isExpectDeclaration() || declaration.isEffectivelyActual()) return
 
             val (body, targetDeclaration) = when (declaration) {
                 is KtNamedFunction -> {
                     val body = declaration.bodyExpression
                     if (body != null) body to declaration else null
                 }
+
                 is KtProperty -> {
                     val initializer = declaration.initializer
                     val getter = declaration.accessors.singleOrNull { it.isGetter }
@@ -60,9 +69,13 @@ class RedundantNullableReturnTypeInspection : AbstractKotlinInspection() {
                         else -> null
                     }
                 }
+
                 else -> null
             } ?: return
-            val actualReturnTypes = body.actualReturnTypes(targetDeclaration)
+            val context = body.analyze()
+            val declarationDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, targetDeclaration] ?: return
+            if (declarationDescriptor.hasJvmTransientAnnotation()) return
+            val actualReturnTypes = body.actualReturnTypes(context, declarationDescriptor)
             if (actualReturnTypes.isEmpty() || actualReturnTypes.any { it.isNullable() }) return
 
             val declarationName = declaration.nameAsSafeName.asString()
@@ -80,15 +93,16 @@ class RedundantNullableReturnTypeInspection : AbstractKotlinInspection() {
         }
     }
 
+    private fun DeclarationDescriptor.hasJvmTransientAnnotation() =
+        (this as? PropertyDescriptor)?.backingField?.annotations?.findAnnotation(TRANSIENT_ANNOTATION_FQ_NAME) != null
+
     @OptIn(FrontendInternals::class)
-    private fun KtExpression.actualReturnTypes(declaration: KtDeclaration): List<KotlinType> {
-        val context = analyze()
-        val declarationDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, declaration] ?: return emptyList()
+    private fun KtExpression.actualReturnTypes(context: BindingContext, declarationDescriptor: DeclarationDescriptor): List<KotlinType> {
         val dataFlowValueFactory = getResolutionFacade().frontendService<DataFlowValueFactory>()
         val moduleDescriptor = findModuleDescriptor()
         val languageVersionSettings = languageVersionSettings
         val returnTypes = collectDescendantsOfType<KtReturnExpression> {
-            it.labelQualifier == null && it.getTargetFunctionDescriptor(context) == declarationDescriptor
+            it.getTargetFunctionDescriptor(context) == declarationDescriptor
         }.flatMap {
             it.returnedExpression.types(context, dataFlowValueFactory, moduleDescriptor, languageVersionSettings)
         }

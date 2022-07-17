@@ -3,9 +3,11 @@ package com.intellij.jarRepository;
 
 import com.intellij.CommonBundle;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.services.MavenRepositoryServicesManager;
-import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
@@ -82,8 +84,11 @@ public final class JarRepositoryManager {
   }
 
   private static final class JobExecutor {
-    static final ExecutorService INSTANCE = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("RemoteLibraryDownloader");
+    static final ExecutorService INSTANCE = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("RemoteLibraryDownloader",
+                                                                                                           ProcessIOExecutorService.INSTANCE);
   }
+
+  public static NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Repository");
 
   public static boolean hasRunningTasks() {
     return ourTasksInProgress.get() > 0;   // todo: count tasks on per-project basis?
@@ -338,7 +343,7 @@ public final class JarRepositoryManager {
       sb.append(root.getFile().getName());
     }
     @NlsSafe final String content = sb.toString();
-    Notifications.Bus.notify(new Notification("Repository", title, content, NotificationType.INFORMATION), project);
+    Notifications.Bus.notify(GROUP.createNotification(title, content, NotificationType.INFORMATION), project);
   }
 
   public static void searchArtifacts(Project project,
@@ -460,7 +465,7 @@ public final class JarRepositoryManager {
   }
 
   @NotNull
-  private static <T> Promise<T> submitBackgroundJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
+  public static <T> Promise<T> submitBackgroundJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
     ModalityState startModality = ModalityState.defaultModalityState();
     AsyncPromise<T> promise = new AsyncPromise<>();
     JobExecutor.INSTANCE.execute(() -> {
@@ -571,6 +576,7 @@ public final class JarRepositoryManager {
     final List<OrderRoot> result = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     for (Artifact each : artifacts) {
+      long ms = System.currentTimeMillis();
       try {
         File repoFile = each.getFile();
         File toFile = repoFile;
@@ -592,6 +598,11 @@ public final class JarRepositoryManager {
       }
       catch (IOException e) {
         LOG.warn(e);
+      }
+      finally {
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Artifact " + each.toString() + " refreshed in " + (System.currentTimeMillis() - ms) + "ms");
+        }
       }
     }
     return result;
@@ -628,10 +639,13 @@ public final class JarRepositoryManager {
 
     @Override
     protected Collection<Artifact> perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception {
+      long ms = System.currentTimeMillis();
       final String version = myDesc.getVersion();
       try {
-        return manager.resolveDependencyAsArtifact(myDesc.getGroupId(), myDesc.getArtifactId(), version, myKinds,
-                                                   myDesc.isIncludeTransitiveDependencies(), myDesc.getExcludedDependencies());
+        Collection<Artifact> artifacts = manager.resolveDependencyAsArtifact(myDesc.getGroupId(), myDesc.getArtifactId(), version, myKinds,
+                                                                             myDesc.isIncludeTransitiveDependencies(),
+                                                                             myDesc.getExcludedDependencies());
+        return artifacts;
       }
       catch (TransferCancelledException e) {
         throw new ProcessCanceledException(e);
@@ -650,6 +664,11 @@ public final class JarRepositoryManager {
         }
         catch (TransferCancelledException e1) {
           throw new ProcessCanceledException(e1);
+        }
+      }
+      finally {
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Artifact " + myDesc + " resolved in " + (System.currentTimeMillis() - ms) + "ms");
         }
       }
     }

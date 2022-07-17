@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.project.Project;
@@ -73,6 +73,9 @@ public final class CommitPresentationUtil {
           result.append("&nbsp;");
         }
       }
+      else if (text.charAt(i) == '\t') {
+        result.append("&nbsp;&nbsp;&nbsp;&nbsp;");
+      }
       else {
         result.append(text.charAt(i));
       }
@@ -131,8 +134,7 @@ public final class CommitPresentationUtil {
     Font font = getCommitMessageFont();
     Convertor<String, String> convertor = s -> replaceHashes(s, resolvedHashes);
 
-    int separator = fullMessage.indexOf("\n\n");
-    String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
+    String subject = getSubject(fullMessage);
     String description = fullMessage.substring(subject.length());
     if (subject.contains("\n")) {
       // subject has new lines => that is not a subject
@@ -167,6 +169,13 @@ public final class CommitPresentationUtil {
            formatText(project, subject, font, Font.BOLD, convertor) +
            "</b>" +
            formatText(project, description, font, font.getStyle(), convertor);
+  }
+
+  @NotNull
+  @NlsSafe
+  public static String getSubject(@NotNull @NlsSafe String fullMessage) {
+    int separator = fullMessage.indexOf("\n\n");
+    return separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
   }
 
   public static boolean isSubjectMarginEnabled(@NotNull Project project) {

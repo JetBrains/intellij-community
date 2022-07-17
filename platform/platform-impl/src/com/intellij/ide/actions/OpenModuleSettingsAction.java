@@ -2,10 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,6 +20,11 @@ public class OpenModuleSettingsAction extends EditSourceAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   protected static boolean isModuleInProjectViewPopup(@NotNull AnActionEvent e) {
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(e.getPlace())) {
       return isModuleInContext(e);
@@ -32,7 +34,7 @@ public class OpenModuleSettingsAction extends EditSourceAction {
 
   public static boolean isModuleInContext(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
-    final Module module = e.getData(LangDataKeys.MODULE);
+    final Module module = e.getData(PlatformCoreDataKeys.MODULE);
     if (project != null && module != null) {
       final VirtualFile moduleFolder = e.getData(CommonDataKeys.VIRTUAL_FILE);
       if (moduleFolder == null) {

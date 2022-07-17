@@ -1,0 +1,7 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.gotoSuper language="kotlin" implementationClass="org.jetbrains.kotlin.idea.fir.codeInsight.handlers.HLGotoSuperActionHandler"/>
+  </extensions>
+
+</idea-plugin>

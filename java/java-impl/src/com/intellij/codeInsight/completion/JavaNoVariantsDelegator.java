@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.JavaCompletionUtil.JavaLookupElementHighlighter;
 import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
@@ -150,6 +151,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
     String fullPrefix = parent.getText().substring(0, parameters.getOffset() - parent.getTextRange().getStartOffset());
     CompletionResultSet qualifiedCollector = result.withPrefixMatcher(fullPrefix);
     ElementFilter filter = JavaCompletionContributor.getReferenceFilter(position);
+    JavaLookupElementHighlighter highlighter = JavaCompletionUtil.getHighlighterForPlace(position);
     for (LookupElement base : suggestQualifierItems(parameters, (PsiJavaCodeReferenceElement)qualifier, filter)) {
       PsiType type = JavaCompletionUtil.getLookupElementType(base);
       if (type != null && !PsiType.VOID.equals(type)) {
@@ -158,8 +160,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
         if (ref != null) {
           for (LookupElement item : JavaSmartCompletionContributor.completeReference(position, ref, filter, true, true, parameters,
                                                                                      result.getPrefixMatcher())) {
-            LookupElement chain =
-              JavaCompletionUtil.highlightIfNeeded(null, new JavaChainLookupElement(base, item, separator), item.getObject(), position);
+            LookupElement chain = highlighter.highlightIfNeeded(null, new JavaChainLookupElement(base, item, separator), item.getObject());
             if (JavaCompletionContributor.shouldInsertSemicolon(position)) {
               chain = TailTypeDecorator.withTail(chain, TailType.SEMICOLON);
             }
@@ -205,12 +206,13 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
 
   static void suggestNonImportedClasses(CompletionParameters parameters, CompletionResultSet result, @Nullable JavaCompletionSession session) {
     List<LookupElement> sameNamedBatch = new ArrayList<>();
+    PsiElement position = parameters.getPosition();
+    JavaLookupElementHighlighter highlighter = JavaCompletionUtil.getHighlighterForPlace(position);
     JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 2, result.getPrefixMatcher(), element -> {
       if (session != null && session.alreadyProcessed(element)) {
         return;
       }
       JavaPsiClassReferenceElement classElement = element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
-      PsiElement position = parameters.getPosition();
       if (classElement != null && parameters.getInvocationCount() < 2) {
         if (JavaClassNameCompletionContributor.AFTER_NEW.accepts(position) &&
             JavaPsiClassReferenceElement.isInaccessibleConstructorSuggestion(position, classElement.getObject())) {
@@ -219,7 +221,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
         classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
       }
 
-      element = JavaCompletionUtil.highlightIfNeeded(null, element, element.getObject(), position);
+      element = highlighter.highlightIfNeeded(null, element, element.getObject());
       if (!sameNamedBatch.isEmpty() && !element.getLookupString().equals(sameNamedBatch.get(0).getLookupString())) {
         result.addAllElements(sameNamedBatch);
         sameNamedBatch.clear();

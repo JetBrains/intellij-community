@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
@@ -6,16 +6,16 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 
-internal class ParameterHintsSettingsMigration : StartupActivity {
+internal class ParameterHintsSettingsMigration : ProjectPostStartupActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      throw ExtensionNotApplicableException.INSTANCE
+      throw ExtensionNotApplicableException.create()
     }
   }
 
-  override fun runActivity(project: Project) {
+  override suspend fun execute(project: Project) {
     val editorSettingsExternalizable = EditorSettingsExternalizable.getInstance()
     if (!editorSettingsExternalizable.isShowParameterNameHints) {
       editorSettingsExternalizable.isShowParameterNameHints = true

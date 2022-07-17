@@ -5,9 +5,10 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.impl.ClassToIntConverter
 import com.intellij.workspaceModel.storage.impl.EntityId
+import com.intellij.workspaceModel.storage.impl.createEntityId
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -144,7 +145,7 @@ class VirtualFileIndexTest {
     ))
     val id = env.generate(Generator.integers(0, 100))
     
-    EntityId(id, ClassToIntConverter.getInt(clazz))
+    createEntityId(id, ClassToIntConverter.INSTANCE.getInt(clazz))
   }
 
   internal val propertyGenerator = Generator.from { env ->

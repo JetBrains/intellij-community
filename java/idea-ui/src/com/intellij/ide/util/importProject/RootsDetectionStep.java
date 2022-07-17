@@ -120,7 +120,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
   @Override
   protected void onFinished(final List<DetectedRootData> foundRoots, final boolean canceled) {
     final CardLayout layout = (CardLayout)myResultPanel.getLayout();
-    if (!foundRoots.isEmpty() && !canceled) {
+    if (foundRoots != null && !foundRoots.isEmpty() && !canceled) {
       myCurrentBaseProjectPath = getBaseProjectPath();
       myDetectedRootsChooser.setElements(foundRoots);
       updateSelectedTypes();

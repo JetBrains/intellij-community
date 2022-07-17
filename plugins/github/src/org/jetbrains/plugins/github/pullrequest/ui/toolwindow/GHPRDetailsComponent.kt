@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.project.Project
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.SideBorder
@@ -18,6 +19,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadStateAction
+import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.*
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTitleComponent
@@ -29,7 +31,8 @@ import javax.swing.JPanel
 
 internal object GHPRDetailsComponent {
 
-  fun create(securityService: GHPRSecurityService,
+  fun create(project: Project,
+             securityService: GHPRSecurityService,
              avatarIconsProvider: GHAvatarIconsProvider,
              branchesModel: GHPRBranchesModel,
              detailsModel: GHPRDetailsModel,
@@ -41,7 +44,7 @@ internal object GHPRDetailsComponent {
     val title = GHPRTitleComponent.create(detailsModel)
     val description = HtmlEditorPane().apply {
       detailsModel.addAndInvokeDetailsChangedListener {
-        setBody(detailsModel.description)
+        setBody(detailsModel.description.convertToHtml(project))
       }
     }
     val timelineLink = ActionLink(GithubBundle.message("pull.request.view.conversations.action")) {

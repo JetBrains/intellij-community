@@ -27,7 +27,7 @@ public final class LambdaHighlightingUtil {
 
   static @NlsContexts.DetailedDescription String checkInterfaceFunctional(@NotNull PsiClass psiClass, @NotNull @Nls String interfaceNonFunctionalMessage) {
     if (psiClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
-    final List<HierarchicalMethodSignature> signatures = LambdaUtil.findFunctionCandidates(psiClass);
+    List<HierarchicalMethodSignature> signatures = LambdaUtil.findFunctionCandidates(psiClass);
     if (signatures == null) return interfaceNonFunctionalMessage;
     if (signatures.isEmpty()) return JavaErrorBundle.message("no.target.method.found");
     if (signatures.size() == 1) {
@@ -39,7 +39,7 @@ public final class LambdaHighlightingUtil {
   static HighlightInfo checkParametersCompatible(@NotNull PsiLambdaExpression expression,
                                                  PsiParameter @NotNull [] methodParameters,
                                                  @NotNull PsiSubstitutor substitutor) {
-    final PsiParameter[] lambdaParameters = expression.getParameterList().getParameters();
+    PsiParameter[] lambdaParameters = expression.getParameterList().getParameters();
     if (lambdaParameters.length != methodParameters.length) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(expression.getParameterList())
@@ -53,8 +53,8 @@ public final class LambdaHighlightingUtil {
       PsiType substitutedParamType = substitutor.substitute(methodParameters[i].getType());
       if (hasFormalParameterTypes &&!PsiTypesUtil.compareTypes(lambdaParameterType, substitutedParamType, true) ||
           !TypeConversionUtil.isAssignable(substitutedParamType, lambdaParameterType)) {
-        final String expectedType = substitutedParamType != null ? substitutedParamType.getPresentableText() : null;
-        final String actualType = lambdaParameterType.getPresentableText();
+        String expectedType = substitutedParamType != null ? substitutedParamType.getPresentableText() : null;
+        String actualType = lambdaParameterType.getPresentableText();
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(expression.getParameterList())
           .descriptionAndTooltip(
@@ -75,10 +75,10 @@ public final class LambdaHighlightingUtil {
 
   public static @NlsContexts.DetailedDescription String checkInterfaceFunctional(@NotNull PsiType functionalInterfaceType) {
     if (functionalInterfaceType instanceof PsiIntersectionType) {
-      final Set<MethodSignature> signatures = new HashSet<>();
+      Set<MethodSignature> signatures = new HashSet<>();
       for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
         if (checkInterfaceFunctional(type) == null) {
-          final MethodSignature signature = LambdaUtil.getFunction(PsiUtil.resolveClassInType(type));
+          MethodSignature signature = LambdaUtil.getFunction(PsiUtil.resolveClassInType(type));
           LOG.assertTrue(signature != null, type.getCanonicalText());
           signatures.add(signature);
         }
@@ -89,8 +89,8 @@ public final class LambdaHighlightingUtil {
       }
       return null;
     }
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-    final PsiClass aClass = resolveResult.getElement();
+    PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    PsiClass aClass = resolveResult.getElement();
     if (aClass != null) {
       if (aClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
       MethodSignature functionalMethod = LambdaUtil.getFunction(aClass);

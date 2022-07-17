@@ -4,20 +4,24 @@ package com.intellij.grazie
 import com.intellij.grazie.grammar.LanguageToolChecker
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.utils.filterFor
 import com.intellij.lang.Language
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPlainText
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 abstract class GrazieTestBase : BasePlatformTestCase() {
   companion object {
     val inspectionTools by lazy { arrayOf(GrazieInspection(), SpellCheckingInspection()) }
-    val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN, Lang.RUSSIAN)
+    val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN, Lang.RUSSIAN, Lang.ITALIAN)
     val enabledRules = setOf("LanguageTool.EN.COMMA_WHICH")
   }
 
@@ -45,11 +49,21 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
       )
     }
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+
+    val newExtensions = TextChecker.allCheckers().map { if (it is LanguageToolChecker) LanguageToolChecker.TestChecker() else it }
+    ExtensionTestUtil.maskExtensions(ExtensionPointName("com.intellij.grazie.textChecker"), newExtensions, testRootDisposable)
   }
 
   override fun tearDown() {
-    GrazieConfig.update { GrazieConfig.State() }
-    super.tearDown()
+    try {
+      GrazieConfig.update { GrazieConfig.State() }
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   protected open fun runHighlightTestForFile(file: String) {
@@ -63,10 +77,9 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     return texts.flatMap { myFixture.configureByText("${it.hashCode()}.txt", it).filterFor<PsiPlainText>() }
   }
 
-  fun check(tokens: Collection<PsiElement>): List<LanguageToolChecker.Problem> {
+  fun check(tokens: Collection<PsiElement>): List<TextProblem> {
     return tokens.flatMap {
-      val text = TextExtractor.findTextAt(it, TextContent.TextDomain.ALL)
-      if (text == null) emptyList() else LanguageToolChecker.checkText(text)
+      TextExtractor.findTextsAt(it, TextContent.TextDomain.ALL).flatMap { text -> LanguageToolChecker().check(text) }
     }
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.ide.actions
 import com.intellij.diagnostic.DebugLogManager
 import com.intellij.diagnostic.DebugLogManager.DebugLogLevel
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -29,9 +30,12 @@ internal class DebugLogConfigureAction : DumbAwareAction() {
       logCustomizer.saveCategories(categories)
     }
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
 
 private const val TRACE_SUFFIX = ":trace"
+private const val ALL_SUFFIX = ":all"
 private val ALL_POSSIBLE_SEPARATORS = "[\n,;]+".toRegex()
 
 private class DebugLogConfigureDialog(project: Project, categories: List<DebugLogManager.Category>) : DialogWrapper(project, false) {
@@ -43,6 +47,7 @@ private class DebugLogConfigureDialog(project: Project, categories: List<DebugLo
       when (it.level) {
         DebugLogLevel.DEBUG -> it.category
         DebugLogLevel.TRACE -> "${it.category}$TRACE_SUFFIX"
+        DebugLogLevel.ALL -> "${it.category}$ALL_SUFFIX"
       }
     }
     title = IdeBundle.message("dialog.title.custom.debug.log.configuration")
@@ -51,7 +56,8 @@ private class DebugLogConfigureDialog(project: Project, categories: List<DebugLo
 
   override fun getDimensionServiceKey() = "#com.intellij.ide.actions.DebugLogConfigureAction"
 
-  override fun createNorthPanel() = JBLabel(XmlStringUtil.wrapInHtml(IdeBundle.message("label.enable.debug.level", TRACE_SUFFIX)))
+  override fun createNorthPanel() = JBLabel(
+    XmlStringUtil.wrapInHtml(IdeBundle.message("label.enable.debug.level", TRACE_SUFFIX, ALL_SUFFIX)))
 
   override fun createCenterPanel() = ScrollPaneFactory.createScrollPane(myTextArea)
 
@@ -66,6 +72,7 @@ private class DebugLogConfigureDialog(project: Project, categories: List<DebugLo
       .map {
         when {
           it.endsWith(TRACE_SUFFIX, ignoreCase = true) -> DebugLogManager.Category(it.dropLast(TRACE_SUFFIX.length), DebugLogLevel.TRACE)
+          it.endsWith(ALL_SUFFIX, ignoreCase = true) -> DebugLogManager.Category(it.dropLast(ALL_SUFFIX.length), DebugLogLevel.ALL)
           else -> DebugLogManager.Category(it, DebugLogLevel.DEBUG)
         }
       }

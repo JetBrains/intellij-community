@@ -101,9 +101,9 @@ def ipython_exec_code(code, globals, locals, debugger):
     res = code_executor.need_more(code)
 
     if res:
-        return True
+        return True, False
 
-    code_executor.add_exec(code, debugger)
+    more, exception_occurred = code_executor.add_exec(code, debugger)
 
     ipython = code_executor.interpreter.ipython
     for key in dict_keys(ipython.user_ns):
@@ -112,7 +112,7 @@ def ipython_exec_code(code, globals, locals, debugger):
         if key not in ipython.user_ns:
             locals.pop(key)
 
-    return False
+    return more, exception_occurred
 
 
 class ConsoleWriter(InteractiveInterpreter):
@@ -192,10 +192,10 @@ def console_exec(thread_id, frame_id, expression, dbg):
         enable_pytest_output()
 
     if IPYTHON:
-        need_more = ipython_exec_code(CodeFragment(expression), updated_globals, updated_globals, dbg)
+        need_more, exception_occurred = ipython_exec_code(CodeFragment(expression), updated_globals, updated_globals, dbg)
         if not need_more:
             update_frame_local_variables_and_save(frame, updated_globals)
-        return need_more
+        return need_more, exception_occurred
 
     interpreter = ConsoleWriter()
 
@@ -205,31 +205,31 @@ def console_exec(thread_id, frame_id, expression, dbg):
         except (OverflowError, SyntaxError, ValueError):
             # Case 1
             interpreter.showsyntaxerror()
-            return False
+            return False, True
         if code is None:
             # Case 2
-            return True
+            return True, False
     else:
         code = expression
 
     # Case 3
     code_executor = get_code_executor()
     code_executor.interruptable = True
+    exception_occurred = False
     try:
         # It is important that globals and locals we pass to the exec function are the same object.
         # Otherwise generator expressions can confuse their scope. Passing updated_globals dictionary seems to be a safe option here
         # because it contains globals and locals in the right precedence.
         # See: https://stackoverflow.com/questions/15866398/why-is-a-python-generator-confusing-its-scope-with-global-in-an-execd-script.
         Exec(code, updated_globals, updated_globals)
-    except SystemExit:
-        raise
     except:
         interpreter.showtraceback()
+        exception_occurred = True
     else:
         update_frame_local_variables_and_save(frame, updated_globals)
     finally:
         code_executor.interruptable = False
-    return False
+    return False, exception_occurred
 
 
 def interrupt_debug_console():

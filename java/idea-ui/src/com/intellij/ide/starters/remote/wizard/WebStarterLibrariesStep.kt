@@ -11,6 +11,7 @@ import com.intellij.ide.starters.shared.ui.SelectedLibrariesPanel
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.AbstractWizard
+import com.intellij.ide.wizard.withVisualPadding
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
@@ -23,8 +24,6 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
@@ -32,8 +31,6 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.io.HttpRequests
-import com.intellij.util.io.HttpRequests.RequestProcessor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
 import com.intellij.util.ui.UIUtil.DEFAULT_VGAP
@@ -44,9 +41,6 @@ import com.intellij.util.ui.update.Update
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.GridBagLayout
-import java.io.IOException
-import java.net.URLConnection
-import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
@@ -178,7 +172,7 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
         progressIndicator.text = JavaStartersBundle.message("message.state.downloading.template", moduleBuilder.presentableName)
 
         val downloadResult: DownloadResult? = try {
-          downloadResult(progressIndicator)
+          moduleBuilder.downloadResultInternal(progressIndicator)
         }
         catch (e: Exception) {
           logger<WebStarterLibrariesStep>().info(e)
@@ -196,60 +190,6 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
 
         starterContext.result = downloadResult
       }, JavaStartersBundle.message("message.state.preparing.template"), true, wizardContext.project)
-  }
-
-  @RequiresBackgroundThread
-  private fun downloadResult(progressIndicator: ProgressIndicator): DownloadResult {
-    val tempFile = FileUtil.createTempFile(moduleBuilder.builderId, ".tmp", true)
-    val log = logger<WebStarterLibrariesStep>()
-
-    val url = moduleBuilder.getGeneratorUrlInternal(starterContext.serverUrl, starterContext).toExternalForm()
-    log.info("Loading project from ${url}")
-
-    return HttpRequests
-      .request(url)
-      .userAgent(moduleBuilder.getUserAgentInternal())
-      .connectTimeout(10000)
-      .isReadResponseOnError(true)
-      .connect(RequestProcessor { request ->
-        val connection: URLConnection = try {
-          request.connection
-        }
-        catch (e: IOException) {
-          log.warn("Can't download project. Message (with headers info): " + HttpRequests.createErrorMessage(e, request, true))
-          throw IOException(HttpRequests.createErrorMessage(e, request, false), e)
-        }
-        catch (he: UnknownHostException) {
-          log.warn("Can't download project: " + he.message)
-          throw IOException(HttpRequests.createErrorMessage(he, request, false), he)
-        }
-
-        val contentType = connection.contentType
-        val contentDisposition = connection.getHeaderField("Content-Disposition")
-        val filename = getFilename(contentDisposition)
-        val isZip = StringUtil.isNotEmpty(contentType) && contentType.startsWith("application/zip")
-                    || filename.endsWith(".zip")
-        // Micronaut has broken content-type (it's "text") but zip-file as attachment
-        // (https://github.com/micronaut-projects/micronaut-starter/issues/268)
-
-        request.saveToFile(tempFile, progressIndicator)
-
-        DownloadResult(isZip, tempFile, filename)
-      })
-  }
-
-  @NlsSafe
-  private fun getFilename(contentDisposition: String?): String {
-    val filenameField = "filename="
-    if (StringUtil.isEmpty(contentDisposition)) return "unknown"
-
-    val startIdx = contentDisposition!!.indexOf(filenameField)
-    val endIdx = contentDisposition.indexOf(';', startIdx)
-    var fileName = contentDisposition.substring(startIdx + filenameField.length, if (endIdx > 0) endIdx else contentDisposition.length)
-    if (StringUtil.startsWithChar(fileName, '\"') && StringUtil.endsWithChar(fileName, '\"')) {
-      fileName = fileName.substring(1, fileName.length - 1)
-    }
-    return fileName
   }
 
   private fun loadFrameworkVersions() {

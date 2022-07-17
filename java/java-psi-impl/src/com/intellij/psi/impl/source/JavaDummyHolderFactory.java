@@ -30,44 +30,44 @@ import org.jetbrains.annotations.NotNull;
 public class JavaDummyHolderFactory implements HolderFactory {
   @NotNull
   @Override
-  public DummyHolder createHolder(@NotNull final PsiManager manager, final TreeElement contentElement, final PsiElement context) {
+  public DummyHolder createHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context) {
     return new JavaDummyHolder(manager, contentElement, context);
   }
 
   @NotNull
   @Override
-  public DummyHolder createHolder(@NotNull final PsiManager manager,
-                                  final TreeElement contentElement, final PsiElement context, final CharTable table) {
+  public DummyHolder createHolder(@NotNull PsiManager manager,
+                                  TreeElement contentElement, PsiElement context, CharTable table) {
     return new JavaDummyHolder(manager, contentElement, context, table);
   }
 
   @NotNull
   @Override
-  public DummyHolder createHolder(@NotNull final PsiManager manager, final PsiElement context) {
+  public DummyHolder createHolder(@NotNull PsiManager manager, PsiElement context) {
     return new JavaDummyHolder(manager, context);
   }
 
   @NotNull
   @Override
-  public DummyHolder createHolder(@NotNull final PsiManager manager, final Language language, final PsiElement context) {
+  public DummyHolder createHolder(@NotNull PsiManager manager, Language language, PsiElement context) {
     return language == JavaLanguage.INSTANCE ? new JavaDummyHolder(manager, context) : new DummyHolder(manager, language, context);
   }
 
   @NotNull
   @Override
-  public DummyHolder createHolder(@NotNull final PsiManager manager, final PsiElement context, final CharTable table) {
+  public DummyHolder createHolder(@NotNull PsiManager manager, PsiElement context, CharTable table) {
     return new JavaDummyHolder(manager, context, table);
   }
 
   @NotNull
   @Override
-  public DummyHolder createHolder(@NotNull final PsiManager manager, final CharTable table, final Language language) {
+  public DummyHolder createHolder(@NotNull PsiManager manager, CharTable table, Language language) {
     return new JavaDummyHolder(manager, table);
   }
 
   @NotNull
   @Override
-  public DummyHolder createHolder(@NotNull final PsiManager manager, final CharTable table, final boolean validity) {
+  public DummyHolder createHolder(@NotNull PsiManager manager, CharTable table, boolean validity) {
     return new JavaDummyHolder(manager, table, validity);
   }
 }

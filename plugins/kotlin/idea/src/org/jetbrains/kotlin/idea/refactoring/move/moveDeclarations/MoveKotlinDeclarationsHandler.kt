@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -16,15 +15,16 @@ import com.intellij.refactoring.move.MoveHandlerDelegate
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getPackage
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.KotlinAwareMoveFilesOrDirectoriesDialog
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.KotlinSelectNestedClassRefactoringDialog
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinNestedClassesDialog
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinTopLevelDeclarationsDialog
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.isEffectivelyActual
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -172,13 +172,13 @@ class MoveKotlinDeclarationsHandler internal constructor(private val handlerActi
             }
             val initialTargetDirectory = MoveFilesOrDirectoriesUtil.resolveToDirectory(project, initialTargetElement)
 
-            if (!ApplicationManager.getApplication().isUnitTestMode &&
+            if (!isUnitTestMode() &&
                 elementsToSearch.any { it.isExpectDeclaration() || it.isEffectivelyActual() }
             ) {
                 val message =
                     RefactoringBundle.getCannotRefactorMessage(KotlinBundle.message("text.move.declaration.proceed.move.without.mpp.counterparts.text"))
                 val title =
-                    RefactoringBundle.getCannotRefactorMessage(KotlinBundle.message("text.move.declaration.proceed.move.without.mpp.counterparts.title"))
+                    KotlinBundle.message("text.move.declaration.proceed.move.without.mpp.counterparts.title")
                 val proceedWithIncompleteRefactoring = Messages.showYesNoDialog(project, message, title, Messages.getWarningIcon())
                 if (proceedWithIncompleteRefactoring != Messages.YES) return true
             }
@@ -222,14 +222,13 @@ class MoveKotlinDeclarationsHandler internal constructor(private val handlerActi
                         handlerActions.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
                         return true
                     }
-                    @Suppress("UNCHECKED_CAST")
-                    handlerActions.invokeMoveKotlinNestedClassesRefactoring(
-                        project,
-                        elementsToSearch.filterIsInstance<KtClassOrObject>(),
-                        container,
-                        targetContainer,
-                        callback
-                    )
+                  handlerActions.invokeMoveKotlinNestedClassesRefactoring(
+                      project,
+                      elementsToSearch.filterIsInstance<KtClassOrObject>(),
+                      container,
+                      targetContainer,
+                      callback
+                  )
                     return true
                 }
                 handlerActions.invokeKotlinSelectNestedClassChooser(
@@ -310,4 +309,6 @@ class MoveKotlinDeclarationsHandler internal constructor(private val handlerActi
     }
 }
 
-private val MOVE_DECLARATIONS: String get() = KotlinBundle.message("text.move.declarations")
+private val MOVE_DECLARATIONS: String
+    @Nls
+    get() = KotlinBundle.message("text.move.declarations")

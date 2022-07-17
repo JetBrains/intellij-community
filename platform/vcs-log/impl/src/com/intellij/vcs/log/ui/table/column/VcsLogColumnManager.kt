@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.EventDispatcher
+import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider
 import java.util.*
 
 /**
@@ -50,6 +51,11 @@ internal class VcsLogColumnManager : Disposable {
       newColumn(column)
     }
 
+    registerCustomColumns()
+    registerProvidersColumns()
+  }
+
+  private fun registerCustomColumns() {
     val customColumnListener = object : ExtensionPointListener<VcsLogCustomColumn<*>> {
       override fun extensionAdded(extension: VcsLogCustomColumn<*>, pluginDescriptor: PluginDescriptor) {
         newColumn(extension)
@@ -60,6 +66,21 @@ internal class VcsLogColumnManager : Disposable {
       }
     }
     VcsLogCustomColumn.KEY.point.addExtensionPointListener(customColumnListener, true, this)
+  }
+
+  private fun registerProvidersColumns() {
+    val customColumnListener = object : ExtensionPointListener<VcsCommitExternalStatusProvider<*>> {
+      override fun extensionAdded(extension: VcsCommitExternalStatusProvider<*>, pluginDescriptor: PluginDescriptor) {
+        if (extension is VcsCommitExternalStatusProvider.WithColumn)
+          newColumn(extension.logColumn)
+      }
+
+      override fun extensionRemoved(extension: VcsCommitExternalStatusProvider<*>, pluginDescriptor: PluginDescriptor) {
+        if (extension is VcsCommitExternalStatusProvider.WithColumn)
+          forgetColumn(extension.logColumn)
+      }
+    }
+    VcsCommitExternalStatusProvider.EP.point.addExtensionPointListener(customColumnListener, true, this)
   }
 
   fun getModelIndex(column: VcsLogColumn<*>): Int = modelIndices[column.id]!!

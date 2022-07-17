@@ -19,11 +19,6 @@ public class LightEditLargeFileEncodingWidget extends LargeFileEncodingWidget im
   }
 
   @Override
-  protected void update() {
-    super.update();
-  }
-
-  @Override
   public @NotNull String ID() {
     return WIDGET_ID;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.dependencies;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,8 +15,7 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.transfer.TransferCancelledException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
-import org.jetbrains.idea.maven.aether.ProgressConsumer;
+import org.jetbrains.idea.maven.aether.*;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
@@ -51,13 +50,18 @@ import java.util.function.Consumer;
  * so this builder does nothing in normal cases. However it's needed when the build process is started in standalone mode (not from IDE) or
  * if build is triggered before IDE downloads all required dependencies.
  */
-public class DependencyResolvingBuilder extends ModuleLevelBuilder{
+public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(DependencyResolvingBuilder.class);
   private static final String MAVEN_REPOSITORY_PATH_VAR = "MAVEN_REPOSITORY";
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
 
-  private static final Key<ArtifactRepositoryManager> MANAGER_KEY = Key.create("_artifact_repository_manager_");
+  private static final Key<ArtifactRepositoryManager> MANAGER_KEY = GlobalContextKey.create("_artifact_repository_manager_");
   private static final Key<Exception> RESOLVE_ERROR_KEY = Key.create("_artifact_repository_resolve_error_");
+  public static final String RESOLUTION_PARALLELISM_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.parallelism";
+  public static final String RESOLUTION_RETRY_ENABLED_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.enabled";
+  public static final String RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.max.attempts";
+  public static final String RESOLUTION_RETRY_DELAY_MS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.delay.ms";
+  public static final String RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.backoff.limit.ms";
 
   public DependencyResolvingBuilder() {
     super(BuilderCategory.INITIAL);
@@ -142,11 +146,10 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   }
 
   private static void resolveMissingDependencies(
-    Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs,
-    Consumer<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> resolveAction
+    Collection<? extends JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs,
+    Consumer<? super JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> resolveAction
   ) throws Exception {
-    String key = "org.jetbrains.jps.incremental.dependencies.resolution.parallelism";
-    int parallelism = SystemProperties.getIntProperty(key, 1);
+    int parallelism = SystemProperties.getIntProperty(RESOLUTION_PARALLELISM_PROPERTY, 1);
     if (parallelism < 2 || libs.size() < 2) {
       libs.forEach(resolveAction);
     }
@@ -226,8 +229,10 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     private static final byte PROGRESS = 1;
     private static final byte FINISHED = 2;
     private byte myState = INITIAL;
+    private CanceledStatus myStatus;
 
-    synchronized boolean requestProcessing(final CanceledStatus cancelStatus) {
+    private synchronized boolean requestProcessing(final CanceledStatus cancelStatus) {
+      myStatus = cancelStatus;
       if (myState == INITIAL) {
         myState = PROGRESS;
         return true;
@@ -245,18 +250,18 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
       return false;
     }
 
-    synchronized void finish() {
+    private synchronized void finish() {
       if (myState != FINISHED) {
         myState = FINISHED;
         this.notifyAll();
       }
     }
 
-    static void init(CompileContext context) {
+    private static void init(CompileContext context) {
       context.putUserData(CONTEXT_KEY, new ConcurrentHashMap<>());
     }
 
-    static @NotNull ResourceGuard get(CompileContext context, JpsMavenRepositoryLibraryDescriptor descriptor) {
+    private static @NotNull ResourceGuard get(CompileContext context, JpsMavenRepositoryLibraryDescriptor descriptor) {
       final ConcurrentMap<JpsMavenRepositoryLibraryDescriptor, ResourceGuard> map = context.getUserData(CONTEXT_KEY);
       assert map != null;
       final ResourceGuard g = new ResourceGuard();
@@ -281,7 +286,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     return result;
   }
 
-  public static ArtifactRepositoryManager getRepositoryManager(final CompileContext context) {
+  public static synchronized ArtifactRepositoryManager getRepositoryManager(final CompileContext context) {
     ArtifactRepositoryManager manager = MANAGER_KEY.get(context);
     if (manager == null) {
 
@@ -292,6 +297,14 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
           ArtifactRepositoryManager.createRemoteRepository(repo.getId(), repo.getUrl(), obtainAuthenticationData(repo.getUrl()))
         );
       }
+      Retry retry = RetryProvider.disabled();
+      if (SystemProperties.getBooleanProperty(RESOLUTION_RETRY_ENABLED_PROPERTY, false)) {
+        long retryInitialDelay = SystemProperties.getLongProperty(RESOLUTION_RETRY_DELAY_MS_PROPERTY, 1000);
+        long retryBackoffLimit = SystemProperties.getLongProperty(RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY, TimeUnit.MINUTES.toMillis(15));
+        int retryMaxAttempts = SystemProperties.getIntProperty(RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY, 10);
+        retry = RetryProvider.withExponentialBackOff(retryInitialDelay, retryBackoffLimit, retryMaxAttempts);
+      }
+
       manager = new ArtifactRepositoryManager(getLocalArtifactRepositoryRoot(context.getProjectDescriptor().getModel().getGlobal()), repositories, new ProgressConsumer() {
         @Override
         public void consume(@NlsSafe String message) {
@@ -302,7 +315,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
         public boolean isCanceled() {
           return context.getCancelStatus().isCanceled();
         }
-      });
+      }, retry);
       // further init manager here
       MANAGER_KEY.set(context, manager);
     }
@@ -320,7 +333,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     return null;
   }
 
-  public static @NotNull File getLocalArtifactRepositoryRoot(@NotNull JpsGlobal global) {
+  private static @NotNull File getLocalArtifactRepositoryRoot(@NotNull JpsGlobal global) {
     final JpsPathVariablesConfiguration pvConfig = JpsModelSerializationDataService.getPathVariablesConfiguration(global);
     final String localRepoPath = pvConfig != null ? pvConfig.getUserVariableValue(MAVEN_REPOSITORY_PATH_VAR) : null;
     if (localRepoPath != null) {

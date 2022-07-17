@@ -15,10 +15,12 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
@@ -39,7 +41,12 @@ public class GitBranchesAction extends DumbAwareAction {
                                GitBranchUtil.getCurrentRepository(project) :
                                GitBranchUtil.getRepositoryOrGuess(project, file);
     if (repository != null) {
-      GitBranchPopup.getInstance(project, repository, e.getDataContext()).asListPopup().showCenteredInCurrentWindow(project);
+      if (Registry.is("git.branches.popup.tree", false)) {
+        GitBranchesTreePopup.show(project, repository);
+      }
+      else {
+        GitBranchPopup.getInstance(project, repository, e.getDataContext()).asListPopup().showCenteredInCurrentWindow(project);
+      }
     }
   }
 
@@ -47,5 +54,10 @@ public class GitBranchesAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     e.getPresentation().setEnabledAndVisible(project != null && !project.isDisposed());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

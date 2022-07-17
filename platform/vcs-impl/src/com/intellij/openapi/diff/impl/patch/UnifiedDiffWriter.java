@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.GitPatchWriter;
 import com.intellij.project.ProjectKt;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +57,8 @@ public final class UnifiedDiffWriter {
                            @Nullable CommitContext commitContext,
                            @Nullable List<PatchEP> patchEpExtensions) throws IOException {
     boolean forceUnixSeparators = shouldForceUnixLineSeparator(project);
-    String headerLineSeparator = forceUnixSeparators ? "\n" : lineSeparator;
+    String headerLineSeparator = forceUnixSeparators ? LineSeparator.LF.getSeparatorString()
+                                                     : lineSeparator;
 
     // write the patch files without content modifications strictly after the files with content modifications,
     // because GitPatchReader is not ready for mixed style patches
@@ -80,10 +82,8 @@ public final class UnifiedDiffWriter {
         }
       }
 
-      String fileContentLineSeparator = patch.getLineSeparator();
-      if (fileContentLineSeparator == null || forceUnixSeparators) {
-        fileContentLineSeparator = headerLineSeparator;
-      }
+      String fileContentLineSeparator = forceUnixSeparators ? LineSeparator.LF.getSeparatorString()
+                                                            : StringUtil.notNullize(patch.getLineSeparator(), headerLineSeparator);
 
       writeFileHeading(writer, basePath, patch, headerLineSeparator, additionalMap);
       for (PatchHunk hunk : patch.getHunks()) {

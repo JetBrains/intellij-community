@@ -19,7 +19,7 @@ public abstract class TestAnonymousClass {
          boolean var2 = true;// 54
       }// 55
    };
-   private final TestAnonymousClass.InnerRecursive y = new TestAnonymousClass.InnerRecursive(new TestAnonymousClass.InnerRecursive((TestAnonymousClass.InnerRecursive)null) {
+   private final InnerRecursive y = new InnerRecursive(new InnerRecursive((InnerRecursive)null) {
       void foo() {
          boolean var1 = true;// 75
          boolean var2 = true;// 76
@@ -31,7 +31,7 @@ public abstract class TestAnonymousClass {
       int j = 5;
       int o = 5;
    };
-   private final TestAnonymousClass.InnerRecursive x = new TestAnonymousClass.InnerRecursive(new TestAnonymousClass.InnerRecursive((TestAnonymousClass.InnerRecursive)null) {
+   private final InnerRecursive x = new InnerRecursive(new InnerRecursive((InnerRecursive)null) {
       void foo() {
          boolean var1 = true;// 90
          boolean var2 = true;// 91
@@ -46,7 +46,7 @@ public abstract class TestAnonymousClass {
 
    void foo(int var1) throws Exception {
       if (var1 > 0) {// 10
-         TestAnonymousClass.I var2 = new TestAnonymousClass.I() {
+         I var2 = new I() {
             public void foo() throws Exception {
                boolean var1 = true;// 13
                boolean var2 = true;// 14
@@ -68,9 +68,9 @@ public abstract class TestAnonymousClass {
    }// 40
 
    static class InnerRecursive {
-      TestAnonymousClass.InnerRecursive r;
+      InnerRecursive r;
 
-      public InnerRecursive(TestAnonymousClass.InnerRecursive var1) {
+      public InnerRecursive(InnerRecursive var1) {
          this.r = var1;// 105
       }// 106
 

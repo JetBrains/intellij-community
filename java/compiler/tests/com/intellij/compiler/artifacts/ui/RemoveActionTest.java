@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts.ui;
 
 import com.intellij.openapi.roots.libraries.Library;
@@ -42,7 +43,7 @@ public class RemoveActionTest extends ArtifactEditorTestCase {
   }
 
   public void testJarFileInLibrary() {
-    VirtualFile jDomJar = getJDomJar();
+    VirtualFile jDomJar = getFastUtilJar();
     final Library library = addProjectLibrary(null, "jdom", jDomJar);
     createEditor(addArtifact(root().lib(library)), true);
 

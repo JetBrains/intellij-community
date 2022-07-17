@@ -70,9 +70,7 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
                           new XObjectValue(variable.getValue(myTransformer, myCurrentNode));
 
       variables.add(new VariableImpl(name, value, global, kind, variable.getSystemId(), variable.getLineNumber()));
-    } catch (TransformerException e) {
-      debug(e);
-    } catch (Debugger.EvaluationException e) {
+    } catch (TransformerException | Debugger.EvaluationException e) {
       debug(e);
     }
   }

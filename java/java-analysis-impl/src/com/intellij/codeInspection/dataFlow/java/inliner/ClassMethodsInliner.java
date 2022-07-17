@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow.java.inliner;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
@@ -46,8 +47,10 @@ public class ClassMethodsInliner implements CallInliner {
       return true;
     }
     else if (IS_INSTANCE.matches(call)) {
+      PsiExpression arg = call.getArgumentList().getExpressions()[0];
       builder.pushExpression(qualifier)
-             .pushExpression(call.getArgumentList().getExpressions()[0])
+             .pushExpression(arg)
+             .boxUnbox(arg, PsiType.getJavaLangObject(call.getManager(), call.getResolveScope()))
              .swap()
              .isInstance(call);
       return true;

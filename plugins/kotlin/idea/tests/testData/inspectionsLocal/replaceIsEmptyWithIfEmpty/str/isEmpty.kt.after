@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 class Api(val name: String)
 
 fun test(api: Api) {

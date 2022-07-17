@@ -21,8 +21,6 @@ import java.util.Map;
 
 /**
  * Manages common code style settings for every language using them.
- *
- * @author Rustam Vishnyakov
  */
 final class CommonCodeStyleSettingsManager {
   private volatile Map<String, CommonCodeStyleSettings> myCommonSettingsMap;
@@ -213,7 +211,7 @@ final class CommonCodeStyleSettingsManager {
         final Language language = Language.findLanguageByID(id);
         if (language != null && myCommonSettingsMap.containsKey(id)) {
           final CommonCodeStyleSettings commonSettings = myCommonSettingsMap.get(id);
-          LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(language);
+          LanguageCodeStyleProvider provider = LanguageCodeStyleProvider.forLanguage(language);
           if (provider != null) {
             Element commonSettingsElement = writeCommonSettings(id, commonSettings, provider);
             if (!commonSettingsElement.getChildren().isEmpty()) {

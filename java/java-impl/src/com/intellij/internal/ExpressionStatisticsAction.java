@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -20,7 +21,18 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExpressionStatisticsAction extends AnAction {
+final class ExpressionStatisticsAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
@@ -83,7 +95,7 @@ public class ExpressionStatisticsAction extends AnAction {
   @NotNull
   private static List<VirtualFile> collectJavaFiles(VirtualFile dir, Project project) {
     final List<VirtualFile> javaFiles = new ArrayList<>();
-    ProjectFileIndex.SERVICE.getInstance(project).iterateContentUnderDirectory(dir, file -> {
+    ProjectFileIndex.getInstance(project).iterateContentUnderDirectory(dir, file -> {
       if (file.getName().endsWith(".java")) {
         javaFiles.add(file);
       }

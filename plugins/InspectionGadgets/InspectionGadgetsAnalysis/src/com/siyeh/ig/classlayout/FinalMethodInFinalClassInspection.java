@@ -16,7 +16,7 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -25,7 +25,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import org.jetbrains.annotations.NotNull;
 
-public class FinalMethodInFinalClassInspection extends BaseInspection {
+public class FinalMethodInFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
@@ -67,7 +67,7 @@ public class FinalMethodInFinalClassInspection extends BaseInspection {
       for (final PsiElement child : children) {
         final String text = child.getText();
         if (PsiModifier.FINAL.equals(text)) {
-          registerError(child, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+          registerError(child);
         }
       }
     }

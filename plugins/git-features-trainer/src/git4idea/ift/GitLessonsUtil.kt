@@ -1,21 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ift
 
 import com.intellij.dvcs.push.VcsPushAction
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.vcs.BranchChangeListener
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.actions.CommonCheckinProjectAction
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -28,72 +31,40 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.frame.MainFrame
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.findBranch
-import git4idea.commands.Git
-import git4idea.index.actions.runProcess
-import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
+import git4idea.config.GitVcsApplicationSettings
+import git4idea.i18n.GitBundle
+import git4idea.index.enableStagingArea
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.dsl.*
-import training.learn.lesson.LessonManager
 import training.ui.LearningUiManager
 import java.awt.Rectangle
-import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KClass
 
 object GitLessonsUtil {
-  fun LessonContext.checkoutBranch(branchName: String) {
-    task {
-      addFutureStep {
-        val changeListManager = ChangeListManager.getInstance(project)
-        changeListManager.scheduleUpdate()
-        changeListManager.invokeAfterUpdate(true) {
-          val repository = GitRepositoryManager.getInstance(project).repositories.first()
-          if (repository.currentBranch?.name == branchName) {
-            completeStep()
-          }
-          else {
-            runProcess(project, "", false) {
-              Git.getInstance().checkout(repository, branchName, null, true, false).throwOnError()
-            }
-            completeStep()
-          }
-        }
-      }
-    }
-
-    prepareRuntimeTask {
-      val vcsLogData = VcsProjectLog.getInstance(project).mainLogUi?.logData ?: return@prepareRuntimeTask
-      val roots = GitRepositoryManager.getInstance(project).repositories.map(GitRepository::getRoot)
-      vcsLogData.refresh(roots)
-    }
-  }
-
   // Git tool window must showing to reset it
   fun LessonContext.resetGitLogWindow() {
     prepareRuntimeTask {
       val vcsLogUi = VcsProjectLog.getInstance(project).mainLogUi
-      // todo: find out how to open branches if it is hidden (git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY is internal and can't be accessed)
       vcsLogUi?.filterUi?.clearFilters()
       PropertiesComponent.getInstance(project).setValue("Vcs.Log.Text.Filter.History", null)
 
-      val vcsLogWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)
-      VcsLogContentUtil.selectMainLog(vcsLogWindow!!.contentManager)
+      VcsLogContentUtil.selectMainLog(project)
     }
 
     // clear Git tool window to return it to default state (needed in case of restarting the lesson)
     task {
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: SearchTextField ->
+      triggerUI().component { ui: SearchTextField ->
         if (UIUtil.getParentOfType(MainFrame::class.java, ui) != null) {
           ui.reset()
           true
         }
         else false
       }
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: VcsLogGraphTable ->
+      triggerUI().component { ui: VcsLogGraphTable ->
         ui.jumpToRow(0, true)
         ui.selectionModel.clearSelection()
         true
@@ -105,7 +76,10 @@ object GitLessonsUtil {
                                                      sequenceLength: Int = 1,
                                                      highlightInside: Boolean = true,
                                                      usePulsation: Boolean = false) {
-    triggerByPartOfComponent(highlightInside = highlightInside, usePulsation = usePulsation) { ui: VcsLogGraphTable ->
+    triggerAndBorderHighlight {
+      this.highlightInside = highlightInside
+      this.usePulsation = usePulsation
+    }.componentPart { ui: VcsLogGraphTable ->
       ui.getRectForSubsequentCommits(startCommitRow, sequenceLength)
     }
   }
@@ -114,7 +88,10 @@ object GitLessonsUtil {
                                                      highlightInside: Boolean = true,
                                                      usePulsation: Boolean = false,
                                                      startCommitPredicate: (VcsCommitMetadata) -> Boolean) {
-    triggerByPartOfComponent(highlightInside = highlightInside, usePulsation = usePulsation) { ui: VcsLogGraphTable ->
+    triggerAndBorderHighlight {
+      this.highlightInside = highlightInside
+      this.usePulsation = usePulsation
+    }.componentPart { ui: VcsLogGraphTable ->
       val rowIndexes = (0 until ui.rowCount).toList().toIntArray()
       val startCommitRow = ui.model.getCommitMetadata(rowIndexes).indexOfFirst(startCommitPredicate)
       if (startCommitRow >= 0) {
@@ -158,19 +135,34 @@ object GitLessonsUtil {
     }
   }
 
-  fun TaskContext.gotItStep(position: Balloon.Position,
-                            width: Int,
-                            @Nls text: String,
-                            cornerToPointerDistance: Int = -1,
-                            duplicateMessage: Boolean = true) {
-    val gotIt = CompletableFuture<Boolean>()
-    text(text, LearningBalloonConfig(position, width, duplicateMessage, cornerToPointerDistance = cornerToPointerDistance) {
-      gotIt.complete(true)
-    })
-    addStep(gotIt)
+  fun TaskContext.triggerOnCheckout(checkBranch: (String) -> Boolean = { true }) {
+    addFutureStep {
+      subscribeForMessageBus(BranchChangeListener.VCS_BRANCH_CHANGED, object : BranchChangeListener {
+        override fun branchWillChange(branchName: String) {}
+
+        override fun branchHasChanged(branchName: String) {
+          if (checkBranch(branchName)) completeStep()
+        }
+      })
+    }
   }
 
-  fun TaskContext.showWarningIfCommitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
+  /**
+   * Restores task if [PreviousTaskInfo.ui] is not showing and background task is not running
+   */
+  fun TaskContext.restoreByUiAndBackgroundTask(taskTitleRegex: @Nls String, delayMillis: Int = 0, restoreId: TaskContext.TaskId? = null) {
+    val regex = Regex(taskTitleRegex)
+    restoreState(restoreId, delayMillis) {
+      previous.ui?.isShowing != true && !isBackgroundableTaskRunning(regex)
+    }
+  }
+
+  private fun isBackgroundableTaskRunning(titleRegex: Regex): Boolean {
+    val indicators = CoreProgressManager.getCurrentIndicators()
+    return indicators.find { it is BackgroundableProcessIndicator && it.isRunning && titleRegex.find(it.title) != null } != null
+  }
+
+  fun TaskContext.showWarningIfCommitWindowClosed(restoreTaskWhenResolved: Boolean = false) {
     showWarningIfToolWindowClosed(ToolWindowId.COMMIT,
                                   GitLessonsBundle.message("git.window.closed.warning",
                                                            action("CheckinProject"),
@@ -178,7 +170,7 @@ object GitLessonsUtil {
                                   restoreTaskWhenResolved)
   }
 
-  fun TaskContext.showWarningIfGitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
+  fun TaskContext.showWarningIfGitWindowClosed(restoreTaskWhenResolved: Boolean = false) {
     showWarningIfToolWindowClosed(ToolWindowId.VCS,
                                   GitLessonsBundle.message("git.window.closed.warning",
                                                            action("ActivateVersionControlToolWindow"), strong("Git")),
@@ -194,24 +186,58 @@ object GitLessonsUtil {
   }
 
   fun LessonContext.showWarningIfModalCommitEnabled() {
-    if (VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES) return
     task {
       val step = stateCheck {
         VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
       }
-      before {
-        val callbackId = LearningUiManager.addCallback {
-          CommitModeManager.setCommitFromLocalChanges(project, true)
-          step.complete(true)
-        }
-        LessonManager.instance.setWarningNotification(TaskContext.RestoreNotification(
-          GitLessonsBundle.message("git.use.non.modal.commit.ui.warning",
-                                   action("ShowSettings"),
-                                   strong(VcsBundle.message("version.control.main.configurable.name")),
-                                   strong(VcsBundle.message("commit.dialog.configurable")),
-                                   strong(VcsBundle.message("settings.commit.without.dialog")),
-                                   callbackId), callback = {}))
+      val callbackId = LearningUiManager.addCallback {
+        CommitModeManager.setCommitFromLocalChanges(project, true)
+        step.complete(true)
       }
+      showWarning(GitLessonsBundle.message("git.use.non.modal.commit.ui.warning",
+                                           action("ShowSettings"),
+                                           strong(VcsBundle.message("version.control.main.configurable.name")),
+                                           strong(VcsBundle.message("commit.dialog.configurable")),
+                                           strong(VcsBundle.message("settings.commit.without.dialog")))
+                  + " " + GitLessonsBundle.message("git.click.to.change.settings", callbackId)) {
+        !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
+      }
+      test {
+        if (!VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES) {
+          Thread.sleep(1000)  // need to wait until LessonMessagePane become updated after restart and warning will be showed
+          clickLessonMessagePaneLink(" click ")
+        }
+      }
+    }
+  }
+
+  fun LessonContext.showWarningIfStagingAreaEnabled() {
+    task {
+      val step = stateCheck {
+        !GitVcsApplicationSettings.getInstance().isStagingAreaEnabled
+      }
+      val callbackId = LearningUiManager.addCallback {
+        enableStagingArea(false)
+        step.complete(true)
+      }
+      showWarning(GitLessonsBundle.message("git.not.use.staging.area.warning",
+                                           action("ShowSettings"),
+                                           strong(VcsBundle.message("version.control.main.configurable.name")),
+                                           strong(GitBundle.message("settings.git.option.group")),
+                                           strong(GitBundle.message("settings.enable.staging.area")))
+                  + " " + GitLessonsBundle.message("git.click.to.change.settings", callbackId)) {
+        GitVcsApplicationSettings.getInstance().isStagingAreaEnabled
+      }
+    }
+  }
+
+  fun LessonContext.restoreCommitWindowStateInformer() {
+    val enabledModalInterface = !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
+    val enabledStagingArea = GitVcsApplicationSettings.getInstance().isStagingAreaEnabled
+    if (!enabledModalInterface && !enabledStagingArea) return
+    restoreChangedSettingsInformer {
+      if (enabledModalInterface) CommitModeManager.setCommitFromLocalChanges(null, false)
+      if (enabledStagingArea) enableStagingArea(true)
     }
   }
 
@@ -250,16 +276,36 @@ object GitLessonsUtil {
                                                            @Nls suggestionWithIcon: String,
                                                            @Nls suggestionWithoutIcon: String,
                                                            actionClass: KClass<T>) {
-    if (UISettings.instance.run { showNavigationBar || showMainToolbar }) {
+    val ui = UISettings.getInstance()
+    if (ui.showMainToolbar && checkActionShownInToolbar(actionClass, "MainToolBar")
+        || !ui.showMainToolbar && ui.showNavigationBar && checkActionShownInToolbar(actionClass, "NavBarToolBar")
+    ) {
       text("$introduction $suggestionWithIcon")
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: ActionButton ->
-        actionClass.isInstance(ui.action)
+      triggerAndFullHighlight { usePulsation = true }.component { button: ActionButton ->
+        actionClass.isInstance(button.action)
       }
     }
     else text("$introduction $suggestionWithoutIcon")
   }
 
+  private fun checkActionShownInToolbar(actionClass: KClass<*>, toolbarName: String): Boolean {
+    return CustomActionsSchema.getInstance()
+      .getCorrectedAction(toolbarName)
+      ?.checkContainsActionRecursively(actionClass) == true
+  }
+
+  private fun AnAction.checkContainsActionRecursively(actionClass: KClass<*>): Boolean {
+    if (this !is ActionGroup) {
+      return actionClass.isInstance(this)
+    }
+    for (child in getChildren(null)) {
+      val contains = child.checkContainsActionRecursively(actionClass)
+      if (contains) return true
+    }
+    return false
+  }
+
   fun loadIllustration(illustrationName: String): Icon {
-    return IconLoader.getIcon("illustrations/$illustrationName", GitLessonsUtil::class.java)
+    return IconLoader.getIcon("illustrations/$illustrationName", GitLessonsUtil::class.java.classLoader)
   }
 }

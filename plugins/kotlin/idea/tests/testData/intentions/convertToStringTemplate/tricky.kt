@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 'args' is never used
 fun compute1(): Int = 777
 fun main(args: Array<String>){
     val a = "a"

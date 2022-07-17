@@ -8,7 +8,7 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.tools.fragmented.LineNumberConvertor;
 import com.intellij.diff.tools.util.text.LineOffsets;
 import com.intellij.diff.tools.util.text.LineOffsetsUtil;
-import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.DiffRangeUtil;
 import com.intellij.diff.util.LineRange;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.DumbProgressIndicator;
@@ -139,8 +139,8 @@ public final class PatchChangeBuilder {
     if (deletionRange.isEmpty() || insertionRange.isEmpty()) return null;
 
     try {
-      CharSequence deleted = DiffUtil.getLinesContent(patchContent, lineOffsets, deletionRange.start, deletionRange.end);
-      CharSequence inserted = DiffUtil.getLinesContent(patchContent, lineOffsets, insertionRange.start, insertionRange.end);
+      CharSequence deleted = DiffRangeUtil.getLinesContent(patchContent, lineOffsets, deletionRange.start, deletionRange.end);
+      CharSequence inserted = DiffRangeUtil.getLinesContent(patchContent, lineOffsets, insertionRange.start, insertionRange.end);
 
       return ByWord.compare(deleted, inserted, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -48,7 +48,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,11 +59,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.Conditions.not;
 
-/**
- * @author ignatov
- */
 public final class ScratchFileActions {
-
   private static int ourCurrentBuffer = 0;
 
   private static int nextBufferIndex() {
@@ -73,17 +68,24 @@ public final class ScratchFileActions {
   }
 
 
-  public static class NewFileAction extends DumbAwareAction implements UpdateInBackground {
+  public static class NewFileAction extends DumbAwareAction {
     private static final Icon ICON = LayeredIcon.create(AllIcons.FileTypes.Text, AllIcons.Actions.Scratch);
 
     private static final String ACTION_ID = "NewScratchFile";
 
-    private final NotNullLazyValue<@Nls String> myActionText = NotNullLazyValue.createValue(
-      () -> NewActionGroup.isActionInNewPopupMenu(this) ? ActionsBundle.actionText(ACTION_ID) : ActionsBundle.message("action.NewScratchFile.text.with.new")
-    );
+    private final NotNullLazyValue<@Nls String> myActionText = NotNullLazyValue.lazy(() -> {
+      return NewActionGroup.isActionInNewPopupMenu(this)
+             ? ActionsBundle.actionText(ACTION_ID)
+             : ActionsBundle.message("action.NewScratchFile.text.with.new");
+    });
 
     public NewFileAction() {
       getTemplatePresentation().setIcon(ICON);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -105,7 +107,7 @@ public final class ScratchFileActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project == null) return;
-      Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+      Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
 
       // selection from the current editor
       ScratchFileCreationHelper.Context context = createContext(e);
@@ -170,7 +172,12 @@ public final class ScratchFileActions {
     }
   }
 
-  public static class NewBufferAction extends DumbAwareAction implements UpdateInBackground {
+  public static class NewBufferAction extends DumbAwareAction {
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -296,7 +303,12 @@ public final class ScratchFileActions {
     checkLanguageAndTryToFixText(project, context, dataContext);
   }
 
-  public static class ChangeLanguageAction extends DumbAwareAction implements UpdateInBackground {
+  public static class ChangeLanguageAction extends DumbAwareAction {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
@@ -325,15 +337,6 @@ public final class ScratchFileActions {
                         LangBundle.message("scratch.file.actions.0.different.languages.number", languages.size());
       e.getPresentation().setText(getChangeLanguageActionName(langName));
       e.getPresentation().setEnabledAndVisible(true);
-    }
-
-    /**
-     * @deprecated use internationalized string instead.
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-    protected @NotNull String getLanguageTerm() {
-      return "Language"; //NON-NLS
     }
 
     protected @NotNull @Nls String getChangeLanguageActionName(@NotNull String languageName) {
@@ -386,7 +389,12 @@ public final class ScratchFileActions {
     }
   }
 
-  public static class ShowFilesPopupAction extends DumbAwareAction implements UpdateInBackground {
+  public static class ShowFilesPopupAction extends DumbAwareAction {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(e.getProject() != null);
@@ -440,15 +448,20 @@ public final class ScratchFileActions {
     }
   }
 
-  public static class ExportToScratchAction extends DumbAwareAction implements UpdateInBackground {
+  public static class ExportToScratchAction extends DumbAwareAction {
     {
       setEnabledInModalContext(true);
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
-      Component c = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+      Component c = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
       ScratchImplUtil.TextExtractor extractor = ScratchImplUtil.getTextExtractor(c);
       boolean isFileEditor = EditorUtil.isRealFileEditor(e.getData(CommonDataKeys.EDITOR));
       e.getPresentation().setEnabled(project != null && extractor != null && !isFileEditor);
@@ -458,7 +471,7 @@ public final class ScratchFileActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project == null) return;
-      ScratchImplUtil.TextExtractor extractor = ScratchImplUtil.getTextExtractor(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
+      ScratchImplUtil.TextExtractor extractor = ScratchImplUtil.getTextExtractor(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
       String text = extractor == null ? null : extractor.extractText();
       if (text == null) return;
       ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();

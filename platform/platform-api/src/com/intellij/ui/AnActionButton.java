@@ -66,8 +66,9 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   public static AnActionButton fromAction(final AnAction action) {
     final Presentation presentation = action.getTemplatePresentation();
-    final AnActionButtonWrapper button = action instanceof CheckedActionGroup ? new CheckedAnActionButton(presentation, action)
-                                                                              : new AnActionButtonWrapper(presentation, action);
+    final AnActionButtonWrapper button = action instanceof CheckedActionGroup ? new CheckedAnActionButton(presentation, action) :
+                                         action instanceof Toggleable ? new ToggleableButtonWrapper(presentation, action) :
+                                         new AnActionButtonWrapper(presentation, action);
     button.setShortcut(action.getShortcutSet());
     return button;
   }
@@ -228,7 +229,13 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     }
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
+  public static class ToggleableButtonWrapper extends AnActionButtonWrapper implements Toggleable {
+    public ToggleableButtonWrapper(Presentation presentation, @NotNull AnAction action) {
+      super(presentation, action);
+    }
+  }
+
+    @SuppressWarnings("ComponentNotRegistered")
   public static class GroupPopupWrapper extends AnActionButtonWrapper {
     public GroupPopupWrapper(@NotNull ActionGroup group) {
       super(group.getTemplatePresentation(), group);

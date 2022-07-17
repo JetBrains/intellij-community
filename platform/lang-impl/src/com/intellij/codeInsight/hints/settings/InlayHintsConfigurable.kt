@@ -88,6 +88,9 @@ class InlayHintsConfigurable(private val project: Project) : Configurable, Confi
 
     @JvmStatic
     fun showSettingsDialogForLanguage(project: Project, language: Language, selector: Predicate<InlayProviderSettingsModel>?) {
+      if (showNewSettings(project, language, selector)) {
+        return
+      }
       val languages = hashSetOf<Language>()
       var current: Language? = language
       while (current != null) {

@@ -52,7 +52,7 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
     private final List<FoldingDescriptor> myFoldingData = new ArrayList<>();
 
     @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
       String methodName = method.getName();
       if (AsmCodeGenerator.SETUP_METHOD_NAME.equals(methodName) ||
           AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME.equals(methodName) ||
@@ -66,14 +66,14 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
     }
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       if (AsmCodeGenerator.CACHED_GET_BUNDLE_METHOD.equals(field.getName())) {
         addFoldingData(field);
       }
     }
 
     @Override
-    public void visitClassInitializer(PsiClassInitializer initializer) {
+    public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
       if (isGeneratedUIInitializer(initializer)) {
         addFoldingData(initializer);
       }

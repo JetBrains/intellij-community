@@ -3,12 +3,16 @@ package com.intellij.execution.ui;
 
 import com.intellij.openapi.options.CompositeSettingsEditor;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -62,7 +66,17 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
     if (!isDefaultSettings()) {
       for (FragmentedSettings.Option option : settings.getSelectedOptions()) {
         if (!ContainerUtil.or(options, o -> o.getName().equals(option.getName()))) {
-          options.add(option);
+          SettingsEditorFragment<Settings, ?> fragment =
+            getAllFragments().filter(f -> f.getId().equals(option.getName())).findFirst().orElse(null);
+          if (fragment != null) {
+            if (fragment.isSelected() != fragment.isInitiallyVisible(settings)) { // do not keep option in selected otherwise
+              FragmentedSettings.Option updatedOption = new FragmentedSettings.Option(fragment.getId(), fragment.isSelected());
+              options.add(updatedOption);
+            }
+          }
+          else {
+            options.add(option);
+          }
         }
       }
     }
@@ -77,9 +91,42 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
   @Override
   public void installWatcher(JComponent c) {
     super.installWatcher(c);
-    addSettingsEditorListener(editor -> SwingUtilities.invokeLater(() -> UIUtil.setupEnclosingDialogBounds(c)));
+    addSettingsEditorListener(editor -> SwingUtilities.invokeLater(() -> {
+      UIUtil.setupEnclosingDialogBounds(c);
+    }));
+    installFragmentsAligner();
   }
 
   protected void initFragments(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments) {
+  }
+
+  private void installFragmentsAligner() {
+    installFragmentsAligner(this);
+    for (SettingsEditorFragment<Settings, ?> fragment : getFragments()) {
+      if (fragment instanceof NestedGroupFragment) {
+        installFragmentsAligner(fragment);
+      }
+    }
+  }
+
+  private static void installFragmentsAligner(SettingsEditor<?> fragment) {
+    JComponent component = fragment.getComponent();
+    for (Component childComponent : component.getComponents()) {
+      if (childComponent instanceof PanelWithAnchor) {
+        UIUtil.runWhenVisibilityChanged(childComponent, () -> SwingUtilities.invokeLater(() -> {
+          alignPanels(component);
+        }));
+      }
+    }
+  }
+
+  private static void alignPanels(JComponent container) {
+    List<PanelWithAnchor> panels =
+      Arrays.stream(container.getComponents())
+        .filter(component -> component.isVisible())
+        .filter(component -> component instanceof PanelWithAnchor)
+        .map(component -> (PanelWithAnchor)component)
+        .collect(Collectors.toList());
+    UIUtil.mergeComponentsWithAnchor(panels, true);
   }
 }

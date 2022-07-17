@@ -210,7 +210,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
                                       final PsiClass resolvedClass) {
     file.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
 
         if (referenceName != null && referenceName.equals(reference.getReferenceName())) {
@@ -232,11 +232,11 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
 
     file.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitImportList(PsiImportList list) {
+      public void visitImportList(@NotNull PsiImportList list) {
       }
 
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
 
         try {
           if (checkParameterizedReference(reference)) return;

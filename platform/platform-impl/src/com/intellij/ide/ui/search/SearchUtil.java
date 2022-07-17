@@ -4,6 +4,7 @@ package com.intellij.ide.ui.search;
 import com.intellij.BundleBase;
 import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.util.NlsSafe;
@@ -22,6 +23,9 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.plaf.basic.BasicComboPopup;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.View;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -38,17 +42,14 @@ public final class SearchUtil {
   public static final String HIGHLIGHT_WITH_BORDER = "searchUtil.highlightWithBorder";
   private static final String STYLE_END = "</style>";
 
+  private static final Logger LOGGER = Logger.getInstance(SearchUtil.class);
+
   private SearchUtil() { }
 
   static void processConfigurables(@NotNull List<? extends Configurable> configurables,
                                    @NotNull Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options, boolean i18n) {
     for (final Configurable configurable : configurables) {
       if (!(configurable instanceof SearchableConfigurable)) {
-        continue;
-      }
-      //ignore invisible root nodes
-      //noinspection deprecation
-      if (configurable instanceof SearchableConfigurable.Parent && !((SearchableConfigurable.Parent)configurable).isVisible()) {
         continue;
       }
 
@@ -187,20 +188,51 @@ public final class SearchUtil {
     }
   }
 
+  /**
+   * This method tries to extract a user-visible text (as opposed to a HTML markup string) from a Swing text component.
+   */
+  @Nullable
+  private static String getLabelFromTextView(@NotNull JComponent component) {
+    Object view = component.getClientProperty("html");
+    if (!(view instanceof View)) return null;
+    Document document = ((View)view).getDocument();
+    if (document == null) return null;
+    int length = document.getLength();
+    try {
+      return document.getText(0, length);
+    }
+    catch (BadLocationException e) {
+      LOGGER.error(e);
+      return null;
+    }
+  }
+
+  private static String getLabelFromComponent(@NotNull JLabel label) {
+    String text = getLabelFromTextView(label);
+    if (text == null) text = label.getText();
+    return text;
+  }
+
+  private static String getLabelFromComponent(@NotNull AbstractButton button) {
+    String text = getLabelFromTextView(button);
+    if (text == null) text = button.getText();
+    return text;
+  }
+
   @Nullable
   private static String getLabelFromComponent(@Nullable Component component) {
     String label = null;
     if (component instanceof JLabel) {
-      label = ((JLabel)component).getText();
+      label = getLabelFromComponent((JLabel)component);
     }
     else if (component instanceof JCheckBox) {
-      label = ((JCheckBox)component).getText();
+      label = getLabelFromComponent((JCheckBox)component);
     }
     else if (component instanceof JRadioButton) {
-      label = ((JRadioButton)component).getText();
+      label = getLabelFromComponent((JRadioButton)component);
     }
     else if (component instanceof JButton) {
-      label = ((JButton)component).getText();
+      label = getLabelFromComponent((JButton)component);
     }
     return Strings.nullize(label, true);
   }
@@ -376,7 +408,7 @@ public final class SearchUtil {
   }
 
   public static String markup(@NotNull String textToMarkup, @Nullable String filter) {
-    return markup(textToMarkup, filter, Color.white, ColorUtil.fromHex("1d5da7"));
+    return markup(textToMarkup, filter, new JBColor(Gray._50, Gray._0), JBColor.namedColor("SearchMatch.startBackground", ColorUtil.fromHex("1d5da7")));
   }
 
   public static String markup(@NotNull String textToMarkup, @Nullable String filter, Color textColor, Color backgroundColor) {
@@ -615,15 +647,8 @@ public final class SearchUtil {
     }
 
     for (Configurable configurable : result) {
-      if (isAcceptable(configurable)) {
-        consumer.accept(configurable);
-      }
+      consumer.accept(configurable);
     }
-  }
-
-  public static boolean isAcceptable(@NotNull Configurable configurable) {
-    //noinspection deprecation
-    return !(configurable instanceof SearchableConfigurable.Parent) || ((SearchableConfigurable.Parent)configurable).isVisible();
   }
 
   private static void addChildren(@NotNull Configurable configurable, @NotNull List<? super Configurable> list) {

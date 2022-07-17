@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.openapi.util.Condition;
@@ -8,6 +8,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Editable postfix template expression condition used to determine contexts that a postfix template can be applied in.
+ *
+ * @param <T> the supported PSI element type
+ *
+ * @see EditablePostfixTemplateWithMultipleExpressions
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/advanced-postfix-templates.html">Advanced Postfix Templates (IntelliJ Platform Docs)</a>
+ */
 public interface PostfixTemplateExpressionCondition<T extends PsiElement> extends Condition<T> {
 
   @NonNls String ID_ATTR = "id";
@@ -19,7 +27,7 @@ public interface PostfixTemplateExpressionCondition<T extends PsiElement> extend
 
 
   /**
-   * @return id for serialization
+   * @return ID for serialization
    */
   @NotNull @NonNls String getId();
 
@@ -31,6 +39,11 @@ public interface PostfixTemplateExpressionCondition<T extends PsiElement> extend
     element.setAttribute(ID_ATTR, getId());
   }
 
+  /**
+   * @param t PSI element to check
+   * @return {@code true} if an expression context determined by a given element is applicable for evaluated postfix template,
+   * {@code false} otherwise
+   */
   @Override
   boolean value(@NotNull T t);
 }

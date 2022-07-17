@@ -12,13 +12,13 @@ Reports <code>List.remove(index)</code> called in a loop that can be replaced wi
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   void removeRange(List&lt;String&gt; list, int from, int to) {
     if (to &gt; from) {
       list.subList(from, to).clear();
     }
   }
-</pre>
+</code></pre>
 <p>
   The quick-fix adds a range check automatically to prevent a possible <code>IndexOutOfBoundsException</code> when the minimal value is bigger
   than the maximal value. It can be removed if such a situation is impossible in your code.

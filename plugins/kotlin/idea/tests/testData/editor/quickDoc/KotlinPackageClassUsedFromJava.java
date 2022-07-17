@@ -6,5 +6,4 @@ class KotlinPackageClassUsedFromJava {
     }
 }
 
-//INFO: <div class='definition'><pre>testing<br>public final class <b>KotlinPackageClassUsedFromJava_DataKt</b>
-//INFO: extends <a href="psi_element://java.lang.Object"><code>Object</code></a></pre></div><table class='sections'></table>
+//INFO: <div class="bottom"><icon src="AllIcons.Nodes.Package">&nbsp;<a href="psi_element://testing"><code><span style="color:#000000;">testing</span></code></a></div><div class='definition'><pre><span style="color:#000080;font-weight:bold;">public final</span> <span style="color:#000080;font-weight:bold;">class</span> <span style="color:#000000;">KotlinPackageClassUsedFromJava_DataKt</span></pre></div><table class='sections'></table>

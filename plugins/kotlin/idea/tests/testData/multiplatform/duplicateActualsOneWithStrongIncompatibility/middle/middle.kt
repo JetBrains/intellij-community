@@ -1,3 +1,3 @@
 package foo
 
-actual fun <!LINE_MARKER("descr='Has declaration in common module'")!>foo<!>(): Int = 42
+actual fun <!LINE_MARKER("descr='Has expects in top module'")!>foo<!>(): Int = 42

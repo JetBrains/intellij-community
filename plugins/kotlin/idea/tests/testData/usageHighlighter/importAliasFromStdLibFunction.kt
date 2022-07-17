@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 import kotlin.let as <info descr="null">~myLet</info>
 
 fun main() {

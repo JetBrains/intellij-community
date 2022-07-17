@@ -3,7 +3,7 @@
 // ACTION: Change parameter 'x' type of function 'foo' to 'Double'
 // ACTION: Convert expression to 'Float'
 // ACTION: Create function 'foo'
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(d: Double) {
     foo(d<caret>)
 }

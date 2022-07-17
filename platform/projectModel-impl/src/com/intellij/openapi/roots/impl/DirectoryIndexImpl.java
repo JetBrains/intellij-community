@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +8,8 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Pair;
@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,7 +32,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This is an internal class, {@link DirectoryIndex} must be used instead.
@@ -65,18 +69,6 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   private void subscribeToFileChanges() {
-    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void beforeRootsChange(@NotNull ModuleRootEvent event) {
-        myRootIndex = null;
-      }
-
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        myRootIndex = null;
-      }
-    });
-
     myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
@@ -85,16 +77,12 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
           rootIndex.myPackageDirectoryCache.clear();
           for (VFileEvent event : events) {
             if (isIgnoredFileCreated(event)) {
-              myRootIndex = null;
+              reset();
               break;
             }
           }
         }
       }
-    });
-
-    myConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> {
-      myRootIndex = null;
     });
   }
 
@@ -161,7 +149,8 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     Pair<Long, RootIndex> pair = branch.getUserData(BRANCH_ROOT_INDEX);
     long modCount = branch.getBranchedVfsStructureModificationCount();
     if (pair == null || pair.first != modCount) {
-      pair = Pair.create(modCount, new RootIndex(branch.getProject(), RootFileSupplier.forBranch(branch)));
+      pair = Pair.create(modCount, new RootIndex(branch.getProject(), RootFileSupplier.forBranch(branch)
+      ));
     }
     return pair.second;
   }
@@ -178,6 +167,8 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   @Override
   public DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
     checkAvailability();
+    ProgressManager.checkCanceled();
+    SlowOperations.assertSlowOperationsAreAllowed();
     dispatchPendingEvents();
     return getRootIndex(file).getInfoForFile(file);
   }
@@ -234,5 +225,9 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
       ProgressManager.checkCanceled();
       LOG.error("Directory index is already disposed for " + myProject);
     }
+  }
+
+  void reset() {
+    myRootIndex = null;
   }
 }

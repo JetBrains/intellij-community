@@ -32,7 +32,7 @@ public final class ForcedBuildFileAttribute {
   @Nullable
   public static String getFrameworkIdOfBuildFile(VirtualFile file) {
     if (file instanceof NewVirtualFile) {
-      try (DataInputStream is = FRAMEWORK_FILE_ATTRIBUTE.readAttribute(file)) {
+      try (DataInputStream is = FRAMEWORK_FILE_ATTRIBUTE.readFileAttribute(file)) {
         if (is != null) {
           if (is.available() == 0) {
             return null;
@@ -66,7 +66,7 @@ public final class ForcedBuildFileAttribute {
 
   private static void forceBuildFile(VirtualFile file, @Nullable String value) {
     if (file instanceof NewVirtualFile) {
-      try (DataOutputStream os = FRAMEWORK_FILE_ATTRIBUTE.writeAttribute(file)) {
+      try (DataOutputStream os = FRAMEWORK_FILE_ATTRIBUTE.writeFileAttribute(file)) {
         IOUtil.writeString(StringUtil.notNullize(value), os);
       }
       catch (IOException e) {

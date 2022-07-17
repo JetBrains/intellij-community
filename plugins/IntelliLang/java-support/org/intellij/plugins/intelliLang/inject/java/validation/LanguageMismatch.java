@@ -51,12 +51,12 @@ public class LanguageMismatch extends LocalInspectionTool {
       final Pair<String, ? extends Set<String>> annotationName = Configuration.getProjectInstance(holder.getProject()).getAdvancedConfiguration().getLanguageAnnotationPair();
 
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         checkExpression(expression, holder, annotationName);
       }
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         if (expression.getParent() instanceof PsiMethodCallExpression) return;
         final PsiElement element = expression.resolve();
         if (!(element instanceof PsiModifierListOwner)) {

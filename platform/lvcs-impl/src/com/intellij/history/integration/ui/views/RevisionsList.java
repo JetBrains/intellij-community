@@ -7,6 +7,7 @@ import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionItem;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -436,7 +437,7 @@ public final class RevisionsList {
         if (affected.first.size() < affected.second) title += "...";
       }
 
-      String filesCount = StringUtil.pluralize(LocalHistoryBundle.message("revisions.table.filesCount", affected.second), affected.second);
+      String filesCount = LocalHistoryBundle.message("revisions.table.filesCount", affected.second);
 
       Pair<@NlsContexts.Label String, Color> label = null;
       if (!item.labels.isEmpty()) {
@@ -573,6 +574,11 @@ public final class RevisionsList {
             .append(title);
         }
         CopyPasteManager.getInstance().setContents(new TextTransferable(sb));
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override

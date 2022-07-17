@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.openapi.util.TextRange
@@ -38,18 +38,18 @@ class ProblemDescriptionUtilTest : LightPlatformTestCase() {
         return DummyHolderFactory.createHolder(psiManager, null)
       }
 
-      override fun getText(): String? {
+      override fun getText(): String {
         return element
       }
 
-      override fun getTextRange(): TextRange? {
+      override fun getTextRange(): TextRange {
         return TextRange(0, element.length)
       }
     }
 
     val descriptorBase = object : ProblemDescriptorBase(psiElement, psiElement, message, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                false, null, true, false) {
-      override fun assertPhysical(element: PsiElement?) {}
+      override fun assertPhysical(element: PsiElement) {}
     }
     
 

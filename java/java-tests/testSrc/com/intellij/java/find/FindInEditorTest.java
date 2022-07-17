@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,6 +35,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,7 +57,12 @@ public class FindInEditorTest extends LightJavaCodeInsightTestCase {
 
     myOutputStream = new ByteArrayOutputStream();
     LivePreview.ourTestOutput = new PrintStream(myOutputStream);
-    EditorHintListener listener = (project, hint, flags) -> LivePreview.processNotFound();
+    EditorHintListener listener = new EditorHintListener() {
+      @Override
+      public void hintShown(@NotNull Project project, @NotNull LightweightHint hint, int flags) {
+        LivePreview.processNotFound();
+      }
+    };
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorHintListener.TOPIC, listener);
   }
 

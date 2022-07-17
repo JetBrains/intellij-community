@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
@@ -13,7 +13,6 @@ import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 import com.intellij.xdebugger.impl.ui.tree.nodes.EvaluatingExpressionRootNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
-import java.util.*
 
 private data class Key(val text: String, val imports: String) {
     constructor(expr: XExpression) : this(expr.expression, StringUtil.notNullize(expr.customInfo))
@@ -64,7 +63,6 @@ class KotlinDebuggerEvaluator(
         return null
     }
 
-    @Suppress("unused")
     enum class EvaluationType(val clazz: Class<*>?) {
         WATCH(WatchNodeImpl::class.java),
         WINDOW(EvaluatingExpressionRootNode::class.java),

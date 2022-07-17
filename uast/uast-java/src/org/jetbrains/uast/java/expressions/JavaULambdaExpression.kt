@@ -16,8 +16,10 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class JavaULambdaExpression(
   override val sourcePsi: PsiLambdaExpression,
   givenParent: UElement?
@@ -25,13 +27,12 @@ class JavaULambdaExpression(
   override val functionalInterfaceType: PsiType?
     get() = sourcePsi.functionalInterfaceType
 
-  override val valueParameters: List<JavaUParameter> by lz {
+  override val valueParameters: List<UParameter> by lz {
     sourcePsi.parameterList.parameters.map { JavaUParameter(it, this) }
   }
 
   override val body: UExpression by lz {
-    val b = sourcePsi.body
-    when (b) {
+    when (val b = sourcePsi.body) {
       is PsiCodeBlock -> JavaConverter.convertBlock(b, this)
       is PsiExpression -> wrapLambdaBody(this, b)
       else -> UastEmptyExpression(this)

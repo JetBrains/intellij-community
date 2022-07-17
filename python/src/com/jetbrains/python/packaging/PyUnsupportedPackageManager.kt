@@ -9,6 +9,9 @@ import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 
 class PyUnsupportedPackageManager(sdk: Sdk) : PyPackageManagerImpl(sdk) {
+
+  override fun shouldSubscribeToLocalChanges(): Boolean = false
+
   override fun getHelperPath(helper: String): String? = (sdk.sdkAdditionalData as? PyRemoteSdkAdditionalDataBase)?.helpersPath?.let {
     RemoteFile(it, helper).path
   }
@@ -26,9 +29,5 @@ class PyUnsupportedPackageManager(sdk: Sdk) : PyPackageManagerImpl(sdk) {
       throw PyExecutionException(PySdkBundle.message("python.sdk.invalid.remote.sdk"), helperPath, args)
     }
     throw PyExecutionException(PySdkBundle.message("python.sdk.package.managing.not.supported.for.sdk", sdk.name), helperPath, args)
-  }
-
-  override fun subscribeToLocalChanges() {
-    // Local VFS changes aren't needed
   }
 }

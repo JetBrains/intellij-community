@@ -40,17 +40,12 @@ public class RemoteSdkCredentialsBuilder {
     copyTo.setHelpersVersionChecked(data.isHelpersVersionChecked());
   }
 
+  /**
+   * @deprecated Just inline this method.
+   */
+  @Deprecated
   public static void copyCredentials(@NotNull RemoteCredentials data, @NotNull MutableRemoteCredentials copyTo) {
-    copyTo.setHost(data.getHost());
-    copyTo.setLiteralPort(data.getLiteralPort());//then port is copied
-    copyTo.setUserName(data.getUserName());
-    copyTo.setPassword(data.getPassword());
-    copyTo.setPrivateKeyFile(data.getPrivateKeyFile());
-    copyTo.setPassphrase(data.getPassphrase());
-    copyTo.setAuthType(data.getAuthType());
-
-    copyTo.setStorePassword(data.isStorePassword());
-    copyTo.setStorePassphrase(data.isStorePassphrase());
+    RemoteCredentialsHolder.copyRemoteCredentials(data, copyTo);
   }
 
   public RemoteSdkCredentialsBuilder withCredentials(@Nullable RemoteCredentials remoteCredentials) {

@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.highlighter.WorkspaceFileType
-import com.intellij.ide.impl.TrustedProjectSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
@@ -14,11 +13,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.doGetProjectFileName
 import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.project.ex.ProjectNameProvider
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
-import com.intellij.util.ThreeState
-import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
@@ -39,7 +37,12 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
   private var dirOrFile: Path? = null
   private var dotIdea: Path? = null
 
-  internal fun getNameFile(): Path = directoryStorePath!!.resolve(ProjectEx.NAME_FILE)
+  internal fun getNameFile(): Path {
+    for (projectNameProvider in ProjectNameProvider.EP_NAME.iterable) {
+      LOG.runAndLogException { projectNameProvider.getNameFile(project)?.let { return it } }
+    }
+    return directoryStorePath!!.resolve(ProjectEx.NAME_FILE)
+  }
 
   final override var loadPolicy = StateLoadPolicy.LOAD
 
@@ -86,7 +89,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
   final override fun getProjectBasePath(): Path {
     val path = dirOrFile ?: throw IllegalStateException("setPath was not yet called")
     if (isDirectoryBased) {
-      val useParent = System.getProperty("store.basedir.parent.detection", "true").toBoolean() && 
+      val useParent = System.getProperty("store.basedir.parent.detection", "true").toBoolean() &&
                       (path.fileName?.toString()?.startsWith("${Project.DIRECTORY_STORE_FOLDER}.") ?: false)
       return if (useParent) path.parent.parent else path
     }
@@ -170,26 +173,12 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       projectIdManager.state.id = projectId
     }
 
-    val productWorkspaceFile = productSpecificWorkspaceParentDir.resolve("$projectId.xml")
-    macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
+    macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productSpecificWorkspaceParentDir.resolve("$projectId.xml")))
     storageManager.setMacros(macros)
-
-    val trustedProjectSettings = project.service<TrustedProjectSettings>()
-    if (trustedProjectSettings.trustedState == ThreeState.UNSURE &&
-        !trustedProjectSettings.hasCheckedIfOldProject &&
-        productWorkspaceFile.exists()) {
-      LOG.info("Marked the project as trusted because there are settings in $productWorkspaceFile")
-      trustedProjectSettings.trustedState = ThreeState.YES
-    }
-    trustedProjectSettings.hasCheckedIfOldProject = true
   }
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
     val storages = stateSpec.storages
-    if (storages.isEmpty()) {
-      return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
-    }
-
     if (isDirectoryBased) {
       if (storages.size == 2 && ApplicationManager.getApplication().isUnitTestMode &&
           isSpecialStorage(storages.first()) &&
@@ -208,33 +197,30 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       }
 
       if (result.isNullOrEmpty()) {
-        return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
+        result = mutableListOf(PROJECT_FILE_STORAGE_ANNOTATION)
       }
-      else {
-        result!!.sortWith(deprecatedComparator)
-        if (isDirectoryBased) {
-          for (providerFactory in StreamProviderFactory.EP_NAME.getIterable(project)) {
-            LOG.runAndLogException {
-              // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
-              providerFactory.customizeStorageSpecs(component, storageManager, stateSpec, result!!, operation)?.let { return it }
-            }
+      result.sortWith(deprecatedComparator)
+      if (isDirectoryBased) {
+        for (providerFactory in StreamProviderFactory.EP_NAME.getIterable(project)) {
+          LOG.runAndLogException {
+            // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
+            providerFactory.customizeStorageSpecs(component, storageManager, stateSpec, result!!, operation)?.let { return it }
           }
         }
-
-        // if we create project from default, component state written not to own storage file, but to project file,
-        // we don't have time to fix it properly, so, ancient hack restored
-        if (!isSpecialStorage(result.first())) {
-          result.add(DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION)
-        }
-        return result
       }
+
+      // if we create project from default, component state written not to own storage file, but to project file,
+      // we don't have time to fix it properly, so, ancient hack restored
+      if (!isSpecialStorage(result.first())) {
+        result.add(DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION)
+      }
+      return result
     }
     else {
       var result: MutableList<Storage>? = null
       // FlexIdeProjectLevelCompilerOptionsHolder, FlexProjectLevelCompilerOptionsHolderImpl and CustomBeanRegistry
       var hasOnlyDeprecatedStorages = true
       for (storage in storages) {
-        @Suppress("DEPRECATION")
         if (storage.path == PROJECT_FILE || storage.path == StoragePathMacros.WORKSPACE_FILE || isSpecialStorage(storage)) {
           if (result == null) {
             result = SmartList()
@@ -250,9 +236,9 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       }
       else {
         if (hasOnlyDeprecatedStorages) {
-          result!!.add(PROJECT_FILE_STORAGE_ANNOTATION)
+          result.add(PROJECT_FILE_STORAGE_ANNOTATION)
         }
-        result!!.sortWith(deprecatedComparator)
+        result.sortWith(deprecatedComparator)
         return result
       }
     }

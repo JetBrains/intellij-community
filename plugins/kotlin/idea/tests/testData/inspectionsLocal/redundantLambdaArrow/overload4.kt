@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun bar(f: () -> Unit) {}
 fun bar(g: (Int, Int) -> Unit) {}

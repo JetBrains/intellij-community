@@ -67,7 +67,7 @@ public final class ExtractMethodUtil {
     assert body != null;
     final JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
 
-      @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      @Override public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         final PsiMethod target = expression.getCopyableUserData(RESOLVE_TARGET_KEY);
         if (target != null) {
@@ -96,6 +96,13 @@ public final class ExtractMethodUtil {
 
   public static void addCastsToEnsureResolveTarget(@NotNull final PsiMethod oldTarget, @NotNull final PsiMethodCallExpression call)
     throws IncorrectOperationException {
+    addCastsToEnsureResolveTarget(oldTarget, PsiSubstitutor.EMPTY, call);
+  }
+
+  public static void addCastsToEnsureResolveTarget(@NotNull final PsiMethod oldTarget,
+                                                   @NotNull PsiSubstitutor oldSubstitutor,
+                                                   @NotNull final PsiMethodCallExpression call)
+    throws IncorrectOperationException {
     final PsiMethod newTarget = call.resolveMethod();
     final PsiManager manager = oldTarget.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
@@ -107,6 +114,7 @@ public final class ExtractMethodUtil {
         for (int i = 0; i < args.length; i++) {
           PsiExpression arg = args[i];
           PsiType paramType = i < oldParameters.length ? oldParameters[i].getType() : oldParameters[oldParameters.length - 1].getType();
+          paramType = oldSubstitutor.substitute(paramType);
           final PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(a)b", null);
           final PsiTypeElement typeElement = cast.getCastType();
           assert typeElement != null;

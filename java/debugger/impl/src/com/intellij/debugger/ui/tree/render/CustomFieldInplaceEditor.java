@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.JavaValue;
@@ -9,9 +9,9 @@ import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.UserExpressionDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.XValuePlace;
@@ -42,11 +42,14 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
     myRenderer = renderer;
     myExpressionEditor.setExpression(descriptor != null ? TextWithImportsImpl.toXExpression(descriptor.getEvaluationText()) : null);
 
-    ValueDescriptorImpl parentDescriptor = ((JavaValue)((XValueContainerNode)node.getParent()).getValueContainer()).getDescriptor();
-    Pair<PsiElement, PsiType> pair = DebuggerUtilsImpl.getPsiClassAndType(getTypeName(parentDescriptor), getProject());
-    if (pair.first != null) {
-      myExpressionEditor.setContext(pair.first);
-    }
+    ValueDescriptorImpl parentDescriptor = ((JavaValue)((XValueContainerNode<?>)node.getParent()).getValueContainer()).getDescriptor();
+    ReadAction.nonBlocking(() -> DebuggerUtilsImpl.getPsiClassAndType(getTypeName(parentDescriptor), getProject()).first)
+      .finishOnUiThread(ModalityState.defaultModalityState(), context -> {
+        if (context != null) {
+          myExpressionEditor.setContext(context);
+        }
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   public static void editNew(@NotNull XValueNodeImpl parentNode) {

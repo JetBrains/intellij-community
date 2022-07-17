@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,8 +31,7 @@ import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class LengthOneStringInIndexOfInspection
-  extends BaseInspection {
+public class LengthOneStringInIndexOfInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Pattern(VALID_ID_PATTERN)
   @Override

@@ -4,11 +4,9 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 import com.intellij.ProjectTopics
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.AutomaticModuleUnloader
@@ -22,7 +20,6 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
@@ -36,7 +33,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsCha
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import java.io.IOException
@@ -71,11 +68,15 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       })
 
       val rootsChangeListener = ProjectRootsChangeListener(project)
-      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
+      WorkspaceModelTopics.getInstance(project).subscribeModuleBridgeInitializer(busConnection, object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChange) {
+          if (!VirtualFileUrlWatcher.getInstance(project).isInsideFilePointersUpdate) {
+            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
+            rootsChangeListener.beforeChanged(event)
+          }
           for (change in event.getChanges(FacetEntity::class.java)) {
             LOG.debug { "Fire 'before' events for facet change $change" }
-            FacetEntityChangeListener.getInstance(project).processBeforeChange(change)
+            FacetEntityChangeListener.getInstance(project).processBeforeChange(change, event)
           }
           val moduleMap = event.storageBefore.moduleMap
           for (change in event.getChanges(ModuleEntity::class.java)) {
@@ -86,11 +87,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
                 fireBeforeModuleRemoved(module)
               }
             }
-          }
-
-          if (!VirtualFileUrlWatcher.getInstance(project).isInsideFilePointersUpdate) {
-            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
-            rootsChangeListener.beforeChanged(event)
           }
         }
 
@@ -209,8 +205,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       }
 
       is EntityChange.Replaced -> {
-        val oldId = change.oldEntity.persistentId()
-        val newId = change.newEntity.persistentId()
+        val oldId = change.oldEntity.persistentId
+        val newId = change.newEntity.persistentId
 
         if (oldId != newId) {
           unloadedModules.remove(change.newEntity.name)
@@ -218,6 +214,13 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
           if (module != null) {
             module.rename(newId.name, getModuleVirtualFileUrl(change.newEntity), true)
             oldModuleNames[module] = oldId.name
+          }
+        }
+        else if (getImlFileDirectory(change.oldEntity) != getImlFileDirectory(change.newEntity)) {
+          val module = event.storageBefore.findModuleByEntity(change.newEntity)
+          val imlFilePath = getModuleVirtualFileUrl(change.newEntity)
+          if (module != null && imlFilePath != null) {
+            module.onImlFileMoved(imlFilePath)
           }
         }
       }
@@ -233,8 +236,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         }
       }
       is EntityChange.Replaced -> {
-        val idBefore = change.oldEntity.persistentId()
-        val idAfter = change.newEntity.persistentId()
+        val idBefore = change.oldEntity.persistentId
+        val idAfter = change.newEntity.persistentId
 
         val newLibrary = event.storageAfter.libraryMap.getDataByEntity(change.newEntity) as LibraryBridgeImpl?
         if (newLibrary != null) {
@@ -247,7 +250,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       is EntityChange.Added -> {
         val tableId = change.entity.tableId as LibraryTableId.ModuleLibraryTableId
         val moduleEntity = entityStore.current.resolve(tableId.moduleId)
-                           ?: error("Could not find module for module library: ${change.entity.persistentId()}")
+                           ?: error("Could not find module for module library: ${change.entity.persistentId}")
         if (moduleEntity.name !in unloadedModules) {
 
           val library = event.storageAfter.libraryMap.getDataByEntity(change.entity)
@@ -295,8 +298,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
                                                  preloadMode = ServiceDescriptor.PreloadMode.FALSE)
   }
 
-  override fun loadModuleToBuilder(moduleName: String, filePath: String, diff: WorkspaceEntityStorageBuilder): ModuleEntity {
-    val builder = WorkspaceEntityStorageBuilder.create()
+  override fun loadModuleToBuilder(moduleName: String, filePath: String, diff: MutableEntityStorage): ModuleEntity {
+    val builder = MutableEntityStorage.create()
     var errorMessage: String? = null
     JpsProjectEntitiesLoader.loadModule(Paths.get(filePath), getJpsProjectConfigLocation(project)!!, builder, object : ErrorReporter {
       override fun reportError(message: String, file: VirtualFileUrl) {
@@ -318,7 +321,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   }
 
   override fun createModule(persistentId: ModuleId, name: String, virtualFileUrl: VirtualFileUrl?, entityStorage: VersionedEntityStorage,
-                            diff: WorkspaceEntityStorageDiffBuilder?): ModuleBridge {
+                            diff: MutableEntityStorage?): ModuleBridge {
     return ModuleBridgeImpl(persistentId, name, project, virtualFileUrl, entityStorage, diff)
   }
 

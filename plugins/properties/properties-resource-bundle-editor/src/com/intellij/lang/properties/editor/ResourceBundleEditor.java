@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.properties.editor;
 
@@ -101,7 +101,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   // user pressed backslash in the corresponding editor.
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
   private final Set<VirtualFile> myBackSlashPressed     = new HashSet<>();
-  private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm               mySelectionChangeAlarm = new Alarm();
 
   private final JPanel              myValuesPanel;
   private final JPanel              myStructureViewPanel;
@@ -743,11 +743,6 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   }
 
   @Override
-  public void selectNotify() {
-
-  }
-
-  @Override
   public void deselectNotify() {
     final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (statusBar != null) {
@@ -768,11 +763,6 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
     return myHighlighter;
-  }
-
-  @Override
-  public FileEditorLocation getCurrentLocation() {
-    return null;
   }
 
   @Override
@@ -804,8 +794,9 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   }
 
   @Override
-  public Document @NotNull [] getDocuments() {
-    return ContainerUtil.map2Array(myEditors.keySet(), new Document[myEditors.size()], propertiesFile -> FileDocumentManager.getInstance().getDocument(propertiesFile));
+  public @NotNull Document @NotNull [] getDocuments() {
+    return ContainerUtil.mapNotNull(myEditors.keySet(), propertiesFile -> FileDocumentManager.getInstance().getDocument(propertiesFile))
+      .toArray(Document.EMPTY_ARRAY);
   }
 
   Map<VirtualFile, EditorEx> getTranslationEditors() {

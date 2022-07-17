@@ -40,8 +40,7 @@ object PyDocumentationLink {
 
   @JvmStatic
   fun toParameterPossibleClass(type: String, anchor: PsiElement, context: TypeEvalContext): String {
-    val pyType = PyTypeParser.getTypeByName(anchor, type, context)
-    return when (pyType) {
+    return when (PyTypeParser.getTypeByName(anchor, type, context)) {
       is PyClassType -> "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_PARAM\">$type</a>"
       else -> type
     }
@@ -52,8 +51,7 @@ object PyDocumentationLink {
 
   @JvmStatic
   fun toPossibleClass(content: String, qualifiedName: String, anchor: PsiElement, context: TypeEvalContext): String {
-    val pyType = PyTypeParser.getTypeByName(anchor, qualifiedName, context)
-    return when (pyType) {
+    return when (PyTypeParser.getTypeByName(anchor, qualifiedName, context)) {
       is PyClassType -> "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_TYPENAME$qualifiedName\">$content</a>"
       else -> content
     }
@@ -141,8 +139,7 @@ object PyDocumentationLink {
 
   @JvmStatic
   private fun possibleClass(type: String, anchor: PsiElement, context: TypeEvalContext): PyClass? {
-    val pyType = PyTypeParser.getTypeByName(anchor, type, context)
-    return when (pyType) {
+    return when (val pyType = PyTypeParser.getTypeByName(anchor, type, context)) {
       is PyClassType -> pyType.pyClass
       else -> null
     }

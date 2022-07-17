@@ -6,12 +6,14 @@ import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
@@ -23,29 +25,28 @@ import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle.Companion.INSTANCE
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
+import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ProjectImportingWizardService
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.inContextOfModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repository
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 import org.jetbrains.kotlin.tools.projectWizard.wizard.IdeWizard
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
-import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmModuleConfigurator
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.inContextOfModuleConfigurator
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repository
 import java.nio.file.Path
-import java.util.*
 import com.intellij.openapi.module.Module as IdeaModule
 
 class IdeaJpsWizardService(
     private val project: Project,
     private val modulesModel: ModifiableModuleModel,
     private val modulesBuilder: NewProjectWizardModuleBuilder,
-    private val ideWizard: IdeWizard
+    private val ideWizard: IdeWizard,
 ) : ProjectImportingWizardService, IdeaWizardService {
     override fun isSuitableFor(buildSystemType: BuildSystemType): Boolean =
         buildSystemType == BuildSystemType.Jps
@@ -63,6 +64,7 @@ class IdeaJpsWizardService(
         )
 
         projectImporter.import()
+        Disposer.dispose(ideWizard.jpsData.libraryOptionsPanel)
         return UNIT_SUCCESS
     }
 }
@@ -123,9 +125,6 @@ private class ProjectImporter(
     private val path: Path,
     val modulesIrs: List<ModuleIR>
 ) {
-    private val librariesPath: Path
-        get() = path / "libs"
-
     fun import() = modulesIrs.mapSequence { moduleIR ->
         convertModule(moduleIR).map { moduleIR to it }
     }.map { irsToIdeaModule ->
@@ -203,11 +202,16 @@ private class ProjectImporter(
             if (classesRoots.size > 1) artifact.artifactId else null,
             classesRoots,
             sourcesRoots,
+            emptyList(),
             when (libraryDependency.dependencyType) {
                 DependencyType.MAIN -> DependencyScope.COMPILE
                 DependencyType.TEST -> DependencyScope.TEST
-            }
-        )
+            },
+            false
+        ) {
+            it.kind = RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
+            it.properties = RepositoryLibraryProperties(artifact.groupId, artifact.artifactId, libraryDependency.version.text)
+        }
     }
 
     private fun downloadLibraryAndGetItsClasses(
@@ -224,7 +228,7 @@ private class ProjectImporter(
             libraryProperties,
             true,
             true,
-            librariesPath.toString(),
+            null,
             listOf(artifact.repository.asJPSRepository())
         )
 

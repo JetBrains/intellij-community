@@ -8,8 +8,10 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 
@@ -17,12 +19,12 @@ class IDESettingsFUSCollector : ProjectUsagesCollector() {
     override fun getGroup() = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
-        if (PlatformVersion.isAndroidStudio()) {
+        if (KotlinPlatformUtils.isAndroidStudio) {
             return emptySet()
         }
 
         val metrics = mutableSetOf<MetricEvent>()
-        val pluginInfo = getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID)
+        val pluginInfo = getPluginInfoById(KotlinIdePlugin.id)
 
         // filling up scriptingAutoReloadEnabled Event
         for (definition in ScriptDefinitionsManager.getInstance(project).getAllDefinitions()) {

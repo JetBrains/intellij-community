@@ -1,1 +1,0 @@
-deprecated: fitContent.svg -> /general/fitContent.svg; to be removed in IDEA 2021.1 - use AllIcons.General.FitContent

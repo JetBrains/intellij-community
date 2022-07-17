@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // IS_APPLICABLE: false
 fun foo() {
     val bar = { x: Int -> x + 1 }

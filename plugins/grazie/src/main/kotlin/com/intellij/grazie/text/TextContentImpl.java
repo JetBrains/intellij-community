@@ -1,20 +1,27 @@
 package com.intellij.grazie.text;
 
+import com.intellij.grazie.grammar.strategy.StrategyUtils;
+import com.intellij.grazie.utils.Text;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.ranges.IntRange;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
-class TextContentImpl implements TextContent {
+class TextContentImpl extends UserDataHolderBase implements TextContent {
   private final TextDomain domain;
   final List<TokenInfo> tokens;
   private volatile String text;
@@ -36,8 +43,8 @@ class TextContentImpl implements TextContent {
       }
       tokens.add(token);
     }
-    if (tokens.get(0) == WS_TOKEN) tokens.remove(0);
-    if (tokens.get(tokens.size() - 1) == WS_TOKEN) tokens.remove(tokens.size() - 1);
+    if (tokens.get(0) instanceof WSTokenInfo) tokens.remove(0);
+    if (tokens.get(tokens.size() - 1) instanceof WSTokenInfo) tokens.remove(tokens.size() - 1);
     if (tokens.isEmpty()) {
       throw new IllegalArgumentException("There should be at least one non-whitespace token");
     }
@@ -57,14 +64,24 @@ class TextContentImpl implements TextContent {
 
     if (leanForward) {
       while (index < tokens.size() - 1 && tokens.get(index).length() == 0) index++;
-      if (tokens.get(index) == WS_TOKEN) {
+      if (tokens.get(index) instanceof WSTokenInfo) {
         index--;
       }
     } else {
-      if (index > 0 && tokens.get(index - 1) != WS_TOKEN) index--;
+      if (index > 0 && !(tokens.get(index - 1) instanceof WSTokenInfo)) index--;
     }
 
     return index;
+  }
+
+  private int findPsiTokenIndex(int fileOffset) {
+    return ObjectUtils.binarySearch(0, tokens.size(), mid -> {
+      int psiTokenIndex = mid;
+      while (!(tokens.get(psiTokenIndex) instanceof PsiToken)) psiTokenIndex--;
+      var tokenRange = ((PsiToken) tokens.get(psiTokenIndex)).rangeInFile;
+      if (tokenRange.containsOffset(fileOffset)) return mid == psiTokenIndex ? 0 : 1;
+      return tokenRange.getEndOffset() < fileOffset ? -1 : 1;
+    });
   }
 
   @Override
@@ -89,7 +106,7 @@ class TextContentImpl implements TextContent {
   public String toString() {
     String text = this.text;
     if (text == null) {
-      this.text = text = StringUtil.join(tokens, "");
+      this.text = text = StringUtil.join(tokens, t -> t.text, "");
     }
     return text;
   }
@@ -128,19 +145,8 @@ class TextContentImpl implements TextContent {
 
   @Override
   public Integer fileOffsetToText(int fileOffset) {
-    for (int i = 0; i < tokens.size(); i++) {
-      TokenInfo token = tokens.get(i);
-      if (token instanceof PsiToken) {
-        TextRange psiRange = ((PsiToken) token).psi.getTextRange();
-        if (psiRange.containsOffset(fileOffset)) {
-          int insidePsi = fileOffset - psiRange.getStartOffset();
-          if (((PsiToken) token).rangeInPsi.containsOffset(insidePsi)) {
-            return getTokenOffsets()[i] + insidePsi - ((PsiToken) token).rangeInPsi.getStartOffset();
-          }
-        }
-      }
-    }
-    return null;
+    int index = findPsiTokenIndex(fileOffset);
+    return index < 0 ? null : getTokenOffsets()[index] + fileOffset - ((PsiToken) tokens.get(index)).rangeInFile.getStartOffset();
   }
 
   @Override
@@ -158,15 +164,21 @@ class TextContentImpl implements TextContent {
 
   @Override
   public @NotNull PsiElement findPsiElementAt(int textOffset) {
-    return Objects.requireNonNull(getContainingFile().findElementAt(textOffsetToFile(textOffset)));
+    int fileOffset = textOffsetToFile(textOffset);
+    PsiFile file = getContainingFile();
+    PsiElement leaf = file.findElementAt(fileOffset);
+    if (leaf == null) {
+      if (fileOffset == file.getTextLength()) {
+        return PsiTreeUtil.getDeepestLast(file);
+      }
+      throw new RuntimeException("Cannot find offset " + fileOffset + " in file of " + file.getClass() + ", length " + file.getTextLength());
+    }
+    return leaf;
   }
 
   @Override
   public @NotNull List<TextRange> getRangesInFile() {
-    return StreamEx.of(tokens).select(PsiToken.class)
-      .map(t -> t.rangeInPsi.shiftRight(t.psi.getTextRange().getStartOffset()))
-      .filter(r -> !r.isEmpty())
-      .toList();
+    return StreamEx.of(tokens).select(PsiToken.class).map(t -> t.rangeInFile).filter(r -> !r.isEmpty()).toList();
   }
 
   @Override
@@ -195,54 +207,84 @@ class TextContentImpl implements TextContent {
 
   @Override
   public TextContent excludeRange(TextRange rangeInText) {
-    return rangeInText.getLength() == 0 ? this : excludeRange(rangeInText, false);
+    return rangeInText.getLength() == 0 ? this : excludeRanges(List.of(Exclusion.exclude(rangeInText)));
   }
 
   @Override
   public TextContent markUnknown(TextRange rangeInText) {
-    return excludeRange(rangeInText, true);
+    return excludeRanges(List.of(Exclusion.markUnknown(rangeInText)));
   }
 
   @Override
   public boolean intersectsRange(TextRange rangeInFile) {
-    return tokens.stream().anyMatch(
-      token -> token instanceof PsiToken &&
-               ((PsiToken) token).rangeInPsi.shiftRight(((PsiToken) token).psi.getTextRange().getStartOffset()).intersectsStrict(rangeInFile));
+    int start = findPsiTokenIndex(rangeInFile.getStartOffset());
+    if (start < 0) start = -start - 1;
+    for (int i = start; i < tokens.size(); i++) {
+      TokenInfo token = tokens.get(i);
+      if (!(token instanceof PsiToken)) continue;
+
+      TextRange tokenRange = ((PsiToken) token).rangeInFile;
+      if (tokenRange.intersectsStrict(rangeInFile)) return true;
+      if (tokenRange.getStartOffset() >= rangeInFile.getEndOffset()) break;
+    }
+    return false;
   }
 
-  private TextContent excludeRange(TextRange range, boolean unknown) {
+  @Override
+  public TextContent excludeRanges(List<Exclusion> ranges) {
     ProgressManager.checkCanceled();
-    if (range.getStartOffset() < 0 || range.getEndOffset() > length()) {
-      throw new IllegalArgumentException("Text range " + range + " should be between 0 and " + length());
+    if (ranges.isEmpty()) return this;
+
+    if (ranges.get(0).start < 0 || ranges.get(ranges.size() - 1).end > length()) {
+      throw new IllegalArgumentException("Text ranges " + ranges + " should be between 0 and " + length());
     }
-    if (range.getStartOffset() == 0 && range.getEndOffset() == length()) {
-      PsiToken first = (PsiToken) tokens.get(0);
-      return new TextContentImpl(domain, Collections.singletonList(
-        new PsiToken("", first.psi,
-          TextRange.from(first.rangeInPsi.getStartOffset(), 0),
-          unknown || first.unknown || ((PsiToken) tokens.get(tokens.size() - 1)).unknown)));
+    for (int i = 1; i < ranges.size(); i++) {
+      if (ranges.get(i - 1).end > ranges.get(i).start) {
+        throw new IllegalArgumentException("Ranges should be sorted and non-intersecting: " + ranges);
+      }
     }
 
     int[] offsets = getTokenOffsets();
-    int i1 = findTokenIndex(range.getStartOffset(), offsets, true);
-    int i2 = findTokenIndex(range.getEndOffset(), offsets, false);
-    PsiToken t1 = (PsiToken) tokens.get(i1);
-    PsiToken t2 = (PsiToken) tokens.get(i2);
+    List<Exclusion>[] affectingExclusions = getAffectingExclusions(ranges, offsets);
 
-    List<TokenInfo> newTokens = new ArrayList<>(tokens.subList(0, i1));
-    if (range.getStartOffset() > offsets[i1]) {
-      newTokens.add(t1.withRange(TextRange.from(t1.rangeInPsi.getStartOffset(), range.getStartOffset() - offsets[i1])));
+    List<TokenInfo> newTokens = new ArrayList<>();
+    for (int i = 0; i < tokens.size(); i++) {
+      List<Exclusion> affecting = affectingExclusions[i];
+      TokenInfo token = tokens.get(i);
+      if (affecting == null) {
+        newTokens.add(token);
+      } else if (token instanceof PsiToken) {
+        newTokens.addAll(((PsiToken)token).splitToken(offsets[i], affecting));
+      }
     }
-    if (unknown) {
-      newTokens.add(new PsiToken("", t1.psi, TextRange.from(t1.rangeInPsi.getStartOffset() + range.getStartOffset() - offsets[i1], 0), true));
-    }
-    int token2End = offsets[i2] + t2.length();
-    if (token2End > range.getEndOffset()) {
-      newTokens.add(t2.withRange(new TextRange(t2.rangeInPsi.getEndOffset() - token2End + range.getEndOffset(), t2.rangeInPsi.getEndOffset())));
-    }
-    newTokens.addAll(tokens.subList(i2 + 1, tokens.size()));
 
+    if (newTokens.isEmpty()) {
+      PsiToken first = (PsiToken) tokens.get(0);
+      newTokens.add(new PsiToken("", first.psi, TextRange.from(first.rangeInPsi.getStartOffset(), 0),
+                                 first.unknown || ((PsiToken)tokens.get(tokens.size() - 1)).unknown));
+    }
+    
     return new TextContentImpl(domain, newTokens);
+  }
+
+  private @Nullable List<Exclusion> @NotNull [] getAffectingExclusions(List<Exclusion> ranges, int[] offsets) {
+    @SuppressWarnings("unchecked") List<Exclusion>[] affectingExclusions = new List[tokens.size()];
+
+    for (Exclusion range : ranges) {
+      boolean emptyRange = range.start == range.end;
+      if (emptyRange && !range.markUnknown) continue;
+
+      int i1 = findTokenIndex(range.start, offsets, true);
+      int i2 = findTokenIndex(range.end, offsets, emptyRange);
+      while (i2 > 0 && tokens.get(i2).length() == 0) i2--;
+
+      for (int j = i1; j <= i2; j++) {
+        List<Exclusion> affecting = affectingExclusions[j];
+        if (affecting == null) affectingExclusions[j] = affecting = new ArrayList<>();
+        affecting.add(range);
+      }
+    }
+    return affectingExclusions;
   }
 
   private int[] getTokenOffsets() {
@@ -280,25 +322,50 @@ class TextContentImpl implements TextContent {
     return this;
   }
 
+  @Override
+  public TextContent removeIndents(Set<Character> indentChars) {
+    LinkedHashSet<IntRange> ranges = StrategyUtils.INSTANCE.indentIndexes(this, indentChars);
+    List<Exclusion> exclusions = StreamEx.of(ranges)
+      .sorted(Comparator.comparingInt(IntRange::getFirst))
+      .map(range -> {
+        int end = range.getEndInclusive() + 1;
+        return new Exclusion(range.getStart(), end, hasUnknownFragmentsIn(new TextRange(range.getStart(), end)));
+      })
+      .toList();
+    return excludeRanges(exclusions);
+  }
+
+  @Override
+  public TextContent removeLineSuffixes(Set<Character> suffixChars) {
+    if (suffixChars.isEmpty()) return this;
+
+    Pattern pattern = Pattern.compile("(" + Strings.join(suffixChars, c -> Pattern.quote(String.valueOf(c)), "|") + ")(?=\n)");
+    return excludeRanges(ContainerUtil.map(Text.allOccurrences(pattern, this), Exclusion::exclude));
+  }
+
   private static boolean isSpace(String text, int start) {
     return Character.isWhitespace(text.charAt(start)) || Character.isSpaceChar(text.charAt(start));
   }
 
   private static @Nullable TokenInfo merge(TokenInfo t1, TokenInfo t2) {
-    if (t1 == WS_TOKEN && t2 == WS_TOKEN) return t1;
-    if (t1 instanceof PsiToken && t2 instanceof PsiToken) {
-      if (((PsiToken) t1).unknown && ((PsiToken) t2).unknown) {
-        return t1;
-      }
-      if (!((PsiToken) t1).unknown && !((PsiToken) t2).unknown) {
-        if (t1.length() == 0) return t2;
-        if (t2.length() == 0) return t1;
+    if (t1 instanceof WSTokenInfo && t2 instanceof WSTokenInfo) return t1;
+    if (t1 instanceof PsiToken && t2 instanceof PsiToken) return mergePsiTokens((PsiToken)t1, (PsiToken)t2);
+    return null;
+  }
+
+  private static TokenInfo mergePsiTokens(PsiToken t1, PsiToken t2) {
+    if (t1.unknown && t2.unknown) {
+      return t1;
+    }
+    if (!t1.unknown && !t2.unknown) {
+      if (t1.length() == 0) return t2;
+      if (t2.length() == 0) return t1;
+      if (t1.psi == t2.psi && t1.rangeInPsi.getStartOffset() + t1.length() == t2.rangeInPsi.getStartOffset()) {
+        return new PsiToken(t1.text + t2.text, t1.psi, t1.rangeInPsi.union(t2.rangeInPsi), false);
       }
     }
     return null;
   }
-
-  static final TokenInfo WS_TOKEN = new TokenInfo(" ") {};
 
   abstract static class TokenInfo {
     final String text;
@@ -320,22 +387,24 @@ class TextContentImpl implements TextContent {
   static class PsiToken extends TokenInfo {
     final PsiElement psi;
     final TextRange rangeInPsi;
+    final TextRange rangeInFile;
     final boolean unknown;
 
     PsiToken(String text, PsiElement psi, TextRange rangeInPsi, boolean unknown) {
       super(text);
       this.psi = psi;
       this.rangeInPsi = rangeInPsi;
+      this.rangeInFile = rangeInPsi.shiftRight(psi.getTextRange().getStartOffset());
       this.unknown = unknown;
       assert rangeInPsi.getLength() == text.length();
       assert !unknown || rangeInPsi.getLength() == 0;
     }
 
     private int psiStart() {
-      return psi.getTextRange().getStartOffset() + rangeInPsi.getStartOffset();
+      return rangeInFile.getStartOffset();
     }
 
-    PsiToken withRange(TextRange range) {
+    private PsiToken withRange(TextRange range) {
       assert range.getLength() > 0;
       assert !unknown;
       return new PsiToken(range.shiftLeft(rangeInPsi.getStartOffset()).substring(text), psi, range, false);
@@ -346,12 +415,56 @@ class TextContentImpl implements TextContent {
       if (this == o) return true;
       if (!(o instanceof PsiToken)) return false;
       PsiToken psiToken = (PsiToken) o;
-      return unknown == psiToken.unknown && psi.equals(psiToken.psi) && rangeInPsi.equals(psiToken.rangeInPsi);
+      return unknown == psiToken.unknown && psi.equals(psiToken.psi) && (unknown || rangeInPsi.equals(psiToken.rangeInPsi));
     }
 
     @Override
     public int hashCode() {
       return Objects.hash(psi, rangeInPsi, unknown);
+    }
+
+    @Override
+    public String toString() {
+      return unknown ? "?" : super.toString();
+    }
+
+    private List<PsiToken> splitToken(int tokenStart, List<Exclusion> affecting) {
+      int tokenEnd = tokenStart + length();
+      if (affecting.size() == 1 && affecting.get(0).start < tokenStart && affecting.get(0).end > tokenEnd) {
+        return Collections.emptyList();
+      }
+
+      List<PsiToken> shreds = new ArrayList<>();
+      int startInPsi = rangeInPsi.getStartOffset();
+      int prevEnd = tokenStart;
+      for (Exclusion range : affecting) {
+        if (range.start > prevEnd) {
+          shreds.add(withRange(TextRange.from(startInPsi + prevEnd - tokenStart, range.start - prevEnd)));
+        }
+        if (range.markUnknown) {
+          shreds.add(new PsiToken("", psi, TextRange.from(startInPsi + range.start - tokenStart, 0), true));
+        }
+        prevEnd = range.end;
+      }
+      Exclusion lastRange = affecting.get(affecting.size() - 1);
+      if (tokenEnd > lastRange.end) {
+        shreds.add(withRange(new TextRange(startInPsi + lastRange.end - tokenStart, startInPsi + length())));
+      }
+      return shreds;
+    }
+  }
+
+  static class WSTokenInfo extends TokenInfo {
+    WSTokenInfo(char ws) { super(String.valueOf(ws)); }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof WSTokenInfo && ((WSTokenInfo)obj).text.equals(text);
+    }
+
+    @Override
+    public int hashCode() {
+      return text.hashCode();
     }
   }
 }

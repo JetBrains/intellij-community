@@ -1,17 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
@@ -34,10 +33,11 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
   public EditorConfigPreviewFileEditor(@NotNull Editor editor, @NotNull EditorConfigPreviewFile previewFile) {
     myEditor = editor;
     myPreviewFile = previewFile;
+    JComponent headerComponent = getHeaderComponent();
     if (myEditor instanceof EditorEx) {
-      ((EditorEx)myEditor).setPermanentHeaderComponent(getHeaderComponent());
+      ((EditorEx)myEditor).setPermanentHeaderComponent(headerComponent);
     }
-    myEditor.setHeaderComponent(getHeaderComponent());
+    myEditor.setHeaderComponent(headerComponent);
     final EditorSettings editorSettings = myEditor.getSettings();
     editorSettings.setWhitespacesShown(true);
     editorSettings.setGutterIconsShown(false);
@@ -90,16 +90,6 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
   }
 
   @Override
-  public void selectNotify() {
-
-  }
-
-  @Override
-  public void deselectNotify() {
-
-  }
-
-  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
 
   }
@@ -109,16 +99,9 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
 
   }
 
-  @Nullable
   @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public FileEditorLocation getCurrentLocation() {
-    return null;
+  public @NotNull VirtualFile getFile() {
+    return myPreviewFile;
   }
 
   @Override

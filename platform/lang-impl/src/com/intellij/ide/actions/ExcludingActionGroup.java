@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,11 @@ public class ExcludingActionGroup extends ActionGroup {
     super(delegate.getTemplatePresentation().getText(), delegate.isPopup());
     myDelegate = delegate;
     myExcludes = excludes;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return myDelegate.getActionUpdateThread();
   }
 
   @Override

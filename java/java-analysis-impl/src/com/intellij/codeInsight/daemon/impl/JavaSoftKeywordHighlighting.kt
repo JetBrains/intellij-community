@@ -18,8 +18,9 @@ internal class JavaSoftKeywordHighlightingPassFactory : TextEditorHighlightingPa
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
   }
 
-  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? =
-    if (file is PsiJavaFile) JavaSoftKeywordHighlightingPass(file, editor.document) else null
+  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
+    return if (file is PsiJavaFile) JavaSoftKeywordHighlightingPass(file, editor.document) else null
+  }
 }
 
 private class JavaSoftKeywordHighlightingPass(private val file: PsiJavaFile, document: Document) :

@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFilePaths
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 
 class SingleChangeListCommitWorkflowHandler(
@@ -76,9 +75,9 @@ class SingleChangeListCommitWorkflowHandler(
     updateCommitOptions()
   }
 
-  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) {
+  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) {
     super.beforeCommitChecksEnded(isDefaultCommit, result)
-    if (result == CheckinHandler.ReturnResult.COMMIT) {
+    if (result.shouldCommit) {
       // commit message could be changed during before-commit checks - ensure updated commit message is used for commit
       workflow.commitState = workflow.commitState.copy(getCommitMessage())
 
@@ -87,7 +86,7 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean =
-    super.isExecutorEnabled(executor) && (!isCommitEmpty() || !executor.areChangesRequired())
+    super.isExecutorEnabled(executor) && (!executor.areChangesRequired() || !isCommitEmpty())
 
   override fun checkCommit(executor: CommitExecutor?): Boolean =
     getCommitMessage().isNotEmpty() ||
@@ -98,7 +97,9 @@ class SingleChangeListCommitWorkflowHandler(
     workflow.commitState = getCommitState()
   }
 
-  override fun addUnversionedFiles() = addUnversionedFiles(getChangeList())
+  override fun addUnversionedFiles(): Boolean {
+    return addUnversionedFiles(getChangeList(), ui.getInclusionModel())
+  }
 
   private fun initCommitMessage() {
     commitMessagePolicy.init(getChangeList(), getIncludedChanges())

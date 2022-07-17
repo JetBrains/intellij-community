@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.validation;
 
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.docstrings.*;
@@ -47,7 +48,7 @@ public class DocStringAnnotator extends PyAnnotator {
     if (node.isAssignmentTo(PyNames.DOC)) {
       PyExpression right = node.getAssignedValue();
       if (right instanceof PyStringLiteralExpression) {
-        getHolder().newSilentAnnotation(com.intellij.lang.annotation.HighlightSeverity.INFORMATION).range(right).textAttributes(PyHighlighter.PY_DOC_COMMENT).create();
+        getHolder().newSilentAnnotation(HighlightSeverity.INFORMATION).range(right).textAttributes(PyHighlighter.PY_DOC_COMMENT).create();
         annotateDocStringStmt((PyStringLiteralExpression)right);
       }
     }
@@ -78,7 +79,8 @@ public class DocStringAnnotator extends PyAnnotator {
       while (true) {
         TextRange textRange = DocStringReferenceProvider.findNextTag(stmt.getText(), pos, tags);
         if (textRange == null) break;
-        getHolder().newSilentAnnotation(com.intellij.lang.annotation.HighlightSeverity.INFORMATION).range(textRange.shiftRight(stmt.getTextRange().getStartOffset())).textAttributes(PyHighlighter.PY_DOC_COMMENT_TAG).create();
+        getHolder().newSilentAnnotation(
+          HighlightSeverity.INFORMATION).range(textRange.shiftRight(stmt.getTextRange().getStartOffset())).textAttributes(PyHighlighter.PY_DOC_COMMENT_TAG).create();
         pos = textRange.getEndOffset();
       }
     }

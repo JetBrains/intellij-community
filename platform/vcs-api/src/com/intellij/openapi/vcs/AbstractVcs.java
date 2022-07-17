@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
@@ -26,7 +26,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -79,6 +82,7 @@ public abstract class AbstractVcs extends StartedActivated {
 
   /**
    * Returns the name of the VCS as it should be displayed in the UI.
+   *
    * @see #getShortName()
    */
   @Nls
@@ -128,6 +132,16 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
+   * Allows to hide 'Shelf' toolwindow tab.
+   * Takes effect for projects that have configured mappings for this VCS only.
+   *
+   * @return true if 'Shelf' tab should be hidden.
+   */
+  public boolean isWithCustomShelves() {
+    return false;
+  }
+
+  /**
    * @return Custom value for {@link com.intellij.openapi.vcs.actions.CompareWithTheSameVersionAction} action text.
    */
   @NlsActions.ActionText
@@ -136,6 +150,7 @@ public abstract class AbstractVcs extends StartedActivated {
     return null;
   }
 
+  @Nullable
   public Configurable getConfigurable() {
     return null;
   }
@@ -264,20 +279,40 @@ public abstract class AbstractVcs extends StartedActivated {
 
   /**
    * This method is called when user invokes "Enable VCS Integration" and selects a particular VCS.
-   * By default it sets up a single mapping {@code <Project> -> selected VCS}.
+   * <p>
+   * By default, it sets up a single mapping {@code <Project> -> selected VCS}.
    */
   @RequiresEdt
   public void enableIntegration() {
+    enableIntegration(null);
+  }
+
+  /**
+   * This method is called when a user invokes "Enable VCS Integration" and selects a particular VCS.
+   * <p>
+   * By default, it sets up a single mapping {@code <targetDirectory> -> selected VCS}.
+   * Some VCSes might try to automatically detect VCS roots or create a new one.
+   *
+   * @param targetDirectory overridden location of project files to check
+   */
+  @RequiresEdt
+  public void enableIntegration(@Nullable VirtualFile targetDirectory) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (vcsManager != null) {
-      vcsManager.setDirectoryMappings(Collections.singletonList(VcsDirectoryMapping.createDefault(getName())));
+      if (targetDirectory != null) {
+        vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(targetDirectory.getPath(), getName())));
+      }
+      else {
+        vcsManager.setDirectoryMappings(Collections.singletonList(VcsDirectoryMapping.createDefault(getName())));
+      }
     }
   }
 
   /**
    * Invoked when a changelist is deleted explicitly by user or implicitly (e.g. after default changelist switch
    * when the previous one was empty).
-   * @param list change list that's about to be removed
+   *
+   * @param list       change list that's about to be removed
    * @param explicitly whether it's a result of explicit Delete action, or just after switching the active changelist.
    * @return UNSURE if the VCS has nothing to say about this changelist.
    * YES or NO if the changelist has to be removed or not, and no further confirmations are needed about this changelist
@@ -489,8 +524,7 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     if (!allowsNestedRoots()) {
       new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
@@ -631,6 +665,16 @@ public abstract class AbstractVcs extends StartedActivated {
 
   public boolean needsCaseSensitiveDirtyScope() {
     return false;
+  }
+
+  /**
+   * Returns true if VCS root needs to be added to watched roots by
+   * {@link com.intellij.openapi.vcs.impl.projectlevelman.FileWatchRequestModifier} when updating VCS mappings.
+   *
+   * @return true if VCS root needs to be added to watched roots, false otherwise.
+   */
+  public boolean needsLFSWatchesForRoots() {
+    return true;
   }
 }
 

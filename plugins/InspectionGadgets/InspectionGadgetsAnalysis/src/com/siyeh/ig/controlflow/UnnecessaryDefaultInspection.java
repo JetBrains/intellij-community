@@ -102,7 +102,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
   private class UnnecessaryDefaultVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       super.visitSwitchExpression(expression);
       checkSwitchBlock(expression);
     }

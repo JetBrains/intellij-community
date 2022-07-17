@@ -23,8 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
 import java.util.Map;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMethod, GrMember,
                                   GrParameterListOwner, GrTopStatement, GrTypeParameterListOwner, GrDocCommentOwner {

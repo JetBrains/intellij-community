@@ -25,7 +25,7 @@ class KotlinPropertyInsertHandler(callType: CallType<*>) : KotlinCallableInsertH
 
     private fun deleteEmptyParenthesis(context: InsertionContext) {
         val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
-        psiDocumentManager.commitAllDocuments()
+        psiDocumentManager.commitDocument(context.document)
         psiDocumentManager.doPostponedOperationsAndUnblockDocument(context.document)
 
         val offset = context.tailOffset

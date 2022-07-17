@@ -249,7 +249,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         if (outputType != null) {
             final String value = outputType.getAttributeValue("value");
             myOutputType = OutputType.valueOf(value);
-            mySaveToFile = Boolean.valueOf(outputType.getAttributeValue("save-to-file"));
+            mySaveToFile = Boolean.parseBoolean(outputType.getAttributeValue("save-to-file"));
         }
         final Element fileType = element.getChild("FileType");
         if (fileType != null) {
@@ -479,6 +479,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     public XsltRunConfiguration initFromFile(@NotNull XmlFile file) {
         assert XsltSupport.isXsltFile(file) : "Not an XSLT file: " + file.getName();
         mySuggestedName = file.getName();
+        setName(mySuggestedName);
 
         final VirtualFile virtualFile = file.getVirtualFile();
         assert virtualFile != null : "No VirtualFile for " + file.getName();

@@ -15,16 +15,61 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.ChangeAnnotationParameterQuickFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ReflectionForUnavailableAnnotationInspection extends BaseInspection {
+
+  @Override
+  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+    String runtimeRef = StringUtil.getQualifiedName("java.lang.annotation.RetentionPolicy", "RUNTIME");
+    if (infos.length == 1) {
+      PsiClass annotationClass = (PsiClass)infos[0];
+      PsiAnnotation newAnnotation = JavaPsiFacade.getElementFactory(annotationClass.getProject())
+        .createAnnotationFromText("@Retention(" + runtimeRef + ")", annotationClass);
+      String text = getText(annotationClass);
+      LocalQuickFix fix = new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_ANNOTATION_RETENTION,
+                                                  annotationClass,
+                                                  newAnnotation.getParameterList().getAttributes()) {
+        @Override
+        public @NotNull String getText() { return text; }
+      };
+      return new DelegatingFix(fix);
+    }
+    else if (infos.length == 2) {
+      PsiAnnotation retentionAnnotation = (PsiAnnotation)infos[1];
+      String text = getText((PsiClass)infos[0]);
+      LocalQuickFix fix =
+        new ChangeAnnotationParameterQuickFix(retentionAnnotation, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, runtimeRef) {
+          @Override
+          public @NotNull String getText() { return text; }
+        };
+      return new DelegatingFix(fix);
+    }
+    assert false;
+    return null;
+  }
+
+  @IntentionName
+  private static String getText(@NotNull PsiClass aClass) {
+    return JavaAnalysisBundle.message("inspection.i18n.quickfix.annotate.element.as", "annotation", aClass.getName(),
+                                      "Retention(RetentionPolicy.RUNTIME)");
+  }
 
   @Override
   @NotNull
@@ -81,14 +126,16 @@ public class ReflectionForUnavailableAnnotationInspection extends BaseInspection
       }
       final PsiAnnotation retentionAnnotation = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_RETENTION);
       if (retentionAnnotation == null) {
-        registerError(arg);
+        if (annotationClass.isWritable()) {
+          registerError(arg, annotationClass);
+        }
         return;
       }
       final PsiAnnotationParameterList parameters = retentionAnnotation.getParameterList();
       final PsiNameValuePair[] attributes = parameters.getAttributes();
       for (PsiNameValuePair attribute : attributes) {
         @NonNls final String name = attribute.getName();
-        if (name != null && !"value".equals(name)) {
+        if (name != null && !PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name)) {
           continue;
         }
         final PsiAnnotationMemberValue value = attribute.getValue();
@@ -97,7 +144,9 @@ public class ReflectionForUnavailableAnnotationInspection extends BaseInspection
         }
         @NonNls final String text = value.getText();
         if (!text.contains("RUNTIME")) {
-          registerError(arg);
+          if (annotationClass.isWritable()) {
+            registerError(arg, annotationClass, retentionAnnotation);
+          }
           return;
         }
       }

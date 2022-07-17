@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
@@ -17,12 +17,12 @@ import java.util.stream.Stream;
 /**
  * @see com.intellij.testFramework.PlatformTestUtil#maskExtensions
  */
-public interface ExtensionPoint<@NotNull T> {
+public interface ExtensionPoint<T extends @NotNull Object> {
   /**
    * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, Disposable)}.
    */
   @Deprecated
-  default void registerExtension(@NotNull T extension) {
+  default void registerExtension(T extension) {
     registerExtension(extension, LoadingOrder.ANY);
   }
 
@@ -30,21 +30,21 @@ public interface ExtensionPoint<@NotNull T> {
    * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, LoadingOrder, Disposable)}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  void registerExtension(@NotNull T extension, @NotNull LoadingOrder order);
+  @ApiStatus.ScheduledForRemoval
+  void registerExtension(T extension, @NotNull LoadingOrder order);
 
   @TestOnly
-  void registerExtension(@NotNull T extension, @NotNull Disposable parentDisposable);
+  void registerExtension(T extension, @NotNull Disposable parentDisposable);
 
   @TestOnly
-  void registerExtension(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor, @NotNull Disposable parentDisposable);
+  void registerExtension(T extension, @NotNull PluginDescriptor pluginDescriptor, @NotNull Disposable parentDisposable);
 
   /**
    * Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions}
    * to register extension as first or to completely replace existing extensions in tests.
    */
   @TestOnly
-  void registerExtension(@NotNull T extension, @NotNull LoadingOrder order, @NotNull Disposable parentDisposable);
+  void registerExtension(T extension, @NotNull LoadingOrder order, @NotNull Disposable parentDisposable);
 
   /**
    * Prefer to use {@link #getExtensionList()}.
@@ -63,7 +63,7 @@ public interface ExtensionPoint<@NotNull T> {
    * @deprecated Use another solution, because this method instantiates all extensions.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   default @Nullable T getExtension() {
     // method is deprecated and not used, ignore not efficient implementation
     return ContainerUtil.getFirstItem(getExtensionList());
@@ -73,7 +73,7 @@ public interface ExtensionPoint<@NotNull T> {
    * @deprecated Use another solution, because this method instantiates all extensions.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   default boolean hasExtension(@NotNull T extension) {
     // method is deprecated and used only by one external plugin, ignore not efficient implementation
     return ContainerUtil.containsIdentity(getExtensionList(), extension);
@@ -83,13 +83,13 @@ public interface ExtensionPoint<@NotNull T> {
    * @deprecated Use another solution to unregister not applicable extension, because this method instantiates all extensions.
    */
   @Deprecated
-  void unregisterExtension(@NotNull T extension);
+  void unregisterExtension(T extension);
 
   /**
    * @deprecated Use another solution to unregister not applicable extension, because this method instantiates all extensions.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   void unregisterExtensions(@NotNull Predicate<? super T> extension);
 
   /**
@@ -99,7 +99,6 @@ public interface ExtensionPoint<@NotNull T> {
    *
    * Consider to use {@link ExtensionNotApplicableException} instead.
    */
-  @SuppressWarnings("unused")
   void unregisterExtension(@NotNull Class<? extends T> extensionClass);
 
   /**
@@ -107,7 +106,7 @@ public interface ExtensionPoint<@NotNull T> {
    *
    * Consider to use {@link ExtensionNotApplicableException} instead.
    */
-  boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter, boolean stopAfterFirstMatch);
+  boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassNameFilter, boolean stopAfterFirstMatch);
 
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
@@ -115,7 +114,7 @@ public interface ExtensionPoint<@NotNull T> {
    * @deprecated Use {@link ExtensionPointName#addChangeListener(Runnable, Disposable)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
   /**

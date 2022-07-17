@@ -8,7 +8,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.tasks.MavenKeymapExtension;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
@@ -185,6 +185,8 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
 
     importProjects(p1, p2);
 
+    assertModules("p1", "p2");
+
     assertEmptyKeymap();
     String goal = "clean";
     assignShortcut(p1, goal, "alt shift X");
@@ -197,6 +199,8 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
 
     configConfirmationForYesAnswer();
     importProjects(p1, p2);
+
+    assertModules( "p2");
 
     assertKeymapDoesNotContain(p1, goal);
     assertKeymapContains(p2, goal);

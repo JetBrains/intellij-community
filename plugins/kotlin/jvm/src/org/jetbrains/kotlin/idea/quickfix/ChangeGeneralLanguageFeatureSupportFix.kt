@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -6,18 +6,23 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.replaceLanguageFeature
+import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
+import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.configuration.findApplicableConfigurator
-import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
-import org.jetbrains.kotlin.idea.facet.getCleanRuntimeLibraryVersion
-import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.config.TestSourceKotlinRootType
+import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
+import org.jetbrains.kotlin.idea.projectConfiguration.checkUpdateRuntime
 import org.jetbrains.kotlin.psi.KtFile
 
 sealed class ChangeGeneralLanguageFeatureSupportFix(
@@ -35,7 +40,8 @@ sealed class ChangeGeneralLanguageFeatureSupportFix(
 
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {
             val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return
-            val forTests = ModuleRootManager.getInstance(module).fileIndex.isInTestSourceContentKotlinAware(file.virtualFile)
+            val fileIndex = ModuleRootManager.getInstance(module).fileIndex
+            val forTests = fileIndex.getKotlinSourceRootType(file.virtualFile) == TestSourceKotlinRootType
 
             findApplicableConfigurator(module).changeGeneralFeatureConfiguration(module, feature, featureSupport, forTests)
         }
@@ -56,19 +62,20 @@ sealed class ChangeGeneralLanguageFeatureSupportFix(
                 additionalArguments = additionalArguments.replaceLanguageFeature(
                     feature,
                     featureSupport,
-                    file.module?.let { getCleanRuntimeLibraryVersion(it) },
+                    file.module?.let { getRuntimeLibraryVersion(it) },
                     separator = " ",
                     quoted = false
                 )
             }
-            project.invalidateProjectRoots()
+            project.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
         }
 
     }
 
-    companion object : FeatureSupportIntentionActionsFactory() {
+    companion object : KotlinIntentionActionsFactory(), FeatureSupportIntentionActionsFactory {
         private val supportedFeatures = listOf(LanguageFeature.InlineClasses)
 
+        @NlsContexts.DialogTitle
         fun getFixText(feature: LanguageFeature, state: LanguageFeature.State) = getFixText(state, feature.presentableName)
 
         override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
@@ -80,6 +87,29 @@ sealed class ChangeGeneralLanguageFeatureSupportFix(
                     quickFixConstructor = if (shouldConfigureInProject(module)) ::InProject else ::InModule
                 )
             }
+        }
+
+        private fun doCreateActions(
+            diagnostic: Diagnostic,
+            feature: LanguageFeature,
+            allowWarningAndErrorMode: Boolean,
+            quickFixConstructor: (PsiElement, LanguageFeature, LanguageFeature.State) -> IntentionAction
+        ): List<IntentionAction> {
+            val newFeatureSupports = when (diagnostic.factory) {
+                Errors.EXPERIMENTAL_FEATURE_ERROR -> {
+                    if (Errors.EXPERIMENTAL_FEATURE_ERROR.cast(diagnostic).a.first != feature) return emptyList()
+                    if (!allowWarningAndErrorMode) listOf(LanguageFeature.State.ENABLED)
+                    else listOf(LanguageFeature.State.ENABLED_WITH_WARNING, LanguageFeature.State.ENABLED)
+                }
+                Errors.EXPERIMENTAL_FEATURE_WARNING -> {
+                    if (Errors.EXPERIMENTAL_FEATURE_WARNING.cast(diagnostic).a.first != feature) return emptyList()
+                    if (!allowWarningAndErrorMode) listOf(LanguageFeature.State.ENABLED)
+                    else listOf(LanguageFeature.State.ENABLED, LanguageFeature.State.ENABLED_WITH_ERROR)
+                }
+                else -> return emptyList()
+            }
+
+            return newFeatureSupports.map { quickFixConstructor(diagnostic.psiElement, feature, it) }
         }
     }
 }

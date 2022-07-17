@@ -12,7 +12,7 @@ public class Test {
         return y;
     }
 
-    private int getY(int x, int y) throws FileNotFoundException {
+    private static int getY(int x, int y) throws FileNotFoundException {
         new Scanner(new File("file.txt"));
         y = y + x;
         y = y / x;

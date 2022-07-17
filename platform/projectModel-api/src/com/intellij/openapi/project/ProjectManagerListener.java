@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import org.jetbrains.annotations.NotNull;
@@ -13,9 +13,9 @@ public interface ProjectManagerListener extends EventListener {
   ProjectManagerListener[] EMPTY_ARRAY = new ProjectManagerListener[0];
 
   /**
-   * Invoked on project open. Executed in EDT.
-   *
-   * @param project opening project
+   * @deprecated Do not use.
+   * <a href=" https://plugins.jetbrains.com/docs/intellij/plugin-components.html#comintellijpoststartupactivity">Post start-up activity</a>
+   * maybe an alternative.
    */
   default void projectOpened(@NotNull Project project) {
   }
@@ -23,8 +23,9 @@ public interface ProjectManagerListener extends EventListener {
   /**
    * @deprecated Use {@link VetoableProjectManagerListener} instead
    */
-  @Deprecated
-  default boolean canCloseProject(@NotNull Project project) {
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated(forRemoval = true)
+  default boolean canCloseProject(@SuppressWarnings("unused") @NotNull Project project) {
     return true;
   }
 

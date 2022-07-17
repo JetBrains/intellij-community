@@ -4,9 +4,8 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,39 +19,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-// Relatively small T <-> int mapping for elements that have int numbers stored in vfs, similar to PersistentEnumerator<T>,
-// unlike later numbers assigned to T are consequent and retained in memory / expected to be small.
-// Vfs invalidation will rebuild this mapping, also any exception with the mapping will cause rebuild of the vfs
-// stored data is VfsTimeStamp Version T*
-public final class VfsDependentEnum<T> {
+/**
+ * @deprecated not that thing one should use, left only for backward compatibility
+ */
+// TODO remove once persistent fs version updated
+@SuppressWarnings("DeprecatedIsStillUsed")
+@ApiStatus.Internal
+@Deprecated
+final class VfsDependentEnum {
   private final Path myFile;
-  private final DataExternalizer<T> myKeyDescriptor;
   private final int myVersion;
 
   // GuardedBy("myLock")
   private boolean myMarkedForInvalidation;
 
-  private final List<T> myInstances = ContainerUtil.createConcurrentList();
-  private final Map<T, Integer> myInstanceToId = new ConcurrentHashMap<>();
+  private final List<String> myInstances = ContainerUtil.createConcurrentList();
+  private final Map<String, Integer> myInstanceToId = new ConcurrentHashMap<>();
   private final Object myLock = new Object();
   private boolean myTriedToLoadFile;
 
-  public VfsDependentEnum(@NotNull String fileName, @NotNull KeyDescriptor<T> descriptor, int version) {
-    this(FSRecords.getPersistentFSPaths(), fileName, descriptor, version);
-  }
-
   @ApiStatus.Internal
-  VfsDependentEnum(@NotNull PersistentFSPaths paths, @NotNull String fileName, @NotNull KeyDescriptor<T> descriptor, int version) {
+  VfsDependentEnum(@NotNull PersistentFSPaths paths, @NotNull String fileName, int version) {
     myFile = paths.getVfsEnumFile(fileName);
-    myKeyDescriptor = descriptor;
     myVersion = version;
   }
 
-  public int getId(@NotNull T s) throws IOException {
-    return getIdRaw(s, true);
-  }
-
-  int getIdRaw(@NotNull T s, boolean vfsRebuildOnException) throws IOException {
+  int getIdRaw(@NotNull String s) throws IOException {
     Integer integer = myInstanceToId.get(s);
     if (integer != null) return integer;
 
@@ -73,13 +65,13 @@ public final class VfsDependentEnum<T> {
         return enumerated;
       }
       catch (IOException e) {
-        invalidate(e, vfsRebuildOnException);
+        invalidate();
         throw e;
       }
     }
   }
 
-  private void saveToFile(@NotNull T instance) throws IOException {
+  private void saveToFile(@NotNull String instance) throws IOException {
     Files.createDirectories(myFile.getParent());
     try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(myFile,
                                                                                                        StandardOpenOption.APPEND,
@@ -89,7 +81,7 @@ public final class VfsDependentEnum<T> {
         DataInputOutputUtil.writeTIME(output, FSRecords.getCreationTimestamp());
         DataInputOutputUtil.writeINT(output, myVersion);
       }
-      myKeyDescriptor.save(output, instance);
+      EnumeratorStringDescriptor.INSTANCE.save(output, instance);
     }
   }
 
@@ -108,10 +100,10 @@ public final class VfsDependentEnum<T> {
 
         int savedVersion = DataInputOutputUtilRt.readINT(input);
         if (savedVersion == myVersion) {
-          List<T> elements = new ArrayList<>();
-          Map<T, Integer> elementToIdMap = new HashMap<>();
+          List<String> elements = new ArrayList<>();
+          Map<String, Integer> elementToIdMap = new HashMap<>();
           while (input.available() > 0) {
-            T instance = myKeyDescriptor.read(input);
+            String instance = EnumeratorStringDescriptor.INSTANCE.read(input);
             assert instance != null;
             elements.add(instance);
             elementToIdMap.put(instance, elements.size());
@@ -135,53 +127,17 @@ public final class VfsDependentEnum<T> {
   }
 
   // GuardedBy("myLock")
-  private void invalidate(@NotNull Throwable e, boolean vfsRebuildOnException) {
+  private void invalidate() {
     if (!myMarkedForInvalidation) {
       myMarkedForInvalidation = true;
       // exception will be rethrown in this call
       FileUtil.deleteWithRenaming(myFile); // better alternatives ?
-      if (vfsRebuildOnException) {
-        FSRecords.requestVfsRebuild(e);
-      }
     }
   }
 
-  private void register(@NotNull T instance, int id) {
+  private void register(@NotNull String instance, int id) {
     myInstanceToId.put(instance, id);
     assert id == myInstances.size() + 1;
     myInstances.add(instance);
-  }
-
-  public @NotNull T getById(int id) throws IOException {
-    assert id > 0;
-    --id;
-    T instance;
-
-    if (id < myInstances.size()) {
-      instance = myInstances.get(id);
-      if (instance != null) return instance;
-    }
-
-    synchronized (myLock) {
-      if (id < myInstances.size()) {
-        instance = myInstances.get(id);
-        if (instance != null) return instance;
-      }
-
-      try {
-        boolean loaded = loadFromFile();
-        if (loaded) {
-          instance = myInstances.get(id);
-          if (instance != null) return instance;
-        }
-        assert false : "Reading nonexistent value:" + id + "," + myFile + ", loaded:" + loaded;
-      }
-      catch (IOException | AssertionError e) {
-        invalidate(e, true);
-        throw e;
-      }
-    }
-
-    return null;
   }
 }

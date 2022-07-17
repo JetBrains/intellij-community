@@ -2,13 +2,10 @@
 package com.intellij.workspaceModel.storage.impl.external
 
 import com.google.common.collect.HashBiMap
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.NotThisEntityId
-import com.intellij.workspaceModel.storage.ThisEntityId
 import com.intellij.workspaceModel.storage.impl.*
-import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
-import com.intellij.workspaceModel.storage.impl.EntityId
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap
 import java.util.*
 
@@ -50,13 +47,21 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   override fun addMapping(entity: WorkspaceEntity, data: T) {
     startWrite()
     add((entity as WorkspaceEntityBase).id, data)
-    (entityStorage as WorkspaceEntityStorageBuilderImpl).incModificationCount()
+    (entityStorage as MutableEntityStorageImpl).incModificationCount()
   }
 
   internal fun add(id: EntityId, data: T) {
     startWrite()
     index[id] = data
     indexLog.add(IndexLogRecord.Add(id, data))
+    LOG.trace {
+      try {
+        "Adding to external index: ${id.asString()} -> $data. Data hash: ${data.hashCode()}"
+      }
+      catch (e: Throwable) {
+        "Adding to external index. ${id.asString()}, cannot get data info. ${e.message}"
+      }
+    }
   }
 
   override fun addIfAbsent(entity: WorkspaceEntity, data: T): Boolean {
@@ -81,7 +86,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     startWrite()
     entity as WorkspaceEntityBase
     val removed = remove(entity.id)
-    (entityStorage as WorkspaceEntityStorageBuilderImpl).incModificationCount()
+    (entityStorage as MutableEntityStorageImpl).incModificationCount()
     return removed
   }
 
@@ -93,6 +98,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
 
   internal fun remove(id: EntityId): T? {
     startWrite()
+    LOG.trace { "Remove $id from external index" }
     val removed = index.remove(id)
     indexLog.add(IndexLogRecord.Remove(id))
     return removed
@@ -100,7 +106,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
 
   fun applyChanges(other: MutableExternalEntityMappingImpl<*>,
                    replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>,
-                   target: WorkspaceEntityStorageBuilderImpl) {
+                   target: MutableEntityStorageImpl) {
     val initialData = HashMap<EntityId, T>()
     //todo there will be no need to remember initial data if we merge events like we do in WorkspaceBuilderChangeLog
     other.indexLog.forEach { indexEntry ->
@@ -127,7 +133,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     }
   }
 
-  private fun getTargetId(replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>, target: WorkspaceEntityStorageBuilderImpl, id: EntityId): EntityId? {
+  private fun getTargetId(replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>, target: MutableEntityStorageImpl, id: EntityId): EntityId? {
     val possibleTargetId = replaceMap[id.notThis()]
     if (possibleTargetId != null) return possibleTargetId.id
 
@@ -173,6 +179,8 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
       }
       return Collections.unmodifiableMap(result)
     }
+
+    private val LOG = logger<MutableExternalEntityMappingImpl<*>>()
   }
 }
 

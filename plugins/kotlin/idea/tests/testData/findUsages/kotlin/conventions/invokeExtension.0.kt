@@ -10,3 +10,6 @@ fun f(p: P) {
     p()
     p.invoke()
 }
+
+// FIR_COMPARISON
+// IGNORE_FIR_LOG

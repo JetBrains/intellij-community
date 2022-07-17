@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.actions
 
 import com.intellij.diff.DiffDialogHints
@@ -6,6 +6,7 @@ import com.intellij.diff.DiffManager
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.chains.SimpleDiffRequestProducer
 import com.intellij.diff.requests.DiffRequest
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
@@ -16,7 +17,12 @@ import git4idea.index.*
 import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.index.vfs.filePath
 
-abstract class GitStageCompareWithVersionAction(val currentVersion: ContentVersion, val compareWithVersion: ContentVersion) : DumbAwareAction() {
+abstract class GitStageCompareWithVersionAction(private val currentVersion: ContentVersion,
+                                                private val compareWithVersion: ContentVersion) : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun update(e: AnActionEvent) {
     val project = e.project
     val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
@@ -42,22 +48,22 @@ abstract class GitStageCompareWithVersionAction(val currentVersion: ContentVersi
     DiffManager.getInstance().showDiff(e.project, SimpleDiffRequestChain.fromProducer(producer), DiffDialogHints.DEFAULT)
   }
 
-  abstract fun createDiffRequest(project: Project, root: VirtualFile, status: GitFileStatus) : DiffRequest
+  abstract fun createDiffRequest(project: Project, root: VirtualFile, status: GitFileStatus): DiffRequest
 }
 
-class GitStageCompareLocalWithStagedAction: GitStageCompareWithVersionAction(ContentVersion.LOCAL, ContentVersion.STAGED) {
+class GitStageCompareLocalWithStagedAction : GitStageCompareWithVersionAction(ContentVersion.LOCAL, ContentVersion.STAGED) {
   override fun createDiffRequest(project: Project, root: VirtualFile, status: GitFileStatus): DiffRequest {
     return compareStagedWithLocal(project, root, status)
   }
 }
 
-class GitStageCompareStagedWithLocalAction: GitStageCompareWithVersionAction(ContentVersion.STAGED, ContentVersion.LOCAL) {
+class GitStageCompareStagedWithLocalAction : GitStageCompareWithVersionAction(ContentVersion.STAGED, ContentVersion.LOCAL) {
   override fun createDiffRequest(project: Project, root: VirtualFile, status: GitFileStatus): DiffRequest {
     return compareStagedWithLocal(project, root, status)
   }
 }
 
-class GitStageCompareStagedWithHeadAction: GitStageCompareWithVersionAction(ContentVersion.STAGED, ContentVersion.HEAD) {
+class GitStageCompareStagedWithHeadAction : GitStageCompareWithVersionAction(ContentVersion.STAGED, ContentVersion.HEAD) {
   override fun createDiffRequest(project: Project, root: VirtualFile, status: GitFileStatus): DiffRequest {
     return compareHeadWithStaged(project, root, status)
   }

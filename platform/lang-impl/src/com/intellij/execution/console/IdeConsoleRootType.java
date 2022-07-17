@@ -8,8 +8,7 @@ import org.jetbrains.annotations.*;
  *
  * @deprecated Use {@link com.intellij.ide.script.IdeConsoleRootType} instead.
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+@Deprecated(forRemoval = true)
 public class IdeConsoleRootType extends ConsoleRootType {
   protected IdeConsoleRootType(@NonNls @NotNull String consoleTypeId, @Nls @Nullable String displayName) {
     super(consoleTypeId, displayName);

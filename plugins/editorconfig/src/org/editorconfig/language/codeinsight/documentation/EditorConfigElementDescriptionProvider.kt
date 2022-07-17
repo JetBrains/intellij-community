@@ -13,13 +13,12 @@ import org.editorconfig.language.schema.descriptors.impl.EditorConfigReferenceDe
 
 class EditorConfigElementDescriptionProvider : ElementDescriptionProvider {
   override fun getElementDescription(element: PsiElement, location: ElementDescriptionLocation): String? {
-    element as? EditorConfigDescribableElement ?: return null
+    if (element !is EditorConfigDescribableElement) return null
     if (element is EditorConfigFlatOptionKey) {
       return EditorConfigBundle.get("usage.type.option.key", element.text, element.section.header.text)
     }
 
-    val descriptor = element.getDescriptor(false)
-    return when (descriptor) {
+    return when (element.getDescriptor(false)) {
       is EditorConfigDeclarationDescriptor,
       is EditorConfigReferenceDescriptor -> EditorConfigBundle.get(
         "usage.type.identifier",

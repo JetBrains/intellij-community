@@ -6,6 +6,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
@@ -136,7 +137,7 @@ final class CompletionAssertions {
                   insertedElement.getNode().getChars())) {
       throw new RuntimeExceptionWithAttachments(
         "Inconsistent completion tree",
-        "range=" + range,
+        "range=" + range + "; fileLength=" + fileCopyText.length(),
         createFileTextAttachment(fileCopy, originalFile),
         createAstAttachment(fileCopy, originalFile),
         new Attachment("Element at caret.txt", insertedElement.getText()));
@@ -165,7 +166,7 @@ final class CompletionAssertions {
            ", physical=" + file.isPhysical();
   }
 
-  static class WatchingInsertionContext extends InsertionContext {
+  static class WatchingInsertionContext extends InsertionContext implements Disposable {
     private RangeMarkerEx tailWatcher;
     Throwable invalidateTrace;
     DocumentEvent killer;
@@ -221,6 +222,11 @@ final class CompletionAssertions {
       }
 
       return offset;
+    }
+
+    @Override
+    public void dispose() {
+      stopWatching();
     }
   }
 

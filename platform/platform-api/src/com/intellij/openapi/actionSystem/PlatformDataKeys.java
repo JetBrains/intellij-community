@@ -1,15 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.*;
 import com.intellij.ide.ui.PopupLocator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.ContentManager;
@@ -25,20 +20,6 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
   public static final DataKey<PasteProvider> PASTE_PROVIDER = DataKey.create("pasteProvider");
   public static final DataKey<DeleteProvider> DELETE_ELEMENT_PROVIDER = DataKey.create("deleteElementProvider");
 
-  /**
-   * Returns single selection item.
-   *
-   * @see #SELECTED_ITEMS
-   */
-  public static final DataKey<Object> SELECTED_ITEM = DataKey.create("selectedItem");
-
-  /**
-   * Returns multi selection items.
-   *
-   * @see #SELECTED_ITEM
-   */
-  public static final DataKey<Object[]> SELECTED_ITEMS = DataKey.create("selectedItems");
-
   public static final DataKey<Rectangle> DOMINANT_HINT_AREA_RECTANGLE = DataKey.create("dominant.hint.rectangle");
 
   public static final DataKey<ContentManager> CONTENT_MANAGER = DataKey.create("contentManager");
@@ -50,6 +31,7 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
   public static final DataKey<StatusBar> STATUS_BAR = DataKey.create("STATUS_BAR");
 
   public static final DataKey<TreeExpander> TREE_EXPANDER = DataKey.create("treeExpander");
+  public static final DataKey<Boolean> TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER = DataKey.create("treeExpanderHideActions");
 
   /**
    * @see com.intellij.ide.actions.ExportToTextFileAction
@@ -94,7 +76,6 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
    *
    * @deprecated use {@link ActionPromoter}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final DataKey<Comparator<? super AnAction>> ACTIONS_SORTER = DataKey.create("actionsSorter");
 }

@@ -1,15 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.net.URISyntaxException;
@@ -28,13 +32,13 @@ public final class PathManager {
   public static final String PROPERTY_SCRATCH_PATH = "idea.scratch.path";
   public static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
   public static final String PROPERTY_LOG_PATH = "idea.log.path";
-  public static final String PROPERTY_LOG_CONFIG_FILE = "idea.log.config.file";
+  public static final String PROPERTY_LOG_CONFIG_FILE = "idea.log.config.properties.file";
   public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
 
   public static final String OPTIONS_DIRECTORY = "options";
   public static final String DEFAULT_EXT = ".xml";
 
-  private static final String PROPERTY_HOME = "idea.home";  // reduced variant of PROPERTY_HOME_PATH, now deprecated
+  private static final String PROPERTY_HOME = "idea.home";  // a reduced variant of PROPERTY_HOME_PATH, now deprecated
   private static final String PROPERTY_VENDOR_NAME = "idea.vendor.name";
 
   private static final String JRE_DIRECTORY = "jbr";
@@ -102,7 +106,8 @@ public final class PathManager {
         catch (IOException ignored) { }
       }
 
-      // set before ourHomePath because getBinDirectories() rely on fact that if getHomePath(true) returns something, then ourBinDirectories is already computed
+      // set before ourHomePath because getBinDirectories() rely on the fact that if `getHomePath(true)`
+      // returns something, then `ourBinDirectories` is already computed
       ourBinDirectories = result == null ?  Collections.emptyList() : getBinDirectories(Paths.get(result));
       ourHomePath = result;
     }
@@ -139,12 +144,20 @@ public final class PathManager {
   }
 
   public static @Nullable String getHomePathFor(@NotNull Class<?> aClass) {
-    String rootPath = getResourceRoot(aClass, '/' + aClass.getName().replace('.', '/') + ".class");
-    if (rootPath == null) return null;
+    Path result = getHomeDirFor(aClass);
+    return result == null ? null : result.toString();
+  }
 
-    Path root = Paths.get(rootPath).toAbsolutePath();
-    do root = root.getParent(); while (root != null && !isIdeaHome(root));
-    return root != null ? root.toString() : null;
+  public static @Nullable Path getHomeDirFor(@NotNull Class<?> aClass) {
+    Path result = null;
+    String rootPath = getResourceRoot(aClass, '/' + aClass.getName().replace('.', '/') + ".class");
+    if (rootPath != null) {
+      Path root = Paths.get(rootPath).toAbsolutePath();
+      do root = root.getParent();
+      while (root != null && !isIdeaHome(root));
+      result = root;
+    }
+    return result;
   }
 
   private static boolean isIdeaHome(Path root) {
@@ -169,6 +182,15 @@ public final class PathManager {
         dir = dir.resolve(osSuffix);
         if (Files.isDirectory(dir)) {
           binDirs.add(dir);
+          if (SystemInfoRt.isLinux) {
+            String arch = CpuArch.isIntel64() ? "amd64" : CpuArch.isArm64() ? "aarch64" : null;
+            if (arch != null) {
+              dir = dir.resolve(arch);
+              if (Files.isDirectory(dir)) {
+                binDirs.add(dir);
+              }
+            }
+          }
         }
       }
     }
@@ -203,10 +225,10 @@ public final class PathManager {
    * Looks for a file in all possible bin directories.
    *
    * @return first that exists.
-   * @throws FileNotFoundException if nothing found.
+   * @throws RuntimeException if nothing found.
    * @see #findBinFile(String)
    */
-  public static @NotNull Path findBinFileWithException(@NotNull String fileName) throws FileNotFoundException {
+  public static @NotNull Path findBinFileWithException(@NotNull String fileName) {
     Path file = findBinFile(fileName);
     if (file != null) {
       return file;
@@ -217,7 +239,7 @@ public final class PathManager {
     for (Path directory : getBinDirectories()) {
       message.append('\n').append(directory);
     }
-    throw new FileNotFoundException(message.toString());
+    throw new RuntimeException(message.toString());
   }
 
   public static @NotNull String getLibPath() {
@@ -251,6 +273,7 @@ public final class PathManager {
     return ourCommonDataPath;
   }
 
+  @SuppressWarnings("IdentifierGrammar")
   public static @Nullable String getPathsSelector() {
     return PATHS_SELECTOR;
   }
@@ -294,10 +317,12 @@ public final class PathManager {
     return platformPath(selector, "Application Support", "", "APPDATA", "", "XDG_CONFIG_HOME", ".config", "");
   }
 
+  @SuppressWarnings("IdentifierGrammar")
   public static @NotNull String getOptionsPath() {
     return getConfigPath() + '/' + OPTIONS_DIRECTORY;
   }
 
+  @SuppressWarnings("IdentifierGrammar")
   public static @NotNull File getOptionsFile(@NotNull String fileName) {
     return Paths.get(getOptionsPath(), fileName + DEFAULT_EXT).toFile();
   }
@@ -351,8 +376,8 @@ public final class PathManager {
     return platformPath(selector, "Caches", "", "LOCALAPPDATA", "", "XDG_CACHE_HOME", ".cache", "");
   }
 
-  public static @NotNull String getDefaultUnixSystemPath(@NotNull String userHome, @NotNull String pathsSelector) {
-    return getUnixPlatformPath(userHome, pathsSelector, null, ".cache", "");
+  public static @NotNull String getDefaultUnixSystemPath(@NotNull String userHome, @NotNull String selector) {
+    return getUnixPlatformPath(userHome, selector, null, ".cache", "");
   }
 
   public static @NotNull String getTempPath() {
@@ -549,6 +574,12 @@ public final class PathManager {
         log("Can't read property file '" + path + "': " + e.getMessage());
       }
     }
+
+    // Check and fix conflicting properties.
+    sysProperties.setProperty("disableJbScreenMenuBar", "true"); // a temporary key for bundled runtime (will be removed soon)
+    if ("true".equals(sysProperties.getProperty("jbScreenMenuBar.enabled"))) {
+      sysProperties.setProperty("apple.laf.useScreenMenuBar", "false");
+    }
   }
 
   private static String getCustomPropertiesFile() {
@@ -608,7 +639,7 @@ public final class PathManager {
   }
 
   /**
-   * @return path to 'community' project home irrespective of current project
+   * @return path to 'community' project home irrespective of the current project
    */
   public static @NotNull String getCommunityHomePath() {
     return getCommunityHomePath(getHomePath());
@@ -623,6 +654,10 @@ public final class PathManager {
     }
     if (Files.isDirectory(Paths.get(homePath, "ultimate/community/.idea"))) {
       return homePath + "/ultimate/community";
+    }
+    if (Files.isDirectory(Paths.get(homePath, "../../../community/.idea"))) {
+      // support projects in ULTIMATE_REPO/remote-dev/extras/SUBDIR
+      return homePath + "/../../../community";
     }
     if (Files.isRegularFile(Paths.get(homePath, "../../Product.Root"))) { // .NET products directory
       return homePath + "/../ultimate/community";
@@ -680,7 +715,7 @@ public final class PathManager {
     if (!Files.exists(artifactsDir)) {
       // running IDE or tests in IDE
       artifactsDir = outClassesDir.resolve("artifacts");
-    } // otherwise running tests via build scripts
+    } // otherwise, running tests via build scripts
     return artifactsDir.resolve(artifactDirNameInBuildLayout).resolve(artifactFileName);
   }
 

@@ -1,0 +1,2 @@
+@MyAnnotation(<caret>/* ...value = */ "a")
+class AK

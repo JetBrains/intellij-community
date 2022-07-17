@@ -67,7 +67,7 @@ public class MisspelledMethodNameInspection extends BaseInspection {
 
   private class MethodNamesDifferOnlyByCaseVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
       PsiMethod[] methods = aClass.getAllMethods();
       Map<String, PsiMethod> methodNames = CollectionFactory.createCaseInsensitiveStringMap();
@@ -97,7 +97,7 @@ public class MisspelledMethodNameInspection extends BaseInspection {
             }
             if (methodClass == aClass) {
               PsiIdentifier identifier = method.getNameIdentifier();
-              if (identifier != null) {
+              if (identifier != null && identifier.isPhysical()) {
                 errorNames.put(identifier, existingName);
               }
             }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
@@ -8,9 +8,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -22,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.Splitter;
@@ -31,23 +30,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBRectangle;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +58,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -72,7 +68,7 @@ public final class EditorWindow {
   public static final DataKey<EditorWindow> DATA_KEY = DataKey.create("editorWindow");
   public static final Key<Boolean> HIDE_TABS = Key.create("HIDE_TABS");
 
-  JPanel myPanel;
+  @NotNull JPanel panel;
   private final @NotNull EditorTabbedContainer myTabbedPane;
   @NotNull
   private final EditorsSplitters myOwner;
@@ -82,7 +78,7 @@ public final class EditorWindow {
    * @deprecated Use file opening methods taking {@link FileEditorOpenOptions} instead
    * and pass the index through {@link FileEditorOpenOptions#withIndex(int)}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
   // Metadata to support editor tab drag&drop process: initial index
   public static final Key<Integer> DRAG_START_INDEX_KEY = KeyWithDefaultValue.create("drag start editor index", -1);
@@ -102,12 +98,12 @@ public final class EditorWindow {
 
   EditorWindow(@NotNull EditorsSplitters owner, @NotNull Disposable parentDisposable) {
     myOwner = owner;
-    myPanel = new JPanel(new BorderLayout());
-    myPanel.setOpaque(false);
-    myPanel.setFocusable(false);
+    panel = new JPanel(new BorderLayout());
+    panel.setOpaque(false);
+    panel.setFocusable(false);
 
     myTabbedPane = new EditorTabbedContainer(this, getManager().getProject(), parentDisposable);
-    myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
+    panel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
 
     // tab layout policy
     if (UISettings.getInstance().getScrollTabLayoutInEditor()) {
@@ -130,17 +126,17 @@ public final class EditorWindow {
 
   void updateTabsVisibility(@NotNull UISettings settings) {
     myTabbedPane.getTabs().getPresentation()
-      .setHideTabs(myOwner.isFloating() && shouldHideTabs(getSelectedEditor())
+      .setHideTabs(myOwner.isFloating() && shouldHideTabs(getSelectedComposite())
                    || settings.getEditorTabPlacement() == UISettings.TABS_NONE
                    || settings.getPresentationMode());
   }
 
-  private static boolean shouldHideTabs(@Nullable EditorWithProviderComposite selectedEditor) {
-    return selectedEditor != null && ContainerUtil.exists(selectedEditor.getEditors(), e -> HIDE_TABS.get(e, false));
+  private static boolean shouldHideTabs(@Nullable EditorComposite composite) {
+    return composite != null && ContainerUtil.exists(composite.getAllEditors(), e -> HIDE_TABS.get(e, false));
   }
 
   public boolean isShowing() {
-    return myPanel.isShowing();
+    return panel.isShowing();
   }
 
   public void closeAllExcept(@Nullable VirtualFile selectedFile) {
@@ -194,46 +190,46 @@ public final class EditorWindow {
   public void closeFile(@NotNull VirtualFile file, boolean disposeIfNeeded, boolean transferFocus) {
     FileEditorManagerImpl editorManager = getManager();
     FileEditorManagerImpl.runBulkTabChange(myOwner, splitters -> {
-      List<EditorWithProviderComposite> editors = splitters.findEditorComposites(file);
-      if (!isDisposed() && editors.isEmpty()) return;
+      List<EditorComposite> composites = splitters.getAllComposites(file);
+      if (!isDisposed() && composites.isEmpty()) return;
       try {
-        EditorWithProviderComposite editor = findFileComposite(file);
+        EditorComposite composite = getComposite(file);
 
         FileEditorManagerListener.Before beforePublisher =
           editorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER);
 
         beforePublisher.beforeFileClosed(editorManager, file);
 
-        if (editor != null) {
-          int componentIndex = findComponentIndex(editor.getComponent());
-          if (componentIndex >= 0) { // editor could close itself on decomposition
+        if (composite != null) {
+          int componentIndex = findComponentIndex(composite.getComponent());
+          if (componentIndex >= 0) { // composite could close itself on decomposition
             int indexToSelect = calcIndexToSelect(file, componentIndex);
-            FileEditorOpenOptions options = new FileEditorOpenOptions().withIndex(componentIndex).withPin(editor.isPinned());
+            FileEditorOpenOptions options = new FileEditorOpenOptions().withIndex(componentIndex).withPin(composite.isPinned());
             Pair<String, FileEditorOpenOptions> pair = Pair.create(file.getUrl(), options);
             myRemovedTabs.push(pair);
             myTabbedPane.removeTabAt(componentIndex, indexToSelect, transferFocus);
-            editorManager.disposeComposite(editor);
+            editorManager.disposeComposite(composite);
           }
         }
         else {
 
           if (inSplitter()) {
-            Splitter splitter = (Splitter)myPanel.getParent();
-            JComponent otherComponent = splitter.getOtherComponent(myPanel);
+            Splitter splitter = (Splitter)panel.getParent();
+            JComponent otherComponent = splitter.getOtherComponent(panel);
 
             if (otherComponent != null) {
               IdeFocusManager.findInstance().requestFocus(otherComponent, true);
             }
           }
 
-          myPanel.removeAll ();
+          panel.removeAll ();
         }
 
         if (disposeIfNeeded && getTabCount() == 0) {
           removeFromSplitter();
         }
         else {
-          myPanel.revalidate();
+          panel.revalidate();
         }
       }
       finally {
@@ -263,8 +259,8 @@ public final class EditorWindow {
       myOwner.setCurrentWindow(siblings[0], true);
     }
 
-    Splitter splitter = (Splitter)myPanel.getParent();
-    JComponent otherComponent = splitter.getOtherComponent(myPanel);
+    Splitter splitter = (Splitter)panel.getParent();
+    JComponent otherComponent = splitter.getOtherComponent(panel);
 
     Container parent = splitter.getParent().getParent();
     if (parent instanceof Splitter) {
@@ -275,6 +271,8 @@ public final class EditorWindow {
       else {
         parentSplitter.setSecondComponent(otherComponent);
       }
+
+      normalizeProportionsIfNeed(myOwner.getCurrentWindow().panel);
     }
     else if (parent instanceof EditorsSplitters) {
       Component currentFocusComponent = getGlobalInstance().getFocusedDescendantFor(parent);
@@ -307,11 +305,11 @@ public final class EditorWindow {
         if (histFile.equals(fileBeingClosed)) {
           continue;
         }
-        EditorWithProviderComposite editor = findFileComposite(histFile);
-        if (editor == null) {
+        EditorComposite composite = getComposite(histFile);
+        if (composite == null) {
           continue; // ????
         }
-        int histFileIndex = findComponentIndex(editor.getComponent());
+        int histFileIndex = findComponentIndex(composite.getComponent());
         if (histFileIndex >= 0) {
           // if the file being closed is located before the hist file, then after closing the index of the histFile will be shifted by -1
           return histFileIndex;
@@ -365,10 +363,6 @@ public final class EditorWindow {
     myTabbedPane.setTabPlacement(tabPlacement);
   }
 
-  void updateTabsLayout(@NotNull TabsLayoutInfo newTabsLayoutInfo) {
-    myTabbedPane.updateTabsLayout(newTabsLayoutInfo);
-  }
-
   public void setAsCurrentWindow(boolean requestFocus) {
     myOwner.setCurrentWindow(this, requestFocus);
   }
@@ -390,7 +384,7 @@ public final class EditorWindow {
   }
 
   public Dimension getSize() {
-    return myPanel.getSize();
+    return panel.getSize();
   }
 
   public @NotNull EditorTabbedContainer getTabbedPane() {
@@ -402,25 +396,25 @@ public final class EditorWindow {
   }
 
   public void toFront() {
-    Window window = UIUtil.getWindow(myTabbedPane.getComponent());
+    Window window = ComponentUtil.getWindow(myTabbedPane.getComponent());
     UIUtil.toFront(window);
   }
 
   protected static class TComp extends JPanel implements DataProvider, EditorWindowHolder {
-    final @NotNull EditorWithProviderComposite myEditor;
+    final @NotNull EditorComposite myComposite;
     protected final EditorWindow myWindow;
 
-    TComp(@NotNull EditorWindow window, @NotNull EditorWithProviderComposite editor) {
+    TComp(@NotNull EditorWindow window, @NotNull EditorComposite composite) {
       super(new BorderLayout());
-      myEditor = editor;
+      myComposite = composite;
       myWindow = window;
-      add(editor.getComponent(), BorderLayout.CENTER);
+      add(composite.getComponent(), BorderLayout.CENTER);
       addFocusListener(new FocusAdapter() {
         @Override
         public void focusGained(FocusEvent e) {
           ApplicationManager.getApplication().invokeLater(() -> {
             if (!hasFocus()) return;
-            JComponent focus = myEditor.getSelectedWithProvider().getFileEditor().getPreferredFocusedComponent();
+            JComponent focus = myComposite.getSelectedWithProvider().getFileEditor().getPreferredFocusedComponent();
             if (focus != null && !focus.hasFocus()) {
               getGlobalInstance().requestFocus(focus, true);
             }
@@ -430,27 +424,27 @@ public final class EditorWindow {
       setFocusTraversalPolicy(new FocusTraversalPolicy() {
         @Override
         public Component getComponentAfter(Container aContainer, Component aComponent) {
-          return myEditor.getFocusComponent();
+          return myComposite.getFocusComponent();
         }
 
         @Override
         public Component getComponentBefore(Container aContainer, Component aComponent) {
-          return myEditor.getFocusComponent();
+          return myComposite.getFocusComponent();
         }
 
         @Override
         public Component getFirstComponent(Container aContainer) {
-          return myEditor.getFocusComponent();
+          return myComposite.getFocusComponent();
         }
 
         @Override
         public Component getLastComponent(Container aContainer) {
-          return myEditor.getFocusComponent();
+          return myComposite.getFocusComponent();
         }
 
         @Override
         public Component getDefaultComponent(Container aContainer) {
-          return myEditor.getFocusComponent();
+          return myComposite.getFocusComponent();
         }
       });
       setFocusCycleRoot(true);
@@ -464,54 +458,82 @@ public final class EditorWindow {
     @Override
     public Object getData(@NotNull String dataId) {
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)){
-        VirtualFile virtualFile = myEditor.getFile();
+        VirtualFile virtualFile = myComposite.getFile();
         return virtualFile.isValid() ? virtualFile : null;
       }
       if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myEditor.getFileEditorManager().getProject();
+        return myComposite.getProject();
       }
       return null;
     }
   }
 
   private void checkConsistency() {
-    LOG.assertTrue(myOwner.containsWindow(this), "EditorWindow not in collection");
+    LOG.assertTrue(isValid(), "EditorWindow not in collection");
   }
 
+  public boolean isValid() {
+    return myOwner.containsWindow(this);
+  }
+
+  /**
+   * @deprecated Use {@link #getSelectedComposite}
+   */
+  @Deprecated
   public @Nullable EditorWithProviderComposite getSelectedEditor() {
-    return getSelectedEditor(false);
+    return (EditorWithProviderComposite)getSelectedComposite(false);
+  }
+
+  public @Nullable EditorComposite getSelectedComposite() {
+    return getSelectedComposite(false);
+  }
+
+  /**
+   * @deprecated Use {@link #getSelectedComposite}
+   */
+  @Deprecated
+  public @Nullable EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {
+    return (EditorWithProviderComposite)getSelectedComposite(ignorePopup);
   }
 
   /**
    * @param ignorePopup if {@code false} and context menu is shown currently for some tab,
-   *                    editor for which menu is invoked will be returned
+   *                    composite for which menu is invoked will be returned
    */
-  public @Nullable EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {
+  public @Nullable EditorComposite getSelectedComposite(boolean ignorePopup) {
     TComp comp = ObjectUtils.tryCast(myTabbedPane.getSelectedComponent(ignorePopup), TComp.class);
-    return comp == null ? null : comp.myEditor;
+    return comp == null ? null : comp.myComposite;
   }
 
+  public @NotNull List<@NotNull EditorComposite> getAllComposites() {
+    return IntStream.range(0, getTabCount()).mapToObj(this::getCompositeAt)
+      .collect(Collectors.toList());
+  }
+
+  /**
+   * @deprecated {@link #getAllComposites()}
+   */
+  @Deprecated
   public EditorWithProviderComposite @NotNull [] getEditors() {
-    int tabCount = getTabCount();
-    EditorWithProviderComposite[] res = new EditorWithProviderComposite[tabCount];
-    for (int i = 0; i != tabCount; ++i) {
-      res[i] = getEditorAt(i);
-    }
-    return res;
+    return ContainerUtil.filterIsInstance(getAllComposites(), EditorWithProviderComposite.class)
+      .toArray(new EditorWithProviderComposite[0]);
   }
 
   public VirtualFile @NotNull [] getFiles() {
-    int tabCount = getTabCount();
-    VirtualFile[] res = new VirtualFile[tabCount];
-    for (int i = 0; i != tabCount; ++i) {
-      res[i] = getEditorAt(i).getFile();
-    }
-    return res;
+    return ContainerUtil.map2Array(getAllComposites(), VirtualFile.class, EditorComposite::getFile);
   }
 
-  public void setSelectedEditor(@NotNull EditorComposite editor, boolean focusEditor) {
-    // select an editor in a tabbed pane and then focus an editor if needed
-    int index = findFileIndex(editor.getFile());
+  /**
+   * @deprecated {@link #setSelectedComposite(EditorComposite, boolean)}
+   */
+  @Deprecated
+  public void setSelectedEditor(@NotNull EditorComposite composite, boolean focusEditor) {
+    setSelectedComposite(composite, focusEditor);
+  }
+
+  public void setSelectedComposite(@NotNull EditorComposite composite, boolean focusEditor) {
+    // select a composite in a tabbed pane and then focus a composite if needed
+    int index = findFileIndex(composite.getFile());
     if (index != -1) {
       if (!isDisposed()) {
         myTabbedPane.setSelectedIndex(index, focusEditor);
@@ -519,14 +541,31 @@ public final class EditorWindow {
     }
   }
 
+  /**
+   * @deprecated Use {@link #setComposite(EditorComposite, boolean)}
+   */
+  @Deprecated
   public void setEditor(@NotNull EditorWithProviderComposite editor, boolean focusEditor) {
-    setEditor(editor, new FileEditorOpenOptions().withRequestFocus(focusEditor));
+    setComposite(editor, new FileEditorOpenOptions().withRequestFocus(focusEditor));
   }
 
+  /**
+   * @deprecated Use {@link #setComposite(EditorComposite, FileEditorOpenOptions)}
+   */
+  @Deprecated
   public void setEditor(@NotNull EditorWithProviderComposite editor, @NotNull FileEditorOpenOptions options) {
-    boolean isNewEditor = findEditorIndex(editor) == -1;
-    boolean isPreviewMode = (isNewEditor || editor.isPreview()) && shouldReservePreview(editor.getFile(), options);
-    editor.setPreview(isPreviewMode);
+    setComposite(editor, options);
+  }
+
+  public void setComposite(@NotNull EditorComposite composite, boolean focusEditor) {
+    setComposite(composite, new FileEditorOpenOptions().withRequestFocus(focusEditor));
+  }
+
+  public void setComposite(@NotNull EditorComposite composite, @NotNull FileEditorOpenOptions options) {
+    boolean isNewEditor = findCompositeIndex(composite) == -1;
+    boolean isPreviewMode = (isNewEditor || composite.isPreview()) && shouldReservePreview(composite.getFile(), options);
+    boolean wasPinned = composite.isPinned();
+    composite.setPreview(isPreviewMode);
 
     if (isNewEditor) {
       int indexToInsert = options.getIndex();
@@ -538,10 +577,10 @@ public final class EditorWindow {
         indexToInsert = UISettings.getInstance().getOpenTabsAtTheEnd() ? myTabbedPane.getTabCount()
                                                                        : myTabbedPane.getSelectedIndex() + 1;
       }
-      VirtualFile file = editor.getFile();
+      VirtualFile file = composite.getFile();
       Icon template = AllIcons.FileTypes.Text;
       EmptyIcon emptyIcon = EmptyIcon.create(template.getIconWidth(), template.getIconHeight());
-      myTabbedPane.insertTab(file, emptyIcon, new TComp(this, editor), null, indexToInsert, editor);
+      myTabbedPane.insertTab(file, emptyIcon, new TComp(this, composite), null, indexToInsert, composite);
 
       Integer dragStartIndex = null;
       Integer hash = file.getUserData(DRAG_START_LOCATION_HASH_KEY);
@@ -551,7 +590,10 @@ public final class EditorWindow {
       if (dragStartIndex == null || dragStartIndex != -1) {
         Boolean initialPinned = file.getUserData(DRAG_START_PINNED_KEY);
         if (initialPinned != null) {
-          editor.setPinned(initialPinned);
+          composite.setPinned(initialPinned);
+        }
+        else if (wasPinned) {
+          composite.setPinned(true);
         }
       }
       file.putUserData(DRAG_START_LOCATION_HASH_KEY, null);
@@ -562,9 +604,9 @@ public final class EditorWindow {
       myOwner.updateFileIconLater(file);
       myOwner.updateFileColor(file);
     }
-    myOwner.updateFileColor(editor.getFile());
+    myOwner.updateFileColor(composite.getFile());
     if (options.getSelectAsCurrent()) {
-      setSelectedEditor(editor, options.getRequestFocus());
+      setSelectedComposite(composite, options.getRequestFocus());
     }
     updateTabsVisibility();
     myOwner.validate();
@@ -595,35 +637,38 @@ public final class EditorWindow {
       return target;
     }
 
-    JPanel panel = myPanel;
+    JPanel panel = this.panel;
     panel.setBorder(null);
     int tabCount = getTabCount();
     if (tabCount != 0) {
-      myPanel = new JPanel(new BorderLayout());
-      myPanel.setOpaque(false);
+      this.panel = new JPanel(new BorderLayout());
+      this.panel.setOpaque(false);
 
-      Splitter splitter = new OnePixelSplitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f);
+      Splitter splitter = EditorsSplitters.createSplitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f);
       splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, Boolean.TRUE);
       EditorWindow res = new EditorWindow(myOwner, myOwner);
-      EditorWithProviderComposite selectedEditor = getSelectedEditor();
+      EditorComposite selectedComposite = getSelectedComposite();
+      assert selectedComposite != null;
+
       panel.remove(myTabbedPane.getComponent());
       panel.add(splitter, BorderLayout.CENTER);
       if (fileIsSecondaryComponent) {
-        splitter.setFirstComponent(myPanel);
+        splitter.setFirstComponent(this.panel);
       } else {
-        splitter.setSecondComponent(myPanel);
+        splitter.setSecondComponent(this.panel);
       }
-      myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
+      this.panel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
       if (fileIsSecondaryComponent) {
-        splitter.setSecondComponent(res.myPanel);
+        splitter.setSecondComponent(res.panel);
       }
       else {
-        splitter.setFirstComponent(res.myPanel);
+        splitter.setFirstComponent(res.panel);
       }
+      normalizeProportionsIfNeed(this.panel);
       // open only selected file in the new splitter instead of opening all tabs
-      VirtualFile file = selectedEditor.getFile();
+      VirtualFile file = selectedComposite.getFile();
       VirtualFile nextFile = virtualFile == null ? file : virtualFile;
-      HistoryEntry currentState = selectedEditor.currentStateAsHistoryEntry();
+      HistoryEntry currentState = selectedComposite.currentStateAsHistoryEntry();
       VirtualFile currentStateFile = currentState.getFile();
       if (currentStateFile == null || !currentStateFile.equals(nextFile)) currentState = null;
       FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
@@ -635,9 +680,9 @@ public final class EditorWindow {
         res.setFilePinned(nextFile, isFilePinned(nextFile));
       }
       if (!focusNew) {
-        res.setSelectedEditor(selectedEditor, true);
+        res.setSelectedComposite(selectedComposite, true);
         getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          JComponent focusComponent = selectedEditor.getFocusComponent();
+          JComponent focusComponent = selectedComposite.getFocusComponent();
           if (focusComponent != null) {
             getGlobalInstance().requestFocus(focusComponent, true);
           }
@@ -649,13 +694,43 @@ public final class EditorWindow {
     return null;
   }
 
+  private void normalizeProportionsIfNeed(Container comp) {
+    if (!AdvancedSettings.getBoolean("editor.normalize.splits")) return;
+
+    Boolean isVertical = null;
+    if (comp instanceof Splitter) {
+      isVertical = ((Splitter)comp).isVertical();
+    } else if (comp.getComponents().length > 0 && comp.getComponents()[0] instanceof Splitter) {
+      isVertical = ((Splitter)comp.getComponents()[0]).isVertical();
+    }
+
+    Map<Splitter, Boolean> hierarchyStack = new LinkedHashMap<>();
+    while (comp != getManager().getMainSplitters() && comp != null) {
+      Container parent = comp.getParent();
+      if (parent instanceof Splitter) {
+        if (isVertical == null) { //Stack orientation (row or column) is not yet defined
+          isVertical = ((Splitter)parent).isVertical();
+        } else if (isVertical != ((Splitter)parent).isVertical()) {
+          break;
+        }
+        hierarchyStack.put((Splitter)parent, ((Splitter)parent).getFirstComponent() == comp);
+      }
+      comp = parent;
+    }
+    int i = 0;
+    for (Map.Entry<Splitter, Boolean> entry : hierarchyStack.entrySet()) {
+      entry.getKey().setProportion(entry.getValue() ? 1 - 1f / (2 + i) : 1f / (2 + i));
+      i++;
+    }
+  }
+
   /**
    * Tries to setup caret and viewport for the given editor from the selected one.
    *
    * @param toSync    editor to setup caret and viewport for
    */
   private void syncCaretIfPossible(FileEditor @NotNull [] toSync) {
-    EditorWithProviderComposite from = getSelectedEditor();
+    EditorComposite from = getSelectedComposite();
     if (from == null) {
       return;
     }
@@ -695,10 +770,10 @@ public final class EditorWindow {
   public EditorWindow @NotNull [] findSiblings() {
     checkConsistency();
     ArrayList<EditorWindow> res = new ArrayList<>();
-    if (myPanel.getParent() instanceof Splitter) {
-      Splitter splitter = (Splitter)myPanel.getParent();
+    if (panel.getParent() instanceof Splitter) {
+      Splitter splitter = (Splitter)panel.getParent();
       for (EditorWindow win : myOwner.getWindows()) {
-        if (win != this && SwingUtilities.isDescendingFrom(win.myPanel, splitter)) {
+        if (win != this && SwingUtilities.isDescendingFrom(win.panel, splitter)) {
           res.add(win);
         }
       }
@@ -725,10 +800,10 @@ public final class EditorWindow {
     windows.remove(this);
     final Map<JPanel, EditorWindow> panel2Window = new HashMap<>();
     for (EditorWindow win : windows) {
-      panel2Window.put(win.myPanel, win);
+      panel2Window.put(win.panel, win);
     }
 
-    final RelativePoint relativePoint = new RelativePoint(myPanel.getLocationOnScreen());
+    final RelativePoint relativePoint = new RelativePoint(panel.getLocationOnScreen());
     final Point point = relativePoint.getPoint(myOwner);
     BiFunction<Integer, Integer, Component> nearestComponent = (x, y) -> SwingUtilities.getDeepestComponentAt(myOwner, x, y);
     Function<Component, EditorWindow> findAdjacentEditor = (component) -> {
@@ -749,14 +824,14 @@ public final class EditorWindow {
 
     // Even if above/below adjacent editor is shifted a bit to the right from left edge of current editor,
     // still try to choose editor that is visually above/below - shifted nor more then quater of editor width.
-    int x = point.x + myPanel.getWidth() / 4;
+    int x = point.x + panel.getWidth() / 4;
     // Splitter has width of one pixel - we need to step at least 2 pixels to be over adjacent editor
     int searchStep = 2;
 
     biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(x, point.y - searchStep)), RelativePosition.UP);
-    biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(x, point.y + myPanel.getHeight() + searchStep)), RelativePosition.DOWN);
+    biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(x, point.y + panel.getHeight() + searchStep)), RelativePosition.DOWN);
     biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(point.x - searchStep, point.y)), RelativePosition.LEFT);
-    biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(point.x + myPanel.getWidth() + searchStep, point.y)), RelativePosition.RIGHT);
+    biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(point.x + panel.getWidth() + searchStep, point.y)), RelativePosition.RIGHT);
 
     return adjacentEditors;
   }
@@ -766,31 +841,31 @@ public final class EditorWindow {
     myPainter = new MySplitPainter(showInfoPanel);
 
     Disposable disposable = Disposer.newDisposable("GlassPaneListeners");
-    IdeGlassPaneUtil.find(myPanel).addPainter(myPanel, myPainter, disposable);
+    IdeGlassPaneUtil.find(panel).addPainter(panel, myPainter, disposable);
 
-    myPanel.repaint();
-    myPanel.setFocusable(true);
-    myPanel.grabFocus();
-    myPanel.setFocusTraversalKeysEnabled(false);
+    panel.repaint();
+    panel.setFocusable(true);
+    panel.grabFocus();
+    panel.setFocusTraversalKeysEnabled(false);
 
     final FocusAdapter focusAdapter = new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
-        myPanel.removeFocusListener(this);
+        panel.removeFocusListener(this);
         if (SplitterService.getInstance().myActiveWindow == EditorWindow.this) {
           SplitterService.getInstance().stopSplitChooser(true);
         }
       }
     };
 
-    myPanel.addFocusListener(focusAdapter);
+    panel.addFocusListener(focusAdapter);
 
     return () -> {
       myPainter.myRectangle = null;
       myPainter = null;
-      myPanel.removeFocusListener(focusAdapter);
-      myPanel.setFocusable(false);
-      myPanel.repaint();
+      panel.removeFocusListener(focusAdapter);
+      panel.setFocusable(false);
+      panel.repaint();
       Disposer.dispose(disposable);
     };
   }
@@ -841,7 +916,7 @@ public final class EditorWindow {
       String switchShortcuts = String.format(IdeBundle.message("split.with.chooser.switch.tab"), getShortcut.apply("SplitChooser.NextWindow"));
 
       // Adjust default width to info text
-      Font font = UIUtil.getLabelFont();
+      Font font = StartupUiUtil.getLabelFont();
       FontMetrics fontMetrics = g.getFontMetrics(font);
       int openShortcutsWidth = fontMetrics.stringWidth(openShortcuts);
       int switchShortcutsWidth = fontMetrics.stringWidth(switchShortcuts);
@@ -887,26 +962,7 @@ public final class EditorWindow {
       setNeedsRepaint(true);
 
       Rectangle r = getTabbedPane().getTabs().getDropArea();
-      switch (myPosition) {
-        case CENTER:
-          break;
-        case UP:
-          r.height /= 2;
-          break;
-        case LEFT:
-          r.width /= 2;
-          break;
-        case DOWN:
-          int h = r.height / 2;
-          r.height -= h;
-          r.y += h;
-          break;
-        case RIGHT:
-          int w = r.width / 2;
-          r.width -= w;
-          r.x += w;
-          break;
-      }
+      TabsUtil.updateBoundsWithDropSide(r, myPosition.mySwingConstant);
       myRectangle = new Rectangle2D.Double(r.x, r.y, r.width, r.height);
     }
   }
@@ -1024,7 +1080,7 @@ public final class EditorWindow {
 
   void changeOrientation() {
     checkConsistency();
-    Container parent = myPanel.getParent();
+    Container parent = panel.getParent();
     if (parent instanceof Splitter) {
       Splitter splitter = (Splitter)parent;
       splitter.setOrientation(!splitter.getOrientation());
@@ -1032,28 +1088,29 @@ public final class EditorWindow {
   }
 
   private int findFileEditorIndex(@NotNull VirtualFile file) {
-    EditorWithProviderComposite composite = findFileComposite(file);
-    return composite == null ? -1 : findEditorIndex(composite);
+    @Nullable EditorComposite composite = getComposite(file);
+    return composite == null ? -1 : findCompositeIndex(composite);
   }
 
   void updateFileIcon(@NotNull VirtualFile file, @NotNull Icon icon) {
-    EditorWithProviderComposite composite = findFileComposite(file);
+    EditorComposite composite = getComposite(file);
     if (composite == null) return;
-    int index = findEditorIndex(composite);
+    int index = findCompositeIndex(composite);
     if (index < 0) return;
     myTabbedPane.setIconAt(index, decorateFileIcon(composite, icon));
   }
 
-  void updateFileName(@NotNull VirtualFile file) {
+  void updateFileName(@NotNull VirtualFile file, @NotNull EditorWindow window) {
     int index = findFileEditorIndex(file);
-    if (index != -1) {
-      setTitleAt(index, SlowOperations.allowSlowOperations(
-        () -> EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file)
-      ));
-      setToolTipTextAt(index, UISettings.getInstance().getShowTabsTooltips()
-                              ? getManager().getFileTooltipText(file)
-                              : null);
-    }
+    if (index == -1) return;
+    ReadAction.nonBlocking(() -> EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file))
+      .expireWhen(this::isDisposed)
+      .finishOnUiThread(ModalityState.any(), (@NlsContexts.TabTitle String title) -> {
+        int index1 = findFileEditorIndex(file);
+        if (index1 != -1) setTitleAt(index1, title);
+      })
+      .submit(NonUrgentExecutor.getInstance());
+    setToolTipTextAt(index, UISettings.getInstance().getShowTabsTooltips() ? getManager().getFileTooltipText(file, window) : null);
   }
 
   @Nullable
@@ -1080,19 +1137,19 @@ public final class EditorWindow {
 
   public void unsplit(boolean setCurrent) {
     checkConsistency();
-    Container splitter = myPanel.getParent();
+    Container splitter = panel.getParent();
 
     if (!(splitter instanceof Splitter)) return;
 
-    EditorWithProviderComposite editorToSelect = getSelectedEditor();
+    EditorComposite compositeToSelect = getSelectedComposite();
     EditorWindow[] siblings = findSiblings();
     JPanel parent = (JPanel)splitter.getParent();
 
     for (EditorWindow eachSibling : siblings) {
       // selected editors will be added first
-      EditorWithProviderComposite selected = eachSibling.getSelectedEditor();
-      if (editorToSelect == null && selected != null) {
-        editorToSelect = selected;
+      EditorComposite selected = eachSibling.getSelectedComposite();
+      if (compositeToSelect == null && selected != null) {
+        compositeToSelect = selected;
         break;
       }
     }
@@ -1101,12 +1158,12 @@ public final class EditorWindow {
       .withSelectAsCurrent(false) // we'll select and focus a single editor in the end
       .withRequestFocus(false);
     for (EditorWindow sibling : siblings) {
-      EditorWithProviderComposite[] siblingEditors = sibling.getEditors();
-      for (EditorWithProviderComposite siblingEditor : siblingEditors) {
-        if (editorToSelect == null) {
-          editorToSelect = siblingEditor;
+      List<EditorComposite> siblingEditors = sibling.getAllComposites();
+      for (EditorComposite siblingEditor : siblingEditors) {
+        if (compositeToSelect == null) {
+          compositeToSelect = siblingEditor;
         }
-        processSiblingEditor(siblingEditor, openOptions);
+        processSiblingComposite(siblingEditor, openOptions);
       }
       LOG.assertTrue(sibling != this);
       sibling.dispose();
@@ -1114,23 +1171,24 @@ public final class EditorWindow {
     parent.remove(splitter);
     parent.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
     parent.revalidate();
-    myPanel = parent;
-    if (editorToSelect != null) {
-      setSelectedEditor(editorToSelect, true);
+    panel = parent;
+    if (compositeToSelect != null) {
+      setSelectedComposite(compositeToSelect, true);
     }
     if (setCurrent) {
       myOwner.setCurrentWindow(this, false);
     }
+    normalizeProportionsIfNeed(panel);
   }
 
-  private void processSiblingEditor(@NotNull EditorWithProviderComposite siblingEditor,
-                                    @NotNull FileEditorOpenOptions openOptions) {
+  private void processSiblingComposite(@NotNull EditorComposite composite,
+                                       @NotNull FileEditorOpenOptions openOptions) {
     if (getTabCount() < UISettings.getInstance().getState().getEditorTabLimit() &&
-        findFileComposite(siblingEditor.getFile()) == null) {
-      setEditor(siblingEditor, openOptions);
+        getComposite(composite.getFile()) == null) {
+      setComposite(composite, openOptions);
     }
     else {
-      getManager().disposeComposite(siblingEditor);
+      getManager().disposeComposite(composite);
     }
   }
 
@@ -1143,24 +1201,32 @@ public final class EditorWindow {
 
   public boolean inSplitter() {
     checkConsistency();
-    return myPanel.getParent() instanceof Splitter;
+    return panel.getParent() instanceof Splitter;
   }
 
   public VirtualFile getSelectedFile() {
     checkConsistency();
-    EditorWithProviderComposite editor = getSelectedEditor();
-    return editor == null ? null : editor.getFile();
+    EditorComposite composite = getSelectedComposite();
+    return composite == null ? null : composite.getFile();
   }
 
+  /**
+   * @deprecated Use {@link #getComposite(VirtualFile)}
+   */
+  @Deprecated
   public @Nullable EditorWithProviderComposite findFileComposite(@NotNull VirtualFile file) {
+    return (EditorWithProviderComposite)getComposite(file);
+  }
+
+  public @Nullable EditorComposite getComposite(@NotNull VirtualFile file) {
     if (file instanceof BackedVirtualFile) {
       file = ((BackedVirtualFile)file).getOriginFile();
     }
 
     for (int i = 0; i != getTabCount(); ++i) {
-      EditorWithProviderComposite editor = getEditorAt(i);
-      if (editor.getFile().equals(file)) {
-        return editor;
+      EditorComposite composite = getCompositeAt(i);
+      if (composite.getFile().equals(file)) {
+        return composite;
       }
     }
     return null;
@@ -1169,8 +1235,8 @@ public final class EditorWindow {
 
   private int findComponentIndex(@NotNull Component component) {
     for (int i = 0; i != getTabCount(); ++i) {
-      EditorWithProviderComposite editor = getEditorAt(i);
-      if (editor.getComponent().equals(component)) {
+      EditorComposite composite = getCompositeAt(i);
+      if (composite.getComponent().equals(component)) {
         return i;
       }
     }
@@ -1179,18 +1245,18 @@ public final class EditorWindow {
 
   private int findPreviewIndex() {
     for (int i = getTabCount() - 1; i >= 0; --i) {
-      EditorWithProviderComposite editor = getEditorAt(i);
-      if (editor.isPreview()) {
+      EditorComposite composite = getCompositeAt(i);
+      if (composite.isPreview()) {
         return i;
       }
     }
     return -1;
   }
 
-  int findEditorIndex(@NotNull EditorComposite editorToFind) {
+  int findCompositeIndex(@NotNull EditorComposite composite) {
     for (int i = 0; i != getTabCount(); ++i) {
-      EditorWithProviderComposite editor = getEditorAt(i);
-      if (editor.equals(editorToFind)) {
+      EditorComposite compositeAt = getCompositeAt(i);
+      if (compositeAt.equals(composite)) {
         return i;
       }
     }
@@ -1208,31 +1274,31 @@ public final class EditorWindow {
   }
 
   @NotNull
-  private EditorWithProviderComposite getEditorAt(int i) {
-    return ((TComp)myTabbedPane.getComponentAt(i)).myEditor;
+  private EditorComposite getCompositeAt(int i) {
+    return ((TComp)myTabbedPane.getComponentAt(i)).myComposite;
   }
 
   public boolean isFileOpen(@NotNull VirtualFile file) {
-    return findFileComposite(file) != null;
+    return getComposite(file) != null;
   }
 
   public boolean isFilePinned(@NotNull VirtualFile file) {
-    EditorComposite editorComposite = findFileComposite(file);
-    if (editorComposite == null) {
+    EditorComposite composite = getComposite(file);
+    if (composite == null) {
       throw new IllegalArgumentException("file is not open: " + file.getPath());
     }
-    return editorComposite.isPinned();
+    return composite.isPinned();
   }
 
   public void setFilePinned(@NotNull VirtualFile file, boolean pinned) {
-    EditorComposite editorComposite = findFileComposite(file);
-    if (editorComposite == null) {
+    EditorComposite composite = getComposite(file);
+    if (composite == null) {
       throw new IllegalArgumentException("file is not open: " + file.getPath());
     }
-    boolean wasPinned = editorComposite.isPinned();
-    editorComposite.setPinned(pinned);
-    if (editorComposite.isPreview()) {
-      editorComposite.setPreview(false);
+    boolean wasPinned = composite.isPinned();
+    composite.setPinned(pinned);
+    if (composite.isPreview()) {
+      composite.setPreview(false);
       myOwner.updateFileColor(file);
     }
     if (wasPinned != pinned && ApplicationManager.getApplication().isDispatchThread()) {
@@ -1259,7 +1325,7 @@ public final class EditorWindow {
 
     // close all preview tabs except one if exists
     Set<VirtualFile> previews =
-      Arrays.stream(getEditors()).filter(EditorComposite::isPreview).map(EditorComposite::getFile).collect(Collectors.toSet());
+      getAllComposites().stream().filter(EditorComposite::isPreview).map(EditorComposite::getFile).collect(Collectors.toSet());
     var survivedPreviewFile = previews.contains(fileToIgnore) ? fileToIgnore : previews.stream().findAny().orElse(null);
     for (VirtualFile preview : previews) {
       if (!Objects.equals(preview, survivedPreviewFile)) defaultCloseFile(preview, transferFocus);
@@ -1300,7 +1366,7 @@ public final class EditorWindow {
     if (closeNonModifiedFilesFirst) {
       // Search in history
       for (VirtualFile file : histFiles) {
-        EditorWithProviderComposite composite = findFileComposite(file);
+        EditorComposite composite = getComposite(file);
         if (composite != null && !myOwner.getManager().isChanged(composite)) {
           // we found non modified file
           closingOrder.add(file);
@@ -1310,7 +1376,7 @@ public final class EditorWindow {
       // Search in tabbed pane
       for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
         VirtualFile file = getFileAt(i);
-        if (!myOwner.getManager().isChanged(getEditorAt(i))) {
+        if (!myOwner.getManager().isChanged(getCompositeAt(i))) {
           // we found non modified file
           closingOrder.add(file);
         }
@@ -1343,13 +1409,12 @@ public final class EditorWindow {
 
     if (file.equals(fileToIgnore)) return false;
 
-    EditorWithProviderComposite composite = findFileComposite(file);
+    EditorComposite composite = getComposite(file);
     if (composite == null) return false;
     //Don't check focus in unit test mode
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      JComponent selectedEditorComponent = composite.getSelectedEditor().getComponent();
-      Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusTargetFor(selectedEditorComponent);
-      if (owner == null || !SwingUtilities.isDescendingFrom(owner, selectedEditorComponent)) return false;
+      Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
+      if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.getSelectedEditor().getComponent())) return false;
     }
     return !myOwner.getManager().isChanged(composite);
   }
@@ -1385,7 +1450,7 @@ public final class EditorWindow {
 
   private static boolean hasClientPropertyInHierarchy(@Nullable Component owner,
                                                       @SuppressWarnings("SameParameterValue") @NotNull Key<Boolean> propertyKey) {
-    Component parent = JBIterable.generate(owner, child -> child.getParent()).find(component -> {
+    Component parent = JBIterable.generate(owner, Component::getParent).find(component -> {
       if (component instanceof JComponent) {
         return Boolean.TRUE.equals(((JComponent)component).getClientProperty(propertyKey));
       }
@@ -1399,11 +1464,18 @@ public final class EditorWindow {
   }
 
   private boolean fileCanBeClosed(@NotNull VirtualFile file, @Nullable VirtualFile fileToIgnore) {
+    if (file instanceof BackedVirtualFile) {
+      BackedVirtualFile backedVirtualFile = (BackedVirtualFile)file;
+      VirtualFile originalFile = backedVirtualFile.getOriginFile();
+      if (originalFile.equals(fileToIgnore)) {
+        return false;
+      }
+    }
     return isFileOpen(file) && !file.equals(fileToIgnore) && !isFilePinned(file);
   }
 
   @NotNull VirtualFile getFileAt(int i) {
-    return getEditorAt(i).getFile();
+    return getCompositeAt(i).getFile();
   }
 
   @Override

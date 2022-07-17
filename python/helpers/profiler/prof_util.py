@@ -59,7 +59,7 @@ def get_fullname(mod_name):
 class ProfDaemonThread(threading.Thread):
     def __init__(self):
         super(ProfDaemonThread, self).__init__()
-        self.setDaemon(True)
+        self.daemon = True
         self.killReceived = False
 
     def run(self):

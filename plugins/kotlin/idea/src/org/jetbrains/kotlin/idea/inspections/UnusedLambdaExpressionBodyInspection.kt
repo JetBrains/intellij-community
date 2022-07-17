@@ -11,24 +11,27 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.callExpressionVisitor
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
 import org.jetbrains.kotlin.resolve.calls.tower.NewVariableAsFunctionResolvedCallImpl
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class UnusedLambdaExpressionBodyInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return callExpressionVisitor(fun(expression) {
-            val context = expression.analyze(BodyResolveMode.PARTIAL_WITH_CFA)
-            if (expression.isUsedAsExpression(context)) {
+            val context = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL_WITH_CFA)
+            if (context == BindingContext.EMPTY || expression.isUsedAsExpression(context)) {
                 return
             }
 
@@ -66,15 +69,24 @@ class UnusedLambdaExpressionBodyInspection : AbstractKotlinInspection() {
                 return
             }
 
-            function.equalsToken?.apply {
-                // TODO: This should be done by formatter but there is no rule for this now
-                if (prevSibling.isSpace() && nextSibling.isSpace()) {
-                    prevSibling.delete()
+            function.replaceBlockExpressionWithLambdaBody(function.bodyExpression?.safeAs<KtLambdaExpression>()?.bodyExpression)
+        }
+    }
+
+    companion object {
+        fun KtDeclarationWithBody.replaceBlockExpressionWithLambdaBody(lambdaBody: KtBlockExpression?) {
+            equalsToken?.let { token ->
+                val ktPsiFactory = KtPsiFactory(project)
+                val lambdaBodyRange = lambdaBody?.allChildren
+                val newBlockBody: KtBlockExpression = if (lambdaBodyRange?.isEmpty == false) {
+                    ktPsiFactory.createDeclarationByPattern<KtNamedFunction>("fun foo() {$0}", lambdaBodyRange).bodyBlockExpression!!
+                } else {
+                    ktPsiFactory.createBlock("")
                 }
-                delete()
+
+                bodyExpression?.delete()
+                token.replace(newBlockBody)
             }
         }
-
-        private fun PsiElement.isSpace() = text == " "
     }
 }

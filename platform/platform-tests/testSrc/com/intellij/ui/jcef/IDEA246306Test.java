@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
@@ -16,21 +16,18 @@ import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLatch;
 import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
 
 /**
- * Tests https://youtrack.jetbrains.com/issue/IDEA-246306
+ * Tests IDEA-246306
  * A JS callback should be called on the browser instance which created it.
  *
  * @author tav
  */
 public class IDEA246306Test {
-  static {
-    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
-  }
-
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
   }
 
   @After

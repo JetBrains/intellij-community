@@ -1,5 +1,5 @@
 // INTENTION_TEXT: "Import members from 'kotlin.LazyThreadSafetyMode'"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class A {
     val v1: Int by lazy(<caret>LazyThreadSafetyMode.NONE) { 1 }

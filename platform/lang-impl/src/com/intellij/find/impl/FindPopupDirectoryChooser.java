@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -24,7 +24,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,8 +47,6 @@ public class FindPopupDirectoryChooser extends JPanel {
 
   @SuppressWarnings("WeakerAccess")
   public FindPopupDirectoryChooser(@NotNull FindPopupPanel panel) {
-    super(new BorderLayout());
-
     myHelper = panel.getHelper();
     myProject = panel.getProject();
     myFindPopupPanel = panel;
@@ -72,7 +71,7 @@ public class FindPopupDirectoryChooser extends JPanel {
 
     FixedSizeButton mySelectDirectoryButton = new FixedSizeButton(myDirectoryComboBox);
     TextFieldWithBrowseButton.MyDoClickAction.addTo(mySelectDirectoryButton, myDirectoryComboBox);
-    mySelectDirectoryButton.setMargin(JBUI.emptyInsets());
+    mySelectDirectoryButton.setMargin(JBInsets.emptyInsets());
 
     mySelectDirectoryButton.addActionListener(__ -> {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
@@ -105,11 +104,10 @@ public class FindPopupDirectoryChooser extends JPanel {
     int mnemonicModifiers = SystemInfo.isMac ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
     recursiveDirectoryAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_Y, mnemonicModifiers)), myFindPopupPanel);
 
-    add(myDirectoryComboBox, BorderLayout.CENTER);
-    JPanel buttonsPanel = new JPanel(new GridLayout(1, 2));
-    buttonsPanel.add(mySelectDirectoryButton);
-    buttonsPanel.add(FindPopupPanel.createToolbar(recursiveDirectoryAction).getComponent()); //check if toolbar updates the button with no delays
-    add(buttonsPanel, BorderLayout.EAST);
+    RowBuilder builder = new RowBuilder(this);
+    builder
+      .addResizable(myDirectoryComboBox)
+      .add(mySelectDirectoryButton, FindPopupPanel.createToolbar(recursiveDirectoryAction).getComponent());
   }
 
   @SuppressWarnings("WeakerAccess")

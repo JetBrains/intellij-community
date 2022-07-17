@@ -7,19 +7,20 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.*
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiRange
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -34,6 +35,8 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.nullability
+import org.jetbrains.kotlin.utils.IDEAPlatforms
+import org.jetbrains.kotlin.utils.IDEAPluginsCompatibilityAPI
 import java.util.*
 
 interface Parameter {
@@ -345,11 +348,46 @@ data class ExtractableCodeDescriptor(
     val controlFlow: ControlFlow,
     val returnType: KotlinType,
     val modifiers: List<KtKeywordToken> = emptyList(),
-    val annotations: List<AnnotationDescriptor> = emptyList()
+    val annotations: List<AnnotationDescriptor> = emptyList(),
+    val optInMarkers: List<FqName> = emptyList()
 ) {
     val name: String get() = suggestedNames.firstOrNull() ?: ""
     val duplicates: List<DuplicateInfo> by lazy { findDuplicates() }
 }
+
+@IDEAPluginsCompatibilityAPI(
+    usedIn = [IDEAPlatforms._213],
+    message = "Provided for binary backward compatibility",
+    plugins = "Jetpack Compose plugin in IDEA"
+)
+fun ExtractableCodeDescriptor.copy(
+ extractionData: ExtractionData = this.extractionData,
+ originalContext: BindingContext = this.originalContext,
+ suggestedNames: List<String> = this.suggestedNames,
+ visibility: KtModifierKeywordToken? = this.visibility,
+ parameters: List<Parameter> = this.parameters,
+ receiverParameter: Parameter? = this.receiverParameter,
+ typeParameters: List<TypeParameter> = this.typeParameters,
+ replacementMap: MultiMap<KtSimpleNameExpression, Replacement> = this.replacementMap,
+ controlFlow: ControlFlow = this.controlFlow,
+ returnType: KotlinType = this.returnType,
+ modifiers: List<KtKeywordToken> = this.modifiers,
+ annotations: List<AnnotationDescriptor> = this.annotations
+) = copy(
+    extractionData,
+    originalContext,
+    suggestedNames,
+    visibility,
+    parameters,
+    receiverParameter,
+    typeParameters,
+    replacementMap,
+    controlFlow,
+    returnType,
+    modifiers,
+    annotations,
+    emptyList()
+)
 
 fun ExtractableCodeDescriptor.copy(
     newName: String,
@@ -382,7 +420,8 @@ fun ExtractableCodeDescriptor.copy(
         controlFlow.copy(oldToNewParameters),
         returnType ?: this.returnType,
         modifiers,
-        annotations
+        annotations,
+        optInMarkers
     )
 }
 
@@ -461,7 +500,8 @@ data class ExtractionGeneratorOptions(
     val target: ExtractionTarget = ExtractionTarget.FUNCTION,
     val dummyName: String? = null,
     val allowExpressionBody: Boolean = true,
-    val delayInitialOccurrenceReplacement: Boolean = false
+    val delayInitialOccurrenceReplacement: Boolean = false,
+    val isConst: Boolean = false
 ) {
     companion object {
         @JvmField
@@ -513,6 +553,7 @@ class AnalysisResult(
             return this
         }
 
+        @Nls
         fun renderMessage(): String {
             val message = KotlinBundle.message(
                 when (this) {

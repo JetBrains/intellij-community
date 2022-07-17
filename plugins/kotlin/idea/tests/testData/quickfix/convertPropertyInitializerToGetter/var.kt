@@ -1,5 +1,5 @@
 // "Convert property initializer to getter" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun String.foo() = "bar"
 

@@ -14,7 +14,6 @@ import java.util.Date;
 import java.util.EnumMap;
 import java.util.Objects;
 
-@SuppressWarnings("unused")
 @ApiStatus.Experimental
 @ApiStatus.Internal
 public interface RunnablesListener {

@@ -96,7 +96,8 @@ fun foo() {
     testtest<foofoo/**/>()
 
     testtest<
-            foofoo,/*
+            foofoo,
+            /*
     */
             >()
 
@@ -105,7 +106,8 @@ fun foo() {
             >()
 
     testtest<
-            foofoo, fososos,/*
+            foofoo, fososos,
+            /*
     */
             testtest<testtest<foofoo>>,
             >()

@@ -2,7 +2,29 @@ import array
 import threading
 import weakref
 from queue import Queue as Queue
-from typing import Any, Callable, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, Callable, Iterable, Mapping, Sequence
+from typing_extensions import Literal
+
+from .connection import Pipe as Pipe
+
+__all__ = [
+    "Process",
+    "current_process",
+    "active_children",
+    "freeze_support",
+    "Lock",
+    "RLock",
+    "Semaphore",
+    "BoundedSemaphore",
+    "Condition",
+    "Event",
+    "Barrier",
+    "Queue",
+    "Manager",
+    "Pipe",
+    "Pool",
+    "JoinableQueue",
+]
 
 JoinableQueue = Queue
 Barrier = threading.Barrier
@@ -18,12 +40,13 @@ class DummyProcess(threading.Thread):
     _parent: threading.Thread
     _pid: None
     _start_called: int
-    exitcode: Optional[int]
+    @property
+    def exitcode(self) -> Literal[0] | None: ...
     def __init__(
         self,
         group: Any = ...,
-        target: Optional[Callable[..., Any]] = ...,
-        name: Optional[str] = ...,
+        target: Callable[..., Any] | None = ...,
+        name: str | None = ...,
         args: Iterable[Any] = ...,
         kwargs: Mapping[str, Any] = ...,
     ) -> None: ...
@@ -43,10 +66,8 @@ class Value:
 
 def Array(typecode: Any, sequence: Sequence[Any], lock: Any = ...) -> array.array[Any]: ...
 def Manager() -> Any: ...
-def Pool(
-    processes: Optional[int] = ..., initializer: Optional[Callable[..., Any]] = ..., initargs: Iterable[Any] = ...
-) -> Any: ...
-def active_children() -> List[Any]: ...
+def Pool(processes: int | None = ..., initializer: Callable[..., Any] | None = ..., initargs: Iterable[Any] = ...) -> Any: ...
+def active_children() -> list[Any]: ...
 def current_process() -> threading.Thread: ...
 def freeze_support() -> None: ...
 def shutdown() -> None: ...

@@ -56,7 +56,7 @@ class GrazieLanguagesList(private val download: (Lang) -> Boolean, private val o
 
   override fun addElement(itemToAdd: Lang?) {
     itemToAdd ?: return
-
+    removeExistedDialects(itemToAdd)
     val positionToInsert = -(myListModel.elements().toList().binarySearch(itemToAdd, Comparator.comparing(Lang::nativeName)) + 1)
     myListModel.add(positionToInsert, itemToAdd)
     myList.clearSelection()
@@ -78,9 +78,22 @@ class GrazieLanguagesList(private val download: (Lang) -> Boolean, private val o
 
   /** Returns pair of (available languages, languages to download) */
   private fun getLangsForPopup(): Pair<List<Lang>, List<Lang>> {
-    val enabledLangs = myListModel.elements().asSequence().map { it.iso }.toSet()
-    val (available, toDownload) = Lang.sortedValues().filter { it.iso !in enabledLangs }.partition { it.isAvailable() }
+    val enabledLangs = myListModel.elements().asSequence().map { it.displayName }.toSet()
+    val (available, toDownload) = Lang.sortedValues().filter { it.displayName !in enabledLangs }.partition { it.isAvailable() }
     return available to toDownload
+  }
+
+  private fun removeExistedDialects(lang: Lang) {
+    val dialectsToRemove = ArrayList<Lang>()
+    for (existed in myListModel.elements()) {
+      if (existed.iso == lang.iso) {
+        dialectsToRemove.add(existed)
+      }
+    }
+
+    for (toRemove in dialectsToRemove) {
+      myListModel.removeElement(toRemove)
+    }
   }
 
   private class MyListPopup(step: GrazieLanguagesPopupStep) : ListPopupImpl(null, step) {

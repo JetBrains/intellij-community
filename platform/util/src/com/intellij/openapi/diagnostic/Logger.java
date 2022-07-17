@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.util.ArrayUtilRt;
@@ -15,15 +15,17 @@ import java.util.Collection;
 import java.util.function.Function;
 
 /**
- * A standard interface to write to %system%/log/idea.log (or %system%/testlog/idea.log in tests).<p/>
+ * <p>A standard interface to write to {@code `%system%/log/idea.log`} (or {@code `%system%/testlog/idea.log`} in tests).<p/>
  *
- * In addition to writing to log file, "error" methods result in showing "IDE fatal errors" dialog in the IDE,
- * in EAP versions or if "idea.fatal.error.notification" system property is "true" (). See
- * {@link com.intellij.diagnostic.DefaultIdeaErrorLogger#canHandle} for more details.<p/>
+ * <p>In addition to writing to log file, "error" methods result in showing "IDE fatal errors" dialog in the IDE
+ * (in EAP versions or if "idea.fatal.error.notification" system property is set to "true").
+ * See {@link com.intellij.diagnostic.DefaultIdeaErrorLogger#canHandle} for more details.<p/>
  *
- * Note that in production, a call to "error" doesn't throw exceptions so the execution continues. In tests, however, an {@link AssertionError} is thrown.<p/>
+ * <p>Note that in production, a call to "error" doesn't throw exceptions so the execution continues.
+ * In tests, however, an {@link AssertionError} is thrown.<p/>
  *
- * In most non-performance tests, debug level is enabled by default, so that when a test fails the full contents of its log are printed to stdout.
+ * <p>In most non-performance tests, debug level is enabled by default -
+ * so that when a test fails, the full contents of its log is printed to stdout.</p>
  */
 public abstract class Logger {
   private static boolean isUnitTestMode;
@@ -227,12 +229,40 @@ public abstract class Logger {
     return value || assertTrue(false, null);
   }
 
+  /** @deprecated IntelliJ Platform no longer uses Log4j as the logging framework; please use {@link #setLevel(LogLevel)} instead */
+  @Deprecated
   public abstract void setLevel(@NotNull Level level);
+
+  public void setLevel(@NotNull LogLevel level) {
+    switch (level) {
+      case OFF:
+        setLevel(Level.OFF);
+        break;
+      case ERROR:
+        setLevel(Level.ERROR);
+        break;
+      case WARNING:
+        setLevel(Level.WARN);
+        break;
+      case INFO:
+        setLevel(Level.INFO);
+        break;
+      case DEBUG:
+        setLevel(Level.DEBUG);
+        break;
+      case TRACE:
+        setLevel(Level.TRACE);
+        break;
+      case ALL:
+        setLevel(Level.ALL);
+        break;
+    }
+  }
 
   protected static Throwable ensureNotControlFlow(@Nullable Throwable t) {
     return t instanceof ControlFlowException ?
-           new Throwable("Control-flow exceptions (like " + t.getClass().getSimpleName() + ") should never be logged: " +
-                         "ignore for explicitly started processes or rethrow to handle on the outer process level", t) :
+           new Throwable("Control-flow exceptions (e.g. this " + t.getClass() + ") should never be logged. " +
+                         "Instead, these should have been rethrown or, if not possible, caught and ignored", t) :
            t;
   }
 

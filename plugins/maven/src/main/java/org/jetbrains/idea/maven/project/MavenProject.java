@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -79,38 +80,26 @@ public class MavenProject {
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
     if (file == null) return null;
 
-    ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
-    ObjectInputStream os = new ObjectInputStream(bs);
-    try {
-      try {
-        MavenProject result = new MavenProject(file);
-        result.myState = (State)os.readObject();
-        return result;
-      }
-      catch (ClassNotFoundException e) {
-        throw new IOException(e);
-      }
+    try (ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
+         ObjectInputStream os = new ObjectInputStream(bs)) {
+      MavenProject result = new MavenProject(file);
+      result.myState = (State)os.readObject();
+      return result;
     }
-    finally {
-      os.close();
-      bs.close();
+    catch (ClassNotFoundException e) {
+      throw new IOException(e);
     }
   }
 
   public void write(@NotNull DataOutputStream out) throws IOException {
     out.writeUTF(getPath());
 
-    BufferExposingByteArrayOutputStream bs = new BufferExposingByteArrayOutputStream();
-    ObjectOutputStream os = new ObjectOutputStream(bs);
-    try {
+    try (BufferExposingByteArrayOutputStream bs = new BufferExposingByteArrayOutputStream();
+         ObjectOutputStream os = new ObjectOutputStream(bs)) {
       os.writeObject(myState);
 
       out.writeInt(bs.size());
       out.write(bs.getInternalBuffer(), 0, bs.size());
-    }
-    finally {
-      os.close();
-      bs.close();
     }
   }
 
@@ -680,6 +669,11 @@ public class MavenProject {
     }
   }
 
+  public @NotNull List<MavenProjectProblem> getCacheProblems() {
+    List<MavenProjectProblem> problemsCache = myState.myProblemsCache;
+    return problemsCache == null ? Collections.emptyList() : problemsCache;
+  }
+
   private static List<MavenProjectProblem> collectProblems(VirtualFile file, State state) {
     List<MavenProjectProblem> result = new ArrayList<>();
 
@@ -738,7 +732,9 @@ public class MavenProject {
       if (state.myUnresolvedDependenciesCache == null) {
         List<MavenArtifact> result = new ArrayList<>();
         for (MavenArtifact each : state.myDependencies) {
-          if (!each.isResolved()) result.add(each);
+          boolean resolved = MavenArtifactUtilKt.resolved(each);
+          each.setFileUnresolved(!resolved);
+          if (!resolved) result.add(each);
         }
         state.myUnresolvedDependenciesCache = result;
       }
@@ -770,7 +766,7 @@ public class MavenProject {
       if (state.myUnresolvedAnnotationProcessors == null) {
         List<MavenArtifact> result = new ArrayList<>();
         for (MavenArtifact each : state.myAnnotationProcessors) {
-          if (!each.isResolved()) result.add(each);
+          if (!MavenArtifactUtilKt.resolved(each)) result.add(each);
         }
         state.myUnresolvedAnnotationProcessors = result;
       }
@@ -964,10 +960,17 @@ public class MavenProject {
     return goal == null ? plugin.getConfigurationElement() : plugin.getGoalConfiguration(goal);
   }
 
-  public Element getPluginExecutionConfiguration(@Nullable String groupId, @Nullable String artifactId, @NotNull String executionId) {
+  private Element getPluginExecutionConfiguration(@Nullable String groupId, @Nullable String artifactId, @NotNull String executionId) {
     MavenPlugin plugin = findPlugin(groupId, artifactId);
     if (plugin == null) return null;
     return plugin.getExecutionConfiguration(executionId);
+  }
+
+  @NotNull
+  private List<Element> getCompileExecutionConfigurations() {
+    MavenPlugin plugin = findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
+    if (plugin == null) return Collections.emptyList();
+    return plugin.getCompileExecutionConfigurations();
   }
 
   public @Nullable MavenPlugin findPlugin(@Nullable String groupId, @Nullable String artifactId) {
@@ -1024,13 +1027,37 @@ public class MavenProject {
     return getCompilerLevel("release");
   }
 
-  private @Nullable String getCompilerLevel(String level) {
-    String result = MavenJDOMUtil.findChildValueByPath(getCompilerConfig(), level);
+  public @Nullable String getTestSourceLevel() {
+    return getCompilerLevel("testSource");
+  }
 
+  public @Nullable String getTestTargetLevel() {
+    return getCompilerLevel("testTarget");
+  }
+
+  public @Nullable String getTestReleaseLevel() {
+    return getCompilerLevel("testRelease");
+  }
+
+  private @Nullable String getCompilerLevel(String level) {
+    List<Element> configs = getCompilerConfigs();
+    if (configs.size() == 1) return getCompilerLevel(level, configs.get(0));
+
+    return configs.stream()
+      .map(element -> MavenJDOMUtil.findChildValueByPath(element, level))
+      .filter(Objects::nonNull)
+      .map(propertyValue -> LanguageLevel.parse(propertyValue))
+      .map(languageLevel -> languageLevel == null ? LanguageLevel.HIGHEST : languageLevel)
+      .max(Comparator.naturalOrder())
+      .map(l -> l.toJavaVersion().toFeatureString())
+      .orElseGet(() -> myState.myProperties.getProperty("maven.compiler." + level));
+  }
+
+  private String getCompilerLevel(String level, Element config) {
+    String result = MavenJDOMUtil.findChildValueByPath(config, level);
     if (result == null) {
       result = myState.myProperties.getProperty("maven.compiler." + level);
     }
-
     return result;
   }
 
@@ -1038,6 +1065,13 @@ public class MavenProject {
     Element executionConfiguration = getPluginExecutionConfiguration("org.apache.maven.plugins", "maven-compiler-plugin", "default-compile");
     if(executionConfiguration != null) return executionConfiguration;
     return getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
+  }
+
+  private @NotNull List<Element> getCompilerConfigs() {
+    List<Element> configurations = getCompileExecutionConfigurations();
+    if(!configurations.isEmpty()) return configurations;
+    Element configuration = getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
+    return configuration == null ? Collections.emptyList() : Collections.singletonList(configuration);
   }
 
   public @NotNull Properties getProperties() {
@@ -1051,7 +1085,7 @@ public class MavenProject {
   private @NotNull Map<String, String> getPropertiesFromConfig(ConfigFileKind kind) {
     Map<String, String> mavenConfig = getCachedValue(kind.CACHE_KEY);
     if (mavenConfig == null) {
-      mavenConfig = readConfigFile(MavenUtil.getBaseDir(getDirectoryFile()), kind);
+      mavenConfig = readConfigFile(MavenUtil.getBaseDir(getDirectoryFile()).toFile(), kind);
       putCachedValue(kind.CACHE_KEY, mavenConfig);
     }
 
@@ -1224,9 +1258,8 @@ public class MavenProject {
       boolean repositoryChanged = !Comparing.equal(myLocalRepository, other.myLocalRepository);
 
       result.dependencies = repositoryChanged || !Comparing.equal(myDependencies, other.myDependencies);
-
       result.plugins = repositoryChanged || !Comparing.equal(myPlugins, other.myPlugins);
-
+      result.properties = !Comparing.equal(myProperties, other.myProperties);
       return result;
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -12,6 +12,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
+import java.util.function.Consumer
 
 class GradleBuildSrcImportingTest : GradleImportingTestCase() {
 
@@ -40,9 +41,9 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
     assertModules("project",
                   "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test")
     val moduleLibDeps = getModuleLibDeps("project.buildSrc.test", "Gradle: junit:junit:4.12")
-    assertThat(moduleLibDeps).hasSize(1).allSatisfy {
+    assertThat(moduleLibDeps).hasSize(1).allSatisfy(Consumer {
       assertThat(it.libraryLevel).isEqualTo("project")
-    }
+    })
   }
 
   @Test
@@ -129,6 +130,41 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
     assertModuleLibDep("another-build.buildSrc.main", depJar.presentableUrl, depJar.url)
   }
 
+
+  /**
+   * since 6.7 included builds become "visible" for `buildSrc` project https://docs.gradle.org/6.7-rc-1/release-notes.html#build-src
+   * !!! Note, this is true only for builds included from the "root" build and it becomes visible also for "nested" `buildSrc` projects !!!
+   * Check an edge case of transitive included builds  reaching the buildSrc. Such chain should be ignored, as it may cause failure with Gradle 7.2+
+   * Related issue in Gradle's tracker: https://github.com/gradle/gradle/issues/20898
+   */
+  @TargetVersions("6.7+")
+  @Test
+  fun `test nested buildSrc with a transitive included builds chain reaching it`() {
+    createProjectSubFile("build-plugins/settings.gradle", "")
+    createProjectSubFile("build-plugins/build.gradle", "plugins { id 'groovy-gradle-plugin' }\n")
+    createProjectSubFile("build-plugins/src/main/groovy/myproject.my-test-plugin.gradle",
+                         "plugins { id 'java' }\n" +
+                         "dependencies { implementation files('libs/myLib.jar') }\n")
+
+    createProjectSubFile("another-build/settings.gradle", "")
+    createProjectSubFile("another-build/buildSrc/build.gradle", "plugins { id 'myproject.my-test-plugin' }\n")
+    createProjectSubFile("another-build/buildSrc/settings.gradle", "")
+    val depJar = createProjectJarSubFile("another-build/buildSrc/libs/myLib.jar")
+
+    createProjectSubFile("included-build/settings.gradle", "includeBuild '../another-build'")
+
+    createSettingsFile("includeBuild 'build-plugins'\n" +
+                       "includeBuild 'included-build'")
+
+    importProject("")
+    assertModules("project",
+                  "build-plugins", "build-plugins.main", "build-plugins.test",
+                  "included-build",
+                  "another-build", "another-build.buildSrc", "another-build.buildSrc.main", "another-build.buildSrc.test")
+
+    assertModuleLibDep("another-build.buildSrc.main", depJar.presentableUrl, depJar.url)
+  }
+
   @TargetVersions("6.7+")
   @Test
   fun `test buildSrc project dependencies on projects of build included from the main build`() {
@@ -200,7 +236,7 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
   }
 
   private fun assertBuildScriptClassPathContains(moduleName: String, expectedEntries: Collection<VirtualFile>) {
-    val module = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
+    val module = ModuleManager.getInstance(myProject).findModuleByName(moduleName)
     val modulePath = ExternalSystemApiUtil.getExternalProjectPath(module)
                      ?: throw AssertionFailedError("Could not find external project path for module '$moduleName'")
     val entries = GradleBuildClasspathManager.getInstance(myProject).getModuleClasspathEntries(modulePath)

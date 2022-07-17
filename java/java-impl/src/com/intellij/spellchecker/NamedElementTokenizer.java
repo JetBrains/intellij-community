@@ -24,8 +24,6 @@ import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author shkate@jetbrains.com
  */
 public class NamedElementTokenizer<T extends PsiNamedElement> extends Tokenizer<T> {

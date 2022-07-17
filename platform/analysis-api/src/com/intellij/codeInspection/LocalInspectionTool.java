@@ -1,18 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -176,55 +172,21 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     return psiElement.getContainingFile();
   }
 
+  /**
+   * Called before this inspection tool' visitor started processing any PSI elements the IDE wanted it to process in this session.
+   * There are no guarantees about which thread it's called from or whether there is a read/write action it's called under.
+   */
   public void inspectionStarted(@NotNull LocalInspectionToolSession session, boolean isOnTheFly) {}
 
+  /**
+   * Called when this inspection tool' visitor finished processing all PSI elements the IDE wanted it to process in this session.
+   * There are no guarantees about which thread it's called from or whether there is a read/write action it's called under.
+   */
   public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
   }
 
   @NotNull
   public List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
-    ProblemsHolder holder = new ProblemsHolder(manager, file, false);
-    LocalInspectionToolSession session = new LocalInspectionToolSession(file, 0, file.getTextLength());
-    PsiElementVisitor customVisitor = buildVisitor(holder, false, session);
-    LOG.assertTrue(!(customVisitor instanceof PsiRecursiveVisitor),
-                   "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive: " + customVisitor);
-
-    if (customVisitor == PsiElementVisitor.EMPTY_VISITOR) {
-      return Collections.emptyList();
-    }
-
-    inspectionStarted(session, false);
-
-    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(holder.getProject());
-    file.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(@NotNull PsiElement element) {
-        element.accept(customVisitor);
-        processInjectedFile(element);
-
-        super.visitElement(element);
-      }
-
-      private void processInjectedFile(PsiElement element) {
-        if (element instanceof PsiLanguageInjectionHost) {
-          List<Pair<PsiElement, TextRange>> files = injectedLanguageManager.getInjectedPsiFiles(element);
-          if (files != null) {
-            for (Pair<PsiElement, TextRange> pair : files) {
-              pair.first.accept(new PsiRecursiveElementWalkingVisitor() {
-                @Override
-                public void visitElement(@NotNull PsiElement injectedElement) {
-                  injectedElement.accept(customVisitor);
-                  super.visitElement(injectedElement);
-                }
-              });
-            }
-          }
-        }
-      }
-    });
-
-    inspectionFinished(session, holder);
-
-    return holder.getResults();
+    return manager.defaultProcessFile(this, file);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class NewWatchAction
@@ -8,19 +8,20 @@ package com.intellij.execution.ui.layout.actions;
 
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class RestoreLayoutAction extends DumbAwareAction {
-  @Nullable
-  public static RunnerContentUi getRunnerUi(@NotNull AnActionEvent e) {
+  
+  public static @Nullable RunnerContentUi getRunnerUi(@NotNull AnActionEvent e) {
     return e.getData(RunnerContentUi.KEY);
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     RunnerContentUi ui = getRunnerUi(e);
     if (ui != null) {
       ui.restoreLayout();
@@ -28,7 +29,12 @@ public final class RestoreLayoutAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
     RunnerContentUi runnerContentUi = getRunnerUi(e);
     boolean enabled = false;
     if (runnerContentUi != null) {

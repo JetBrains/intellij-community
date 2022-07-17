@@ -7,30 +7,32 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
+
+private val ktProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
+    listOf(KotlinArtifacts.kotlinStdlib), listOf(KotlinArtifacts.kotlinStdlibSources)
+) {
+    override fun configureModule(module: Module, model: ModifiableRootModel) {
+        super.configureModule(module, model)
+        MavenDependencyUtil.addFromMaven(model, "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+        MavenDependencyUtil.addFromMaven(model, "org.jetbrains:annotations:23.0.0")
+    }
+}
 
 @TestRoot("idea/tests")
 @TestMetadata("testData/inspections/blockingCallsDetection")
 @RunWith(JUnit38ClassRunner::class)
 class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
-        listOf(KotlinArtifacts.instance.kotlinStdlib), listOf(KotlinArtifacts.instance.kotlinStdlibSources)
-    ) {
-        override fun configureModule(module: Module, model: ModifiableRootModel) {
-            super.configureModule(module, model)
-            MavenDependencyUtil.addFromMaven(model, "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
-        }
-    }
+    override fun getProjectDescriptor(): LightProjectDescriptor = ktProjectDescriptor
 
     override fun setUp() {
         super.setUp()
-        myFixture.addClass("""package org.jetbrains.annotations; public @interface BlockingContext {}""")
         myFixture.enableInspections(BlockingMethodInNonBlockingContextInspection::class.java)
     }
 
@@ -44,10 +46,6 @@ class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTe
 
     fun testLambdaReceiverType() {
         doTest("LambdaReceiverTypeCheck.kt")
-    }
-
-    fun testNestedFunctionsInsideSuspendLambda() {
-        doTest("NestedFunctionsInsideSuspendLambda.kt")
     }
 
     fun testDispatchersTypeDetection() {
@@ -66,6 +64,6 @@ class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTe
 
     fun testFlowOn() {
         myFixture.configureByFile("FlowOn.kt")
-        myFixture.testHighlighting("FlowOn.kt")
+        myFixture.testHighlighting(true, false, false, "FlowOn.kt")
     }
 }

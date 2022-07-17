@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.*
@@ -30,7 +31,7 @@ private class ExpandStripeButtonUI : BasicButtonUI() {
   private val myIconRect = Rectangle()
   private val myTextRect = Rectangle()
   private val myViewRect = Rectangle()
-  private var ourViewInsets: Insets = JBUI.emptyInsets()
+  private var ourViewInsets: Insets = JBInsets.emptyInsets()
 
   override fun getMinimumSize(c: JComponent): Dimension = getPreferredSize(c)
   override fun getMaximumSize(c: JComponent): Dimension = getPreferredSize(c)

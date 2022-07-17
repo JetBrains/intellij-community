@@ -61,11 +61,13 @@ public class ScopeHighlighter {
     List<TextRange> rangesToExtract = ranges.second;
     List<TextRange> rangesToRemove = RangeSplitter.split(wholeRange, rangesToExtract);
 
-    for (TextRange r : rangesToRemove) {
-      addHighlighter(r, UnwrapHandler.HIGHLIGHTER_LEVEL, EditorColors.DELETED_TEXT_ATTRIBUTES);
-    }
-    for (TextRange r : rangesToExtract) {
-      addHighlighter(r, UnwrapHandler.HIGHLIGHTER_LEVEL, EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    addHighlights(rangesToRemove, EditorColors.DELETED_TEXT_ATTRIBUTES);
+    addHighlights(rangesToExtract, EditorColors.SEARCH_RESULT_ATTRIBUTES);
+  }
+
+  public void addHighlights(List<? extends TextRange> ranges, TextAttributesKey key) {
+    for (TextRange r : ranges) {
+      addHighlighter(r, UnwrapHandler.HIGHLIGHTER_LEVEL, key);
     }
   }
 

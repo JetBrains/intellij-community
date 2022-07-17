@@ -11,7 +11,7 @@ public class KotlinTryCatchFinallySurrounder extends KotlinTrySurrounderBase {
 
     @Override
     protected String getCodeTemplate() {
-        return "try { \n} catch(e: Exception) {\n} finally {\n}";
+        return "try { \n} catch(e: Exception) {\nTODO(\"Not yet implemented\")\n} finally {\n}";
     }
 
     @NotNull
@@ -20,6 +20,7 @@ public class KotlinTryCatchFinallySurrounder extends KotlinTrySurrounderBase {
         return getCatchTypeParameterTextRange(expression);
     }
 
+    @SuppressWarnings("DialogTitleCapitalization")
     @Override
     public String getTemplateDescription() {
         return JavaBundle.message("surround.with.try.catch.finally.template");

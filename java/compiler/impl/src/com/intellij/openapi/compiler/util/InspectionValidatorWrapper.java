@@ -67,9 +67,12 @@ public class InspectionValidatorWrapper implements Validator {
 
   private static final ThreadLocal<Boolean> ourCompilationThreads = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
-  public InspectionValidatorWrapper(CompilerManager compilerManager, InspectionManager inspectionManager,
-                                    InspectionProjectProfileManager profileManager, PsiDocumentManager psiDocumentManager,
-                                    PsiManager psiManager, InspectionValidator validator) {
+  private InspectionValidatorWrapper(@NotNull CompilerManager compilerManager,
+                                     @NotNull InspectionManager inspectionManager,
+                                     @NotNull InspectionProjectProfileManager profileManager,
+                                     @NotNull PsiDocumentManager psiDocumentManager,
+                                     @NotNull PsiManager psiManager,
+                                     @NotNull InspectionValidator validator) {
     myCompilerManager = compilerManager;
     myInspectionManager = inspectionManager;
     myProfileManager = profileManager;
@@ -79,7 +82,7 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   @NotNull
-  public static InspectionValidatorWrapper create(Project project, InspectionValidator validator) {
+  public static InspectionValidatorWrapper create(@NotNull Project project, @NotNull InspectionValidator validator) {
     return new InspectionValidatorWrapper(
       CompilerManager.getInstance(project),
       InspectionManager.getInstance(project),
@@ -343,9 +346,9 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   private Map<ProblemDescriptor, HighlightDisplayLevel> runXmlFileSchemaValidation(@NotNull XmlFile xmlFile) {
-    AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(xmlFile));
+    AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(xmlFile), false);
 
-    List<ExternalAnnotator> annotators = ExternalLanguageAnnotators.allForFile(XMLLanguage.INSTANCE, xmlFile);
+    List<ExternalAnnotator<?,?>> annotators = ExternalLanguageAnnotators.allForFile(XMLLanguage.INSTANCE, xmlFile);
     for (ExternalAnnotator<?, ?> annotator : annotators) {
       processAnnotator(xmlFile, holder, annotator);
     }

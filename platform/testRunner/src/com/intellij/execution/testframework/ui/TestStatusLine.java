@@ -163,8 +163,7 @@ public class TestStatusLine extends NonOpaquePanel {
   /**
    * @deprecated Usages should be deleted as progress is now incorporated into console
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setPreferredSize(boolean orientation) {
     final Dimension size = new JBDimension(orientation ? 150 : 450 , -1);
     myProgressPanel.setMaximumSize(size);

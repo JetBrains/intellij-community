@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,8 +48,9 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private List<IdeaPluginDependency> myDependencies = new ArrayList<>();
   private Status myStatus = Status.UNKNOWN;
   private boolean myLoaded;
-  private String myDownloadUrl;
-  private String myRepositoryName;
+  private @NonNls String myDownloadUrl;
+  private @NonNls String myChannel; // TODO parameters map?
+  private @NlsSafe String myRepositoryName;
   private String myInstalledVersion;
   private boolean myEnabled = true;
   private String myRating;
@@ -313,7 +315,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   public void setDate(String date) {
-    this.date = Long.valueOf(date);
+    this.date = Long.parseLong(date);
   }
 
   public void setDate(Long date) {
@@ -335,8 +337,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   /**
    * @deprecated Use {@link #setDependencies(List)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated(forRemoval = true)
   public void setDepends(@NotNull List<PluginId> depends, PluginId @Nullable [] optionalDependencies) {
     myDependencies = new ArrayList<>();
     for (PluginId id : depends) {
@@ -392,8 +393,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  @Nullable
-  public ClassLoader getPluginClassLoader() {
+  public @Nullable ClassLoader getPluginClassLoader() {
     return null;
   }
 
@@ -437,19 +437,29 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myEnabled = enabled;
   }
 
-  public String getDownloadUrl() {
+  public @NonNls String getDownloadUrl() {
     return myDownloadUrl;
   }
 
-  public void setDownloadUrl(String host) {
-    myDownloadUrl = host;
+  public void setDownloadUrl(@NonNls String downloadUrl) {
+    myDownloadUrl = downloadUrl;
+  }
+
+  @ApiStatus.Experimental
+  public @NonNls String getChannel() {
+    return myChannel;
+  }
+
+  @ApiStatus.Experimental
+  public void setChannel(@NonNls String channel) {
+    myChannel = channel;
   }
 
   public @NlsSafe String getRepositoryName() {
     return myRepositoryName;
   }
 
-  public void setRepositoryName(String repositoryName) {
+  public void setRepositoryName(@NlsSafe String repositoryName) {
     myRepositoryName = repositoryName;
   }
 
@@ -474,7 +484,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
     if (!StringUtil.isEmptyOrSpaces(rating)) {
       try {
-        if (Double.valueOf(rating) > 0) {
+        if (Double.parseDouble(rating) > 0) {
           return StringUtil.trimEnd(rating, ".0");
         }
       }

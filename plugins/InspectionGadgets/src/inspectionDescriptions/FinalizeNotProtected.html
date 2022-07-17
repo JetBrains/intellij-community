@@ -5,11 +5,11 @@ declared <code>public</code>.
 <p>
   According to the contract of the <code>Object.finalize()</code>, only the garbage
   collector calls this method. Making this method public may be confusing, because it
-  means that the method can be used by users.
+  means that the method can be used from other code.
 </p>
 <p>
-  The quick-fix makes the method protected to prevent it from being explicitly invoked
-  by other classes.
+  A quick-fix is provided to make the method <code>protected</code>, to prevent it from being invoked
+  from other classes.
 </p>
 <!-- tooltip end -->
 <p><b>Example:</b></p>

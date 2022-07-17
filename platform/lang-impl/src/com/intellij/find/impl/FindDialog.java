@@ -3,7 +3,6 @@
 package com.intellij.find.impl;
 
 import com.intellij.find.FindModel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class FindDialog {
@@ -11,8 +10,7 @@ public final class FindDialog {
   /**
    * @deprecated use {@link FindInProjectUtil#getPresentableName(FindModel.SearchContext)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static String getPresentableName(@NotNull FindModel.SearchContext searchContext) {
     return FindInProjectUtil.getPresentableName(searchContext);
   }

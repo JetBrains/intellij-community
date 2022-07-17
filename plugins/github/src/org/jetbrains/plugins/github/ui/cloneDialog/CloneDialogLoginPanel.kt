@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
@@ -8,7 +8,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ENTER
-import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -25,9 +25,9 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.layout.*
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
-import com.intellij.util.ui.JBUI.emptyInsets
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
@@ -97,7 +97,9 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
 
   fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
 
-  override fun dispose() = Unit
+  override fun dispose() {
+    cancelLogin()
+  }
 
   private fun buildLayout() {
     add(JPanel(HorizontalLayout(0)).apply {
@@ -197,7 +199,7 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
   private fun toErrorComponent(info: ValidationInfo): JComponent =
     SimpleColoredComponent().apply {
       myBorder = empty()
-      ipad = emptyInsets()
+      ipad = JBInsets.emptyInsets()
 
       append(info.message, ERROR_ATTRIBUTES)
     }

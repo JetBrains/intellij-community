@@ -151,8 +151,8 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
 
   @Override
   public void documentChanged(@NotNull DocumentEvent e) {
+    l.writeLock().lock();
     try {
-      l.writeLock().lock();
       if (size() != 0) {
         updateMarkersOnChange(e);
         if (DocumentEventUtil.isMoveInsertion(e)) {
@@ -234,9 +234,9 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
 
   @Nullable
   private static <T extends RangeMarkerEx> RangeMarkerImpl getNodeMarker(@NotNull IntervalNode<T> node) {
-    List<Supplier<T>> keys = node.intervals;
+    List<Supplier<? extends T>> keys = node.intervals;
     for (int i = keys.size() - 1; i >= 0; i--) {
-      Supplier<T> key = keys.get(i);
+      Supplier<? extends T> key = keys.get(i);
       RangeMarkerImpl marker = (RangeMarkerImpl)key.get();
       if (marker != null) {
         if (marker.isValid()) return marker;
@@ -257,11 +257,11 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   }
 
   // returns true if all deltas involved are still 0
-  boolean collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<T> root,
-                                                 int start, int end, int lengthDelta,
-                                                 @NotNull List<? super IntervalNode<T>> affected) {
-    if (root == null) return true;
-    boolean norm = pushDelta(root);
+  void collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<T> root,
+                                              int start, int end, int lengthDelta,
+                                              @NotNull List<? super IntervalNode<T>> affected) {
+    if (root == null) return;
+    pushDelta(root);
 
     int maxEnd = root.maxEnd;
     assert root.isValid();
@@ -276,15 +276,13 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     }
     else if (end < root.intervalStart()) {
       // shift entire subtree
-      int newD = root.changeDelta(lengthDelta);
-      norm &= newD == 0;
+      root.changeDelta(lengthDelta);
       IntervalNode<T> left = root.getLeft();
       if (left != null) {
-        int newL = left.changeDelta(-lengthDelta);
-        norm &= newL == 0;
+        left.changeDelta(-lengthDelta);
       }
-      norm &= pushDelta(root);
-      norm &= collectAffectedMarkersAndShiftSubtrees(left, start, end, lengthDelta, affected);
+      pushDelta(root);
+      collectAffectedMarkersAndShiftSubtrees(left, start, end, lengthDelta, affected);
       correctMax(root, 0);
     }
     else {
@@ -294,11 +292,10 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
         root.setValid(false);  //make invisible
       }
 
-      norm &= collectAffectedMarkersAndShiftSubtrees(root.getLeft(), start, end, lengthDelta, affected);
-      norm &= collectAffectedMarkersAndShiftSubtrees(root.getRight(), start, end, lengthDelta, affected);
+      collectAffectedMarkersAndShiftSubtrees(root.getLeft(), start, end, lengthDelta, affected);
+      collectAffectedMarkersAndShiftSubtrees(root.getRight(), start, end, lengthDelta, affected);
       correctMax(root, 0);
     }
-    return norm;
   }
 
   // All intervals contained in (e.getMoveOffset(), e.getMoveOffset() + e.getNewLength())

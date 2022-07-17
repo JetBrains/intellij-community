@@ -26,8 +26,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static com.intellij.xml.util.XmlStringUtil.escapeString;
 import static com.intellij.openapi.vcs.annotate.AnnotationTooltipBuilder.buildSimpleTooltip;
+import static com.intellij.xml.util.XmlStringUtil.escapeString;
 
 public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   private final String myContents;
@@ -192,7 +192,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   @Override
   @Nullable
   public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
-    if (! myShowMergeSources) return null;
+    if (!myShowMergeSources) return null;
     return new AnnotationSourceSwitcher() {
       @Override
       @NotNull
@@ -335,5 +335,11 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   @Override
   public VcsRevisionNumber getCurrentRevision() {
     return myBaseRevision;
+  }
+
+  @Nullable
+  @Override
+  public LineModificationDetailsProvider getLineModificationDetailsProvider() {
+    return DefaultLineModificationDetailsProvider.create(this);
   }
 }

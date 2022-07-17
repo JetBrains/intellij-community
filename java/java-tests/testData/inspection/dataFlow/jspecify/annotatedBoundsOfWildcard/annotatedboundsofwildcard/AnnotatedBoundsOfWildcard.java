@@ -16,11 +16,11 @@
 
 package annotatedboundsofwildcard;
 
-import org.jspecify.annotations.DefaultNonNull;
-import org.jspecify.annotations.Nullable;
-import org.jspecify.annotations.NullnessUnspecified;
+import org.jspecify.nullness.NullMarked;
+import org.jspecify.nullness.Nullable;
+import org.jspecify.nullness.NullnessUnspecified;
 
-@DefaultNonNull
+@NullMarked
 public class AnnotatedBoundsOfWildcard {
   public void superAsIs(
       // jspecify_nullness_not_enough_information
@@ -52,10 +52,10 @@ class Base {}
 
 class Derived extends Base {}
 
-@DefaultNonNull
+@NullMarked
 class Test<T extends Object, E extends @Nullable Object, F extends @NullnessUnspecified Object> {}
 
-@DefaultNonNull
+@NullMarked
 class Use {
   public void main(
       Test<Derived, Derived, Derived> aNotNullNotNullNotNull,

@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging
 
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
@@ -47,7 +48,14 @@ data class PyRequirementsAnalysisResult(val currentFileOutput: List<String>,
                                         val unhandledLines: List<String>,
                                         val unchangedInBaseFiles: List<String>) {
   companion object {
-    fun empty() = PyRequirementsAnalysisResult(mutableListOf(), mutableMapOf(), mutableListOf(), mutableListOf())
+    fun empty() = PyRequirementsAnalysisResult(emptyList(), emptyMap(), emptyList(), emptyList())
+  }
+
+  fun withImportedPackages(importedPackages: Map<String, PyPackage>, settings: PyPackageRequirementsSettings): PyRequirementsAnalysisResult {
+    val newCurrentFile = currentFileOutput + importedPackages.values.map {
+      if (settings.specifyVersion) "${it.name}${settings.versionSpecifier.separator}${it.version}" else it.name
+    }
+    return PyRequirementsAnalysisResult(newCurrentFile, baseFilesOutput, unhandledLines, unchangedInBaseFiles)
   }
 }
 
@@ -73,7 +81,7 @@ private class PyCollectImportsTask(
 }
 
 internal fun syncWithImports(module: Module) {
-  val notificationGroup = NotificationGroup.balloonGroup("Sync Python requirements", PyBundle.message("python.requirements.balloon"))
+  val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Sync Python requirements")
   val sdk = PythonSdkUtil.findPythonSdk(module)
   if (sdk == null) {
     val configureSdkAction = NotificationAction.createSimpleExpiring(PySdkBundle.message("python.configure.interpreter.action")) {
@@ -156,9 +164,15 @@ private fun prepareRequirementsText(module: Module, sdk: Sdk, settings: PyPackag
     .map { it.name.toLowerCase() to it }
     .toMap(mutableMapOf())
 
-  val requirementsFile = PyPackageUtil.findRequirementsTxt(module) ?: return PyRequirementsAnalysisResult.empty()
-  val visitor = PyRequirementsFileVisitor(importedPackages, settings)
-  return visitor.visitRequirementsFile(psiManager.findFile(requirementsFile)!!)
+  val analysisResult = when (val requirementsFile = PyPackageUtil.findRequirementsTxt(module)) {
+    null -> PyRequirementsAnalysisResult.empty()
+    else -> {
+      val visitor = PyRequirementsFileVisitor(importedPackages, settings)
+      visitor.visitRequirementsFile(psiManager.findFile(requirementsFile)!!)
+    }
+  }
+
+  return analysisResult.withImportedPackages(importedPackages, settings)
 }
 
 private fun showSyncSettingsDialog(project: Project, settings: PyPackageRequirementsSettings): Boolean {

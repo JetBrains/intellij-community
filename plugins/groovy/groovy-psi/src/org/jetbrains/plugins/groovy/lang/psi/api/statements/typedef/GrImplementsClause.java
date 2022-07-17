@@ -17,8 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public interface GrImplementsClause extends GrReferenceList {
 }

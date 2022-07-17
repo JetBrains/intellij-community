@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.impl.statistics.FusCollectSettingChangesRunConfiguration;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfigurations;
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -32,8 +34,8 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,7 +94,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         if (!myChangingNameFromCode) {
           RunConfiguration runConfiguration = getSettings().getConfiguration();
           if (runConfiguration instanceof LocatableConfigurationBase) {
-            ((LocatableConfigurationBase)runConfiguration).setNameChangedByUser(true);
+            ((LocatableConfigurationBase<?>)runConfiguration).setNameChangedByUser(true);
           }
         }
       }
@@ -120,14 +122,15 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   protected @NotNull RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     RunnerAndConfigurationSettings snapshot = super.getSnapshot();
     snapshot.setName(getNameText());
+    snapshot.setFolderName(getFolderName());
+    snapshot.getConfiguration().setAllowRunningInParallel(myIsAllowRunningInParallel);
     RunnerAndConfigurationSettings original = getSettings();
     snapshot.setTemporary(original.isTemporary());
-    if (original.isStoredInDotIdeaFolder()) {
-      snapshot.storeInDotIdeaFolder();
+
+    if (myComponent != null && myComponent.myRCStorageUi != null) {
+      myComponent.myRCStorageUi.apply(snapshot);
     }
-    else if (original.isStoredInArbitraryFileInProject() && original.getPathIfStoredInArbitraryFileInProject() != null) {
-      snapshot.storeInArbitraryFileInProject(original.getPathIfStoredInArbitraryFileInProject());
-    }
+
     return snapshot;
   }
 
@@ -140,8 +143,23 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   @Override
   public void apply() throws ConfigurationException {
     RunnerAndConfigurationSettings settings = getSettings();
-
     RunConfiguration runConfiguration = settings.getConfiguration();
+
+    if (runConfiguration instanceof FusCollectSettingChangesRunConfiguration) {
+      RunConfiguration oldRunConfiguration = runConfiguration.clone();
+
+      performApply(settings, runConfiguration);
+      
+      ((FusCollectSettingChangesRunConfiguration)runConfiguration)
+        .collectSettingChangesOnApply((FusCollectSettingChangesRunConfiguration)oldRunConfiguration);
+    }
+    else {
+      performApply(settings, runConfiguration);
+    }
+  }
+
+  private void performApply(@NotNull RunnerAndConfigurationSettings settings,
+                            @NotNull RunConfiguration runConfiguration) throws ConfigurationException {
     settings.setName(getNameText());
     runConfiguration.setAllowRunningInParallel(myIsAllowRunningInParallel);
     myRunOnTargetPanel.apply();
@@ -149,6 +167,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     if (myComponent.myRCStorageUi != null) {
       myComponent.myRCStorageUi.apply(settings);
+      myComponent.myRCStorageUi.reset(settings); // to reset its internal state
     }
 
     super.apply();
@@ -438,7 +457,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myComponentPlace.setLayout(new GridBagLayout());
       myComponentPlace.add(getEditorComponent(),
                            new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                  JBUI.emptyInsets(), 0, 0));
+                                                  JBInsets.emptyInsets(), 0, 0));
       myComponentPlace.doLayout();
       myFixButton.setIcon(AllIcons.Actions.QuickfixBulb);
       requestToUpdateWarning();
@@ -508,7 +527,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           myQuickFix = quickFix;
         }
         myValidationPanel.setVisible(true);
-        Window window = UIUtil.getWindow(myWholePanel);
+        Window window = ComponentUtil.getWindow(myWholePanel);
         if (!myWindowResizedOnce && window != null && window.isShowing()) {
           Dimension size = window.getSize();
           window.setSize(size.width, size.height + myValidationPanel.getPreferredSize().height);

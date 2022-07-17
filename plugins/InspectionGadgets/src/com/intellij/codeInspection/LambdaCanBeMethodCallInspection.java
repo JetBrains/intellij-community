@@ -15,7 +15,6 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -34,7 +33,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
     boolean java11 = PsiUtil.isLanguageLevel11OrHigher(holder.getFile());
     return new JavaElementVisitor() {
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression lambda) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {
         super.visitLambdaExpression(lambda);
         PsiElement body = lambda.getBody();
         if (body == null) return;

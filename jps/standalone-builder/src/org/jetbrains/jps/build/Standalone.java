@@ -189,7 +189,7 @@ public class Standalone {
     final BuildRunner buildRunner = new BuildRunner(loader);
     ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot, new BuildFSState(true));
     try {
-      buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, BuildType.BUILD, scopes, includeDependenciesToScope);
+      buildRunner.runBuild(descriptor, CanceledStatus.NULL, messageHandler, BuildType.BUILD, scopes, includeDependenciesToScope);
     }
     finally {
       descriptor.release();

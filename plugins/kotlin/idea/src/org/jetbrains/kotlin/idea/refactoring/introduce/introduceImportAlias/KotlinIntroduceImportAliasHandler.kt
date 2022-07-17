@@ -10,20 +10,22 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.moveCaret
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.util.ElementKind
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.references.findPsiDeclarations
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
-import org.jetbrains.kotlin.idea.search.fileScope
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.util.ImportInsertHelperImpl
+import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getAllAccessibleFunctions
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -40,7 +42,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.checkWithAttachment
 
 object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
-    val REFACTORING_NAME = KotlinBundle.message("name.introduce.import.alias")
+    private val REFACTORING_NAME = KotlinBundle.message("name.introduce.import.alias")
 
     @get:TestOnly
     var suggestedImportAliasNames: Collection<String> = emptyList()
@@ -81,28 +83,30 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
             }
         }
 
-        val suggestionsName = KotlinNameSuggester.suggestNamesByFqName(
+        val suggestionsName = Fe10KotlinNameSuggester.suggestNamesByFqName(
             fqName,
             validator = validator,
             defaultName = { fqName.asString().replace('.', '_') })
         checkWithAttachment(suggestionsName.isNotEmpty(), { "Unable to build any suggestion name for $fqName" }) {
-            it.withAttachment("file.kt", file.text)
+            it.withPsiAttachment("file.kt", file)
         }
         val newName = suggestionsName.first()
         suggestedImportAliasNames = suggestionsName
-        val newDirective = ImportInsertHelperImpl.addImport(project, file, fqName, false, Name.identifier(newName))
+        project.executeWriteCommand(KotlinBundle.message("intention.add.import.alias.group.name"), groupId = null) {
+            val newDirective = ImportInsertHelperImpl.addImport(project, file, fqName, false, Name.identifier(newName))
 
-        replaceUsages(usages, newName)
-        cleanImport(file, fqName)
+            replaceUsages(usages, newName)
+            cleanImport(file, fqName)
 
-        if (elementInImportDirective) editor.moveCaret(newDirective.alias?.nameIdentifier?.textOffset ?: newDirective.endOffset)
+            if (elementInImportDirective) editor.moveCaret(newDirective.alias?.nameIdentifier?.textOffset ?: newDirective.endOffset)
 
-        invokeRename(project, editor, newDirective.alias, suggestionsName)
+            invokeRename(project, editor, newDirective.alias, suggestionsName)
+        }
     }
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
         if (file !is KtFile) return
-        selectElement(editor, file, listOf(CodeInsightUtils.ElementKind.EXPRESSION)) {
+        selectElement(editor, file, ElementKind.EXPRESSION) {
             doRefactoring(project, editor, it as KtNameReferenceExpression)
         }
     }
@@ -124,8 +128,10 @@ private fun invokeRename(
     elementToRename: PsiNamedElement?,
     suggestionsName: Collection<String>
 ) {
+    val pointer = if (elementToRename != null) SmartPointerManager.createPointer(elementToRename) else null
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-    val rename = VariableInplaceRenamer(elementToRename, editor, project)
+    val element = pointer?.element ?: return
+    val rename = VariableInplaceRenamer(element, editor, project)
     rename.performInplaceRefactoring(LinkedHashSet(suggestionsName))
 }
 

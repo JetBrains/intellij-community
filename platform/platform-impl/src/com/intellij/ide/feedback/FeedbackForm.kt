@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.feedback
 
 import com.intellij.CommonBundle
@@ -16,31 +16,32 @@ import com.intellij.openapi.application.impl.ZenDeskForm
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.PopupBorder
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.dialog
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
-import com.intellij.util.BooleanFunction
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.util.function.Predicate
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent
 
-data class ZenDeskComboOption(val displayName: @Nls String, val id: String) {
+private data class ZenDeskComboOption(val displayName: @Nls String, val id: String) {
   override fun toString(): String = displayName
 }
 
@@ -75,127 +76,109 @@ class FeedbackForm(
     return panel {
       if (isEvaluation) {
         row {
-          label(ApplicationBundle.message("feedback.form.evaluation.prompt")).also {
-            it.component.font = JBFont.h1()
+          label(ApplicationBundle.message("feedback.form.evaluation.prompt")).applyToComponent {
+            font = JBFont.h1()
           }
         }
         row {
-          label(ApplicationBundle.message("feedback.form.comment")).also {
-            it.component.minimumSize = Dimension(it.component.preferredSize.width, it.component.minimumSize.height)
-          }
+          label(ApplicationBundle.message("feedback.form.comment"))
         }
         row {
           label(ApplicationBundle.message("feedback.form.rating", ApplicationNamesInfo.getInstance().fullProductName))
         }
         row {
-          cell {
-            ratingComponent = RatingComponent().also {
-              it.addPropertyChangeListener { evt ->
-                if (evt.propertyName == RatingComponent.RATING_PROPERTY) {
-                  missingRatingTooltip?.isVisible = false
-                }
+          ratingComponent = RatingComponent().also {
+            it.addPropertyChangeListener { evt ->
+              if (evt.propertyName == RatingComponent.RATING_PROPERTY) {
+                missingRatingTooltip?.isVisible = false
               }
-              it()
             }
-
-            missingRatingTooltip = JBLabel(ApplicationBundle.message("feedback.form.rating.required")).apply {
-              border = JBUI.Borders.compound(PopupBorder.Factory.createColored(JBUI.CurrentTheme.Validator.errorBorderColor()),
-                                             JBUI.Borders.empty(4, 8))
-              background = JBUI.CurrentTheme.Validator.errorBackgroundColor()
-              isVisible = false
-              isOpaque = true
-              this().withLargeLeftGap()
-            }
+            cell(it)
           }
+
+          missingRatingTooltip = label(ApplicationBundle.message("feedback.form.rating.required")).applyToComponent {
+            border = JBUI.Borders.compound(PopupBorder.Factory.createColored(JBUI.CurrentTheme.Validator.errorBorderColor()),
+              JBUI.Borders.empty(4, 8))
+            background = JBUI.CurrentTheme.Validator.errorBackgroundColor()
+            isVisible = false
+            isOpaque = true
+          }.component
         }
       }
       else {
         row {
-          label(ApplicationBundle.message("feedback.form.topic"))
-        }
-        row {
-          cell {
-            comboBox(CollectionComboBoxModel(topicOptions), { topic }, { topic = it})
-              .withErrorOnApplyIf(ApplicationBundle.message("feedback.form.topic.required")) {
-                it.selectedItem == null
-              }
-              .also {
-                topicComboBox = it.component
-              }
-            HyperlinkLabel()()
-              .also {
-                it.component.setTextWithHyperlink(ApplicationBundle.message("feedback.form.issue"))
-                it.component.setIcon(AllIcons.General.BalloonInformation)
-                it.component.addHyperlinkListener {
-                  SendFeedbackAction.submit(project, ApplicationInfoEx.getInstanceEx().youtrackUrl, SendFeedbackAction.getDescription(project))
-                }
-              }
-              .visibleIf(topicComboBox.selectedValueMatches { it?.id == "ij_bug" })
-          }
+          topicComboBox = comboBox(CollectionComboBoxModel(topicOptions))
+            .label(ApplicationBundle.message("feedback.form.topic"), LabelPosition.TOP)
+            .bindItem({ topic }, { topic = it})
+            .errorOnApply(ApplicationBundle.message("feedback.form.topic.required")) {
+              it.selectedItem == null
+            }.component
+
+          icon(AllIcons.General.BalloonInformation)
+            .gap(RightGap.SMALL)
+            .visibleIf(topicComboBox.selectedValueMatches { it?.id == "ij_bug" })
+          text(ApplicationBundle.message("feedback.form.issue")) {
+            SendFeedbackAction.submit(project, ApplicationInfoEx.getInstanceEx().youtrackUrl, SendFeedbackAction.getDescription(project))
+          }.visibleIf(topicComboBox.selectedValueMatches { it?.id == "ij_bug" })
         }
       }
       row {
-        label(if (isEvaluation) ApplicationBundle.message("feedback.form.evaluation.details") else ApplicationBundle.message("feedback.form.details"))
-      }
-      row {
-        scrollableTextArea(::details, rows = 5)
+        val label = if (isEvaluation) ApplicationBundle.message("feedback.form.evaluation.details") else ApplicationBundle.message("feedback.form.details")
+        textArea()
+          .label(label, LabelPosition.TOP)
+          .bindText(::details)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .verticalAlign(VerticalAlign.FILL)
+          .rows(5)
           .focused()
-          .withErrorOnApplyIf(ApplicationBundle.message("feedback.form.details.required")) {
+          .errorOnApply(ApplicationBundle.message("feedback.form.details.required")) {
             it.text.isBlank()
           }
-          .also {
-            it.component.emptyText.text = if (isEvaluation)
+          .applyToComponent {
+            emptyText.text = if (isEvaluation)
               ApplicationBundle.message("feedback.form.evaluation.details.emptyText")
             else
               ApplicationBundle.message("feedback.form.details.emptyText")
-            it.component.font = JBFont.regular()
-            it.component.emptyText.setFont(JBFont.regular())
-            it.component.putClientProperty(JBTextArea.STATUS_VISIBLE_FUNCTION,
-                                           BooleanFunction<JBTextArea> { textArea -> textArea.text.isEmpty() })
-
-            it.component.addKeyListener(object : KeyAdapter() {
+            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, Predicate<JBTextArea> { it.text.isEmpty() })
+            addKeyListener(object : KeyAdapter() {
               override fun keyPressed(e: KeyEvent) {
                 if (e.keyCode == KeyEvent.VK_TAB) {
                   if ((e.modifiersEx and KeyEvent.SHIFT_DOWN_MASK) != 0) {
-                    it.component.transferFocusBackward()
+                    transferFocusBackward()
                   }
                   else {
-                    it.component.transferFocus()
+                    transferFocus()
                   }
                   e.consume()
                 }
               }
             })
           }
+      }.resizableRow()
+
+      row {
+        textField()
+          .label(ApplicationBundle.message("feedback.form.email"), LabelPosition.TOP)
+          .bindText(::email)
+          .columns(COLUMNS_MEDIUM)
+          .errorOnApply(ApplicationBundle.message("feedback.form.email.required")) { it.text.isBlank() }
+          .errorOnApply(ApplicationBundle.message("feedback.form.email.invalid")) { !it.text.matches(Regex(".+@.+\\..+")) }
       }
       row {
-        label(ApplicationBundle.message("feedback.form.email"))
+        checkBox(ApplicationBundle.message("feedback.form.need.support"))
+          .bindSelected(::needSupport)
       }
       row {
-        textField(::email, columns = 25)
-          .withErrorOnApplyIf(ApplicationBundle.message("feedback.form.email.required")) { it.text.isBlank() }
-          .withErrorOnApplyIf(ApplicationBundle.message("feedback.form.email.invalid")) { !it.text.matches(Regex(".+@.+\\..+")) }
-      }
-      row {
-        checkBox(ApplicationBundle.message("feedback.form.need.support"), ::needSupport)
-      }
-      row {
-        cell {
-          checkBox(ApplicationBundle.message("feedback.form.share.system.information"), ::shareSystemInformation)
-          @Suppress("DialogTitleCapitalization")
-          HyperlinkLabel(ApplicationBundle.message("feedback.form.share.system.information.link"))().also {
-            it.component.addHyperlinkListener {
-              showSystemInformation()
-            }
-          }
+        checkBox(ApplicationBundle.message("feedback.form.share.system.information"))
+          .bindSelected(::shareSystemInformation)
+          .gap(RightGap.SMALL)
+        @Suppress("DialogTitleCapitalization")
+        link(ApplicationBundle.message("feedback.form.share.system.information.link")) {
+          showSystemInformation()
         }
       }
       row {
-        label(ApplicationBundle.message("feedback.form.consent")).also {
-          UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, it.component)
-          it.component.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-          it.component.minimumSize = Dimension(it.component.preferredSize.width, it.component.minimumSize.height)
-        }
+        comment(ApplicationBundle.message("feedback.form.consent"))
       }
     }
   }
@@ -225,8 +208,8 @@ class FeedbackForm(
 
       override fun doAction(e: ActionEvent) {
         val ratingComponent = ratingComponent
-        missingRatingTooltip?.isVisible = ratingComponent?.rating == 0
-        if (ratingComponent == null || ratingComponent.rating != 0) {
+        missingRatingTooltip?.isVisible = ratingComponent?.myRating == 0
+        if (ratingComponent == null || ratingComponent.myRating != 0) {
           super.doAction(e)
         }
         else {
@@ -256,8 +239,8 @@ class FeedbackForm(
         mapOf(
           "systeminfo" to systemInfo,
           "needsupport" to needSupport
-        ) + (ratingComponent?.let { mapOf("rating" to it.rating) } ?: mapOf()) + (topic?.let { mapOf("topic" to it.id)} ?: emptyMap() )
-      , onDone = {
+        ) + (ratingComponent?.let { mapOf("rating" to it.myRating) } ?: mapOf()) + (topic?.let { mapOf("topic" to it.id) } ?: emptyMap())
+        , onDone = {
         ApplicationManager.getApplication().invokeLater {
           var message = ApplicationBundle.message("feedback.form.thanks", ApplicationNamesInfo.getInstance().fullProductName)
           if (isEvaluation) {

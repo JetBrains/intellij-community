@@ -4,15 +4,13 @@ package com.intellij.formatting;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @deprecated use {@link FormattingModelBuilder}
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+@Deprecated(forRemoval = true)
 public interface FormattingModelBuilderEx extends FormattingModelBuilder {
   /**
    * Allows to adjust indent options to used during performing formatting operation on the given ranges of the given file.
@@ -28,7 +26,7 @@ public interface FormattingModelBuilderEx extends FormattingModelBuilder {
    * @deprecated Use {@link com.intellij.psi.codeStyle.FileIndentOptionsProvider} instead.
    */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default CommonCodeStyleSettings.IndentOptions getIndentOptionsToUse(@NotNull PsiFile file,
                                                                       @NotNull FormatTextRanges ranges,
                                                                       @NotNull CodeStyleSettings settings) {

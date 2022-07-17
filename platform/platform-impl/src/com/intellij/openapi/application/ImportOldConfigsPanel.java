@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.BootstrapBundle;
@@ -101,7 +101,7 @@ class ImportOldConfigsPanel extends JDialog {
       Ref<File> fileRef = Ref.create();
       PathChooserDialog chooser = FileChooserFactoryImpl.createNativePathChooserIfEnabled(chooserDescriptor, null, myRootPanel);
       if (chooser != null) {
-        VirtualFile vf = myLastSelection != null ? new CoreLocalVirtualFile(new CoreLocalFileSystem(), myLastSelection.toFile(), true) : null;
+        VirtualFile vf = myLastSelection != null ? new CoreLocalVirtualFile(new CoreLocalFileSystem(), myLastSelection) : null;
         chooser.choose(vf, files -> fileRef.set(new File(files.get(0).getPresentableUrl())));
       }
       else {

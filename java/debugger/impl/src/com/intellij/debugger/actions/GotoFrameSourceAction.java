@@ -10,10 +10,12 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -47,8 +49,10 @@ public abstract class GotoFrameSourceAction extends DebuggerAction{
           JavaExecutionStack executionStack =
             new JavaExecutionStack(threadProxy, process, Objects.equals(threadSuspendContext.getThread(), threadProxy));
           executionStack.initTopFrame();
-          XStackFrame frame = executionStack.createStackFrame(frameProxy);
-          DebuggerUIUtil.invokeLater(() -> session.setCurrentStackFrame(executionStack, frame));
+          XStackFrame frame = ContainerUtil.getFirstItem(executionStack.createStackFrames(frameProxy));
+          if (frame != null) {
+            DebuggerUIUtil.invokeLater(() -> session.setCurrentStackFrame(executionStack, frame));
+          }
         }
       });
     }
@@ -57,6 +61,11 @@ public abstract class GotoFrameSourceAction extends DebuggerAction{
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(getStackFrameDescriptor(e.getDataContext()) != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private static StackFrameDescriptorImpl getStackFrameDescriptor(DataContext dataContext) {

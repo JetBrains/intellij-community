@@ -4,6 +4,7 @@ package com.intellij.ide.scratch;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -23,20 +24,19 @@ public class ScratchFileTest extends LightPlatformCodeInsightTestCase {
   }
 
   public void testXmlCompletion() {
-    PsiFile file = createXmlScratch();
-    Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
-    document.setText("<");
-    Editor editor = ((TextEditor)FileEditorManager.getInstance(getProject()).openFile(file.getVirtualFile(), true)[0]).getEditor();
-    editor.getCaretModel().moveToOffset(1);
-    new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), editor);
+    WriteAction.run(() -> {
+      PsiFile file = createXmlScratch();
+      Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
+      document.setText("<");
+      Editor editor = ((TextEditor)FileEditorManager.getInstance(getProject()).openFile(file.getVirtualFile(), true)[0]).getEditor();
+      editor.getCaretModel().moveToOffset(1);
+      new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), editor);
+    });
   }
 
   public void testIsFileOfTypeWorks() {
-    assertTrue(FileTypeManager.getInstance().isFileOfType(createXmlScratch().getVirtualFile(), StdFileTypes.XML));
-  }
-
-  @Override
-  protected boolean isRunInWriteAction() {
-    return true;
+    WriteAction.run(() -> {
+      assertTrue(FileTypeManager.getInstance().isFileOfType(createXmlScratch().getVirtualFile(), StdFileTypes.XML));
+    });
   }
 }

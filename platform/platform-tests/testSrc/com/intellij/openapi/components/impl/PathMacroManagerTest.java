@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,7 @@ public class PathMacroManagerTest {
 
   private MockModule createModule(@NotNull String basePath) {
     MockProject project = createProject(basePath);
-    return new MockModule(project) {
+    return new MockModule(project, project) {
       @Override
       public @NotNull Path getModuleNioFile() {
         return Paths.get(project.getBasePath()).resolve("module/module.iml");
@@ -134,6 +135,7 @@ public class PathMacroManagerTest {
 
   @Test
   public void testProjectUnderWSL() {
+    IoTestUtil.assumeWindows();
     String wslHome = "//wsl$/Linux";
     MockModule module = createModule(wslHome + "/project");
     assertReplacements(

@@ -22,5 +22,6 @@ private fun i(o: Any) = when (o) {
     is A -> {
         if (o is T) o.a + o.t else o.a
     }
+
     else -> o.hashCode()
 }

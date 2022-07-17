@@ -13,13 +13,16 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.GenericDomValue
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.maven.dom.MavenDomElement
+import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency
@@ -29,7 +32,6 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.plugins.groovy.lang.psi.util.childrenOfType
 
 val mavenTopLevelElementsOrder = listOf(
   "modelVersion",
@@ -218,6 +220,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
         addTagIfNotExists(tagName = domValue.xmlElementName, parentElement = domDependency, siblingsBeforeTag = siblingsBeforeTag)
         updateVariableOrValue(model, domValue, newValue)
       }
+
       else -> domValue.xmlTag?.delete()
     }
   }
@@ -334,7 +337,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     }
   }
 
-  private fun saveFile(psiFile: @NotNull XmlFile) {
+  private fun saveFile(psiFile: XmlFile) {
     val document = myDocumentManager.getDocument(psiFile) ?: throw IllegalStateException(MavenProjectBundle.message(
       "maven.model.error", psiFile))
     myDocumentManager.doPostponedOperationsAndUnblockDocument(document)
@@ -369,17 +372,20 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     return scope
   }
 
-  override fun declaredDependencies(module: @NotNull Module): List<DeclaredDependency>? {
+  override fun declaredDependencies(module: Module): List<DeclaredDependency> {
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
+    return declaredDependencies(project.file) ?: emptyList()
+  }
 
-    return ReadAction.compute<List<DeclaredDependency>, Throwable> {
-      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file)
-                  ?: throw IllegalStateException(MavenProjectBundle.message("maven.model.error", module.name))
+  //for faster testing
+  fun declaredDependencies(file: VirtualFile): List<DeclaredDependency>? {
+    return ReadAction.compute<List<DeclaredDependency>?, Throwable> {
+      val model = MavenDomUtil.getMavenDomProjectModel(myProject, file) ?: return@compute null
       model.dependencies.dependencies.map { mavenDomDependency ->
         DeclaredDependency(
           groupId = mavenDomDependency.groupId.stringValue,
           artifactId = mavenDomDependency.artifactId.stringValue,
-          version = mavenDomDependency.version.stringValue,
+          version = retrieveDependencyVersion(myProject, mavenDomDependency),
           configuration = mavenDomDependency.scope.stringValue,
           dataContext = DataContext { if (CommonDataKeys.PSI_ELEMENT.`is`(it)) mavenDomDependency.xmlElement else null }
         )
@@ -387,15 +393,38 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     }
   }
 
+  private fun retrieveDependencyVersion(project: Project, dependency: MavenDomDependency): String? {
+    val directVersion = dependency.version.stringValue
+    if (directVersion != null) return directVersion
+
+    val groupId = dependency.groupId.stringValue
+    val artifactId = dependency.artifactId.stringValue
+
+    val domModel = dependency.getParentOfType(MavenDomProjectModel::class.java, false) ?: return null
+    val ref = Ref<String>()
+    if (MavenDomProjectProcessorUtils.processDependenciesInDependencyManagement(domModel,
+                                                                                {
+                                                                                  if (groupId == it.groupId.stringValue
+                                                                                      && artifactId == it.artifactId.stringValue
+                                                                                      && !it.version.stringValue.isNullOrBlank()
+                                                                                  ) {
+                                                                                    ref.set(it.version.stringValue)
+                                                                                    return@processDependenciesInDependencyManagement true
+                                                                                  }
+                                                                                  false
+                                                                                }, project)) {
+      return ref.get()
+
+    }
+    return null
+
+  }
+
   override fun declaredRepositories(module: Module): List<UnifiedDependencyRepository> {
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
-    return ReadAction.compute<List<UnifiedDependencyRepository>, Throwable> {
-      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file) ?: throw IllegalStateException(
-        MavenProjectBundle.message("maven.model.error", module.name))
-      model.repositories.repositories.map {
-        UnifiedDependencyRepository(it.id.stringValue, it.name.stringValue, it.url.stringValue ?: "")
-      }
-    }
+    val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file)  ?: return emptyList()
+    return model.repositories.repositories
+      .map { UnifiedDependencyRepository(it.id.stringValue, it.name.stringValue, it.url.stringValue ?: "") }
   }
 
 }

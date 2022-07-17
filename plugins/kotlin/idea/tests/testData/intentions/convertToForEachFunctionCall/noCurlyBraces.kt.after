@@ -1,4 +1,7 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Name shadowed: i
+// AFTER-WARNING: The expression is unused
+// AFTER-WARNING: The expression is unused
 fun foo() {
     val list = 1..4
     val i = 0

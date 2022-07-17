@@ -40,6 +40,6 @@ final class UrlPartNode extends FilePartNode {
   @Override
   @NonNls
   public String toString() {
-    return "UrlPartNode: '"+getName() + "' -> "+children.length;
+    return "UrlPartNode: '"+getName() + "'; children:"+children.length;
   }
 }

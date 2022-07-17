@@ -1,37 +1,27 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
-import junit.framework.TestCase;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
-import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 import static com.intellij.ui.jcef.JBCefTestHelper.await;
 import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
-/**
- * Tests proxy with authentication.
- *
- * @author tav
- */
 public class JBCefProxyTest {
-  // https://confluence.jetbrains.com/display/JBINT/HTTP+Proxy+with+authorization
-  private static final @NotNull String PROXY_HOST = "proxy-auth-test.labs.intellij.net";
-  private static final int PROXY_PORT = 3128;
-  private static final @NotNull String LOGIN = "user1";
-  private static final @NotNull String PASSWORD = "fg3W9";
-
-  private volatile boolean passed;
+  private static final String TEST_HOST = "captive.apple.com";
 
   static {
     TestScaleHelper.setSystemProperty("java.awt.headless", "false");
@@ -42,6 +32,15 @@ public class JBCefProxyTest {
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+
+    var proxySettings = System.getProperty("idea.test.proxy.settings");
+    assumeTrue("'idea.test.proxy.settings' not set", proxySettings != null);
+
+    var matcher = Pattern.compile("(\\w+):([^@]+)@([^:]+):(\\d+)").matcher(proxySettings);  // 'user:pass@host:port'
+    assertTrue("cannot parse proxy settings: '" + proxySettings + "'", matcher.matches() && matcher.groupCount() == 4);
+
+    var proxyPort = Integer.parseInt(matcher.group(4));
+    JBCefProxySettings.setTestInstance(true, false, false, null, matcher.group(3), proxyPort, true, matcher.group(1), matcher.group(2));
   }
 
   @After
@@ -50,49 +49,38 @@ public class JBCefProxyTest {
   }
 
   @Test
-  public void test() {
-    JBCefProxySettings.setTestInstance(true,
-                                       false,
-                                       false,
-                                       null,
-                                       PROXY_HOST,
-                                       PROXY_PORT,
-                                       true,
-                                       LOGIN,
-                                       PASSWORD);
+  public void test() throws IOException {
+    var latch = new CountDownLatch(1);
+    var statusCode = new AtomicInteger(-1);
 
-    CountDownLatch latch = new CountDownLatch(1);
-
-    final String TEST_HOST = "ya.ru";
-    JBCefBrowser jbCefBrowser = new JBCefBrowser("https://" + TEST_HOST);
-    jbCefBrowser.setErrorPage(JBCefBrowserBase.ErrorPage.DEFAULT);
-
-    jbCefBrowser.getJBCefClient().addLoadHandler(new CefLoadHandlerAdapter() {
+    var browser = new JBCefBrowser("https://" + TEST_HOST);
+    browser.setErrorPage(JBCefBrowserBase.ErrorPage.DEFAULT);
+    browser.getJBCefClient().addLoadHandler(new CefLoadHandlerAdapter() {
       @Override
       public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
-        System.out.println("JBCefLoadHtmlTest.onLoadEnd: " + browser.getURL() + ", status: " + httpStatusCode);
-        passed = httpStatusCode == 200;
+        System.out.println("JBCefProxyTest.onLoadEnd: " + browser.getURL() + ", status: " + httpStatusCode);
         if (frame.getURL().contains(TEST_HOST)) {
+          statusCode.set(httpStatusCode);
           latch.countDown();
         }
       }
+
       @Override
       public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
-        passed = !failedUrl.contains(TEST_HOST);
-        System.out.println("JBCefLoadHtmlTest.onLoadError: " + failedUrl + ", error: " + errorText);
+        System.out.println("JBCefProxyTest.onLoadError: " + failedUrl + ", error: " + errorText);
       }
-    }, jbCefBrowser.getCefBrowser());
+    }, browser.getCefBrowser());
 
-    invokeAndWaitForLoad(jbCefBrowser, () -> {
-      JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
+    invokeAndWaitForLoad(browser, () -> {
+      var frame = new JFrame(JBCefLoadHtmlTest.class.getName());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);
-      frame.add(jbCefBrowser.getComponent());
+      frame.add(browser.getComponent());
       frame.setVisible(true);
     });
 
-    TestCase.assertTrue(await(latch));
+    await(latch);
 
-    TestCase.assertTrue(passed);
+    assertEquals(200, statusCode.get());
   }
 }

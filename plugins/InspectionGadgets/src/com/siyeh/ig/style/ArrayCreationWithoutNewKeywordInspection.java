@@ -52,7 +52,7 @@ public class ArrayCreationWithoutNewKeywordInspection extends BaseInspection {
 
   private static class ArrayCreationExpressionVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+    public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
       super.visitArrayInitializerExpression(expression);
       final PsiType type = expression.getType();
       if (!(type instanceof PsiArrayType)) {

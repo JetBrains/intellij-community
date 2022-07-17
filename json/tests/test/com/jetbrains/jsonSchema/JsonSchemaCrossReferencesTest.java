@@ -101,10 +101,10 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void doCheck() throws Exception {
+      public void doCheck() {
         final VirtualFile moduleFile = locateFileUnderTestRoot("/");
         assertNotNull(moduleFile);
-        checkSchemaCompletion(moduleFile, "basePropertiesSchema.json", false);
+        checkSchemaCompletion(moduleFile, "basePropertiesSchema.json");
       }
     });
   }
@@ -132,15 +132,15 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void doCheck() throws Exception {
+      public void doCheck() {
         final VirtualFile moduleFile = locateFileUnderTestRoot("/");
         assertNotNull(moduleFile);
-        checkSchemaCompletion(moduleFile, "baseSchema.json", true);
+        checkSchemaCompletion(moduleFile, "baseSchema.json");
       }
     });
   }
 
-  private void checkSchemaCompletion(VirtualFile moduleFile, final String fileName, boolean delayAfterUpdate) throws InterruptedException {
+  private void checkSchemaCompletion(VirtualFile moduleFile, final String fileName) {
     myFixture.doHighlighting();
     complete();
     assertStringItems("\"one\"", "\"two\"");
@@ -160,11 +160,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         fileDocumentManager.saveAllDocuments();
       }));
     JsonSchemaService.Impl.get(getProject()).reset();
-
-    if (delayAfterUpdate) {
-      // give time for vfs callbacks to finish
-      Thread.sleep(400);
-    }
 
     myFixture.doHighlighting();
     complete();

@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.internal.statistic.config.EventLogOptions.DEFAULT_ID_REVISION
 import com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_DISABLED
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration.Companion.UNDEFINED_DEVICE_ID
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration.Companion.generateSessionId
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration.Companion.hashSha256
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.internal.statistic.utils.StatisticsUtil
@@ -55,14 +56,51 @@ class EventLogConfiguration {
       md.update(data.toByteArray())
       return StringUtil.toHexString(md.digest())
     }
+
+    public fun getOrGenerateSaltFromPrefs(recorderId: String): ByteArray{
+      val companyName = ApplicationInfoImpl.getShadowInstance().shortCompanyName
+      val name = if (StringUtil.isEmptyOrSpaces(companyName)) "jetbrains" else companyName.toLowerCase(Locale.US)
+      val prefs = Preferences.userRoot().node(name)
+
+      val saltKey = getSaltPropertyKey(recorderId)
+      var salt = prefs.getByteArray(saltKey, null)
+      if (salt == null) {
+        salt = ByteArray(32)
+        SecureRandom().nextBytes(salt)
+        prefs.putByteArray(saltKey, salt)
+        LOG.info("Generating new salt for $recorderId")
+      }
+      return salt
+    }
+
+    val defaultSessionId: String by lazy { generateSessionId() }
+    internal fun generateSessionId(): String {
+      val presentableHour = StatisticsUtil.getCurrentHourInUTC()
+      return "$presentableHour-${UUID.randomUUID().toString().shortedUUID()}"
+    }
+
+    private fun String.shortedUUID(): String {
+      val start = this.lastIndexOf('-')
+      if (start > 0 && start + 1 < this.length) {
+        return this.substring(start + 1)
+      }
+      return this
+    }
+
+    private fun isDefaultRecorderId(recorderId: String): Boolean {
+      return FUS_RECORDER == recorderId
+    }
+
+    internal fun getSaltPropertyKey(recorderId: String): String {
+      return if (isDefaultRecorderId(recorderId)) SALT_PREFERENCE_KEY else StringUtil.toLowerCase(recorderId) + "_" + SALT_PREFERENCE_KEY
+    }
   }
 
-  private val defaultConfiguration: EventLogRecorderConfiguration = EventLogRecorderConfiguration(FUS_RECORDER, this)
+  private val defaultConfiguration = EventLogRecorderConfiguration(FUS_RECORDER, this, defaultSessionId)
   private val configurations: MutableMap<String, EventLogRecorderConfiguration> = HashMap()
 
   val build: String by lazy { ApplicationInfo.getInstance().build.asBuildNumber() }
 
-  @Deprecated("Use bucket from configuration created with getOrCreate method")
   val bucket: Int = defaultConfiguration.bucket
 
   @Deprecated("Call method on configuration created with getOrCreate method")
@@ -87,10 +125,6 @@ class EventLogConfiguration {
 
   fun getEventLogSettingsPath(): Path = getEventLogDataPath().resolve("settings")
 
-  internal fun getSaltPropertyKey(recorderId: String): String {
-    return if (isDefaultRecorderId(recorderId)) SALT_PREFERENCE_KEY else StringUtil.toLowerCase(recorderId) + "_" + SALT_PREFERENCE_KEY
-  }
-
   internal fun getHeadlessDeviceIdProperty(recorderId: String): String {
     return getRecorderBasedProperty(recorderId, IDEA_HEADLESS_STATISTICS_DEVICE_ID)
   }
@@ -107,14 +141,11 @@ class EventLogConfiguration {
     return if (isDefaultRecorderId(recorderId)) property else property + "." + StringUtil.toLowerCase(recorderId)
   }
 
-  private fun isDefaultRecorderId(recorderId: String): Boolean {
-    return FUS_RECORDER == recorderId
-  }
 }
 
 class EventLogRecorderConfiguration internal constructor(private val recorderId: String,
-                                                         private val eventLogConfiguration: EventLogConfiguration) {
-  val sessionId: String = generateSessionId()
+                                                         private val eventLogConfiguration: EventLogConfiguration,
+                                                         val sessionId: String = generateSessionId()) {
 
   val deviceId: String = getOrGenerateDeviceId()
   val bucket: Int = deviceId.asBucket()
@@ -165,21 +196,8 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
     return anonymizedCache.computeIfAbsent(data) { hashSha256(salt, it) }
   }
 
-  private fun String.shortedUUID(): String {
-    val start = this.lastIndexOf('-')
-    if (start > 0 && start + 1 < this.length) {
-      return this.substring(start + 1)
-    }
-    return this
-  }
-
   private fun String.asBucket(): Int {
     return MathUtil.nonNegativeAbs(this.hashCode()) % 256
-  }
-
-  private fun generateSessionId(): String {
-    val presentableHour = StatisticsUtil.getCurrentHourInUTC()
-    return "$presentableHour-${UUID.randomUUID().toString().shortedUUID()}"
   }
 
   private fun getOrGenerateDeviceId(): String {
@@ -209,19 +227,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
       }
     }
 
-    val companyName = ApplicationInfoImpl.getShadowInstance().shortCompanyName
-    val name = if (StringUtil.isEmptyOrSpaces(companyName)) "jetbrains" else companyName.toLowerCase(Locale.US)
-    val prefs = Preferences.userRoot().node(name)
-
-    val saltKey = eventLogConfiguration.getSaltPropertyKey(recorderId)
-    var salt = prefs.getByteArray(saltKey, null)
-    if (salt == null) {
-      salt = ByteArray(32)
-      SecureRandom().nextBytes(salt)
-      prefs.putByteArray(saltKey, salt)
-      EventLogConfiguration.LOG.info("Generating new salt for $recorderId")
-    }
-    return salt
+    return EventLogConfiguration.getOrGenerateSaltFromPrefs(recorderId)
   }
 
   /**

@@ -61,7 +61,7 @@ public class TerminalActionUtil {
 
   public static TerminalAction createTerminalAction(@NotNull JBTerminalWidget widget,
                                                     @NotNull TerminalActionPresentation actionPresentation,
-                                                    @NotNull Predicate<JBTerminalWidgetListener> action) {
+                                                    @NotNull Predicate<? super JBTerminalWidgetListener> action) {
     return new TerminalAction(actionPresentation, input -> {
       JBTerminalWidgetListener listener = widget.getListener();
       if (listener != null) {

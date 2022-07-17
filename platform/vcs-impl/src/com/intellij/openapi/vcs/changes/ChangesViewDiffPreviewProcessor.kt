@@ -1,33 +1,32 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.*
-import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeListNode
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG
+import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vcs.changes.ui.TagChangesBrowserNode
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
+import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.EditedCommitDetails
 import com.intellij.vcs.commit.EditedCommitNode
-import one.util.streamex.StreamEx
 import java.util.*
-import java.util.stream.Stream
-import kotlin.streams.toList
 
-private fun wrap(project: Project, changesNodes: Stream<ChangesBrowserNode<*>>, unversioned: Stream<FilePath>): Stream<Wrapper> =
-  Stream.concat(
-    changesNodes.map { wrapNode(project, it) }.filter(Objects::nonNull),
-    unversioned.map { UnversionedFileWrapper(it) }
-  )
+private fun wrap(project: Project,
+                 changesNodes: Iterable<ChangesBrowserNode<*>>,
+                 unversioned: Iterable<FilePath>): Iterable<Wrapper> =
+  JBIterable.empty<Wrapper>()
+    .append(JBIterable.from(changesNodes).map { wrapNode(project, it) }.filter(Objects::nonNull))
+    .append(JBIterable.from(unversioned).map { UnversionedFileWrapper(it) })
 
 private fun wrapNode(project: Project, node: ChangesBrowserNode<*>): Wrapper? {
   return when (val nodeObject = node.userObject) {
@@ -65,48 +64,29 @@ private inline fun <reified T : ChangesBrowserNode<*>> findNodeOfType(node: Chan
 }
 
 private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesListView,
-                                              isInEditor : Boolean) :
-  ChangeViewDiffRequestProcessor(changesView.project, if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.CHANGES_VIEW) {
+                                              private val isInEditor: Boolean)
+  : ChangeViewDiffRequestProcessor(changesView.project, if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.CHANGES_VIEW) {
 
   init {
-    if (!isInEditor) {
-      myContentPanel.border = IdeBorderFactory.createBorder(SideBorder.TOP)
-    }
     putContextUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true)
   }
 
-  override fun getSelectedChanges(): Stream<Wrapper> =
-    if (changesView.isSelectionEmpty) allChanges
-    else wrap(project, StreamEx.of(changesView.selectedChangesNodes.iterator()), StreamEx.of(changesView.selectedUnversionedFiles.iterator()))
+  override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean {
+    return !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
+  }
 
-  override fun getAllChanges(): Stream<Wrapper> = wrap(project, StreamEx.of(changesView.changesNodes.iterator()), changesView.unversionedFiles)
+  override fun iterateSelectedChanges(): Iterable<Wrapper> =
+    wrap(project, changesView.selectedChangesNodes, changesView.selectedUnversionedFiles)
+
+  override fun iterateAllChanges(): Iterable<Wrapper> =
+    wrap(project, changesView.changesNodes, changesView.unversionedFiles)
+
+  override fun showAllChangesForEmptySelection(): Boolean = false
 
   override fun selectChange(change: Wrapper) {
-    changesView.findNodePathInTree(change.userObject, (change.tag as? ChangesBrowserNode.WrapperTag)?.value)
-      ?.let {
-        TreeUtil.selectPath(changesView, it, false)
-        // Explicit refresh needed, since TreeUtil.selectPath will trigger refresh based on the current focused editor component.
-        // This will fail in case if selection comes from "Go to Change" popup.
-        refresh(false)
-      }
-  }
-
-  override fun createGoToChangeAction(): AnAction {
-    return MyGoToChangePopupProvider().createGoToChangeAction()
-  }
-
-  private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
-    override fun getChanges(): List<PresentableChange> {
-      return allChanges.toList()
-    }
-
-    override fun select(change: PresentableChange) {
-      (change as? Wrapper)?.run(::selectChange)
-    }
-
-    override fun getSelectedChange(): PresentableChange? {
-      return currentChange
-    }
+    val tag = (change.tag as? ChangesViewUserObjectTag)?.userObject
+    val treePath = changesView.findNodePathInTree(change.userObject, tag) ?: return
+    TreeUtil.selectPath(changesView, treePath, false)
   }
 
   fun setAllowExcludeFromCommit(value: Boolean) {
@@ -121,36 +101,40 @@ private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesLi
   }
 }
 
-private class AmendChangeWrapper(private val commitDetails: EditedCommitDetails) : ChangesBrowserNode.WrapperTag(commitDetails) {
+private class AmendChangeWrapper(override val userObject: EditedCommitDetails) : ChangesViewUserObjectTag {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
     other as AmendChangeWrapper
 
-    if (commitDetails.commit.id != other.commitDetails.commit.id) return false
+    if (userObject.commit.id != other.userObject.commit.id) return false
 
     return true
   }
 
-  override fun toString(): String = commitDetails.commit.subject
+  override fun toString(): String = userObject.commit.subject
 
-  override fun hashCode(): Int = commitDetails.commit.id.hashCode()
+  override fun hashCode(): Int = userObject.commit.id.hashCode()
 }
 
-private class ChangeListWrapper(private val changeList: ChangeList) : ChangesBrowserNode.WrapperTag(changeList) {
+private class ChangeListWrapper(override val userObject: ChangeList) : ChangesViewUserObjectTag {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
     other as ChangeListWrapper
 
-    if (changeList.name != other.changeList.name) return false
+    if (userObject.name != other.userObject.name) return false
 
     return true
   }
 
-  override fun hashCode(): Int = changeList.name.hashCode()
+  override fun hashCode(): Int = userObject.name.hashCode()
 
-  override fun toString(): String = changeList.name
+  override fun toString(): String = userObject.name
+}
+
+interface ChangesViewUserObjectTag : ChangesBrowserNode.Tag {
+  val userObject: Any
 }

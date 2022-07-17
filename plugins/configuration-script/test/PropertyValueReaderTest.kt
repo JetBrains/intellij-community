@@ -49,6 +49,6 @@ private fun readYaml(@Language("YAML") data: String): MappingNode {
   return doRead(data.trimIndent().reader())!!
 }
 
-private fun doReadPluginsConfiguration(@Suppress("SameParameterValue") @Language("YAML") data: String): PluginsConfiguration? {
+private fun doReadPluginsConfiguration(@Suppress("SameParameterValue") @Language("YAML") data: String): PluginsConfiguration {
   return readIntoObject(PluginsConfiguration(), findValueNodeByPath(PluginJsonSchemaGenerator.plugins, readYaml(data).value)!!)
 }

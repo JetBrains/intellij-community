@@ -152,8 +152,9 @@ public final class ClassUtils {
     return aClass.hasModifierProperty(PsiModifier.FINAL) &&
            Arrays.stream(aClass.getAllFields())
              .filter(field -> !field.hasModifierProperty(PsiModifier.STATIC))
-             .map(field -> field.getType())
-             .allMatch(type -> TypeConversionUtil.isPrimitiveAndNotNull(type) || immutableTypes.contains(type.getCanonicalText()));
+             .allMatch(field -> field.hasModifierProperty(PsiModifier.FINAL) &&
+                                (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) ||
+                                 immutableTypes.contains(field.getType().getCanonicalText())));
   }
 
   public static boolean inSamePackage(@Nullable PsiElement element1, @Nullable PsiElement element2) {
@@ -211,13 +212,16 @@ public final class ClassUtils {
     return parentClass != null;
   }
 
+  /**
+   * @return containing class for {@code element} ignoring {@link PsiAnonymousClass} if {@code element} is located in corresponding expression list
+   */
   @Nullable
   public static PsiClass getContainingClass(PsiElement element) {
     PsiClass currentClass;
     while (true) {
       currentClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       if (currentClass instanceof PsiAnonymousClass &&
-          PsiTreeUtil.isAncestor(((PsiAnonymousClass)currentClass).getArgumentList(), element, true)) {
+          PsiTreeUtil.isAncestor(((PsiAnonymousClass)currentClass).getArgumentList(), element, false)) {
         element = currentClass;
       } else {
         return currentClass;

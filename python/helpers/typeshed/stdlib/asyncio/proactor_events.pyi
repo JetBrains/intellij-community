@@ -1,14 +1,19 @@
 import sys
 from socket import socket
-from typing import Any, Mapping, Optional, Type
-from typing_extensions import Literal, Protocol
+from typing import Any, Mapping, Protocol
+from typing_extensions import Literal
 
 from . import base_events, constants, events, futures, streams, transports
+
+if sys.version_info >= (3, 7):
+    __all__ = ("BaseProactorEventLoop",)
+else:
+    __all__ = ["BaseProactorEventLoop"]
 
 if sys.version_info >= (3, 8):
     class _WarnCallbackProtocol(Protocol):
         def __call__(
-            self, message: str, category: Optional[Type[Warning]] = ..., stacklevel: int = ..., source: Optional[Any] = ...
+            self, message: str, category: type[Warning] | None = ..., stacklevel: int = ..., source: Any | None = ...
         ) -> None: ...
 
 class _ProactorBasePipeTransport(transports._FlowControlMixin, transports.BaseTransport):
@@ -17,27 +22,39 @@ class _ProactorBasePipeTransport(transports._FlowControlMixin, transports.BaseTr
         loop: events.AbstractEventLoop,
         sock: socket,
         protocol: streams.StreamReaderProtocol,
-        waiter: Optional[futures.Future[Any]] = ...,
-        extra: Optional[Mapping[Any, Any]] = ...,
-        server: Optional[events.AbstractServer] = ...,
+        waiter: futures.Future[Any] | None = ...,
+        extra: Mapping[Any, Any] | None = ...,
+        server: events.AbstractServer | None = ...,
     ) -> None: ...
-    def __repr__(self) -> str: ...
     if sys.version_info >= (3, 8):
         def __del__(self, _warn: _WarnCallbackProtocol = ...) -> None: ...
     else:
         def __del__(self) -> None: ...
+
     def get_write_buffer_size(self) -> int: ...
 
 class _ProactorReadPipeTransport(_ProactorBasePipeTransport, transports.ReadTransport):
-    def __init__(
-        self,
-        loop: events.AbstractEventLoop,
-        sock: socket,
-        protocol: streams.StreamReaderProtocol,
-        waiter: Optional[futures.Future[Any]] = ...,
-        extra: Optional[Mapping[Any, Any]] = ...,
-        server: Optional[events.AbstractServer] = ...,
-    ) -> None: ...
+    if sys.version_info >= (3, 10):
+        def __init__(
+            self,
+            loop: events.AbstractEventLoop,
+            sock: socket,
+            protocol: streams.StreamReaderProtocol,
+            waiter: futures.Future[Any] | None = ...,
+            extra: Mapping[Any, Any] | None = ...,
+            server: events.AbstractServer | None = ...,
+            buffer_size: int = ...,
+        ) -> None: ...
+    else:
+        def __init__(
+            self,
+            loop: events.AbstractEventLoop,
+            sock: socket,
+            protocol: streams.StreamReaderProtocol,
+            waiter: futures.Future[Any] | None = ...,
+            extra: Mapping[Any, Any] | None = ...,
+            server: events.AbstractServer | None = ...,
+        ) -> None: ...
 
 class _ProactorBaseWritePipeTransport(_ProactorBasePipeTransport, transports.WriteTransport):
     def __init__(
@@ -45,9 +62,9 @@ class _ProactorBaseWritePipeTransport(_ProactorBasePipeTransport, transports.Wri
         loop: events.AbstractEventLoop,
         sock: socket,
         protocol: streams.StreamReaderProtocol,
-        waiter: Optional[futures.Future[Any]] = ...,
-        extra: Optional[Mapping[Any, Any]] = ...,
-        server: Optional[events.AbstractServer] = ...,
+        waiter: futures.Future[Any] | None = ...,
+        extra: Mapping[Any, Any] | None = ...,
+        server: events.AbstractServer | None = ...,
     ) -> None: ...
 
 class _ProactorWritePipeTransport(_ProactorBaseWritePipeTransport):
@@ -56,24 +73,24 @@ class _ProactorWritePipeTransport(_ProactorBaseWritePipeTransport):
         loop: events.AbstractEventLoop,
         sock: socket,
         protocol: streams.StreamReaderProtocol,
-        waiter: Optional[futures.Future[Any]] = ...,
-        extra: Optional[Mapping[Any, Any]] = ...,
-        server: Optional[events.AbstractServer] = ...,
+        waiter: futures.Future[Any] | None = ...,
+        extra: Mapping[Any, Any] | None = ...,
+        server: events.AbstractServer | None = ...,
     ) -> None: ...
 
 class _ProactorDuplexPipeTransport(_ProactorReadPipeTransport, _ProactorBaseWritePipeTransport, transports.Transport): ...
 
 class _ProactorSocketTransport(_ProactorReadPipeTransport, _ProactorBaseWritePipeTransport, transports.Transport):
 
-    _sendfile_compatible: constants._SendfileMode = ...
+    _sendfile_compatible: constants._SendfileMode
     def __init__(
         self,
         loop: events.AbstractEventLoop,
         sock: socket,
         protocol: streams.StreamReaderProtocol,
-        waiter: Optional[futures.Future[Any]] = ...,
-        extra: Optional[Mapping[Any, Any]] = ...,
-        server: Optional[events.AbstractServer] = ...,
+        waiter: futures.Future[Any] | None = ...,
+        extra: Mapping[Any, Any] | None = ...,
+        server: events.AbstractServer | None = ...,
     ) -> None: ...
     def _set_extra(self, sock: socket) -> None: ...
     def can_write_eof(self) -> Literal[True]: ...

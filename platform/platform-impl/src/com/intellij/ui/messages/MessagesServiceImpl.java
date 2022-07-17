@@ -1,24 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.messages;
 
-import com.intellij.diagnostic.LoadingState;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.ui.messages.AlertMessagesManager;
 import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.ui.messages.TwoStepConfirmationDialog;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.InsertPathAction;
-import com.intellij.ui.MessageException;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.mac.MacMessages;
 import com.intellij.util.Function;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.UIUtil;
@@ -36,8 +29,6 @@ import static com.intellij.credentialStore.CredentialPromptDialog.getTrimmedChar
 import static com.intellij.openapi.ui.Messages.*;
 
 public class MessagesServiceImpl implements MessagesService {
-  private static final Logger LOG = Logger.getInstance(MessagesServiceImpl.class);
-
   @Override
   public int showMessageDialog(@Nullable Project project,
                                @Nullable Component parentComponent,
@@ -59,22 +50,8 @@ public class MessagesServiceImpl implements MessagesService {
                                                                focusedOptionIndex, icon, doNotAskOption, helpId);
     }
 
-    try {
-      if (canShowMacSheetPanel() && !alwaysUseIdeaUI) {
-        WindowManager windowManager = LoadingState.COMPONENTS_REGISTERED.isOccurred() ? WindowManager.getInstance() : null;
-        if (windowManager != null) {
-          Window parentWindow = windowManager.suggestParentWindow(project);
-          return MacMessages.getInstance()
-            .showMessageDialog(title, message, options, parentWindow, defaultOptionIndex, focusedOptionIndex, doNotAskOption, icon, null);
-        }
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
-    }
-
-    MessageDialog dialog = new MessageDialog(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false, helpId);
+    MessageDialog dialog = new MessageDialog(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex,
+                                             icon, doNotAskOption, false, helpId);
     dialog.show();
     return dialog.getExitCode();
   }
@@ -92,16 +69,9 @@ public class MessagesServiceImpl implements MessagesService {
       return TestDialogManager.getTestImplementation().show(message);
     }
 
-    try {
-      if (canShowMacSheetPanel() && moreInfo == null) {
-        return MacMessages.getInstance()
-          .showMessageDialog(title, message, options, WindowManager.getInstance().suggestParentWindow(project), defaultOptionIndex,
-                             focusedOptionIndex, null, icon, null);
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
+    if (AlertMessagesManager.isEnabled() && moreInfo == null) {
+      return AlertMessagesManager.instance().showMessageDialog(project, null, message, title, options, defaultOptionIndex,
+                                                               focusedOptionIndex, icon, null, null);
     }
 
     MessageDialog dialog =
@@ -229,7 +199,7 @@ public class MessagesServiceImpl implements MessagesService {
       return TestDialogManager.getTestInputImplementation().show(message, validator);
     }
 
-    ChooseDialog dialog = new ChooseDialog(message, title, icon, values, initialValue);
+    @SuppressWarnings("deprecation") ChooseDialog dialog = new ChooseDialog(message, title, icon, values, initialValue);
     dialog.setValidator(validator);
     dialog.getComboBox().setEditable(true);
     dialog.getComboBox().getEditor().setItem(initialValue);
@@ -250,7 +220,7 @@ public class MessagesServiceImpl implements MessagesService {
       return TestDialogManager.getTestImplementation().show(message);
     }
 
-    ChooseDialog dialog = new ChooseDialog(project, parentComponent, message, title, icon, values, initialValue);
+    @SuppressWarnings("deprecation") ChooseDialog dialog = new ChooseDialog(project, parentComponent, message, title, icon, values, initialValue);
     dialog.show();
     return dialog.getSelectedIndex();
   }
@@ -292,21 +262,14 @@ public class MessagesServiceImpl implements MessagesService {
   }
 
   @Override
-  public boolean isAlertEnabled() {
-    return AlertMessagesManager.isEnabled();
-  }
-
-  @Override
   public void showErrorDialog(@Nullable Project project,
                               @Nullable @NlsContexts.DialogMessage String message,
                               @NotNull @NlsContexts.DialogTitle String title) {
     Messages.showErrorDialog(project, message, title);
   }
 
-  @Override
-  public void showInfoMessage(@NotNull Component component,
-                              @NotNull @NlsContexts.DialogMessage String message,
-                              @NotNull @NlsContexts.DialogTitle String title) {
-    Messages.showInfoMessage(component, message, title);
+  private static boolean isApplicationInUnitTestOrHeadless() {
+    Application app = ApplicationManager.getApplication();
+    return app != null && (app.isUnitTestMode() || app.isHeadlessEnvironment());
   }
 }

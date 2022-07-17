@@ -178,6 +178,12 @@ public final class TargetElementUtilBase {
   }
 
   @Nullable
+  public static PsiReference findReferenceWithoutExpectedCaret(@NotNull Editor editor) {
+    int offset = editor.getCaretModel().getOffset();
+    return findReference(editor, offset);
+  }
+
+  @Nullable
   public static PsiReference findReference(@NotNull Editor editor, int offset) {
     Project project = editor.getProject();
     if (project == null) return null;

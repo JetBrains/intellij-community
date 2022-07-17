@@ -255,7 +255,7 @@ public class MantisRepository extends BaseRepositoryImpl {
   @Nullable
   private IssueData fetchIssueById(@NotNull MantisConnectPortType soap, @NotNull String id) throws Exception {
     try {
-      return soap.mc_issue_get(getUsername(), getPassword(), BigInteger.valueOf(Integer.valueOf(id)));
+      return soap.mc_issue_get(getUsername(), getPassword(), BigInteger.valueOf(Integer.parseInt(id)));
     }
     catch (RemoteException e) {
       throw handleException(e);

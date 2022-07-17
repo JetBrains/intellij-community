@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.intellij.lang.annotations.JdkConstants;
@@ -14,7 +15,9 @@ import java.awt.event.KeyEvent;
 
 public abstract class TypeCommand extends AbstractCommand {
 
+  private static final Logger LOG = Logger.getInstance(TypeCommand.class);
   private static final KeyStrokeMap ourMap = new KeyStrokeMap();
+  private static boolean metaKeyPresent = true;
 
   public TypeCommand(String text, int line, boolean executeInAwt) {
     super(text, line, executeInAwt);
@@ -56,8 +59,15 @@ public abstract class TypeCommand extends AbstractCommand {
     if (meta) {
       robot.keyPress(KeyEvent.VK_META);
     }
-    else {
-      robot.keyRelease(KeyEvent.VK_META);
+    else if (metaKeyPresent) {
+      try {
+        robot.keyRelease(KeyEvent.VK_META);
+      }
+      catch (IllegalArgumentException e) {
+        LOG.warn(e);
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        metaKeyPresent = false;
+      }
     }
 
     if (keyStroke.getKeyCode() > 0) {

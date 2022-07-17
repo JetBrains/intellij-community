@@ -2,7 +2,7 @@
 }
 
 class C {
-  <warning descr="Modifier 'static' is redundant for records">static</warning> record R () {
+  <warning descr="Modifier 'static' is redundant for inner records">static</warning> record R () {
   }
 
   void test() {

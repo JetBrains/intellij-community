@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -14,7 +14,8 @@ import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructField;
@@ -132,7 +133,7 @@ public class NestedClassProcessor {
             for (int i = 0; i < md_content.params.length; ++i) {
               VarVersionPair varVersion = new VarVersionPair(varIndex, 0);
               if (i < vars_count) {
-                Exprent param = inv_dynamic.getLstParameters().get(param_index + i);
+                Exprent param = inv_dynamic.getParameters().get(param_index + i);
 
                 if (param.type == Exprent.EXPRENT_VAR) {
                   mapNewNames.put(varVersion, enclosingMethod.varproc.getVarName(new VarVersionPair((VarExprent)param)));
@@ -142,7 +143,7 @@ public class NestedClassProcessor {
                 mapNewNames.put(varVersion, enclosingCollector.getFreeName(method.varproc.getVarName(varVersion)));
               }
 
-              varIndex += md_content.params[i].stackSize;
+              varIndex += md_content.params[i].getStackSize();
             }
           }
         }
@@ -267,8 +268,8 @@ public class NestedClassProcessor {
               if (expr.type == Exprent.EXPRENT_NEW) {
                 InvocationExprent constructor = ((NewExprent)expr).getConstructor();
 
-                if (constructor != null && mapVarMasks.containsKey(constructor.getClassname())) { // non-static inner class constructor
-                  String refClassName = constructor.getClassname();
+                if (constructor != null && mapVarMasks.containsKey(constructor.getClassName())) { // non-static inner class constructor
+                  String refClassName = constructor.getClassName();
                   ClassNode nestedClassNode = node.getClassNode(refClassName);
 
                   if (nestedClassNode.type != ClassNode.CLASS_MEMBER) {
@@ -281,7 +282,7 @@ public class NestedClassProcessor {
                     List<VarFieldPair> lstTemp = new ArrayList<>();
 
                     for (int i = 0; i < mask.size(); i++) {
-                      Exprent param = constructor.getLstParameters().get(i);
+                      Exprent param = constructor.getParameters().get(i);
                       VarFieldPair pair = null;
 
                       if (param.type == Exprent.EXPRENT_VAR && mask.get(i) != null) {
@@ -302,7 +303,7 @@ public class NestedClassProcessor {
                     }
                     else {
                       for (int i = 0; i < pairMask.size(); i++) {
-                        if (!InterpreterUtil.equalObjects(pairMask.get(i), lstTemp.get(i))) {
+                        if (!Objects.equals(pairMask.get(i), lstTemp.get(i))) {
                           pairMask.set(i, null);
                         }
                       }
@@ -415,7 +416,7 @@ public class NestedClassProcessor {
                 varName = enclosingMethod.varproc.getVarName(pair);
                 varType = enclosingMethod.varproc.getVarType(pair);
 
-                enclosingMethod.varproc.setVarFinal(pair, VarTypeProcessor.VAR_EXPLICIT_FINAL);
+                enclosingMethod.varproc.setVarFinal(pair, VarProcessor.VAR_EXPLICIT_FINAL);
               }
 
               if (pair.var == -1 || "this".equals(varName)) {
@@ -433,7 +434,7 @@ public class NestedClassProcessor {
               mapNewTypes.put(newVar, varType);
             }
 
-            varIndex += md.params[index++].stackSize;
+            varIndex += md.params[index++].getStackSize();
           }
         }
 
@@ -453,7 +454,7 @@ public class NestedClassProcessor {
               varName = enclosing_method.varproc.getVarName(entry.getValue());
               varType = enclosing_method.varproc.getVarType(entry.getValue());
 
-              enclosing_method.varproc.setVarFinal(entry.getValue(), VarTypeProcessor.VAR_EXPLICIT_FINAL);
+              enclosing_method.varproc.setVarFinal(entry.getValue(), VarProcessor.VAR_EXPLICIT_FINAL);
             }
 
             if (entry.getValue().var == -1 || "this".equals(varName)) {
@@ -513,7 +514,7 @@ public class NestedClassProcessor {
                 CodeConstants.INIT_NAME.equals(method.methodStruct.getName()) &&
                 exprent.type == Exprent.EXPRENT_INVOCATION) {
               InvocationExprent invokeExpr = (InvocationExprent)exprent;
-              if (invokeExpr.getFunctype() == InvocationExprent.TYP_INIT) {
+              if (invokeExpr.getFuncType() == InvocationExprent.TYPE_INIT) {
                 // invocation of the super constructor in an anonymous class
                 child.superInvocation = invokeExpr; // FIXME: save original names of parameters
                 return 2;
@@ -586,7 +587,7 @@ public class NestedClassProcessor {
           for (int i = 0; i < md.params.length; i++) {  // no static methods allowed
             String keyField = getEnclosingVarField(cl, method, graph, varIndex);
             fields.add(keyField == null ? null : new VarFieldPair(keyField, new VarVersionPair(-1, 0))); // TODO: null?
-            varIndex += md.params[i].stackSize;
+            varIndex += md.params[i].getStackSize();
           }
 
           mapMasks.put(mt.getDescriptor(), fields);
@@ -601,7 +602,7 @@ public class NestedClassProcessor {
     String field = "";
 
     // parameter variable final
-    if (method.varproc.getVarFinal(new VarVersionPair(index, 0)) == VarTypeProcessor.VAR_NON_FINAL) {
+    if (method.varproc.getVarFinal(new VarVersionPair(index, 0)) == VarProcessor.VAR_NON_FINAL) {
       return null;
     }
 
@@ -609,7 +610,7 @@ public class NestedClassProcessor {
 
     // no loop at the begin
     DirectNode firstNode = graph.first;
-    if (firstNode.preds.isEmpty()) {
+    if (firstNode.predecessors.isEmpty()) {
       // assignment to a synthetic field?
       for (Exprent exprent : firstNode.exprents) {
         if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
@@ -780,13 +781,13 @@ public class NestedClassProcessor {
         stack.clear();
 
         switch (st.type) {
-          case Statement.TYPE_SEQUENCE:
+          case SEQUENCE:
             stack.addAll(0, st.getStats());
             break;
-          case Statement.TYPE_IF:
-          case Statement.TYPE_ROOT:
-          case Statement.TYPE_SWITCH:
-          case Statement.TYPE_SYNCRONIZED:
+          case IF:
+          case ROOT:
+          case SWITCH:
+          case SYNCHRONIZED:
             stack.add(st.getFirst());
             break;
           default:
@@ -820,7 +821,7 @@ public class NestedClassProcessor {
             counter++;
           }
 
-          if (st.type == Statement.TYPE_DO) {
+          if (st.type == StatementType.DO) {
             DoStatement dost = (DoStatement)st;
 
             lst.addAll(dost.getInitExprentList());
@@ -856,7 +857,7 @@ public class NestedClassProcessor {
     List<Exprent> lst = exprent.getAllExprents(true);
     lst.add(exprent);
 
-    String classname = classType.value;
+    String classname = classType.getValue();
 
     for (Exprent expr : lst) {
       boolean res = false;
@@ -871,17 +872,17 @@ public class NestedClassProcessor {
           res = classname.equals(((FieldExprent)expr).getClassname());
           break;
         case Exprent.EXPRENT_INVOCATION:
-          res = classname.equals(((InvocationExprent)expr).getClassname());
+          res = classname.equals(((InvocationExprent)expr).getClassName());
           break;
         case Exprent.EXPRENT_NEW:
           VarType newType = expr.getExprType();
-          res = newType.type == CodeConstants.TYPE_OBJECT && classname.equals(newType.value);
+          res = newType.getType() == CodeConstants.TYPE_OBJECT && classname.equals(newType.getValue());
           break;
         case Exprent.EXPRENT_VAR:
           VarExprent varExpr = (VarExprent)expr;
           if (varExpr.isDefinition()) {
             VarType varType = varExpr.getVarType();
-            if (classType.equals(varType) || (varType.arrayDim > 0 && classType.value.equals(varType.value))) {
+            if (classType.equals(varType) || (varType.getArrayDim() > 0 && classType.getValue().equals(varType.getValue()))) {
               res = true;
             }
           }

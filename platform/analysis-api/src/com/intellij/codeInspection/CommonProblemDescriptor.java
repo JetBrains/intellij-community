@@ -53,7 +53,7 @@ public interface CommonProblemDescriptor {
   /**
    * Returns the quickfixes for the problem.
    *
-   * @return the list of quickfixes registered for the problem.
+   * @return the array of quickfixes registered for the problem.
    */
   QuickFix @Nullable [] getFixes();
 }

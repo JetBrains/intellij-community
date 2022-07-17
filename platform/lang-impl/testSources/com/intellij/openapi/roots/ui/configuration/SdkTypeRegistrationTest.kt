@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.Disposable
@@ -72,7 +72,7 @@ private class MockSdkType : SdkType("Mock") {
     additional.setAttribute("data", (additionalData as MockSdkAdditionalData).data)
   }
 
-  override fun loadAdditionalData(additional: Element): SdkAdditionalData? {
+  override fun loadAdditionalData(additional: Element): SdkAdditionalData {
     return MockSdkAdditionalData(additional.getAttributeValue("data") ?: "")
   }
 }

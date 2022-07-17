@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 class C {
     val xxx = 1
 
@@ -6,5 +8,5 @@ class C {
     }
 }
 
-// EXIST: { lookupString: "xxx", itemText: "xxx", typeText: "String" }
+// EXIST: { lookupString: "xxx", itemText: "xxx", typeText: "String", icon: "nodes/parameter.svg"}
 // NOTHING_ELSE

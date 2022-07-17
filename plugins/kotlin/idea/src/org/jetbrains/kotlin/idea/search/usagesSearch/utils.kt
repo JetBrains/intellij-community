@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.idea.search.usagesSearch
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.MethodSignatureUtil
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.IDELanguageSettingsProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -20,19 +22,14 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMethodDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaOrKotlinMemberDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.hasJavaResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProvider
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
-import org.jetbrains.kotlin.idea.project.findAnalyzerServices
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
-import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.util.FuzzyType
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.fuzzyExtensionReceiverType
 import org.jetbrains.kotlin.idea.util.toFuzzyType
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -129,22 +126,13 @@ fun PsiReference.checkUsageVsOriginalDescriptor(
         }
 }
 
-fun PsiReference.isConstructorUsage(ktClassOrObject: KtClassOrObject): Boolean = with(element) {
-    fun checkJavaUsage(): Boolean {
-        val call = getNonStrictParentOfType<PsiConstructorCall>()
-        return call == parent && call?.resolveConstructor()?.containingClass?.navigationElement == ktClassOrObject
-    }
+fun PsiReference.isKotlinConstructorUsage(ktClassOrObject: KtClassOrObject): Boolean = with(element) {
+    if (this !is KtElement) return false
 
-    fun checkKotlinUsage(): Boolean {
-        if (this !is KtElement) return false
+    val descriptor = getConstructorCallDescriptor() as? ConstructorDescriptor ?: return false
 
-        val descriptor = getConstructorCallDescriptor() as? ConstructorDescriptor ?: return false
-
-        val declaration = DescriptorToSourceUtils.descriptorToDeclaration(descriptor.containingDeclaration)
-        return declaration == ktClassOrObject || (declaration is KtConstructor<*> && declaration.getContainingClassOrObject() == ktClassOrObject)
-    }
-
-    checkJavaUsage() || checkKotlinUsage()
+    val declaration = DescriptorToSourceUtils.descriptorToDeclaration(descriptor.containingDeclaration)
+    return declaration == ktClassOrObject || (declaration is KtConstructor<*> && declaration.getContainingClassOrObject() == ktClassOrObject)
 }
 
 private fun KtElement.getConstructorCallDescriptor(): DeclarationDescriptor? {
@@ -228,26 +216,6 @@ fun PsiReference.isCallableOverrideUsage(declaration: KtNamedDeclaration): Boole
     }
 }
 
-fun <T : PsiNamedElement> List<T>.filterDataClassComponentsIfDisabled(kotlinOptions: KotlinReferencesSearchOptions): List<T> {
-    if (kotlinOptions.searchForComponentConventions) return this
-
-    fun PsiNamedElement.isComponentElement(): Boolean {
-
-        if (this !is PsiMethod) return false
-
-        val dataClassParent = ((parent as? KtLightClass)?.kotlinOrigin as? KtClass)?.isData() == true
-        if (!dataClassParent) return false
-
-        if (!Name.isValidIdentifier(name)) return false
-        val nameIdentifier = Name.identifier(name)
-        if (!DataClassDescriptorResolver.isComponentLike(nameIdentifier)) return false
-
-        return true
-    }
-
-    return filter { !it.isComponentElement() }
-}
-
 fun KtFile.forceResolveReferences(elements: List<KtElement>) {
     getResolutionFacade().analyze(elements, BodyResolveMode.PARTIAL)
 }
@@ -268,19 +236,18 @@ private fun PsiElement.resolveTargetToDescriptor(isDestructionDeclarationSearch:
 
 private fun containsTypeOrDerivedInside(declaration: KtDeclaration, typeToSearch: FuzzyType): Boolean {
 
-    fun KotlinType.containsTypeOrDerivedInside(type: FuzzyType): Boolean {
-        return type.checkIsSuperTypeOf(this) != null || arguments.any { !it.isStarProjection && it.type.containsTypeOrDerivedInside(type) }
+    fun KotlinType.containsTypeOrDerivedInside(): Boolean {
+        return typeToSearch.checkIsSuperTypeOf(this) != null || arguments.any { !it.isStarProjection && it.type.containsTypeOrDerivedInside() }
     }
 
     val descriptor = declaration.resolveToDescriptorIfAny() as? CallableDescriptor
     val type = descriptor?.returnType
-    return type != null && type.containsTypeOrDerivedInside(typeToSearch)
+    return type != null && type.containsTypeOrDerivedInside()
 }
 
 private fun FuzzyType.toPsiClass(project: Project): PsiClass? {
     val classDescriptor = type.constructor.declarationDescriptor ?: return null
-    val classDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, classDescriptor)
-    return when (classDeclaration) {
+    return when (val classDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, classDescriptor)) {
         is PsiClass -> classDeclaration
         is KtClassOrObject -> classDeclaration.toLightClass()
         else -> null
@@ -307,11 +274,10 @@ fun PsiElement.getReceiverTypeSearcherInfo(isDestructionDeclarationSearch: Boole
 }
 
 fun KtFile.getDefaultImports(): List<ImportPath> {
-    val moduleInfo = getNullableModuleInfo() ?: return emptyList()
-    return TargetPlatformDetector.getPlatform(this).findAnalyzerServices(project).getDefaultImports(
-        IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, project),
-        includeLowPriorityImports = true
-    )
+    val moduleInfo = this.moduleInfoOrNull ?: return emptyList()
+    return platform
+        .findAnalyzerServices(project)
+        .getDefaultImports(IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, project), includeLowPriorityImports = true)
 }
 
 fun PsiFile.scriptDefinitionExists(): Boolean = findScriptDefinition() != null

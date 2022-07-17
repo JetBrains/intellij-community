@@ -12,3 +12,4 @@ class Foo {
 }
 
 fun bar(s: String) {}
+/* IGNORE_FIR */

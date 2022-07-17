@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.junit.Test;
 
 import java.io.IOException;

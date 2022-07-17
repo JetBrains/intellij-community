@@ -65,7 +65,7 @@ public class NullThrownInspection extends BaseInspection {
   private static class ThrowNullVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitThrowStatement(PsiThrowStatement statement) {
+    public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
       final PsiExpression exception =
         PsiUtil.skipParenthesizedExprDown(statement.getException());

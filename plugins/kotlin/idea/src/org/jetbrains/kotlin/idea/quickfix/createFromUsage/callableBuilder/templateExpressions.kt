@@ -14,7 +14,8 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getValueParameters
@@ -46,16 +47,17 @@ internal class ParameterNameExpression(
         // find the parameter list
         val project = context.project ?: return null
         val offset = context.startOffset
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
         val editor = context.editor ?: return null
-        val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) as KtFile
+        val document = editor.document
+        PsiDocumentManager.getInstance(project).commitDocument(document)
+        val file = PsiDocumentManager.getInstance(project).getPsiFile(document) as KtFile
         val elementAt = file.findElementAt(offset)
         val declaration = PsiTreeUtil.getParentOfType(elementAt, KtFunction::class.java, KtClass::class.java) ?: return arrayOf()
         val parameterList = when (declaration) {
             is KtFunction -> declaration.valueParameterList!!
             is KtClass -> declaration.getPrimaryConstructorParameterList()!!
             else -> throw KotlinExceptionWithAttachments("Unexpected declaration kind: ${declaration::class.java}")
-                .withAttachment("declaration", declaration.text)
+                .withPsiAttachment("declaration", declaration)
         }
 
         // add names based on selected type
@@ -82,7 +84,7 @@ internal class ParameterNameExpression(
 
         // ensure there are no conflicts
         val validator = CollectingNameValidator(parameterNames)
-        return names.map { LookupElementBuilder.create(KotlinNameSuggester.suggestNameByName(it, validator)) }.toTypedArray()
+        return names.map { LookupElementBuilder.create(Fe10KotlinNameSuggester.suggestNameByName(it, validator)) }.toTypedArray()
     }
 }
 
@@ -136,9 +138,11 @@ internal class TypeParameterListExpression(
         val project = context.project!!
         val offset = context.startOffset
 
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
         val editor = context.editor!!
-        val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) as KtFile
+        val document = editor.document
+        val documentManager = PsiDocumentManager.getInstance(project)
+        documentManager.commitDocument(document)
+        val file = documentManager.getPsiFile(document) as KtFile
         val elementAt = file.findElementAt(offset)
         val declaration = elementAt?.getStrictParentOfType<KtNamedDeclaration>() ?: return TextResult("")
 

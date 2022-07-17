@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
 import com.intellij.openapi.components.PathMacroMap
@@ -12,7 +12,8 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.eclipse.IdeaXml.*
@@ -89,6 +90,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
             root.addContent(libTag)
           }
         }
+        else -> {}
       }
     }
     if (libLevels.isNotEmpty()) {

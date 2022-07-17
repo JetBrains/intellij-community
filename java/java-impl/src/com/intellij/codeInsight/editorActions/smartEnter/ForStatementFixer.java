@@ -72,7 +72,10 @@ public class ForStatementFixer implements Fixer {
 
     final PsiExpression condition = forStatement.getCondition();
     if (condition == null) {
-      registerErrorOffset(editor, processor, initialization, forStatement);
+      boolean endlessLoop = initialization instanceof PsiEmptyStatement && forStatement.getUpdate() == null;
+      if (!endlessLoop) {
+        registerErrorOffset(editor, processor, initialization, forStatement);
+      }
       return;
     }
     

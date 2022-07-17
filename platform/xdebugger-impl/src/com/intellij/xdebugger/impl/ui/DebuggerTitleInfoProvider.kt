@@ -10,7 +10,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.TitleInfoProvider
 import com.intellij.openapi.wm.impl.simpleTitleParts.RegistryOption
 import com.intellij.openapi.wm.impl.simpleTitleParts.SimpleTitleInfoProvider
+import com.intellij.util.application
+import com.intellij.util.ui.EDT
 import com.intellij.xdebugger.*
+import javax.swing.SwingUtilities
 
 private class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption("ide.debug.in.title", null)) {
   companion object {
@@ -62,11 +65,20 @@ private class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption
     var subscriptionDisposable: Disposable? = null
 
     fun checkState(provider: DebuggerTitleInfoProvider) {
-      debuggerSessionStarted = XDebuggerManager.getInstance(project)?.let {
-        provider.isEnabled() && it.debugSessions.isNotEmpty()
-      } ?: false
+      fun action() {
+        application.assertIsDispatchThread()
+        debuggerSessionStarted = XDebuggerManager.getInstance(project)?.let {
+          provider.isEnabled() && it.debugSessions.isNotEmpty()
+        } ?: false
+        provider.updateNotify()
+      }
 
-      provider.updateNotify()
+      if (EDT.isCurrentThreadEdt()) {
+        action()
+      } else {
+        // Some debuggers are known to terminate their debug sessions outside the EDT (RIDER-66994). Reschedule title update for this case.
+        SwingUtilities.invokeLater(::action)
+      }
     }
 
     fun addSubscription(provider: DebuggerTitleInfoProvider): Disposable {
@@ -77,6 +89,7 @@ private class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption
 
       project.messageBus.connect(disposable).subscribe(XDebuggerManager.TOPIC, object : XDebuggerManagerListener {
         override fun processStarted(debugProcess: XDebugProcess) {
+          application.assertIsDispatchThread()
           debuggerSessionStarted = true
 
           debugProcess.session.addSessionListener(object : XDebugSessionListener {

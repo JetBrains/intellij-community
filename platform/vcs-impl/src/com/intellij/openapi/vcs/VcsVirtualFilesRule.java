@@ -26,6 +26,9 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * {@link VcsDataKeys#VIRTUAL_FILES}
+ */
 public class VcsVirtualFilesRule implements GetDataRule {
   @Nullable
   @Override

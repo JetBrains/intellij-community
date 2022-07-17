@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
@@ -804,21 +804,6 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     public boolean isCancelable() {
       return super.isCancelable();
     }
-  }
-
-  public void testIndicatorsStillNotThrowInCheckCanceledIfCalledStartNonCancelableSectionBeforeByOldStaleDeprecatedPluginsNotYetPortedToProgressManagerExecuteInNonCancelableSection() {
-    checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(new EmptyProgressIndicator());
-    checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(new AbstractProgressIndicatorBase());
-    checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(new DaemonProgressIndicator());
-  }
-
-  private static void checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(@NotNull ProgressIndicator indicator) {
-    assertFalse(ProgressManager.getInstance().isInNonCancelableSection());
-    indicator.startNonCancelableSection();
-    indicator.cancel();
-    indicator.checkCanceled();
-    indicator.finishNonCancelableSection();
-    assertThrows(ProcessCanceledException.class, () -> indicator.checkCanceled());
   }
 
   public void testEmptyIndicatorMustConformToAtLeastSomeSimpleLifecycleConstrains() {

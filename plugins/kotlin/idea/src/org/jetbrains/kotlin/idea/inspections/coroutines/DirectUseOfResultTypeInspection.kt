@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
@@ -38,8 +38,7 @@ class DirectUseOfResultTypeInspection : AbstractIsResultInspection(
     }
 
     private fun FunctionDescriptor.hasCorrespondingNonCatchingFunction(returnType: KotlinType, nameWithoutCatching: String): Boolean? {
-        val containingDescriptor = containingDeclaration
-        val scope = when (containingDescriptor) {
+        val scope = when (val containingDescriptor = containingDeclaration) {
             is ClassDescriptor -> containingDescriptor.unsubstitutedMemberScope
             is PackageFragmentDescriptor -> containingDescriptor.getMemberScope()
             else -> return null

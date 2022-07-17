@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console
 
+import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.run.PythonRunConfiguration
@@ -42,7 +44,12 @@ interface PyExecuteConsoleCustomizer {
   /**
    * Notify about new name set for custom run descriptor
    */
-  fun descriptorNameUpdated(descriptor: RunContentDescriptor, newName: String) {}
+  fun descriptorNameUpdated(descriptor: RunContentDescriptor, newName: String) {
+    val console: ExecutionConsole = descriptor.executionConsole
+    if (console is PythonConsoleView) {
+      console.setCommandQueueTitle(newName)
+    }
+  }
 
   /**
    * Return run descriptor name
@@ -63,6 +70,10 @@ interface PyExecuteConsoleCustomizer {
    * Notify that runner started execution, but console process will be started later
    */
   fun notifyRunnerStart(virtualFile: VirtualFile, runner: PydevConsoleRunner) {}
+
+  fun isHorizontalAndUnitedToolbar(): Boolean = false
+
+  fun notifySciCellGutterExecuted(editor: EditorImpl, actionId: String) {}
 }
 
 enum class DescriptorType {

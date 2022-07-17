@@ -1,38 +1,51 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 package com.intellij.codeInsight.navigation.impl
 
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
-import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
+import com.intellij.codeInsight.navigation.*
+import com.intellij.model.psi.impl.DeclarationOrReference
 import com.intellij.model.psi.impl.TargetData
-import com.intellij.model.psi.impl.referenceRanges
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 
+@Suppress("DEPRECATION")
+@Deprecated("Unused in v2 implementation")
 internal fun TargetData.ctrlMouseInfo(): CtrlMouseInfo? {
-  return when (this) {
-    is TargetData.Declared -> {
-      DeclarationCtrlMouseInfo(declaration)
-    }
-    is TargetData.Referenced -> {
-      val targets = this.targets
-      if (targets.isEmpty()) {
-        return null
-      }
-      val ranges = highlightRanges()
-      val singleTarget = targets.singleOrNull()
-      if (singleTarget != null) {
-        SingleSymbolCtrlMouseInfo(singleTarget.symbol, elementAtOffset(), ranges)
-      }
-      else {
-        MultipleTargetElementsInfo(ranges)
-      }
-    }
+  val targets = this.targets
+  if (targets.isEmpty()) {
+    return null
+  }
+  val ranges = highlightRanges()
+  val singleTarget = targets.singleOrNull()
+  return if (singleTarget != null) {
+    SingleSymbolCtrlMouseInfo(singleTarget.symbol, elementAtOffset(), ranges, this is TargetData.Declared)
+  }
+  else {
+    MultipleTargetElementsInfo(ranges)
+  }
+}
+
+internal fun TargetData.ctrlMouseData(project: Project): CtrlMouseData? {
+  val targets = this.targets
+  if (targets.isEmpty()) {
+    return null
+  }
+  val ranges = highlightRanges()
+  val singleTarget = targets.singleOrNull()
+  if (singleTarget == null) {
+    return multipleTargetsCtrlMouseData(ranges)
+  }
+  else {
+    return symbolCtrlMouseData(project, singleTarget.symbol, elementAtOffset(), ranges, this is TargetData.Declared)
   }
 }
 
 internal fun TargetData.elementAtOffset(): PsiElement {
   return when (this) {
-    is TargetData.Declared -> declaration.declaringElement
+    is TargetData.Declared -> {
+      declarations.last().declaringElement
+    }
     is TargetData.Referenced -> {
       // If there is an evaluator reference in the list, then it will be the last one,
       // otherwise we don't care about the element at offset because it's not used to generate doc for symbol references.
@@ -42,18 +55,11 @@ internal fun TargetData.elementAtOffset(): PsiElement {
 }
 
 internal fun TargetData.highlightRanges(): List<TextRange> {
-  return when (this) {
-    is TargetData.Declared -> listOf(declaration.absoluteRange)
-    is TargetData.Referenced -> highlightRanges()
+  val singleDeclarationOrReference = drs.singleOrNull()
+  if (singleDeclarationOrReference != null) {
+    return singleDeclarationOrReference.ranges
   }
-}
-
-private fun TargetData.Referenced.highlightRanges(): List<TextRange> {
-  val singleReference = references.singleOrNull()
-  if (singleReference != null) {
-    return referenceRanges(singleReference)
-  }
-  val rangeLists = references.mapTo(HashSet(), ::referenceRanges)
+  val rangeLists = drs.mapTo(HashSet(), DeclarationOrReference::ranges)
   val singleRangeList = rangeLists.singleOrNull()
   if (singleRangeList != null) {
     // In case there are multi-range references, we want to highlight multiple ranges
@@ -62,12 +68,12 @@ private fun TargetData.Referenced.highlightRanges(): List<TextRange> {
     return singleRangeList
   }
   else {
-    // Otherwise we want to highlight only range with the offset,
+    // Otherwise, we want to highlight only range with the offset,
     // for example: ref1 has a multi-range of [range1, range2], and ref2 has a multi-range of [range2, range3]
     //
     // References in TargetData$Referenced#references have the same absolute range, so we can choose any reference.
     // Multi-range symbol references are not yet supported => symbol references have only 1 range.
     // There can be at most 1 evaluator reference in the list, its (multi-)range has only 1 common segment with symbol references range.
-    return listOf(references.first().absoluteRange)
+    return listOf(drs.first().rangeWithOffset)
   }
 }

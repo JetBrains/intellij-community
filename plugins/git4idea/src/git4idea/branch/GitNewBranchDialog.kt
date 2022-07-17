@@ -7,6 +7,12 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
@@ -65,26 +71,33 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
 
   override fun createCenterPanel() = panel {
     row {
-      label(GitBundle.message("new.branch.dialog.branch.name"))
-    }
-    row {
-      textField(::branchName, { branchName = it }).focused().withValidationOnApply(
+      textField()
+        .bindText(::branchName, { branchName = it })
+        .horizontalAlign(HorizontalAlign.FILL)
+        .label(GitBundle.message("new.branch.dialog.branch.name"), LabelPosition.TOP)
+        .focused().validationOnApply(
         validateBranchName()).apply { startTrackingValidationIfNeeded() }
     }
     row {
       if (showCheckOutOption) {
-        checkBox(GitBundle.message("new.branch.dialog.checkout.branch.checkbox"), ::checkout).component.apply {
+        checkBox(GitBundle.message("new.branch.dialog.checkout.branch.checkbox"))
+          .bindSelected(::checkout)
+          .component.apply {
           mnemonic = KeyEvent.VK_C
         }
       }
       if (showResetOption) {
-        overwriteCheckbox = checkBox(GitBundle.message("new.branch.dialog.overwrite.existing.branch.checkbox"), ::reset).component.apply {
+        overwriteCheckbox = checkBox(GitBundle.message("new.branch.dialog.overwrite.existing.branch.checkbox"))
+          .bindSelected(::reset)
+          .component.apply {
           mnemonic = KeyEvent.VK_R
           isEnabled = false
         }
       }
       if (showSetTrackingOption) {
-        setTrackingCheckbox = checkBox(GitBundle.message("new.branch.dialog.set.tracking.branch.checkbox"), ::tracking).component.apply {
+        setTrackingCheckbox = checkBox(GitBundle.message("new.branch.dialog.set.tracking.branch.checkbox"))
+          .bindSelected(::tracking)
+          .component.apply {
           mnemonic = KeyEvent.VK_T
         }
       }
@@ -92,7 +105,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
   }
 
   private fun validateBranchName(): ValidationInfoBuilder.(JTextField) -> ValidationInfo? = {
-    it.text = validator.cleanUpBranchNameOnTyping(it.text)
+    it.cleanBranchNameAndAdjustCursorIfNeeded()
     val errorInfo = checkRefNameEmptyOrHead(it.text) ?: conflictsWithRemoteBranch(repositories, it.text)
     if (errorInfo != null) error(errorInfo.message)
     else {
@@ -111,7 +124,25 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
     }
   }
 
-  private fun CellBuilder<JTextField>.startTrackingValidationIfNeeded() {
+  private fun JTextField.cleanBranchNameAndAdjustCursorIfNeeded() {
+    val initialText = text
+    val initialCaret = caretPosition
+
+    val fixedText = validator.cleanUpBranchNameOnTyping(initialText)
+
+    // if the text didn't change, there's no point in updating it or cursorPosition
+    if (fixedText == initialText) return
+
+    val initialTextBeforeCaret = initialText.take(initialCaret)
+    val fixedTextBeforeCaret = validator.cleanUpBranchNameOnTyping(initialTextBeforeCaret)
+
+    val fixedCaret = fixedTextBeforeCaret.length
+
+    text = fixedText
+    caretPosition = fixedCaret
+  }
+
+  private fun Cell<JTextField>.startTrackingValidationIfNeeded() {
     if (branchName.isEmpty()) {
       component.document.addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {

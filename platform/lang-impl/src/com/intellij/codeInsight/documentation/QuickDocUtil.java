@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.DocPreviewUtil;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.DocumentationResult;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
@@ -13,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -25,10 +27,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -39,6 +38,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class QuickDocUtil {
 
+  /**
+   * @deprecated No op in v2 implementation.
+   * Use {@link DocumentationResult#asyncDocumentation} or {@link DocumentationResult.Data#updates} for async updates.
+   */
+  @Deprecated
   public static void updateQuickDoc(@NotNull final Project project, @NotNull final PsiElement element, @Nullable @Nls final String documentation) {
     if (StringUtil.isEmpty(documentation)) return;
     // modal dialogs with fragment editors fix: can't guess proper modality state here
@@ -50,6 +54,11 @@ public final class QuickDocUtil {
     });
   }
 
+  /**
+   * @deprecated Returns `null` in v2 implementation.
+   * Use {@link  DocumentationResult#asyncDocumentation} or {@link DocumentationResult.Data#updates} for async updates.
+   */
+  @Deprecated
   @Nullable
   public static DocumentationComponent getActiveDocComponent(@NotNull Project project) {
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
@@ -70,6 +79,7 @@ public final class QuickDocUtil {
   }
 
 
+  @Nls
   @Contract("_, _, _, null -> null")
   public static String inferLinkFromFullDocumentation(@NotNull DocumentationProvider provider,
                                                       PsiElement element,
@@ -85,9 +95,13 @@ public final class QuickDocUtil {
 
   public static final Object CUT_AT_CMD = ObjectUtils.sentinel("CUT_AT_CMD");
 
+  /**
+   * @deprecated No op in v2 implementation.
+   */
+  @Deprecated
   public static void updateQuickDocAsync(@NotNull PsiElement element,
                                          @NotNull CharSequence prefix,
-                                         @NotNull Consumer<Consumer<Object>> provider) {
+                                         @NotNull Consumer<? super Consumer<Object>> provider) {
     Project project = element.getProject();
     StringBuilder sb = new StringBuilder(prefix);
     ConcurrentLinkedQueue<Object> queue = new ConcurrentLinkedQueue<>();
@@ -127,7 +141,7 @@ public final class QuickDocUtil {
     }, 100, alarmDisposable);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        provider.consume(str -> {
+        provider.consume((Consumer<Object>)str -> {
           ProgressManager.checkCanceled();
           if (stop.get()) throw new ProcessCanceledException();
           queue.add(str);
@@ -140,5 +154,17 @@ public final class QuickDocUtil {
         }
       }
     });
+  }
+
+  private static volatile boolean useDocumentationV1 = false;
+
+  @ApiStatus.Internal
+  public static void forceEnableDocumentationV1() {
+    useDocumentationV1 = true;
+  }
+
+  @ApiStatus.Internal
+  public static boolean isDocumentationV2Enabled() {
+    return !useDocumentationV1 && Registry.is("documentation.v2");
   }
 }

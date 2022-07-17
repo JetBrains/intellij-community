@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.UnmodifiableHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -381,14 +380,5 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
   @NotNull
   public Map<PsiTypeParameter, PsiType> getSubstitutionMap() {
     return mySubstitutionMap;
-  }
-
-  /**
-   * @deprecated use {@link PsiSubstitutor#createSubstitutor(Map)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static PsiSubstitutor createSubstitutor(@Nullable Map<? extends PsiTypeParameter, ? extends PsiType> map) {
-    return PsiSubstitutor.createSubstitutor(map);
   }
 }

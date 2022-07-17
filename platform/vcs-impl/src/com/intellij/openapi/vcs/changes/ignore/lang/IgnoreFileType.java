@@ -26,7 +26,6 @@ package com.intellij.openapi.vcs.changes.ignore.lang;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -84,7 +83,6 @@ public class IgnoreFileType extends LanguageFileType {
    *
    * @return The icon instance, or null if no icon should be shown.
    */
-  @Nullable
   @Override
   public Icon getIcon() {
     return getIgnoreLanguage().getIcon();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configuration;
 
 import com.intellij.openapi.application.PathMacroFilter;
@@ -8,8 +8,7 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-
-class RunConfigurationPathMacroFilter extends PathMacroFilter {
+final class RunConfigurationPathMacroFilter extends PathMacroFilter {
   @Override
   public boolean skipPathMacros(@NotNull Attribute attribute) {
     return attribute.getName().equals(Constants.NAME) && attribute.getParent().getName().equals("configuration");

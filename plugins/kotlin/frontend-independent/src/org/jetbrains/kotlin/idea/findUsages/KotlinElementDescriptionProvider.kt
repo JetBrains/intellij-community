@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.findUsages
 
@@ -15,9 +15,9 @@ import com.intellij.usageView.UsageViewShortNameLocation
 import com.intellij.usageView.UsageViewTypeLocation
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.KotlinIndependentBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.util.string.collapseSpaces
+import org.jetbrains.kotlin.idea.base.util.collapseSpaces
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -58,6 +58,14 @@ open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
                 override fun visitTypeReference(typeReference: KtTypeReference, data: Unit): String {
                     val typeText = typeReference.typeElement?.accept(this, data) ?: "???"
                     return if (typeReference.hasParentheses()) "($typeText)" else typeText
+                }
+
+                override fun visitIntersectionType(definitelyNotNullType: KtIntersectionType, data: Unit): String {
+                    return buildString {
+                        append(definitelyNotNullType.getLeftTypeRef()?.typeElement?.accept(visitor, data) ?: "???")
+                        append(" & ")
+                        append(definitelyNotNullType.getRightTypeRef()?.typeElement?.accept(visitor, data) ?: "???")
+                    }
                 }
 
                 override fun visitDynamicType(type: KtDynamicType, data: Unit) = type.text
@@ -107,39 +115,39 @@ open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
 
         fun elementKind() = when (targetElement) {
             is KtClass -> if (targetElement.isInterface())
-                KotlinIndependentBundle.message("find.usages.interface")
+                KotlinBundle.message("find.usages.interface")
             else
-                KotlinIndependentBundle.message("find.usages.class")
+                KotlinBundle.message("find.usages.class")
             is KtObjectDeclaration -> if (targetElement.isCompanion())
-                KotlinIndependentBundle.message("find.usages.companion.object")
+                KotlinBundle.message("find.usages.companion.object")
             else
-                KotlinIndependentBundle.message("find.usages.object")
-            is KtNamedFunction -> KotlinIndependentBundle.message("find.usages.function")
-            is KtPropertyAccessor -> KotlinIndependentBundle.message(
+                KotlinBundle.message("find.usages.object")
+            is KtNamedFunction -> KotlinBundle.message("find.usages.function")
+            is KtPropertyAccessor -> KotlinBundle.message(
                 "find.usages.for.property",
                 (if (targetElement.isGetter)
-                    KotlinIndependentBundle.message("find.usages.getter")
+                    KotlinBundle.message("find.usages.getter")
                 else
-                    KotlinIndependentBundle.message("find.usages.setter"))
+                    KotlinBundle.message("find.usages.setter"))
             ) + " "
-            is KtFunctionLiteral -> KotlinIndependentBundle.message("find.usages.lambda")
-            is KtPrimaryConstructor, is KtSecondaryConstructor -> KotlinIndependentBundle.message("find.usages.constructor")
+            is KtFunctionLiteral -> KotlinBundle.message("find.usages.lambda")
+            is KtPrimaryConstructor, is KtSecondaryConstructor -> KotlinBundle.message("find.usages.constructor")
             is KtProperty -> if (targetElement.isLocal)
-                KotlinIndependentBundle.message("find.usages.variable")
+                KotlinBundle.message("find.usages.variable")
             else
-                KotlinIndependentBundle.message("find.usages.property")
-            is KtTypeParameter -> KotlinIndependentBundle.message("find.usages.type.parameter")
-            is KtParameter -> KotlinIndependentBundle.message("find.usages.parameter")
-            is KtDestructuringDeclarationEntry -> KotlinIndependentBundle.message("find.usages.variable")
-            is KtTypeAlias -> KotlinIndependentBundle.message("find.usages.type.alias")
-            is KtLabeledExpression -> KotlinIndependentBundle.message("find.usages.label")
-            is KtImportAlias -> KotlinIndependentBundle.message("find.usages.import.alias")
-            is KtLightClassForFacade -> KotlinIndependentBundle.message("find.usages.facade.class")
+                KotlinBundle.message("find.usages.property")
+            is KtTypeParameter -> KotlinBundle.message("find.usages.type.parameter")
+            is KtParameter -> KotlinBundle.message("find.usages.parameter")
+            is KtDestructuringDeclarationEntry -> KotlinBundle.message("find.usages.variable")
+            is KtTypeAlias -> KotlinBundle.message("find.usages.type.alias")
+            is KtLabeledExpression -> KotlinBundle.message("find.usages.label")
+            is KtImportAlias -> KotlinBundle.message("find.usages.import.alias")
+            is KtLightClassForFacade -> KotlinBundle.message("find.usages.facade.class")
             else -> {
                 //TODO Implement in FIR
                 when {
-                    targetElement.isRenameJavaSyntheticPropertyHandler -> KotlinIndependentBundle.message("find.usages.property")
-                    targetElement.isRenameKotlinPropertyProcessor -> KotlinIndependentBundle.message("find.usages.property.accessor")
+                    targetElement.isRenameJavaSyntheticPropertyHandler -> KotlinBundle.message("find.usages.property")
+                    targetElement.isRenameKotlinPropertyProcessor -> KotlinBundle.message("find.usages.property.accessor")
                     else -> null
                 }
             }
@@ -149,7 +157,6 @@ open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
             targetElement.parent as? KtProperty
         } else targetElement as? PsiNamedElement
 
-        @Suppress("FoldInitializerAndIfToElvis")
         if (namedElement == null) {
             return if (targetElement is KtElement) "'" + StringUtil.shortenTextWithEllipsis(
                 targetElement.text.collapseSpaces(),
@@ -170,6 +177,7 @@ open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
                         namedElement !is KtTypeParameter &&
                         namedElement !is KtParameter &&
                         namedElement !is KtConstructor<*>
+                @Suppress("HardCodedStringLiteral")
                 val desc = when (namedElement) {
                     is KtFunction -> {
                         val baseText = buildString {

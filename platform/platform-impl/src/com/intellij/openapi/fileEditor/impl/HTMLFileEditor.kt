@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.CommonBundle
@@ -9,7 +9,6 @@ import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ActionCallback
@@ -129,7 +128,6 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
   override fun isValid(): Boolean = true
   override fun addPropertyChangeListener(listener: PropertyChangeListener) { }
   override fun removePropertyChangeListener(listener: PropertyChangeListener) { }
-  override fun getCurrentLocation(): FileEditorLocation? = null
   override fun dispose() { }
 
   override fun getFile(): VirtualFile = file

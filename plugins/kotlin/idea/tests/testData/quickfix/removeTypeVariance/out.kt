@@ -1,5 +1,5 @@
 // "Remove 'out' variance from 'T'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class Test<out T> {
     fun foo(t: <caret>T) {}

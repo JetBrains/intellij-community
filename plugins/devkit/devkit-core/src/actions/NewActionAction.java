@@ -4,9 +4,9 @@ package org.jetbrains.idea.devkit.actions;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.ide.actions.CreateTemplateInPackageAction;
 import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -22,7 +22,7 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-public class NewActionAction extends CreateElementActionBase implements UpdateInBackground, DescriptorUtil.Patcher {
+public class NewActionAction extends CreateElementActionBase implements DescriptorUtil.Patcher {
   private static class Holder {
     // length == 1 is important to make MyInputValidator close the dialog when
     // module selection is canceled. That's some weird interface actually...
@@ -33,12 +33,17 @@ public class NewActionAction extends CreateElementActionBase implements UpdateIn
   private XmlFile pluginDescriptorToPatch;
 
   @Override
-  protected final PsiElement @NotNull [] invokeDialog(Project project, PsiDirectory directory) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  protected final PsiElement @NotNull [] invokeDialog(@NotNull Project project, @NotNull PsiDirectory directory) {
     PsiElement[] psiElements = doInvokeDialog(project, directory);
     return psiElements == Holder.CANCELED ? PsiElement.EMPTY_ARRAY : psiElements;
   }
 
-  private PsiElement[] doInvokeDialog(Project project, PsiDirectory directory) {
+  private PsiElement[] doInvokeDialog(Project project, @NotNull PsiDirectory directory) {
     myDialog = new NewActionDialog(project, directory);
     try {
       myDialog.show();
@@ -65,7 +70,7 @@ public class NewActionAction extends CreateElementActionBase implements UpdateIn
       return false;
     }
 
-    Module module = dataContext.getData(LangDataKeys.MODULE);
+    Module module = dataContext.getData(PlatformCoreDataKeys.MODULE);
     if (module == null || !PsiUtil.isPluginModule(module)) {
       return false;
     }
@@ -80,7 +85,7 @@ public class NewActionAction extends CreateElementActionBase implements UpdateIn
   }
 
   @Override
-  protected PsiElement @NotNull [] create(@NotNull String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement @NotNull [] create(@NotNull String newName, @NotNull PsiDirectory directory) throws Exception {
     PsiClass createdClass = DevkitActionsUtil.createSingleClass(newName, "Action.java", directory);
     DescriptorUtil.patchPluginXml(this, createdClass, pluginDescriptorToPatch);
     return new PsiElement[]{createdClass};
@@ -98,7 +103,7 @@ public class NewActionAction extends CreateElementActionBase implements UpdateIn
   }
 
   @Override
-  protected String getActionName(PsiDirectory directory, String newName) {
+  protected @NotNull String getActionName(@NotNull PsiDirectory directory, @NotNull String newName) {
     return DevKitBundle.message("new.action.action.name", directory, newName);
   }
 }

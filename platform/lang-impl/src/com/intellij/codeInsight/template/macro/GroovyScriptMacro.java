@@ -51,7 +51,7 @@ public class GroovyScriptMacro extends Macro {
   public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     if (params.length == 0) return null;
     Object o = runIt(params, context);
-    if (o instanceof Collection && !((Collection)o).isEmpty()) {
+    if (o instanceof Collection && !((Collection<?>)o).isEmpty()) {
       return new TextResult(toNormalizedString(((Collection)o).iterator().next()));
     }
     if (o instanceof Object[] && ((Object[])o).length > 0) {

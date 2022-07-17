@@ -16,9 +16,9 @@ import java.util.List;
 public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
   protected static final Logger LOG = Logger.getInstance(PsiTypeMapper.class);
 
+  @SuppressWarnings("unchecked")
   @Nullable
   public <T extends PsiType> T mapType(@NotNull T type) {
-    //noinspection unchecked
     return (T)type.accept(this);
   }
 

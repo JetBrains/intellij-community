@@ -15,18 +15,20 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LocalQuickFixAsIntentionAdapter implements IntentionAction {
+import java.util.List;
+
+public class LocalQuickFixAsIntentionAdapter implements IntentionAction, CustomizableIntentionAction {
   private final LocalQuickFix myFix;
   @NotNull private final ProblemDescriptor myProblemDescriptor;
 
@@ -74,11 +76,40 @@ public class LocalQuickFixAsIntentionAdapter implements IntentionAction {
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    LocalQuickFix result = ObjectUtils.tryCast(myFix.getFileModifierForPreview(target), LocalQuickFix.class);
-    if (result == null) return null;
-    ProblemDescriptor descriptor = myProblemDescriptor.getDescriptorForPreview(target);
-    return new LocalQuickFixAsIntentionAdapter(result, descriptor);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
+                                                       @NotNull Editor editor,
+                                                       @NotNull PsiFile file) {
+    return myFix.generatePreview(project, myProblemDescriptor.getDescriptorForPreview(file));
+  }
+
+  @Override
+  public boolean isShowSubmenu() {
+    return myFix instanceof CustomizableIntentionAction ? ((CustomizableIntentionAction)myFix).isShowSubmenu()
+                                                        : CustomizableIntentionAction.super.isShowSubmenu();
+  }
+
+  @Override
+  public boolean isSelectable() {
+    return myFix instanceof CustomizableIntentionAction ? ((CustomizableIntentionAction)myFix).isSelectable()
+                                                        : CustomizableIntentionAction.super.isSelectable();
+  }
+
+  @Override
+  public boolean isShowIcon() {
+    return myFix instanceof CustomizableIntentionAction ? ((CustomizableIntentionAction)myFix).isShowIcon()
+                                                        : CustomizableIntentionAction.super.isShowIcon();
+  }
+
+  @Override
+  public String getTooltipText() {
+    return myFix instanceof CustomizableIntentionAction ? ((CustomizableIntentionAction)myFix).getTooltipText()
+                                                        : CustomizableIntentionAction.super.getTooltipText();
+  }
+
+  @Override
+  public @NotNull List<RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
+    return myFix instanceof CustomizableIntentionAction ? ((CustomizableIntentionAction)myFix).getRangesToHighlight(editor, file)
+                                                        : CustomizableIntentionAction.super.getRangesToHighlight(editor, file);
   }
 }
 

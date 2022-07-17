@@ -34,15 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleSurroundDescriptor implements SurroundDescriptor {
-  @SuppressWarnings("DialogTitleCapitalization") private static final Surrounder[] SURROUNDERS = {
-    new GroupSurrounder(RegExpBundle.message("surrounder.capturing.group.pattern"), "("),
-    new GroupSurrounder(RegExpBundle.message("surrounder.non.capturing.group.pattern"), "(?:"),
-    new GroupSurrounder(RegExpBundle.message("surrounder.atomic.group.pattern"), "(?:"),
-    new GroupSurrounder(RegExpBundle.message("surrounder.positive.lookbehind.pattern"), "(?<="),
-    new GroupSurrounder(RegExpBundle.message("surrounder.negative.lookbehind.pattern"), "(?<!"),
-    new GroupSurrounder(RegExpBundle.message("surrounder.positive.lookahead.pattern"), "(?="),
-    new GroupSurrounder(RegExpBundle.message("surrounder.negative.lookahead.pattern"), "(?!"),
-  };
 
   @Override
   public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
@@ -86,7 +77,15 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
 
   @Override
   public Surrounder @NotNull [] getSurrounders() {
-    return SURROUNDERS;
+    return new Surrounder[]{
+      new GroupSurrounder(RegExpBundle.message("surrounder.capturing.group.pattern"), "("),
+      new GroupSurrounder(RegExpBundle.message("surrounder.non.capturing.group.pattern"), "(?:"),
+      new GroupSurrounder(RegExpBundle.message("surrounder.atomic.group.pattern"), "(?:"),
+      new GroupSurrounder(RegExpBundle.message("surrounder.positive.lookbehind.pattern"), "(?<="),
+      new GroupSurrounder(RegExpBundle.message("surrounder.negative.lookbehind.pattern"), "(?<!"),
+      new GroupSurrounder(RegExpBundle.message("surrounder.positive.lookahead.pattern"), "(?="),
+      new GroupSurrounder(RegExpBundle.message("surrounder.negative.lookahead.pattern"), "(?!"),
+    };
   }
 
   @Override

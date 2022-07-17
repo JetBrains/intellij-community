@@ -15,7 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,7 +159,7 @@ public final class AddExceptionToThrowsFix extends BaseIntentionAction implement
       psiElement = myWrongElement;
     }
     else {
-      PsiElement parentStatement = RefactoringUtil.getParentStatement(myWrongElement, false);
+      PsiElement parentStatement = CommonJavaRefactoringUtil.getParentStatement(myWrongElement, false);
       if (parentStatement instanceof PsiDeclarationStatement) {
         PsiElement[] declaredElements = ((PsiDeclarationStatement)parentStatement).getDeclaredElements();
         if (declaredElements.length > 0 && declaredElements[0] instanceof PsiClass) {

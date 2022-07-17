@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -107,7 +107,15 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   private String getTestInfo(@NotNull String testFullPath, @NotNull QuickFixTestCase quickFix) {
-    String infos = StreamEx.of(quickFix.doHighlighting())
+    String infos = getCurrentHighlightingInfo(quickFix.doHighlighting());
+    return "Test: " + testFullPath + "\n" +
+           "Language level: " + PsiUtil.getLanguageLevel(quickFix.getProject()) + "\n" +
+           (quickFix.getProject().equals(getProject()) ? "SDK: " + ModuleRootManager.getInstance(getModule()).getSdk() + "\n" : "") +
+           "Infos: " + infos;
+  }
+
+  static String getCurrentHighlightingInfo(@NotNull List<HighlightInfo> infos) {
+    return StreamEx.of(infos)
       .filter(info -> info.getSeverity() != HighlightInfoType.SYMBOL_TYPE_SEVERITY)
       .map(info -> {
         String fixes = "";
@@ -123,10 +131,6 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
                info.getText() + "': " + info.getDescription() + "\n" + fixes;
       })
       .joining("       ");
-    return "Test: " + testFullPath + "\n" +
-           "Language level: " + PsiUtil.getLanguageLevel(quickFix.getProject()) + "\n" +
-           (quickFix.getProject().equals(getProject()) ? "SDK: " + ModuleRootManager.getInstance(getModule()).getSdk() + "\n" : "") +
-           "Infos: " + infos;
   }
 
   protected void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName)
@@ -166,7 +170,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
    * @deprecated use {@link LightQuickFixParameterizedTestCase}
    * to get separate tests for all data files in testData directory.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected void doAllTests() {
     doAllTests(createWrapper());
   }

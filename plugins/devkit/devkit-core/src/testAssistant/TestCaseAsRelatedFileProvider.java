@@ -26,7 +26,7 @@ final class TestCaseAsRelatedFileProvider extends GotoRelatedProvider {
       return Collections.emptyList();
     }
 
-    final List<Location> locations = TestLocationDataRule.collectRelativeLocations(project, file);
+    final List<Location> locations = TestLocationUtil.collectRelativeLocations(project, file);
     if (locations.isEmpty()) {
       return Collections.emptyList();
     }

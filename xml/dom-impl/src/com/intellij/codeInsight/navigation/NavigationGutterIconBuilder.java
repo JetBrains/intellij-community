@@ -12,13 +12,10 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
-import com.intellij.openapi.util.NotNullFactory;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -66,12 +63,12 @@ public class NavigationGutterIconBuilder<T> {
     o -> ContainerUtil.createMaybeSingletonList(o.getXmlElement());
   public static final NotNullFunction<DomElement, Collection<? extends GotoRelatedItem>> DOM_GOTO_RELATED_ITEM_PROVIDER = dom -> {
     if (dom.getXmlElement() != null) {
-      return Collections.singletonList(new DomGotoRelatedItem(dom));
+      return List.of(new DomGotoRelatedItem(dom));
     }
     return Collections.emptyList();
   };
   protected static final NotNullFunction<PsiElement, Collection<? extends GotoRelatedItem>> PSI_GOTO_RELATED_ITEM_PROVIDER =
-    dom -> Collections.singletonList(new GotoRelatedItem(dom, InspectionsBundle.message("xml.goto.group")));
+    dom -> List.of(new GotoRelatedItem(dom, InspectionsBundle.message("xml.goto.group")));
 
   protected NavigationGutterIconBuilder(@NotNull final Icon icon, @NotNull NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> converter) {
     this(icon, converter, null);
@@ -86,8 +83,13 @@ public class NavigationGutterIconBuilder<T> {
   }
 
   @NotNull
-  public static NavigationGutterIconBuilder<PsiElement> create(@NotNull final Icon icon) {
+  public static NavigationGutterIconBuilder<PsiElement> create(@NotNull Icon icon) {
     return create(icon, DEFAULT_PSI_CONVERTOR, PSI_GOTO_RELATED_ITEM_PROVIDER);
+  }
+
+  @NotNull
+  public static NavigationGutterIconBuilder<PsiElement> create(@NotNull Icon icon, @NlsContexts.Separator String navigationGroup) {
+    return create(icon, DEFAULT_PSI_CONVERTOR, element -> List.of(new GotoRelatedItem(element, navigationGroup)));
   }
 
   @NotNull
@@ -166,12 +168,32 @@ public class NavigationGutterIconBuilder<T> {
     return this;
   }
 
+  /**
+   * This method may lead to a deadlock when used from pooled thread, e.g. from
+   * {@link com.intellij.codeInsight.daemon.LineMarkerProvider#collectSlowLineMarkers(List, Collection)}.
+   * {@link PsiElementListCellRenderer} is a UI component that acquires Swing tree lock on init.
+   *
+   * @deprecated Use {@link #setCellRenderer(Computable)} instead, then renderer will be instantiated lazily and from EDT
+   */
+  @Deprecated
   @NotNull
   public NavigationGutterIconBuilder<T> setCellRenderer(@NotNull final PsiElementListCellRenderer cellRenderer) {
     myCellRenderer = new Computable.PredefinedValueComputable<>(cellRenderer);
     return this;
   }
 
+  /**
+   * @param cellRendererProvider list cell renderer for navigation popup
+   */
+  public @NotNull NavigationGutterIconBuilder<T> setCellRenderer(@NotNull Computable<PsiElementListCellRenderer<?>> cellRendererProvider) {
+    myCellRenderer = cellRendererProvider;
+    return this;
+  }
+
+  /**
+   * @deprecated Use {{@link #createGutterIcon(AnnotationHolder, PsiElement)}} instead
+   */
+  @Deprecated(forRemoval = true)
   @Nullable
   public Annotation install(@NotNull DomElementAnnotationHolder holder, @Nullable DomElement element) {
     if (!myLazy && myTargets.getValue().isEmpty() || element == null) return null;
@@ -190,8 +212,14 @@ public class NavigationGutterIconBuilder<T> {
 
   public void createGutterIcon(@NotNull AnnotationHolder holder, @Nullable PsiElement element) {
     if (!myLazy && myTargets.getValue().isEmpty() || element == null) return;
-    holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(element).gutterIconRenderer(createGutterIconRenderer(
-      element.getProject())).needsUpdateOnTyping(false).create();
+
+    NavigationGutterIconRenderer renderer = createGutterIconRenderer(element.getProject());
+
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+      .range(element)
+      .gutterIconRenderer(renderer)
+      .needsUpdateOnTyping(false)
+      .create();
   }
 
   @NotNull

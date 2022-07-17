@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,8 +48,7 @@ public interface InspectionProfileManager {
   /**
    * @deprecated use {@link #getSeverityRegistrar()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default @NotNull SeverityRegistrar getOwnSeverityRegistrar() {
     return getSeverityRegistrar();
   }

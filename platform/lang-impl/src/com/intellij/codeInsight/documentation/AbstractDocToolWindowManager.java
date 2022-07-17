@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.util.Disposer;
@@ -8,6 +8,10 @@ import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated V2 implementation doesn't allow customization of the tool window in plugins.
+ */
+@Deprecated
 public abstract class AbstractDocToolWindowManager implements DocToolWindowManager {
 
   @Override

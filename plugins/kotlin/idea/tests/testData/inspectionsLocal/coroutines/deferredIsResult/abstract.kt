@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Unwrap 'Deferred' return type (breaks use-sites!)
 
 package kotlinx.coroutines

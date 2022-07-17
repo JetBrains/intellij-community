@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
@@ -14,6 +16,7 @@ class ConvertCollectionConstructorToFunction : SelfTargetingIntention<KtCallExpr
     KtCallExpression::class.java, KotlinBundle.lazyMessage("convert.collection.constructor.to.function")
 ) {
 
+    @SafeFieldForPreview
     private val functionMap = hashMapOf(
         "java.util.ArrayList.<init>" to "arrayListOf",
         "kotlin.collections.ArrayList.<init>" to "arrayListOf",
@@ -36,7 +39,7 @@ class ConvertCollectionConstructorToFunction : SelfTargetingIntention<KtCallExpr
         val fq = element.resolveToCall()?.resultingDescriptor?.fqNameSafe?.asString() ?: return
         val toCall = functionMap[fq] ?: return
         val callee = element.calleeExpression ?: return
-        callee.replace(KtPsiFactory(element).createIdentifier(toCall))
+        callee.replace(KtPsiFactory(element).createExpression(toCall))
         element.getQualifiedExpressionForSelector()?.replace(element)
     }
 }

@@ -1,5 +1,5 @@
 // "Add 'open fun f(): Int' to 'A'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 open class A {
 }
 class B : A() {

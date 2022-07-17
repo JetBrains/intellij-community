@@ -21,12 +21,12 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class MavenImportingSettings implements Cloneable {
@@ -62,6 +62,7 @@ public class MavenImportingSettings implements Cloneable {
   private boolean downloadDocsAutomatically = false;
   private boolean downloadAnnotationsAutomatically = false;
   private boolean autoDetectCompiler = true;
+  private boolean importToTreeStructure = false;
 
   private GeneratedSourcesFolder generatedSourcesFolder = GeneratedSourcesFolder.AUTODETECT;
 
@@ -114,8 +115,7 @@ public class MavenImportingSettings implements Cloneable {
    * @deprecated see {@link MavenImportingSettings#setImportAutomatically(boolean)} for details
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public boolean isImportAutomatically() {
     return importAutomatically;
   }
@@ -125,8 +125,7 @@ public class MavenImportingSettings implements Cloneable {
    * @deprecated Auto-import cannot be disabled
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public void setImportAutomatically(@SuppressWarnings("unused") boolean importAutomatically) {
     this.importAutomatically = importAutomatically;
   }
@@ -238,6 +237,17 @@ public class MavenImportingSettings implements Cloneable {
     this.autoDetectCompiler = autoDetectCompiler;
   }
 
+  @Deprecated //tree import will be replaced with WorkpsaceModel import
+  public boolean isImportToTreeStructure() {
+    return importToTreeStructure;
+  }
+
+  public void setImportToTreeStructure(boolean importToTreeStructure) {
+    boolean changedValue = !Objects.equals(this.importToTreeStructure, importToTreeStructure);
+    this.importToTreeStructure = importToTreeStructure;
+    if (changedValue) fireUpdateAllProjectStructure();
+  }
+
   @Property
   @NotNull
   public GeneratedSourcesFolder getGeneratedSourcesFolder() {
@@ -268,6 +278,10 @@ public class MavenImportingSettings implements Cloneable {
     this.jdkForImporter = jdkForImporter;
   }
 
+
+  public void copyListeners(MavenImportingSettings another) {
+    myListeners.addAll(another.myListeners);
+  }
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -282,6 +296,7 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadSourcesAutomatically != that.downloadSourcesAutomatically) return false;
     if (downloadAnnotationsAutomatically != that.downloadAnnotationsAutomatically) return false;
     if (autoDetectCompiler != that.autoDetectCompiler) return false;
+    if (importToTreeStructure != that.importToTreeStructure) return false;
     //if (lookForNested != that.lookForNested) return false;
     if (keepSourceFolders != that.keepSourceFolders) return false;
     if (excludeTargetFolder != that.excludeTargetFolder) return false;
@@ -320,6 +335,8 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadAnnotationsAutomatically) result++;
     result <<= 1;
     if (autoDetectCompiler) result++;
+    result <<= 1;
+    if (importToTreeStructure) result++;
     result <<= 1;
 
     result = 31 * result + (updateFoldersOnImportPhase != null ? updateFoldersOnImportPhase.hashCode() : 0);
@@ -362,10 +379,18 @@ public class MavenImportingSettings implements Cloneable {
     }
   }
 
+  private void fireUpdateAllProjectStructure() {
+    for (Listener each : myListeners) {
+      each.updateAllProjectStructure();
+    }
+  }
+
   public interface Listener {
 
     void createModuleGroupsChanged();
 
     void createModuleForAggregatorsChanged();
+
+    void updateAllProjectStructure();
   }
 }

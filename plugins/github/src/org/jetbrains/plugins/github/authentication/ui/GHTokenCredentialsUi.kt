@@ -5,7 +5,7 @@ import com.intellij.ide.BrowserUtil.browse
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.layout.*
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -28,7 +28,7 @@ internal class GHTokenCredentialsUi(
   val isAccountUnique: UniqueLoginPredicate
 ) : GHCredentialsUi() {
 
-  private val tokenTextField = JBTextField()
+  private val tokenTextField = JBPasswordField()
   private var fixedLogin: String? = null
 
   fun setToken(token: String) {

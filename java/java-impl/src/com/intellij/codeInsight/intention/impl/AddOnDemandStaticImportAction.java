@@ -59,8 +59,9 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
     if (!(gParent instanceof PsiJavaCodeReferenceElement) ||
         isParameterizedReference((PsiJavaCodeReferenceElement)gParent)) return null;
 
-    if (PsiUtilCore.getElementType(PsiTreeUtil.nextCodeLeaf(gParent)) == JavaTokenType.ARROW) {
-      return null;
+    if (PsiUtilCore.getElementType(PsiTreeUtil.nextCodeLeaf(gParent)) == JavaTokenType.ARROW &&
+        !(gParent.getParent() instanceof PsiCaseLabelElementList)) {
+        return null;
     }
 
     PsiElement resolved = refExpr.resolve();
@@ -122,7 +123,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
     return classToImport != null;
   }
 
-  public static boolean invoke(final Project project, PsiFile file, final Editor editor, PsiElement element) {
+  public static boolean invoke(final Project project, PsiFile file, final Editor editor, @NotNull PsiElement element) {
     final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     final PsiClass aClass = (PsiClass)refExpr.resolve();
     if (aClass == null) {
@@ -161,22 +162,24 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       copy.accept(new JavaRecursiveElementWalkingVisitor() {
         int delta;
         @Override
-        public void visitReferenceElement(PsiJavaCodeReferenceElement expression) {
-          if (isParameterizedReference(expression) ||
-              expression instanceof PsiMethodReferenceExpression ||
-              expression.getParent() instanceof PsiErrorElement) {
-            super.visitElement(expression);
-            return;
-          }
-          PsiElement qualifierExpression = expression.getQualifier();
-          if (qualifierExpression instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifierExpression).isReferenceTo(aClass)) {
+        public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement expression) {
+          PsiElement qualifierExpression;
+          if (!isParameterizedReference(expression) &&
+              !(expression instanceof PsiMethodReferenceExpression) &&
+              !(expression.getParent() instanceof PsiErrorElement) &&
+              (qualifierExpression = expression.getQualifier()) instanceof PsiJavaCodeReferenceElement &&
+              ((PsiJavaCodeReferenceElement)qualifierExpression).isReferenceTo(aClass)) {
             try {
-              PsiElement resolved = expression.resolve();
+              JavaResolveResult[] resolved = expression.multiResolve(false);
               int end = expression.getTextRange().getEndOffset();
               qualifierExpression.delete();
+              PsiElement firstChild = expression.getFirstChild();
+              if (firstChild instanceof PsiJavaToken && ((PsiJavaToken)firstChild).getTokenType() == JavaTokenType.DOT) {
+                firstChild.delete();
+              }
               delta += end - expression.getTextRange().getEndOffset();
-              PsiElement after = expression.resolve();
-              if (manager.areElementsEquivalent(after, resolved)) {
+              JavaResolveResult[] resolvedAfter = expression.multiResolve(false);
+              if (resolvesToSame(manager, resolved, resolvedAfter)) {
                 int offset = expression.getTextRange().getStartOffset() + delta;
                 PsiJavaCodeReferenceElement originalExpression =
                   PsiTreeUtil.findElementOfClassAtOffset(root, offset, PsiJavaCodeReferenceElement.class, false);
@@ -196,7 +199,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
               LOG.error(e);
             }
           }
-          super.visitElement(expression);
+          super.visitReferenceElement(expression);
         }
       });
 
@@ -214,7 +217,20 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
     return conflict.get();
   }
 
-  private static boolean collectChangedPlaces(Project project, Editor editor, List<PsiJavaCodeReferenceElement> expressionsToDequalify) {
+  private static boolean resolvesToSame(@NotNull PsiManager manager, JavaResolveResult @NotNull [] resolved, JavaResolveResult @NotNull [] resolvedAfter) {
+    // returns true if there's at least one element from "resolved" which is the same as one of "resolvedAfter"
+    for (JavaResolveResult result : resolved) {
+      if (!result.isAccessible()) continue;
+      for (JavaResolveResult resultAfter : resolvedAfter) {
+        if (resultAfter.isAccessible() && manager.areElementsEquivalent(result.getElement(), resultAfter.getElement())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean collectChangedPlaces(Project project, Editor editor, @NotNull List<? extends PsiJavaCodeReferenceElement> expressionsToDequalify) {
     boolean found = false;
     for (PsiJavaCodeReferenceElement expression : expressionsToDequalify) {
       if (!expression.isValid()) continue;

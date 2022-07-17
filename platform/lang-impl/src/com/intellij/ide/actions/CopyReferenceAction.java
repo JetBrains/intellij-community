@@ -4,18 +4,14 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -76,6 +72,11 @@ public class CopyReferenceAction extends DumbAwareAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @NotNull
   protected List<PsiElement> getPsiElements(DataContext dataContext, Editor editor) {
     return getElementsToCopy(editor, dataContext);
@@ -106,6 +107,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     highlight(editor, project, elements);
   }
 
+  @NlsSafe
   protected String getQualifiedName(Editor editor, List<? extends PsiElement> elements) {
     return CopyReferenceUtil.doCopy(elements, editor);
   }
@@ -124,17 +126,6 @@ public class CopyReferenceAction extends DumbAwareAction {
 
   @Nullable
   public static String elementToFqn(@Nullable final PsiElement element) {
-    return CopyReferenceUtil.elementToFqn(element, null);
-  }
-
-  public interface VirtualFileQualifiedNameProvider {
-    ExtensionPointName<VirtualFileQualifiedNameProvider> EP_NAME =
-      ExtensionPointName.create("com.intellij.virtualFileQualifiedNameProvider");
-
-    /**
-     * @return {@code virtualFile} fqn (relative path for example) or null if not handled by this provider
-     */
-    @Nullable
-    String getQualifiedName(@NotNull Project project, @NotNull VirtualFile virtualFile);
+    return FqnUtil.elementToFqn(element, null);
   }
 }

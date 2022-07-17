@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webcore.packaging;
 
 import com.intellij.ide.IdeBundle;
@@ -16,6 +16,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 
 public class PackagesNotificationPanel {
@@ -25,18 +26,22 @@ public class PackagesNotificationPanel {
   private PackageManagementService.ErrorDescription myErrorDescription;
 
   public PackagesNotificationPanel() {
+    this(PackagesNotificationPanel::showError);
+  }
+
+  public PackagesNotificationPanel(@NotNull BiConsumer<? super String, ? super PackageManagementService.ErrorDescription> showErrorFunction) {
     myHtmlViewer = SwingHelper.createHtmlViewer(true, null, null, null);
     myHtmlViewer.setVisible(false);
     myHtmlViewer.setOpaque(true);
     myHtmlViewer.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         final Runnable handler = myLinkHandlers.get(e.getDescription());
         if (handler != null) {
           handler.run();
         }
         else if (myErrorTitle != null && myErrorDescription != null) {
-          showError(myErrorTitle, myErrorDescription);
+          showErrorFunction.accept(myErrorTitle, myErrorDescription);
         }
       }
     });

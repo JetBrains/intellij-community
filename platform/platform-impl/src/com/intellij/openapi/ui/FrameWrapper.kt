@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
 import com.intellij.application.options.RegistryManager
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
-import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CommonShortcuts
@@ -28,22 +27,20 @@ import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.LinuxIdeMenuBar.Companion.doBindAppMenuOfParent
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.appendTitlePart
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
-import com.intellij.ui.AppUIUtil
-import com.intellij.ui.BalloonLayout
-import com.intellij.ui.ComponentUtil
-import com.intellij.ui.FrameState
-import com.intellij.util.SystemProperties
+import com.intellij.ui.*
+import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.JBR
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.resolvedPromise
 import java.awt.*
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
+import java.util.function.Supplier
 import javax.swing.*
 
 open class FrameWrapper @JvmOverloads constructor(project: Project?,
@@ -55,10 +52,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
   private var images: List<Image> = emptyList()
   private var isCloseOnEsc = false
   private var onCloseHandler: BooleanGetter? = null
-  private var isDecorated: Boolean = true
   private var frame: Window? = null
   private var project: Project? = null
-  private var focusWatcher: FocusWatcher? = null
   private var isDisposing = false
 
   var isDisposed = false
@@ -107,7 +102,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
 
     UIUtil.decorateWindowHeader((frame as RootPaneContainer).rootPane)
     if (frame is JFrame) {
-      UIUtil.setCustomTitleBar(frame, frame.rootPane) { runnable ->
+      val handlerProvider = Supplier { FullScreeSupport.NEW.apply("com.intellij.ui.mac.MacFullScreenSupport") }
+      ToolbarUtil.setTransparentTitleBar(frame, frame.rootPane, handlerProvider) { runnable ->
         Disposer.register(this, Disposable { runnable.run() })
       }
     }
@@ -115,7 +111,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     val focusListener = object : WindowAdapter() {
       override fun windowOpened(e: WindowEvent) {
         val focusManager = IdeFocusManager.getInstance(project)
-        val toFocus = preferredFocusedComponent ?: focusManager.getFocusTargetFor(component!!)
+        val toFocus = focusManager.getLastFocusedFor(e.window) ?: preferredFocusedComponent ?: focusManager.getFocusTargetFor(component!!)
         if (toFocus != null) {
           focusManager.requestFocus(toFocus, true)
         }
@@ -166,14 +162,12 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       frame.iconImages = images.map { ImageUtil.toBufferedImage(it) }
     }
 
-    if (SystemInfo.isLinux && frame is JFrame && GlobalMenuLinux.isAvailable()) {
+    if (SystemInfoRt.isLinux && frame is JFrame && GlobalMenuLinux.isAvailable()) {
       val parentFrame = WindowManager.getInstance().getFrame(project)
       if (parentFrame != null) {
         doBindAppMenuOfParent(frame, parentFrame)
       }
     }
-    focusWatcher = FocusWatcher()
-    focusWatcher!!.install(component!!)
   }
 
   fun show(restoreBounds: Boolean) {
@@ -186,6 +180,9 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       loadFrameState(state)
     }
 
+    if (SystemInfoRt.isMac) {
+      TouchbarSupport.showWindowActions(this, frame)
+    }
     frame.isVisible = true
   }
 
@@ -212,10 +209,6 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     this.frame = null
     preferredFocusedComponent = null
     project = null
-    if (component != null && focusWatcher != null) {
-      focusWatcher!!.deinstall(component)
-    }
-    focusWatcher = null
     component = null
     images = emptyList()
     isDisposed = true
@@ -262,7 +255,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
   val isActive: Boolean
     get() = frame?.isActive == true
 
-  protected open fun createJFrame(parent: IdeFrame): JFrame = MyJFrame(this, parent, isDecorated)
+  protected open fun createJFrame(parent: IdeFrame): JFrame = MyJFrame(this, parent)
 
   protected open fun createJDialog(parent: IdeFrame): JDialog = MyJDialog(this, parent)
 
@@ -295,10 +288,6 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     onCloseHandler = value
   }
 
-  fun setIsDecorated(value: Boolean) {
-    isDecorated = value
-  }
-
   protected open fun loadFrameState(state: WindowState?) {
     val frame = getFrame()
     if (state == null) {
@@ -313,34 +302,29 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     (frame as RootPaneContainer).rootPane.revalidate()
   }
 
-  private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeFrame, decorated: Boolean = true) : JFrame(), DataProvider, IdeFrame.Child, IdeFrameEx {
+  private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeFrame) : JFrame(), DataProvider, IdeFrame.Child, IdeFrameEx {
     private var frameTitle: String? = null
     private var fileTitle: String? = null
     private var file: Path? = null
-    var myFrameDecorator: IdeFrameDecorator? = null
 
     init {
       FrameState.setFrameStateListener(this)
       glassPane = IdeGlassPaneImpl(getRootPane(), true)
-      if (SystemInfo.isMac && !(SystemInfo.isMacSystemMenu && SystemProperties.`is`("mac.system.menu.singleton"))) {
-        jMenuBar = IdeMenuBar.createMenuBar()
+      if (SystemInfoRt.isMac && !(SystemInfo.isMacSystemMenu && java.lang.Boolean.getBoolean("mac.system.menu.singleton"))) {
+        jMenuBar = IdeMenuBar.createMenuBar().setFrame(this)
+
       }
       MouseGestureManager.getInstance().add(this)
       focusTraversalPolicy = IdeFocusTraversalPolicy()
-      // NB!: the root pane must be set before decorator,
-      // which holds its own client properties in a root pane
-      if (decorated) {
-        myFrameDecorator = IdeFrameDecorator.decorate(this, owner)
-      }
     }
 
     override fun isInFullScreen() = false
 
-    override fun toggleFullScreen(state: Boolean): Promise<*> = resolvedPromise<Any>()
+    override fun toggleFullScreen(state: Boolean): CompletableFuture<*> = CompletableFuture.completedFuture(null)
 
     override fun addNotify() {
       if (IdeFrameDecorator.isCustomDecorationActive()) {
-        JdkEx.setHasCustomDecoration(this)
+        JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true)
       }
       super.addNotify()
     }
@@ -354,6 +338,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     override fun suggestChildFrameBounds(): Rectangle = parent.suggestChildFrameBounds()
 
     override fun getProject() = parent.project
+
+    override fun notifyProjectActivation() = parent.notifyProjectActivation()
 
     override fun setFrameTitle(title: String) {
       frameTitle = title
@@ -431,6 +417,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     override fun suggestChildFrameBounds(): Rectangle = parent.suggestChildFrameBounds()
 
     override fun getProject(): Project? = parent.project
+
+    override fun notifyProjectActivation() = parent.notifyProjectActivation()
 
     init {
       glassPane = IdeGlassPaneImpl(getRootPane())

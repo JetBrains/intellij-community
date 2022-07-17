@@ -51,7 +51,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
   private RunConfiguration myConfiguration;
 
   public BeforeRunComponent(@NotNull Disposable parentDisposable) {
-    super(new WrapLayout(FlowLayout.LEADING, 0, FragmentedSettingsBuilder.TAG_VGAP));
+    super(new WrapLayout(FlowLayout.LEADING, 0, JBUI.scale(FragmentedSettingsBuilder.TAG_VGAP)));
     Disposer.register(parentDisposable, this);
     add(Box.createVerticalStrut(30));
 
@@ -263,7 +263,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     private BeforeRunTask<?> myTask;
     private int myOrder;
 
-    private TaskButton(@NotNull BeforeRunTaskProvider<BeforeRunTask<?>> provider, Consumer<AnActionEvent> action) {
+    private TaskButton(@NotNull BeforeRunTaskProvider<BeforeRunTask<?>> provider, Consumer<? super AnActionEvent> action) {
       super(provider.getName(), action);
       Disposer.register(BeforeRunComponent.this, this);
       add(myDropPlace, JLayeredPane.DRAG_LAYER);
@@ -303,8 +303,8 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
 
     private void updateButton() {
       if (myTask == null) return;
-      updateButton(myOrder + ". " + myProvider.getDescription(myTask), myProvider.getTaskIcon(myTask),
-                   !DumbService.isDumb(myConfiguration.getProject()) || DumbService.isDumbAware(myProvider));
+      setEnabled(!DumbService.isDumb(myConfiguration.getProject()) || DumbService.isDumbAware(myProvider));
+      updateButton(myOrder + ". " + myProvider.getDescription(myTask), myProvider.getTaskIcon(myTask));
     }
 
     private void showDropPlace(boolean show) {

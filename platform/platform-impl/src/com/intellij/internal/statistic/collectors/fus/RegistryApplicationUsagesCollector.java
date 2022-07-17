@@ -34,8 +34,8 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.*;
 public final class RegistryApplicationUsagesCollector extends ApplicationUsagesCollector {
   public static final String DISABLE_INTELLIJ_PROJECT_ANALYTICS = "ide.disable.intellij.project.analytics";
 
-  private static final EventLogGroup GROUP = new EventLogGroup("platform.registry", 4);
-  private static final StringEventField REGISTRY_KEY = EventFields.StringValidatedByCustomRule("id", "registry_key");
+  private static final EventLogGroup GROUP = new EventLogGroup("platform.registry", 5);
+  private static final StringEventField REGISTRY_KEY = EventFields.StringValidatedByCustomRule("id", RegistryUtilValidator.class);
 
   private static final VarargEventId REGISTRY = GROUP.registerVarargEvent("registry", REGISTRY_KEY, EventFields.PluginInfo);
   private static final VarargEventId EXPERIMENT = GROUP.registerVarargEvent("experiment", REGISTRY_KEY, EventFields.PluginInfo);
@@ -76,9 +76,10 @@ public final class RegistryApplicationUsagesCollector extends ApplicationUsagesC
   }
 
   public static class RegistryUtilValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "registry_key".equals(ruleId);
+    public String getRuleId() {
+      return "registry_key";
     }
 
     @NotNull

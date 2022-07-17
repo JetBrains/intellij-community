@@ -7,17 +7,21 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.intentions.ReplaceItWithExplicitFunctionLiteralParamIntention
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 
 class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection() {
     companion object {
@@ -34,7 +38,7 @@ class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection
             if (lambda.valueParameters.isNotEmpty()) return
             if (lambda.getStrictParentOfType<KtLambdaExpression>() == null) return
 
-            val context = lambda.analyze()
+            val context = lambda.safeAnalyzeNonSourceRootCode()
             val implicitParameter = lambda.getImplicitParameter(context) ?: return
             if (lambda.getParentImplicitParameterLambda(context) == null) return
 
@@ -53,7 +57,7 @@ class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection
                         KotlinBundle.message("implicit.parameter.it.of.enclosing.lambda.is.shadowed"),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                         AddExplicitParameterToOuterLambdaFix(),
-                        IntentionWrapper(ReplaceItWithExplicitFunctionLiteralParamIntention(), containingFile)
+                        IntentionWrapper(ReplaceItWithExplicitFunctionLiteralParamIntention())
                     )
                 }
             }

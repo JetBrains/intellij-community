@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.actions;
 
@@ -11,11 +11,8 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ExecutionDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.ide.ui.IdeUiService;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -24,7 +21,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,9 +28,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +47,8 @@ public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance(ConfigurationContext.class);
   public static final Key<ConfigurationContext> SHARED_CONTEXT = Key.create("SHARED_CONTEXT");
 
-  private final Location<PsiElement> myLocation;
+  private final Location<? extends PsiElement> myLocation;
+  private final Editor myEditor;
   private RunnerAndConfigurationSettings myConfiguration;
   private boolean myInitialized;
   private boolean myMultipleSelection;
@@ -68,7 +63,7 @@ public class ConfigurationContext {
 
 
   /**
-   * @deprecated use {@link this#getFromContext(DataContext dataContext, String place)}
+   * @deprecated use {@link ConfigurationContext#getFromContext(DataContext dataContext, String place)}
    */
   @NotNull
   @Deprecated
@@ -79,20 +74,21 @@ public class ConfigurationContext {
   @NotNull
   public static ConfigurationContext getFromContext(DataContext dataContext, String place) {
     DataManager dataManager = DataManager.getInstance();
+
     ConfigurationContext sharedContext = dataManager.loadFromDataContext(dataContext, SHARED_CONTEXT);
-    Pair<Location<PsiElement>, Boolean> calculatedLocation = null;
-    Module module = null;
-    if (sharedContext == null ||
-        sharedContext.getLocation() == null ||
-        (calculatedLocation = calcLocation(dataContext, module = LangDataKeys.MODULE.getData(dataContext))).getFirst() == null ||
-        !Comparing.equal(sharedContext.getLocation().getPsiElement(), calculatedLocation.getFirst().getPsiElement())) {
-      if (calculatedLocation==null) {
-        module = LangDataKeys.MODULE.getData(dataContext);
-        calculatedLocation = calcLocation(dataContext, module);
-      }
-      sharedContext = new ConfigurationContext(dataContext, calculatedLocation.getFirst(), module, calculatedLocation.getSecond(), place);
+    Location<?> sharedLocation = sharedContext == null ? null : sharedContext.getLocation();
+    PsiElement sharedPsiElement = sharedLocation == null ? null : sharedLocation.getPsiElement();
+
+    Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
+    Location<PsiElement> location = calcLocation(dataContext, module);
+    PsiElement psiElement = location == null ? null : location.getPsiElement();
+
+    if (sharedLocation == null || location == null || !Comparing.equal(sharedPsiElement, psiElement)) {
+      boolean isMultipleSelection = isMultipleSelection(dataContext);
+      sharedContext = new ConfigurationContext(dataContext, location, module, isMultipleSelection, place);
       dataManager.saveInDataContext(dataContext, SHARED_CONTEXT, sharedContext);
     }
+
     return sharedContext;
   }
 
@@ -101,10 +97,14 @@ public class ConfigurationContext {
     return new ConfigurationContext(location);
   }
 
-  private ConfigurationContext(final DataContext dataContext, Location<PsiElement> location, Module module, boolean multipleSelection, String place) {
+  private ConfigurationContext(@NotNull DataContext dataContext,
+                               @Nullable Location<PsiElement> location,
+                               @Nullable Module module,
+                               boolean multipleSelection,
+                               String place) {
     RunConfiguration configuration = RunConfiguration.DATA_KEY.getData(dataContext);
     if (configuration == null) {
-      ExecutionEnvironment environment = dataContext.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
+      ExecutionEnvironment environment = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(dataContext);
       if (environment != null) {
         myConfiguration = environment.getRunnerAndConfigurationSettings();
         if (myConfiguration != null) {
@@ -113,6 +113,7 @@ public class ConfigurationContext {
         }
       }
     }
+    myEditor = CommonDataKeys.EDITOR.getData(dataContext);
     myRuntimeConfiguration = configuration;
     myDataContext = dataContext;
     myModule = module;
@@ -121,62 +122,64 @@ public class ConfigurationContext {
     myPlace = place;
   }
 
-  @NotNull
-  private static Pair<Location<PsiElement>,Boolean> calcLocation(@NotNull DataContext dataContext, Module module) {
-    @SuppressWarnings({"unchecked"}) Location<PsiElement> location = (Location<PsiElement>)Location.DATA_KEY.getData(dataContext);
+  private static @Nullable Location<PsiElement> calcLocation(@NotNull DataContext dataContext, Module module) {
+    Location<?> location = Location.DATA_KEY.getData(dataContext);
     if (location != null) {
-      Location<?>[] locations = Location.DATA_KEYS.getData(dataContext);
-      boolean myMultipleSelection = locations != null && locations.length > 1;
-      return Pair.create(location, myMultipleSelection);
+      //noinspection unchecked
+      return (Location<PsiElement>)location;
     }
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
-      return Pair.create(null, false);
+      return null;
     }
-    final PsiElement element = getSelectedPsiElement(dataContext, project);
+    PsiElement element = getSelectedPsiElement(dataContext, project);
     if (element == null) {
-      return Pair.create(null, false);
+      return null;
     }
-    location = new PsiLocation<>(project, module, element);
-    final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-    boolean myMultipleSelection;
-    if (elements != null) {
-      myMultipleSelection = elements.length > 1;
-    }
-    else {
-      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-      myMultipleSelection = files != null && files.length > 1;
-    }
-    return Pair.create(location, myMultipleSelection);
+    return new PsiLocation<>(project, module, element);
+  }
+
+  private static boolean isMultipleSelection(@NotNull DataContext dataContext) {
+    Location<?> location = Location.DATA_KEY.getData(dataContext);
+    Location<?>[] locations = Location.DATA_KEYS.getData(dataContext);
+    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    return location != null && locations != null && locations.length > 1 ||
+           elements != null && elements.length > 1 ||
+           files != null && files.length > 1;
   }
 
   public ConfigurationContext(@NotNull PsiElement element) {
     myModule = ModuleUtilCore.findModuleForPsiElement(element);
     myLocation = new PsiLocation<>(element.getProject(), myModule, element);
     myRuntimeConfiguration = null;
-    myDataContext = this::getDefaultData;
+    myDataContext = getDefaultDataContext();
+    myEditor = null;
     myPlace = null;
   }
 
-  private ConfigurationContext(@NotNull Location location) {
-    //noinspection unchecked
+  private ConfigurationContext(@NotNull Location<? extends PsiElement> location) {
     myLocation = location;
     myModule = location.getModule();
+    myEditor = null;
     myRuntimeConfiguration = null;
-    myDataContext = this::getDefaultData;
+    myDataContext = getDefaultDataContext();
     myPlace = null;
   }
 
-  private Object getDefaultData(String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) return myLocation.getProject();
-    if (LangDataKeys.MODULE.is(dataId)) return myModule;
+  private @Nullable Object getDefaultData(@NotNull String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) return myLocation == null ? null : myLocation.getProject();
+    if (PlatformCoreDataKeys.MODULE.is(dataId)) return myModule;
     if (Location.DATA_KEY.is(dataId)) return myLocation;
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) return myLocation.getPsiElement();
-    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) return ContainerUtil.ar(myLocation.getPsiElement());
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return PsiUtilCore.getVirtualFile(myLocation.getPsiElement());
+    if (CommonDataKeys.EDITOR.is(dataId)) return myEditor;
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) return myLocation == null ? null : myLocation.getPsiElement();
     return null;
   }
 
+  public @NotNull DataContext getDefaultDataContext() {
+    return IdeUiService.getInstance().createCustomizedDataContext(DataContext.EMPTY_CONTEXT, this::getDefaultData);
+  }
+  
   public boolean containsMultipleSelection() {
     return myMultipleSelection;
   }
@@ -395,8 +398,7 @@ public class ConfigurationContext {
     return myRuntimeConfiguration == null || myRuntimeConfiguration.getType() == type;
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable
   public List<RuntimeConfigurationProducer> findPreferredProducers() {
     if (myPreferredProducers == null) {
@@ -408,9 +410,17 @@ public class ConfigurationContext {
   @Nullable
   public List<ConfigurationFromContext> getConfigurationsFromContext() {
     if (myConfigurationsFromContext == null) {
-      myConfigurationsFromContext = PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true);
+      myConfigurationsFromContext = PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true, true);
     }
     return myConfigurationsFromContext;
+  }
+
+  /**
+   * The same as {@link #getConfigurationsFromContext()} but this method doesn't search among existing run configurations
+   */
+  public @Nullable List<ConfigurationFromContext> createConfigurationsFromContext() {
+    // At the moment of writing, caching is not needed here, the result is cached outside.
+    return PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true, false);
   }
 
   private static final class ExistingConfiguration {

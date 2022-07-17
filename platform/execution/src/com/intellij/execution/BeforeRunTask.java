@@ -36,7 +36,7 @@ public abstract class BeforeRunTask<T extends BeforeRunTask<?>> implements Clone
   @Deprecated
   public void writeExternal(@NotNull Element element) {
     if (this instanceof PersistentStateComponent) {
-      ((PersistentStateComponent)this).getState();
+      ((PersistentStateComponent<?>)this).getState();
     }
     else {
       element.setAttribute("enabled", String.valueOf(myIsEnabled));

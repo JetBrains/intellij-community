@@ -16,6 +16,7 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
@@ -25,8 +26,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
-import com.intellij.refactoring.makeStatic.Settings;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -63,8 +63,17 @@ public class MethodMayBeStaticInspection extends BaseInspection {
       public void doFix(Project project, ProblemDescriptor descriptor) {
         final PsiMethod element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
         if (element != null) {
-          new MakeMethodStaticProcessor(project, element, new Settings(m_replaceQualifier, null, null)).run();
+          JavaRefactoringFactory.getInstance(project).createMakeMethodStatic(element, m_replaceQualifier, null, PsiField.EMPTY_ARRAY, null).run();
         }
+      }
+
+      @Override
+      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+        final PsiMethod element = PsiTreeUtil.getParentOfType(previewDescriptor.getPsiElement(), PsiMethod.class);
+        if (element != null) {
+          element.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+        }
+        return IntentionPreviewInfo.DIFF;
       }
 
       @Override

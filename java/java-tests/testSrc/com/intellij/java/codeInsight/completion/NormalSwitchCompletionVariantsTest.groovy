@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.NeedsIndex
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
@@ -28,7 +29,11 @@ class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTestCase 
   void testCompletionPrimitiveTypeStmt() { doTest(COMMON_VARIANTS) }
   void testCompletionVariantsInStmt() { doTest(COMMON_OBJECT_VARIANTS) }
   void testCompletionVariantsInExpr() { doTest(COMMON_OBJECT_VARIANTS) }
+
+  @NeedsIndex.Full
   void testCompletionSealedHierarchyStmt() { doTest(COMMON_OBJECT_VARIANTS + ["case Variant1", "case Variant2"]) }
+
+  @NeedsIndex.Full
   void testCompletionSealedHierarchyExpr() { doTest(COMMON_OBJECT_VARIANTS + ["case Variant1", "case Variant2"]) }
 
   private void doTest(String[] variants) {

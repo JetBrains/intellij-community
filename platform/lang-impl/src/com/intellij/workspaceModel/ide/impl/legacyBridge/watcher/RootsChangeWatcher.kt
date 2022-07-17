@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.watcher
 
 import com.google.common.io.Files
@@ -13,7 +13,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
@@ -25,16 +24,18 @@ import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener.Companion.calculateRootsChangeType
+import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener.Companion.shouldFireRootsChanged
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher.Companion.calculateAffectedEntities
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -57,21 +58,19 @@ internal class RootsChangeWatcher(val project: Project) {
     }
 
     VirtualFileManager.getInstance().addAsyncFileListener(object : AsyncFileListener {
-      @Volatile
-      private var result: ProjectRootManagerImpl.RootsChangeType? = null
       private val changedUrlsList = ContainerUtil.createConcurrentList<Pair<String, String>>()
       private val changedModuleStorePaths = ContainerUtil.createConcurrentList<Pair<Module, Path>>()
 
-      override fun prepareChange(events: MutableList<out VFileEvent>): AsyncFileListener.ChangeApplier {
-        result = null
+      override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier {
+        val entityChanges = EntityChangeStorage()
         changedUrlsList.clear()
         changedModuleStorePaths.clear()
 
         val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
         events.forEach { event ->
           when (event) {
-            is VFileDeleteEvent -> calculateRootsChangeTypeIfNeeded(entityStorage, virtualFileManager.fromUrl(event.file.url),
-                                                                    ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED)
+            is VFileDeleteEvent ->
+              calculateEntityChangesIfNeeded(entityChanges, entityStorage, virtualFileManager.fromUrl(event.file.url), true)
             is VFileCreateEvent -> {
               val parentUrl = event.parent.url
               val protocolEnd = parentUrl.indexOf(URLUtil.SCHEME_SEPARATOR)
@@ -82,26 +81,23 @@ internal class RootsChangeWatcher(val project: Project) {
                 VfsUtilCore.pathToUrl(event.path)
               }
               val virtualFileUrl = virtualFileManager.fromUrl(url)
-              calculateRootsChangeTypeIfNeeded(entityStorage, virtualFileUrl, ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED)
+              calculateEntityChangesIfNeeded(entityChanges, entityStorage, virtualFileUrl, false)
               if (url.startsWith(URLUtil.FILE_PROTOCOL) && (event.isDirectory || event.childName.endsWith(".jar"))) {
                 //if a new directory or a new jar file is created, we may have roots pointing to files under it with jar protocol
                 val suffix = if (event.isDirectory) "" else URLUtil.JAR_SEPARATOR
                 val jarFileUrl = URLUtil.JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR + VfsUtil.urlToPath(url) + suffix
                 val jarVirtualFileUrl = virtualFileManager.fromUrl(jarFileUrl)
-                calculateRootsChangeTypeIfNeeded(entityStorage, jarVirtualFileUrl, ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED)
+                calculateEntityChangesIfNeeded(entityChanges, entityStorage, jarVirtualFileUrl, false)
               }
             }
-            is VFileCopyEvent -> calculateRootsChangeTypeIfNeeded(entityStorage,
-                                                                  virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(event.path)),
-                                                                  ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED)
+            is VFileCopyEvent -> calculateEntityChangesIfNeeded(entityChanges, entityStorage,
+              virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(event.path)), false)
             is VFilePropertyChangeEvent, is VFileMoveEvent -> {
               if (event is VFilePropertyChangeEvent) propertyChanged(event)
               val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
               if (oldUrl != newUrl) {
-                calculateRootsChangeTypeIfNeeded(entityStorage, virtualFileManager.fromUrl(oldUrl),
-                                                 ProjectRootManagerImpl.RootsChangeType.GENERIC)
-                calculateRootsChangeTypeIfNeeded(entityStorage, virtualFileManager.fromUrl(newUrl),
-                                                 ProjectRootManagerImpl.RootsChangeType.GENERIC)
+                calculateEntityChangesIfNeeded(entityChanges, entityStorage, virtualFileManager.fromUrl(oldUrl), true)
+                calculateEntityChangesIfNeeded(entityChanges, entityStorage, virtualFileManager.fromUrl(newUrl), false)
                 changedUrlsList.add(Pair(oldUrl, newUrl))
               }
             }
@@ -111,7 +107,7 @@ internal class RootsChangeWatcher(val project: Project) {
         return object : AsyncFileListener.ChangeApplier {
           override fun beforeVfsChange() {
             changedUrlsList.forEach { (oldUrl, newUrl) -> virtualFileUrlWatcher.onVfsChange(oldUrl, newUrl) }
-            fireRootsChangeEvent(true)
+            fireRootsChangeEvent(true, entityChanges)
           }
 
           override fun afterVfsChange() {
@@ -121,32 +117,43 @@ internal class RootsChangeWatcher(val project: Project) {
               ClasspathStorage.modulePathChanged(module)
             }
             if (changedModuleStorePaths.isNotEmpty()) moduleManager.incModificationCount()
-            fireRootsChangeEvent()
+            fireRootsChangeEvent(entityChangesStorage = entityChanges)
           }
         }
       }
 
-      fun isUnderJarDirectory(storage: WorkspaceEntityStorage, virtualFileUrl: VirtualFileUrl): Boolean {
+      private fun getIncludingJarDirectory(storage: EntityStorage,
+                                           virtualFileUrl: VirtualFileUrl): VirtualFileUrl? {
         val indexedJarDirectories = (storage.getVirtualFileUrlIndex() as VirtualFileIndex).getIndexedJarDirectories()
         var parentVirtualFileUrl: VirtualFileUrl? = virtualFileUrl
         while (parentVirtualFileUrl != null && parentVirtualFileUrl !in indexedJarDirectories) {
           parentVirtualFileUrl = virtualFileManager.getParentVirtualUrl(parentVirtualFileUrl)
         }
-        return parentVirtualFileUrl != null && parentVirtualFileUrl in indexedJarDirectories
+        return if (parentVirtualFileUrl != null && parentVirtualFileUrl in indexedJarDirectories) parentVirtualFileUrl else null
       }
 
-      fun calculateRootsChangeTypeIfNeeded(storage: WorkspaceEntityStorage, virtualFileUrl: VirtualFileUrl,
-                                           currentRootsChangeType: ProjectRootManagerImpl.RootsChangeType) {
-        if (result == ProjectRootManagerImpl.RootsChangeType.GENERIC) return
-        if (isUnderJarDirectory(storage, virtualFileUrl)) {
-          result = calculateRootsChangeType(result, currentRootsChangeType)
+      private fun calculateEntityChangesIfNeeded(entityChanges: EntityChangeStorage,
+                                                 storage: EntityStorage,
+                                                 virtualFileUrl: VirtualFileUrl,
+                                                 allRootsWereRemoved: Boolean) {
+        val includingJarDirectory = getIncludingJarDirectory(storage, virtualFileUrl)
+        if (includingJarDirectory != null) {
+          val entities = if (allRootsWereRemoved) emptyList()
+          else
+            storage.getVirtualFileUrlIndex().findEntitiesByUrl(includingJarDirectory).toList()
+          entityChanges.addAll(entities.map { pair -> pair.first })
           return
         }
+
         val affectedEntities = mutableListOf<EntityWithVirtualFileUrl>()
         calculateAffectedEntities(storage, virtualFileUrl, affectedEntities)
         virtualFileUrl.subTreeFileUrls.forEach { fileUrl -> calculateAffectedEntities(storage, fileUrl, affectedEntities) }
-        if (affectedEntities.none { shouldFireRootsChanged(it.entity, project) } && virtualFileUrl.url !in projectFilePaths) return
-        result = calculateRootsChangeType(result, currentRootsChangeType)
+
+        if (affectedEntities.any { it.propertyName != "entitySource" && shouldFireRootsChanged(it.entity, project) }
+            || virtualFileUrl.url in projectFilePaths) {
+          val changes = if (allRootsWereRemoved) emptyList() else affectedEntities.map { it.entity }
+          entityChanges.addAll(changes)
+        }
       }
 
       private fun isRootChangeForbidden(): Boolean {
@@ -156,9 +163,10 @@ internal class RootsChangeWatcher(val project: Project) {
         return projectRootManager.isFiringEvent()
       }
 
-      private fun fireRootsChangeEvent(beforeRootsChanged: Boolean = false) {
+      private fun fireRootsChangeEvent(beforeRootsChanged: Boolean = false, entityChangesStorage: EntityChangeStorage) {
         ApplicationManager.getApplication().assertWriteAccessAllowed()
-        if (result != null && !isRootChangeForbidden()) {
+        val indexingInfo = entityChangesStorage.createIndexingInfo()
+        if (indexingInfo != null && !isRootChangeForbidden()) {
           val projectRootManager = ProjectRootManager.getInstance(project) as ProjectRootManagerBridge
           if (beforeRootsChanged)
             projectRootManager.rootsChanged.beforeRootsChanged()
@@ -166,7 +174,7 @@ internal class RootsChangeWatcher(val project: Project) {
             if (log.isTraceEnabled) {
               log.trace("Roots changed: changed urls = $changedUrlsList, changed module store paths = $changedModuleStorePaths")
             }
-            projectRootManager.rootsChanged.rootsChanged(result!!)
+            projectRootManager.rootsChanged.rootsChanged(indexingInfo)
           }
         }
       }
@@ -180,7 +188,7 @@ internal class RootsChangeWatcher(val project: Project) {
         val workspaceModel = WorkspaceModel.getInstance(project)
         val moduleEntity = workspaceModel.entityStorage.current.resolve(ModuleId(oldModuleName)) ?: return
         workspaceModel.updateProjectModel { diff ->
-          diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) { this.name = newModuleName }
+          diff.modifyEntity(moduleEntity) { this.name = newModuleName }
         }
       }
 
@@ -228,5 +236,19 @@ internal class RootsChangeWatcher(val project: Project) {
 
     @JvmStatic
     fun getInstance(project: Project): RootsChangeWatcher = project.getComponent(RootsChangeWatcher::class.java)
+
+    private class EntityChangeStorage {
+      private var entities: MutableList<WorkspaceEntity>? = null
+
+      private fun initChanges(): MutableList<WorkspaceEntity> = entities ?: (mutableListOf<WorkspaceEntity>().also { entities = it })
+
+      fun addAll(addedEntities: Collection<WorkspaceEntity>) {
+        initChanges().addAll(addedEntities)
+      }
+
+      fun createIndexingInfo() = entities?.let { it ->
+        ProjectRootsChangeListener.WorkspaceEventRescanningInfo(it.map { entity -> EntityChange.Added(entity) }, false)
+      }
+    }
   }
 }

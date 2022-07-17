@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -11,6 +11,8 @@ import com.intellij.util.indexing.UnindexedFilesUpdater;
 import junit.framework.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.internal.MethodSorter;
+import org.junit.runner.Describable;
+import org.junit.runner.Description;
 
 import java.lang.reflect.*;
 
@@ -24,10 +26,6 @@ import static junit.framework.TestSuite.warning;
  * {@link com.jetbrains.php.slowTests.PhpDumbCompletionTestSuite}
  */
 public interface TestIndexingModeSupporter {
-  /**
-   * If you need to reproduce problem with a specific indexing mode,
-   * annotate test method with {@link NeedsIndex.Exact}.
-   */
   enum IndexingMode {
     SMART {
       @Override
@@ -92,28 +90,6 @@ public interface TestIndexingModeSupporter {
         dumbService.queueTask(new UnindexedFilesUpdater(project));
         dumbService.setDumb(true);
       });
-    }
-  }
-
-  /**
-   * Must be called from testcase setup
-   */
-  default void initIndexingMode() {
-    if (this instanceof TestCase) {
-      String testName = ((TestCase)this).getName();
-      if (testName != null) {
-        NeedsIndex.Exact exact = null;
-        try {
-          exact = getClass().getMethod(testName).getAnnotation(NeedsIndex.Exact.class);
-        }
-        catch (NoSuchMethodException ignored) {
-        }
-        if (exact != null) {
-          //noinspection UseOfSystemOutOrSystemErr
-          System.out.println(testName + ": force indexing mode to " + exact.value());
-          setIndexingMode(exact.value());
-        }
-      }
     }
   }
 
@@ -241,7 +217,7 @@ public interface TestIndexingModeSupporter {
      * }
      */
     private static class MyHackyJUnitTaskMirrorImpl {
-      private static class VmExitErrorTest implements Test {
+      private static class VmExitErrorTest implements Test, Describable {
         private final TestCase myTestCase;
         private final IndexingMode myMode;
 
@@ -273,6 +249,11 @@ public interface TestIndexingModeSupporter {
         @Override
         public String toString() {
           return myTestCase.getClass().getName() + "." + myTestCase.getName() + " with IndexingMode " + myMode.name();
+        }
+
+        @Override
+        public Description getDescription() {
+          return Description.createTestDescription(myTestCase.getClass(), myTestCase.getName() + "[" + myMode.name() + "]");
         }
       }
     }

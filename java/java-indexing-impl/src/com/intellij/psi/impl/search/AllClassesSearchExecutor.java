@@ -24,19 +24,13 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
   public boolean execute(@NotNull final AllClassesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiClass> consumer) {
     SearchScope scope = queryParameters.getScope();
 
-    if (scope == GlobalSearchScope.EMPTY_SCOPE) {
+    if (SearchScope.isEmptyScope(scope)) {
       return true;
     }
 
     if (scope instanceof GlobalSearchScope) {
       PsiManager manager = PsiManager.getInstance(queryParameters.getProject());
-      manager.startBatchFilesProcessingMode();
-      try {
-        return processAllClassesInGlobalScope((GlobalSearchScope)scope, queryParameters, consumer);
-      }
-      finally {
-        manager.finishBatchFilesProcessingMode();
-      }
+      return manager.runInBatchFilesMode(() -> processAllClassesInGlobalScope((GlobalSearchScope)scope, queryParameters, consumer));
     }
 
     PsiElement[] scopeRoots = ((LocalSearchScope)scope).getScope();
@@ -115,7 +109,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         stopped[0] = !processor.process(aClass);
         super.visitClass(aClass);
       }
@@ -128,7 +122,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         stopped[0] = !processor.process(aClass);
         super.visitClass(aClass);
       }

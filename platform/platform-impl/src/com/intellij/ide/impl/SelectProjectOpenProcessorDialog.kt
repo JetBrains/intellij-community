@@ -1,14 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectOpenProcessor
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import javax.swing.JComponent
@@ -26,23 +27,20 @@ class SelectProjectOpenProcessorDialog(
     init()
   }
 
-  override fun createCenterPanel(): JComponent? = panel {
+  override fun createCenterPanel(): JComponent = panel {
     row {
       label(ProjectBundle.message("project.open.select.from.multiple.processors.dialog.description.line1", processors.size, file.name))
     }
-    row {
-      label(ProjectBundle.message("project.open.select.from.multiple.processors.dialog.description.line2"))
-    }
-    buttonGroup(::selectedProcessor) {
+    buttonsGroup(ProjectBundle.message("project.open.select.from.multiple.processors.dialog.description.line2")) {
       processors.forEach { processor ->
         row {
           radioButton(ProjectBundle.message("project.open.select.from.multiple.processors.dialog.choice", processor.name), processor)
         }
       }
-    }
+    }.bind(::selectedProcessor)
   }
 
-  override fun getHelpId(): String? = "project.open.select.from.multiple.providers"
+  override fun getHelpId(): String = "project.open.select.from.multiple.providers"
 
   fun showAndGetChoice(): ProjectOpenProcessor? = if (showAndGet()) selectedProcessor else null
 
@@ -58,11 +56,11 @@ class SelectProjectOpenProcessorDialog(
 
     @JvmStatic
     fun showAndGetChoice(processors: List<ProjectOpenProcessor>, file: VirtualFile): ProjectOpenProcessor? {
-      if (Messages.isApplicationInUnitTestOrHeadless()) {
-        return testShowAndGetChoice(processors, file)
+      val app = ApplicationManager.getApplication()
+      return when {
+        app != null && (app.isUnitTestMode || app.isHeadlessEnvironment) -> testShowAndGetChoice(processors, file)
+        else -> SelectProjectOpenProcessorDialog(processors, file).showAndGetChoice()
       }
-      val dialog = SelectProjectOpenProcessorDialog(processors, file)
-      return dialog.showAndGetChoice()
     }
   }
 }

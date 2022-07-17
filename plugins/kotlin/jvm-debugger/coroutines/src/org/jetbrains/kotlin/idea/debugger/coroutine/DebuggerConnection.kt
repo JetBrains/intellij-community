@@ -8,8 +8,11 @@ import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.ui.RunnerLayoutUi
 import com.intellij.execution.ui.layout.PlaceInGrid
+import com.intellij.execution.ui.layout.impl.RunnerContentUi
+import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -22,13 +25,16 @@ import com.intellij.xdebugger.XDebuggerManagerListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParamsProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
-import org.jetbrains.kotlin.idea.debugger.coroutine.view.XCoroutineView
+import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineView
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class DebuggerConnection(
     val project: Project,
     val configuration: RunConfigurationBase<*>?,
     val params: JavaParameters?,
     modifyArgs: Boolean = true,
+    // Used externally on the Android Studio side
+    @Suppress("MemberVisibilityCanBePrivate")
     val alwaysShowPanel: Boolean = false
 ) : XDebuggerManagerListener, Disposable {
     companion object {
@@ -37,6 +43,7 @@ class DebuggerConnection(
 
     private var connection: MessageBusConnection? = null
     private val coroutineAgentAttached: Boolean
+    private var isDisposed = false
 
     init {
         if (params is JavaParameters && modifyArgs) {
@@ -53,14 +60,26 @@ class DebuggerConnection(
 
     override fun processStarted(debugProcess: XDebugProcess) {
         DebuggerInvocationUtil.swingInvokeLater(project) {
-            if (debugProcess is JavaDebugProcess) {
-                if (!Disposer.isDisposed(this) && coroutinesPanelShouldBeShown()) {
-                    registerXCoroutinesPanel(debugProcess.session)?.let {
-                        Disposer.register(this, it)
-                    }
+            val session = debugProcess.session
+            if (debugProcess is JavaDebugProcess &&
+                !isDisposed &&
+                coroutinesPanelShouldBeShown() &&
+                !coroutinePanelIsRegistered(session))
+            {
+                registerXCoroutinesPanel(session)?.let {
+                    Disposer.register(this, it)
                 }
             }
         }
+    }
+
+    private fun coroutinePanelIsRegistered(session: XDebugSession): Boolean {
+        val ui = session.ui.safeAs<RunnerLayoutUiImpl>() ?: return false
+        val runnerContentUi = RunnerContentUi.KEY.getData(ui) ?: return false
+        val content = invokeAndWaitIfNeeded {
+            runnerContentUi.findContent(CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT)
+        }
+        return content != null
     }
 
     override fun processStopped(debugProcess: XDebugProcess) {
@@ -71,16 +90,18 @@ class DebuggerConnection(
 
     private fun registerXCoroutinesPanel(session: XDebugSession): Disposable? {
         val ui = session.ui ?: return null
-        val xCoroutineThreadView = XCoroutineView(project, session as XDebugSessionImpl)
-        val framesContent: Content = createContent(ui, xCoroutineThreadView)
+        val javaDebugProcess = session.debugProcess as? JavaDebugProcess ?: return null
+        val coroutineThreadView = CoroutineView(project, javaDebugProcess)
+        val framesContent: Content = createContent(ui, coroutineThreadView)
         framesContent.isCloseable = false
-        ui.addContent(framesContent, 0, PlaceInGrid.right, false)
-        session.addSessionListener(xCoroutineThreadView.debugSessionListener(session))
+        ui.addContent(framesContent, 0, PlaceInGrid.right, true)
+        session.addSessionListener(coroutineThreadView.debugSessionListener(session))
         session.rebuildViews()
-        return xCoroutineThreadView
+        return coroutineThreadView
     }
 
-    private fun coroutinesPanelShouldBeShown() = alwaysShowPanel || configuration is ExternalSystemRunConfiguration || coroutineAgentAttached
+    private fun coroutinesPanelShouldBeShown() =
+        alwaysShowPanel || configuration is ExternalSystemRunConfiguration || coroutineAgentAttached
 
     private fun createContent(ui: RunnerLayoutUi, createContentParamProvider: CreateContentParamsProvider): Content {
         val param = createContentParamProvider.createContentParams()
@@ -88,6 +109,7 @@ class DebuggerConnection(
     }
 
     override fun dispose() {
+        isDisposed = true
         connection?.disconnect()
         connection = null
     }

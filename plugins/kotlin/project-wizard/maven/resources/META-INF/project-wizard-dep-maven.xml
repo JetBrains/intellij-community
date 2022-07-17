@@ -1,8 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <newProjectWizard.buildSystem.kotlin implementation="org.jetbrains.kotlin.idea.maven.projectWizard.MavenKotlinBuildSystemType"/>
-  </extensions>
-  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
-    <ideaWizardService implementation="org.jetbrains.kotlin.idea.maven.projectWizard.IdeaMavenWizardService"/>
-  </extensions>
-</idea-plugin>

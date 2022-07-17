@@ -8,7 +8,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
@@ -18,14 +17,13 @@ import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
  * This class is still needed for compatibility for Raml plugin.
  */
 @Deprecated(forRemoval = true)
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class YAMLCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @NotNull
   @Override
-  public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
+  public Configurable createSettingsPage(final @NotNull CodeStyleSettings settings, final @NotNull CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, YAMLLanguage.INSTANCE.getDisplayName()) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
         final CodeStyleSettings currentSettings = getCurrentSettings();
         return new TabbedLanguageCodeStylePanel(YAMLLanguage.INSTANCE, currentSettings, settings) {
           @Override
@@ -51,7 +49,7 @@ public class YAMLCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new YAMLCodeStyleSettings(settings);
   }
 }

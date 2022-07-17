@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.junit;
 
 import com.siyeh.IntentionPowerPackBundle;
@@ -47,6 +47,8 @@ public class CreateAssertIntentionTest extends IPPTestCase {
                        "}");
 
     myFixture.addClass("package org.junit.jupiter.api;" +
+                       "import org.junit.platform.commons.annotation.Testable;" +
+                       "@Testable\n" +
                        "public @interface Test {}");
     myFixture.addClass("package org.junit.platform.commons.annotation;" +
                        "public @interface Testable {}");

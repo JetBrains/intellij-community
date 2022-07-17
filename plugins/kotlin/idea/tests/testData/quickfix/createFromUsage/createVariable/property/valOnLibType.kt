@@ -1,5 +1,5 @@
 // "Create extension property 'Int.foo'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class A<T>(val n: T)
 

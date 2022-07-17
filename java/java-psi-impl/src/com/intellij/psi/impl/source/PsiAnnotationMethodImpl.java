@@ -33,11 +33,11 @@ import org.jetbrains.annotations.NotNull;
 public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotationMethod {
   private SoftReference<PsiAnnotationMemberValue> myCachedDefaultValue;
 
-  public PsiAnnotationMethodImpl(final PsiMethodStub stub) {
+  public PsiAnnotationMethodImpl(PsiMethodStub stub) {
     super(stub, JavaStubElementTypes.ANNOTATION_METHOD);
   }
 
-  public PsiAnnotationMethodImpl(final ASTNode node) {
+  public PsiAnnotationMethodImpl(ASTNode node) {
     super(node);
   }
 
@@ -48,9 +48,9 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
 
   @Override
   public PsiAnnotationMemberValue getDefaultValue() {
-    final PsiMethodStub stub = getStub();
+    PsiMethodStub stub = getStub();
     if (stub != null) {
-      final String text = stub.getDefaultValueText();
+      String text = stub.getDefaultValueText();
       if (StringUtil.isEmpty(text)) return null;
 
       PsiAnnotationMemberValue value = SoftReference.dereference(myCachedDefaultValue);
@@ -68,7 +68,7 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
     boolean expectedDefault = false;
     TreeElement childNode = getNode().getFirstChildNode();
     while (childNode != null) {
-      final IElementType type = childNode.getElementType();
+      IElementType type = childNode.getElementType();
       if (type == JavaTokenType.DEFAULT_KEYWORD) {
         expectedDefault = true;
       }

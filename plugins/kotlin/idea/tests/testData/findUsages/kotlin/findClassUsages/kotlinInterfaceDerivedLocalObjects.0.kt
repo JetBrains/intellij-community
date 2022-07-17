@@ -7,3 +7,5 @@ interface <caret>X {
 open class A : X {
 
 }
+
+// FIR_COMPARISON

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Caret
@@ -17,6 +18,10 @@ import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.index.vfs.filePath
 
 abstract class GitStageShowVersionAction(private val showStaged: Boolean) : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun update(e: AnActionEvent) {
     val project = e.project
     val file = e.getData(CommonDataKeys.VIRTUAL_FILE)

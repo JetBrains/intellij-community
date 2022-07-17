@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.openapi.Disposable
@@ -14,6 +14,10 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
                                        componentManager: ComponentManagerImpl,
                                        implementationClass: Class<*>? = null,
                                        initializedInstance: Any? = null) : BaseComponentAdapter(componentManager, pluginDescriptor, initializedInstance, implementationClass) {
+  companion object {
+    private val isDebugEnabled = LOG.isDebugEnabled
+  }
+
   override val implementationClassName: String
     get() = descriptor.implementation!!
 
@@ -24,7 +28,7 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
   override fun getActivityCategory(componentManager: ComponentManagerImpl) = componentManager.getActivityCategory(isExtension = false)
 
   override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T {
-    if (LOG.isDebugEnabled) {
+    if (isDebugEnabled) {
       val app = componentManager.getApplication()
       if (app != null && app.isWriteAccessAllowed && !app.isUnitTestMode &&
           PersistentStateComponent::class.java.isAssignableFrom(implementationClass)) {
@@ -32,16 +36,15 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
       }
     }
 
-    if (indicator == null) {
+    val progressManager = if (indicator == null) null else ProgressManager.getInstance()
+    if (progressManager == null || progressManager.isInNonCancelableSection) {
       return createAndInitialize(componentManager, implementationClass)
     }
-
-    // don't use here computeInNonCancelableSection - it is kotlin and no need of such awkward and stack-trace unfriendly methods
-    var instance: T? = null
-    ProgressManager.getInstance().executeNonCancelableSection {
-      instance = createAndInitialize(componentManager, implementationClass)
+    else {
+      return progressManager.computeInNonCancelableSection<T, Exception> {
+        createAndInitialize(componentManager, implementationClass)
+      }
     }
-    return instance!!
   }
 
   private fun <T : Any> createAndInitialize(componentManager: ComponentManagerImpl, implementationClass: Class<T>): T {

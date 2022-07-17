@@ -103,7 +103,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     }
     final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
     try {
-      final RemoteExternalSystemFacade facade = manager.getFacade(myIdeProject, myExternalProjectPath, myExternalSystemId);
+      final RemoteExternalSystemFacade<?> facade = manager.getFacade(myIdeProject, myExternalProjectPath, myExternalSystemId);
       setState(facade.isTaskInProgress(getId()) ? ExternalSystemTaskState.IN_PROGRESS : ExternalSystemTaskState.FAILED);
     }
     catch (Throwable e) {
@@ -258,7 +258,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     }
     else if (event instanceof ExternalSystemTaskExecutionEvent &&
              ((ExternalSystemTaskExecutionEvent)event).getProgressEvent() instanceof ExternalSystemStatusEvent) {
-      ExternalSystemStatusEvent progressEvent = (ExternalSystemStatusEvent)((ExternalSystemTaskExecutionEvent)event).getProgressEvent();
+      ExternalSystemStatusEvent<?> progressEvent = (ExternalSystemStatusEvent<?>)((ExternalSystemTaskExecutionEvent)event).getProgressEvent();
       total = progressEvent.getTotal();
       progress = progressEvent.getProgress();
       unit = progressEvent.getUnit();

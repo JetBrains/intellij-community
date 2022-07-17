@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
  */
 public class PySmartEnterProcessor extends SmartEnterProcessor {

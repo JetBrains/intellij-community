@@ -23,6 +23,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+/**
+ * Implement this extension to change how dependencies of modules are processed by the IDE. You may also need to register implementation of
+ * {@link org.jetbrains.jps.model.java.impl.JpsJavaDependenciesEnumerationHandler} extension to ensure that the same logic applies inside
+ * JPS build process.
+ */
 @ApiStatus.OverrideOnly
 public abstract class OrderEnumerationHandler {
   public static final ExtensionPointName<Factory> EP_NAME =

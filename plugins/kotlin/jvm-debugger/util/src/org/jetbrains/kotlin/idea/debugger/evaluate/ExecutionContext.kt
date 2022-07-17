@@ -7,14 +7,13 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
-import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.ClassesByNameProvider
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.project.Project
 import com.sun.jdi.*
 import com.sun.jdi.request.EventRequest
-import org.jetbrains.kotlin.idea.debugger.hopelessAware
+import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
 import org.jetbrains.org.objectweb.asm.Type
 
 class ExecutionContext(evaluationContext: EvaluationContextImpl, val frameProxy: StackFrameProxyImpl) :

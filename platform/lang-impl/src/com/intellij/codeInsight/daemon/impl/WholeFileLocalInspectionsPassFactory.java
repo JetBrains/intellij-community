@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.psi.PsiFile;
@@ -33,7 +34,7 @@ final class WholeFileLocalInspectionsPassFactory implements TextEditorHighlighti
   public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
                                                                @NotNull Document document,
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-    return createPass(file, LocalInspectionsPass.EMPTY_PRIORITY_RANGE, document);
+    return createPass(file, TextRange.EMPTY_RANGE, document);
   }
 
   static final class MyRegistrar implements TextEditorHighlightingPassFactoryRegistrar {
@@ -78,7 +79,7 @@ final class WholeFileLocalInspectionsPassFactory implements TextEditorHighlighti
 
   @Override
   @Nullable
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
+  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     long actualCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
     synchronized (myPsiModificationCount) {
       if (myPsiModificationCount.get(file) == (int)actualCount) {
@@ -95,12 +96,13 @@ final class WholeFileLocalInspectionsPassFactory implements TextEditorHighlighti
         return null;
       }
     }
-    return createPass(file, VisibleHighlightingPassFactory.calculateVisibleRange(editor), editor.getDocument());
+    ProperTextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
+    return createPass(file, visibleRange, editor.getDocument());
   }
 
   @NotNull
   private LocalInspectionsPass createPass(@NotNull PsiFile file,
-                                          TextRange visibleRange, @NotNull final Document document) {
+                                          TextRange visibleRange, @NotNull Document document) {
     return new LocalInspectionsPass(file, document, 0, file.getTextLength(), visibleRange, true,
                                     new DefaultHighlightInfoProcessor(), false) {
       @Override

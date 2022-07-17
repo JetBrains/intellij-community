@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 package my.simple.name
 
 typealias Int = Long

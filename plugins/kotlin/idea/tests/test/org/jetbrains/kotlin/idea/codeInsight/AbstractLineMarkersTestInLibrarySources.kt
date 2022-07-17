@@ -8,10 +8,11 @@ import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.createFile
 import com.intellij.util.io.write
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import java.io.File
 import java.nio.file.Files
 
@@ -55,7 +56,7 @@ abstract class AbstractLineMarkersTestInLibrarySources : AbstractLineMarkersTest
                 val document = myFixture.editor.document
                 PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-                if (!ProjectRootsUtil.isLibrarySourceFile(project, myFixture.file.virtualFile)) {
+                if (!RootKindFilter.librarySources.matches(myFixture.file)) {
                     throw AssertionError("File ${myFixture.file.virtualFile.path} should be in library sources!")
                 }
 

@@ -44,7 +44,7 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
       val (startIndices, _) = viewer.transferLineFromOneside(start)
       val startLine = side.select(startIndices).takeIf { it >= 0 } ?: return@GHPRDiffEditorGutterIconRendererFactoryImpl null
 
-      GHPRCommentLocation(side, endLine, startLine, endLine)
+      GHPRCommentLocation(side, endLine, startLine, fileLine)
     }
 
     GHPREditorCommentableRangesController(commentableRanges, gutterIconRendererFactory, viewer.editor)

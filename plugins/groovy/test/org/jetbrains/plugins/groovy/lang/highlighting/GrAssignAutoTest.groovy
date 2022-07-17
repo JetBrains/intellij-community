@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.util.Slow
 
+import static org.assertj.core.api.Assertions.assertThat
 /**
  * Character and char are skipped intentionally.
  * Double and Double[] are skipped intentionally.
@@ -144,7 +145,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
         }
         ''',
            typesXTypes,
-           ['int -> double[]', 'short -> int[]', 'short -> double[]', 'byte -> int[]', 'byte -> double[]'],
+           ['int -> double[]', 'short -> int[]', 'short -> double[]', 'byte -> int[]', 'byte -> double[]', 'short -> Integer[]', 'byte -> Integer[]'],
            ['Integer[] -> int[]', 'Integer[] -> double[]', 'int[] -> double[]', 'int[] -> Integer[]']
   }
 
@@ -206,7 +207,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
     }
 
     assert falseDiff.isEmpty(), "Idea no error, groovy error : " + falseDiff.collect { "'$it'" }
-    assert trueDiff.isEmpty(), "Idea error, groovy no error : " + trueDiff.collect { "'$it'" }
+    assertThat(trueDiff).isEmpty()
     assert falseIssues.isEmpty(), falseIssues.collect { "'$it'" }
     assert trueIssues.isEmpty(), trueIssues.collect { "'$it'" }
   }

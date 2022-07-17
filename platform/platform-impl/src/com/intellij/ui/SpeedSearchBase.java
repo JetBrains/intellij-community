@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -20,12 +20,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.text.NameUtilCore;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
@@ -52,10 +53,14 @@ import static com.intellij.util.ReflectionUtil.getMethodDeclaringClass;
 public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSearchSupply {
   private static final Logger LOG = Logger.getInstance(SpeedSearchBase.class);
 
-  protected static final Border BORDER = new CustomLineBorder(JBColor.namedColor("SpeedSearch.borderColor", JBColor.LIGHT_GRAY), JBUI.insets(1));
+  private static final JBColor BORDER_COLOR = JBColor.namedColor("SpeedSearch.borderColor", JBColor.LIGHT_GRAY);
   protected static final Color FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.foreground", UIUtil.getToolTipForeground());
   protected static final Color BACKGROUND_COLOR = JBColor.namedColor("SpeedSearch.background", new JBColor(Gray.xFF, Gray._111));
   protected static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.errorForeground", JBColor.RED);
+
+  private static JBInsets borderInsets() {
+    return JBUI.insets("SpeedSearch.borderInsets", JBUI.insets(0, 0, 0, 0));
+  }
 
   private static final Key<String> SEARCH_TEXT_KEY = Key.create("SpeedSearch.searchText");
 
@@ -65,9 +70,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private final ToolWindowManagerListener myWindowManagerListener = new ToolWindowManagerListener() {
     @Override
     public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
-        if (!isInsideActiveToolWindow(toolWindowManager)) {
-          manageSearchPopup(null);
-        }
+      if (!isInsideActiveToolWindow(toolWindowManager)) {
+        manageSearchPopup(null);
+      }
     }
 
     private boolean isInsideActiveToolWindow(@NotNull ToolWindowManager toolWindowManager) {
@@ -173,6 +178,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   @Override
   public boolean isPopupActive() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return mySearchPopup != null && mySearchPopup.isVisible() ||
            isStickySearch() && StringUtil.isNotEmpty(UIUtil.getClientProperty(myComponent, SEARCH_TEXT_KEY));
   }
@@ -192,8 +198,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   protected abstract int getSelectedIndex();
 
   /** @deprecated Please implement {@link #getElementCount()} and {@link #getElementAt(int)} instead. */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected Object @NotNull [] getAllElements() {
     throw new UnsupportedOperationException("See `SpeedSearchBase.getElementIterator(int)` javadoc");
   }
@@ -211,8 +216,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   /** @deprecated Please implement {@link #getElementCount()} and {@link #getElementAt(int)} instead. */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected int convertIndexToModel(final int viewIndex) {
     return viewIndex;
   }
@@ -224,8 +228,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   protected abstract void selectElement(Object element, String selectedText);
 
   /**
-   * The main method for items traversal. 
-   * 
+   * The main method for items traversal.
+   *
    * Implementations can override it or use the default implementation
    * that uses {@link #getElementAt(int)} and {@link #getElementCount()} methods.
    *
@@ -494,7 +498,14 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         }
       });
 
-      setBorder(BORDER);
+      Border lineBorder = JBUI.Borders.customLine(BORDER_COLOR);
+      if (ExperimentalUI.isNewUI()) {
+        setBorder(JBUI.Borders.compound(lineBorder, new EmptyBorder(borderInsets())));
+      }
+      else {
+        setBorder(lineBorder);
+      }
+
       setBackground(BACKGROUND_COLOR);
       setLayout(new BorderLayout());
       add(mySearchField, BorderLayout.CENTER);
@@ -621,7 +632,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         i == KeyEvent.VK_PAGE_DOWN ||
         i == KeyEvent.VK_LEFT ||
         i == KeyEvent.VK_RIGHT
-        ) {
+      ) {
         if (!isStickySearch()) {
           manageSearchPopup(null);
         }

@@ -4,7 +4,6 @@ package com.jetbrains.python.codeInsight.typing
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.CatchingConsumer
-import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.webcore.packaging.PackageManagementService
 import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.packaging.PyPIPackageUtil
@@ -115,7 +114,7 @@ private fun loadRequirementAndExtraArgsForPackageAndThenContinueForSource(state:
               emptyList()
             }
 
-          state.result[name] = t!!.first() to extraArgs
+          state.result[name] = t.first() to extraArgs
         }
 
         continueLoadingRequirementsAndExtraArgsForSource(state)

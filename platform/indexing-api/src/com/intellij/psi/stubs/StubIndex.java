@@ -9,16 +9,15 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.IdIterator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public abstract class StubIndex {
   private static class StubIndexHolder {
@@ -104,19 +103,40 @@ public abstract class StubIndex {
   /**
    * @deprecated use {@link StubIndex#getContainingFiles(StubIndexKey, Object, Project, GlobalSearchScope)}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public abstract <Key> IdIterator getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull @NonNls Key dataKey,
                                                     @NotNull Project project,
                                                     @NotNull final GlobalSearchScope scope);
 
   /**
-   * @return lazily reified set of VirtualFile's, namely {@link CompactVirtualFileSet}.
+   * @return lazily reified iterator of VirtualFile's.
    */
   @NotNull
-  public abstract <Key> Set<VirtualFile> getContainingFiles(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull @NonNls Key dataKey,
-                                                            @NotNull Project project,
-                                                            @NotNull final GlobalSearchScope scope);
+  public abstract <Key> Iterator<VirtualFile> getContainingFilesIterator(@NotNull StubIndexKey<Key, ?> indexKey,
+                                                                         @NotNull @NonNls Key dataKey,
+                                                                         @NotNull Project project,
+                                                                         @NotNull GlobalSearchScope scope);
+
+  /**
+   * @deprecated use {@link StubIndex#getContainingFilesIterator(StubIndexKey, Object, Project, GlobalSearchScope)}
+   */
+  @Deprecated
+  @NotNull
+  public <Key> Set<VirtualFile> getContainingFiles(@NotNull StubIndexKey<Key, ?> indexKey,
+                                                   @NotNull @NonNls Key dataKey,
+                                                   @NotNull Project project,
+                                                   @NotNull GlobalSearchScope scope) {
+    return ContainerUtil.newHashSet(getContainingFilesIterator(indexKey, dataKey, project, scope));
+  }
+
+  @ApiStatus.Experimental
+  public abstract <Key> int getMaxContainingFileCount(@NotNull StubIndexKey<Key, ?> indexKey,
+                                                      @NotNull @NonNls Key dataKey,
+                                                      @NotNull Project project,
+                                                      @NotNull GlobalSearchScope scope);
+
+
 
   public abstract void forceRebuild(@NotNull Throwable e);
 }

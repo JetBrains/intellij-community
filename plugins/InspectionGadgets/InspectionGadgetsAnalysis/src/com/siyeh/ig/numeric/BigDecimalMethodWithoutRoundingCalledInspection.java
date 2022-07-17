@@ -30,7 +30,7 @@ public class BigDecimalMethodWithoutRoundingCalledInspection extends BaseInspect
   private static class BigDecimalMethodWithoutRoundingCalledVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (JAVA_MATH_BIG_DECIMAL.test(expression)) {
         registerMethodCallError(expression);

@@ -4,6 +4,7 @@ package com.intellij.execution.filters;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,8 @@ public interface ExceptionLineParser {
 
   String getMethod();
 
-  PsiFile getFile();
+  @RequiresReadLock
+  @Nullable PsiFile getFile();
 
   ExceptionWorker.ParsedLine getInfo();
 }

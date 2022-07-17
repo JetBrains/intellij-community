@@ -113,7 +113,7 @@ public class NegatedConditionalInspection extends BaseInspection {
   private class NegatedConditionalVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       final PsiExpression thenBranch = expression.getThenExpression();
       if (thenBranch == null) {

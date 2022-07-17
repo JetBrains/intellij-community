@@ -1,5 +1,5 @@
 // "Convert member to extension" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 interface B {
 }
 

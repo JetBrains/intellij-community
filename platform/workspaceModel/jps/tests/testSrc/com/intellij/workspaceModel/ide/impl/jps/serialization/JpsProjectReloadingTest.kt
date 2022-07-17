@@ -4,9 +4,10 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.bridgeEntities.projectLibraries
+import com.intellij.workspaceModel.storage.bridgeEntities.sourceRoots
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
@@ -115,10 +116,10 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
     val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager)
     val change = updateAction(projectData)
     val (changedEntities, builder) =
-      projectData.serializers.reloadFromChangedFiles(change, CachingJpsFileContentReader(projectData.projectDirUrl), TestErrorReporter)
-    val originalBuilder = WorkspaceEntityStorageBuilder.from(projectData.storage)
+      projectData.serializers.reloadFromChangedFiles(change, CachingJpsFileContentReader(projectData.configLocation), TestErrorReporter)
+    val originalBuilder = MutableEntityStorage.from(projectData.storage)
     originalBuilder.replaceBySource({it in changedEntities}, builder)
-    projectData.serializers.checkConsistency(projectData.projectDirUrl, originalBuilder, virtualFileManager)
+    projectData.serializers.checkConsistency(projectData.configLocation, originalBuilder, virtualFileManager)
     return ReloadedProjectData(originalBuilder, projectData.projectDirUrl)
   }
 
@@ -171,5 +172,5 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
     return "$newBaseUrl/${FileUtil.toSystemIndependentName(FileUtil.getRelativePath(oldBaseUrl, file)!!)}"
   }
 
-  private data class ReloadedProjectData(val storage: WorkspaceEntityStorageBuilder, val projectDirUrl: String)
+  private data class ReloadedProjectData(val storage: MutableEntityStorage, val projectDirUrl: String)
 }

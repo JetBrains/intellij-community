@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * Allows to override the file type for a file. Overrides take precedence over all other ways of determining the type of the file
  * (name checks, content checks, {@link com.intellij.openapi.fileTypes.FileTypeRegistry.FileTypeDetector}). An overridden file type
  * completely replaces the file's normal file type for PSI, actions and all other features.
- *
+ * <p>
  * If the override conditions for a given {@code FileTypeOverrider} change, it needs to call
  * {@link com.intellij.util.FileContentUtilCore#reparseFiles(VirtualFile...)} if it's possible to identify specific files affected
  * by the change, or {@link FileTypeManagerEx#makeFileTypesChange(String, Runnable)} ()} if the change affects an unknown number of files.

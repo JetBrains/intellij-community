@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -33,7 +33,7 @@ public final class ContentManagerUtil {
   }
 
   public static void cleanupContents(Content notToRemove, Project project, String contentName) {
-    MessageView messageView = MessageView.SERVICE.getInstance(project);
+    MessageView messageView = MessageView.getInstance(project);
     for (Content content : messageView.getContentManager().getContents()) {
       if (content.isPinned()) continue;
       if (contentName.equals(content.getDisplayName()) && content != notToRemove) {

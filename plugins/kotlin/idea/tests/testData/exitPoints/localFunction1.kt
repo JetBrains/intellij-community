@@ -11,4 +11,5 @@ fun f(a: Int): Int {
     }
 }
 
+//HIGHLIGHTED: localFun
 //HIGHLIGHTED: return

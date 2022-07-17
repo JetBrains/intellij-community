@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization
 
-import com.intellij.util.SystemProperties
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import org.jetbrains.annotations.TestOnly
@@ -39,7 +38,7 @@ internal abstract class BindingProducer : BindingInitializationContext {
   override val bindingProducer: BindingProducer
     get() = this
 
-  override val isResolveConstructorOnInit = SystemProperties.`is`("idea.serializer.resolve.ctor.on.init")
+  override val isResolveConstructorOnInit = java.lang.Boolean.getBoolean("idea.serializer.resolve.ctor.on.init")
 
   abstract fun getNestedBinding(accessor: MutableAccessor): Binding
 
@@ -80,7 +79,6 @@ internal abstract class BindingProducer : BindingInitializationContext {
 
   protected abstract fun createRootBinding(aClass: Class<*>?, type: Type): Binding
 
-  @Suppress("unused")
   fun clearBindingCache() {
     cacheLock.write {
       cache.clear()

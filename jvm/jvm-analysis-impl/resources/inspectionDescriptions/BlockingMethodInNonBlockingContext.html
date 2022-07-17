@@ -2,22 +2,31 @@
 <body>
 Reports thread-blocking method calls in code fragments where threads should not be blocked.
 
-<p>Example (Reactor):</p>
+<p><b>Example (Project Reactor):</b></p>
 <pre><code>
 Flux.just("1").flatMap(f -&gt; {
-    Flux&lt;String&gt; just = Flux.just(f);
+    Flux&lt;String&gt; just = loadUsersFromDatabase();
     just.toIterable(); // Error: blocking operator call in non-blocking scope
     return just;
   }
 );
 </code></pre>
 
-<p>Example (Kotlin Coroutines):</p>
+<p>Consider running blocking code <a href="https://projectreactor.io/docs/core/release/reference/#faq.wrap-blocking">with a proper
+  scheduler</a>, for example <code>Schedulers.boundedElastic()</code>, or try to find an alternative non-blocking API.</p>
+
+<br/>
+
+<p><b>Example (Kotlin Coroutines):</b></p>
 <pre><code>
 suspend fun exampleFun() {
-    Thread.sleep(100); // Error: inappropriate blocking method call inside suspend function
+    Thread.sleep(100); // Error: blocking method call inside suspend function
 }
 </code></pre>
+
+<p>Consider running blocking code <a href="https://kotlinlang.org/docs/coroutine-context-and-dispatchers.html">with a special dispatcher</a>,
+  for example <code>Dispatchers.IO</code>, or try to find an alternative non-blocking API.</p>
+
 <!-- tooltip end -->
 <p>Configure the inspection:</p>
 <ul>

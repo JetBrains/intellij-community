@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
+import com.intellij.application.options.RegistryManager;
 import com.intellij.core.CoreBundle;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
@@ -27,7 +29,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -88,7 +89,8 @@ public final class PluginInstaller {
     return false;
   }
 
-  private static void uninstallAfterRestart(@NotNull Path pluginPath) throws IOException {
+  @ApiStatus.Internal
+  public static void uninstallAfterRestart(@NotNull Path pluginPath) throws IOException {
     addActionCommand(new DeleteCommand(pluginPath));
   }
 
@@ -97,12 +99,13 @@ public final class PluginInstaller {
                                                boolean isUpdate) {
     boolean uninstalledWithoutRestart = true;
     if (pluginDescriptor.isEnabled()) {
-      DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions().withDisable(false)
+      DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions()
+        .withDisable(false)
         .withUpdate(isUpdate)
         .withWaitForClassloaderUnload(true);
 
       uninstalledWithoutRestart = parentComponent != null ?
-                                  DynamicPlugins.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options) :
+                                  DynamicPlugins.INSTANCE.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options) :
                                   DynamicPlugins.INSTANCE.unloadPlugin(pluginDescriptor, options);
     }
 
@@ -128,10 +131,21 @@ public final class PluginInstaller {
     return uninstalledWithoutRestart;
   }
 
-  public static void installAfterRestart(@NotNull Path sourceFile,
-                                         boolean deleteSourceFile,
+  @ApiStatus.Internal
+  public static void installAfterRestartAndKeepIfNecessary(@NotNull IdeaPluginDescriptor newDescriptor,
+                                                           @NotNull Path newPluginPath,
+                                                           @Nullable Path oldPluginPath) throws IOException {
+    installAfterRestart(newDescriptor,
+                        newPluginPath,
+                        oldPluginPath,
+                        !keepArchive());
+  }
+
+  @ApiStatus.Internal
+  public static void installAfterRestart(@NotNull IdeaPluginDescriptor descriptor,
+                                         @NotNull Path sourceFile,
                                          @Nullable Path existingPlugin,
-                                         @NotNull IdeaPluginDescriptor descriptor) throws IOException {
+                                         boolean deleteSourceFile) throws IOException {
     List<ActionCommand> commands = new ArrayList<>();
 
     if (existingPlugin != null) {
@@ -283,10 +297,8 @@ public final class PluginInstaller {
                                                             InstallationSourceEnum.FROM_DISK,
                                                             installedPlugin != null ? installedPlugin.getVersion() : null);
 
-      if (Registry.is("custom-repository.certificate.signature.check")) {
-        if (!PluginSignatureChecker.verify(pluginDescriptor, file, true)) {
-          return false;
-        }
+      if (!PluginSignatureChecker.verifyIfRequired(pluginDescriptor, file, false, true)) {
+        return false;
       }
 
       Task.WithResult<Pair<PluginInstallOperation, ? extends IdeaPluginDescriptor>, RuntimeException> task =
@@ -323,14 +335,14 @@ public final class PluginInstaller {
                                   !DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor) ||
                                   operation.isRestartRequired();
       if (isRestartRequired) {
-        installAfterRestart(path, false, oldFile, pluginDescriptor);
+        installAfterRestart(pluginDescriptor, path, oldFile, false);
       }
       ourState.onPluginInstall(pluginDescriptor, installedPlugin != null, isRestartRequired);
 
       IdeaPluginDescriptor toDisable = pair.getSecond();
       if (toDisable != null) {
         // TODO[yole] unload and check for restart
-        pluginEnabler.disablePlugins(Set.of(toDisable));
+        pluginEnabler.disable(Set.of(toDisable));
       }
 
       Set<PluginInstallCallbackData> installedDependencies = operation.getInstalledDependentPlugins();
@@ -360,7 +372,7 @@ public final class PluginInstaller {
         }
       }
 
-      if (path.toString().endsWith(".zip") && Registry.is("ide.plugins.keep.archive")) {
+      if (path.toString().endsWith(".zip") && keepArchive()) {
         File tempFile = MarketplacePluginDownloadService.getPluginTempFile();
         FileUtil.copy(file, tempFile);
         MarketplacePluginDownloadService.renameFileToZipRoot(tempFile);
@@ -397,7 +409,13 @@ public final class PluginInstaller {
       return false;
     }
 
-    return DynamicPlugins.INSTANCE.loadPlugin(targetDescriptor);
+    return PluginEnabler.HEADLESS.isDisabled(targetDescriptor.getPluginId()) ||
+           DynamicPlugins.INSTANCE.loadPlugin(targetDescriptor);
+  }
+
+  private static boolean keepArchive() {
+    return !LoadingState.COMPONENTS_LOADED.isOccurred() ||
+           RegistryManager.getInstance().is("ide.plugins.keep.archive");
   }
 
   private static @NotNull Set<String> findNotInstalledPluginDependencies(@NotNull List<? extends IdeaPluginDependency> dependencies,
@@ -409,8 +427,7 @@ public final class PluginInstaller {
 
       PluginId pluginId = dependency.getPluginId();
       if (installedDependencies.contains(pluginId) ||
-          model.isEnabled(pluginId) ||
-          model.isDisabled(pluginId) ||
+          model.isLoaded(pluginId) ||
           PluginManagerCore.isModuleDependency(pluginId)) {
         continue;
       }

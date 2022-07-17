@@ -4,6 +4,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,6 +19,7 @@ public interface PsiTreeChangePreprocessor {
    * @deprecated Use {@link #EP}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval  
   ExtensionPointName<PsiTreeChangePreprocessor> EP_NAME = ExtensionPointName.create("com.intellij.psi.treeChangePreprocessor");
 
   void treeChanged(@NotNull PsiTreeChangeEventImpl event);

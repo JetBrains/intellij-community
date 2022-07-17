@@ -1,12 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix, HighPriorityAction {
   private final LanguageLevel myLevel;
@@ -61,6 +63,13 @@ public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix,
   }
 
   @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(file);
+    return new IntentionPreviewInfo.Html(
+      JavaBundle.message("increase.language.level.preview.description", Objects.requireNonNull(module).getName(), myLevel.toJavaVersion()));
+  }
+
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     Module module = ModuleUtilCore.findModuleForFile(file);
     return module != null && JavaSdkUtil.isLanguageLevelAcceptable(project, module, myLevel);
@@ -74,7 +83,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix,
         return;
       }
     }
-    WriteAction.run(() -> {
+    WriteCommandAction.runWriteCommandAction(project, getText(), null, () -> {
       Module module = ModuleUtilCore.findModuleForPsiElement(file);
       if (module != null) {
         LanguageLevel oldLevel = LanguageLevelUtil.getCustomLanguageLevel(module);

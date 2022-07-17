@@ -3,13 +3,13 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -80,11 +80,12 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     "  // IntelliJ API Decompiler stub source generated from a class file\n" +
     "  // Implementation of methods is not available\n" +
     "\n";
+  private static final String CORRUPTED_CLASS_PACKAGE = "corrupted_class_file";
 
   private static final Key<Document> CLS_DOCUMENT_LINK_KEY = Key.create("cls.document.link");
 
-  /** NOTE: you absolutely MUST NOT hold PsiLock under the mirror lock */
-  private final Object myMirrorLock = new Object();
+  @SuppressWarnings("GrazieInspection")
+  private final Object myMirrorLock = new Object();  // NOTE: one absolutely MUST NOT hold PsiLock under the mirror lock
   private final Object myStubLock = new Object();
 
   private final boolean myIsForDecompiling;
@@ -180,7 +181,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   @Override
-  public void setPackageName(final String packageName) throws IncorrectOperationException {
+  public void setPackageName(String packageName) throws IncorrectOperationException {
     throw new IncorrectOperationException("Cannot set package name for compiled files");
   }
 
@@ -291,13 +292,13 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     }
     else {
       PsiClass[] classes = getClasses(), mirrors = mirrorFile.getClasses();
+      PsiPackageStatement pkg = getPackageStatement(), mirrorPkg = mirrorFile.getPackageStatement();
       if (classes.length == 1 && mirrors.length == 0 && PsiPackage.PACKAGE_INFO_CLASS.equals(classes[0].getName())) {
-        PsiPackageStatement pkg = getPackageStatement(), mirrorPkg = mirrorFile.getPackageStatement();
         ClsElementImpl.setMirror(pkg, mirrorPkg);
         ClsElementImpl.setMirrorIfPresent(classes[0].getModifierList(), mirrorPkg.getAnnotationList());
       }
-      else {
-        ClsElementImpl.setMirrorIfPresent(getPackageStatement(), mirrorFile.getPackageStatement());
+      else if (pkg == null || !CORRUPTED_CLASS_PACKAGE.equals(pkg.getPackageName())) {
+        ClsElementImpl.setMirrorIfPresent(pkg, mirrorPkg);
         ClsElementImpl.setMirrors(classes, mirrors);
       }
     }
@@ -335,7 +336,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
           PsiClass[] classes = getClasses();
           String fileName = (classes.length > 0 ? classes[0].getName() : file.getNameWithoutExtension()) + JavaFileType.DOT_DEFAULT_EXTENSION;
 
-          final Document document = FileDocumentManager.getInstance().getDocument(file);
+          Document document = FileDocumentManager.getInstance().getDocument(file);
           assert document != null : file.getUrl();
 
           CharSequence mirrorText = document.getImmutableCharSequence();
@@ -346,9 +347,9 @@ public class ClsFileImpl extends PsiBinaryFileImpl
 
           mirrorTreeElement = SourceTreeToPsiMap.psiToTreeNotNull(mirror);
           try {
-            final TreeElement finalMirrorTreeElement = mirrorTreeElement;
+            TreeElement _mirrorTreeElement = mirrorTreeElement;
             ProgressManager.getInstance().executeNonCancelableSection(() -> {
-              setFileMirror(finalMirrorTreeElement);
+              setFileMirror(_mirrorTreeElement);
               putUserData(CLS_DOCUMENT_LINK_KEY, document);
             });
           }
@@ -383,9 +384,9 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   private static Exception wrapException(InvalidMirrorException e, VirtualFile file) {
     ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.getInstance().find(file, ClassFileDecompilers.Light.class);
     if (decompiler != null) {
-      PluginId pluginId = PluginManagerCore.getPluginByClassName(decompiler.getClass().getName());
-      if (pluginId != null) {
-        return new PluginException(e, pluginId);
+      PluginDescriptor plugin = PluginManager.getPluginByClass(decompiler.getClass());
+      if (plugin != null) {
+        return new PluginException(e, plugin.getPluginId());
       }
     }
 
@@ -393,7 +394,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   @Override
-  public PsiFile getDecompiledPsiFile() {
+  public @NotNull PsiFile getDecompiledPsiFile() {
     return (PsiFile)getMirror();
   }
 
@@ -457,10 +458,9 @@ public class ClsFileImpl extends PsiBinaryFileImpl
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
-    final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
-      final PsiClass[] classes = getClasses();
-      for (PsiClass aClass : classes) {
+      for (PsiClass aClass : getClasses()) {
         if (!processor.execute(aClass, state)) return false;
       }
     }
@@ -479,15 +479,15 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     Project project = getProject();
     VirtualFile virtualFile = getVirtualFile();
     boolean isDefault = project.isDefault(); // happens on decompile
-    StubTree newStubTree = (StubTree)(isDefault ? stubTreeLoader.build(null, virtualFile, this)
-                                               : stubTreeLoader.readOrBuild(project, virtualFile, this));
+    StubTree newStubTree =
+      (StubTree)(isDefault ? stubTreeLoader.build(null, virtualFile, this) : stubTreeLoader.readOrBuild(project, virtualFile, this));
     if (newStubTree == null) {
       if (LOG.isDebugEnabled()) LOG.debug("No stub for class file " + virtualFile.getPresentableUrl());
-      newStubTree = new StubTree(new PsiJavaFileStubImpl("corrupted_class_files", true));
+      newStubTree = new StubTree(new PsiJavaFileStubImpl(CORRUPTED_CLASS_PACKAGE, true));
     }
     else if (!(newStubTree.getRoot() instanceof PsiClassHolderFileStub)) {
       if (LOG.isDebugEnabled()) LOG.debug("Invalid stub for class file " + virtualFile.getPresentableUrl() + ": " + newStubTree.getRoot());
-      newStubTree = new StubTree(new PsiJavaFileStubImpl("corrupted_class_files", true));
+      newStubTree = new StubTree(new PsiJavaFileStubImpl(CORRUPTED_CLASS_PACKAGE, true));
     }
 
     synchronized (myStubLock) {
@@ -562,7 +562,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       JavaSdkVersion jdkVersion = ClsParsingUtil.getJdkVersionByBytecode(reader.readUnsignedShort(6));
       LanguageLevel level = jdkVersion != null ? jdkVersion.getMaxLanguageLevel() : null;
       if (level != null && level.isAtLeast(LanguageLevel.JDK_11) && ClsParsingUtil.isPreviewLevel(reader.readUnsignedShort(4))) {
-        level = notNull(level.getPreviewLevel(), level);
+        level = notNull(level.getPreviewLevel(), LanguageLevel.HIGHEST);
       }
 
       if (module) {
@@ -636,7 +636,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       try {
         new ClassReader(innerClass.second).accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
       }
-      catch (Exception e) {  // workaround for bug in skipping annotations when first parameter of inner class is dropped (IDEA-204145)
+      catch (Exception e) {  // workaround for bug in skipping annotations when a first parameter of inner class is dropped (IDEA-204145)
         VirtualFile file = innerClass.first;
         if (LOG.isDebugEnabled()) LOG.debug(String.valueOf(file), e);
         else LOG.info(file + ": " + e.getMessage());

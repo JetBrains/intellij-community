@@ -5,10 +5,12 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.*;
@@ -35,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -93,6 +96,7 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
     final JBTable table = myFilterTable.getTable();
     table.setTableHeader(new JTableHeader());
     table.setStriped(false);
+    table.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
     myFilterPanel = ToolbarDecorator.createDecorator(table)
       .disableUpDownActions()
       .setToolbarPosition(ActionToolbarPosition.RIGHT)
@@ -177,6 +181,9 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
 
   @Override
   public String getShortFilterText(NamedScriptableDefinition variable) {
+    if (variable == null) {
+      return "";
+    }
     final StringBuilder builder = new StringBuilder();
     for (FilterAction filter : myFilters) {
       final String text = filter.getShortText(variable);
@@ -282,12 +289,13 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
       message = SSRBundle.message("no.script.for.0.label", varName);
     }
     final StatusText statusText = myFilterTable.getTable().getEmptyText();
-    statusText.setText(message);
+    statusText.clear();
+    Arrays.stream(message.split("\n")).forEach((@NlsSafe var line) -> statusText.appendLine(line));
     if (isValid()) {
-      statusText.appendSecondaryText(myConstraint instanceof MatchVariableConstraint
+      statusText.appendLine(myConstraint instanceof MatchVariableConstraint
                                      ? SSRBundle.message("add.filter.label")
                                      : SSRBundle.message("add.script.label"),
-                                     SimpleTextAttributes.LINK_ATTRIBUTES,
+                                     SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                                      e -> showAddFilterPopup(myFilterTable.getTable(),
                                                              new RelativePoint(MouseInfo.getPointerInfo().getLocation())));
     }
@@ -300,6 +308,10 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
   @Override
   public Runnable getConstraintChangedCallback() {
     return myConstraintChangedCallback;
+  }
+
+  public JBTable getTable() {
+    return myFilterTable.getTable();
   }
 
   private class Header implements Filter {

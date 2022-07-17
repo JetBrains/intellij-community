@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -11,7 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 @State(
   name = "PluginManagerConfigurable",
-  storages = @Storage("plugin_ui.xml")
+  storages = @Storage("plugin_ui.xml"),
+  category = SettingsCategory.UI
 )
 public final class PluginManagerUISettings implements PersistentStateComponent<PluginManagerUISettings>, PerformInBackgroundOption {
   public boolean UPDATE_IN_BACKGROUND;

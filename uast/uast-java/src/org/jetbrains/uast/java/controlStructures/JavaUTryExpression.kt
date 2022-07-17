@@ -17,14 +17,16 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.ChildRole
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class JavaUTryExpression(
   override val sourcePsi: PsiTryStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UTryExpression {
   override val tryClause: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.tryBlock, this) }
-  override val catchClauses: List<JavaUCatchClause> by lz { sourcePsi.catchSections.map { JavaUCatchClause(it, this) } }
+  override val catchClauses: List<UCatchClause> by lz { sourcePsi.catchSections.map { JavaUCatchClause(it, this) } }
   override val finallyClause: UBlockExpression? by lz { sourcePsi.finallyBlock?.let { JavaConverter.convertBlock(it, this) } }
 
   override val resourceVariables: List<UVariable> by lz {
@@ -44,13 +46,14 @@ class JavaUTryExpression(
     get() = sourcePsi.getChildByRole(ChildRole.FINALLY_KEYWORD)?.let { UIdentifier(it, this) }
 }
 
+@ApiStatus.Internal
 class JavaUCatchClause(
   override val sourcePsi: PsiCatchSection,
   givenParent: UElement?
 ) : JavaAbstractUElement(givenParent), UCatchClause {
   override val body: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.catchBlock, this) }
 
-  override val parameters: List<JavaUParameter> by lz {
+  override val parameters: List<UParameter> by lz {
     (sourcePsi.parameter?.let { listOf(it) } ?: emptyList()).map { JavaUParameter(it, this) }
   }
 

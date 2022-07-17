@@ -18,16 +18,17 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Serega.Vasiliev
+ * An extension for JVM languages to aid annotation generation.
  */
 public interface PsiAnnotationSupport {
 
+  /**
+   * Creates a {@link PsiLiteral} object that represents a string literal in a given language, ready to be inserted as annotation value.
+   *
+   * @param value literal value
+   * @param context context element
+   * @return a literal PSI element (e.g., {@link PsiLiteralExpression} for Java language).
+   */
   @NotNull
   PsiLiteral createLiteralValue(@NotNull String value, @NotNull PsiElement context);
-
-  /*@NotNull
-  PsiArrayInitializerMemberValue createArrayMemberValue(@Nullable PsiElement context);
-
-  @NotNull
-  PsiAnnotation createAnnotation(@NotNull String qname, @Nullable PsiElement context);*/
 }

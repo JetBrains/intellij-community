@@ -524,7 +524,7 @@
     },
     {
       "key": "List.selectionBackground",
-      "description": "Also used for ActionMenuItem (used in context and main menus)"
+      "description": "Also used for ActionMenuItem (used in context and main menus) as default"
     },
     {
       "key": "List.selectionForeground"
@@ -565,8 +565,7 @@
     },
     {
       "key": "Menu.selectionBackground",
-      "deprecated": true,
-      "description": "List.selectionBackground is used instead"
+      "description": "Menu item with a submenu, the main menu bar on Windows/Linux"
     },
     {
       "key": "Menu.selectionForeground",
@@ -1024,7 +1023,8 @@
     {
       "key": "StatusBar.hoverBackground",
       "since": "2019.2",
-      "description": "Appears under widgets in status bar"
+      "description": "Appears under widgets in status bar. Use StatusBar.Widget.hoverBackground instead",
+      "deprecated": true
     },
     {
       "key": "StatusBar.bottomColor",

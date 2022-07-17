@@ -4,4 +4,4 @@ fun foo() {
     }
 }
 
-//INFO: <div class='definition'><pre>value-parameter <b>it</b>: Int</pre></div>
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">value-parameter</span> <span style="color:#000000;">it</span><span style="">: </span><span style="color:#000000;">Int</span></pre></div>

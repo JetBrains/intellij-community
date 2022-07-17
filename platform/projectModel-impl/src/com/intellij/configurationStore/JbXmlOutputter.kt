@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("Duplicates")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.configurationStore
 
@@ -10,9 +9,8 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.SystemProperties
 import com.intellij.util.xmlb.Constants
 import org.jdom.*
@@ -63,21 +61,6 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
   // For normal output
   private val format = if (DEFAULT_FORMAT.lineSeparator == lineSeparator) DEFAULT_FORMAT else JDOMUtil.createFormat(lineSeparator)
 
-  /**
-   * This will print the `Document` to the given Writer.
-   *
-   *
-   *
-   * Warning: using your own Writer may cause the outputter's
-   * preferred character encoding to be ignored.  If you use
-   * encodings other than UTF-8, we recommend using the method that
-   * takes an OutputStream instead.
-   *
-   *
-   * @param doc `Document` to format.
-   * @param out `Writer` to use.
-   * @throws IOException - if there's any problem writing.
-   */
   @Throws(IOException::class)
   fun output(doc: Document, out: Writer) {
     printDeclaration(out, format.encoding)
@@ -101,8 +84,6 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
       indent(out, 0)
     }
 
-    // Output final line separator
-    // We output this no matter what the newline flags say
     writeLineSeparator(out)
 
     out.flush()
@@ -219,7 +200,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     }
 
     if (macroMap != null) {
-      normalizedString = macroMap.substitute(normalizedString, SystemInfo.isFileSystemCaseSensitive)
+      normalizedString = macroMap.substitute(normalizedString, SystemInfoRt.isFileSystemCaseSensitive)
     }
     out.write(escapeElementEntities(normalizedString))
   }
@@ -241,14 +222,14 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
 
     // Print the beginning of the tag plus attributes and any
     // necessary namespace declarations
-    out.write('<'.toInt())
+    out.write('<'.code)
     printQualifiedName(out, element)
 
     if (element.hasAttributes()) {
       printAttributes(out, element.attributes)
     }
 
-    // depending on the settings (newlines, textNormalize, etc), we may or may not want to print all of the content,
+    // depending on the settings (newlines, textNormalize, etc.), we may or may not want to print all the content,
     // so determine the index of the start of the content we're interested in based on the current settings.
     if (!writeContent(out, element, level)) {
       return
@@ -256,7 +237,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
 
     out.write("</")
     printQualifiedName(out, element)
-    out.write('>'.toInt())
+    out.write('>'.code)
   }
 
   @Throws(IOException::class)
@@ -274,7 +255,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
       return false
     }
 
-    out.write('>'.toInt())
+    out.write('>'.code)
 
     // for a special case where the content is only CDATA or Text we don't want to indent after the start or before the end tag
     if (nextNonText(content, start) < size) {
@@ -344,7 +325,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
         is Element -> printElement(out, next, level)
         is ProcessingInstruction -> printProcessingInstruction(out, next)
         else -> {
-          // XXX if we get here then we have a illegal content, for now we'll just ignore it (probably should throw a exception)
+          // XXX if we get here then we have an illegal content, for now we'll just ignore it (probably should throw an exception)
         }
       }
 
@@ -393,7 +374,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
       // determine if we need to pad the output (padding is only need in trim or normalizing mode)
       if (previous != null && (format.textMode == Format.TextMode.NORMALIZE || format.textMode == Format.TextMode.TRIM)) {
         if (endsWithWhite(previous) || startsWithWhite(next)) {
-          out.write(' '.toInt())
+          out.write(' '.code)
         }
       }
 
@@ -417,13 +398,13 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
   @Throws(IOException::class)
   private fun printAttributes(out: Writer, attributes: List<Attribute>) {
     for (attribute in attributes) {
-      out.write(' '.toInt())
+      out.write(' '.code)
       printQualifiedName(out, attribute)
-      out.write('='.toInt())
-      out.write('"'.toInt())
+      out.write('='.code)
+      out.write('"'.code)
 
       val value = if (macroMap != null && (macroFilter == null || !macroFilter.skipPathMacros(attribute))) {
-        macroMap.getAttributeValue(attribute, macroFilter, SystemInfo.isFileSystemCaseSensitive, false)
+        macroMap.getAttributeValue(attribute, macroFilter, SystemInfoRt.isFileSystemCaseSensitive, false)
       }
       else {
         attribute.value
@@ -434,7 +415,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
       }
 
       out.write(escapeAttributeEntities(value))
-      out.write('"'.toInt())
+      out.write('"'.code)
     }
   }
 
@@ -525,7 +506,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     // checks only option tag
     name = element.getAttributeValue(Constants.NAME)
     if (name != null && doesNameSuggestSensitiveInformation(name) && element.getAttribute("value") != null) {
-      logSensitiveInformationError("@name=$name", "Element", element /* here not parentElement because it is attribute */)
+      logSensitiveInformationError("@name=$name", "Element", element /* here not parentElement because it is attributed */)
     }
   }
 
@@ -568,7 +549,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
 
     var message = "$elementKind ${if (parentPath == null) "" else "$parentPath."}$name probably contains sensitive information"
     if (storageFilePathForDebugPurposes != null) {
-      message += " (file: ${storageFilePathForDebugPurposes.replace(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()), "~")})"
+      message += " (file: ${storageFilePathForDebugPurposes.replace(FileUtilRt.toSystemIndependentName(SystemProperties.getUserHome()), "~")})"
     }
     if (reportedSensitiveProblems.add(message)) {
       Logger.getInstance(JbXmlOutputter::class.java).error(message)
@@ -620,35 +601,33 @@ private fun isAllWhitespace(obj: Content): Boolean {
 }
 
 private fun startsWithWhite(str: String): Boolean {
-  return !StringUtil.isEmpty(str) && Verifier.isXMLWhitespace(str[0])
+  return !str.isEmpty() && Verifier.isXMLWhitespace(str[0])
 }
 
-// Determine if a string ends with a XML whitespace.
+// Determine if a string ends with an XML whitespace.
 private fun endsWithWhite(str: String): Boolean {
-  return !StringUtil.isEmpty(str) && Verifier.isXMLWhitespace(str[str.length - 1])
+  return !str.isEmpty() && Verifier.isXMLWhitespace(str[str.length - 1])
 }
 
 private fun escapeAttributeEntities(str: String): String {
   return JDOMUtil.escapeText(str, false, true)
 }
 
-@Throws(IOException::class)
 private fun printQualifiedName(out: Writer, e: Element) {
   if (!e.namespace.prefix.isEmpty()) {
     out.write(e.namespace.prefix)
-    out.write(':'.toInt())
+    out.write(':'.code)
   }
   out.write(e.name)
 }
 
 // Support method to print a name without using att.getQualifiedName()
 // and thus avoiding a StringBuffer creation and memory churn
-@Throws(IOException::class)
 private fun printQualifiedName(out: Writer, a: Attribute) {
   val prefix = a.namespace.prefix
-  if (!StringUtil.isEmpty(prefix)) {
+  if (!prefix.isNullOrEmpty()) {
     out.write(prefix)
-    out.write(':'.toInt())
+    out.write(':'.code)
   }
   out.write(a.name)
 }

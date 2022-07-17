@@ -1,7 +1,21 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.api.http
 
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.castSafelyTo
 import com.intellij.util.io.HttpRequests
@@ -12,14 +26,14 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.HttpURLConnection
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
-@Suppress("TooGenericExceptionCaught") // Putting any potential issues in an Either.Left
 internal suspend fun requestString(
     url: String,
     acceptContentType: String,
     timeoutInSeconds: Int = 10,
     headers: List<Pair<String, String>>
-): ApiResult<String> = suspendCancellableCoroutine { cont ->
+): String = suspendCancellableCoroutine { cont ->
     try {
         val builder = HttpRequests.request(url)
             .productNameAsUserAgent()
@@ -50,26 +64,13 @@ internal suspend fun requestString(
                 )
             }
 
-            val r = when {
-                responseText.isEmpty() -> ApiResult.Failure(EmptyBodyException())
-                else -> ApiResult.Success(responseText)
+            when {
+                responseText.isEmpty() -> cont.resumeWithException(EmptyBodyException())
+                else -> cont.resume(responseText)
             }
-            cont.resume(r)
         }
     } catch (t: Throwable) {
-        t.log()
-        cont.resume(ApiResult.Failure(t.log()))
-    }
-}
-
-private fun String.asJSONObject(): JsonObject = JsonParser.parseString(this).asJsonObject
-
-private fun Throwable.log() = apply {
-    @Suppress("TooGenericExceptionCaught") // Guarding against random runtime failures
-    try {
-        Logger.getInstance(this.javaClass).warn("Error occurred while performing a request", this)
-    } catch (t: Throwable) {
-        // IntelliJ logger rethrows logged exception
+        cont.resumeWithException(t)
     }
 }
 
@@ -88,7 +89,6 @@ private fun InputStream.copyTo(out: OutputStream, bufferSize: Int = DEFAULT_BUFF
     }
     return bytesCopied
 }
-
 
 private fun InputStream.readBytes(cancellationRequested: () -> Boolean): ByteArray {
     val buffer = ByteArrayOutputStream(maxOf(DEFAULT_BUFFER_SIZE, this.available()))

@@ -13,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Handler, extending IDE behaviour on typing in editor.
  * <p>
- * Note that {@code PsiFile} passed to handler's methods isn't guaranteed to be in sync with the document at the time of invocation
- * (due to performance considerations). {@link com.intellij.psi.PsiDocumentManager#commitDocument(Document)} should be invoked explicitly,
- * if an up-to-date PSI is required.
+ * Note that {@code PsiFile} passed to handler's methods isn't guaranteed to be in sync with the document at the time of invocation, for performance reasons.
+ * Heavy/expensive methods should not be called there because they would lead to freezes on typing.
+ * For example, {@link com.intellij.psi.PsiDocumentManager#commitDocument(Document)} should be avoided, if possible.
  */
 public abstract class TypedHandlerDelegate {
   public static final ExtensionPointName<TypedHandlerDelegate> EP_NAME = new ExtensionPointName<>("com.intellij.typedHandler");

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -9,7 +9,7 @@ public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_16;
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   @Override
@@ -19,6 +19,7 @@ public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
 
   public void testInstanceOfPattern() { doTest(); }
   public void testSwitchStatements() { doTest(); }
+  public void testSwitchStatementUnreachableBranches() { doTest(); }
   public void testSwitchExpressions() { doTest(); }
   public void testSwitchExpressionsNullability() { doTest(); }
   public void testConstantDescAsWrapperSupertype() {
@@ -38,4 +39,7 @@ public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
                        "public @interface NonnullByDefault {}");
     doTest(); 
   }
+  public void testStaticFieldInAnonymous() { doTest(); }
+
+  public void testMutabilityJdk16() { doTest(); }
 }

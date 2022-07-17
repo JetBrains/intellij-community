@@ -24,27 +24,36 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonListeners;
+import com.intellij.codeInsight.daemon.impl.DaemonRespondToChangesTest;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.PingProgress;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
+import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.naming.ClassNamingConvention;
 import com.siyeh.ig.naming.NewClassNamingConventionInspection;
@@ -54,6 +63,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
@@ -81,6 +92,8 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   private PsiJavaFile configureByText(String text) {
     configureFromFileText("dummy.java", text);
     assertTrue(getFile() instanceof PsiJavaFile);
+    DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)getEditor());
+    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
     return (PsiJavaFile)getFile();
   }
 
@@ -89,6 +102,34 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     // Avoid starting inside command (as implemented in super-class)
     // because we need to operate on application undo queue
     return false;
+  }
+
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    AtomicBoolean resolveHappened = new AtomicBoolean();
+    // we run the test in EDT under this fake progress which is needed for one thing only: to be able to assert that no resolve happens in EDT.
+    // Since resolve calls checkCanceled() a lot, we intercept these calls and check is we are being called from within resolve and are in EDT
+    class MyPingProgressIndicator extends ProgressIndicatorBase implements PingProgress {
+      @Override
+      public void interact() {
+        boolean isFromResolve = isFromResolve();
+        if (isFromResolve) resolveHappened.set(true);
+        assert !isFromResolve
+               || !ApplicationManager.getApplication().isDispatchThread() && ApplicationManager.getApplication().isReadAccessAllowed() // allow resolve from the background thread
+               || ApplicationManager.getApplication().isWriteAccessAllowed(); // allow resolve in the write action because that's how PsiReference.bindToElement() works
+      }
+    }
+    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      try {
+        super.runTestRunnable(testRunnable);
+      }
+      catch (Throwable e) {
+        throw new RuntimeException(e);
+      }
+    }, new MyPingProgressIndicator());
+    assertTrue("We must do resolve during auto-import, but it seems this test"+getTestName(false)+
+               " didn't sense any resolve at all. `isFromResolve()` method is broken?", resolveHappened.get());
   }
 
   public void testImportsInsertedAlphabetically() {
@@ -215,7 +256,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     });
   }
 
-  public void testAutoImportCaretLocation() {
+  public void testAutoImportCaretLocation() throws ExecutionException, InterruptedException {
     String text = "class X { ArrayList<caret> c; }";
     configureByText(text);
     type(" ");
@@ -227,19 +268,25 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     PsiReference ref = getFile().findReferenceAt(offset - 1);
     assertTrue(ref instanceof PsiJavaCodeReferenceElement);
 
-    ImportClassFixBase.Result result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false, true);
+    ImportClassFix fix = createImportFix((PsiJavaCodeReferenceElement)ref);
+    ImportClassFixBase.Result result = fix.doFix(getEditor(), true, false, true);
     assertEquals(ImportClassFixBase.Result.POPUP_NOT_SHOWN, result);
     UIUtil.dispatchAllInvocationEvents();
 
     getEditor().getCaretModel().moveToOffset(offset - 1);
-    result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false, true);
+    fix = createImportFix((PsiJavaCodeReferenceElement)ref);
+    result = fix.doFix(getEditor(), true, false, true);
     assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
     UIUtil.dispatchAllInvocationEvents();
 
     assertEmpty(highlightErrors());
   }
 
-  public void testAutoImportCaretLocation2() {
+  private static ImportClassFix createImportFix(PsiJavaCodeReferenceElement ref) throws InterruptedException, ExecutionException {
+    return ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.compute(() -> new ImportClassFix(ref))).get();
+  }
+
+  public void testAutoImportCaretLocation2() throws ExecutionException, InterruptedException {
     String text = "class X { <caret>ArrayList c = null; }";
     configureByText(text);
     type(" ");
@@ -252,14 +299,14 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     PsiReference ref = getFile().findReferenceAt(offset);
     assertTrue(ref instanceof PsiJavaCodeReferenceElement);
 
-    ImportClassFixBase.Result result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false, true);
+    ImportClassFixBase.Result result = createImportFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false, true);
     assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
     UIUtil.dispatchAllInvocationEvents();
 
     assertEmpty(highlightErrors());
   }
 
-  public void testAutoImportWorksWhenITypeSpaceAfterClassName() {
+  public void testAutoImportWorksWhenITypeSpaceAfterClassName() throws Exception {
     @NonNls String text = "class S { ArrayList<caret> }";
     configureByText(text);
 
@@ -271,7 +318,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
     PsiJavaCodeReferenceElement element =
       (PsiJavaCodeReferenceElement)getFile().findReferenceAt(getEditor().getCaretModel().getOffset() - 2);
-    ImportClassFix fix = new ImportClassFix(element);
+    ImportClassFix fix = createImportFix(element);
     ImportClassFixBase.Result result = fix.doFix(getEditor(), false, false, true);
     assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
 
@@ -279,6 +326,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testAutoImportAfterUncomment() {
+    assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("java.util.ArrayList", GlobalSearchScope.allScope(getProject())));
     @Language("JAVA")
     @NonNls String text = "class S { /*ArrayList l; HashMap h; <caret>*/ }";
     configureByText(text);
@@ -300,7 +348,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     assertEquals(2, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
   }
 
-  public void testEnsureOptimizeImportsWhenInspectionReportsErrors() {
+  public void testEnsureOptimizeImportsWhenInspectionReportsErrors() throws Exception {
     @NonNls String text = "import java.util.List; class S { } <caret>";
     configureByText(text);
     //ensure error will be provided by a local inspection
@@ -340,7 +388,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   }
 
 
-  public void testAutoImportOfGenericReference() {
+  public void testAutoImportOfGenericReference() throws Exception {
     @NonNls final String text = "class S {{ new ArrayList<caret><String> }}";
     configureByText(text);
     EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000); // make sure editor is visible - auto-import works only for visible area
@@ -361,10 +409,11 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     assertOneImportAdded("java.util.ArrayList");
   }
 
-  private void assertOneImportAdded(String s) {
+  private void assertOneImportAdded(String s) throws Exception {
     PsiImportStatementBase importStatement = assertOneElement(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
-    assertTrue(importStatement.resolve() instanceof PsiClass);
-    assertEquals(s, ((PsiClass)importStatement.resolve()).getQualifiedName());
+    PsiElement resolved = ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.compute(() -> importStatement.resolve())).get();
+    assertTrue(resolved instanceof PsiClass);
+    assertEquals(s, ((PsiClass)resolved).getQualifiedName());
   }
   private void assertNoImportsAdded() {
     assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
@@ -391,7 +440,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     assertNoImportsAdded();
   }
 
-  public void testUnambiguousImportMustBeInsertedEvenWhenShowImportPopupIsOff() {
+  public void testUnambiguousImportMustBeInsertedEvenWhenShowImportPopupIsOff() throws Exception {
     @Language("JAVA")
     @NonNls String text = "package p;\n" +
                           "class S { ArrayList l; }  ";
@@ -416,7 +465,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     }
   }
 
-  public void testAutoOptimizeDoesntSuddenlyRemoveImportsDuringTyping() {
+  public void testAutoOptimizeDoesntSuddenlyRemoveImportsDuringTyping() throws Exception {
     @NonNls String text = "package x; " +
                           "import java.util.ArrayList; " +
                           "class S {{ <caret> ArrayList l;\n" +
@@ -461,7 +510,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     assertNoImportsAdded();
   }
 
-  public void testAutoInsertImportForInnerClassAllowInnerClassImports() {
+  public void testAutoInsertImportForInnerClassAllowInnerClassImports() throws Exception {
     @NonNls String text = "package x; class S { void f(ReadLock r){} } <caret> ";
     configureByText(text);
 
@@ -477,7 +526,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     assertOneImportAdded("java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock");
   }
 
-  public void testAutoImportSkipsClassReferenceInMethodPosition() {
+  public void testAutoImportSkipsClassReferenceInMethodPosition() throws Exception {
     @NonNls String text =
       "package x; import java.util.HashMap; class S { HashMap<String,String> f(){ return  Hash<caret>Map <String, String >();} }  ";
     configureByText(text);
@@ -491,7 +540,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     assertOneImportAdded("java.util.HashMap");
 
     PsiReference ref = javaFile.findReferenceAt(getEditor().getCaretModel().getOffset());
-    ImportClassFix fix = new ImportClassFix((PsiJavaCodeReferenceElement)ref);
+    ImportClassFix fix = createImportFix((PsiJavaCodeReferenceElement)ref);
     assertFalse(fix.isAvailable(getProject(), getEditor(), getFile()));
   }
 
@@ -505,16 +554,16 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     assertEquals(1, highlightErrors().size());
   }
 
-  public void testAutoImportIgnoresUnresolvedImportReferences() {
+  public void testAutoImportIgnoresUnresolvedImportReferences() throws ExecutionException, InterruptedException {
     @Language("JAVA")
     @NonNls String text = "package x; import xxx.yyy.ArrayList; /** @noinspection ClassInitializerMayBeStatic*/ class S {{ ArrayList<caret> r; }}";
     configureByText(text);
 
     PsiJavaFile javaFile = (PsiJavaFile)getFile();
     PsiReference ref = javaFile.findReferenceAt(getEditor().getCaretModel().getOffset() - 1);
-    ImportClassFix fix = new ImportClassFix((PsiJavaCodeReferenceElement)ref);
+    ImportClassFix fix = createImportFix((PsiJavaCodeReferenceElement)ref);
     //explicitly available
-    assertTrue(fix.isAvailable(getProject(), getEditor(), getFile()));
+    assertFalse(fix.isAvailable(getProject(), getEditor(), getFile()));
     //hint is not available
     assertFalse(fix.showHint(getEditor()));
   }
@@ -538,5 +587,27 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     public String getShortName() {
       return "TooShortName";
     }
+  }
+
+  public void testAutoImportMustNotRunResolveInEDT() throws Exception {
+    @NonNls final String text = "class S {{ new ArrayList<<caret>String> }}";
+    configureByText(text);
+    type(" ");
+    backspace(); // make file undoable
+
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000); // make sure editor is visible - auto-import works only for visible area
+    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    doHighlighting();
+    assertOneImportAdded("java.util.ArrayList");
+  }
+
+  private static boolean isFromResolve() {
+    Throwable currentStack = new Throwable();
+    return ContainerUtil.exists(currentStack.getStackTrace(),
+                                stackElement -> stackElement.getClassName().equals(PsiJavaCodeReferenceElementImpl.class.getName())
+                                                && stackElement.getMethodName().equals("resolve"));
   }
 }

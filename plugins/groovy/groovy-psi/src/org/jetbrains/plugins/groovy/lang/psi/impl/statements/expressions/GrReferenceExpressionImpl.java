@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrStaticExpressionReference;
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineTransformationUtilKt;
 
 import java.util.*;
 
@@ -269,6 +270,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Nullable
   private static PsiType calculateType(@NotNull GrReferenceExpressionImpl refExpr) {
+    PsiType macroType = GroovyInlineTransformationUtilKt.getTypeFromInlineTransformation(refExpr);
+    if (macroType != null) return macroType;
     final Collection<? extends GroovyResolveResult> results = refExpr.lrResolve(true);
     final GroovyResolveResult result = PsiImplUtil.extractUniqueResult(results);
     final PsiElement resolved = result.getElement();
@@ -497,9 +500,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     @NotNull
     @Override
-    public Collection<GroovyResolveResult> doResolve(@NotNull GrReferenceExpressionImpl ref, boolean incomplete) {
+    public GroovyResolveResult[] doResolve(@NotNull GrReferenceExpressionImpl ref, boolean incomplete) {
       if (incomplete) {
-        return resolveIncomplete(ref);
+        return resolveIncomplete(ref).toArray(GroovyResolveResult.EMPTY_ARRAY);
       }
       final GroovyReference rValueRef = ref.getRValueReference();
       final GroovyReference lValueRef = ref.getLValueReference();
@@ -512,19 +515,19 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         for (GroovyResolveResult result : lValueRef.resolve(false)) {
           results.putIfAbsent(result.getElement(), result);
         }
-        return new SmartList<>(results.values());
+        return results.values().toArray(GroovyResolveResult.EMPTY_ARRAY);
       }
       else if (rValueRef != null) {
         // r-value only
-        return new SmartList<>(rValueRef.resolve(false));
+        return rValueRef.resolve(false).toArray(GroovyResolveResult.EMPTY_ARRAY);
       }
       else if (lValueRef != null) {
         // l-value only
-        return new SmartList<>(lValueRef.resolve(false));
+        return lValueRef.resolve(false).toArray(GroovyResolveResult.EMPTY_ARRAY);
       }
       else {
         LOG.error("Reference expression has no references");
-        return emptyList();
+        return GroovyResolveResult.EMPTY_ARRAY;
       }
     }
   };

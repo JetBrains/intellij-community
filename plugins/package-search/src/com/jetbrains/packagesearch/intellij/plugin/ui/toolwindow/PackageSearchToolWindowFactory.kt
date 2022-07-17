@@ -1,53 +1,44 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow
 
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.ui.content.ContentFactory
-import com.intellij.ui.content.ContentManager
-import com.intellij.util.castSafelyTo
 import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.HasToolWindowActions
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.SimpleToolWindowWithToolWindowActionsPanel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.SimpleToolWindowWithTwoToolbarsPanel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.repositories.RepositoryManagementPanel
-import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
-import com.jetbrains.packagesearch.intellij.plugin.util.FeatureFlags
-import com.jetbrains.packagesearch.intellij.plugin.util.addSelectionChangedListener
-import com.jetbrains.packagesearch.intellij.plugin.util.getPackageSearchModulesChangesFlow
+import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
-import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
-import com.jetbrains.packagesearch.intellij.plugin.util.lookAndFeelFlow
-import com.jetbrains.packagesearch.intellij.plugin.util.onEach
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
+import com.jetbrains.packagesearch.intellij.plugin.util.toolWindowManager
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.annotations.Nls
-import javax.swing.JComponent
 
-class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
-
+internal class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
     companion object {
 
-        private val ToolWindowId = PackageSearchBundle.message("toolwindow.stripe.Dependencies")
+        internal val ToolWindowId = PackageSearchBundle.message("toolwindow.stripe.Dependencies")
 
         private fun getToolWindow(project: Project) = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId)
 
@@ -57,127 +48,32 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     override fun isApplicable(project: Project): Boolean {
-        val isAvailable = runBlocking { project.getPackageSearchModulesChangesFlow().first().isNotEmpty() }
+        if (PluginEnvironment.isTestEnvironment) {
+            return false
+        }
 
-        if (!isAvailable) project.getPackageSearchModulesChangesFlow()
-            .filter { it.isNotEmpty() }
-            .take(1)
-            .flowOn(Dispatchers.Default)
-            .map {
-                RegisterToolWindowTask.closable(
-                    ToolWindowId,
-                    PackageSearchBundle.messagePointer("toolwindow.stripe.Dependencies"),
-                    PackageSearchIcons.ArtifactSmall
-                )
-            }
-            .map { toolWindowTask -> ToolWindowManager.getInstance(project).registerToolWindow(toolWindowTask) }
-            .onEach { toolWindow -> initialize(toolWindow, project) }
-            .flowOn(Dispatchers.AppUI)
-            .launchIn(project.lifecycleScope)
+        val isAvailable = DependenciesToolwindowTabProvider.extensions(project).isNotEmpty()
+
+        if (!isAvailable) {
+            DependenciesToolwindowTabProvider.availableTabsFlow(project)
+                .filter { it.isNotEmpty() }
+                .take(1)
+                .map {
+                    RegisterToolWindowTask.closable(
+                        ToolWindowId,
+                        PackageSearchBundle.messagePointer("toolwindow.stripe.Dependencies"),
+                        PackageSearchIcons.ArtifactSmall
+                    )
+                }
+                .map { toolWindowTask -> project.toolWindowManager.registerToolWindow(toolWindowTask) }
+                .onEach { toolWindow -> toolWindow.initialize(project) }
+                .flowOn(Dispatchers.toolWindowManager(project))
+                .launchIn(project.lifecycleScope)
+        }
 
         return isAvailable
     }
 
-    override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) = initialize(toolWindow, project)
-
-    private fun initialize(
-        toolWindow: ToolWindow,
-        project: Project
-    ): Unit = with(toolWindow) {
-        title = PackageSearchBundle.message("toolwindow.stripe.Dependencies")
-
-        contentManager.addSelectionChangedListener { event ->
-            if (this is ToolWindowEx) {
-                setAdditionalGearActions(null)
-                event.content.component.castSafelyTo<HasToolWindowActions>()
-                    ?.also { setAdditionalGearActions(it.gearActions) }
-            }
-            setTitleActions(emptyList())
-            event.content.component.castSafelyTo<HasToolWindowActions>()
-                ?.titleActions
-                ?.also { setTitleActions(it.toList()) }
-        }
-
-        contentManager.removeAllContents(true)
-
-        val panels = buildList {
-            add(PackageManagementPanel(project))
-            if (FeatureFlags.showRepositoriesTab) {
-                add(RepositoryManagementPanel(rootDataModelProvider = project.packageSearchDataService))
-            }
-        }
-
-        val contentFactory = ContentFactory.SERVICE.getInstance()
-
-        for (panel in panels) {
-            panel.initialize(contentManager, contentFactory)
-        }
-
-        isAvailable = false
-
-        project.getPackageSearchModulesChangesFlow()
-            .map { it.isNotEmpty() }
-            .onEach { logInfo("PackageSearchToolWindowFactory#packageSearchModulesChangesFlow") { "Setting toolWindow.isAvailable = $it" } }
-            .onEach(Dispatchers.AppUI) { isAvailable = it }
-            .launchIn(project.lifecycleScope)
-
-        combine(project.lookAndFeelFlow, project.getPackageSearchModulesChangesFlow().filter { it.isNotEmpty() }) { _, _ -> }
-            .onEach(Dispatchers.AppUI) { contentManager.component.updateAndRepaint() }
-            .launchIn(project.lifecycleScope)
-
-    }
-
-    private fun PackageSearchPanelBase.initialize(
-        contentManager: ContentManager,
-        contentFactory: ContentFactory,
-    ) {
-        val panelContent = content // should be executed before toolbars
-        val toolbar = toolbar
-        val topToolbar = topToolbar
-        val gearActions = gearActions
-        val titleActions = titleActions
-
-        if (topToolbar == null) {
-            contentManager.addTab(title, panelContent, toolbar, gearActions, titleActions, contentFactory)
-        } else {
-            val content = contentFactory.createContent(
-                toolbar?.let {
-                    SimpleToolWindowWithTwoToolbarsPanel(
-                        it,
-                        topToolbar,
-                        gearActions,
-                        titleActions,
-                        panelContent
-                    )
-                },
-                title,
-                false
-            )
-
-            content.isCloseable = false
-            contentManager.addContent(content)
-            content.component.updateAndRepaint()
-        }
-    }
-
-    private fun ContentManager.addTab(
-        @Nls title: String,
-        content: JComponent,
-        toolbar: JComponent?,
-        gearActions: ActionGroup?,
-        titleActions: Array<AnAction>?,
-        contentFactory: ContentFactory
-    ) {
-        addContent(
-            contentFactory.createContent(null, title, false).apply {
-                component = SimpleToolWindowWithToolWindowActionsPanel(gearActions, titleActions, false).apply {
-                    setProvideQuickActions(true)
-                    setContent(content)
-                    toolbar?.let { setToolbar(it) }
-
-                    isCloseable = false
-                }
-            }
-        )
-    }
+    override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) = toolWindow.initialize(project)
 }
+

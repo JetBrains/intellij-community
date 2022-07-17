@@ -1,39 +1,30 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea
 
-import com.intellij.ProjectTopics
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.updateSettings.impl.UpdateChecker.excludedFromUpdateCheckPlugins
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinPluginCompatibilityVerifier.checkCompatibility
-import org.jetbrains.kotlin.idea.configuration.ui.notifications.notifyKotlinStyleUpdateIfNeeded
+import org.jetbrains.kotlin.idea.configuration.notifications.notifyKotlinStyleUpdateIfNeeded
+import org.jetbrains.kotlin.idea.configuration.notifications.showEapSurveyNotification
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter.Companion.setupReportingFromRelease
 import org.jetbrains.kotlin.idea.search.containsKotlinFile
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
-import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative
 import java.util.concurrent.Callable
 
 internal class PluginStartupActivity : StartupActivity.Background {
     override fun runActivity(project: Project) {
-        val startupService = PluginStartupService.getInstance(project)
-
-        startupService.register()
-        project.messageBus.connect(startupService).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-            override fun rootsChanged(event: ModuleRootEvent) {
-                KotlinJavaPsiFacade.getInstance(project).clearPackageCaches()
-            }
-        })
         initializeDiagnostics()
         excludedFromUpdateCheckPlugins.add("org.jetbrains.kotlin")
         checkCompatibility()
@@ -44,12 +35,16 @@ internal class PluginStartupActivity : StartupActivity.Background {
 
         ReadAction.nonBlocking(Callable { project.containsKotlinFile() })
             .inSmartMode(project)
-            .expireWith(startupService)
+            .expireWith(KotlinPluginDisposable.getInstance(project))
             .finishOnUiThread(ModalityState.any()) { hasKotlinFiles ->
                 if (!hasKotlinFiles) return@finishOnUiThread
 
                 if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
                     notifyKotlinStyleUpdateIfNeeded(project)
+
+                    if (!isUnitTestMode()) {
+                        showEapSurveyNotification(project)
+                    }
                 }
 
                 val daemonCodeAnalyzer = DaemonCodeAnalyzerImpl.getInstanceEx(project) as DaemonCodeAnalyzerImpl

@@ -24,7 +24,7 @@ public class PagedFileStorageTest {
   private static final Logger LOG = Logger.getInstance(PagedFileStorageTest.class);
   @Rule public TempDirectory tempDir = new TempDirectory();
 
-  private final StorageLockContext lock = new StorageLockContext(true);
+  private final StorageLockContext lock = new StorageLockContext();
   private Path f;
   private PagedFileStorage s;
 
@@ -65,7 +65,7 @@ public class PagedFileStorageTest {
       s.resize(1000);
 
       for (int i = 0; i < 1000; i++) {
-        assertEquals(0, s.get(i));
+        assertEquals(0, s.get(i, true));
       }
     });
   }
@@ -116,7 +116,7 @@ public class PagedFileStorageTest {
       file.put(0, bytes, 0, bytes.length);
       int written_bytes = (int)file.length();
       byte[] newBytes = new byte[written_bytes];
-      file.get(0, newBytes, 0, written_bytes);
+      file.get(0, newBytes, 0, written_bytes, true);
       assertArrayEquals(bytes, newBytes);
 
       file.close();

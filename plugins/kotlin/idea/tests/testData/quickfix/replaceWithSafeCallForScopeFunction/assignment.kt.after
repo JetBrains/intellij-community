@@ -1,5 +1,5 @@
 // "Replace scope function with safe (?.) call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 var i = 0
 
 fun foo(a: String?) {

@@ -8,6 +8,7 @@ import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.SmartList
 import com.intellij.util.io.readChars
 import com.intellij.util.io.write
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -101,6 +102,7 @@ class ListTest {
     assertThat(deserializedBean.list).isSameAs(emptyList<String>())
   }
 
+  @Ignore
   @Test
   fun `parameterized array`() {
     class TestBean<T> {
@@ -111,7 +113,8 @@ class ListTest {
     val bean = TestBean<String>()
     bean.list = arrayOf("bar")
     val deserializedBean = test(bean, defaultTestWriteConfiguration.copy(allowAnySubTypes = true))
-    assertThat(deserializedBean.list!!.first()).isEqualTo("bar")
+    val array = deserializedBean.list!!
+    assertThat(array.first()).isEqualTo("bar")
   }
 
   @Test

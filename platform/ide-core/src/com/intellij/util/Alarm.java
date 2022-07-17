@@ -2,11 +2,9 @@
 package com.intellij.util;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationActivationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
@@ -19,7 +17,10 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Async;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -28,10 +29,10 @@ import java.util.List;
 import java.util.concurrent.*;
 
 /**
- * Allows to schedule Runnable instances (requests) to be executed after a specific time interval on a specific thread.
+ * Allows scheduling `Runnable` instances (requests) to be executed after a specific time interval on a specific thread.
  * Use {@link #addRequest} methods to schedule the requests.
  * Two requests scheduled with the same delay are executed sequentially, one after the other.
- * {@link #cancelAllRequests()} and {@link #cancelRequest(Runnable)} allow to cancel already scheduled requests.
+ * {@link #cancelAllRequests()} and {@link #cancelRequest(Runnable)} allow canceling already scheduled requests.
  */
 public class Alarm implements Disposable {
   protected static final Logger LOG = Logger.getInstance(Alarm.class);
@@ -40,7 +41,7 @@ public class Alarm implements Disposable {
 
   // requests scheduled to myExecutorService
   private final List<Request> myRequests = new SmartList<>(); // guarded by LOCK
-  // requests not yet scheduled to myExecutorService (because e.g. corresponding component isn't active yet)
+  // requests not yet scheduled to myExecutorService (because e.g., the corresponding component isn't active yet)
   private final List<Request> myPendingRequests = new SmartList<>(); // guarded by LOCK
 
   private final ScheduledExecutorService myExecutorService;
@@ -68,16 +69,13 @@ public class Alarm implements Disposable {
 
   public enum ThreadToUse {
     /**
-     * Run request in Swing EventDispatchThread. This is the default.
+     * Run request in Swing event dispatch thread; this is the default.
      * NB: <i>Requests shouldn't take long to avoid UI freezes.</i>
      */
     SWING_THREAD,
 
-    /**
-     * @deprecated Use {@link #POOLED_THREAD} instead
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+    /** @deprecated Use {@link #POOLED_THREAD} instead */
+    @Deprecated(forRemoval = true)
     SHARED_THREAD,
 
     /**
@@ -89,14 +87,14 @@ public class Alarm implements Disposable {
   }
 
   /**
-   * Creates alarm that works in Swing thread
+   * Creates an alarm that works in EDT.
    */
   public Alarm() {
     this(ThreadToUse.SWING_THREAD);
   }
 
   /**
-   * Creates alarm that works in Swing thread
+   * Creates an alarm that works in EDT.
    */
   public Alarm(@NotNull Disposable parentDisposable) {
     this(ThreadToUse.SWING_THREAD, parentDisposable);
@@ -124,7 +122,7 @@ public class Alarm implements Disposable {
   public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
     myThreadToUse = threadToUse;
     if (threadToUse == ThreadToUse.SHARED_THREAD) {
-      DeprecatedMethodException.report("Please use POOLED_THREAD instead");
+      PluginException.reportDeprecatedUsage("Alarm.ThreadToUse#SHARED_THREAD", "Please use `POOLED_THREAD` instead");
     }
 
     myExecutorService = threadToUse == ThreadToUse.SWING_THREAD ?
@@ -305,7 +303,7 @@ public class Alarm implements Disposable {
   }
 
   /**
-   * wait for all requests to start execution (i.e. their delay elapses and their run() method, well, runs)
+   * wait for all requests to start execution (i.e., their delay elapses and their run() method, well, runs)
    * and then wait for the execution to finish.
    */
   @TestOnly
@@ -349,7 +347,8 @@ public class Alarm implements Disposable {
     private final ModalityState myModalityState;
     private Future<?> myFuture; // guarded by LOCK
     private final long myDelayMillis;
-    private final ClientId myClientId;
+    @NotNull
+    private final String myClientId;
 
     @Async.Schedule
     private Request(@NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
@@ -358,7 +357,7 @@ public class Alarm implements Disposable {
 
         myModalityState = modalityState;
         myDelayMillis = delayMillis;
-        myClientId = ClientId.getCurrent();
+        myClientId = ClientId.getCurrentValue();
       }
     }
 
@@ -384,10 +383,7 @@ public class Alarm implements Disposable {
     private void runSafely(@Nullable Runnable task) {
       try {
         if (!myDisposed && task != null) {
-          if (ClientId.Companion.getPropagateAcrossThreads()) {
-            ClientId.withClientId(myClientId, () -> QueueProcessor.runSafely(task));
-          }
-          else {
+          try (AccessToken ignored = ClientId.withClientId(myClientId)) {
             QueueProcessor.runSafely(task);
           }
         }
@@ -412,8 +408,8 @@ public class Alarm implements Disposable {
     }
 
     /**
-     * @return task if not yet executed
-     * must be called under LOCK
+     * Must be called under `LOCK`.
+     * Returns a task, if not yet executed.
      */
     private @Nullable Runnable cancel() {
       Future<?> future = myFuture;
@@ -436,11 +432,10 @@ public class Alarm implements Disposable {
     }
   }
 
-  /**
-   * @deprecated use {@link #Alarm(JComponent, Disposable)} instead
-   */
-  @Deprecated
+  /** @deprecated use {@link #Alarm(JComponent, Disposable)} instead */
+  @Deprecated(forRemoval = true)
   public @NotNull Alarm setActivationComponent(@NotNull JComponent component) {
+    PluginException.reportDeprecatedUsage("Alarm#setActivationComponent", "Please use `#Alarm(JComponent, Disposable)` instead");
     ApplicationManager.getApplication().assertIsDispatchThread();
     myActivationComponent = component;
     //noinspection ResultOfObjectAllocationIgnored
@@ -450,8 +445,6 @@ public class Alarm implements Disposable {
         flushPending();
       }
     });
-
-
     return this;
   }
 

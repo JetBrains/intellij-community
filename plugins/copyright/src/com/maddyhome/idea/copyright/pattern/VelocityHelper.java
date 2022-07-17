@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.maddyhome.idea.copyright.pattern;
 
@@ -14,7 +14,7 @@ import org.apache.commons.collections.ExtendedProperties;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
-import org.apache.velocity.runtime.log.SimpleLog4JLogSystem;
+import org.apache.velocity.runtime.log.JdkLogChute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,9 +106,9 @@ public final class VelocityHelper
                 extendedProperties.addProperty("file.resource.loader.path", PathManager.getPluginsPath() + "/Copyright/resources");
 
                 extendedProperties.addProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS,
-                    SimpleLog4JLogSystem.class.getName());
+                    JdkLogChute.class.getName());
                 extendedProperties
-                    .addProperty("runtime.log.logsystem.log4j.category", CopyrightManager.class.getName());
+                    .addProperty(JdkLogChute.RUNTIME_LOG_JDK_LOGGER, CopyrightManager.class.getName());
 
                 engine.setExtendedProperties(extendedProperties);
                 engine.init();

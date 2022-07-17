@@ -17,8 +17,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.CommonMoveClassesOrPackagesUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -65,14 +65,14 @@ public class CreateTestUtils {
       }
       else {
         PsiDirectory defaultDir = chooseDefaultDirectory(project, targetModule, targetPackage.getDirectories(), roots);
-        return MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir);
+        return CommonMoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir);
       }
     });
 
     if (selectedRoot == null) return null;
 
     return WriteCommandAction.writeCommandAction(project).withName(CodeInsightBundle.message("create.directory.command"))
-      .compute(() -> RefactoringUtil.createPackageDirectoryInSourceRoot(targetPackage, selectedRoot));
+      .compute(() -> CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(targetPackage, selectedRoot));
   }
 
   @Nullable

@@ -133,7 +133,7 @@ Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage
 AssigOp                  = "=" | "+="
 
 ParamExpansionName       = ([a-zA-Z0-9_] | {EscapedAnyChar})+
-ParameterExpansionExpr   = [^}/$`\"]+ | {EscapedChar}+
+ParameterExpansionExpr   = ([^}/$`\"\\] | {EscapedChar})+
 ParamExpansionSeparator  = "!" | ":" | ":"?"=" | ":"?"+" | ":"?"-" | ":"?"?" | "@" | ","","? | "^""^"? | "*"
 
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
@@ -146,7 +146,6 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
 StringContent            = [^$\"`(\\] | {EscapedAnyChar}
 EvalContent              = [^|\r\n$\"`'() ;] | {EscapedAnyChar}
 
-%state ARITHMETIC_EXPRESSION
 %state OLD_ARITHMETIC_EXPRESSION
 %state LET_EXPRESSION
 %state EVAL_EXPRESSION
@@ -331,7 +330,7 @@ EvalContent              = [^|\r\n$\"`'() ;] | {EscapedAnyChar}
     "elif"                        { return ELIF; }
     "else"                        { return ELSE; }
     "fi"                          { popState(IF_CONDITION); return FI; }
-    "for"                         { pushState(OTHER_CONDITIONS); return FOR; }
+    "for" / {WhiteSpace}+         { pushState(OTHER_CONDITIONS); return FOR; }
     "in"                          { return IN; }
     "function"                    { return FUNCTION; }
     "if"                          { pushState(IF_CONDITION); return IF; }
@@ -344,7 +343,7 @@ EvalContent              = [^|\r\n$\"`'() ;] | {EscapedAnyChar}
     "test"                        { pushState(TEST_EXPRESSION); return TEST; }
 }
 
-<PARENTHESES_COMMAND_SUBSTITUTION, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION> {
+<PARENTHESES_COMMAND_SUBSTITUTION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION> {
     "*="                          { return MULT_ASSIGN; }
     "/="                          { return DIV_ASSIGN; }
     "%="                          { return MOD_ASSIGN; }
@@ -391,7 +390,7 @@ EvalContent              = [^|\r\n$\"`'() ;] | {EscapedAnyChar}
     {ArithWord}                   { return WORD; }
 }
 
-<YYINITIAL, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, TEST_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE,
+<YYINITIAL, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, TEST_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE,
   CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, BACKQUOTE_COMMAND_SUBSTITUTION, HERE_STRING, PARENTHESES_COMMAND_SUBSTITUTION> {
     {AssignmentWord} / {AssigOp}  { return WORD; }
     {Filedescriptor}              { return FILEDESCRIPTOR; }

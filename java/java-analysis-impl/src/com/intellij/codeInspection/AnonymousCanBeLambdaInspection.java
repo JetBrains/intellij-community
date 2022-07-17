@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -67,14 +67,14 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+      public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
         final PsiElement parent = aClass.getParent();
         if (canBeConvertedToLambda(aClass, false, isOnTheFly || reportNotAnnotatedInterfaces, Collections.emptySet())) {
           final PsiElement lBrace = aClass.getLBrace();
           LOG.assertTrue(lBrace != null);
           final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
-          ProblemHighlightType type = ProblemHighlightType.LIKE_UNUSED_SYMBOL;
+          ProblemHighlightType type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
           if (isOnTheFly && !reportNotAnnotatedInterfaces) {
             final PsiClass baseClass = aClass.getBaseClassType().resolve();
             LOG.assertTrue(baseClass != null);
@@ -351,7 +351,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
 
     block.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitVariable(PsiVariable variable) {
+      public void visitVariable(@NotNull PsiVariable variable) {
         super.visitVariable(variable);
         if (!(variable instanceof PsiField)) {
           variables.add(variable);
@@ -359,7 +359,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
       }
     });
 
-    final PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(lambdaExpression.getProject());
+    final PsiResolveHelper helper = PsiResolveHelper.getInstance(lambdaExpression.getProject());
     for (Iterator<PsiVariable> iterator = variables.iterator(); iterator.hasNext(); ) {
       PsiVariable local = iterator.next();
       final String localName = local.getName();
@@ -411,7 +411,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
       final LinkedHashMap<PsiElement, PsiElement> replacements = new LinkedHashMap<>();
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitVariable(PsiVariable variable) {
+        public void visitVariable(@NotNull PsiVariable variable) {
           super.visitVariable(variable);
           final String newName = names.get(variable);
           if (newName != null) {
@@ -420,7 +420,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
         }
 
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);
           final PsiElement resolve = expression.resolve();
           if (resolve instanceof PsiVariable) {
@@ -501,7 +501,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression methodCallExpression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCallExpression) {
       if (myBodyContainsForbiddenRefs) return;
 
       super.visitMethodCallExpression(methodCallExpression);
@@ -513,7 +513,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void visitThisExpression(PsiThisExpression expression) {
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
       if (myBodyContainsForbiddenRefs) return;
 
       if (expression.getQualifier() == null) {
@@ -522,7 +522,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void visitSuperExpression(PsiSuperExpression expression) {
+    public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
       if (myBodyContainsForbiddenRefs) return;
 
       if (expression.getQualifier() == null) {
@@ -531,14 +531,14 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void visitVariable(PsiVariable variable) {
+    public void visitVariable(@NotNull PsiVariable variable) {
       if (myBodyContainsForbiddenRefs) return;
 
       super.visitVariable(variable);
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (myBodyContainsForbiddenRefs) return;
 
       super.visitReferenceExpression(expression);

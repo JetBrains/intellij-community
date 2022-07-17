@@ -62,8 +62,7 @@ private fun getCategoryClasses(call: GrMethodCall, closure: GrFunctionalExpressi
 @NlsSafe private const val USE = "use"
 
 private fun checkMethodCall(place: PsiElement): GrMethodCall? {
-  val context = place.context
-  val call = when (context) {
+  val call = when (val context = place.context) {
     is GrMethodCall -> context
     is GrArgumentList -> context.context as? GrMethodCall
     else -> null

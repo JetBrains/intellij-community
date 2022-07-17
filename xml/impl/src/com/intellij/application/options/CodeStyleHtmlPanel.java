@@ -93,7 +93,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(final @NotNull EditorColorsScheme scheme) {
     return XmlHighlighterFactory.createXMLHighlighter(scheme);
   }
 
@@ -124,7 +124,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  public void apply(CodeStyleSettings rootSettings) throws ConfigurationException {
+  public void apply(@NotNull CodeStyleSettings rootSettings) throws ConfigurationException {
     HtmlCodeStyleSettings settings = rootSettings.getCustomSettings(HtmlCodeStyleSettings.class);
     settings.HTML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
     settings.HTML_ATTRIBUTE_WRAP = CodeStyleSettings.WrapStyle.getId((CodeStyleSettings.WrapStyle)myWrapAttributes.getSelectedItem());
@@ -164,7 +164,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected void resetImpl(final CodeStyleSettings rootSettings) {
+  protected void resetImpl(final @NotNull CodeStyleSettings rootSettings) {
     HtmlCodeStyleSettings settings = rootSettings.getCustomSettings(HtmlCodeStyleSettings.class);
     myKeepBlankLines.setText(String.valueOf(settings.HTML_KEEP_BLANK_LINES));
     myWrapAttributes.setSelectedItem(CodeStyleSettings.WrapStyle.forWrapping(settings.HTML_ATTRIBUTE_WRAP));

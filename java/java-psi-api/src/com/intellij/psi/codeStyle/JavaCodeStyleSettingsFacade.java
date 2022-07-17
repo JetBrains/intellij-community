@@ -9,28 +9,28 @@ import org.jetbrains.annotations.ApiStatus;
  * @deprecated Use {@link JavaFileCodeStyleFacade} for per-file code-style-settings. Note: project settings
  * may not be applicable to a particular file.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+@ApiStatus.ScheduledForRemoval
 @Deprecated
 public abstract class JavaCodeStyleSettingsFacade {
 
   /**
    * @deprecated Use {@link JavaFileCodeStyleFacade#useFQClassNames()}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public abstract boolean useFQClassNames();
 
   /**
    * @deprecated Use {@link JavaFileCodeStyleFacade#isGenerateFinalParameters()}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public abstract boolean isGenerateFinalParameters();
 
   /**
    * @deprecated Use {@link JavaFileCodeStyleFacade#forContext(PsiFile)} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static JavaCodeStyleSettingsFacade getInstance(Project project) {
     return project.getService(JavaCodeStyleSettingsFacade.class);

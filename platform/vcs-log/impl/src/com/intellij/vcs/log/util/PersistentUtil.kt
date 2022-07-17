@@ -34,6 +34,7 @@ import java.nio.file.Path
 object PersistentUtil {
   @JvmField
   val LOG_CACHE = File(PathManager.getSystemPath(), "vcs-log")
+
   @NonNls
   private const val CORRUPTION_MARKER = "corruption.marker"
 
@@ -57,14 +58,18 @@ object PersistentUtil {
     val sortedRoots = logProviders.keys.sortedBy { it.path }
     return StringUtil.join(sortedRoots, { root -> root.path + "." + mapping(logProviders.getValue(root)) }, ".").hashCode()
   }
+
+  @JvmStatic
+  fun getProjectLogDataDirectoryName(projectName: String, logId: String): String =
+    PathUtilRt.suggestFileName("${projectName.take(7)}.$logId", false, false)
 }
 
 class StorageId(@NonNls private val projectName: String,
                 @NonNls private val subdirName: String,
                 private val logId: String,
                 val version: Int) {
-  private val safeProjectName = PathUtilRt.suggestFileName("${projectName.take(7)}.$logId", false, false)
-  val projectStorageDir by lazy { File(File(LOG_CACHE, subdirName), safeProjectName) }
+  private val safeProjectName = PersistentUtil.getProjectLogDataDirectoryName(projectName, logId)
+  val projectStorageDir by lazy { File(File(LOG_CACHE, safeProjectName), subdirName) }
 
   @JvmOverloads
   fun getStorageFile(kind: String, forMapIndexStorage: Boolean = false): Path {

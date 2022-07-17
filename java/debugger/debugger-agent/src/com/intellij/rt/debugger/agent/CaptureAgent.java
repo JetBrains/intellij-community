@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.debugger.agent;
 
 import org.jetbrains.capture.org.objectweb.asm.*;
@@ -10,28 +10,17 @@ import java.lang.instrument.UnmodifiableClassException;
 import java.net.URI;
 import java.security.ProtectionDomain;
 import java.util.*;
-import java.util.jar.JarFile;
 
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
+@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "rawtypes"})
 public final class CaptureAgent {
-  public static final String AGENT_STORAGE_JAR = "debugger-agent-storage.jar";
   private static Instrumentation ourInstrumentation;
   private static final Set<Class> mySkipped = new HashSet<Class>();
 
   private static final Map<String, List<InstrumentPoint>> myInstrumentPoints = new HashMap<String, List<InstrumentPoint>>();
 
-  public static void premain(String args, Instrumentation instrumentation) {
-    // never instrument twice
-    if (System.getProperty("intellij.debug.agent") != null) {
-      System.err.println("Capture agent: more than one agent is not allowed, skipping");
-      return;
-    }
-    System.setProperty("intellij.debug.agent", "true");
-
+  public static void init(String args, Instrumentation instrumentation) {
     ourInstrumentation = instrumentation;
     try {
-      appendStorageJar(instrumentation);
-
       readSettings(args);
 
       // remember already loaded and not instrumented classes to skip them during retransform
@@ -74,52 +63,6 @@ public final class CaptureAgent {
     }
   }
 
-  @SuppressWarnings("SSBasedInspection")
-  private static void appendStorageJar(Instrumentation instrumentation) throws IOException {
-    File storageJar = null;
-
-    // do not extract if storage jar is available nearby
-    try {
-      storageJar = new File(new File(CaptureAgent.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile(),
-                            AGENT_STORAGE_JAR);
-    }
-    catch (Exception e) {
-      try {
-        String path = "/" + CaptureAgent.class.getName().replace('.', '/') + ".class";
-        String classResource = CaptureAgent.class.getResource(path).getFile();
-        if (classResource.startsWith("file:")) {
-          storageJar = new File(new File(classResource.substring(5, classResource.length() - path.length() - 1)).getParentFile(),
-                                AGENT_STORAGE_JAR);
-        }
-      } catch (Exception ignored) {
-      }
-    }
-
-    if (storageJar == null || !storageJar.exists()) {
-      InputStream inputStream = CaptureAgent.class.getResourceAsStream("/" + AGENT_STORAGE_JAR);
-      try {
-        storageJar = File.createTempFile("debugger-agent-storage", ".jar");
-        storageJar.deleteOnExit();
-        OutputStream outStream = new FileOutputStream(storageJar);
-        try {
-          byte[] buffer = new byte[10 * 1024];
-          int bytesRead;
-          while ((bytesRead = inputStream.read(buffer)) != -1) {
-            outStream.write(buffer, 0, bytesRead);
-          }
-        }
-        finally {
-          outStream.close();
-        }
-      }
-      finally {
-        inputStream.close();
-      }
-    }
-
-    instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(storageJar));
-  }
-
   private static void setupJboss() {
     String modulesKey = "jboss.modules.system.pkgs";
     String property = System.getProperty(modulesKey, "");
@@ -138,15 +81,16 @@ public final class CaptureAgent {
     Properties properties = new Properties();
     File file;
     try {
-      FileReader reader = null;
+      InputStream stream = null;
       try {
         file = new File(new URI(uri));
-        reader = new FileReader(file);
-        properties.load(reader);
+        stream = new FileInputStream(file);
+        // use ISO 8859-1 character encoding
+        properties.load(stream);
       }
       finally {
-        if (reader != null) {
-          reader.close();
+        if (stream != null) {
+          stream.close();
         }
       }
     }

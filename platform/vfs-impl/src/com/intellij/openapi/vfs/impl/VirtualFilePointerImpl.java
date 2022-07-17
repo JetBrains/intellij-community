@@ -20,6 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TraceableDisposable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -53,6 +55,9 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
       return ((VirtualFile)result).getName();
     }
     String url = (String)result;
+    if (node.myFS instanceof ArchiveFileSystem) {
+      url = VfsImplUtil.getLocalPath((ArchiveFileSystem)node.myFS, url);
+    }
     int index = url.lastIndexOf('/');
     return index >= 0 ? url.substring(index + 1) : url;
   }

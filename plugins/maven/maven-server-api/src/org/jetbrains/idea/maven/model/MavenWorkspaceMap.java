@@ -59,7 +59,7 @@ public class MavenWorkspaceMap implements Serializable {
   }
 
   //cannot use java.util.function here because of java 6 lang level
-  public static MavenWorkspaceMap copy(MavenWorkspaceMap workspaceMap, Function<String, String> transformer) {
+  public static MavenWorkspaceMap copy(MavenWorkspaceMap workspaceMap, Function<? super String, String> transformer) {
     MavenWorkspaceMap result = new MavenWorkspaceMap();
     for (Map.Entry<MavenId, Data> entry : workspaceMap.myMapping.entrySet()) {
       Data data = entry.getValue();
@@ -68,6 +68,12 @@ public class MavenWorkspaceMap implements Serializable {
       result.myMapping.put(entry.getKey(), new Data(data.originalId, file, outputFile));
     }
     return result;
+  }
+
+  public MavenWorkspaceMap copyInto(MavenWorkspaceMap recipient) {
+    recipient.myMapping.clear();
+    recipient.myMapping.putAll(myMapping);
+    return recipient;
   }
 
   public static final class Data implements Serializable {

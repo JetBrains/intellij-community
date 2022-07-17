@@ -2,6 +2,7 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -287,36 +288,41 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-26354
   public void testInitializingAttrs() {
-    doTestByText("import attr\n" +
-                 "import typing\n" +
-                 "\n" +
-                 "@attr.s\n" +
-                 "class Weak1:\n" +
-                 "    x = attr.ib()\n" +
-                 "    y = attr.ib(default=0)\n" +
-                 "    z = attr.ib(default=attr.Factory(list))\n" +
-                 "    \n" +
-                 "Weak1(1, \"str\", 2)\n" +
-                 "\n" +
-                 "\n" +
-                 "@attr.s\n" +
-                 "class Weak2:\n" +
-                 "    x = attr.ib()\n" +
-                 "    \n" +
-                 "    @x.default\n" +
-                 "    def __init_x__(self):\n" +
-                 "        return 1\n" +
-                 "    \n" +
-                 "Weak2(\"str\")\n" +
-                 "\n" +
-                 "\n" +
-                 "@attr.s\n" +
-                 "class Strong:\n" +
-                 "    x = attr.ib(type=int)\n" +
-                 "    y = attr.ib(default=0, type=int)\n" +
-                 "    z = attr.ib(default=attr.Factory(list), type=typing.List[int])\n" +
-                 "    \n" +
-                 "Strong(1, <warning descr=\"Expected type 'int', got 'str' instead\">\"str\"</warning>, <warning descr=\"Expected type 'list[int]', got 'list[str]' instead\">[\"str\"]</warning>)");
+    runWithAdditionalClassEntryInSdkRoots(
+      "packages",
+      () -> doTestByText(
+        "import attr\n" +
+        "import typing\n" +
+        "\n" +
+        "@attr.s\n" +
+        "class Weak1:\n" +
+        "    x = attr.ib()\n" +
+        "    y = attr.ib(default=0)\n" +
+        "    z = attr.ib(default=attr.Factory(list))\n" +
+        "    \n" +
+        "Weak1(1, \"str\", 2)\n" +
+        "\n" +
+        "\n" +
+        "@attr.s\n" +
+        "class Weak2:\n" +
+        "    x = attr.ib()\n" +
+        "    \n" +
+        "    @x.default\n" +
+        "    def __init_x__(self):\n" +
+        "        return 1\n" +
+        "    \n" +
+        "Weak2(\"str\")\n" +
+        "\n" +
+        "\n" +
+        "@attr.s\n" +
+        "class Strong:\n" +
+        "    x = attr.ib(type=int)\n" +
+        "    y = attr.ib(default=0, type=int)\n" +
+        "    z = attr.ib(default=attr.Factory(list), type=typing.List[int])\n" +
+        "    \n" +
+        "Strong(1, <warning descr=\"Expected type 'int', got 'str' instead\">\"str\"</warning>, <warning descr=\"Expected type 'list[int]', got 'list[str]' instead\">[\"str\"]</warning>)"
+      )
+    );
   }
 
   // PY-28957
@@ -474,11 +480,441 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText("from typing import Type\n" +
                  "def foo(x: Type[int | str]):\n" +
                  "    pass\n" +
-                 "foo(<warning descr=\"Expected type 'Type[int | str]', got 'Union' instead\">int | str</warning>)");
+                 "foo(<warning descr=\"Expected type 'Type[int | str]', got 'UnionType' instead\">int | str</warning>)");
   }
 
   // PY-44974
   public void testBitwiseOrUnionsAndOldStyleUnionsAreEquivalent() {
     doTest();
+  }
+
+  // PY-49935
+  public void testParamSpecExample() {
+    doTestByText("from collections.abc import Callable\n" +
+                 "from typing import ParamSpec\n" +
+                 "\n" +
+                 "P = ParamSpec(\"P\")\n" +
+                 "\n" +
+                 "\n" +
+                 "def changes_return_type_to_str(x: Callable[P, int]) -> Callable[P, str]: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "def returns_int(a: str, b: bool) -> int:\n" +
+                 "    return 42\n" +
+                 "\n" +
+                 "\n" +
+                 "changes_return_type_to_str(returns_int)(\"42\", <warning descr=\"Expected type 'bool', got 'int' instead\">42</warning>)");
+  }
+
+  // PY-49935
+  public void testParamSpecUserGenericClassMethod() {
+    doTestByText("from typing import TypeVar, Generic, Callable, ParamSpec\n" +
+                 "\n" +
+                 "U = TypeVar(\"U\")\n" +
+                 "P = ParamSpec(\"P\")\n" +
+                 "\n" +
+                 "\n" +
+                 "class Y(Generic[U, P]):\n" +
+                 "    f: Callable[P, U]\n" +
+                 "    attr: U\n" +
+                 "\n" +
+                 "    def __init__(self, f: Callable[P, U], attr: U) -> None:\n" +
+                 "        self.f = f\n" +
+                 "        self.attr = attr\n" +
+                 "\n" +
+                 "\n" +
+                 "def a(q: int) -> str: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "expr = Y(a, '1').f(<warning descr=\"Expected type 'int', got 'str' instead\">\"42\"</warning>)\n");
+  }
+
+  // PY-49935
+  public void testParamSpecUserGenericClassMethodSeveralParameters() {
+    doTestByText("from typing import TypeVar, Generic, Callable, ParamSpec\n" +
+                 "\n" +
+                 "U = TypeVar(\"U\")\n" +
+                 "P = ParamSpec(\"P\")\n" +
+                 "\n" +
+                 "\n" +
+                 "class Y(Generic[U, P]):\n" +
+                 "    f: Callable[P, U]\n" +
+                 "    attr: U\n" +
+                 "\n" +
+                 "    def __init__(self, f: Callable[P, U], attr: U) -> None:\n" +
+                 "        self.f = f\n" +
+                 "        self.attr = attr\n" +
+                 "\n" +
+                 "\n" +
+                 "def a(q: int, s: str) -> str: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "expr = Y(a, '1').f(42, <warning descr=\"Expected type 'str', got 'int' instead\">42</warning>)\n");
+  }
+
+  // PY-49935
+  public void testParamSpecUserGenericClassMethodConcatenate() {
+    doTestByText("from typing import TypeVar, Generic, Callable, ParamSpec, Concatenate\n" +
+           "\n" +
+           "U = TypeVar(\"U\")\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "class Y(Generic[U, P]):\n" +
+           "    f: Callable[Concatenate[int, P], U]\n" +
+           "    attr: U\n" +
+           "\n" +
+           "    def __init__(self, f: Callable[Concatenate[int, P], U], attr: U) -> None:\n" +
+           "        self.f = f\n" +
+           "        self.attr = attr\n" +
+           "\n" +
+           "\n" +
+           "def a(q: int, s: str, b: bool) -> str: ...\n" +
+           "\n" +
+           "\n" +
+           "expr = Y(a, '1').f(42, <warning descr=\"Expected type 'str', got 'int' instead\">42</warning>, <warning descr=\"Expected type 'bool', got 'int' instead\">42</warning>)\n");
+  }
+
+  // PY-49935
+  public void testParamSpecConcatenateAddThirdParameter() {
+    doTestByText("from collections.abc import Callable\n" +
+           "from typing import Concatenate, ParamSpec\n" +
+           "\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "def bar(x: int, *args: bool) -> int: ...\n" +
+           "\n" +
+           "\n" +
+           "def add(x: Callable[P, int]) -> Callable[Concatenate[str, P], bool]: ...\n" +
+           "\n" +
+           "\n" +
+           "add(bar)(\"42\", 42, <warning descr=\"Expected type 'bool', got 'int' instead\">42</warning>)");
+  }
+
+  // PY-49935
+  public void testParamSpecConcatenateAddSecondParameter() {
+    doTestByText("from collections.abc import Callable\n" +
+                 "from typing import Concatenate, ParamSpec\n" +
+                 "\n" +
+                 "P = ParamSpec(\"P\")\n" +
+                 "\n" +
+                 "\n" +
+                 "def bar(x: int, *args: bool) -> int: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "def add(x: Callable[P, int]) -> Callable[Concatenate[str, P], bool]: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "add(bar)(\"42\", <warning descr=\"Expected type 'int', got 'str' instead\">\"42\"</warning>, True)");
+  }
+
+  // PY-49935
+  public void testParamSpecConcatenateAddFirstParameter() {
+    doTestByText("from collections.abc import Callable\n" +
+                 "from typing import Concatenate, ParamSpec\n" +
+                 "\n" +
+                 "P = ParamSpec(\"P\")\n" +
+                 "\n" +
+                 "\n" +
+                 "def bar(x: int, *args: bool) -> int: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "def add(x: Callable[P, int]) -> Callable[Concatenate[str, P], bool]: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "add(bar)(<warning descr=\"Expected type 'str', got 'int' instead\">42</warning>, 42, True)");
+  }
+
+  // PY-49935
+  public void testParamSpecConcatenateAddFirstSeveralParameters() {
+    doTestByText("from collections.abc import Callable\n" +
+                 "from typing import Concatenate, ParamSpec\n" +
+                 "\n" +
+                 "P = ParamSpec(\"P\")\n" +
+                 "\n" +
+                 "\n" +
+                 "def bar(x: int, *args: bool) -> int: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "def add(x: Callable[P, int]) -> Callable[Concatenate[str, list[str], P], bool]: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "add(bar)(<warning descr=\"Expected type 'str', got 'int' instead\">42</warning>, <warning descr=\"Expected type 'list[str]', got 'list[int]' instead\">[42]</warning>, 3, True)");
+  }
+
+  // PY-49935
+  public void testParamSpecConcatenateAddOk() {
+    doTestByText("from collections.abc import Callable\n" +
+                 "from typing import Concatenate, ParamSpec\n" +
+                 "\n" +
+                 "P = ParamSpec(\"P\")\n" +
+                 "\n" +
+                 "\n" +
+                 "def bar(x: int, *args: bool) -> int: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "def add(x: Callable[P, int]) -> Callable[Concatenate[str, P], bool]: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "add(bar)(\"42\", 42, True, True, True)");
+  }
+
+  // PY-49935
+  public void testParamSpecConcatenateRemove() {
+    doTestByText("from collections.abc import Callable\n" +
+           "from typing import Concatenate, ParamSpec\n" +
+           "\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "def bar(x: int, *args: bool) -> int: ...\n" +
+           "\n" +
+           "\n" +
+           "def remove(x: Callable[Concatenate[int, P], int]) -> Callable[P, bool]: ...\n" +
+           "\n" +
+           "\n" +
+           "remove(bar)(<warning descr=\"Expected type 'bool', got 'int' instead\">42</warning>)");
+  }
+
+  // PY-49935
+  public void testParamSpecConcatenateRemoveOkOneBool() {
+    doTestByText("from collections.abc import Callable\n" +
+                 "from typing import Concatenate, ParamSpec\n" +
+                 "\n" +
+                 "P = ParamSpec(\"P\")\n" +
+                 "\n" +
+                 "\n" +
+                 "def bar(x: int, *args: bool) -> int: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "def remove(x: Callable[Concatenate[int, P], int]) -> Callable[P, bool]: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "remove(bar)(True)");
+  }
+
+  // PY-49935
+  public void testParamSpecConcatenateRemoveOkTwoBools() {
+    doTestByText("from collections.abc import Callable\n" +
+                 "from typing import Concatenate, ParamSpec\n" +
+                 "\n" +
+                 "P = ParamSpec(\"P\")\n" +
+                 "\n" +
+                 "\n" +
+                 "def bar(x: int, *args: bool) -> int: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "def remove(x: Callable[Concatenate[int, P], int]) -> Callable[P, bool]: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "remove(bar)(True, True)");
+  }
+
+  // PY-49935
+  public void testParamSpecConcatenateRemoveOkEmpty() {
+    doTestByText("from collections.abc import Callable\n" +
+                 "from typing import Concatenate, ParamSpec\n" +
+                 "\n" +
+                 "P = ParamSpec(\"P\")\n" +
+                 "\n" +
+                 "\n" +
+                 "def bar(x: int, *args: bool) -> int: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "def remove(x: Callable[Concatenate[int, P], int]) -> Callable[P, bool]: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "remove(bar)()");
+  }
+
+  // PY-49935
+  public void testParamSpecConcatenateTransform() {
+    doTestByText("from collections.abc import Callable\n" +
+           "from typing import Concatenate, ParamSpec\n" +
+           "\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "def bar(x: int, *args: bool) -> int: ...\n" +
+           "\n" +
+           "\n" +
+           "def transform(\n" +
+           "        x: Callable[Concatenate[int, P], int]\n" +
+           ") -> Callable[Concatenate[str, P], bool]:\n" +
+           "    def inner(s: str, *args: P.args):\n" +
+           "        return True\n" +
+           "    return inner\n" +
+           "\n" +
+           "\n" +
+           "transform(bar)(<warning descr=\"Expected type 'str', got 'int' instead\">42</warning>)");
+  }
+
+  // PY-50337
+  public void testBitwiseOrUnionWithNotCalculatedGenericFromUnion() {
+    doTestByText("from typing import Union, TypeVar\n" +
+                 "\n" +
+                 "T = TypeVar(\"T\", bytes, str)\n" +
+                 "\n" +
+                 "my_union = Union[str, set[T]]\n" +
+                 "another_union = Union[list[str], my_union[T]]\n" +
+                 "\n" +
+                 "\n" +
+                 "def foo(path_or_buf: another_union[T] | None) -> None:\n" +
+                 "    print(path_or_buf)\n");
+  }
+
+  // PY-50403
+  public void testFunctionNamedParameterUnification() {
+    doTestByText("from collections.abc import Callable\n" +
+                 "from typing import ParamSpec\n" +
+                 "\n" +
+                 "P = ParamSpec(\"P\")\n" +
+                 "\n" +
+                 "\n" +
+                 "def twice(f: Callable[P, int], *args: P.args, **kwargs: P.kwargs) -> int:\n" +
+                 "    return f(*args, **kwargs) + f(*args, **kwargs)\n" +
+                 "\n" +
+                 "\n" +
+                 "def a_int_b_str(a: int, b: str) -> int:\n" +
+                 "    return a + len(b)\n" +
+                 "\n" +
+                 "\n" +
+                 "res1 = twice(a_int_b_str, 1, \"A\")\n" +
+                 "\n" +
+                 "res2 = twice(a_int_b_str, b=\"A\", a=1)\n" +
+                 "\n" +
+                 "res3 = twice(a_int_b_str, <warning descr=\"Expected type 'int', got 'str' instead\">\"A\"</warning>, <warning descr=\"Expected type 'str', got 'int' instead\">1</warning>)\n" +
+                 "\n" +
+                 "res4 = twice(a_int_b_str, <warning descr=\"Expected type 'str', got 'int' instead\">b=1</warning>, <warning descr=\"Expected type 'int', got 'str' instead\">a=\"A\"</warning>)");
+  }
+
+  // PY-50403
+  public void testFunctionNotEnoughArgumentsToMatchWithParamSpec() {
+    doTestByText("from typing import ParamSpec, Callable, TypeVar\n" +
+                 "\n" +
+                 "P = ParamSpec('P')\n" +
+                 "T = TypeVar('T')\n" +
+                 "\n" +
+                 "\n" +
+                 "def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):\n" +
+                 "    f(*args, **kwargs)\n" +
+                 "\n" +
+                 "\n" +
+                 "def func(n: int, s: str) -> None:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "caller(func, 42<warning descr=\"Parameter 's' unfilled (from ParamSpec 'P')\">)</warning>\n");
+  }
+
+  // PY-50403
+  public void testFunctionTooManyArgumentsToMatchWithParamSpec() {
+    doTestByText("from typing import ParamSpec, Callable, TypeVar\n" +
+                 "\n" +
+                 "P = ParamSpec('P')\n" +
+                 "T = TypeVar('T')\n" +
+                 "\n" +
+                 "\n" +
+                 "def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):\n" +
+                 "    f(*args, **kwargs)\n" +
+                 "\n" +
+                 "\n" +
+                 "def func(n: int, s: str) -> None:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "caller(func, 42, 'foo', <warning descr=\"Unexpected argument (from ParamSpec 'P')\">None</warning>)");
+  }
+
+  // PY-50403
+  public void testFunctionNamedArgumentNotMatchWithParamSpec() {
+    doTestByText("from typing import ParamSpec, Callable, TypeVar\n" +
+                 "\n" +
+                 "P = ParamSpec('P')\n" +
+                 "T = TypeVar('T')\n" +
+                 "\n" +
+                 "\n" +
+                 "def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):\n" +
+                 "    f(*args, **kwargs)\n" +
+                 "\n" +
+                 "\n" +
+                 "def func(foo: int) -> None:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "caller(func, <warning descr=\"Unexpected argument (from ParamSpec 'P')\">bar=42</warning><warning descr=\"Parameter 'foo' unfilled (from ParamSpec 'P')\">)</warning>");
+  }
+
+  // PY-50403
+  public void testSameArgumentPassedTwiceInParamSpec() {
+    doTestByText("from typing import ParamSpec, Callable, TypeVar\n" +
+                 "\n" +
+                 "P = ParamSpec('P')\n" +
+                 "T = TypeVar('T')\n" +
+                 "\n" +
+                 "\n" +
+                 "def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):\n" +
+                 "    f(*args, **kwargs)\n" +
+                 "\n" +
+                 "\n" +
+                 "def func(n: int) -> None:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "caller(func, 42, <warning descr=\"Unexpected argument (from ParamSpec 'P')\">n=42</warning>)");
+  }
+
+  // PY-46661
+  public void testTypedDictInReturnType() {
+    doTest();
+  }
+
+  // PY-53611
+  public void testTypedDictRequiredNotRequiredKeys() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("from typing import TypedDict\n" +
+                                            "from typing_extensions import Required, NotRequired\n" +
+                                            "class WithTotalFalse(TypedDict, total=False):\n" +
+                                            "    x: Required[int]\n" +
+                                            "class WithTotalTrue(TypedDict, total=True):\n" +
+                                            "    x: NotRequired[int]\n" +
+                                            "class WithoutTotal(TypedDict):\n" +
+                                            "    x: NotRequired[int]\n" +
+                                            "class WithoutTotalWithExplicitRequired(TypedDict):\n" +
+                                            "    x: Required[int]\n" +
+                                            "    y: NotRequired[int]\n" +
+                                            "AlternativeSyntax = TypedDict(\"AlternativeSyntax\", {'x': NotRequired[int]})\n" +
+                                            "with_total_false: WithTotalFalse = <warning descr=\"TypedDict 'WithTotalFalse' has missing key: 'x'\">{}</warning>\n" +
+                                            "with_total_true: WithTotalTrue = {}\n" +
+                                            "without_total: WithoutTotal = {}\n" +
+                                            "without_total_with_explicit_required: WithoutTotalWithExplicitRequired = <warning descr=\"TypedDict 'WithoutTotalWithExplicitRequired' has missing key: 'x'\">{}</warning>\n" +
+                                            "alternative_syntax: AlternativeSyntax = {}\n"));
+  }
+
+  // PY-53611
+  public void testTypedDictRequiredNotRequiredEquivalence() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-53611
+  public void testTypedDictRequiredNotRequiredMixedWithAnnotated() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("from typing_extensions import TypedDict, Required, NotRequired, Annotated\n" +
+                                            "class A(TypedDict):\n" +
+                                            "    x: Annotated[NotRequired[int], 'Some constraint']\n" +
+                                            "def f(a: A):\n" +
+                                            "    pass\n" +
+                                            "f({})\n" +
+                                            "class B(TypedDict, total=False):\n" +
+                                            "    x: Annotated[Required[int], 'Some constraint']\n" +
+                                            "def g(b: B):\n" +
+                                            "    pass\n" +
+                                            "g(<warning descr=\"TypedDict 'B' has missing key: 'x'\">{}</warning>)\n"));
+  }
+
+  // PY-53611
+  public void testTypingRequiredTypeSpecificationsMultiFile() {
+    doMultiFileTest();
   }
 }

@@ -43,7 +43,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
 
   @NotNull
   @Override
-  public PsiClassReferenceListStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
+  public PsiClassReferenceListStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     JavaClassReferenceListElementType type = (JavaClassReferenceListElementType)node.getTokenType();
     return new PsiClassReferenceListStubImpl(type, parentStub, getTexts(tree, node));
   }

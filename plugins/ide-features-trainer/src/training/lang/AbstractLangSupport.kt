@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.lang
 
 import com.intellij.ide.impl.OpenProjectTask
@@ -10,10 +10,12 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.vfs.VirtualFile
 import training.learn.exceptons.NoSdkException
 import training.project.FileUtils
 import training.project.ProjectUtils
 import training.project.ReadMeCreator
+import training.util.OnboardingFeedbackData
 import java.io.File
 import java.io.FileFilter
 import java.io.PrintWriter
@@ -21,19 +23,26 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 
 abstract class AbstractLangSupport : LangSupport {
-  override val defaultProjectName: String
+  override val contentRootDirectoryName: String
     get() = "LearnProject"
 
   override fun getProjectFilePath(projectName: String): String {
     return ProjectUtil.getBaseDir() + File.separator + projectName
   }
 
-  override fun installAndOpenLearningProject(projectPath: Path,
+  override var onboardingFeedbackData: OnboardingFeedbackData? = null
+
+  override fun installAndOpenLearningProject(contentRoot: Path,
                                              projectToClose: Project?,
                                              postInitCallback: (learnProject: Project) -> Unit) {
-    ProjectUtils.simpleInstallAndOpenLearningProject(projectPath, this,
-                                                     OpenProjectTask(projectToClose = projectToClose),
+    ProjectUtils.simpleInstallAndOpenLearningProject(contentRoot, this,
+                                                     OpenProjectTask { this.projectToClose = projectToClose },
                                                      postInitCallback)
+  }
+
+  override fun openOrImportLearningProject(projectRootDirectory: VirtualFile, openProjectTask: OpenProjectTask): Project {
+    val nioPath = projectRootDirectory.toNioPath()
+    return ProjectUtil.openOrImport(nioPath, openProjectTask) ?: error("Cannot create project for ${primaryLanguage} at $nioPath")
   }
 
   override fun copyLearningProjectFiles(projectDirectory: File, destinationFilter: FileFilter?): Boolean {
@@ -57,7 +66,7 @@ abstract class AbstractLangSupport : LangSupport {
 
   open val readMeCreator: ReadMeCreator? = null
 
-  override fun getSdkForProject(project: Project): Sdk? {
+  override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk? {
     try {
       // Use no SDK if it's a valid for this language
       checkSdk(null, project)

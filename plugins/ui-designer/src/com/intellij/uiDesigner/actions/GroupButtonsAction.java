@@ -33,7 +33,7 @@ public class GroupButtonsAction extends AbstractGuiEditorAction {
     if (groupName == null) return;
     RadRootContainer rootContainer = editor.getRootContainer();
     RadButtonGroup group = rootContainer.createGroup(groupName);
-    for(RadComponent component: selectedComponents) {
+    for (RadComponent component : selectedComponents) {
       rootContainer.setGroupForComponent(component, group);
     }
     editor.refreshAndSave(true);
@@ -47,7 +47,7 @@ public class GroupButtonsAction extends AbstractGuiEditorAction {
   }
 
   public static boolean allButtons(final List<? extends RadComponent> selection) {
-    for(RadComponent component: selection) {
+    for (RadComponent component : selection) {
       if (!(component.getDelegee() instanceof AbstractButton) ||
           component.getDelegee() instanceof JButton) {
         return false;

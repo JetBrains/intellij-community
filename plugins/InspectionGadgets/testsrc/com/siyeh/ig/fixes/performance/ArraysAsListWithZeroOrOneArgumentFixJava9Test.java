@@ -11,17 +11,18 @@ import com.siyeh.ig.performance.ArraysAsListWithZeroOrOneArgumentInspection;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings({"ClassInitializerMayBeStatic", "ArraysAsListWithZeroOrOneArgument"})
 public class ArraysAsListWithZeroOrOneArgumentFixJava9Test extends IGQuickFixesTestCase {
 
   public void testZeroArguments() {
     doTest(CommonQuickFixBundle.message("fix.replace.with.x", "List.of()"),
            "import java.util.*;\n" +
            "class X {{\n" +
-           "    Arrays.asList/**/();\n" +
+           "    Object o = Arrays.asList/**/();\n" +
            "}}",
            "import java.util.*;\n" +
            "class X {{\n" +
-           "    List.of();\n" +
+           "    Object o = List.of();\n" +
            "}}");
   }
 
@@ -47,6 +48,18 @@ public class ArraysAsListWithZeroOrOneArgumentFixJava9Test extends IGQuickFixesT
            "import java.util.*;" +
            "class X {{\n" +
            "  List<Map<String, String>> list = List.of(new HashMap<>());" +
+           "}}");
+  }
+
+  public void testOneArgumentNullable() {
+    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Collections.singletonList()"),
+           "import java.util.*;" +
+           "class X {{\n" +
+           "  List<?> list = Arrays./**/asList((String)null);" +
+           "}}",
+           "import java.util.*;" +
+           "class X {{\n" +
+           "  List<?> list = Collections.singletonList((String) null);" +
            "}}");
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test
 
@@ -12,9 +12,10 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
-import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -37,6 +38,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -46,9 +48,15 @@ import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.facet.hasKotlinFacet
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
-import org.jetbrains.kotlin.idea.facet.*
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.facet.configureFacet
+import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
+import org.jetbrains.kotlin.idea.facet.removeKotlinFacet
 import org.jetbrains.kotlin.idea.formatter.KotlinLanguageCodeStyleSettingsProvider
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
@@ -56,17 +64,15 @@ import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.API_VERSION_DIRECTI
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.COMPILER_ARGUMENTS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.JVM_TARGET_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.LANGUAGE_VERSION_DIRECTIVE
+import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinRoot
-import org.jetbrains.kotlin.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.TestMetadataUtil
-import org.jetbrains.kotlin.test.util.slashedPath
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.rethrow
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.test.assertEquals
 
 abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFixtureTestCaseBase() {
 
@@ -74,15 +80,13 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
 
     protected open val captureExceptions = false
 
-    protected fun testDataFile(fileName: String): File = File(testDataDirectory, fileName)
+    protected fun dataFile(fileName: String): File = File(testDataDirectory, fileName)
 
-    protected fun testDataFile(): File = testDataFile(fileName())
+    protected fun dataFile(): File = dataFile(fileName())
 
-    protected fun testDataFilePath(): Path = testDataFile().toPath()
+    protected fun dataFilePath(): Path = dataFile().toPath()
 
-    protected fun testPath(fileName: String = fileName()): String = testDataFile(fileName).toString()
-
-    protected fun testPath(): String = testPath(fileName())
+    protected fun dataFilePath(fileName: String = fileName()): String = dataFile(fileName).toString()
 
     protected open fun fileName(): String = KotlinTestUtils.getTestDataFileName(this::class.java, this.name) ?: (getTestName(false) + ".kt")
 
@@ -109,25 +113,29 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
 
         EditorTracker.getInstance(project)
 
-        if (!isFirPlugin) {
-            invalidateLibraryCache(project)
-        }
+        invalidateLibraryCache(project)
+    }
 
+    override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
         if (captureExceptions) {
-            LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-                override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
+            LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
+                override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
                     exceptions.addIfNotNull(t)
-                    return super.processError(category, message, t, details)
+                    return super.processError(category, message, details, t)
                 }
-            })
+            }) {
+                super.runBare(testRunnable)
+            }
+        }
+        else {
+            super.runBare(testRunnable)
         }
     }
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { LoggedErrorProcessor.restoreDefaultProcessor() },
-            ThrowableRunnable { disableKotlinOfficialCodeStyle(project) },
-            ThrowableRunnable { super.tearDown() },
+            { runCatching { project }.getOrNull()?.let { disableKotlinOfficialCodeStyle(it) } },
+            { super.tearDown() },
         )
 
         if (exceptions.isNotEmpty()) {
@@ -190,9 +198,9 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
             val minJavaVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "MIN_JAVA_VERSION:")?.toInt()
 
             if (minJavaVersion != null && !(InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME") ||
-                        InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_RUNTIME"))
+                        InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_STDLIB"))
             ) {
-                error("MIN_JAVA_VERSION so far is supported for RUNTIME/WITH_RUNTIME only")
+                error("MIN_JAVA_VERSION so far is supported for RUNTIME/WITH_STDLIB only")
             }
             return when {
                 withLibraryDirective.isNotEmpty() ->
@@ -219,8 +227,11 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_SCRIPT_RUNTIME") ->
                     KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_SCRIPT_RUNTIME
 
+                InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_STDLIB_JDK8") ->
+                    KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_STDLIB_JDK8
+
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME") ||
-                        InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_RUNTIME") ->
+                        InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_STDLIB") ->
                     if (minJavaVersion != null) {
                         object : KotlinWithJdkAndRuntimeLightProjectDescriptor(INSTANCE.libraryFiles, INSTANCE.librarySourceFiles) {
                             val sdkValue by lazy { sdk(minJavaVersion) }
@@ -281,6 +292,11 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         return configureByFile(relativePath)
     }
 
+    fun JavaCodeInsightTestFixture.configureByFiles(vararg file: File): List<PsiFile> {
+        val relativePaths = file.map { it.toRelativeString(testDataDirectory) }.toTypedArray()
+        return configureByFiles(*relativePaths).toList()
+    }
+
     fun JavaCodeInsightTestFixture.checkResultByFile(file: File) {
         val relativePath = file.toRelativeString(testDataDirectory)
         checkResultByFile(relativePath)
@@ -309,17 +325,20 @@ fun <T> withCustomCompilerOptions(fileText: String, project: Project, module: Mo
 }
 
 private fun configureCompilerOptions(fileText: String, project: Project, module: Module): Boolean {
-    val version = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $LANGUAGE_VERSION_DIRECTIVE ")
-    val apiVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $API_VERSION_DIRECTIVE ")
+    val rawLanguageVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $LANGUAGE_VERSION_DIRECTIVE ")
+    val rawApiVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $API_VERSION_DIRECTIVE ")
     val jvmTarget = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $JVM_TARGET_DIRECTIVE ")
     // We can have several such directives in quickFixMultiFile tests
     // TODO: refactor such tests or add sophisticated check for the directive
     val options = InTextDirectivesUtils.findListWithPrefixes(fileText, "// $COMPILER_ARGUMENTS_DIRECTIVE ").firstOrNull()
 
-    if (version != null || apiVersion != null || jvmTarget != null || options != null) {
+    val languageVersion = rawLanguageVersion?.let { LanguageVersion.fromVersionString(rawLanguageVersion) }
+    val apiVersion = rawApiVersion?.let { ApiVersion.parse(rawApiVersion) }
+
+    if (languageVersion != null || apiVersion != null || jvmTarget != null || options != null) {
         configureLanguageAndApiVersion(
             project, module,
-            version ?: LanguageVersion.LATEST_STABLE.versionString,
+            languageVersion ?: KotlinPluginLayout.standaloneCompilerVersion.languageVersion,
             apiVersion
         )
 
@@ -400,14 +419,24 @@ fun runAll(
 
 private fun rollbackCompilerOptions(project: Project, module: Module, removeFacet: Boolean) {
     KotlinCompilerSettings.getInstance(project).update { this.additionalArguments = DEFAULT_ADDITIONAL_ARGUMENTS }
-    KotlinCommonCompilerArgumentsHolder.getInstance(project).update { this.languageVersion = LanguageVersion.LATEST_STABLE.versionString }
+
+    val bundledKotlinVersion = KotlinPluginLayout.standaloneCompilerVersion
+
+    KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
+        this.languageVersion = bundledKotlinVersion.languageVersion.versionString
+    }
 
     if (removeFacet) {
         module.removeKotlinFacet(ProjectDataManager.getInstance().createModifiableModelsProvider(project), commitModel = true)
         return
     }
 
-    configureLanguageAndApiVersion(project, module, LanguageVersion.LATEST_STABLE.versionString, ApiVersion.LATEST_STABLE.versionString)
+    configureLanguageAndApiVersion(
+        project,
+        module,
+        bundledKotlinVersion.languageVersion,
+        bundledKotlinVersion.apiVersion
+    )
 
     val facetSettings = KotlinFacet.get(module)!!.configuration.settings
     (facetSettings.compilerArguments as? K2JVMCompilerArguments)?.jvmTarget = JvmTarget.DEFAULT.description
@@ -422,8 +451,8 @@ private fun rollbackCompilerOptions(project: Project, module: Module, removeFace
 fun withCustomLanguageAndApiVersion(
     project: Project,
     module: Module,
-    languageVersion: String,
-    apiVersion: String?,
+    languageVersion: LanguageVersion,
+    apiVersion: ApiVersion?,
     body: () -> Unit
 ) {
     val removeFacet = !module.hasKotlinFacet()
@@ -431,16 +460,18 @@ fun withCustomLanguageAndApiVersion(
     try {
         body()
     } finally {
+        val bundledCompilerVersion = KotlinPluginLayout.standaloneCompilerVersion
+
         if (removeFacet) {
             KotlinCommonCompilerArgumentsHolder.getInstance(project)
-                .update { this.languageVersion = LanguageVersion.LATEST_STABLE.versionString }
+                .update { this.languageVersion = bundledCompilerVersion.languageVersion.versionString }
             module.removeKotlinFacet(ProjectDataManager.getInstance().createModifiableModelsProvider(project), commitModel = true)
         } else {
             configureLanguageAndApiVersion(
                 project,
                 module,
-                LanguageVersion.LATEST_STABLE.versionString,
-                ApiVersion.LATEST_STABLE.versionString
+                bundledCompilerVersion.languageVersion,
+                bundledCompilerVersion.apiVersion
             )
         }
     }
@@ -449,8 +480,8 @@ fun withCustomLanguageAndApiVersion(
 private fun configureLanguageAndApiVersion(
     project: Project,
     module: Module,
-    languageVersion: String,
-    apiVersion: String?
+    languageVersion: LanguageVersion,
+    apiVersion: ApiVersion?
 ) {
     WriteAction.run<Throwable> {
         val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
@@ -460,12 +491,11 @@ private fun configureLanguageAndApiVersion(
         if (compilerArguments != null) {
             compilerArguments.apiVersion = null
         }
-
-        facet.configureFacet(languageVersion, null, modelsProvider)
+        facet.configureFacet(IdeKotlinVersion.fromLanguageVersion(languageVersion), null, modelsProvider, emptySet())
         if (apiVersion != null) {
-            facet.configuration.settings.apiLevel = LanguageVersion.fromVersionString(apiVersion)
+            facet.configuration.settings.apiLevel = LanguageVersion.fromVersionString(apiVersion.versionString)
         }
-        KotlinCommonCompilerArgumentsHolder.getInstance(project).update { this.languageVersion = languageVersion }
+        KotlinCommonCompilerArgumentsHolder.getInstance(project).update { this.languageVersion = languageVersion.versionString }
         modelsProvider.commit()
     }
 }
@@ -496,11 +526,10 @@ fun createTextEditorBasedDataContext(
     caret: Caret,
     additionalSteps: SimpleDataContext.Builder.() -> SimpleDataContext.Builder = { this },
 ): DataContext {
-    val textEditorPsiDataProvider = TextEditorPsiDataProvider()
-    val parentContext = DataContext { dataId -> textEditorPsiDataProvider.getData(dataId, editor, caret) }
+    val parentContext = CaretSpecificDataContext.create(EditorUtil.getEditorDataContext(editor), caret)
+    assertEquals(project, parentContext.getData(CommonDataKeys.PROJECT));
+    assertEquals(editor, parentContext.getData(CommonDataKeys.EDITOR));
     return SimpleDataContext.builder()
-        .add(CommonDataKeys.PROJECT, project)
-        .add(CommonDataKeys.EDITOR, editor)
         .additionalSteps()
         .setParent(parentContext)
         .build()

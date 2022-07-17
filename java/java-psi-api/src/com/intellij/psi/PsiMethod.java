@@ -153,7 +153,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @param checkAccess if false, the super methods are searched even if this method
    *                    is private. If true, an empty result list is returned for private methods.
-   * @return the array of matching method signatures, or an empty array if no methods are found.
+   * @return the list of matching method signatures, or an empty array if no methods are found.
    */
   @NotNull
   List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess);

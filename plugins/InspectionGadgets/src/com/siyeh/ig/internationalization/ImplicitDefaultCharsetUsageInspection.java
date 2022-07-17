@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInsight.intention.FileModifier.SafeTypeForPreview;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
@@ -31,7 +33,7 @@ import java.util.stream.Stream;
 /**
  * @author Bas Leijdekkers
  */
-public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
+public class ImplicitDefaultCharsetUsageInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   private static final List<String> UTF_8_ARG = Collections.singletonList("java.nio.charset.StandardCharsets.UTF_8");
   private static final List<String> FALSE_AND_UTF_8_ARG = Arrays.asList("false", "java.nio.charset.StandardCharsets.UTF_8");
@@ -47,6 +49,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     }
   }
 
+  @SafeTypeForPreview
   private static final class CharsetOverload {
     static final CharsetOverload NONE = new CharsetOverload(null, Collections.emptyList());
 
@@ -59,7 +62,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     }
 
     InspectionGadgetsFix createFix(LanguageLevel level) {
-      return myMethod == null || Java15APIUsageInspection.getLastIncompatibleLanguageLevel(myMethod, level) != null
+      return myMethod == null || LanguageLevelUtil.getLastIncompatibleLanguageLevel(myMethod, level) != null
              ? null
              : new AddUtf8CharsetFix(this);
     }
@@ -130,7 +133,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     );
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (METHODS.test(expression)) {
         registerMethodCallError(expression, expression);
@@ -138,7 +141,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     }
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiMethod constructor = expression.resolveConstructor();
       if (constructor == null) {
@@ -216,7 +219,6 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     /**
      * Refers to the method but it is read-only
      */
-    @SafeFieldForPreview
     private final CharsetOverload myCharsetOverload;
 
     private AddUtf8CharsetFix(CharsetOverload charsetOverload) {

@@ -22,7 +22,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.Alarm
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
@@ -97,7 +97,7 @@ class KotlinChangePropertySignatureDialog(
     private var receiverTypeLabel: JLabel by Delegates.notNull()
     private var receiverDefaultValueLabel: JLabel by Delegates.notNull()
 
-    private val updateSignatureAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD)
+    private val updateSignatureAlarm = Alarm()
     private val signatureComponent: MethodSignatureComponent = KotlinSignatureComponent("", project).apply {
         preferredSize = Dimension(-1, 130)
         minimumSize = Dimension(-1, 130)

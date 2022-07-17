@@ -37,26 +37,30 @@ public class ListEditForm {
   public ListEditForm(@NlsContexts.ColumnName String title, List<String> stringList) {
     table = new ListTable(new ListWrappingTableModel(stringList, title));
 
-    contentPanel = setupActions(ToolbarDecorator.createDecorator(table)).createPanel();
+    contentPanel = setupActions(ToolbarDecorator.createDecorator(table), "").createPanel();
   }
 
   public ListEditForm(@NlsContexts.ColumnName String title, @NlsContexts.Label String label, List<String> stringList) {
+    this(title, label, stringList, "");
+  }
+
+  public ListEditForm(@NlsContexts.ColumnName String title, @NlsContexts.Label String label, List<String> stringList, @NotNull String defaultElement) {
     table = new ListTable(new ListWrappingTableModel(stringList, title));
     table.setTableHeader(null);
 
-    contentPanel = setupActions(ToolbarDecorator.createDecorator(table))
+    contentPanel = setupActions(ToolbarDecorator.createDecorator(table), defaultElement)
       .setToolbarPosition(ActionToolbarPosition.RIGHT)
       .createPanel();
     contentPanel = UI.PanelFactory.panel(contentPanel).withLabel(label).moveLabelOnTop().resizeY(true).createPanel();
     contentPanel.setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
   }
 
-  private @NotNull ToolbarDecorator setupActions(@NotNull ToolbarDecorator decorator) {
+  private @NotNull ToolbarDecorator setupActions(@NotNull ToolbarDecorator decorator, @NotNull String defaultElement) {
     return decorator.setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           final ListWrappingTableModel tableModel = table.getModel();
-          tableModel.addRow();
+          tableModel.addRow(defaultElement);
           EventQueue.invokeLater(() -> {
             final int lastRowIndex = tableModel.getRowCount() - 1;
             final Rectangle rectangle =
@@ -69,7 +73,7 @@ public class ListEditForm {
             final TableCellEditor editor = table.getCellEditor();
             final Component component =
               editor.getTableCellEditorComponent(table,
-                                                 null, true, lastRowIndex, 0);
+                                                 defaultElement, true, lastRowIndex, 0);
             IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(component, true));
           });
         }

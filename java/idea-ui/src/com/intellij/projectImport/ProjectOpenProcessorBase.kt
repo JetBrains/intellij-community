@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectImport
 
 import com.intellij.CommonBundle
@@ -33,18 +33,15 @@ import javax.swing.Icon
 abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOpenProcessor {
   companion object {
     @JvmStatic
-    protected fun canOpenFile(file: VirtualFile, supported: Array<String>): Boolean {
-      return supported.contains(file.name)
-    }
+    protected fun canOpenFile(file: VirtualFile, supported: Array<String>): Boolean = supported.contains(file.name)
 
     @JvmStatic
     fun getUrl(path: String): String {
-      var resolvedPath: String
-      try {
-        resolvedPath = FileUtil.resolveShortWindowsName(path)
+      val resolvedPath = try {
+        FileUtil.resolveShortWindowsName(path)
       }
       catch (ignored: IOException) {
-        resolvedPath = path
+        path
       }
       return VfsUtilCore.pathToUrl(resolvedPath)
     }
@@ -53,7 +50,7 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
   private val myBuilder: T?
 
   @Deprecated("Override {@link #doGetBuilder()} and use {@code ProjectImportBuilder.EXTENSIONS_POINT_NAME.findExtensionOrFail(yourClass.class)}.")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   protected constructor(builder: T) {
     myBuilder = builder
   }
@@ -67,9 +64,11 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
 
   protected open fun doGetBuilder(): T = myBuilder!!
 
-  override fun getName(): String = builder.name
+  override val name: String
+    get() = builder.name
 
-  override fun getIcon(): Icon? = builder.icon
+  override val icon: Icon?
+    get() = builder.icon
 
   override fun canOpenProject(file: VirtualFile): Boolean {
     val supported = supportedExtensions
@@ -156,7 +155,11 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
         }
       }
 
-      var options = OpenProjectTask(projectToClose = projectToClose, forceOpenInNewFrame = forceOpenInNewFrame, projectName = wizardContext.projectName)
+      var options = OpenProjectTask {
+        this.projectToClose = projectToClose
+        this.forceOpenInNewFrame = forceOpenInNewFrame
+        this.projectName = wizardContext.projectName
+      }
       if (!shouldOpenExisting) {
         options = options.copy(isNewProject = true)
       }

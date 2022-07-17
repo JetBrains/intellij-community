@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce
 
@@ -15,11 +15,12 @@ import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.IntroduceParameterRefactoring
 import com.intellij.refactoring.introduceField.ElementToWorkOn
-import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor
 import com.intellij.refactoring.introduceParameter.Util
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.DocCommentPolicy
+import com.intellij.refactoring.util.JavaNameSuggestionUtil
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -28,7 +29,6 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.chooseMembers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperInfo
@@ -36,6 +36,8 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuper
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.EXTRACT_FUNCTION
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ExtractKotlinFunctionHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceConstant.INTRODUCE_CONSTANT
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceConstant.KotlinIntroduceConstantHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty.INTRODUCE_PROPERTY
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty.KotlinIntroducePropertyHandler
@@ -47,15 +49,14 @@ import org.jetbrains.kotlin.idea.refactoring.markMembersInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.extractClassMembers
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.util.findElementByCommentPrefix
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
+import org.jetbrains.kotlin.idea.core.util.ElementKind
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.util.findElementByCommentPrefix
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import java.io.File
 import java.util.*
@@ -97,7 +98,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
 
             class LambdaHelperImpl : HelperImpl(), KotlinIntroduceLambdaParameterHelper {
                 override fun configureExtractLambda(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptor = with(descriptor) {
-                    if (name.isNullOrEmpty()) copy(suggestedNames = listOf("__dummyTestFun__")) else this
+                    if (name.isEmpty()) copy(suggestedNames = listOf("__dummyTestFun__")) else this
                 }
             }
 
@@ -109,7 +110,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
             with(handler) {
                 val target = (file as KtFile).findElementByCommentPrefix("// TARGET:") as? KtNamedDeclaration
                 if (target != null) {
-                    selectElement(fixture.editor, file, true, listOf(CodeInsightUtils.ElementKind.EXPRESSION)) { element ->
+                    selectElement(fixture.editor, file, true, listOf(ElementKind.EXPRESSION)) { element ->
                         invoke(fixture.project, fixture.editor, element as KtExpression, target)
                     }
                 } else {
@@ -176,9 +177,9 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 expr,
                 true
             )
-            val suggestedNames = AbstractJavaInplaceIntroducer.appendUnresolvedExprName(
-                JavaCompletionUtil.completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info),
-                initializer
+            val suggestedNames = JavaNameSuggestionUtil.appendUnresolvedExprName(
+              JavaCompletionUtil.completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info),
+              initializer
             )
 
             IntroduceParameterProcessor(
@@ -190,8 +191,9 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 localVar,
                 true,
                 suggestedNames.first(),
-                true,
+                IntroduceVariableBase.JavaReplaceChoice.ALL, 
                 IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE,
+                false,
                 false,
                 false,
                 null,
@@ -279,6 +281,39 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
         }
     }
 
+    protected fun doIntroduceConstantTest(unused: String) {
+        doTest { file ->
+            file as KtFile
+
+            val extractionTarget = propertyTargets.single {
+                it.targetName == InTextDirectivesUtils.findStringWithPrefixes(file.getText(), "// EXTRACTION_TARGET: ")
+            }
+
+            val helper = object : ExtractionEngineHelper(INTRODUCE_CONSTANT) {
+                override fun configureAndRun(
+                    project: Project,
+                    editor: Editor,
+                    descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
+                    onFinish: (ExtractionResult) -> Unit
+                ) {
+                    doRefactor(
+                        ExtractionGeneratorConfiguration(
+                            descriptorWithConflicts.descriptor,
+                            ExtractionGeneratorOptions(target = extractionTarget, delayInitialOccurrenceReplacement = true, isConst = true)
+                        ),
+                        onFinish
+                    )
+                }
+            }
+
+            val handler = KotlinIntroduceConstantHandler(helper)
+            val editor = fixture.editor
+            handler.selectElements(editor, file) { elements, target ->
+                handler.doInvoke(project, editor, file, elements, target)
+            }
+        }
+    }
+
     protected fun doExtractSuperTest(unused: String, isInterface: Boolean) {
         doTest(true) { file ->
             file as KtFile
@@ -338,9 +373,9 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
         withCustomCompilerOptions(fileText, project, module) {
             ConfigLibraryUtil.configureLibrariesByDirective(module, fileText)
 
-            val addKotlinRuntime = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// WITH_RUNTIME") != null
+            val addKotlinRuntime = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// WITH_STDLIB") != null
             if (addKotlinRuntime) {
-                ConfigLibraryUtil.configureKotlinRuntimeAndSdk(module, IdeaTestUtil.getMockJdk18())
+                ConfigLibraryUtil.configureKotlinRuntimeAndSdk(module, projectDescriptor.sdk!!)
             }
 
             try {
@@ -353,7 +388,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 ConfigLibraryUtil.unconfigureLibrariesByDirective(module, fileText)
 
                 if (addKotlinRuntime) {
-                    ConfigLibraryUtil.unConfigureKotlinRuntimeAndSdk(module, IdeaTestUtil.getMockJdk18())
+                    ConfigLibraryUtil.unConfigureKotlinRuntimeAndSdk(module, projectDescriptor.sdk!!)
                 }
             }
         }
@@ -459,7 +494,11 @@ fun doExtractFunction(fixture: CodeInsightTestFixture, file: KtFile) {
                     descriptor
                 }
 
-                doRefactor(ExtractionGeneratorConfiguration(newDescriptor, ExtractionGeneratorOptions.DEFAULT), onFinish)
+                fun afterFinish(extraction: ExtractionResult){
+                    processDuplicates(extraction.duplicateReplacers, project, editor)
+                    onFinish(extraction)
+                }
+                doRefactor(ExtractionGeneratorConfiguration(newDescriptor, ExtractionGeneratorOptions.DEFAULT), ::afterFinish)
             }
         }
     )

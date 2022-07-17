@@ -122,11 +122,6 @@ public class SingleConfigurableEditor extends DialogWrapper {
   }
 
   @Override
-  public @Nullable Dimension getInitialSize() {
-    return new Dimension(650, 500);
-  }
-
-  @Override
   protected Action @NotNull [] createActions() {
     List<Action> actions = new ArrayList<>();
     actions.add(getOKAction());
@@ -176,7 +171,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
   }
 
   protected class ApplyAction extends AbstractAction {
-    private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    private final Alarm myUpdateAlarm = new Alarm(getDisposable());
 
     public ApplyAction() {
       super(CommonBundle.getApplyButtonText());

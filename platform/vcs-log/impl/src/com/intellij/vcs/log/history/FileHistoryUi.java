@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -57,8 +57,10 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                        @NotNull VisiblePackRefresher refresher,
                        @NotNull FilePath path,
                        @Nullable Hash revision,
-                       @NotNull VirtualFile root) {
-    super(getFileHistoryLogId(path, revision), logData, new FileHistoryColorManager(root, path), refresher);
+                       @NotNull VirtualFile root,
+                       @NotNull String logId,
+                       @NotNull VcsLogDiffHandler vcsLogDiffHandler) {
+    super(logId, logData, new FileHistoryColorManager(root, path), refresher);
 
     assert !path.isDirectory();
 
@@ -68,7 +70,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
     myUiProperties = uiProperties;
 
-    myFileHistoryModel = new FileHistoryModel(logData, Objects.requireNonNull(logData.getLogProvider(root).getDiffHandler()), root) {
+    myFileHistoryModel = new FileHistoryModel(logData, vcsLogDiffHandler, root) {
       @NotNull
       @Override
       protected VisiblePack getVisiblePack() {
@@ -242,7 +244,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
     @NotNull
     @Override
-    public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails commitDetails, boolean isSelected) {
+    public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails commitDetails, int column, boolean isSelected) {
       if (isSelected) return VcsCommitStyle.DEFAULT;
 
       if (myCondition == null) {

@@ -1,26 +1,31 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.injected.editor.EditorWindow
+import com.intellij.json.codeinsight.JsonStandardComplianceInspection
+import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
+import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.parents
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.InjectionTestFixture
 import com.intellij.testFramework.fixtures.injectionForHost
 import com.intellij.util.castSafelyTo
-import com.intellij.util.containers.Predicate
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
 import junit.framework.TestCase
+import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
+import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction
 import org.jetbrains.concurrency.collectResults
 import org.jetbrains.concurrency.runAsync
 import org.jetbrains.yaml.psi.impl.YAMLScalarImpl
+import java.util.function.Predicate
 
 class YamlMultilineInjectionTest : BasePlatformTestCase() {
 
@@ -229,6 +234,62 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     """.trimIndent())
   }
 
+  fun testTemporaryInjection() {
+    myFixture.configureByText("test.yaml", """
+      long:
+        long:
+          nest:
+            abc: |
+                <xml1>
+                    <xml2>
+                        <xml3><caret></xml3>
+                    </xml2>
+                </xml1>
+        
+    """.trimIndent())
+
+    assertNotNull(myFixture.getAvailableIntention("Inject language or reference"))
+    InjectLanguageAction.invokeImpl(project, myFixture.editor, myFixture.file, Injectable.fromLanguage(Language.findLanguageByID("XML")))
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    assertNotNull(myFixture.getAvailableIntention("Uninject language or reference"))
+    UnInjectLanguageAction.invokeImpl(project, myFixture.editor, myFixture.file)
+    myInjectionFixture.assertInjectedLangAtCaret(null)
+  }
+
+  fun testNewLineInPlainTextInjectedXMLinNested() {
+    myFixture.configureByText("test.yaml", """
+      long:
+        long:
+          nest:
+            #language=XML
+            abc:
+              <xml1>
+                  <xml2>
+                      <xml3><caret></xml3>
+                  </xml2>
+              </xml1>
+        
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      long:
+        long:
+          nest:
+            #language=XML
+            abc:
+              <xml1>
+                  <xml2>
+                      <xml3>
+                          
+                      </xml3>
+                  </xml2>
+              </xml1>
+        
+    """.trimIndent())
+  }
+
   fun testNewLineInInjectedXMLinNestedAndUndoInMultithreading() {
     // reuse testNewLineInInjectedXMLinNested fixture
     testNewLineInInjectedXMLinNested()
@@ -294,6 +355,29 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
             }
           }
           
+    """.trimIndent())
+  }
+  
+  fun testInjectedJsonBlockQuickfix() {
+    myFixture.enableInspections(JsonStandardComplianceInspection::class.java)
+    myFixture.configureByText("test.yaml", """
+    myyaml:
+      #language=JSON
+      json: |
+        ab<caret>c: 1
+
+    """.trimIndent())
+    
+    myFixture.doHighlighting()
+    myInjectionFixture.assertInjectedLangAtCaret("JSON")
+    val wrapQuickfix = myFixture.getAvailableIntention("Wrap with double quotes")!!
+    myFixture.launchAction(wrapQuickfix)
+    myFixture.checkResult("""
+    myyaml:
+      #language=JSON
+      json: |
+        "abc": 1
+  
     """.trimIndent())
   }
   
@@ -499,7 +583,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |  #language=XML
       |  xml: |
       |    <xml>
-      |        <tag>   </tag>
+      |        <tag></tag>
       |    </xml>
       |  #language=YAML
       |  yaml: |
@@ -509,7 +593,8 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |  #language=Java
       |  after: |
       |    class B {
-      |        void foo(){}
+      |        void foo() {
+      |        }
       |    }
       |  #language=Properties
       |  prop: |
@@ -731,6 +816,40 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
         Y: 12
     """.trimIndent())
   }
+  
+  fun testFEinPlainText() {
+    myFixture.configureByText("test.yaml", """
+        myyaml:
+          #language=XML
+          xml:
+            <xml>
+                <caret><aaa></aaa>
+            </xml>
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    val fe = myInjectionFixture.openInFragmentEditor()
+    fe.type(" ")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    myFixture.checkResult("""
+      myyaml:
+        #language=XML
+        xml:
+          <xml>
+               <aaa></aaa>
+          </xml>
+    """.trimIndent())  
+    fe.type(" ")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    myFixture.checkResult("""
+      myyaml:
+        #language=XML
+        xml:
+          <xml>
+                <aaa></aaa>
+          </xml>
+    """.trimIndent())
+  }
 
   fun testSplitHtmlFromEmpty() {
     myFixture.configureByText("test.yaml", """
@@ -807,7 +926,39 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
               \  "
     """.trimIndent())
   }
-  
+
+  fun testMultilineInQuotedFragment() {
+    myFixture.configureByText("test.yaml", """
+        X: "<caret>"
+        
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    val fe = myInjectionFixture.openInFragmentEditor()
+    fe.type("""
+      <html>
+      <body>
+      <h1>
+    """.trimIndent())
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assertEquals("fragment editor should be", """
+      <html>
+          <body>
+              <h1></h1>
+          </body>
+      </html>
+    """.trimIndent(), fe.file.text)
+    myFixture.checkResult("""
+      X: "<html>\n\
+         \    <body>\n\
+         \        <h1></h1>\n\
+         \    </body>
+         </html>"
+      
+    """.trimIndent())
+  }
+
+
   fun testYamlToYamlQuotedMultiline() {
     myFixture.configureByText("test.yaml", """
         myyaml: "abc: \<caret>

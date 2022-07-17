@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -13,7 +14,7 @@ public interface Version {
   /**
    * Current version of lombok plugin
    */
-  @NonNls String LAST_LOMBOK_VERSION = "1.18.20";
+  @NonNls String LAST_LOMBOK_VERSION = "1.18.22";
 
   @NonNls String LAST_LOMBOK_VERSION_WITH_JPS_FIX = "1.18.16";
   @NonNls String LOMBOK_VERSION_WITH_JDK16_FIX = "1.18.20";
@@ -21,7 +22,13 @@ public interface Version {
   Pattern VERSION_PATTERN = Pattern.compile("(.*:)([\\d.]+)(.*)");
 
   static boolean isLessThan(@Nullable String currentVersion, @Nullable String otherVersion) {
-    return StringUtil.compareVersionNumbers(currentVersion, otherVersion) < 0;
+    try {
+      return StringUtil.compareVersionNumbers(currentVersion, otherVersion) < 0;
+    }
+    catch (NumberFormatException e) {
+      Logger.getInstance(Version.class).info("Unable to parse lombok version: " + currentVersion);
+      return false;
+    }
   }
 
   @Nullable

@@ -1,52 +1,41 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
-public final class SimpleDataContext implements DataContext {
-  private final Map<String, Object> myDataId2Data;
+public final class SimpleDataContext extends CustomizedDataContext {
+  private final Map<String, Object> myMap;
   private final DataContext myParent;
 
-  private SimpleDataContext(@NotNull Map<String, Object> dataId2data, @Nullable DataContext parent) {
-    myDataId2Data = dataId2data;
-    myParent = parent;
+  private SimpleDataContext(@NotNull Map<String, Object> map, @Nullable DataContext parent) {
+    myMap = map;
+    myParent = Objects.requireNonNullElse(parent, DataContext.EMPTY_CONTEXT);
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    Object result = getDataFromSelfOrParent(dataId);
-
-    if (result == null) {
-      GetDataRule rule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(dataId);
-      if (rule != null) {
-        return rule.getData(this::getDataFromSelfOrParent);
-      }
-    }
-
-    return result;
+  public @NotNull DataContext getParent() {
+    return myParent;
   }
 
-  private Object getDataFromSelfOrParent(@NotNull String dataId) {
-    return myDataId2Data.containsKey(dataId) ? myDataId2Data.get(dataId) :
-           myParent == null ? null : myParent.getData(dataId);
+  @Override
+  public @Nullable Object getRawCustomData(@NotNull String dataId) {
+    return myMap.containsKey(dataId) ?
+           Objects.requireNonNullElse(myMap.get(dataId), EXPLICIT_NULL) : null;
   }
 
   /** @deprecated use {@link SimpleDataContext#getSimpleContext(DataKey, Object, DataContext)} instead. */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static DataContext getSimpleContext(@NotNull String dataId, @NotNull Object data, DataContext parent) {
     return new SimpleDataContext(Map.of(dataId, data), parent);
@@ -61,16 +50,14 @@ public final class SimpleDataContext implements DataContext {
    * @see SimpleDataContext#builder()
    * @deprecated prefer type-safe {@link SimpleDataContext#builder()} where possible.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static DataContext getSimpleContext(@NotNull Map<String, Object> dataId2data, @Nullable DataContext parent) {
     return new SimpleDataContext(dataId2data, parent);
   }
 
   /** @deprecated use {@link SimpleDataContext#getSimpleContext(DataKey, Object)} instead. */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static DataContext getSimpleContext(@NotNull String dataId, @NotNull Object data) {
     return getSimpleContext(dataId, data, null);
@@ -110,6 +97,13 @@ public final class SimpleDataContext implements DataContext {
         if (myMap == null) myMap = new HashMap<>();
         myMap.put(dataKey.getName(), value);
       }
+      return this;
+    }
+
+    @NotNull
+    public <T> Builder addNull(@NotNull DataKey<? super T> dataKey) {
+      if (myMap == null) myMap = new HashMap<>();
+      myMap.put(dataKey.getName(), EXPLICIT_NULL);
       return this;
     }
 

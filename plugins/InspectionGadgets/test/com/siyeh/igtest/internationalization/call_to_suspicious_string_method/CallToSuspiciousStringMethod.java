@@ -5,6 +5,7 @@ class CallToSuspiciousStringMethod {
     a.<warning descr="'String.equalsIgnoreCase()' called in internationalized context">equalsIgnoreCase</warning>(b);
     a.<warning descr="'String.compareTo()' called in internationalized context">compareTo</warning>(b);
     a.<warning descr="'String.compareToIgnoreCase()' called in internationalized context">compareToIgnoreCase</warning>(b);
+    a.<warning descr="'String.trim()' called in internationalized context">trim</warning>();
   }
 
   @SuppressWarnings({"CallToStringCompareTo", "CallToStringEquals", "CallToStringEqualsIgnoreCase"})

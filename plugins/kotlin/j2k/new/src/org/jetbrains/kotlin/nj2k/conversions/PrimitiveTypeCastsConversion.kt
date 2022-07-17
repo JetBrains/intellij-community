@@ -1,12 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.callOn
-import org.jetbrains.kotlin.nj2k.parenthesizeIfBinaryExpression
+import org.jetbrains.kotlin.nj2k.parenthesizeIfCompoundExpression
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.*
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
@@ -29,8 +30,16 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
                 && (expression.operator.token == JKOperatorToken.PLUS || expression.operator.token == JKOperatorToken.MINUS)
             ) {
                 val casted = castToAsPrimitiveTypes(expression.expression, toType, strict) ?: return null
-                return JKPrefixExpression(casted, expression.operator)
+                return JKPrefixExpression(casted, expression.operator).withFormattingFrom(expression)
             }
+
+            if (expression is JKQualifiedExpression) {
+                if (expression.selector.safeAs<JKCallExpression>()?.identifier?.fqName == "kotlin.Int.inv") {
+                    val casted = castToAsPrimitiveTypes(expression.receiver, toType, strict) ?: return null
+                    return JKQualifiedExpression(casted, expression::selector.detached()).withFormattingFrom(expression)
+                }
+            }
+
             val expressionTypeAsPrimitive = expression.calculateType(typeFactory)?.asPrimitiveType() ?: return null
             val toTypeAsPrimitive = toType.asPrimitiveType() ?: return null
             if (toTypeAsPrimitive == expressionTypeAsPrimitive) return null
@@ -50,7 +59,7 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
                     return JKLiteralExpression(
                         expression.literal,
                         expectedType
-                    )
+                    ).withFormattingFrom(expression)
                 }
             }
 
@@ -59,25 +68,25 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
             val initialTypeName = expressionTypeAsPrimitive.kotlinName()
             val conversionFunctionName = "to${toTypeAsPrimitive.kotlinName()}"
             return JKQualifiedExpression(
-                expression.copyTreeAndDetach().parenthesizeIfBinaryExpression(),
+                expression.copyTreeAndDetach().parenthesizeIfCompoundExpression(),
                 JKCallExpressionImpl(
                     symbolProvider.provideMethodSymbol("kotlin.$initialTypeName.$conversionFunctionName"),
                     JKArgumentList()
                 )
-            )
+            ).withFormattingFrom(expression)
         }
 
-        fun RecursiveApplicableConversionBase.charConversion(
+        private fun RecursiveApplicableConversionBase.charConversion(
             expression: JKExpression,
             fromType: JKJavaPrimitiveType,
             toType: JKJavaPrimitiveType
         ): JKExpression? {
             if (fromType == toType || moduleApiVersion < ApiVersion.KOTLIN_1_5) return null
             if (fromType == JKJavaPrimitiveType.CHAR) {
-                return charToPrimitiveConversion(expression, toType)
+                return charToPrimitiveConversion(expression, toType)?.withFormattingFrom(expression)
             }
             if (toType == JKJavaPrimitiveType.CHAR) {
-                return primitiveToCharConversion(expression, fromType)
+                return primitiveToCharConversion(expression, fromType)?.withFormattingFrom(expression)
             }
             return null
         }
@@ -88,7 +97,7 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
         ): JKExpression? {
             if (toType == JKJavaPrimitiveType.BOOLEAN) return null
 
-            var result = expression.copyTreeAndDetach().parenthesizeIfBinaryExpression()
+            var result = expression.copyTreeAndDetach().parenthesizeIfCompoundExpression()
 
             result = JKQualifiedExpression(
                 result,
@@ -109,7 +118,7 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
             // Int.toChar() is not deprecated, leave it as is.
             if (fromType == JKJavaPrimitiveType.BOOLEAN || fromType == JKJavaPrimitiveType.INT) return null
 
-            val result = expression.copyTreeAndDetach().parenthesizeIfBinaryExpression()
+            val result = expression.copyTreeAndDetach().parenthesizeIfCompoundExpression()
 
             if (fromType == JKJavaPrimitiveType.FLOAT || fromType == JKJavaPrimitiveType.DOUBLE) {
                 return result.callOn(

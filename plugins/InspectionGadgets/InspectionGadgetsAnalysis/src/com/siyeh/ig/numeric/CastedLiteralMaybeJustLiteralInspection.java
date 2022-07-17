@@ -107,7 +107,7 @@ abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
   private class CastedLiteralMayBeJustLiteralVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
       if (!getTypeBeforeCast().equals(type)) {

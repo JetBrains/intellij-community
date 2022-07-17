@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(a: List<String>, b: List<Int>) {
     a.forEach {

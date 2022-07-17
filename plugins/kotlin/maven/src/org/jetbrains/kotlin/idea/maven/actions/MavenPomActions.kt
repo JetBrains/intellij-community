@@ -16,8 +16,8 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.kotlin.idea.maven.PomFile
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
-import org.jetbrains.kotlin.idea.versions.MAVEN_STDLIB_ID
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.utils.PathUtil
 
 class GenerateMavenCompileExecutionAction :
     PomFileActionBase(KotlinMavenExecutionProvider(PomFile.KotlinGoals.Compile, PomFile.DefaultPhases.Compile))
@@ -38,7 +38,7 @@ open class PomFileActionBase(generateProvider: AbstractDomGenerateProvider<*>) :
 }
 
 private class KotlinMavenPluginProvider :
-    AbstractDomGenerateProvider<MavenDomPlugin>("kotlin-maven-plugin-provider", MavenDomPlugin::class.java) {
+    AbstractDomGenerateProvider<MavenDomPlugin>("kotlin-maven-plugin-provider", "kotlin-maven-plugin-provider", MavenDomPlugin::class.java) {
 
     override fun generate(parent: DomElement?, editor: Editor?): MavenDomPlugin? {
         if (parent !is MavenDomProjectModel) {
@@ -74,7 +74,7 @@ private class KotlinMavenPluginProvider :
 }
 
 private class KotlinMavenExecutionProvider(val goal: String, val phase: String) :
-    AbstractDomGenerateProvider<MavenDomPlugin>("kotlin-maven-execution-provider", MavenDomPlugin::class.java) {
+    AbstractDomGenerateProvider<MavenDomPlugin>("kotlin-maven-execution-provider", "kotlin-maven-execution-provider", MavenDomPlugin::class.java) {
 
     override fun generate(parent: DomElement?, editor: Editor?): MavenDomPlugin? {
         if (parent !is MavenDomPlugin) {
@@ -84,9 +84,7 @@ private class KotlinMavenExecutionProvider(val goal: String, val phase: String) 
         val file = PomFile.forFileOrNull(DomUtil.getFile(parent)) ?: return null
         val execution = file.addExecution(parent, goal, phase, listOf(goal))
 
-        if (editor != null) {
-            editor.caretModel.moveToOffset(execution.ensureXmlElementExists().endOffset)
-        }
+        editor?.caretModel?.moveToOffset(execution.ensureXmlElementExists().endOffset)
 
         return parent
     }
@@ -130,5 +128,7 @@ private fun DomElement.findPlugin(): MavenDomPlugin? =
 private fun MavenDomPlugin.isKotlinMavenPlugin() = groupId.stringValue == KotlinMavenConfigurator.GROUP_ID
         && artifactId.stringValue == KotlinMavenConfigurator.MAVEN_PLUGIN_ID
 
-private fun MavenDomDependency.isKotlinStdlib() = groupId.stringValue == KotlinMavenConfigurator.GROUP_ID
-        && artifactId.stringValue == MAVEN_STDLIB_ID
+private fun MavenDomDependency.isKotlinStdlib(): Boolean {
+    return groupId.stringValue == KotlinMavenConfigurator.GROUP_ID
+            && artifactId.stringValue == PathUtil.KOTLIN_JAVA_STDLIB_NAME
+}

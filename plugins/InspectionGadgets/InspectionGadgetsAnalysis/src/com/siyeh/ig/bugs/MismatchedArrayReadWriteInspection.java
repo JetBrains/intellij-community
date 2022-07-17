@@ -204,7 +204,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       }
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         if (myWritten && myRead) {
           return;
         }

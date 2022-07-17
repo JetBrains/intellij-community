@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -8,9 +8,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -160,16 +158,19 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     return null;
   }
 
-  @Nullable
-  protected XValueGroup createStaticGroup(EvaluationContextImpl evaluationContext) {
+  protected void addStaticGroup(EvaluationContextImpl evaluationContext, XCompositeNode node) {
     Location location = myDescriptor.getLocation();
     if (location != null && myDescriptor.getThisObject() == null) {
-      StaticDescriptorImpl staticDescriptor = myNodeManager.getStaticDescriptor(myDescriptor, location.declaringType());
-      if (staticDescriptor.isExpandable()) {
-        return new JavaStaticGroup(staticDescriptor, evaluationContext, myNodeManager);
-      }
+      ReferenceType type = location.declaringType();
+      // preload fields
+      DebuggerUtilsAsync.allFields(type).thenAccept(__ -> {
+        StaticDescriptorImpl staticDescriptor = myNodeManager.getStaticDescriptor(myDescriptor, type);
+        if (staticDescriptor.isExpandable()) {
+          node.addChildren(
+            XValueChildrenList.topGroups(List.of(new JavaStaticGroup(staticDescriptor, evaluationContext, myNodeManager))), false);
+        }
+      });
     }
-    return null;
   }
 
   @NotNull
@@ -212,9 +213,11 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       if (evaluationContext == null) {
         return;
       }
-      if (!debuggerContext.isEvaluationPossible()) {
-        node.setErrorMessage(MessageDescriptor.EVALUATION_NOT_POSSIBLE.getLabel());
-      }
+
+      // the message is disabled, see IDEA-281129
+      //if (!debuggerContext.isEvaluationPossible()) {
+      //  node.setErrorMessage(MessageDescriptor.EVALUATION_NOT_POSSIBLE.getLabel());
+      //}
 
       // this node
       XNamedValue thisNode = createThisNode(evaluationContext);
@@ -223,10 +226,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       }
 
       // static group
-      XValueGroup staticGroup = createStaticGroup(evaluationContext);
-      if (staticGroup != null) {
-        children.addTopGroup(staticGroup);
-      }
+      addStaticGroup(evaluationContext, node);
 
       // last method return value if any
       createReturnValueNodes(evaluationContext).forEach(children::add);
@@ -363,11 +363,12 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     Set<String> alreadyCollected = new HashSet<>(usedVars.first);
     usedVars.second.stream().map(TextWithImports::getText).forEach(alreadyCollected::add);
     Set<TextWithImports> extra = new HashSet<>();
-    for (FrameExtraVariablesProvider provider : FrameExtraVariablesProvider.EP_NAME.getExtensionList()) {
-      if (provider.isAvailable(sourcePosition, evalContext)) {
-        extra.addAll(provider.collectVariables(sourcePosition, evalContext, alreadyCollected));
-      }
-    }
+    DebuggerUtilsImpl.forEachSafe(FrameExtraVariablesProvider.EP_NAME,
+                                  provider -> {
+                                    if (provider.isAvailable(sourcePosition, evalContext)) {
+                                      extra.addAll(provider.collectVariables(sourcePosition, evalContext, alreadyCollected));
+                                    }
+                                  });
     return extra;
   }
 
@@ -415,9 +416,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   }
 
   protected void superBuildVariables(final EvaluationContextImpl evaluationContext, XValueChildrenList children) throws EvaluateException {
-    for (LocalVariableProxyImpl local : getVisibleVariables()) {
-      children.add(JavaValue.create(myNodeManager.getLocalVariableDescriptor(null, local), evaluationContext, myNodeManager));
-    }
+    buildLocalVariables(evaluationContext, children, getVisibleVariables());
   }
 
   @NotNull
@@ -469,7 +468,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     @Override
-    public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(final @NotNull PsiMethodCallExpression expression) {
       if (myCollectExpressions) {
         final PsiMethod psiMethod = expression.resolveMethod();
         if (psiMethod != null && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(expression, myVisibleLocals)) {
@@ -480,7 +479,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     @Override
-    public void visitReferenceExpression(final PsiReferenceExpression reference) {
+    public void visitReferenceExpression(final @NotNull PsiReferenceExpression reference) {
       if (myLineRange.intersects(reference.getTextRange())) {
         final PsiElement psiElement = reference.resolve();
         if (psiElement instanceof PsiVariable) {
@@ -529,7 +528,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     @Override
-    public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
+    public void visitArrayAccessExpression(final @NotNull PsiArrayAccessExpression expression) {
       if (myCollectExpressions && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(expression, myVisibleLocals)) {
         myExpressions.add(new TextWithImportsImpl(expression));
       }
@@ -537,13 +536,13 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     @Override
-    public void visitParameter(final PsiParameter parameter) {
+    public void visitParameter(final @NotNull PsiParameter parameter) {
       processVariable(parameter);
       super.visitParameter(parameter);
     }
 
     @Override
-    public void visitLocalVariable(final PsiLocalVariable variable) {
+    public void visitLocalVariable(final @NotNull PsiLocalVariable variable) {
       processVariable(variable);
       super.visitLocalVariable(variable);
     }
@@ -555,7 +554,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     @Override
-    public void visitClass(final PsiClass aClass) {
+    public void visitClass(final @NotNull PsiClass aClass) {
       // Do not step in to local and anonymous classes...
     }
   }
@@ -683,7 +682,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   private static TextRange adjustRange(final PsiElement element, final TextRange originalRange) {
     final Ref<TextRange> rangeRef = new Ref<>(originalRange);
     element.accept(new JavaRecursiveElementVisitor() {
-      @Override public void visitExpressionStatement(final PsiExpressionStatement statement) {
+      @Override public void visitExpressionStatement(final @NotNull PsiExpressionStatement statement) {
         final TextRange stRange = statement.getTextRange();
         if (originalRange.intersects(stRange)) {
           final TextRange currentRange = rangeRef.get();

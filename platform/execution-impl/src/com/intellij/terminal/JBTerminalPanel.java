@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -22,14 +22,19 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.JBHiDPIScaledImage;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TerminalCopyPasteHandler;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
+import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalPanel;
+import com.pty4j.windows.conpty.WinConPtyProcess;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +56,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     "ActivateTerminalToolWindow",
     "ActivateProjectToolWindow",
     "ActivateFavoritesToolWindow",
+    "ActivateBookmarksToolWindow",
     "ActivateFindToolWindow",
     "ActivateRunToolWindow",
     "ActivateDebugToolWindow",
@@ -70,6 +76,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     "PreviousProjectWindow",
 
     "ShowBookmarks",
+    "ShowTypeBookmarks",
     "FindInPath",
     "GotoBookmark0",
     "GotoBookmark1",
@@ -172,6 +179,28 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
 
   public void addPreKeyEventHandler(@NotNull Consumer<? super KeyEvent> preKeyEventHandler) {
     myPreKeyEventConsumers.add(preKeyEventHandler);
+  }
+
+  @Override
+  public List<TerminalAction> getActions() {
+    List<TerminalAction> actions = super.getActions();
+    String clearBufferActionName = mySettingsProvider.getClearBufferActionPresentation().getName();
+    TerminalAction clearBufferAction = ContainerUtil.find(actions, action -> action.getName().equals(clearBufferActionName));
+    if (clearBufferAction != null) {
+      clearBufferAction.withEnabledSupplier(() -> {
+        if (getTerminalTextBuffer().isUsingAlternateBuffer()) {
+          return false;
+        }
+        JBTerminalWidget terminalWidget = DataManager.getInstance().getDataContext(this).getData(JBTerminalWidget.TERMINAL_DATA_KEY);
+        if (terminalWidget == null || terminalWidget.getTerminalPanel() != this) {
+          return false;
+        }
+        ProcessTtyConnector connector = terminalWidget.getProcessTtyConnector();
+        WinConPtyProcess winConPtyProcess = connector != null ? ObjectUtils.tryCast(connector.getProcess(), WinConPtyProcess.class) : null;
+        return winConPtyProcess == null;
+      });
+    }
+    return actions;
   }
 
   @Override
@@ -292,11 +321,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
   }
 
   @Override
-  public void dispose() {
-    super.dispose();
-  }
-
-  @Override
   protected void processMouseWheelEvent(MouseWheelEvent e) {
     if (EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() && EditorUtil.isChangeFontSize(e)) {
       int newFontSize = (int)mySettingsProvider.getTerminalFontSize() - e.getWheelRotation();
@@ -330,10 +354,13 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
 
     @Override
     public boolean dispatch(@NotNull AWTEvent e) {
-      return e instanceof KeyEvent && dispatchKeyEvent((KeyEvent)e);
+      if (e instanceof KeyEvent) {
+        dispatchKeyEvent((KeyEvent)e);
+      }
+      return false;
     }
 
-    private boolean dispatchKeyEvent(@NotNull KeyEvent e) {
+    private void dispatchKeyEvent(@NotNull KeyEvent e) {
       if (!skipKeyEvent(e)) {
         if (!JBTerminalPanel.this.isFocusOwner()) {
           if (LOG.isDebugEnabled()) {
@@ -341,16 +368,13 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
                       getDebugTerminalPanelName() + ", unregistering");
           }
           unregister();
-          return false;
+          return;
         }
         if (LOG.isDebugEnabled()) {
           LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent(e) + ", registered:" + myRegistered);
         }
-        IdeEventQueue.getInstance().flushDelayedKeyEvents();
         JBTerminalPanel.this.dispatchEvent(e);
-        return true;
       }
-      return false;
     }
 
     void register() {

@@ -80,7 +80,7 @@ public class StaticFieldReferenceOnSubclassInspection extends BaseInspection imp
   private static class StaticFieldOnSubclassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       final PsiElement qualifier = expression.getQualifier();
       if (!(qualifier instanceof PsiReferenceExpression)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.openapi.application.ApplicationManager
@@ -14,11 +14,14 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
+import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 import org.junit.Assert
@@ -27,22 +30,18 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+
 /**
  * @author peter
  */
 class DumbServiceImplTest extends BasePlatformTestCase {
-
   @Override
   protected void setUp() throws Exception {
     super.setUp()
-    def key = "idea.force.dumb.queue.tasks"
+    String key = "idea.force.dumb.queue.tasks"
     String prev = System.setProperty(key, "true")
     disposeOnTearDown {
-      if (prev != null) {
-        System.setProperty(key, prev)
-      } else {
-        System.clearProperty(key)
-      }
+      SystemProperties.setProperty(key, prev)
     }
   }
 
@@ -50,7 +49,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     DumbService dumbService = new DumbServiceImpl(project)
 
     AtomicInteger disposes = new AtomicInteger(0)
-    def task1 = new DumbModeTask("a") {
+    def task1 = new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         while (!indicator.isCanceled()) {
@@ -64,7 +63,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
       }
     }
 
-    def task2 = new DumbModeTask("b") {
+    def task2 = new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
       }
@@ -86,7 +85,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
 
   void "test queueTask is async"() {
     def semaphore = new Semaphore(1)
-    dumbService.queueTask(new DumbModeTask("mock") {
+    dumbService.queueTask(new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         def e = new Exception()
@@ -116,7 +115,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     int invocations = 0
 
     Semaphore semaphore = new Semaphore(1)
-    dumbService.queueTask(new DumbModeTask(new Object()) {
+    dumbService.queueTask(new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         assert !ApplicationManager.application.dispatchThread
@@ -163,7 +162,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     def started = new AtomicBoolean()
     def finished = new AtomicBoolean()
 
-    dumbService.queueTask(new DumbModeTask(new Object()) {
+    dumbService.queueTask(new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         started.set(true)
@@ -172,7 +171,8 @@ class DumbServiceImplTest extends BasePlatformTestCase {
           ProgressIndicatorUtils.withTimeout(20_000) {
             def index = FileBasedIndex.getInstance() as FileBasedIndexImpl
             new IndexUpdateRunner(index, ConcurrencyUtil.newSameThreadExecutorService(), 1)
-              .indexFiles(project, Collections.singletonList(new IndexUpdateRunner.FileSet(project, "child", [child])), indicator)
+              .indexFiles(project, Collections.singletonList(new IndexUpdateRunner.FileSet(project, "child", [child])),
+                          indicator, new ProjectIndexingHistoryImpl(getProject(), "Testing", ScanningType.PARTIAL))
           }
         }
         catch (ProcessCanceledException e) {
@@ -187,11 +187,11 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     assert finished.get()
   }
 
-  public void testDelayBetweenBecomingSmartAndWaitForSmartReturnMustBeSmall() {
+  void testDelayBetweenBecomingSmartAndWaitForSmartReturnMustBeSmall() {
     int N = 100
     int[] delays = new int[N]
     DumbServiceImpl dumbService = getDumbService()
-    Future<?> future = null;
+    Future<?> future = null
     for (int i=0; i< N; i++) {
       dumbService.runInDumbMode {
         CountDownLatch waiting = new CountDownLatch(1)
@@ -202,7 +202,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
         waiting.await()
       }
       long start = System.currentTimeMillis()
-      future.get();
+      future.get()
       long elapsed = System.currentTimeMillis() - start
       delays[i] = elapsed
     }

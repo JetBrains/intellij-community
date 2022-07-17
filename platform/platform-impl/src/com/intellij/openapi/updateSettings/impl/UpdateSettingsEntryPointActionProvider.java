@@ -58,7 +58,13 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
   private static void preparePrevPlatformUpdate() {
     PropertiesComponent properties = PropertiesComponent.getInstance();
-    BuildNumber newBuildForUpdate = BuildNumber.fromString(properties.getValue(NEXT_RUN_KEY_BUILD));
+    BuildNumber newBuildForUpdate;
+    try {
+      newBuildForUpdate = BuildNumber.fromString(properties.getValue(NEXT_RUN_KEY_BUILD));
+    }
+    catch (Exception ignore) {
+      return;
+    }
 
     if (newBuildForUpdate != null) {
       if (newBuildForUpdate.compareTo(ApplicationInfo.getInstance().getBuild()) > 0) {
@@ -146,7 +152,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     }
     else {
       BuildInfo build = platformUpdateInfo.getNewBuild();
-      properties.setValue(NEXT_RUN_KEY_BUILD, build.toString());
+      properties.setValue(NEXT_RUN_KEY_BUILD, build.getNumber().toString());
       properties.setValue(NEXT_RUN_KEY_VERSION, build.getVersion());
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.i18n;
 
@@ -446,9 +446,8 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
            new Class[] {UInjectionHost.class};
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public @NotNull String getAlternativeID() {
     return "nls";
   }
 
@@ -613,7 +612,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
           fixes.addAll(IntentionWrapper.wrapToQuickFixes(JvmElementActionFactories.createAddAnnotationActions((JvmModifiersOwner)target, AnnotationRequestsKt.annotationRequest(fqn)), sourcePsi.getContainingFile()));
           if (addNullSafe) {
             for (IntentionAction action : JvmElementActionFactories.createAddAnnotationActions((JvmModifiersOwner)target, AnnotationRequestsKt.annotationRequest(NlsInfo.NLS_SAFE))) {
-              fixes.add(new IntentionWrapper(action, sourcePsi.getContainingFile()) {
+              fixes.add(new IntentionWrapper(action) {
                 @Override
                 public @NotNull String getFamilyName() {
                   return JavaI18nBundle.message("intention.family.name.mark.as.nlssafe");
@@ -953,7 +952,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     if (parent instanceof UResolvable && isNonNlsCall((UResolvable)parent, nonNlsTargets)) {
       return true;
     }
-    if (parent != null && UastExpressionUtils.isAssignment(parent)) {
+    if (UastExpressionUtils.isAssignment(parent)) {
       UExpression operand = ((UBinaryExpression)parent).getLeftOperand();
       if (operand instanceof UReferenceExpression &&
           isNonNlsCall((UReferenceExpression)operand, nonNlsTargets)) return true;

@@ -1,30 +1,46 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
-import com.jetbrains.packagesearch.api.v2.ApiPackagesResponse
-import com.jetbrains.packagesearch.api.v2.ApiRepository
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
-import com.jetbrains.packagesearch.intellij.plugin.api.http.ApiResult
+import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
-import org.apache.commons.collections.map.LRUMap
+import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
+import org.jetbrains.packagesearch.api.v2.ApiRepository
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 
 internal class ProjectDataProvider(
-    private val apiClient: PackageSearchApiClient
+    private val apiClient: PackageSearchApiClient,
+    private val packageCache: CoroutineLRUCache<InstalledDependency, ApiStandardPackage>
 ) {
 
-    private val packageCache = LRUMap(500)
+    suspend fun fetchKnownRepositories(): List<ApiRepository> = apiClient.repositories().repositories
 
-    suspend fun fetchKnownRepositories(): ApiResult<List<ApiRepository>> = apiClient.repositories()
-        .mapSuccess { it.repositories }
-
-    suspend fun doSearch(searchQuery: String, filterOptions: FilterOptions): ApiResult<ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> {
+    suspend fun doSearch(
+        searchQuery: String,
+        filterOptions: FilterOptions
+    ): ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> {
         val repositoryIds = filterOptions.onlyRepositoryIds
 
         return apiClient.packagesByQuery(
@@ -42,18 +58,18 @@ internal class ProjectDataProvider(
 
         val apiInfoByDependency = fetchInfoFromCacheOrApiFor(installedDependencies, traceInfo)
 
-        val filteredApiInfo = apiInfoByDependency.filterValues { it == null }
-        if (filteredApiInfo.isNotEmpty() && filteredApiInfo.size != installedDependencies.size) {
-            val failedDependencies = filteredApiInfo.keys
+        val (emptyApiInfoByDependency, successfulApiInfoByDependency) =
+            apiInfoByDependency.partition { (_, v) -> v == null }
+
+        if (emptyApiInfoByDependency.isNotEmpty() && emptyApiInfoByDependency.size != installedDependencies.size) {
+            val failedDependencies = emptyApiInfoByDependency.keys
 
             logInfo(traceInfo, "ProjectDataProvider#fetchInfoFor()") {
-                "Failed obtaining data for ${failedDependencies.size} dependencies:\n" +
-                    failedDependencies.joinToString("\n") { "\t* '${it.coordinatesString}'" }
+                "Failed obtaining data for ${failedDependencies.size} dependencies"
             }
         }
 
-        @Suppress("UNCHECKED_CAST") // We filter out null values before casting, we should be ok
-        return apiInfoByDependency.filterValues { it != null } as Map<InstalledDependency, ApiStandardPackage>
+        return successfulApiInfoByDependency.filterNotNullValues()
     }
 
     private suspend fun fetchInfoFromCacheOrApiFor(
@@ -67,8 +83,8 @@ internal class ProjectDataProvider(
         val remoteInfoByDependencyMap = mutableMapOf<InstalledDependency, ApiStandardPackage?>()
         val packagesToFetch = mutableListOf<InstalledDependency>()
         for (dependency in dependencies) {
-            val standardV2Package = packageCache[dependency]
-            remoteInfoByDependencyMap[dependency] = standardV2Package as ApiStandardPackage?
+            val standardV2Package = packageCache.get(dependency)
+            remoteInfoByDependencyMap[dependency] = standardV2Package
             if (standardV2Package == null) {
                 packagesToFetch += dependency
             }
@@ -90,17 +106,34 @@ internal class ProjectDataProvider(
             .chunked(size = 25)
             .asFlow()
             .map { dependenciesToFetch -> apiClient.packagesByRange(dependenciesToFetch) }
-            .filterIsInstance<ApiResult.Success<ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>>>()
-            .map { it.result.packages }
+            .map { it.packages }
+            .catch {
+                logDebug(
+                    "${this::class.run { qualifiedName ?: simpleName ?: this }}#fetchedPackages",
+                    it,
+                ) { "Error while retrieving packages" }
+                emit(emptyList())
+            }
             .toList()
             .flatten()
 
         for (v2Package in fetchedPackages) {
             val dependency = InstalledDependency.from(v2Package)
-            packageCache[dependency] = v2Package
+            packageCache.put(dependency, v2Package)
             remoteInfoByDependencyMap[dependency] = v2Package
         }
 
         return remoteInfoByDependencyMap
     }
+}
+
+private fun <K, V> Map<K, V>.partition(transform: (Map.Entry<K, V>) -> Boolean): Pair<Map<K, V>, Map<K, V>> {
+    val trueMap = mutableMapOf<K, V>()
+    val falseMap = mutableMapOf<K, V>()
+    forEach { if (transform(it)) trueMap[it.key] = it.value else falseMap[it.key] = it.value }
+    return trueMap to falseMap
+}
+
+private fun <K, V> Map<K, V?>.filterNotNullValues() = buildMap<K, V> {
+    this@filterNotNullValues.forEach { (k, v) -> if (v != null) put(k, v) }
 }

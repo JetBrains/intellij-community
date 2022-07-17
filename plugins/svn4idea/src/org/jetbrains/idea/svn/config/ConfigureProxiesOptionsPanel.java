@@ -227,7 +227,7 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
         value = ((JCheckBox) component).isSelected() ? "yes" : "no";
       }
 
-      if ((value != null) && ((! "".equals(value)) || (map.containsKey(entry.getKey())))) {
+      if ((value != null) && (!value.isEmpty() || map.containsKey(entry.getKey()))) {
         map.put(entry.getKey(), value);
       }
     }

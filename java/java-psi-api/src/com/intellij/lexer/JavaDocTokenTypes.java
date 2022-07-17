@@ -52,6 +52,16 @@ public final class JavaDocTokenTypes implements DocCommentTokenTypes {
   }
 
   @Override
+  public IElementType tagValueQuote() {
+    return JavaDocTokenType.DOC_TAG_VALUE_QUOTE;
+  }
+
+  @Override
+  public IElementType tagValueColon() {
+    return JavaDocTokenType.DOC_TAG_VALUE_COLON;
+  }
+
+  @Override
   public IElementType tagValueSharp() {
     return JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN;
   }

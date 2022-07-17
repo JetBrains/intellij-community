@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.dataset
 
 import com.intellij.spellchecker.SpellCheckerManager
@@ -12,7 +12,7 @@ class DataSetPerformanceTest: SpellcheckerInspectionTestCase() {
     val manager = SpellCheckerManager.getInstance(project)
     val total = Datasets.missp.flatMap { it.misspellings + it.word }.size
 
-    PlatformTestUtil.startPerformanceTest("highlight ${total} words in missp", 750) {
+    PlatformTestUtil.startPerformanceTest("highlight ${total} words in missp", 1750) {
       for (word in Datasets.missp) {
         manager.hasProblem(word.word)
         for (missp in word.misspellings) {
@@ -26,7 +26,7 @@ class DataSetPerformanceTest: SpellcheckerInspectionTestCase() {
     val manager = SpellCheckerManager.getInstance(project)
     val total = Datasets.words.flatMap { it.misspellings + it.word }.size
 
-    PlatformTestUtil.startPerformanceTest("highlight ${total} words in words", 100) {
+    PlatformTestUtil.startPerformanceTest("highlight ${total} words in words", 200) {
       for (word in Datasets.words) {
         manager.hasProblem(word.word)
         for (missp in word.misspellings) {
@@ -41,7 +41,7 @@ class DataSetPerformanceTest: SpellcheckerInspectionTestCase() {
     val manager = SpellCheckerManager.getInstance(project)
     val total = Datasets.wordsCamelCase.flatMap { it.misspellings + it.word }.size
 
-    PlatformTestUtil.startPerformanceTest("highlight ${total} words in camel-case", 250) {
+    PlatformTestUtil.startPerformanceTest("highlight ${total} words in camel-case", 500) {
       for (word in Datasets.wordsCamelCase) {
         manager.hasProblem(word.word)
         for (missp in word.misspellings) {

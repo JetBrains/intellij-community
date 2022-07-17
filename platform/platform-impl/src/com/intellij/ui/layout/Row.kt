@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
 import com.intellij.ui.components.noteComponent
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
@@ -13,8 +14,12 @@ import javax.swing.JLabel
 import kotlin.reflect.KMutableProperty0
 
 interface BaseBuilder {
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun withButtonGroup(@NlsContexts.BorderTitle title: String?, buttonGroup: ButtonGroup, body: () -> Unit)
 
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
     withButtonGroup(null, buttonGroup, body)
   }
@@ -23,19 +28,27 @@ interface BaseBuilder {
     buttonGroup(null, init)
   }
 
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun buttonGroup(@NlsContexts.BorderTitle title:String? = null, init: () -> Unit) {
     withButtonGroup(title, ButtonGroup(), init)
   }
 }
 
 interface RowBuilder : BaseBuilder {
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun createChildRow(label: JLabel? = null,
                      isSeparated: Boolean = false,
                      noGrid: Boolean = false,
                      @Nls title: String? = null): Row
 
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun createNoteOrCommentRow(component: JComponent): Row
 
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun checkBoxGroup(@Nls title: String?, body: () -> Unit)
 
   fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
@@ -52,14 +65,20 @@ interface RowBuilder : BaseBuilder {
    * Creates row with a huge gap after it, that can be used to group related components.
    * Think of [titledRow] without a title and additional indent.
    */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun blockRow(init: Row.() -> Unit): Row
 
   /**
    * Creates row with hideable decorator.
    * It allows to hide some information under the titled decorator
    */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun hideableRow(@NlsContexts.Separator title: String, incrementsIndent: Boolean = true, init: Row.() -> Unit): Row
 
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun hideableRow(@NlsContexts.Separator title: String, init: Row.() -> Unit): Row {
     return hideableRow(title = title, true, init)
   }
@@ -71,6 +90,8 @@ interface RowBuilder : BaseBuilder {
     createNoteOrCommentRow(noteComponent(text, linkHandler))
   }
 
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun commentRow(@Nls text: String) {
     createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true, -1, true))
   }
@@ -78,6 +99,8 @@ interface RowBuilder : BaseBuilder {
   /**
    * Creates a nested UI DSL panel, with a grid which is independent of this pane.
    */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun nestedPanel(@NlsContexts.BorderTitle title: String? = null, init: LayoutBuilder.() -> Unit): CellBuilder<DialogPanel>
 
   fun onGlobalApply(callback: () -> Unit): Row
@@ -85,28 +108,40 @@ interface RowBuilder : BaseBuilder {
   fun onGlobalIsModified(callback: () -> Boolean): Row
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 inline fun <reified T : Any> InnerCell.buttonGroup(prop: KMutableProperty0<T>, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
   buttonGroup(prop.toBinding(), init)
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 inline fun <reified T : Any> InnerCell.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
   buttonGroup(PropertyBinding(getter, setter), init)
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 inline fun <reified T : Any> InnerCell.buttonGroup(binding: PropertyBinding<T>, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
   withButtonGroup(ButtonGroup()) {
     CellBuilderWithButtonGroupProperty(binding).init()
   }
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 inline fun <reified T : Any> RowBuilder.buttonGroup(prop: KMutableProperty0<T>, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
   buttonGroup(prop.toBinding(), init)
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 inline fun <reified T : Any> RowBuilder.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
   buttonGroup(PropertyBinding(getter, setter), init)
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 inline fun <reified T : Any> RowBuilder.buttonGroup(binding: PropertyBinding<T>, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
   withButtonGroup(ButtonGroup()) {
     RowBuilderWithButtonGroupProperty(this, binding).init()
@@ -126,6 +161,7 @@ abstract class Row : Cell(), RowBuilder {
    * Indent for child rows of this row, expressed in steps (multiples of [SpacingConfiguration.indentLevel]). Replaces indent
    * calculated from row nesting.
    */
+  @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var subRowIndent: Int
 
   protected abstract val builder: LayoutBuilderImpl
@@ -133,12 +169,16 @@ abstract class Row : Cell(), RowBuilder {
   /**
    * Specifies the right alignment for the component if the cell is larger than the component plus its gaps.
    */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   inline fun right(init: Row.() -> Unit) {
     alignRight()
     init()
   }
 
   @PublishedApi
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   internal abstract fun alignRight()
 
   abstract fun largeGapAfter()
@@ -148,6 +188,7 @@ abstract class Row : Cell(), RowBuilder {
    *
    * @param isFullWidth If `true`, the cell occupies the full width of the enclosing component.
    */
+  @Deprecated("Use Kotlin UI DSL Version 2")
   inline fun cell(isVerticalFlow: Boolean = false, isFullWidth: Boolean = false, init: InnerCell.() -> Unit) {
     setCellMode(true, isVerticalFlow, isFullWidth)
     InnerCell(this).init()
@@ -155,12 +196,17 @@ abstract class Row : Cell(), RowBuilder {
   }
 
   @PublishedApi
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   internal abstract fun createRow(label: String?): Row
 
   @PublishedApi
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   internal abstract fun setCellMode(value: Boolean, isVerticalFlow: Boolean, fullWidth: Boolean)
 
   // backward compatibility
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
   operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null) {
     invoke(constraints = *constraints, growPolicy = growPolicy).withLeftGap(gapLeft)
@@ -171,11 +217,14 @@ enum class GrowPolicy {
   SHORT_TEXT, MEDIUM_TEXT
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun Row.enableIf(predicate: ComponentPredicate) {
   enabled = predicate()
   predicate.addListener { enabled = it }
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun Row.enableSubRowsIf(predicate: ComponentPredicate) {
   subRowsEnabled = predicate()
   predicate.addListener { subRowsEnabled = it }

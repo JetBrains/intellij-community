@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.packaging;
 
 import com.intellij.analysis.AnalysisScope;
@@ -23,7 +9,12 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.dependency.DependencyUtils;
@@ -50,15 +41,19 @@ public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
       return null;
     }
 
-    final Set<RefClass> dependencies =
-      DependencyUtils.calculateDependenciesForClass(refClass);
+
+    int numClasses = getClassesCount(manager, owner);
+    if (numClasses == 1) {
+      return null;
+    }
+
+    final Set<RefClass> dependencies = DependencyUtils.calculateDependenciesForClass(refClass);
     for (RefClass dependency : dependencies) {
       if (inSamePackage(refClass, dependency)) {
         return null;
       }
     }
-    final Set<RefClass> dependents =
-      DependencyUtils.calculateDependentsForClass(refClass);
+    final Set<RefClass> dependents = DependencyUtils.calculateDependentsForClass(refClass);
     for (RefClass dependent : dependents) {
       if (inSamePackage(refClass, dependent)) {
         return null;
@@ -72,6 +67,17 @@ public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
                                         "class.unconnected.to.package.problem.descriptor"),
                                       true, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)
     };
+  }
+
+  private static int getClassesCount(@NotNull InspectionManager manager, RefEntity owner) {
+    return ReadAction.compute(() -> {
+      final Project project = manager.getProject();
+      final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(owner.getQualifiedName());
+      if (aPackage == null || aPackage.getSubPackages().length > 0) {
+        return -1;
+      }
+      return aPackage.getClasses(GlobalSearchScope.projectScope(project)).length;
+    });
   }
 
   private static boolean inSamePackage(RefClass class1, RefClass class2) {

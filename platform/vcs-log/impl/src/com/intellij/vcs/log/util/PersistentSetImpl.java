@@ -62,9 +62,4 @@ public class PersistentSetImpl<T> extends PersistentEnumerator<T> implements Per
   public void flush() {
     force();
   }
-
-  @Override
-  public void markCorrupted() {
-    super.markCorrupted();
-  }
 }

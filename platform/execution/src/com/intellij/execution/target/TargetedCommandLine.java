@@ -14,7 +14,10 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -32,19 +35,25 @@ public final class TargetedCommandLine {
   @NotNull private final Charset myCharset;
   private final @NotNull List<? extends TargetValue<String>> myParameters;
   @NotNull private final Map<String, TargetValue<String>> myEnvironment;
+  private final boolean myRedirectErrorStream;
+  private final @Nullable PtyOptions myPtyOptions;
 
-  public TargetedCommandLine(@NotNull TargetValue<String> exePath,
-                             @NotNull TargetValue<String> workingDirectory,
-                             @NotNull TargetValue<String> inputFilePath,
-                             @NotNull Charset charset,
-                             @NotNull List<? extends TargetValue<String>> parameters,
-                             @NotNull Map<String, TargetValue<String>> environment) {
+  TargetedCommandLine(@NotNull TargetValue<String> exePath,
+                      @NotNull TargetValue<String> workingDirectory,
+                      @NotNull TargetValue<String> inputFilePath,
+                      @NotNull Charset charset,
+                      @NotNull List<? extends TargetValue<String>> parameters,
+                      @NotNull Map<String, TargetValue<String>> environment,
+                      boolean redirectErrorStream,
+                      @Nullable PtyOptions ptyOptions) {
     myExePath = exePath;
     myWorkingDirectory = workingDirectory;
     myInputFilePath = inputFilePath;
     myCharset = charset;
     myParameters = parameters;
     myEnvironment = environment;
+    myRedirectErrorStream = redirectErrorStream;
+    myPtyOptions = ptyOptions;
   }
 
   /**
@@ -108,6 +117,14 @@ public final class TargetedCommandLine {
   @NotNull
   public Charset getCharset() {
     return myCharset;
+  }
+
+  public boolean isRedirectErrorStream() {
+    return myRedirectErrorStream;
+  }
+
+  public @Nullable PtyOptions getPtyOptions() {
+    return myPtyOptions;
   }
 
   @Nullable

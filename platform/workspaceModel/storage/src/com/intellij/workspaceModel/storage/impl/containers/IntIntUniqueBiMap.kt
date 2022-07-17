@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl.containers
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap
@@ -47,10 +47,8 @@ class MutableIntIntUniqueBiMap private constructor(
     if (value2Key.containsKey(value)) error("Value $value already exists in the map")
     startWrite()
     // Don't convert to links[key] = ... because it *may* became autoboxing
-    @Suppress("ReplacePutWithAssignment")
     value2Key.put(value, key)
     // Don't convert to links[key] = ... because it *may* became autoboxing
-    @Suppress("ReplacePutWithAssignment")
     key2Value.put(key, value)
   }
 

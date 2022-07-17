@@ -48,7 +48,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
   @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return ((Boolean)infos[0]) ? new FallthruInSwitchStatementFix() : null;
+    return ((Boolean)infos[0]) ? new FallthruInSwitchStatementFix((String) infos[1]) : null;
   }
 
   @Override
@@ -58,10 +58,21 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
 
   private static class FallthruInSwitchStatementFix extends InspectionGadgetsFix {
 
+    private final String myKeyword;
+
+    private FallthruInSwitchStatementFix(String keyword) {
+      myKeyword = keyword;
+    }
+
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("fallthru.in.switch.statement.quickfix");
+      return InspectionGadgetsBundle.message("fallthru.in.switch.statement.quickfix", PsiKeyword.BREAK);
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return InspectionGadgetsBundle.message("fallthru.in.switch.statement.quickfix", myKeyword);
     }
 
     @Override
@@ -70,11 +81,10 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
       PsiSwitchBlock switchBlock = labelStatement.getEnclosingSwitchBlock();
-      String value = "";
-      if (switchBlock instanceof PsiSwitchExpression) {
-        value = " " + PsiTypesUtil.getDefaultValueOfType(((PsiSwitchExpression)switchBlock).getType()) + " ";
-      }
-      final PsiStatement breakStatement = factory.createStatementFromText("break" + value + ";", labelStatement);
+      String stmt = switchBlock instanceof PsiSwitchExpression 
+                    ? "yield " + PsiTypesUtil.getDefaultValueOfType(((PsiSwitchExpression)switchBlock).getType()) + ";" 
+                    : "break;";
+      final PsiStatement breakStatement = factory.createStatementFromText(stmt, labelStatement);
       final PsiElement parent = labelStatement.getParent();
       parent.addBefore(breakStatement, labelStatement);
     }
@@ -91,7 +101,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
     }
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       super.visitSwitchExpression(expression);
       doCheckSwitchBlock(expression);
     }
@@ -125,7 +135,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
           continue;
         }
         if (ControlFlowUtils.statementMayCompleteNormally(previousStatement)) {
-          registerError(statement, switchBlock instanceof PsiSwitchStatement || isOnTheFly());
+          registerError(statement, switchBlock instanceof PsiSwitchStatement || isOnTheFly(), switchBlock instanceof PsiSwitchExpression ? PsiKeyword.YIELD : PsiKeyword.BREAK);
         }
       }
     }

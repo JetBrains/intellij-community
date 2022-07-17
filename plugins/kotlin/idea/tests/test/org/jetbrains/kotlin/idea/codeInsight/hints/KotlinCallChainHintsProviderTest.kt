@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
@@ -32,6 +32,22 @@ class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
             operator fun invoke() = Foo()
         }
     """.trimIndent()
+
+    fun `test error type`() = doTest("""
+        // NO_HINTS
+        interface Baz {
+            fun foo(): Foo = Foo()
+        }
+
+        class Outer : Baz {
+            class Nested {
+                val x = this@Outer.foo()
+                    .bar()
+                    .foo()
+                    .bar()
+            }
+        }
+    """.trimIndent())
 
     fun `test simple`() = doTest("""
         fun main() {
@@ -142,6 +158,6 @@ class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
     """.trimIndent())
 
     private fun doTest(text: String) {
-        testProvider("foo.kt", "$chainLib\n$text", KotlinCallChainHintsProvider())
+        doTestProvider("foo.kt", "$chainLib\n$text", KotlinCallChainHintsProvider())
     }
 }

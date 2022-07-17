@@ -4,7 +4,8 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.imports.canBeAddedToImport
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceImportAlias.KotlinIntroduceImportAliasHandler
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -17,16 +18,20 @@ class IntroduceImportAliasIntention : SelfTargetingRangeIntention<KtNameReferenc
     KotlinBundle.lazyMessage("introduce.import.alias")
 ) {
     override fun applicabilityRange(element: KtNameReferenceExpression): TextRange? {
-        if (element.parent is KtInstanceExpressionWithLabel) return null
-        if (element.mainReference.getImportAlias() != null) return null
+        if (element.parent is KtInstanceExpressionWithLabel || element.mainReference.getImportAlias() != null) return null
 
         val targets = element.resolveMainReferenceToDescriptors()
         if (targets.isEmpty() || targets.any { !it.canBeAddedToImport() }) return null
+        // It is a workaround: KTIJ-20142 actual FE could not report ambiguous references for alias for a broken reference
+        if (element.mainReference.resolve() == null) return null
         return element.textRange
     }
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun applyTo(element: KtNameReferenceExpression, editor: Editor?) {
         if (editor == null) return
-        KotlinIntroduceImportAliasHandler.doRefactoring(element.project, editor, element)
+        val project = element.project
+        KotlinIntroduceImportAliasHandler.doRefactoring(project, editor, element)
     }
 }

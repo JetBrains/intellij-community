@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
 import com.intellij.CommonBundle;
@@ -35,6 +35,11 @@ import java.awt.*;
 * @author peter
 */
 public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
+  @Override
+  public boolean isApplicable(@NotNull Project project) {
+    return !ActionCenter.isEnabled();
+  }
+
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     EventLog.getProjectService(project).initDefaultContent();
@@ -77,7 +82,7 @@ public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbA
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
       @Override
       public Object getData(@NotNull @NonNls String dataId) {
-        return PlatformDataKeys.HELP_ID.is(dataId) ? EventLog.HELP_ID : super.getData(dataId);
+        return PlatformCoreDataKeys.HELP_ID.is(dataId) ? EventLog.HELP_ID : super.getData(dataId);
       }
     };
     panel.setContent(editorPanel);
@@ -87,7 +92,7 @@ public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbA
     toolbar.setTargetComponent(editor.getContentComponent());
     panel.setToolbar(toolbar.getComponent());
 
-    Content content = ContentFactory.SERVICE.getInstance().createContent(panel, title, false);
+    Content content = ContentFactory.getInstance().createContent(panel, title, false);
     contentManager.addContent(content);
     contentManager.setSelectedContent(content);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -17,8 +17,8 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -41,7 +41,6 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StringPattern;
@@ -86,7 +85,7 @@ public final class FindManagerImpl extends FindManager {
   private static final Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
 
   private FindUIHelper myHelper;
-  private static final NotificationGroup GROUP = new NotificationGroup("Find Problems", NotificationDisplayType.STICKY_BALLOON, false);
+  private static final NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Find Problems");
 
   public FindManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -186,6 +185,13 @@ public final class FindManagerImpl extends FindManager {
   }
 
   @Override
+  public void closeFindDialog() {
+    if (myHelper != null) {
+      myHelper.closeUI();
+    }
+  }
+
+  @Override
   @NotNull
   public FindModel getFindInFileModel() {
     return myFindInFileModel;
@@ -197,7 +203,7 @@ public final class FindManagerImpl extends FindManager {
     myFindInProjectModel.setFromCursor(false);
     myFindInProjectModel.setForward(true);
     myFindInProjectModel.setGlobal(true);
-    myFindInProjectModel.setMultiline(Registry.is("ide.find.as.popup.allow.multiline"));
+    myFindInProjectModel.setMultiline(true);
     myFindInProjectModel.setSearchInProjectFiles(false);
     return myFindInProjectModel;
   }

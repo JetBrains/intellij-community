@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PROBLEM: none
 fun foo(matrix: Array<Array<Int>>) {
     for (i in <caret>0 until matrix[0].size) {

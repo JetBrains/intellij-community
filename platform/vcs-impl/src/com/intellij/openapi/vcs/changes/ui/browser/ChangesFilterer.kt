@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -17,6 +18,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator
@@ -32,6 +34,8 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
   companion object {
     @JvmField
     val DATA_KEY: DataKey<ChangesFilterer> = DataKey.create("com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer")
+
+    private val LOG = logger<ChangesFilterer>()
   }
 
   private val LOCK = Any()
@@ -58,7 +62,9 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     if (oldChanges == null && changes == null) return
     if (oldChanges != null && changes != null && ContainerUtil.equalsIdentity(oldChanges, changes)) return
     rawChanges = changes?.toList()
-    restartLoading()
+    if (activeFilter != null) {
+      restartLoading()
+    }
   }
 
   @RequiresEdt
@@ -148,7 +154,13 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     for (change in changes) {
       ProgressManager.checkCanceled()
 
-      val accept = filter.accept(this, change)
+      val accept = try {
+        filter.accept(this, change)
+      }
+      catch (e: VcsException) {
+        LOG.warn(e)
+        true
+      }
 
       synchronized(LOCK) {
         ProgressManager.checkCanceled()
@@ -281,11 +293,12 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     }
   }
 
-  class FilterGroup : DefaultActionGroup(), Toggleable, DumbAware {
+  class FilterGroup : ActionGroup(), Toggleable, DumbAware {
     init {
-      isPopup = true
+      isPopup = false
       templatePresentation.text = VcsBundle.message("action.filter.filter.by.text")
       templatePresentation.icon = AllIcons.General.Filter
+      templatePresentation.isDisableGroupIfEmpty = false
     }
 
     override fun update(e: AnActionEvent) {
@@ -303,13 +316,16 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       val filterer = e?.getData(DATA_KEY) ?: return AnAction.EMPTY_ARRAY
 
-      return listOf(MovesOnlyFilter, NonImportantFilter)
-        .filter { it.isAvailable(filterer) }
-        .map { ToggleFilterAction(filterer, it) }
-        .toTypedArray()
+      return arrayOf<AnAction>(Separator(VcsBundle.message("action.filter.separator.text"))) +
+             listOf(MovesOnlyFilter, NonImportantFilter)
+               .filter { it.isAvailable(filterer) }
+               .map { ToggleFilterAction(filterer, it) }
+               .toTypedArray()
     }
 
-    override fun disableIfNoVisibleChildren(): Boolean = false
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
   }
 
   private class ToggleFilterAction(val filterer: ChangesFilterer, val filter: Filter)

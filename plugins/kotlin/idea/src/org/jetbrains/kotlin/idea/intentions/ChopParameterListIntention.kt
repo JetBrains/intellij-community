@@ -8,9 +8,10 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.reformatted
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
-import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
@@ -23,8 +24,8 @@ abstract class AbstractChopListIntention<TList : KtElement, TElement : KtElement
     private val elementClass: Class<TElement>,
     textGetter: () -> String
 ) : SelfTargetingIntention<TList>(listClass, textGetter) {
-    override fun allowCaretInsideElement(element: PsiElement) =
-        element !is KtValueArgument && super.allowCaretInsideElement(element)
+    override fun skipProcessingFurtherElementsAfter(element: PsiElement) =
+        element is KtValueArgument || super.skipProcessingFurtherElementsAfter(element)
 
     open fun leftParOnNewLine(commonCodeStyleSettings: CommonCodeStyleSettings): Boolean = false
 

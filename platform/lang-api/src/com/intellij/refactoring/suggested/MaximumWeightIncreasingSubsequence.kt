@@ -2,12 +2,14 @@
 package com.intellij.refactoring.suggested
 
 import com.intellij.util.containers.IntArrayList
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Finds an increasing subsequence of element in the list with the maximum sum of [weightFunction] for all elements.
  * @return a list of indices in [list] of the elements of the subsequence found.
  */
-internal fun <T : Comparable<T>> findMaximumWeightIncreasingSubsequence(list: List<T>, weightFunction: (T) -> Double): IntArray {
+@ApiStatus.Internal
+fun <T : Comparable<T>> findMaximumWeightIncreasingSubsequence(list: List<T>, weightFunction: (T) -> Double): IntArray {
   if (list.isEmpty()) return intArrayOf()
   if (list.size == 1) return intArrayOf(0)
 

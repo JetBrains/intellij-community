@@ -8,9 +8,9 @@ class Outer {
     fun foo() = 1
 
     inner class Inner {
-        fun innerFun() = 1
+        fun innerFun() = 39
         fun test() {
-            fun f() = 1
+            fun f() = 156
 
             // outer is captured in lambda
             lambda {

@@ -19,6 +19,16 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
   }
 
   @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitEnumConstant(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+
+  @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     appendText(getDocComment(), indentLevel, buffer, NEXT_LINE);
     appendText(getModifierList(), indentLevel, buffer, "");

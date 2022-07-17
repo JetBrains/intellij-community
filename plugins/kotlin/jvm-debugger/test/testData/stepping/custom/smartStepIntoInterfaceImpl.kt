@@ -27,7 +27,6 @@ interface I {
 }
 
 class IImpl: I {
-    // super call in override (step into works in JVM_IR, doesn't work in the old backend)
     override fun fooOverride() {
         return super.fooOverride()
     }
@@ -114,7 +113,6 @@ fun testSmartStepInto() {
 fun testStepInto() {
     val ii = IImpl()
 
-    // (Fixed in JVM_IR) TODO: should be smartStepIntoInterfaceImpl.kt:32 instead of smartStepIntoInterfaceImpl.kt:23
     // STEP_INTO: 1
     // RESUME: 1
     //Breakpoint!

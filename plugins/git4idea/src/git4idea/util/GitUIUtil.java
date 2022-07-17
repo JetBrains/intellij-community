@@ -3,16 +3,13 @@ package git4idea.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleListCellRenderer;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +18,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -33,26 +29,6 @@ public final class GitUIUtil {
    * A private constructor for utility class
    */
   private GitUIUtil() {
-  }
-
-  /**
-   * @deprecated use {@link VcsNotifier} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void notifyError(Project project,
-                                 @Nls @NotNull String title,
-                                 @Nls @Nullable String description,
-                                 boolean important,
-                                 @Nullable Exception error) {
-    if (important) {
-      VcsNotifier.getInstance(project)
-        .notifyError(null, title, StringUtil.notNullize(description), Collections.singleton(error));
-    }
-    else {
-      VcsNotifier.getInstance(project)
-        .notifyImportantWarning(null, title, StringUtil.notNullize(description), Collections.singleton(error));
-    }
   }
 
   /**

@@ -17,9 +17,12 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiContinueStatement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UContinueExpression
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
 
+@ApiStatus.Internal
 class JavaUContinueExpression(
   override val sourcePsi: PsiContinueStatement,
   givenParent: UElement?
@@ -28,6 +31,6 @@ class JavaUContinueExpression(
     get() = sourcePsi.labelIdentifier?.text
 
   override val jumpTarget: UElement? by lz {
-    sourcePsi.findContinuedStatement().takeIf { it !== sourcePsi }?.let { JavaConverter.convertStatement(it, null) }
+    sourcePsi.findContinuedStatement().takeIf { it !== sourcePsi }?.let { JavaConverter.convertStatement(it, null, UExpression::class.java) }
   }
 }

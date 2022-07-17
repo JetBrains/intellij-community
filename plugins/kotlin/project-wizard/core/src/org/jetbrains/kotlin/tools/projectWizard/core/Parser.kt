@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.core
 
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingReference
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.templates.Template
@@ -26,7 +28,7 @@ abstract class Parser<out T : Any> {
     abstract fun ParsingContext.parse(value: Any?, @NonNls path: String): TaskResult<T>
 }
 
-fun <T : Any> alwaysFailingParser(errorMessage: String) = object : Parser<T>() {
+fun <T : Any> alwaysFailingParser(@Nls errorMessage: String) = object : Parser<T>() {
     override fun ParsingContext.parse(value: Any?, path: String): TaskResult<T> =
         Failure(object : Error() {
             override val message: String get() = errorMessage
@@ -44,7 +46,7 @@ inline fun <reified E> enumParser(): Parser<E> where E : Enum<E>, E : Displayabl
             enumValue.name.equals(name, ignoreCase = true) || enumValue.text.equals(name, ignoreCase = true)
         }.toResult {
             ParseError(
-                "For setting `$path` one of [${enumValues<E>().joinToString { it.name }}] was expected but `$name` was found"
+                KotlinNewProjectWizardBundle.message("error.text.for.setting.0.one.of.1.was.expected.but.2.was.found", path, enumValues<E>().joinToString { it.name }, name)
             )
         }
     }
@@ -89,7 +91,7 @@ fun <T : Any> valueParserM(parser: suspend ParsingContext.(value: Any?, path: St
 
 fun Any?.classMismatchError(@NonNls path: String, expected: KClass<*>): ParseError {
     val classpath = this?.let { it::class.simpleName } ?: "null"
-    return ParseError("Expected ${expected.simpleName!!} for `$path` but $classpath was found")
+    return ParseError(KotlinNewProjectWizardBundle.message("error.text.expected.0.for.1.but.2.was.found", expected.simpleName!!, path, classpath))
 }
 
 inline fun <reified V : Any> Any?.parseAs(@NonNls path: String) =

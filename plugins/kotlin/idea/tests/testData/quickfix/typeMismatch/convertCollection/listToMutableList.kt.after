@@ -1,5 +1,5 @@
 // "Convert expression to 'MutableList' by inserting '.toMutableList()'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(a: List<String>) {
     bar(a.toMutableList()<caret>)

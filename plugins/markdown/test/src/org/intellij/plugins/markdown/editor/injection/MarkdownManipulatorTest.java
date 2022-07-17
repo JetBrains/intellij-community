@@ -5,10 +5,11 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence;
 
 public class  MarkdownManipulatorTest extends BasePlatformTestCase {
   public void testSimpleCodeFence() {
@@ -170,12 +171,12 @@ public class  MarkdownManipulatorTest extends BasePlatformTestCase {
     int offset = myFixture.getCaretOffset();
 
     PsiElement element = myFixture.getFile().findElementAt(offset);
-    MarkdownCodeFenceImpl codeFence = (MarkdownCodeFenceImpl)InjectedLanguageManager.getInstance(getProject()).getInjectionHost(element);
-
-    final MarkdownCodeFenceImpl.Manipulator manipulator = new MarkdownCodeFenceImpl.Manipulator();
-    MarkdownCodeFenceImpl newCodeFence =
-      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), (Computable<MarkdownCodeFenceImpl>)() -> manipulator
-        .handleContentChange(codeFence, TextRange.from(element.getTextOffset(), element.getTextLength()), newContent));
+    MarkdownCodeFence codeFence = (MarkdownCodeFence)InjectedLanguageManager.getInstance(getProject()).getInjectionHost(element);
+    assertNotNull("Failed to find fence element", codeFence);
+    final var manipulator = ElementManipulators.getNotNullManipulator(codeFence);
+    final var newCodeFence = WriteCommandAction.runWriteCommandAction(myFixture.getProject(), (Computable<MarkdownCodeFence>)() -> {
+      return manipulator.handleContentChange(codeFence, TextRange.from(element.getTextOffset(), element.getTextLength()), newContent);
+    });
 
     assertEquals(expectedText, newCodeFence != null ? newCodeFence.getText() : codeFence.getText());
   }

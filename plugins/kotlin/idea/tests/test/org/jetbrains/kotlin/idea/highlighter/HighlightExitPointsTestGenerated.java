@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +21,16 @@ import org.junit.runner.RunWith;
 public class HighlightExitPointsTestGenerated extends AbstractHighlightExitPointsTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
+
+    @TestMetadata("anonymousFunction.kt")
+    public void testAnonymousFunction() throws Exception {
+        runTest("testData/exitPoints/anonymousFunction.kt");
+    }
+
+    @TestMetadata("anonymousFunction2.kt")
+    public void testAnonymousFunction2() throws Exception {
+        runTest("testData/exitPoints/anonymousFunction2.kt");
     }
 
     @TestMetadata("getter.kt")
@@ -51,6 +61,11 @@ public class HighlightExitPointsTestGenerated extends AbstractHighlightExitPoint
     @TestMetadata("inlineLocalReturn2.kt")
     public void testInlineLocalReturn2() throws Exception {
         runTest("testData/exitPoints/inlineLocalReturn2.kt");
+    }
+
+    @TestMetadata("inlineLocalReturn3.kt")
+    public void testInlineLocalReturn3() throws Exception {
+        runTest("testData/exitPoints/inlineLocalReturn3.kt");
     }
 
     @TestMetadata("inlineWithNoInlineParam.kt")
@@ -91,6 +106,16 @@ public class HighlightExitPointsTestGenerated extends AbstractHighlightExitPoint
     @TestMetadata("notInline2.kt")
     public void testNotInline2() throws Exception {
         runTest("testData/exitPoints/notInline2.kt");
+    }
+
+    @TestMetadata("notInline3.kt")
+    public void testNotInline3() throws Exception {
+        runTest("testData/exitPoints/notInline3.kt");
+    }
+
+    @TestMetadata("notReturnedLabeledExpression.kt")
+    public void testNotReturnedLabeledExpression() throws Exception {
+        runTest("testData/exitPoints/notReturnedLabeledExpression.kt");
     }
 
     @TestMetadata("simple.kt")

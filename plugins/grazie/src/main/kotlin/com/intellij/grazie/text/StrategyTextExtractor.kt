@@ -18,7 +18,7 @@ internal class StrategyTextExtractor(private val strategy: GrammarCheckingStrate
       .filter { it !is PsiCompiledElement && !wsTokens.contains(it.elementType) }
       .mapNotNull { buildTextContent(it) }
       .mapNotNull { trimLeadingQuotesAndSpaces(it) }
-    return TextContent.joinWithWhitespace(fragments)
+    return TextContent.joinWithWhitespace('\n', fragments)
   }
 
   private fun trimLeadingQuotesAndSpaces(content: TextContent): TextContent? {
@@ -62,7 +62,18 @@ internal class StrategyTextExtractor(private val strategy: GrammarCheckingStrate
         null,
         strategy.javaClass)
     }
-    return TextContentBuilder.excludeRanges(content, filtered)
+    val sorted = filtered.sortedBy { it.first }
+    for (i in 1 until sorted.size) {
+      if (sorted[i - 1].last >= sorted[i].first) {
+        PluginException.logPluginError(
+          logger<StrategyTextExtractor>(),
+          "$strategy produced intersecting stealthy ranges ${sorted[i - 1]} and ${sorted[i]}",
+          null,
+          strategy.javaClass)
+        return null
+      }
+    }
+    return content.excludeRanges(sorted.map { TextContent.Exclusion(it.first, it.last + 1, false) })
   }
 
   internal companion object {

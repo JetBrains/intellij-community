@@ -1,5 +1,5 @@
 // FIX: Replace 'it' with explicit parameter
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun main() {
     listOf(42).map {

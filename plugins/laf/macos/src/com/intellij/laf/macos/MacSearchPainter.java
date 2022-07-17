@@ -12,7 +12,7 @@ import javax.swing.border.Border;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 
-class MacSearchPainter implements SearchTextAreaPainter {
+final class MacSearchPainter implements SearchTextAreaPainter {
   private final PluggableLafInfo.SearchAreaContext myContext;
 
   MacSearchPainter(PluggableLafInfo.SearchAreaContext context) {
@@ -20,20 +20,17 @@ class MacSearchPainter implements SearchTextAreaPainter {
   }
 
   @Override
-  @NotNull
-  public Border getBorder() {
+  public @NotNull Border getBorder() {
     return JBUI.Borders.empty(3 + Math.max(0, JBUIScale.scale(16) - UIUtil.getLineHeight(myContext.getTextComponent())) / 2, 6, 4, 4);
   }
 
   @Override
-  @NotNull
-  public String getLayoutConstraints() {
+  public @NotNull String getLayoutConstraints() {
     return "flowx, ins 0, gapx " + JBUIScale.scale(4);
   }
 
   @Override
-  @NotNull
-  public String getHistoryButtonConstraints() {
+  public @NotNull String getHistoryButtonConstraints() {
     int extraGap = getExtraGap();
     return "ay top, gaptop " + extraGap + ", gapleft" + (JBUIScale.isUsrHiDPI() ? 4 : 0);
   }
@@ -46,15 +43,13 @@ class MacSearchPainter implements SearchTextAreaPainter {
 
 
   @Override
-  @NotNull
-  public String getIconsPanelConstraints() {
+  public @NotNull String getIconsPanelConstraints() {
     int extraGap = getExtraGap();
     return "gaptop " + extraGap + ", ay top, gapright " + extraGap / 2;
   }
 
   @Override
-  @NotNull
-  public Border getIconsPanelBorder(int rows) {
+  public @NotNull Border getIconsPanelBorder(int rows) {
     return JBUI.Borders.emptyBottom(rows == 2 ? 3 : 0);
   }
 

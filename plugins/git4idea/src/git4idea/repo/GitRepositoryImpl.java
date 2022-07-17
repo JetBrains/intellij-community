@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
+import com.intellij.diagnostic.opentelemetry.TraceManager;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.util.StopWatch;
 import git4idea.GitDisposable;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
@@ -17,6 +17,7 @@ import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
 import git4idea.status.GitStagingAreaHolder;
+import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,50 +39,58 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
   @NotNull private final VirtualFile myGitDir;
   @NotNull private final GitRepositoryFiles myRepositoryFiles;
 
-  @Nullable private final GitUntrackedFilesHolder myUntrackedFilesHolder;
-  @Nullable private final GitStagingAreaHolder myStagingAreaHolder;
-  @Nullable private final GitRepositoryIgnoredFilesHolder myIgnoredRepositoryFilesHolder;
+  @NotNull private final GitUntrackedFilesHolder myUntrackedFilesHolder;
+  @NotNull private final GitStagingAreaHolder myStagingAreaHolder;
+  @NotNull private final GitRepositoryIgnoredFilesHolder myIgnoredRepositoryFilesHolder;
 
   @NotNull private volatile GitRepoInfo myInfo;
 
+  /**
+   * @param rootDir Root of the repository (parent directory of '.git' file/directory).
+   * @param gitDir  '.git' directory location. For worktrees - location of the 'main_repo/.git/worktrees/worktree_name/'.
+   */
   private GitRepositoryImpl(@NotNull VirtualFile rootDir,
                             @NotNull VirtualFile gitDir,
                             @NotNull Project project,
-                            @NotNull Disposable parentDisposable,
-                            final boolean light) {
+                            @NotNull Disposable parentDisposable) {
     super(project, rootDir, parentDisposable);
     myVcs = GitVcs.getInstance(project);
     myGitDir = gitDir;
-    myRepositoryFiles = GitRepositoryFiles.getInstance(rootDir, gitDir);
+    myRepositoryFiles = GitRepositoryFiles.createInstance(rootDir, gitDir);
     myReader = new GitRepositoryReader(myRepositoryFiles);
     myInfo = readRepoInfo();
 
-    if (!light) {
-      myStagingAreaHolder = new GitStagingAreaHolder(this);
+    myStagingAreaHolder = new GitStagingAreaHolder(this);
 
-      myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
-      Disposer.register(this, myUntrackedFilesHolder);
+    myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
+    Disposer.register(this, myUntrackedFilesHolder);
 
-      myIgnoredRepositoryFilesHolder = new GitRepositoryIgnoredFilesHolder(this);
-    }
-    else {
-      myStagingAreaHolder = null;
-      myUntrackedFilesHolder = null;
-      myIgnoredRepositoryFilesHolder = null;
-    }
+    myIgnoredRepositoryFilesHolder = new GitRepositoryIgnoredFilesHolder(this);
   }
 
   /**
    * @deprecated Use {@link GitRepositoryManager#getRepositoryForRoot} to obtain an instance of a Git repository.
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static GitRepository getInstance(@NotNull VirtualFile root,
                                           @NotNull Project project,
                                           boolean listenToRepoChanges) {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
-    return notNull(repository, () -> createInstance(root, project, GitDisposable.getInstance(project), listenToRepoChanges));
+    return notNull(repository, () -> createInstance(root, project, GitDisposable.getInstance(project)));
+  }
+
+  /**
+   * @deprecated Use {@link #createInstance(VirtualFile, Project, Disposable)}
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  @NotNull
+  public static GitRepository createInstance(@NotNull VirtualFile root,
+                                             @NotNull Project project,
+                                             @NotNull Disposable parentDisposable,
+                                             boolean listenToRepoChanges) {
+    return createInstance(root, project, parentDisposable);
   }
 
   /**
@@ -92,9 +101,9 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
   @NotNull
   public static GitRepository createInstance(@NotNull VirtualFile root,
                                              @NotNull Project project,
-                                             @NotNull Disposable parentDisposable,
-                                             boolean listenToRepoChanges) {
-    return createInstance(root, Objects.requireNonNull(GitUtil.findGitDir(root)), project, parentDisposable, listenToRepoChanges);
+                                             @NotNull Disposable parentDisposable) {
+    VirtualFile gitDir = Objects.requireNonNull(GitUtil.findGitDir(root));
+    return createInstance(root, gitDir, project, parentDisposable);
   }
 
   @ApiStatus.Internal
@@ -102,13 +111,10 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
   static GitRepository createInstance(@NotNull VirtualFile root,
                                       @NotNull VirtualFile gitDir,
                                       @NotNull Project project,
-                                      @NotNull Disposable parentDisposable,
-                                      boolean listenToRepoChanges) {
-    GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, parentDisposable, !listenToRepoChanges);
-    if (listenToRepoChanges) {
-      repository.setupUpdater();
-      GitRepositoryManager.getInstance(project).notifyListenersAsync(repository);
-    }
+                                      @NotNull Disposable parentDisposable) {
+    GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, parentDisposable);
+    repository.setupUpdater();
+    GitRepositoryManager.getInstance(project).notifyListenersAsync(repository);
     return repository;
   }
 
@@ -131,20 +137,21 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
   }
 
   @Override
-  public @NotNull GitStagingAreaHolder getStagingAreaHolder() {
-    if (myStagingAreaHolder == null) {
-      throw new IllegalStateException("Using staging area holder with light git repository instance " + this);
-    }
+  @NotNull
+  public GitStagingAreaHolder getStagingAreaHolder() {
     return myStagingAreaHolder;
   }
 
   @Override
   @NotNull
   public GitUntrackedFilesHolder getUntrackedFilesHolder() {
-    if (myUntrackedFilesHolder == null) {
-      throw new IllegalStateException("Using untracked files holder with light git repository instance " + this);
-    }
     return myUntrackedFilesHolder;
+  }
+
+  @Override
+  @NotNull
+  public GitRepositoryIgnoredFilesHolder getIgnoredFilesHolder() {
+    return myIgnoredRepositoryFilesHolder;
   }
 
   @Override
@@ -240,7 +247,9 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
 
   @NotNull
   private GitRepoInfo readRepoInfo() {
-    StopWatch sw = StopWatch.start("Reading Git repo info in " + getShortRepositoryName(this));
+    Span span =
+      TraceManager.INSTANCE.getTracer("vcs").spanBuilder("reading Git repo info").setAttribute("repository", getShortRepositoryName(this))
+        .startSpan();
     File configFile = myRepositoryFiles.getConfigFile();
     GitConfig config = GitConfig.read(configFile);
     myRepositoryFiles.updateCustomPaths(config.parseCore());
@@ -252,7 +261,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
       config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
     GitHooksInfo hooksInfo = myReader.readHooksInfo();
     Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
-    sw.report(LOG);
+    span.end();
     return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), new LinkedHashSet<>(remotes),
                            new HashMap<>(state.getLocalBranches()), new HashMap<>(state.getRemoteBranches()),
                            new LinkedHashSet<>(trackInfos),
@@ -277,12 +286,5 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
   @Override
   public String toLogString() {
     return "GitRepository " + getRoot() + " : " + myInfo;
-  }
-
-  @NotNull
-  @Override
-  public GitRepositoryIgnoredFilesHolder getIgnoredFilesHolder() {
-    if (myIgnoredRepositoryFilesHolder == null) throw new UnsupportedOperationException("Unsupported for light Git repository");
-    return myIgnoredRepositoryFilesHolder;
   }
 }

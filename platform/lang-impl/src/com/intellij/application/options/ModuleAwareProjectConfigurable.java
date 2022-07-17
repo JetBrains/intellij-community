@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.icons.AllIcons;
@@ -9,6 +9,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.platform.ModuleAttachProcessor;
 import com.intellij.ui.CollectionListModel;
@@ -33,7 +34,7 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
   private final Project myProject;
   private final @NlsContexts.ConfigurableName String myDisplayName;
   private final String myHelpTopic;
-  private final Map<Module, T> myModuleConfigurables = new HashMap<>();
+  private final Map<Module, AtomicNotNullLazyValue<T>> myConfigurablesProviders = new HashMap<>();
   private final static String PROJECT_ITEM_KEY = "thisisnotthemoduleyouarelookingfor";
 
   public ModuleAwareProjectConfigurable(@NotNull Project project, @NlsContexts.ConfigurableName String displayName, @NonNls String helpTopic) {
@@ -61,8 +62,9 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     if (myProject.isDefault()) {
       T configurable = createDefaultProjectConfigurable();
       if (configurable != null) {
-        myModuleConfigurables.put(null, configurable);
-        return configurable.createComponent();
+        var projectConfigurableProvider = AtomicNotNullLazyValue.createValue(() -> configurable);
+        myConfigurablesProviders.put(null, projectConfigurableProvider);
+        return projectConfigurableProvider.getValue().createComponent();
       }
     }
     final List<Module> modules = ContainerUtil.filter(ModuleAttachProcessor.getSortedModules(myProject),
@@ -72,9 +74,9 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
 
     if (modules.size() == 1 && projectConfigurable == null) {
       Module module = modules.get(0);
-      final T configurable = createModuleConfigurable(module);
-      myModuleConfigurables.put(module, configurable);
-      return configurable.createComponent();
+      var onlyModuleConfigurableProvider = AtomicNotNullLazyValue.createValue(() -> createModuleConfigurable(module));
+      myConfigurablesProviders.put(module, onlyModuleConfigurableProvider);
+      return onlyModuleConfigurableProvider.getValue().createComponent();
     }
     final Splitter splitter = new Splitter(false, 0.25f);
     CollectionListModel<Module> listDataModel = new CollectionListModel<>(modules);
@@ -100,29 +102,38 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
 
 
     if (projectConfigurable != null) {
-      myModuleConfigurables.put(null, projectConfigurable);
+      myConfigurablesProviders.put(null, AtomicNotNullLazyValue.createValue(() -> projectConfigurable));
       final JComponent component = projectConfigurable.createComponent();
-      cardPanel.add(component, PROJECT_ITEM_KEY);
-      listDataModel.add(0, null);
+      if (component != null) {
+        cardPanel.add(component, PROJECT_ITEM_KEY);
+        listDataModel.add(0, null);
+      }
     }
 
     for (Module module : modules) {
-      final T configurable = createModuleConfigurable(module);
-      myModuleConfigurables.put(module, configurable);
-      final JComponent component = configurable.createComponent();
-      cardPanel.add(component, module.getName());
+      myConfigurablesProviders.put(module, AtomicNotNullLazyValue.createValue(() -> {
+        final T configurable = createModuleConfigurable(module);
+        JComponent component = configurable.createComponent();
+        if (component == null) {
+          component = new JPanel();
+        }
+        cardPanel.add(component, module.getName());
+        configurable.reset();
+        return configurable;
+      }));
     }
-    moduleList.addListSelectionListener(__ -> {
-      final Module value = moduleList.getSelectedValue();
-      layout.show(cardPanel, value == null ? PROJECT_ITEM_KEY : value.getName());
-    });
+    moduleList.addListSelectionListener(__ -> showModuleConfigurable(layout, cardPanel, moduleList.getSelectedValue()));
 
     if (moduleList.getItemsCount() > 0) {
       moduleList.setSelectedIndex(0);
-      Module module = listDataModel.getElementAt(0);
-      layout.show(cardPanel, module == null ? PROJECT_ITEM_KEY : module.getName());
+      showModuleConfigurable(layout, cardPanel, listDataModel.getElementAt(0));
     }
     return splitter;
+  }
+
+  private void showModuleConfigurable(@NotNull CardLayout layout, @NotNull JPanel cardPanel, @Nullable Module selectedModule) {
+    myConfigurablesProviders.get(selectedModule).getValue();
+    layout.show(cardPanel, selectedModule == null ? PROJECT_ITEM_KEY : selectedModule.getName());
   }
 
   @Nullable
@@ -161,32 +172,40 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
 
   @Override
   public boolean isModified() {
-    for (T configurable : myModuleConfigurables.values()) {
-      if (configurable.isModified()) return true;
+    for (AtomicNotNullLazyValue<T> configurableProvider : myConfigurablesProviders.values()) {
+      if (configurableProvider.isComputed() && configurableProvider.getValue().isModified()) {
+        return true;
+      }
     }
     return false;
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    for (T configurable : myModuleConfigurables.values()) {
-      configurable.apply();
+    for (AtomicNotNullLazyValue<T> configurableProvider : myConfigurablesProviders.values()) {
+      if (configurableProvider.isComputed()) {
+        configurableProvider.getValue().apply();
+      }
     }
   }
 
   @Override
   public void reset() {
-    for (T configurable : myModuleConfigurables.values()) {
-      configurable.reset();
+    for (AtomicNotNullLazyValue<T> configurableProvider : myConfigurablesProviders.values()) {
+      if (configurableProvider.isComputed()) {
+        configurableProvider.getValue().reset();
+      }
     }
   }
 
   @Override
   public void disposeUIResources() {
-    for (T configurable : myModuleConfigurables.values()) {
-      configurable.disposeUIResources();
+    for (AtomicNotNullLazyValue<T> configurableProvider : myConfigurablesProviders.values()) {
+      if (configurableProvider.isComputed()) {
+        configurableProvider.getValue().disposeUIResources();
+      }
     }
-    myModuleConfigurables.clear();
+    myConfigurablesProviders.clear();
   }
 
   @NotNull

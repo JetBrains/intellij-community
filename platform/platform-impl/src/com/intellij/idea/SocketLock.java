@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
@@ -6,19 +6,23 @@ import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtilRt;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandlerContext;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
+import kotlinx.coroutines.CoroutineStart;
+import kotlinx.coroutines.Deferred;
+import kotlinx.coroutines.GlobalScope;
+import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.MessageDecoder;
 
-import java.awt.*;
 import java.io.*;
 import java.net.ConnectException;
 import java.net.InetAddress;
@@ -29,11 +33,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.List;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.ide.SpecialConfigFiles.*;
 
@@ -53,11 +58,11 @@ public final class SocketLock {
   private static final String OK_RESPONSE = "ok";
   private static final String PATHS_EOT_RESPONSE = "---";
 
-  private final AtomicReference<Function<List<String>, Future<CliResult>>> myCommandProcessorRef;
+  private final AtomicReference<Function<? super List<String>, ? extends Future<CliResult>>> myCommandProcessorRef;
   private final Path myConfigPath;
   private final Path mySystemPath;
   private final List<AutoCloseable> myLockedFiles = new ArrayList<>(4);
-  private volatile CompletableFuture<BuiltInServer> myBuiltinServerFuture;
+  private volatile Deferred<BuiltInServer> builtinServerFuture;
 
   public SocketLock(@NotNull Path configPath, @NotNull Path systemPath) {
     myConfigPath = configPath;
@@ -65,7 +70,8 @@ public final class SocketLock {
     if (myConfigPath.equals(mySystemPath)) {
       throw new IllegalArgumentException("'config' and 'system' paths should point to different directories");
     }
-    myCommandProcessorRef = new AtomicReference<>(args -> CliResult.error(Main.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized")));
+    myCommandProcessorRef =
+      new AtomicReference<>(args -> CliResult.error(Main.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized")));
   }
 
   public @NotNull Path getConfigPath() {
@@ -76,7 +82,7 @@ public final class SocketLock {
     return mySystemPath;
   }
 
-  public void setCommandProcessor(@NotNull Function<List<String>, Future<CliResult>> processor) {
+  public void setCommandProcessor(@NotNull Function<? super List<String>, ? extends Future<CliResult>> processor) {
     myCommandProcessorRef.set(processor);
   }
 
@@ -107,26 +113,15 @@ public final class SocketLock {
   }
 
   @Nullable BuiltInServer getServer() {
-    Future<BuiltInServer> future = myBuiltinServerFuture;
-    if (future != null) {
-      try {
-        return future.get();
-      }
-      catch (InterruptedException e) {
-        throw new IllegalStateException(e);
-      }
-      catch (ExecutionException e) {
-        throw new IllegalStateException(e.getCause());
-      }
-    }
-    return null;
+    Deferred<BuiltInServer> future = builtinServerFuture;
+    return future == null ? null : FutureKt.asCompletableFuture(future).join();
   }
 
-  @Nullable CompletableFuture<BuiltInServer> getServerFuture() {
-    return myBuiltinServerFuture;
+  @Nullable Deferred<BuiltInServer> getServerFuture() {
+    return builtinServerFuture;
   }
 
-  public @NotNull Map.Entry<ActivationStatus, CliResult> lockAndTryActivate(@NotNull String @NotNull [] args) throws Exception {
+  public @NotNull Map.Entry<@NotNull ActivationStatus, @Nullable CliResult> lockAndTryActivate(@NotNull String @NotNull [] args) throws Exception {
     log("enter: lock(config=%s system=%s)", myConfigPath, mySystemPath);
 
     lockPortFiles();
@@ -135,7 +130,6 @@ public final class SocketLock {
     readPort(myConfigPath, portToPath);
     readPort(mySystemPath, portToPath);
     if (!portToPath.isEmpty()) {
-      args = JetBrainsProtocolHandler.checkForJetBrainsProtocolCommand(args);
       for (Map.Entry<Integer, List<String>> entry : portToPath.entrySet()) {
         Map.Entry<ActivationStatus, CliResult> status = tryActivate(entry.getKey(), entry.getValue(), args);
         if (status.getKey() != ActivationStatus.NO_INSTANCE) {
@@ -146,41 +140,43 @@ public final class SocketLock {
       }
     }
 
-    myBuiltinServerFuture = CompletableFuture.supplyAsync(() -> {
-      Activity activity = StartUpMeasurer.startActivity("built-in server launch", ActivityCategory.DEFAULT);
+    builtinServerFuture =
+      BuildersKt.async(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
+        Activity activity = StartUpMeasurer.startActivity("built-in server launch", ActivityCategory.DEFAULT);
 
-      String token = UUID.randomUUID().toString();
-      Path[] lockedPaths = {myConfigPath, mySystemPath};
-      BuiltInServer server = BuiltInServer.Companion.start(6942, 50, false, () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef, token));
-      try {
-        byte[] portBytes = Integer.toString(server.getPort()).getBytes(StandardCharsets.UTF_8);
-        Files.write(myConfigPath.resolve(PORT_FILE), portBytes);
-        Files.write(mySystemPath.resolve(PORT_FILE), portBytes);
+        String token = UUID.randomUUID().toString();
+        Path[] lockedPaths = {myConfigPath, mySystemPath};
+        BuiltInServer server =
+          BuiltInServer.Companion.start(6942, 50, false, () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef::get, token));
+        try {
+          byte[] portBytes = Integer.toString(server.getPort()).getBytes(StandardCharsets.UTF_8);
+          Files.write(myConfigPath.resolve(PORT_FILE), portBytes);
+          Files.write(mySystemPath.resolve(PORT_FILE), portBytes);
 
-        Path tokenFile = mySystemPath.resolve(TOKEN_FILE);
-        Files.write(tokenFile, token.getBytes(StandardCharsets.UTF_8));
-        PosixFileAttributeView view = Files.getFileAttributeView(tokenFile, PosixFileAttributeView.class);
-        if (view != null) {
-          try {
-            view.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+          Path tokenFile = mySystemPath.resolve(TOKEN_FILE);
+          Files.write(tokenFile, token.getBytes(StandardCharsets.UTF_8));
+          PosixFileAttributeView view = Files.getFileAttributeView(tokenFile, PosixFileAttributeView.class);
+          if (view != null) {
+            try {
+              view.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+            }
+            catch (IOException e) {
+              log(e);
+            }
           }
-          catch (IOException e) {
-            log(e);
-          }
+
+          unlockPortFiles();
+        }
+        catch (RuntimeException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          throw new CompletionException(e);
         }
 
-        unlockPortFiles();
-      }
-      catch (RuntimeException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        throw new CompletionException(e);
-      }
-
-      activity.end();
-      return server;
-    }, ForkJoinPool.commonPool());
+        activity.end();
+        return server;
+      });
 
     log("exit: lock(): succeed");
     return new AbstractMap.SimpleEntry<>(ActivationStatus.NO_INSTANCE, null);
@@ -248,15 +244,6 @@ public final class SocketLock {
       // backward compatibility: requires at least one path to match
       boolean result = paths.stream().anyMatch(stringList::contains);
       if (result) {
-        // update the property immediately - in some cases, allows to avoid a splash flickering
-        System.setProperty(CommandLineArgs.SPLASH, "false");
-        EventQueue.invokeLater(() -> {
-          Runnable hideSplashTask = SplashManager.getHideTask();
-          if (hideSplashTask != null) {
-            hideSplashTask.run();
-          }
-        });
-
         try {
           String token = readOneLine(mySystemPath.resolve(TOKEN_FILE));
           @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
@@ -296,11 +283,11 @@ public final class SocketLock {
     private enum State {HEADER, CONTENT}
 
     private final List<String> myLockedPaths;
-    private final AtomicReference<Function<List<String>, Future<CliResult>>> myCommandProcessorRef;
+    private final Supplier<? extends Function<? super List<String>, ? extends Future<CliResult>>> myCommandProcessorRef;
     private final String myToken;
     private State myState = State.HEADER;
 
-    MyChannelInboundHandler(Path[] lockedPaths, AtomicReference<Function<List<String>, Future<CliResult>>> commandProcessorRef, String token) {
+    MyChannelInboundHandler(Path[] lockedPaths, Supplier<? extends Function<? super List<String>, ? extends Future<CliResult>>> commandProcessorRef, String token) {
       myLockedPaths = new ArrayList<>(lockedPaths.length);
       for (Path path : lockedPaths) {
         myLockedPaths.add(path.toString());

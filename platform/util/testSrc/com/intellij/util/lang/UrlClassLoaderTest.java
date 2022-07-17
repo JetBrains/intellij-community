@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,6 +59,7 @@ public class UrlClassLoaderTest {
       assertNotNull(standardCl.findResource(nonCanonicalPathToFile));
 
       String absolutePathToFile = "/dir/a.txt";
+      assertNull(customCl.findResource(absolutePathToFile));  // there's no logger on the classpath, `UrlClassLoader#logError` prints to stderr
       assertNull(standardCl.findResource(absolutePathToFile));
     }
   }

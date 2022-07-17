@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jps.impl;
 
 import com.intellij.openapi.application.Application;
@@ -285,6 +285,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     if (loaders.isEmpty()) {
       return Collections.emptyList();
     }
+
     @NonNls String resourceName = "META-INF/services/" + extensionClass.getName();
     Set<Class<T>> classes = new LinkedHashSet<>();
     Set<String> loadedUrls = new HashSet<>();

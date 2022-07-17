@@ -1,5 +1,6 @@
 // "Change 'B.foo' function return type to 'Int'" "false"
 // "Change 'B.foo' function return type to 'Long'" "false"
+// WITH_STDLIB
 // "Remove explicitly specified return type" "false"
 // ACTION: Add full qualifier
 // ACTION: Go To Super Method

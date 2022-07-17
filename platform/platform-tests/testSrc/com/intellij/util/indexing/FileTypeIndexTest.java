@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FileTypeIndex;
@@ -15,12 +17,12 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
 public class FileTypeIndexTest extends BasePlatformTestCase {
-
   public void testAddFileType() {
     FileTypeIndexImpl index = FileBasedIndexExtension.EXTENSION_POINT_NAME.findExtension(FileTypeIndexImpl.class);
     VirtualFile file = myFixture.configureByText("foo.test", "abc").getVirtualFile();
@@ -42,30 +44,14 @@ public class FileTypeIndexTest extends BasePlatformTestCase {
     assertEmpty(FileTypeIndex.getFiles(foo, GlobalSearchScope.allScope(getProject())));
   }
 
-  @NotNull
-   static FileType registerFakeFileType(@NotNull String name, @NotNull Disposable parent) {
+  static @NotNull FileType registerFakeFileType(@NotNull String name, @NotNull Disposable parent) {
     FileType foo = new FakeFileType() {
-      @Override
-      public boolean isMyFileType(@NotNull VirtualFile file) {
-        return file.getName().equals("foo.test");
-      }
-
-      @NotNull
-      @Override
-      public String getName() {
-        return name;
-      }
-
-      @NotNull
-      @Override
-      public String getDescription() {
-        return name;
-      }
-
+      @Override public boolean isMyFileType(@NotNull VirtualFile file) { return file.getName().equals("foo.test"); }
+      @Override public @NotNull String getName() { return name; }
+      @Override public @NotNull String getDescription() { return name; }
     };
-
-    FileTypeManagerEx.getInstanceEx().registerFileType(foo);
-    Disposer.register(parent, () -> FileTypeManagerEx.getInstanceEx().unregisterFileType(foo));
+    ((FileTypeManagerImpl)FileTypeManager.getInstance()).registerFileType(foo, List.of(), parent,
+                                                                          PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
     return foo;
   }
 }

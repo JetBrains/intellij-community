@@ -5,7 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 /**
  * Provides access to the storage which holds workspace model entities.
@@ -19,14 +19,14 @@ interface WorkspaceModel {
   /**
    * Modifies the current model by calling [updater] and applying it to the storage. Requires write action.
    */
-  fun <R> updateProjectModel(updater: (WorkspaceEntityStorageBuilder) -> R): R
+  fun <R> updateProjectModel(updater: (MutableEntityStorage) -> R): R
 
   /**
    * Update project model without the notification to message bus and without resetting accumulated changes.
    *
    * This method doesn't require write action.
    */
-  fun <R> updateProjectModelSilent(updater: (WorkspaceEntityStorageBuilder) -> R): R
+  fun <R> updateProjectModelSilent(updater: (MutableEntityStorage) -> R): R
 
   /**
    * Get builder that can be updated in background and applied later and a project model.
@@ -43,7 +43,7 @@ interface WorkspaceModel {
    *   won't be applied and this method will return false. In this case client should get a newer version of snapshot builder, apply changes
    *   and try to call [replaceProjectModel].
    *   Keep in mind that you may not need to start the full builder update process (e.g. gradle sync) and the newer version of the builder
-   *   can be updated using [WorkspaceEntityStorageBuilder.addDiff] or [WorkspaceEntityStorageBuilder.replaceBySource], but you have be
+   *   can be updated using [MutableEntityStorage.addDiff] or [MutableEntityStorage.replaceBySource], but you have be
    *   sure that the changes will be applied to the new builder correctly.
    *
    * The calculation of changes will be performed during [BuilderSnapshot.getStorageReplacement]. This method only replaces the project model
@@ -68,9 +68,6 @@ interface WorkspaceModel {
   fun replaceProjectModel(replacement: StorageReplacement): Boolean
 
   companion object {
-    val enabledForArtifacts: Boolean
-      get() = Registry.`is`("ide.new.project.model.artifacts")
-
     @JvmStatic
     fun getInstance(project: Project): WorkspaceModel = project.service()
   }

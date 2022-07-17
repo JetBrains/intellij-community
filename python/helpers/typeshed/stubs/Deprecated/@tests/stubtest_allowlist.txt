@@ -1,0 +1,3 @@
+deprecated.sphinx.SphinxAdapter.__init__
+deprecated.sphinx.versionadded
+deprecated.sphinx.versionchanged

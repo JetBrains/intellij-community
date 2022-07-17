@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 'i' is never used, could be renamed to _
 fun foo(f: (Int, Int, Int) -> Unit) {
     f(1, 2, 3)
 }

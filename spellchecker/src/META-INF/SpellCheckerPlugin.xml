@@ -25,12 +25,16 @@
 
     <spellchecker.support language="TEXT" implementationClass="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
     <spellchecker.bundledDictionaryProvider implementation="com.intellij.spellchecker.DefaultBundledDictionariesProvider"/>
+    <spellchecker.dictionary.customDictionaryProvider implementation="com.intellij.spellchecker.hunspell.HunspellDictionaryProvider"/>
 
     <registryKey key="spellchecker.corrections.limit" defaultValue="3" description="Spellchecker corrections limit" restartRequired="false"/>
 
     <projectService serviceImplementation="com.intellij.spellchecker.state.ProjectDictionaryState"/>
     <statistics.projectUsagesCollector implementation="com.intellij.spellchecker.statistics.SpellcheckerConfigCollector"/>
     <lookup.usageDetails implementation="com.intellij.spellchecker.statistics.SpellcheckerLookupUsageDescriptor"/>
-    <statistics.counterUsagesCollector groupId="spellchecker.events" version="1"/>
+    <statistics.collectorExtension implementation="com.intellij.spellchecker.statistics.SpellcheckerLookupUsageDescriptor$SpellcheckerCompletionCollectorExtension"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.spellchecker.statistics.SpellcheckerActionStatistics"/>
+
+    <notificationGroup id="Spellchecker" displayType="BALLOON" bundle="messages.SpellCheckerBundle" key="notification.group.spellchecker"/>
   </extensions>
 </idea-plugin>

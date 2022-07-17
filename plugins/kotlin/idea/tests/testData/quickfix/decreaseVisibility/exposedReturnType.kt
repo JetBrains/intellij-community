@@ -1,5 +1,11 @@
 // "Make 'bar' private" "true"
+// ACTION: Convert member to extension
+// ACTION: Convert to block body
 // ACTION: Make 'Data' internal
+// ACTION: Make 'Data' public
+// ACTION: Make 'bar' private
+// ACTION: Move to companion object
+// ACTION: Specify return type explicitly
 
 private data class Data(val x: Int)
 

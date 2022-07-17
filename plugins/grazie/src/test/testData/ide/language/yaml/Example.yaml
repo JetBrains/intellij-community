@@ -2,12 +2,12 @@
 receipt:     Oz-Ware Purchase Invoice
 date:        2012-08-06
 customer:
-  first_name:   Dorothyer
+  first_name:   <TYPO descr="Typo: In word 'Dorothyer'">Dorothyer</TYPO>
   family_name:  Gale
 
 items:
   - part_no:   A4786
-    descrip:   Water Bucket (Filled)
+    <TYPO descr="Typo: In word 'descrip'">descrip</TYPO>:   Water Bucket (Filled)
     # This
 
     # Are good price
@@ -24,7 +24,7 @@ items:
     price:     133.7
     quantity:
       - It <warning descr="IT_VBZ">are</warning> error here
-      - xcvxcv
+      - <TYPO descr="Typo: In word 'xcvxcv'">xcvxcv</TYPO>
 
 bill-to:  &id001
   street: |
@@ -37,7 +37,6 @@ bill-to:  &id001
     Актуальный плагин.
     На конференции работали советы по секциям: химия, история.
   city:   "It <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO>"
-  state:  '<warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> error too'
 
 ship-to:  *id001
 
@@ -53,3 +52,13 @@ specialDelivery:  >
   das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
   das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <warning descr="MANNSTUNDE">Mannstunden</warning>.
 
+# We usually recommend not to specify default resources and to leave this as a conscious
+# choice for the user. This also increases chances charts run on environments with little
+# resources, such as Minikube. If you do want to specify resources, uncomment the following
+# lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+# limits:
+#   cpu: 100m
+#   memory: 128Mi
+# requests:
+#   cpu: 100m
+#   memory: 128Mi

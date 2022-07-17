@@ -23,13 +23,16 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFileOrDirectoryPackagingElement;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.FileOrDirectoryPackagingElementEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.util.JpsPathUtil;
+
+import java.util.Objects;
 
 public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirectoryCopyPackagingElement> extends PackagingElement<T> {
   @NonNls public static final String PATH_ATTRIBUTE = "path";
@@ -52,23 +55,23 @@ public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirect
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
     return element instanceof FileOrDirectoryCopyPackagingElement &&
-           myFilePath != null &&
-           myFilePath.equals(((FileOrDirectoryCopyPackagingElement<?>)element).getFilePath());
+           getMyFilePath() != null &&
+           getMyFilePath().equals(((FileOrDirectoryCopyPackagingElement<?>)element).getFilePath());
   }
 
   @Attribute(PATH_ATTRIBUTE)
   public String getFilePath() {
-    return myFilePath;
+    return getMyFilePath();
   }
 
   public void setFilePath(String filePath) {
-    String filePathBefore = myFilePath;
+    String filePathBefore = getMyFilePath();
     this.update(
       () -> myFilePath = filePath,
       (builder, entity) -> {
         if (filePathBefore.equals(filePath)) return;
 
-        builder.modifyEntity(ModifiableFileOrDirectoryPackagingElement.class, entity, ent -> {
+        builder.modifyEntity(FileOrDirectoryPackagingElementEntity.Builder.class, entity, ent -> {
           VirtualFileUrlManager manager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, myProject);
           if (filePath != null) {
             VirtualFileUrl fileUrl = manager.fromPath(filePath);
@@ -108,5 +111,18 @@ public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirect
   private static boolean isJar(VirtualFile file) {
     final String ext = file.getExtension();
     return ext != null && ext.equalsIgnoreCase("jar");
+  }
+
+  protected String getMyFilePath() {
+    if (myStorage == null) {
+      return myFilePath;
+    } else {
+      FileOrDirectoryPackagingElementEntity entity = (FileOrDirectoryPackagingElementEntity)getThisEntity();
+      String path = JpsPathUtil.urlToPath(entity.getFilePath().getUrl());
+      if (!Objects.equals(myFilePath, path)) {
+        myFilePath = path;
+      }
+      return path;
+    }
   }
 }

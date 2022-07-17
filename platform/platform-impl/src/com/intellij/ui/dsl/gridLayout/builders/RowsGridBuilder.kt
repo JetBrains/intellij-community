@@ -4,57 +4,54 @@ package com.intellij.ui.dsl.gridLayout.builders
 import com.intellij.ui.dsl.gridLayout.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
+import kotlin.math.max
+
+private const val GRID_EMPTY = -1
 
 /**
  * Builds grid layout row by row
  */
 @ApiStatus.Experimental
-class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
+class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
-  private val GRID_EMPTY = -1
-  private val layout = panel.layout as JBGridLayout
-  private val grid = grid ?: layout.rootGrid
+  private val layout = panel.layout as GridLayout
+
+  val grid = grid ?: layout.rootGrid
+
+  var columnsCount: Int = 0
+    private set
+
+  val resizableColumns: MutableSet<Int> by this.grid::resizableColumns
+
+  var defaultHorizontalAlign = HorizontalAlign.LEFT
+    private set
+
+  var defaultVerticalAlign = VerticalAlign.CENTER
+    private set
+
+  var defaultBaselineAlign = false
+    private set
+
   private var x = 0
   private var y = GRID_EMPTY
 
-  fun resizableColumns(value: Set<Int>): RowsGridBuilder {
-    grid.resizableColumns = value
-    return this
-  }
-
-  fun columnsDistance(value: List<Int>): RowsGridBuilder {
-    grid.columnsDistance = value
+  fun columnsGaps(value: List<HorizontalGaps>): RowsGridBuilder {
+    grid.columnsGaps.clear()
+    grid.columnsGaps.addAll(value)
     return this
   }
 
   /**
-   * Starts new row. Can be omitted for the first row
-   *
-   * @param distance distance between previous row and new one. Not used for the first row
-   * @param resizable true if new row is resizable
+   * Starts new row. Can be omitted for the first and last rows
    */
-  fun row(distance: Int = 0, resizable: Boolean = false): RowsGridBuilder {
-    if (distance < 0) {
-      throw JBGridException("Invalid parameter: distance = $distance")
-    }
-
-    // Update rowsDistance
-    if (y != GRID_EMPTY && distance > 0) {
-      val rowsDistance = grid.rowsDistance.toMutableList()
-      while (rowsDistance.size <= y) {
-        rowsDistance.add(0)
-      }
-      rowsDistance[y] = distance
-      grid.rowsDistance = rowsDistance
-    }
-
+  fun row(rowGaps: VerticalGaps = VerticalGaps.EMPTY, resizable: Boolean = false): RowsGridBuilder {
     x = 0
     y++
 
+    setRowGaps(rowGaps)
+
     if (resizable) {
-      val resizableRows = grid.resizableRows.toMutableSet()
-      resizableRows.add(y)
-      grid.resizableRows = resizableRows
+      resizableRow()
     }
 
     return this
@@ -62,33 +59,80 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
 
   fun cell(component: JComponent,
            width: Int = 1,
-           horizontalAlign: HorizontalAlign = HorizontalAlign.LEFT,
-           verticalAlign: VerticalAlign = VerticalAlign.TOP,
+           horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
+           verticalAlign: VerticalAlign = defaultVerticalAlign,
+           baselineAlign: Boolean = defaultBaselineAlign,
+           resizableColumn: Boolean = false,
            gaps: Gaps = Gaps.EMPTY,
-           visualPaddings: Gaps = Gaps.EMPTY): RowsGridBuilder {
+           visualPaddings: Gaps = Gaps.EMPTY,
+           widthGroup: String? = null,
+           componentHelper: ComponentHelper? = null): RowsGridBuilder {
     if (y == GRID_EMPTY) {
       y = 0
     }
+    if (resizableColumn) {
+      addResizableColumn()
+    }
 
-    val constraints = JBConstraints(grid, x, y, width = width, verticalAlign = verticalAlign, horizontalAlign = horizontalAlign,
-                                    gaps = gaps, visualPaddings = visualPaddings)
+    val constraints = Constraints(grid, x, y, width = width, horizontalAlign = horizontalAlign,
+                                  verticalAlign = verticalAlign, baselineAlign = baselineAlign,
+                                  gaps = gaps, visualPaddings = visualPaddings, widthGroup = widthGroup,
+                                  componentHelper = componentHelper)
     panel.add(component, constraints)
     return skip(width)
   }
 
-  fun subGrid(width: Int = 1,
-              horizontalAlign: HorizontalAlign = HorizontalAlign.LEFT,
-              verticalAlign: VerticalAlign = VerticalAlign.TOP,
-              gaps: Gaps = Gaps.EMPTY,
-              visualPaddings: Gaps = Gaps.EMPTY): JBGrid {
+  fun constraints(width: Int = 1,
+                  horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
+                  verticalAlign: VerticalAlign = defaultVerticalAlign,
+                  baselineAlign: Boolean = defaultBaselineAlign,
+                  gaps: Gaps = Gaps.EMPTY,
+                  visualPaddings: Gaps = Gaps.EMPTY,
+                  widthGroup: String? = null,
+                  componentHelper: ComponentHelper? = null): Constraints {
     if (y == GRID_EMPTY) {
       y = 0
     }
+    val result = Constraints(grid, x, y,
+                             width = width, horizontalAlign = horizontalAlign,
+                             verticalAlign = verticalAlign, baselineAlign = baselineAlign,
+                             gaps = gaps, visualPaddings = visualPaddings,
+                             widthGroup = widthGroup,
+                             componentHelper = componentHelper)
+    skip(width)
+    return result
+  }
 
-    val constraints = JBConstraints(grid, x, y, width = width, verticalAlign = verticalAlign, horizontalAlign = horizontalAlign,
-                                    gaps = gaps, visualPaddings = visualPaddings)
+  fun subGrid(width: Int = 1,
+              horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
+              verticalAlign: VerticalAlign = defaultVerticalAlign,
+              baselineAlign: Boolean = defaultBaselineAlign,
+              resizableColumn: Boolean = false,
+              gaps: Gaps = Gaps.EMPTY,
+              visualPaddings: Gaps = Gaps.EMPTY): Grid {
+    startFirstRow()
+    if (resizableColumn) {
+      addResizableColumn()
+    }
+
+    val constraints = Constraints(grid, x, y, width = width, horizontalAlign = horizontalAlign,
+      verticalAlign = verticalAlign, baselineAlign = baselineAlign,
+      gaps = gaps, visualPaddings = visualPaddings)
     skip(width)
     return layout.addLayoutSubGrid(constraints)
+  }
+
+  fun subGridBuilder(width: Int = 1,
+                     horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
+                     verticalAlign: VerticalAlign = defaultVerticalAlign,
+                     baselineAlign: Boolean = defaultBaselineAlign,
+                     resizableColumn: Boolean = false,
+                     gaps: Gaps = Gaps.EMPTY,
+                     visualPaddings: Gaps = Gaps.EMPTY): RowsGridBuilder {
+    return RowsGridBuilder(panel, subGrid(width, horizontalAlign, verticalAlign, baselineAlign, resizableColumn, gaps, visualPaddings))
+      .defaultHorizontalAlign(defaultHorizontalAlign)
+      .defaultVerticalAlign(defaultVerticalAlign)
+      .defaultBaselineAlign(defaultBaselineAlign)
   }
 
   /**
@@ -96,6 +140,50 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
    */
   fun skip(count: Int = 1): RowsGridBuilder {
     x += count
+    columnsCount = max(columnsCount, x)
     return this
+  }
+
+  fun setRowGaps(rowGaps: VerticalGaps) {
+    startFirstRow()
+
+    while (grid.rowsGaps.size <= y) {
+      grid.rowsGaps.add(VerticalGaps.EMPTY)
+    }
+    grid.rowsGaps[y] = rowGaps
+  }
+
+  fun defaultHorizontalAlign(defaultHorizontalAlign: HorizontalAlign): RowsGridBuilder {
+    this.defaultHorizontalAlign = defaultHorizontalAlign
+    return this
+  }
+
+  fun defaultVerticalAlign(defaultVerticalAlign: VerticalAlign): RowsGridBuilder {
+    this.defaultVerticalAlign = defaultVerticalAlign
+    return this
+  }
+
+  fun defaultBaselineAlign(defaultBaselineAlign: Boolean): RowsGridBuilder {
+    this.defaultBaselineAlign = defaultBaselineAlign
+    return this
+  }
+
+  /**
+   * Marks current row as a resizable one
+   */
+  fun resizableRow(): RowsGridBuilder {
+    startFirstRow()
+    grid.resizableRows += y
+    return this
+  }
+
+  fun addResizableColumn() {
+    grid.resizableColumns += x
+  }
+
+  private fun startFirstRow() {
+    if (y == GRID_EMPTY) {
+      y = 0
+    }
   }
 }

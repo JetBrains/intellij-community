@@ -10,14 +10,15 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.*
+import org.jetbrains.kotlin.idea.debugger.base.util.isSubtype
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 
 const val CREATION_STACK_TRACE_SEPARATOR = "\b\b\b" // the "\b\b\b" is used as creation stacktrace separator in kotlinx.coroutines
 const val CREATION_CLASS_NAME = "_COROUTINE._CREATION"
@@ -106,7 +107,7 @@ fun StackTraceElement.isCreationSeparatorFrame() =
     className == CREATION_CLASS_NAME
 
 fun Location.findPosition(project: Project) =
-    readAction {
+    runReadAction {
         if (declaringType() != null)
             getPosition(project, declaringType().name(), lineNumber())
         else
@@ -136,9 +137,6 @@ fun ThreadReferenceProxyImpl.supportsEvaluation(): Boolean =
 
 fun SuspendContextImpl.supportsEvaluation() =
     this.debugProcess.canRunEvaluation || isUnitTestMode()
-
-fun XDebugSession.suspendContextImpl() =
-    suspendContext as SuspendContextImpl
 
 fun threadAndContextSupportsEvaluation(suspendContext: SuspendContextImpl, frameProxy: StackFrameProxyImpl?) =
     suspendContext.invokeInManagerThread {

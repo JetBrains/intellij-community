@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 
 val a = randomValue().let<caret> { r -> List(10) { r } }

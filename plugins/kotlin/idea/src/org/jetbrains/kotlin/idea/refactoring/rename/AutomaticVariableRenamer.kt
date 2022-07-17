@@ -20,15 +20,14 @@ import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import org.jetbrains.kotlin.idea.core.unquote
+import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
-import org.jetbrains.kotlin.resolve.lazy.NoDescriptorForDeclarationException
 import org.jetbrains.kotlin.resolve.source.PsiSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
@@ -41,8 +40,8 @@ class AutomaticVariableRenamer(
     private val toUnpluralize = ArrayList<KtNamedDeclaration>()
 
     init {
-        val oldClassName = klass.name!!.unquote()
-        val newClassNameUnquoted = newClassName.unquote()
+        val oldClassName = klass.name!!.unquoteKotlinIdentifier()
+        val newClassNameUnquoted = newClassName.unquoteKotlinIdentifier()
         for (usage in usages) {
             val usageElement = usage.element ?: continue
 
@@ -57,12 +56,7 @@ class AutomaticVariableRenamer(
             if (variableName.equals(newClassNameUnquoted, ignoreCase = true)) continue
             if (!StringUtil.containsIgnoreCase(variableName, oldClassName)) continue
 
-            val descriptor = try {
-                parameterOrVariable.unsafeResolveToDescriptor()
-            } catch (e: NoDescriptorForDeclarationException) {
-                LOG.error(e)
-                continue
-            }
+            val descriptor = parameterOrVariable.resolveToDescriptorIfAny() ?: continue
 
             val type = (descriptor as VariableDescriptor).type
             if (type.isCollectionLikeOf(klass)) {
@@ -77,7 +71,7 @@ class AutomaticVariableRenamer(
 
     override fun getDialogTitle() = JavaRefactoringBundle.message("rename.variables.title")
 
-    override fun getDialogDescription() = JavaRefactoringBundle.message("rename.variables.with.the.following.names.to")
+    override fun getDialogDescription() = JavaRefactoringBundle.message("title.rename.variables.with.the.following.names.to")
 
     override fun entityName() = JavaRefactoringBundle.message("entity.name.variable")
 

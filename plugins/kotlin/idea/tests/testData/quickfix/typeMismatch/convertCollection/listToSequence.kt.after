@@ -1,5 +1,5 @@
 // "Convert expression to 'Sequence' by inserting '.asSequence()'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(a: List<String>) {
     bar(a.asSequence()<caret>)

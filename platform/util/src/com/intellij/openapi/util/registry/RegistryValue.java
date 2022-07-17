@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.Disposable;
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,10 +99,20 @@ public class RegistryValue {
   }
 
   public @Nullable @NlsSafe String getSelectedOption() {
-    for (String option : getOptions(asString())) {
-      if (option.endsWith("*")) {
-        return Strings.trimEnd(option, "*");
+    // [opt1|opt2|selectedOpt*|opt4]
+    String value = asString();
+    int length = value.length();
+    if (length < 3 || value.charAt(0) != '[' || value.charAt(length - 1) != ']') return null;
+    int pos = 1;
+    while (pos < length) {
+      int end = value.indexOf('|', pos);
+      if (end == -1) {
+        end = length - 1;
       }
+      if (value.charAt(end - 1) == '*') {
+        return value.substring(pos, end - 1);
+      }
+      pos = end + 1;
     }
     return null;
   }
@@ -240,12 +249,15 @@ public class RegistryValue {
   public void setValue(String value) {
     resetCache();
 
+    RegistryValueListener globalValueChangeListener = myRegistry.getValueChangeListener();
+    globalValueChangeListener.beforeValueChanged(this);
     for (RegistryValueListener each : myListeners) {
       each.beforeValueChanged(this);
     }
 
     myRegistry.getUserProperties().put(myKey, value);
 
+    globalValueChangeListener.afterValueChanged(this);
     for (RegistryValueListener each : myListeners) {
       each.afterValueChanged(this);
     }
@@ -281,7 +293,12 @@ public class RegistryValue {
   }
 
   public void resetToDefault() {
-    setValue(myRegistry.getBundleValue(myKey));
+    String value = myRegistry.getBundleValueOrNull(myKey);
+    if (value == null) {
+      myRegistry.getUserProperties().remove(myKey);
+    } else {
+      setValue(value);
+    }
   }
 
   public void addListener(@NotNull RegistryValueListener listener, @NotNull Disposable parent) {
@@ -294,8 +311,7 @@ public class RegistryValue {
     return myKey + "=" + asString();
   }
 
-  @ApiStatus.Internal
-  public void resetCache() {
+  void resetCache() {
     myStringCachedValue = null;
     myIntCachedValue = null;
     myDoubleCachedValue = Double.NaN;

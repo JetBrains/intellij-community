@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress
 
 import com.intellij.build.BuildWorkspaceConfiguration
@@ -17,7 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil.addSourceRoot
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
@@ -26,7 +26,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.java.JavaResourceRootType
 
 class CompilerBuildViewTest : BaseCompilerTestCase() {
-
   private lateinit var buildViewTestFixture: BuildViewTestFixture
   private val testDisposable: Disposable = Disposer.newDisposable()
 
@@ -35,8 +34,6 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     super.setUp()
     buildViewTestFixture = BuildViewTestFixture(project)
     buildViewTestFixture.setUp()
-    val registryValue = Registry.get("ide.jps.use.build.tool.window")
-    registryValue.setValue(true, testDisposable)
   }
 
   public override fun tearDown() {
@@ -76,23 +73,19 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     buildViewTestFixture.assertBuildViewSelectedNode("rebuild finished", false) { output: String? ->
       assertThat(output).startsWith("Clearing build system data...\n" +
                                     "Executing pre-compile tasks...\n" +
-                                    "Loading Ant configuration...\n" +
-                                    "Running Ant tasks...\n" +
-                                    "Cleaning output directories...\n" +
+                                    "Cleaning output directories…\n" +
                                     "Running 'before' tasks\n" +
                                     "Checking sources\n" +
-                                    "Copying resources... [a]\n" +
-                                    "Parsing java... [a]\n" +
-                                    "Writing classes... [a]\n" +
-                                    "Updating dependency information... [a]\n" +
-                                    "Adding @NotNull assertions... [a]\n" +
-                                    "Adding pattern assertions... [a]\n" +
-                                    "Adding the Threading Model assertions… [a]\n" +
+                                    "Copying resources… [a]\n" +
+                                    "Parsing java… [a]\n" +
+                                    "Writing classes… [a]\n" +
+                                    "Updating dependency information… [a]\n" +
+                                    "Adding nullability assertions… [a]\n" +
+                                    "Adding pattern assertions… [a]\n" +
+                                    "Adding threading assertions… [a]\n" +
                                     "Running 'after' tasks\n")
-      assertThat(output).contains("Finished, saving caches...\n" +
+      assertThat(output).contains("Finished, saving caches…\n" +
                                   "Executing post-compile tasks...\n" +
-                                  "Loading Ant configuration...\n" +
-                                  "Running Ant tasks...\n" +
                                   "Synchronizing output directories...")
     }
 
@@ -100,23 +93,19 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     buildViewTestFixture.assertBuildViewTreeEquals("-\n recompile finished")
     buildViewTestFixture.assertBuildViewSelectedNode("recompile finished", false) { output: String? ->
       assertThat(output).startsWith("Executing pre-compile tasks...\n" +
-                                    "Loading Ant configuration...\n" +
-                                    "Running Ant tasks...\n" +
-                                    "Cleaning output directories...\n" +
+                                    "Cleaning output directories…\n" +
                                     "Running 'before' tasks\n" +
                                     "Checking sources\n" +
-                                    "Copying resources... [a]\n" +
-                                    "Parsing java... [a]\n" +
-                                    "Writing classes... [a]\n" +
-                                    "Updating dependency information... [a]\n" +
-                                    "Adding @NotNull assertions... [a]\n" +
-                                    "Adding pattern assertions... [a]\n" +
-                                    "Adding the Threading Model assertions… [a]\n" +
+                                    "Copying resources… [a]\n" +
+                                    "Parsing java… [a]\n" +
+                                    "Writing classes… [a]\n" +
+                                    "Updating dependency information… [a]\n" +
+                                    "Adding nullability assertions… [a]\n" +
+                                    "Adding pattern assertions… [a]\n" +
+                                    "Adding threading assertions… [a]\n" +
                                     "Running 'after' tasks")
-      assertThat(output).contains("Finished, saving caches...\n" +
+      assertThat(output).contains("Finished, saving caches…\n" +
                                   "Executing post-compile tasks...\n" +
-                                  "Loading Ant configuration...\n" +
-                                  "Running Ant tasks...\n" +
                                   "Synchronizing output directories...")
     }
   }
@@ -242,18 +231,6 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
   }
 
   private fun runWithProgressExIndicatorSupport(action: () -> Unit) {
-    val key = "intellij.progress.task.ignoreHeadless"
-    val prev = System.setProperty(key, "true")
-    try {
-      return action()
-    }
-    finally {
-      if (prev != null) {
-        System.setProperty(key, prev)
-      }
-      else {
-        System.clearProperty(key)
-      }
-    }
+    PlatformTestUtil.withSystemProperty<Nothing>("intellij.progress.task.ignoreHeadless", "true", action)
   }
 }

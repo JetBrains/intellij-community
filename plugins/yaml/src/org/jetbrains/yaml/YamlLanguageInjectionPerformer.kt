@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import org.jetbrains.yaml.psi.YAMLScalar
 import org.jetbrains.yaml.psi.impl.YAMLBlockScalarImpl
+import org.jetbrains.yaml.psi.impl.YAMLPlainTextImpl
 import org.jetbrains.yaml.psi.impl.YAMLScalarImpl
 
 class YamlLanguageInjectionPerformer : LanguageInjectionPerformer {
@@ -40,10 +41,10 @@ fun injectIntoYamlMultiRanges(registrar: MultiHostRegistrar,
                               prefix: String?,
                               suffix: String?) {
   registrar.startInjecting(language)
-  if (context is YAMLBlockScalarImpl) {
-    context.putUserData(InjectionMeta.INJECTION_INDENT, " ".repeat(context.locateIndent()))
-    context.putUserData(InjectionMeta.SUPPRESS_COPY_PASTE_HANDLER_IN_FE, true)
-  }
+
+  if (context is YAMLBlockScalarImpl)
+    context.putUserData(InjectionMeta.INJECTION_INDENT, context.indentString)
+
   if (ranges.isEmpty()) {
     // do nothing
   }

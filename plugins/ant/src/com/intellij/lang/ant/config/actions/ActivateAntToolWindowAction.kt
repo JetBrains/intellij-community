@@ -12,7 +12,7 @@ class ActivateAntToolWindowAction : ActivateToolWindowAction(ToolWindowId.ANT_BU
     templatePresentation.icon = AllIcons.Toolwindows.ToolWindowAnt
   }
 
-  override fun hasEmptyState(): Boolean {
+  override fun hasEmptyState(project: Project): Boolean {
     return true
   }
 

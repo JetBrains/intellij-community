@@ -352,7 +352,7 @@ public final class ArtifactUtil {
         @Override
         public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
           if (element instanceof FileOrDirectoryCopyPackagingElement<?>) {
-            final VirtualFile root = ((FileOrDirectoryCopyPackagingElement)element).findFile();
+            final VirtualFile root = ((FileOrDirectoryCopyPackagingElement<?>)element).findFile();
             if (root != null && VfsUtilCore.isAncestor(root, file, false)) {
               final String relativePath;
               if (root.equals(file) && element instanceof FileCopyPackagingElement) {
@@ -471,10 +471,10 @@ public final class ArtifactUtil {
     return null;
   }
 
-  private static boolean areResourceFilesFromSourceRootsCopiedToOutput(@NotNull Module module) {
+  public static boolean areResourceFilesFromSourceRootsCopiedToOutput(@NotNull Module module) {
     for (OrderEnumerationHandler.Factory factory : OrderEnumerationHandler.EP_NAME.getExtensionList()) {
-      if (factory.isApplicable(module)) {
-        return factory.createHandler(module).areResourceFilesFromSourceRootsCopiedToOutput();
+      if (factory.isApplicable(module) && !factory.createHandler(module).areResourceFilesFromSourceRootsCopiedToOutput()) {
+        return false;
       }
     }
     return true;

@@ -15,7 +15,7 @@ public class InvalidComparatorMethodReferenceInspection extends AbstractBaseJava
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
         PsiElement referenceNameElement = expression.getReferenceNameElement();
         if(referenceNameElement == null) return;
         String name = referenceNameElement.getText();

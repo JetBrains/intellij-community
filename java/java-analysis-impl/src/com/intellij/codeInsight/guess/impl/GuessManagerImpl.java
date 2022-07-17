@@ -527,7 +527,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       if (ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(expression.getLExpression(), myPlace)) {
         handleAssignment(expression.getRExpression());
       }
@@ -535,7 +535,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public void visitLocalVariable(PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       if (ExpressionUtils.isReferenceTo(myPlace, variable)) {
         myDeclared = true;
         handleAssignment(variable.getInitializer());
@@ -544,7 +544,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       PsiExpression operand = expression.getOperand();
       if (operand != null && ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(operand, myPlace)) {
         myNeedDfa = true;
@@ -553,7 +553,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       if (OBJECT_GET_CLASS.test(call)) {
         PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
         if (qualifier != null && ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(qualifier, myPlace)) {
@@ -564,7 +564,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
       if (ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(expression.getOperand(), myPlace)) {
         myNeedDfa = true;
       }

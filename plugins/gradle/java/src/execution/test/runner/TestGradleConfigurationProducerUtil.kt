@@ -11,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findTestsTaskToRun
-import java.util.*
 
 fun <E : PsiElement> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   module: Module,
@@ -93,28 +92,24 @@ fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   createFilter: (T) -> String,
   getTestsTaskToRun: (VirtualFile) -> List<List<String>>
 ): Boolean {
-  val testRunConfigurations = LinkedHashMap<String, MutableSet<String>>()
+  // escaped-tasks -> arguments
+  val testRunConfigurations = LinkedHashMap<List<String>, MutableSet<String>>()
   for (test in tests) {
     val sourceFile = findTestSource(test) ?: return false
     for (tasks in getTestsTaskToRun(sourceFile)) {
       if (tasks.isEmpty()) continue
-      val commandLine = tasks.joinToString(" ") { it.escapeIfNeeded() }
-      val arguments = testRunConfigurations.getOrPut(commandLine, ::LinkedHashSet)
-      arguments.add(createFilter(test).trim())
+      val escapedTasks = tasks.map { it.escapeIfNeeded() }
+      val arguments = testRunConfigurations.getOrPut(escapedTasks, ::LinkedHashSet)
+      val testFilter = createFilter(test).trim()
+      if (testFilter.isNotEmpty()) {
+        arguments.add(testFilter)
+      }
     }
   }
 
-  val commandLineTokens = ArrayList<String>()
-  for ((tasks, arguments) in testRunConfigurations.entries) {
-    commandLineTokens.add(tasks)
-    commandLineTokens.addAll(arguments)
-  }
-  if (testRunConfigurations.size > 1) {
-    commandLineTokens.add("--continue")
-  }
-
-  commandLine = commandLineTokens.joinToString(" ")
   externalProjectPath = projectPath
+  taskNames = testRunConfigurations.entries.flatMap { it.key + it.value }
+  scriptParameters = if (testRunConfigurations.size > 1) "--continue" else ""
 
   return true
 }

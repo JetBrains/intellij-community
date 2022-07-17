@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
- * @author: Eugene Zhuravlev
+ * @author Eugene Zhuravlev
  */
 package com.intellij.debugger.engine;
 
@@ -45,6 +45,9 @@ public class RequestHint {
   private boolean myResetIgnoreFilters = false;
   private boolean myRestoreBreakpoints = false;
 
+  @Nullable
+  private final RequestHint myParentHint;
+
   public RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, @NotNull MethodFilter methodFilter) {
     this(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_INTO, methodFilter);
   }
@@ -56,10 +59,19 @@ public class RequestHint {
   }
 
   public RequestHint(final ThreadReferenceProxyImpl stepThread,
-                      final SuspendContextImpl suspendContext,
-                      @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE}) int stepSize,
-                      @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth,
-                      @Nullable MethodFilter methodFilter) {
+                     final SuspendContextImpl suspendContext,
+                     @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE}) int stepSize,
+                     @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth,
+                     @Nullable MethodFilter methodFilter) {
+    this(stepThread, suspendContext, stepSize, depth, methodFilter, null);
+  }
+
+  public RequestHint(final ThreadReferenceProxyImpl stepThread,
+                     final SuspendContextImpl suspendContext,
+                     @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE}) int stepSize,
+                     @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth,
+                     @Nullable MethodFilter methodFilter,
+                     @Nullable RequestHint parentHint) {
     mySize = stepSize;
     myDepth = depth;
     myMethodFilter = methodFilter;
@@ -67,6 +79,7 @@ public class RequestHint {
     myFrameCount = DebugProcessImpl.getFrameCount(stepThread, suspendContext);
     myPosition =
       suspendContext.getDebugProcess().getPositionManager().getSourcePosition(DebugProcessImpl.getLocation(stepThread, suspendContext));
+    myParentHint = parentHint;
   }
 
   public void setIgnoreFilters(boolean ignoreFilters) {
@@ -253,4 +266,12 @@ public class RequestHint {
     return STOP;
   }
 
+  public void doStep(@NotNull DebugProcessImpl debugProcess, SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, int size, int depth) {
+    debugProcess.doStep(suspendContext, stepThread, size, depth, this);
+  }
+
+  @Nullable
+  final RequestHint getParentHint() {
+    return myParentHint;
+  }
 }

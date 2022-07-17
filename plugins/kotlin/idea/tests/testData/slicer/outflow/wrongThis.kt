@@ -1,5 +1,5 @@
 // FLOW: OUT
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class C {
     fun String.extensionFun(): Any {

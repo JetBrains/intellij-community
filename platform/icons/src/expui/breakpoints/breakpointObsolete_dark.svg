@@ -1,0 +1,4 @@
+<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M11.5 6C11.5 9.03757 9.03757 11.5 6 11.5C2.96243 11.5 0.5 9.03757 0.5 6C0.5 2.96243 2.96243 0.5 6 0.5C9.03757 0.5 11.5 2.96243 11.5 6ZM6 2.1C6.49706 2.1 6.9 2.50294 6.9 3L6.9 6C6.9 6.49706 6.49706 6.9 6 6.9C5.50294 6.9 5.1 6.49706 5.1 6L5.1 3C5.1 2.50294 5.50294 2.1 6 2.1ZM6 9.7C6.55228 9.7 7 9.25228 7 8.7C7 8.14771 6.55228 7.7 6 7.7C5.44772 7.7 5 8.14771 5 8.7C5 9.25228 5.44772 9.7 6 9.7Z" fill="#DB5C5C"/>
+</svg>

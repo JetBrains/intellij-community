@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ether;
 
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
@@ -31,7 +18,7 @@ import java.io.File;
 import java.util.Map;
 
 /**
- * @author: db
+ * @author db
  */
 public class MarkDirtyTest extends IncrementalTestCase {
   public MarkDirtyTest() {
@@ -98,7 +85,7 @@ public class MarkDirtyTest extends IncrementalTestCase {
     doTestBuild(1).assertSuccessful();
   }
 
-  public void testTransitiveRecompile() throws Exception {
+  public void testTransitiveRecompile() {
     JpsModule module = addModule();
     addTestRoot(module, "testSrc");
     JpsModule util = addModule("util", "util/src");
@@ -107,7 +94,7 @@ public class MarkDirtyTest extends IncrementalTestCase {
     JpsModule lib = addModule("lib", "lib/src");
     addTestRoot(lib, "lib/testSrc");
     JpsModuleRootModificationUtil.addDependency(util, lib);
-    executeWithSystemProperty(Mappings.PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, String.valueOf(true), () -> doTestBuild(1)).assertSuccessful();
+    PlatformTestUtil.withSystemProperty(Mappings.PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, String.valueOf(true), () -> doTestBuild(1).assertSuccessful());
   }
 
   public void testRecompileTwinDependencies() {

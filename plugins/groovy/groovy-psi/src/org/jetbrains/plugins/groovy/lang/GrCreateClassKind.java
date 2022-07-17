@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ClassKind;
@@ -13,7 +13,8 @@ public enum GrCreateClassKind implements ClassKind {
   INTERFACE (GroovyBundle.messagePointer("groovy.term.interface")),
   TRAIT     (GroovyBundle.messagePointer("groovy.term.trait")),
   ENUM      (GroovyBundle.messagePointer("groovy.term.enum")),
-  ANNOTATION(GroovyBundle.messagePointer("groovy.term.annotation"));
+  ANNOTATION(GroovyBundle.messagePointer("groovy.term.annotation")),
+  RECORD    (GroovyBundle.messagePointer("groovy.term.record"));
 
   private final Supplier<@Nls @NotNull String> myDescription;
 

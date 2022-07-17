@@ -9,6 +9,7 @@ import com.intellij.lang.ExpressionTypeProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExpressionTypes;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -27,11 +28,14 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
   private final boolean myRequestFocus;
@@ -60,15 +64,8 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
         ExpressionTypeProvider provider = Objects.requireNonNull(map.get(expression));
         TextRange range = expression.getTextRange();
         editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-        ReadAction.nonBlocking(() -> {
-            //noinspection unchecked
-            return provider.getInformationHint(expression);
-          })
-          .submit(AppExecutorUtil.getAppExecutorService())
-          .onSuccess(hint -> {
-            // noinspection HardCodedStringLiteral
-            displayHint(new DisplayedTypeInfo(expression, provider, editor), hint);
-          });
+        // noinspection unchecked
+        displayHint(expression, new DisplayedTypeInfo(expression, provider, editor), expr -> provider.getInformationHint(expr));
       }
     };
     if (map.isEmpty()) {
@@ -84,8 +81,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
       DisplayedTypeInfo typeInfo = new DisplayedTypeInfo(expression, provider, editor);
       if (typeInfo.isRepeating() && provider.hasAdvancedInformation()) {
         //noinspection unchecked
-        String informationHint = provider.getAdvancedInformationHint(expression);
-        displayHint(typeInfo, informationHint);
+        displayHint(expression, typeInfo, expr -> provider.getAdvancedInformationHint(expr));
       } else {
         callback.pass(expression);
       }
@@ -98,11 +94,16 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     }
   }
 
-  private void displayHint(@NotNull DisplayedTypeInfo typeInfo, @HintText String informationHint) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      HintManager.getInstance().setRequestFocusForNextHint(myRequestFocus);
-      typeInfo.showHint(informationHint);
-    });
+  private void displayHint(@NotNull PsiElement expression,
+                           @NotNull DisplayedTypeInfo typeInfo,
+                           @NotNull Function<? super PsiElement, @Nls String> hintGetter) {
+    Callable<@Nls String> getHintAction = () -> hintGetter.apply(expression);
+    ReadAction.nonBlocking(getHintAction)
+      .finishOnUiThread(ModalityState.any(), hint -> {
+        HintManager.getInstance().setRequestFocusForNextHint(myRequestFocus);
+        typeInfo.showHint(hint);
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @NotNull

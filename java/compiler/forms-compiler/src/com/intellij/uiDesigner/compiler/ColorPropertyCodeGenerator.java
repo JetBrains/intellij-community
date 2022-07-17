@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.ColorDescriptor;
@@ -8,10 +8,7 @@ import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import java.awt.*;
 
-/**
- * @noinspection HardCodedStringLiteral
- */
-public class ColorPropertyCodeGenerator extends PropertyCodeGenerator {
+public final class ColorPropertyCodeGenerator extends PropertyCodeGenerator {
   private static final Type ourColorType = Type.getType(Color.class);
   private static final Type ourObjectType = Type.getType(Object.class);
   private static final Type ourUIManagerType = Type.getType("Ljavax/swing/UIManager;");

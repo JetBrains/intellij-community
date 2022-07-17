@@ -6,8 +6,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.RegionPainter;
 import com.intellij.ui.scroll.TouchScrollUtil;
+import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +84,13 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   public void updateUI() {
     ScrollBarUI ui = getUI();
     if (ui instanceof DefaultScrollBarUI) return;
-    setUI(createUI(this));
+    setUI(createUI(this, isThin()));
+  }
+
+  @SuppressWarnings("UnusedParameters")
+  @NotNull
+  public static ScrollBarUI createUI(JComponent c) {
+    return createUI(c, false);
   }
 
   /**
@@ -96,8 +102,13 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    */
   @SuppressWarnings("UnusedParameters")
   @NotNull
-  public static ScrollBarUI createUI(JComponent c) {
-    return SystemInfo.isMac ? new MacScrollBarUI() : new DefaultScrollBarUI();
+  public static ScrollBarUI createUI(JComponent c, boolean isThin) {
+    if (SystemInfo.isMac) {
+      return isThin ? new ThinMacScrollBarUI() : new MacScrollBarUI();
+    }
+    else {
+      return isThin ? new ThinScrollBarUI() : new DefaultScrollBarUI();
+    }
   }
 
   /**
@@ -126,6 +137,13 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   public void setUnitIncrement(int increment) {
     isUnitIncrementSet = true;
     super.setUnitIncrement(increment);
+  }
+
+  public void toggle(boolean isOn) {
+    ScrollBarUI ui = getUI();
+    if (ui instanceof DefaultScrollBarUI) {
+      ((DefaultScrollBarUI)ui).toggle(isOn);
+    }
   }
 
   /**
@@ -318,6 +336,10 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       return boundDelta(-blockIncrement, blockIncrement, delta);
     }
     return Double.NaN;
+  }
+
+  public boolean isThin() {
+    return false;
   }
 
   private static final class Model extends DefaultBoundedRangeModel {

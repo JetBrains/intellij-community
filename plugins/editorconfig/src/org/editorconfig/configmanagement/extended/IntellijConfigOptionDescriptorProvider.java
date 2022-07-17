@@ -11,7 +11,10 @@ import org.editorconfig.language.schema.descriptors.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptionDescriptorProvider {
 
@@ -68,15 +71,9 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
 
   @Nullable
   private static EditorConfigDescriptor createValueDescriptor(@NotNull String property, @NotNull AbstractCodeStylePropertyMapper mapper) {
-    CodeStylePropertyAccessor accessor = mapper.getAccessor(property);
+    CodeStylePropertyAccessor<?> accessor = mapper.getAccessor(property);
     if (accessor instanceof CodeStyleChoiceList) {
       return new EditorConfigUnionDescriptor(choicesToDescriptorList((CodeStyleChoiceList)accessor), null, null);
-    }
-    else if (isFormatterOnOffTag(accessor)) {
-      return new EditorConfigPairDescriptor(
-        new EditorConfigStringDescriptor(null, null, ".*"),
-        new EditorConfigStringDescriptor(null, null, ".*"),
-        null, null);
     }
     else if (accessor instanceof IntegerAccessor) {
       return new EditorConfigNumberDescriptor(null,  null);
@@ -108,11 +105,6 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
     else {
       return listDescriptor;
     }
-  }
-
-  private static boolean isFormatterOnOffTag(@NotNull CodeStylePropertyAccessor accessor) {
-    String name = accessor.getPropertyName();
-    return "formatter_on_tag".equals(name) || "formatter_off_tag".equals(name);
   }
 
   private static List<EditorConfigDescriptor> choicesToDescriptorList(@NotNull CodeStyleChoiceList list) {

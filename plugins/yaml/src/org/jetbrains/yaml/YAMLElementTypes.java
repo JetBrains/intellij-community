@@ -2,12 +2,9 @@
 package org.jetbrains.yaml;
 
 import com.intellij.psi.TokenType;
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public interface YAMLElementTypes {
-  IFileElementType FILE = new IFileElementType(YAMLLanguage.INSTANCE);
-
   YAMLElementType DOCUMENT = new YAMLElementType("Document ---");
 
   YAMLElementType KEY_VALUE_PAIR = new YAMLElementType("Key value pair");
@@ -30,11 +27,13 @@ public interface YAMLElementTypes {
     YAMLTokenTypes.SCALAR_TEXT
   );
 
-  TokenSet SCALAR_ITEMS = TokenSet.orSet(BLOCK_SCALAR_ITEMS, TokenSet.create(
+  TokenSet TEXT_SCALAR_ITEMS = TokenSet.create(
     YAMLTokenTypes.SCALAR_STRING,
     YAMLTokenTypes.SCALAR_DSTRING,
     YAMLTokenTypes.TEXT
-  ));
+  );
+  
+  TokenSet SCALAR_ITEMS = TokenSet.orSet(BLOCK_SCALAR_ITEMS, TEXT_SCALAR_ITEMS);
 
   TokenSet SCALAR_VALUES = TokenSet.orSet(SCALAR_ITEMS, TokenSet.create(
     SCALAR_LIST_VALUE
@@ -78,7 +77,7 @@ public interface YAMLElementTypes {
   );
 
   TokenSet TOP_LEVEL = TokenSet.create(
-    FILE,
+    YAMLParserDefinition.FILE,
     DOCUMENT
   );
 
@@ -89,4 +88,8 @@ public interface YAMLElementTypes {
     SCALAR_LIST_VALUE,
     SCALAR_TEXT_VALUE
   );
+
+  TokenSet YAML_COMMENT_TOKENS = TokenSet.create(YAMLTokenTypes.COMMENT);
+
+  TokenSet WHITESPACE_TOKENS = TokenSet.create(YAMLTokenTypes.WHITESPACE);
 }

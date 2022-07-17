@@ -1,16 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.extensions.AreaInstance;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,14 +17,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
+/**
+ * Implement this interface and register the implementation as {@code directoryIndexExcludePolicy} extension in plugin.xml to specify files
+ * and directories which should be automatically
+ * <a href="https://www.jetbrains.com/help/idea/content-roots.html#exclude-files-folders">excluded</a> from the project and its modules.
+ */
 public interface DirectoryIndexExcludePolicy {
-  ExtensionPointName<DirectoryIndexExcludePolicy> EP_NAME = ExtensionPointName.create("com.intellij.directoryIndexExcludePolicy");
+  ProjectExtensionPointName<DirectoryIndexExcludePolicy> EP_NAME =
+    new ProjectExtensionPointName<>("com.intellij.directoryIndexExcludePolicy");
 
   /**
    * @deprecated Override {@link #getExcludeUrlsForProject()} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default VirtualFile @NotNull [] getExcludeRootsForProject() {
     return VirtualFile.EMPTY_ARRAY;
   }
@@ -45,9 +49,9 @@ public interface DirectoryIndexExcludePolicy {
   }
 
   @Contract(pure = true)
-  default VirtualFilePointer @NotNull [] getExcludeRootsForModule(@NotNull ModuleRootModel rootModel) { return VirtualFilePointer.EMPTY_ARRAY;}
+  default VirtualFilePointer @NotNull [] getExcludeRootsForModule(@NotNull ModuleRootModel rootModel) { return VirtualFilePointer.EMPTY_ARRAY; }
 
   static DirectoryIndexExcludePolicy @NotNull [] getExtensions(@NotNull AreaInstance areaInstance) {
-    return EP_NAME.getExtensions(areaInstance);
+    return EP_NAME.getExtensions(areaInstance).toArray(new DirectoryIndexExcludePolicy[0]);
   }
 }

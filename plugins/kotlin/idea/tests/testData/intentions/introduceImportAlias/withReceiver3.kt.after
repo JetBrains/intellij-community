@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 package my.sample
 
 import kotlin.let as let1

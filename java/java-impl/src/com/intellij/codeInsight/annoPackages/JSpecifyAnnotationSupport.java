@@ -14,11 +14,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class JSpecifyAnnotationSupport implements AnnotationPackageSupport {
-  private static final String PACKAGE_NAME = "org.jspecify.annotations";
+  private static final String PACKAGE_NAME = "org.jspecify.nullness";
   private static final String NULLABLE = PACKAGE_NAME + "." + "Nullable";
   private static final String NOT_NULL = PACKAGE_NAME + "." + "NonNull";
   private static final String NULLNESS_UNKNOWN = PACKAGE_NAME + "." + "NullnessUnspecified";
-  private static final String DEFAULT_NOT_NULL = PACKAGE_NAME + "." + "DefaultNonNull";
+  private static final String DEFAULT_NOT_NULL = PACKAGE_NAME + "." + "NullMarked";
   private static final String DEFAULT_NULLNESS_UNKNOWN = PACKAGE_NAME + "." + "DefaultNullnessUnspecified";
 
   private static boolean isAvailable() {

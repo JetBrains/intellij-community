@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -178,7 +178,7 @@ public class ExtensionPointImplTest {
   @Test
   public void notApplicableRegistration() {
     doTestInterruptedAdapterProcessing(() -> {
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     }, (extensionPoint, adapter) -> {
       assertThat(extensionPoint.getExtensionList()).hasSize(2);
       adapter.setFire(null);
@@ -196,7 +196,7 @@ public class ExtensionPointImplTest {
     MyShootingComponentAdapter adapter = newStringAdapter();
     extensionPoint.addExtensionAdapter(adapter);
     adapter.setFire(() -> {
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     });
 
     extensionPoint.registerExtension("third", disposable);
@@ -334,7 +334,8 @@ public class ExtensionPointImplTest {
     private Runnable myFire;
 
     MyShootingComponentAdapter(@NotNull String implementationClass) {
-      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null, InterfaceExtensionImplementationClassResolver.INSTANCE);
+      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null,
+            InterfaceExtensionImplementationClassResolver.INSTANCE);
     }
 
     public synchronized void setFire(@Nullable Runnable fire) {

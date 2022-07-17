@@ -6,6 +6,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.ide.actions.runAnything.RunAnythingManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.externalSystem.action.ExternalSystemAction;
@@ -20,21 +21,12 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.cli.CommandLineArgumentException;
-import org.gradle.cli.CommandLineParser;
-import org.gradle.cli.ParsedCommandLine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsConverter;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.util.GradleCommandLine;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static org.jetbrains.plugins.gradle.execution.GradleRunAnythingProvider.HELP_COMMAND;
 
@@ -60,6 +52,11 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     Presentation p = e.getPresentation();
     p.setVisible(isVisible(e));
     p.setEnabled(isEnabled(e));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -98,7 +95,8 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     if (configuration == null) return;
 
     RunManager runManager = RunManager.getInstance(project);
-    final RunnerAndConfigurationSettings existingConfiguration = runManager.findConfigurationByTypeAndName(configuration.getType(), configuration.getName());
+    final RunnerAndConfigurationSettings existingConfiguration =
+      runManager.findConfigurationByTypeAndName(configuration.getType(), configuration.getName());
     if (existingConfiguration == null) {
       runManager.setTemporaryConfiguration(configuration);
     }
@@ -107,49 +105,16 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     }
   }
 
-  private static ExternalTaskExecutionInfo buildTaskInfo(@NotNull String projectPath,
-                                                         @NotNull String fullCommandLine,
-                                                         @Nullable Executor executor)
-    throws CommandLineArgumentException {
-    CommandLineParser gradleCmdParser = new CommandLineParser();
-
-    GradleCommandLineOptionsConverter commandLineConverter = new GradleCommandLineOptionsConverter();
-    commandLineConverter.configure(gradleCmdParser);
-    ParsedCommandLine parsedCommandLine = gradleCmdParser.parse(ParametersListUtil.parse(fullCommandLine, true, true));
-
-    final Map<String, List<String>> optionsMap =
-      commandLineConverter.convert(parsedCommandLine, new HashMap<>());
-
-    final List<String> systemProperties = optionsMap.remove("system-prop");
-    final String vmOptions = systemProperties == null ? "" : StringUtil.join(systemProperties, entry -> "-D" + entry, " ");
-
-    final StringBuilder scriptParameters = new StringBuilder(StringUtil.join(optionsMap.entrySet(), entry -> {
-      final List<String> values = entry.getValue();
-      final String longOptionName = entry.getKey();
-      if (values != null && !values.isEmpty()) {
-        return StringUtil.join(values, entry1 -> "--" + longOptionName + ' ' + entry1, " ");
-      }
-      else {
-        return "--" + longOptionName;
-      }
-    }, " "));
-
-    final List<String> tasks = new ArrayList<>();
-    boolean isTaskArgument = false;
-    for (String argument : parsedCommandLine.getExtraArguments()) {
-      if (!isTaskArgument && argument.startsWith("-")) {
-        scriptParameters.append(" ").append(argument);
-      } else {
-        isTaskArgument = true;
-        tasks.add(argument);
-      }
-    }
-
+  private static ExternalTaskExecutionInfo buildTaskInfo(
+    @NotNull String projectPath,
+    @NotNull String fullCommandLine,
+    @Nullable Executor executor
+  ) throws CommandLineArgumentException {
+    GradleCommandLine commandLine = GradleCommandLine.parse(fullCommandLine);
     ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
     settings.setExternalProjectPath(projectPath);
-    settings.setTaskNames(tasks);
-    settings.setScriptParameters(scriptParameters.toString().trim());
-    settings.setVmOptions(vmOptions);
+    settings.setTaskNames(commandLine.getTasksAndArguments().toList());
+    settings.setScriptParameters(commandLine.getScriptParameters().toString());
     settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.toString());
     return new ExternalTaskExecutionInfo(settings, executor == null ? DefaultRunExecutor.EXECUTOR_ID : executor.getId());
   }

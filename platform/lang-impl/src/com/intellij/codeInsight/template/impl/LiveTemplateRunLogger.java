@@ -19,9 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class LiveTemplateRunLogger extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("live.templates", 47);
-  private static final StringEventField TEMPLATE_GROUP = EventFields.StringValidatedByCustomRule("group", "live_template_group");
-  private static final StringEventField KEY = EventFields.StringValidatedByCustomRule("key", "live_template");
+  private static final EventLogGroup GROUP = new EventLogGroup("live.templates", 48);
+  private static final StringEventField TEMPLATE_GROUP = EventFields.StringValidatedByCustomRule("group", LiveTemplateValidator.class);
+  private static final StringEventField KEY = EventFields.StringValidatedByCustomRule("key", LiveTemplateValidator.class);
   private static final BooleanEventField CHANGED_BY_USER = EventFields.Boolean("changedByUser");
   private static final VarargEventId STARTED = registerLiveTemplateEvent(GROUP, "started");
 
@@ -88,9 +88,15 @@ final class LiveTemplateRunLogger extends CounterUsagesCollector {
   }
 
   public static class LiveTemplateValidator extends CustomValidationRule {
+    @NotNull
+    @Override
+    public String getRuleId() {
+      return "live_template";
+    }
+
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
-      return "live_template".equals(ruleId) || "live_template_group".equals(ruleId) ;
+      return getRuleId().equals(ruleId) || "live_template_group".equals(ruleId) ;
     }
 
     @NotNull

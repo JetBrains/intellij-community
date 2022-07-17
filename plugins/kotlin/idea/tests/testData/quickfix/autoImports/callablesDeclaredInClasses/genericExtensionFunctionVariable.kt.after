@@ -1,0 +1,15 @@
+// "Import" "true"
+package p
+
+import p.AObject.ext
+
+open class A {
+    fun <T> T.ext() {}
+}
+
+object AObject : A()
+
+fun usage() {
+    val ten = 10
+    ten.ext()
+}

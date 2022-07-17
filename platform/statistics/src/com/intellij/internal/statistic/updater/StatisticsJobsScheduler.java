@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.updater;
 
 import com.intellij.concurrency.JobScheduler;
@@ -6,42 +6,31 @@ import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.StatisticsNotificationManager;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogMigration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
-import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
 import com.intellij.internal.statistic.eventLog.connection.StatisticsService;
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploader;
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
-import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
 
 @InternalIgnoreDependencyViolation
 final class StatisticsJobsScheduler implements ApplicationInitializedListener {
   private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 5 * 60 * 1000;
   private static final int CHECK_STATISTICS_PROVIDERS_DELAY_IN_MIN = 1;
   private static final int CHECK_EXTERNAL_UPLOADER_DELAY_IN_MIN = 3;
+  private static final String REDUCE_DELAY_FLAG_KEY = "fus.internal.reduce.initial.delay";
 
   StatisticsJobsScheduler() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     }
   }
 
@@ -60,6 +49,7 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
   }
 
   private static void runValidationRulesUpdate() {
+    int initialDelay = Boolean.parseBoolean(System.getProperty(REDUCE_DELAY_FLAG_KEY)) ? 0 : 3;
     JobScheduler.getScheduler().scheduleWithFixedDelay(
       () -> {
         final List<StatisticsEventLoggerProvider> providers = StatisticsEventLogProviderUtil.getEventLogProviders();
@@ -68,15 +58,14 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
             IntellijSensitiveDataValidator.getInstance(provider.getRecorderId()).update();
           }
         }
-      }, 3, 180, TimeUnit.MINUTES);
+      }, initialDelay, 180, TimeUnit.MINUTES);
   }
 
   private static void checkPreviousExternalUploadResult() {
     JobScheduler.getScheduler().schedule(() -> {
-      StatisticsEventLoggerProvider config = FeatureUsageLogger.INSTANCE.getConfig();
-      if (config.isRecordEnabled()) {
-        EventLogExternalUploader.INSTANCE.logPreviousExternalUploadResult(config.getRecorderId());
-      }
+      List<StatisticsEventLoggerProvider> providers =
+        ContainerUtil.filter(StatisticsEventLogProviderUtil.getEventLogProviders(), provider -> provider.getSendLogsOnIdeClose());
+      EventLogExternalUploader.INSTANCE.logPreviousExternalUploadResult(providers);
     }, CHECK_EXTERNAL_UPLOADER_DELAY_IN_MIN, TimeUnit.MINUTES);
   }
 

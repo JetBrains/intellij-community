@@ -13,10 +13,15 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor {
     return JAVA_8
   }
+  
+  // To avoid Java highlighting
+  private fun configureKt(fileText: String) {
+    myFixture.configureByText("Foo.kt", fileText)
+  }
 
   fun testFunctionParameters() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
        class Foo {
           fun foo(s: String) {
             foo(<warning descr="Hardcoded string literal: \"text\"">"text"</warning>)
@@ -30,7 +35,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testPropagateToReceiver() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
        public fun String.trimIndent(): String = this
        fun foo(@org.jetbrains.annotations.NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'message' is never used">message</warning>: String) { }
        fun bar() {
@@ -43,7 +48,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   
   fun testPropagateThroughLocal() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
        fun foo(@org.jetbrains.annotations.NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'message' is never used">message</warning>: String) { }
        fun foo1(<warning descr="[UNUSED_PARAMETER] Parameter 'message' is never used">message</warning>: String) { }
        fun bar() {
@@ -62,7 +67,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
     myFixture.enableInspections(inspection)
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
        fun foo(@org.jetbrains.annotations.Nls(capitalization=org.jetbrains.annotations.Nls.Capitalization.Title) <warning descr="[UNUSED_PARAMETER] Parameter 'message' is never used">message</warning>: String) { }
        fun bar() {
           var text = <warning descr="Hardcoded string literal: \"foo\""><warning descr="[VARIABLE_WITH_REDUNDANT_INITIALIZER] Variable 'text' initializer is redundant">"foo"</warning></warning>
@@ -82,7 +87,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     inspection.setIgnoreForAllButNls(true)
     inspection.setReportUnannotatedReferences(true)
     myFixture.enableInspections(inspection)
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
        fun foo(@org.jetbrains.annotations.Nls(capitalization=org.jetbrains.annotations.Nls.Capitalization.Title) message: String) { }
        fun bar(text : String) {
          foo(te<caret>xt)
@@ -110,7 +115,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     inspection.setIgnoreForAllButNls(true)
     inspection.setReportUnannotatedReferences(true)
     myFixture.enableInspections(inspection)
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         @org.jetbrains.annotations.Nls
         fun bar(param: String?): String {
           return <warning descr="Reference to non-localized string is used where localized string is expected">param</warning> ?: ""
@@ -128,7 +133,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
         |native @org.jetbrains.annotations.Nls String getFoo();
         |native void setFoo(@org.jetbrains.annotations.Nls String s);
         |}""".trimMargin())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
        class Foo : X() {
           @org.jetbrains.annotations.Nls var prop = "";
        
@@ -156,7 +161,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
          Foo[] value() default {};
        }
     """.trimIndent())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
        @Foo("Single param")
        class X
 
@@ -174,7 +179,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   
   fun testKotlinAnnotationValues() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
       import org.jetbrains.annotations.*
 
       // TODO: support annotations without @get: prefix
@@ -199,7 +204,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   
   fun testNamedParameters() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         fun foo(<warning descr="[UNUSED_PARAMETER] Parameter 'a' is never used">a</warning>: Int = 0, 
                 @org.jetbrains.annotations.NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'b' is never used">b</warning>: String, 
                 <warning descr="[UNUSED_PARAMETER] Parameter 'c' is never used">c</warning>: String) {}
@@ -214,7 +219,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testWhen() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         fun foo(@org.jetbrains.annotations.NonNls nonNls: String, foo: String) {
           when (nonNls) {
             "foo bar" -> {}
@@ -233,7 +238,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testIf() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         fun foo() {
           @org.jetbrains.annotations.NonNls val prefix = if (true) "foo bar" else ""
           val <warning descr="[UNUSED_VARIABLE] Variable 'suffix' is never used">suffix</warning> = if (true) <warning descr="Hardcoded string literal: \"foo bar\"">"foo bar"</warning> else prefix
@@ -244,7 +249,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   
   fun testStringBuilder() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         fun foo() {
           @org.jetbrains.annotations.NonNls val buffer = StringBuilder()
           buffer.append("foo bar")
@@ -260,7 +265,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     inspection.setIgnoreForAllButNls(true)
     inspection.setReportUnannotatedReferences(true)
     myFixture.enableInspections(inspection)
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         import org.jetbrains.annotations.*
 
         fun foo() {
@@ -277,7 +282,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   
   fun testFunctionReturn() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         fun debug(@org.jetbrains.annotations.NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'lazyMessage' is never used">lazyMessage</warning>: () -> String) {}
         fun debug2(@org.jetbrains.annotations.NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'lazyMessage' is never used">lazyMessage</warning>: java.util.function.Supplier<String>) {}
     
@@ -291,7 +296,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   
   fun testExtensionMethod() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         class Test {}
 
         fun Test.weigh(@org.jetbrains.annotations.NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'id' is never used">id</warning>: String): Boolean = true
@@ -309,7 +314,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   
   fun testLocals() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         fun test() {
           @org.jetbrains.annotations.NonNls var <warning descr="[ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE] Variable 'x' is assigned but never accessed">x</warning>: String = "foo bar"
           <warning descr="[UNUSED_VALUE] The value '\"bar foo\"' assigned to 'var x: String defined in test' is never used">x =</warning> "bar foo"
@@ -320,7 +325,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   
   fun testConcatenation() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         fun test() {
           @org.jetbrains.annotations.NonNls val <warning descr="[UNUSED_VARIABLE] Variable 'id' is never used">id</warning> = "foo:" + "bar"
         }
@@ -330,7 +335,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   
   fun testList() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
        import org.jetbrains.annotations.*
        import java.util.*
        
@@ -348,7 +353,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   fun testCompareWithNonNls() {
     myFixture.enableInspections(I18nInspection())
     myFixture.addClass("public interface Y {@org.jetbrains.annotations.NonNls String getNonNls();}")
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
        import org.jetbrains.annotations.*
        
        @NonNls
@@ -375,7 +380,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   
   fun testException() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         public typealias UnsupportedOperationException = java.lang.UnsupportedOperationException
         class Err(message:String): Throwable(message)
 
@@ -394,7 +399,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     val inspection = I18nInspection()
     inspection.ignoreForExceptionConstructors = false
     myFixture.enableInspections(inspection)
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         class Err(message:String): Throwable(message)
       
         fun test() {
@@ -408,7 +413,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
     myFixture.enableInspections(inspection)
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
        class Foo {
           fun foo(@org.jetbrains.annotations.Nls s: String) {
             foo(<warning descr="Hardcoded string literal: \"text\"">"text"</warning>)
@@ -423,7 +428,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
     myFixture.enableInspections(inspection)
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         class ReferredClass {
           val instance = "value"
           companion object {
@@ -452,7 +457,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     inspection.setIgnoreForAllButNls(true)
     inspection.setReportUnannotatedReferences(true)
     myFixture.enableInspections(inspection)
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         import org.jetbrains.annotations.Nls
 
         fun showMessage(@Nls <warning descr="[UNUSED_PARAMETER] Parameter 'text' is never used">text</warning>: String) {}
@@ -486,7 +491,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   
   fun testDefaultValues() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         import org.jetbrains.annotations.NonNls
         
         fun foo1(<warning descr="[UNUSED_PARAMETER] Parameter 'message' is never used">message</warning>: String = <warning descr="Hardcoded string literal: \"Hello World\"">"Hello World"</warning>) {}
@@ -497,7 +502,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testConstructorParameter() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
       import org.jetbrains.annotations.Nls
       
       class B1: A(<warning descr="Hardcoded string literal: \"Text for i18n\"">"Text for i18n"</warning>)
@@ -509,7 +514,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testReturnValues() {
     myFixture.enableInspections(I18nInspection())
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         val a = <warning descr="Hardcoded string literal: \"Test text\"">"Test text"</warning>
         val b get() = <warning descr="Hardcoded string literal: \"Test text\"">"Test text"</warning>
         val c: String
@@ -530,7 +535,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     inspection.setIgnoreForAllButNls(true)
     inspection.setReportUnannotatedReferences(true)
     myFixture.enableInspections(inspection)
-    myFixture.configureByText("Foo.kt", """
+    configureKt("""
         import org.jetbrains.annotations.*
         
         private const val LEFT = "Left"
@@ -554,14 +559,38 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
     myFixture.enableInspections(inspection)
-    myFixture.configureByText("Foo.kt", """
+    myFixture.addClass("package kotlin;public class String {public boolean startsWith(String string);}")
+    configureKt("""
         import org.jetbrains.annotations.*
-        fun test(@Nls x : <warning descr="[PLATFORM_CLASS_MAPPED_TO_KOTLIN] This class shouldn't be used in Kotlin. Use kotlin.String instead.">java.lang.String</warning>) {
+        fun test(@Nls x : String) {
             if (x.startsWith(<warning descr="Hardcoded string literal: \"Hello\"">"Hello"</warning>)) {}
+            if (x == <warning descr="Hardcoded string literal: \"Hello\"">"Hello"</warning>) {}
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
+  fun testTypeUseAnnotation() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+    myFixture.addClass("package kotlin;public class String {public boolean startsWith(String string);}")
+    myFixture.addClass("import org.jetbrains.annotations.*;\n" +
+                       "import java.lang.annotation.*;\n" +
+                       "@Nls(capitalization = Nls.Capitalization.Sentence)\n" +
+                       "@Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})\n" +
+                       "public @interface Label { }")
+    configureKt("""
+        import org.jetbrains.annotations.*
+
+        fun getString(): @Label String {return <warning descr="Hardcoded string literal: \"str\"">"str"</warning>}
+        @Nls
+        fun test(): String {
+            return getString()
         }
     """.trimIndent())
     myFixture.testHighlighting()
   }
 
 }
-

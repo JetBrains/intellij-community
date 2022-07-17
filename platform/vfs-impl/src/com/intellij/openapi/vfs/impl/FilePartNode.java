@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -9,7 +10,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -127,7 +130,7 @@ class FilePartNode {
 
   @Override
   public String toString() {
-    return getName() + (children.length == 0 ? "" : " -> "+children.length);
+    return "FilePartNode: '" + getName() + "'; children: " + children.length + "; fs=" + myFS + "; myFileOrUrl=" + myFileOrUrl +"; "+myFileOrUrl.getClass();
   }
 
   static int getNameId(@NotNull VirtualFile file) {
@@ -199,7 +202,7 @@ class FilePartNode {
         String myUrl = myUrl();
         String expectedUrl = StringUtil.trimEnd(urlFromRoot, '/');
         String actualUrl = StringUtil.trimEnd(myUrl, '/');
-        assert FileUtil.namesEqual(actualUrl, expectedUrl) : "Expected url: '" + expectedUrl + "' but got: '" + actualUrl + "'";
+        assert FileUtil.namesEqual(actualUrl, expectedUrl) : "Expected url: '" + expectedUrl + "' but got: '" + actualUrl + "'; parent="+parent+"; name="+name+"; urlFromParent="+urlFromRoot;
       }
       else {
         assert Comparing.equal(getParentThroughJar(myFile, myFS), parent) :
@@ -330,8 +333,7 @@ class FilePartNode {
       newNode.children = children;
       children = EMPTY_ARRAY;
       changed = true;
-      String myOldPath = VfsUtilCore.urlToPath(childUrl(parentUrl=myUrl(parentFileOrUrl), myName, myFS));
-      root.removeEmptyNodesByPath(FilePartNodeRoot.splitNames(myOldPath));
+      root.removeEmptyNodesByPath(VfsUtilCore.urlToPath(childUrl(parentUrl = myUrl(parentFileOrUrl), myName, myFS)));
       thisNode = newNode;
       nameChanged = true;
     }
@@ -495,7 +497,22 @@ class FilePartNode {
     return false;
   }
 
-  boolean removeEmptyNodesByPath(@NotNull List<String> parts) {
+  void removeEmptyNodesByPath(@NotNull String path) {
+    Pair<NewVirtualFile, String> pair = VfsImplUtil.extractRootFromPath(myFS, path);
+    if (pair != null) {
+      int rootIndex = binarySearchChildByName(pair.first.getNameSequence());
+      if (rootIndex >= 0) {
+        if (children[rootIndex].removeEmptyNodesByPath(FilePartNodeRoot.splitNames(pair.second))) {
+          children = children.length == 1 ? EMPTY_ARRAY : ArrayUtil.remove(children, rootIndex);
+        }
+      }
+    }
+    else {
+      removeEmptyNodesByPath(FilePartNodeRoot.splitNames(path));
+    }
+  }
+
+  private boolean removeEmptyNodesByPath(@NotNull List<String> parts) {
     if (parts.isEmpty()) {
       return children.length == 0;
     }
@@ -513,22 +530,23 @@ class FilePartNode {
     return false;
   }
 
-  private boolean isCaseSensitive() {
+  boolean isCaseSensitive() {
     VirtualFile file = myFile();
     return file == null ? myFS.isCaseSensitive() : file.isCaseSensitive();
   }
 
   private void print(StringBuilder buffer, boolean recheck, String prefix) {
-    buffer.append(prefix + " " + getName() + " isCaseSensitive:" + isCaseSensitive());
+    buffer.append(prefix).append(" ").append(getName()).append(" isCaseSensitive:").append(isCaseSensitive());
     VirtualFile file = myFile();
     if (recheck && file != null && myFS instanceof LocalFileSystem) {
-      buffer.append(" really parent sensitive: " + FileSystemUtil.readParentCaseSensitivity(new File(file.getPath())));
+      buffer.append(" really parent sensitive: ").append(FileSystemUtil.readParentCaseSensitivity(new File(file.getPath())));
     }
     buffer.append("\n");
     for (FilePartNode child : children) {
       child.print(buffer, recheck, prefix + "  ");
     }
   }
+
   StringBuilder print(boolean recheck) {
     StringBuilder buffer = new StringBuilder();
     print(buffer, recheck,"");

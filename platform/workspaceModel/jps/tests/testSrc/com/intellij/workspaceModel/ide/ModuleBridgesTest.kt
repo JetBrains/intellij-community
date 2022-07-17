@@ -1,11 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.ProjectTopics.PROJECT_ROOTS
-import com.intellij.configurationStore.StoreUtil
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.configurationStore.saveSettings
+import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.*
@@ -30,11 +28,19 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.EntityStorageSnapshot
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.toBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties
@@ -72,7 +78,7 @@ class ModuleBridgesTest {
   }
 
   @Test
-  fun `test that module continues to receive updates after being created in modifiable model`() =
+  fun `test that module continues to receive updates after being created in modifiable model`() {
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)
 
@@ -102,6 +108,7 @@ class ModuleBridgesTest {
         it.commit()
       }
     }
+  }
 
   @Test
   fun `test commit module root model in uncommitted module`() =
@@ -124,37 +131,46 @@ class ModuleBridgesTest {
     }
 
   @Test
-  fun `test rename module from model`() =
-    WriteCommandAction.runWriteCommandAction(project) {
-      val oldModuleName = "oldName"
-      val newModuleName = "newName"
-      val moduleManager = ModuleManager.getInstance(project)
+  fun `test rename module from model`() {
+    val oldModuleName = "oldName"
+    val newModuleName = "newName"
+    val moduleManager = ModuleManager.getInstance(project)
 
-      val iprFile = File(project.projectFilePath!!)
-      val oldNameFile = File(project.basePath, "$oldModuleName.iml")
-      val newNameFile = File(project.basePath, "$newModuleName.iml")
+    val iprFile = File(project.projectFilePath!!)
+    val oldNameFile = File(project.basePath, "$oldModuleName.iml")
+    val newNameFile = File(project.basePath, "$newModuleName.iml")
 
-      val module = moduleManager.modifiableModel.let { model ->
-        val module = model.newModule(oldNameFile.path, ModuleType.EMPTY.id)
-        model.commit()
-        module
+    runBlocking {
+      val module = withContext(Dispatchers.EDT) {
+        runWriteAction {
+          val model = moduleManager.modifiableModel
+          val module = model.newModule(oldNameFile.path, ModuleType.EMPTY.id)
+          model.commit()
+          module
+        }
       }
-      StoreUtil.saveDocumentsAndProjectSettings(project)
+
+      saveSettings(project)
+
       assertTrue(oldNameFile.exists())
       assertTrue(iprFile.readText().contains(oldNameFile.name))
       assertEquals(oldModuleName, module.name)
 
-      moduleManager.modifiableModel.let { model ->
-        assertSame(module, model.findModuleByName(oldModuleName))
-        assertNull(model.getModuleToBeRenamed(oldModuleName))
 
-        model.renameModule(module, newModuleName)
+      withContext(Dispatchers.EDT) {
+        ApplicationManager.getApplication().runWriteAction {
+          val model = moduleManager.modifiableModel
+          assertSame(module, model.findModuleByName(oldModuleName))
+          assertNull(model.getModuleToBeRenamed(oldModuleName))
 
-        assertSame(module, model.findModuleByName(oldModuleName))
-        assertSame(module, model.getModuleToBeRenamed(newModuleName))
-        assertSame(newModuleName, model.getNewName(module))
+          model.renameModule(module, newModuleName)
 
-        model.commit()
+          assertSame(module, model.findModuleByName(oldModuleName))
+          assertSame(module, model.getModuleToBeRenamed(newModuleName))
+          assertSame(newModuleName, model.getNewName(module))
+
+          model.commit()
+        }
       }
 
       assertNull(moduleManager.findModuleByName(oldModuleName))
@@ -166,7 +182,7 @@ class ModuleBridgesTest {
       assertEquals(newNameFile, File(moduleFilePath!!))
       assertTrue(module.getModuleNioFile().toString().endsWith(newNameFile.name))
 
-      StoreUtil.saveDocumentsAndProjectSettings(project)
+      saveSettings(project)
 
       assertFalse(iprFile.readText().contains(oldNameFile.name))
       assertFalse(oldNameFile.exists())
@@ -174,60 +190,66 @@ class ModuleBridgesTest {
       assertTrue(iprFile.readText().contains(newNameFile.name))
       assertTrue(newNameFile.exists())
     }
+  }
 
   @Test
-  fun `test rename module and all dependencies in other modules`() =
-    WriteCommandAction.runWriteCommandAction(project) {
-      val checkModuleDependency = { moduleName: String, dependencyModuleName: String ->
-        assertNotNull(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java)
-                        .first { it.persistentId().name == moduleName }.dependencies
-                        .find { it is ModuleDependencyItem.Exportable.ModuleDependency && it.module.name == dependencyModuleName })
-      }
+  fun `test rename module and all dependencies in other modules`() = runBlocking {
+    val checkModuleDependency = { moduleName: String, dependencyModuleName: String ->
+      assertNotNull(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java)
+                      .first { it.persistentId.name == moduleName }.dependencies
+                      .find { it is ModuleDependencyItem.Exportable.ModuleDependency && it.module.name == dependencyModuleName })
+    }
 
-      val antModuleName = "ant"
-      val mavenModuleName = "maven"
-      val gradleModuleName = "gradle"
-      val moduleManager = ModuleManager.getInstance(project)
+    val antModuleName = "ant"
+    val mavenModuleName = "maven"
+    val gradleModuleName = "gradle"
+    val moduleManager = ModuleManager.getInstance(project)
 
-      val iprFile = File(project.projectFilePath!!)
-      val antModuleFile = File(project.basePath, "$antModuleName.iml")
-      val mavenModuleFile = File(project.basePath, "$mavenModuleName.iml")
-      val gradleModuleFile = File(project.basePath, "$gradleModuleName.iml")
+    val iprFile = File(project.projectFilePath!!)
+    val antModuleFile = File(project.basePath, "$antModuleName.iml")
+    val mavenModuleFile = File(project.basePath, "$mavenModuleName.iml")
+    val gradleModuleFile = File(project.basePath, "$gradleModuleName.iml")
 
-      val (antModule, mavenModule) = moduleManager.modifiableModel.let { model ->
+    val (antModule, mavenModule) = withContext(Dispatchers.EDT) {
+      runWriteAction {
+        val model = moduleManager.modifiableModel
         val antModule = model.newModule(antModuleFile.path, ModuleType.EMPTY.id)
         val mavenModule = model.newModule(mavenModuleFile.path, ModuleType.EMPTY.id)
         model.commit()
         Pair(antModule, mavenModule)
       }
-      ModuleRootModificationUtil.addDependency(mavenModule, antModule)
-      checkModuleDependency(mavenModuleName, antModuleName)
+    }
+    ModuleRootModificationUtil.addDependency(mavenModule, antModule)
+    checkModuleDependency(mavenModuleName, antModuleName)
 
-      StoreUtil.saveDocumentsAndProjectSettings(project)
-      var fileText = iprFile.readText()
-      assertEquals(2, listOf(antModuleName, mavenModuleName).filter { fileText.contains(it) }.size)
+    saveSettings(project)
+    var fileText = iprFile.readText()
+    assertEquals(2, listOf(antModuleName, mavenModuleName).filter { fileText.contains(it) }.size)
 
-      assertTrue(antModuleFile.exists())
-      assertTrue(mavenModuleFile.exists())
-      assertTrue(mavenModuleFile.readText().contains(antModuleName))
+    assertTrue(antModuleFile.exists())
+    assertTrue(mavenModuleFile.exists())
+    assertTrue(mavenModuleFile.readText().contains(antModuleName))
 
-      moduleManager.modifiableModel.let { model ->
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().runWriteAction {
+        val model = moduleManager.modifiableModel
         model.renameModule(antModule, gradleModuleName)
         model.commit()
       }
-      checkModuleDependency(mavenModuleName, gradleModuleName)
-
-      StoreUtil.saveDocumentsAndProjectSettings(project)
-      fileText = iprFile.readText()
-      assertEquals(2, listOf(mavenModuleName, gradleModuleName).filter { fileText.contains(it) }.size)
-
-      assertFalse(antModuleFile.exists())
-      assertTrue(gradleModuleFile.exists())
-      assertTrue(mavenModuleFile.exists())
-      fileText = mavenModuleFile.readText()
-      assertFalse(fileText.contains(antModuleName))
-      assertFalse(fileText.contains(antModuleName))
     }
+    checkModuleDependency(mavenModuleName, gradleModuleName)
+
+    saveSettings(project)
+    fileText = iprFile.readText()
+    assertEquals(2, listOf(mavenModuleName, gradleModuleName).filter { fileText.contains(it) }.size)
+
+    assertFalse(antModuleFile.exists())
+    assertTrue(gradleModuleFile.exists())
+    assertTrue(mavenModuleFile.exists())
+    fileText = mavenModuleFile.readText()
+    assertFalse(fileText.contains(antModuleName))
+    assertFalse(fileText.contains(antModuleName))
+  }
 
   @Test
   fun `test remove and add module with the same name`() =
@@ -345,19 +367,19 @@ class ModuleBridgesTest {
     }
 
   @Test
-  fun `test module component serialized into module iml`() {
+  fun `test module component serialized into module iml`() = runBlocking {
     val moduleFile = File(project.basePath, "test.iml")
 
     val moduleManager = ModuleManager.getInstance(project)
     val module = runWriteActionAndWait { moduleManager.newModule (moduleFile.path, ModuleTypeId.JAVA_MODULE) }
 
-    runWriteActionAndWait { StoreUtil.saveDocumentsAndProjectSettings(project) }
+    saveSettings(project)
 
     assertNull(JDomSerializationUtil.findComponent(JDOMUtil.load(moduleFile), "XXX"))
 
     TestModuleComponent.getInstance(module).testString = "My String"
 
-    StoreUtil.saveSettings(module, true)
+    saveSettings(project, forceSavingAllSettings = true)
 
     assertEquals(
       """  
@@ -420,7 +442,7 @@ class ModuleBridgesTest {
 
   @Test
   fun `test module libraries loaded from cache`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
 
     val tempDir = temporaryDirectoryRule.newPath()
 
@@ -430,18 +452,18 @@ class ModuleBridgesTest {
     val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
     val moduleLibraryEntity = builder.addLibraryEntity(
       name = "some",
-      tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId()),
+      tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId),
       roots = listOf(LibraryRoot(tempDir.toVirtualFileUrl(virtualFileManager), LibraryRootTypeId.COMPILED)),
       excludedRoots = emptyList(),
       source = source
     )
-    builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+    builder.modifyEntity(moduleEntity) {
       dependencies = listOf(
-        ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.persistentId(), false, ModuleDependencyItem.DependencyScope.COMPILE)
+        ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.persistentId, false, ModuleDependencyItem.DependencyScope.COMPILE)
       )
     }
 
-    WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
+    WorkspaceModelInitialTestContent.withInitialContent(builder.toSnapshot()) {
       val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
 
       val module = ModuleManager.getInstance(project).findModuleByName("test")
@@ -460,7 +482,7 @@ class ModuleBridgesTest {
 
   @Test
   fun `test libraries are loaded from cache`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
 
     val tempDir = temporaryDirectoryRule.newPath()
 
@@ -474,7 +496,7 @@ class ModuleBridgesTest {
       source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager))
     )
 
-    WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
+    WorkspaceModelInitialTestContent.withInitialContent(builder.toSnapshot()) {
       val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
 
       val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
@@ -518,20 +540,16 @@ class ModuleBridgesTest {
       assertEquals("x y z", (contentEntry.sourceFolders[0].jpsElement.properties as TestCustomSourceRootProperties).testString)
 
       assertTrue(contentEntry.sourceFolders[1].rootType is TestCustomSourceRootType)
-      assertEquals(null, (contentEntry.sourceFolders[1].jpsElement.properties as TestCustomSourceRootProperties).testString)
+      assertEquals("default properties", (contentEntry.sourceFolders[1].jpsElement.properties as TestCustomSourceRootProperties).testString)
 
       val customRoots = WorkspaceModel.getInstance(project).entityStorage.current.entities(CustomSourceRootPropertiesEntity::class.java)
         .toList()
         .sortedBy { it.sourceRoot.url.url }
-      assertEquals(2, customRoots.size)
+      assertEquals(1, customRoots.size)
 
       assertEquals("<sourceFolder testString=\"x y z\" />", customRoots[0].propertiesXmlTag)
       assertEquals("$url/root1", customRoots[0].sourceRoot.url.url)
       assertEquals(TestCustomSourceRootType.TYPE_ID, customRoots[0].sourceRoot.rootType)
-
-      assertEquals("<sourceFolder />", customRoots[1].propertiesXmlTag)
-      assertEquals("$url/root2", customRoots[1].sourceRoot.url.url)
-      assertEquals(TestCustomSourceRootType.TYPE_ID, customRoots[1].sourceRoot.rootType)
     }
   }
 
@@ -568,9 +586,10 @@ class ModuleBridgesTest {
   }
 
   @Test
-  fun `test custom source root saving`() {
+  fun `test custom source root saving`() = runBlocking {
     val tempDir = temporaryDirectoryRule.newPath().toFile()
-    TestCustomRootModelSerializerExtension.registerTestCustomSourceRootType(temporaryDirectoryRule.newPath().toFile(), disposableRule.disposable)
+    TestCustomRootModelSerializerExtension.registerTestCustomSourceRootType(temporaryDirectoryRule.newPath().toFile(),
+                                                                            disposableRule.disposable)
 
     val moduleImlFile = File(tempDir, "my.iml")
     Files.createDirectories(moduleImlFile.parentFile.toPath())
@@ -587,11 +606,12 @@ class ModuleBridgesTest {
         contentEntry.addSourceFolder("$url/root3", TestCustomSourceRootType.INSTANCE, TestCustomSourceRootProperties("some data"))
         contentEntry.addSourceFolder("$url/root4", TestCustomSourceRootType.INSTANCE, TestCustomSourceRootProperties(null))
       }
+    }
 
-      StoreUtil.saveDocumentsAndProjectSettings(project)
+    saveSettings(project)
 
-      val rootManagerComponent = JDomSerializationUtil.findComponent(JDOMUtil.load(moduleImlFile), "NewModuleRootManager")!!
-      assertEquals("""
+    val rootManagerComponent = JDomSerializationUtil.findComponent(JDOMUtil.load(moduleImlFile), "NewModuleRootManager")!!
+    assertEquals("""
             <content url="file://${'$'}MODULE_DIR${'$'}">
               <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root1" type="custom-source-root-type" testString="default properties" />
               <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root2" type="custom-source-root-type" testString="" />
@@ -599,37 +619,49 @@ class ModuleBridgesTest {
               <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root4" type="custom-source-root-type" />
             </content>
       """.trimIndent(), JDOMUtil.write(rootManagerComponent.getChild("content")!!))
-    }
   }
 
   @Test
-  fun `test remove module removes source roots`() = WriteCommandAction.runWriteCommandAction(project) {
+  fun `test remove module removes source roots`() = runBlocking {
     startLog()
     val moduleName = "build"
     val antLibraryFolder = "ant-lib"
 
     val moduleFile = File(project.basePath, "$moduleName.iml")
-    val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
-      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
-      moduleModel.commit()
-      module
+
+    val module = withContext(Dispatchers.EDT) {
+      runWriteAction {
+        val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+          val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+          moduleModel.commit()
+          module
+        }
+
+        ModuleRootModificationUtil.updateModel(module) { model ->
+          val tempDir = temporaryDirectoryRule.newPath().toFile()
+          val url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(tempDir.path))
+          val contentEntry = model.addContentEntry(url)
+          contentEntry.addSourceFolder("$url/$antLibraryFolder", false)
+        }
+
+        module
+      }
     }
 
-    ModuleRootModificationUtil.updateModel(module) { model ->
-      val tempDir = temporaryDirectoryRule.newPath().toFile()
-      val url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(tempDir.path))
-      val contentEntry = model.addContentEntry(url)
-      contentEntry.addSourceFolder("$url/$antLibraryFolder", false)
-    }
-    StoreUtil.saveDocumentsAndProjectSettings(project)
-    assertTrue(moduleFile.readText().contains(antLibraryFolder))
-    val entityStore = WorkspaceModel.getInstance(project).entityStorage
-    assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
-    assertEquals(1, entityStore.current.entities(JavaSourceRootEntity::class.java).count())
+    saveSettings(project)
 
-    ModuleManager.getInstance(project).disposeModule(module)
-    assertEmpty(entityStore.current.entities(ContentRootEntity::class.java).toList())
-    assertEmpty(entityStore.current.entities(JavaSourceRootEntity::class.java).toList())
+    withContext(Dispatchers.EDT) {
+      assertTrue(moduleFile.readText().contains(antLibraryFolder))
+      val entityStore = WorkspaceModel.getInstance(project).entityStorage
+      assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
+      assertEquals(1, entityStore.current.entities(JavaSourceRootEntity::class.java).count())
+
+      ApplicationManager.getApplication().runWriteAction {
+        ModuleManager.getInstance(project).disposeModule(module)
+      }
+      assertEmpty(entityStore.current.entities(ContentRootEntity::class.java).toList())
+      assertEmpty(entityStore.current.entities(JavaSourceRootEntity::class.java).toList())
+    }
 
     val caughtLogs = catchLog()
     // Trying to assert that a particular warning isn't presented in logs
@@ -768,7 +800,7 @@ class ModuleBridgesTest {
 
     WorkspaceModel.getInstance(project).updateProjectModel { builder ->
       val entity = builder.resolve(ModuleId("xxx"))!!
-      builder.modifyEntity(ModifiableModuleEntity::class.java, entity) {
+      builder.modifyEntity(entity) {
         this.name = "yyy"
       }
     }
@@ -808,7 +840,7 @@ class ModuleBridgesTest {
 
 internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disposableRule: DisposableRule): Project {
   val projectDir = temporaryDirectory.newPath("project")
-  val project = WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
+  val project = WorkspaceModelInitialTestContent.withInitialContent(EntityStorageSnapshot.empty()) {
     PlatformTestUtil.loadAndOpenProject(projectDir.resolve("testProject.ipr"), disposableRule.disposable)
   }
   return project

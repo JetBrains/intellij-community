@@ -23,12 +23,14 @@ from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, 
     InternalGetNextStatementTargets, CMD_SET_PROJECT_ROOTS, CMD_GET_SMART_STEP_INTO_VARIANTS,
     CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR, CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS, NetCommand,
     CMD_SET_PROTOCOL, CMD_PYDEVD_JSON_CONFIG, InternalGetThreadStack, InternalSmartStepInto, InternalGetSmartStepIntoVariants,
-    CMD_DATAVIEWER_ACTION, InternalDataViewerAction, CMD_TABLE_EXEC, InternalTableCommand, CMD_INTERRUPT_DEBUG_CONSOLE)
+    CMD_DATAVIEWER_ACTION, InternalDataViewerAction, CMD_TABLE_EXEC, InternalTableCommand, CMD_INTERRUPT_DEBUG_CONSOLE, CMD_SET_USER_TYPE_RENDERERS)
 from _pydevd_bundle.pydevd_constants import (get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN,
     NEXT_VALUE_SEPARATOR, IS_WINDOWS, get_current_thread_id)
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydev_imps._pydev_saved_modules import threading
 import json
+from _pydevd_bundle.pydevd_user_type_renderers import parse_set_type_renderers_message
+
 
 def process_net_command(py_db, cmd_id, seq, text):
     '''Processes a command received from the Java side
@@ -230,9 +232,8 @@ def process_net_command(py_db, cmd_id, seq, text):
                 # the text is: thread_id\tframe_id\tFRAME|GLOBAL\tattributes*
                 try:
                     thread_id, frame_id, scopeattrs = text.split('\t', 2)
-
                     if scopeattrs.find('\t') != -1:  # there are attributes beyond scope
-                        scope, attrs = scopeattrs.split('\t', 1)
+                        scope, _,  attrs = scopeattrs.split('\t', 2)
                     else:
                         scope, attrs = (scopeattrs, None)
 
@@ -249,7 +250,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                     roffset, coffset, rows, cols, format, thread_id, frame_id, scopeattrs  = text.split('\t', 7)
 
                     if scopeattrs.find('\t') != -1:  # there are attributes beyond scope
-                        scope, attrs = scopeattrs.split('\t', 1)
+                        scope, _, attrs = scopeattrs.split('\t', 2)
                     else:
                         scope, attrs = (scopeattrs, None)
 
@@ -307,9 +308,9 @@ def process_net_command(py_db, cmd_id, seq, text):
                     traceback.print_exc()
 
             elif cmd_id == CMD_GET_FRAME:
-                thread_id, frame_id, scope = text.split('\t', 2)
+                thread_id, frame_id, scope, group_type = text.split('\t', 3)
 
-                int_cmd = InternalGetFrame(seq, thread_id, frame_id)
+                int_cmd = InternalGetFrame(seq, thread_id, frame_id, int(group_type))
                 py_db.post_internal_command(int_cmd, thread_id)
 
             elif cmd_id == CMD_SET_BREAK:
@@ -890,6 +891,13 @@ def process_net_command(py_db, cmd_id, seq, text):
                     thread_id, frame_id, init_command, command_type = text.split('\t', 3)
                     int_cmd = InternalTableCommand(seq, thread_id, frame_id, init_command, command_type)
                     py_db.post_internal_command(int_cmd, thread_id)
+                except:
+                    traceback.print_exc()
+
+            elif cmd_id == CMD_SET_USER_TYPE_RENDERERS:
+                try:
+                    type_renderers = parse_set_type_renderers_message(text)
+                    py_db.set_user_type_renderers(type_renderers)
                 except:
                     traceback.print_exc()
 

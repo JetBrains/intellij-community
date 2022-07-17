@@ -5,71 +5,53 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.concurrent.Executor;
-import java.util.function.BiConsumer;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Implementation of {@link SESearcher.Listener} which decrease events rate and raise batch updates
+ * Implementation of {@link SearchListener} which decrease events rate and raise batch updates
  * each {@code throttlingDelay} milliseconds.
  * <br>
  * Not thread-safe and should be notified only in EDT
  */
-class ThrottlingListenerWrapper implements SESearcher.Listener {
+class ThrottlingListenerWrapper extends BufferingListenerWrapper {
 
   public final int myThrottlingDelay;
 
-  private final SESearcher.Listener myDelegateListener;
-  private final Executor myDelegateExecutor;
-
-  private final Buffer myBuffer = new Buffer();
-  private final BiConsumer<List<SearchEverywhereFoundElementInfo>, List<SearchEverywhereFoundElementInfo>> myFlushConsumer;
-
-  private final Alarm flushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm flushAlarm = new Alarm();
   private boolean flushScheduled;
 
-  ThrottlingListenerWrapper(int throttlingDelay, SESearcher.Listener delegateListener, Executor delegateExecutor) {
+  ThrottlingListenerWrapper(int throttlingDelay, SearchListener delegateListener) {
+    super(delegateListener);
     myThrottlingDelay = throttlingDelay;
-    myDelegateListener = delegateListener;
-    myDelegateExecutor = delegateExecutor;
-
-    myFlushConsumer = (added, removed) -> {
-      if (!added.isEmpty()) {
-        myDelegateExecutor.execute(() -> myDelegateListener.elementsAdded(added));
-      }
-      if (!removed.isEmpty()) {
-        myDelegateExecutor.execute(() -> myDelegateListener.elementsRemoved(removed));
-      }
-    };
   }
 
+  @Override
   public void clearBuffer() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myBuffer.clear();
+    super.clearBuffer();
     cancelScheduledFlush();
   }
 
   @Override
   public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myBuffer.addEvent(new Event(Event.ADD, list));
+    super.elementsAdded(list);
     scheduleFlushBuffer();
   }
 
   @Override
   public void elementsRemoved(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myBuffer.addEvent(new Event(Event.REMOVE, list));
+    super.elementsRemoved(list);
     scheduleFlushBuffer();
   }
 
   @Override
   public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myBuffer.flush(myFlushConsumer);
-    myDelegateExecutor.execute(() -> myDelegateListener.searchFinished(hasMoreContributors));
+    super.searchFinished(hasMoreContributors);
     cancelScheduledFlush();
   }
+
+  @Override
+  public void contributorFinished(@NotNull SearchEverywhereContributor<?> contributor, boolean hasMore) { }
 
   private void scheduleFlushBuffer() {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -78,7 +60,7 @@ class ThrottlingListenerWrapper implements SESearcher.Listener {
       ApplicationManager.getApplication().assertIsDispatchThread();
       if (!flushScheduled) return;
       flushScheduled = false;
-      myBuffer.flush(myFlushConsumer);
+      flushBuffer();
     };
 
     if (!flushScheduled) {
@@ -92,49 +74,4 @@ class ThrottlingListenerWrapper implements SESearcher.Listener {
     flushAlarm.cancelAllRequests();
     flushScheduled = false;
   }
-
-  private static class Event {
-    static final int REMOVE = 0;
-    static final int ADD = 1;
-
-    final int type;
-    final List<? extends SearchEverywhereFoundElementInfo> items;
-
-    Event(int type, List<? extends SearchEverywhereFoundElementInfo> items) {
-      this.type = type;
-      this.items = items;
-    }
-  }
-
-  private static class Buffer {
-    private final Queue<Event> myQueue = new ArrayDeque<>();
-
-    public void addEvent(Event event) {
-      myQueue.add(event);
-    }
-
-    public void flush(BiConsumer<? super List<SearchEverywhereFoundElementInfo>, ? super List<SearchEverywhereFoundElementInfo>> consumer) {
-      List<SearchEverywhereFoundElementInfo> added = new ArrayList<>();
-      List<SearchEverywhereFoundElementInfo> removed = new ArrayList<>();
-      myQueue.forEach(event -> {
-        if (event.type == Event.ADD) {
-          added.addAll(event.items);
-        } else {
-          event.items.forEach(removing -> {
-            if (!added.removeIf(existing -> existing.getContributor() == removing.getContributor() && existing.getElement() == removing.getElement())) {
-              removed.add(removing);
-            }
-          });
-        }
-      });
-      myQueue.clear();
-      consumer.accept(added, removed);
-    }
-
-    public void clear() {
-      myQueue.clear();
-    }
-  }
-
-
 }

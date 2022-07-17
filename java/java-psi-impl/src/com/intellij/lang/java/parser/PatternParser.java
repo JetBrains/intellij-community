@@ -33,12 +33,16 @@ public class PatternParser {
     }
     myParser.getDeclarationParser().parseModifierList(builder, PATTERN_MODIFIERS);
     PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
-    boolean isPattern = type != null && builder.getTokenType() == JavaTokenType.IDENTIFIER;
+    boolean isPattern = type != null && (builder.getTokenType() == JavaTokenType.IDENTIFIER ||
+                                         builder.getTokenType() == JavaTokenType.LPARENTH);
     patternStart.rollbackTo();
     return isPattern;
   }
 
-  PsiBuilder.@NotNull Marker parsePattern(final PsiBuilder builder) {
+  /**
+   * Must be called only if isPattern returned true
+   */
+  public PsiBuilder.@NotNull Marker parsePattern(final PsiBuilder builder) {
     PsiBuilder.Marker guardPattern = builder.mark();
     PsiBuilder.Marker primaryPattern = parsePrimaryPattern(builder);
     if (builder.getTokenType() != JavaTokenType.ANDAND) {
@@ -46,7 +50,7 @@ public class PatternParser {
       return primaryPattern;
     }
     builder.advanceLexer();
-    PsiBuilder.Marker guardingExpression = myParser.getExpressionParser().parseAssignment(builder);
+    PsiBuilder.Marker guardingExpression = myParser.getExpressionParser().parseConditionalAnd(builder, ExpressionParser.FORBID_LAMBDA_MASK);
     if (guardingExpression == null) {
       error(builder, JavaPsiBundle.message("expected.expression"));
     }
@@ -65,20 +69,78 @@ public class PatternParser {
       done(parenPattern, JavaElementType.PARENTHESIZED_PATTERN);
       return parenPattern;
     }
-    return parseTypePattern(builder);
+    return parseTypeOrRecordPattern(builder);
   }
 
-  private PsiBuilder.@NotNull Marker parseTypePattern(final PsiBuilder builder) {
+  private void parseRecordStructurePattern(final PsiBuilder builder) {
+    PsiBuilder.Marker recordStructure = builder.mark();
+    boolean hasLparen = expect(builder, JavaTokenType.LPARENTH);
+    assert hasLparen;
+
+    boolean isFirst = true;
+    while (builder.getTokenType() != JavaTokenType.RPARENTH) {
+      if (!isFirst) {
+        expectOrError(builder, JavaTokenType.COMMA, "expected.comma");
+      }
+
+      if (builder.getTokenType() == null) {
+        break;
+      }
+
+      if (isPattern(builder)) {
+        parsePattern(builder);
+        isFirst = false;
+      }
+      else {
+        error(builder, JavaPsiBundle.message("expected.pattern"));
+        if (builder.getTokenType() == JavaTokenType.RPARENTH) {
+          break;
+        }
+        builder.advanceLexer();
+      }
+    }
+    if (!expect(builder, JavaTokenType.RPARENTH)) {
+      builder.error(JavaPsiBundle.message("expected.rparen"));
+    }
+    recordStructure.done(JavaElementType.DECONSTRUCTION_LIST);
+  }
+
+  private PsiBuilder.@NotNull Marker parseTypeOrRecordPattern(final PsiBuilder builder) {
     PsiBuilder.Marker pattern = builder.mark();
     PsiBuilder.Marker patternVariable = builder.mark();
     myParser.getDeclarationParser().parseModifierList(builder, PATTERN_MODIFIERS);
 
     PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
-    // guarded by isPattern
-    assert type != null;
-    assert expect(builder, JavaTokenType.IDENTIFIER);
-    done(patternVariable, JavaElementType.PATTERN_VARIABLE);
-    done(pattern, JavaElementType.TYPE_TEST_PATTERN);
+    assert type != null; // guarded by isPattern
+    boolean isRecord = false;
+    if (builder.getTokenType() == JavaTokenType.LPARENTH) {
+      parseRecordStructurePattern(builder);
+      isRecord = true;
+    }
+
+    final boolean hasIdentifier;
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER) { // pattern variable after the record structure pattern
+      if (isRecord) {
+        PsiBuilder.Marker variable = builder.mark();
+        builder.advanceLexer();
+        variable.done(JavaElementType.DECONSTRUCTION_PATTERN_VARIABLE);
+      } else {
+        builder.advanceLexer();
+      }
+      hasIdentifier = true;
+    } else {
+      hasIdentifier = false;
+    }
+
+    if (isRecord) {
+      patternVariable.drop();
+      done(pattern, JavaElementType.DECONSTRUCTION_PATTERN);
+    }
+    else {
+      assert hasIdentifier;// guarded by isPattern
+      done(patternVariable, JavaElementType.PATTERN_VARIABLE);
+      done(pattern, JavaElementType.TYPE_TEST_PATTERN);
+    }
     return pattern;
   }
 }

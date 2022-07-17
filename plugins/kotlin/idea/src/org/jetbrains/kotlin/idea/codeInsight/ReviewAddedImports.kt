@@ -13,9 +13,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.ui.LightweightHint
 import com.intellij.util.ArrayUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -39,7 +41,7 @@ object ReviewAddedImports {
         if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.YES &&
             !imported.isEmpty()
         ) {
-            if (ApplicationManager.getApplication().isUnitTestMode) {
+            if (isUnitTestMode()) {
                 importsToBeReviewed = imported
                 removeImports(project, file, importsToBeDeleted)
                 return
@@ -63,10 +65,10 @@ object ReviewAddedImports {
 
     private fun showHint(
         editor: Editor,
-        info: String,
+        @Nls info: String,
         hyperlinkListener: HyperlinkListener
     ) {
-        if (ApplicationManager.getApplication().isUnitTestMode) return
+        if (isUnitTestMode()) return
         val hint = LightweightHint(HintUtil.createInformationLabel(info, hyperlinkListener, null, null))
         val flags = HintManager.HIDE_BY_ANY_KEY or HintManager.HIDE_BY_TEXT_CHANGE
         HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER, flags, 0, false)
@@ -91,7 +93,7 @@ object ReviewAddedImports {
     ) {
         if (importsToRemove.isEmpty()) return
 
-        WriteCommandAction.runWriteCommandAction(project, KotlinBundle.message("revert.applied.imports"), null, Runnable {
+        WriteCommandAction.runWriteCommandAction(project, KotlinBundle.message("revert.applied.imports.command"), null, Runnable {
             val newImports = file.importDirectives.mapNotNull {
                 val importedFqName = it.importedFqName ?: return@mapNotNull null
                 if (importsToRemove.contains(importedFqName.asString())) return@mapNotNull null

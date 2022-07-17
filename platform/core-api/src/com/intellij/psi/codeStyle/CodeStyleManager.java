@@ -202,6 +202,7 @@ public abstract class CodeStyleManager  {
   /**
    * Calculates the indent that should be used for the specified line in
    * the specified file.
+   * To get indents for several lines (or the whole file) use {@link #getLineIndents(PsiFile)}.
    *
    * @param file   the file for which the indent should be calculated.
    * @param offset the offset for the line at which the indent should be calculated.
@@ -210,6 +211,20 @@ public abstract class CodeStyleManager  {
    */
   @Nullable
   public abstract String getLineIndent(@NotNull PsiFile file, int offset);
+
+  /**
+   * Calculates the indent that should be used for all the lines in the specified file.
+   * Default implementation returns null to keep API backward compatibility.
+   * Client must take it into account.
+   *
+   * @param file   the file for which the indent should be calculated.
+   * @return the list of indent string (containing of tabs and/or whitespaces), or
+   *         {@code null} if method is not implemented.
+   */
+  @Nullable
+  public List<String> getLineIndents(@NotNull PsiFile file) {
+    return null;
+  }
 
   /**
    * Calculates the indent that should be used for the specified line in

@@ -11,6 +11,7 @@ import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,7 +162,49 @@ public class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspect
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
+        visitSwitchBlock(statement);
+      }
+
+      @Override
+      public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
+        visitSwitchBlock(expression);
+      }
+
+      private void visitSwitchBlock(PsiSwitchBlock block) {
+        PsiCodeBlock body = block.getBody();
+        if (body == null) return;
+        PsiExpression selector = block.getExpression();
+        if (selector == null || !TypeUtils.isJavaLangString(selector.getType())) return;
+        // Matching of constant selector against constant labels is processed by Constant Conditions & Exceptions
+        if (PsiUtil.isConstantExpression(selector)) return;
+        StringCase selectorCase = fromExpression(selector, ANALYSIS_COMPLEXITY);
+        if (selectorCase.myHasUpper != ThreeState.NO && selectorCase.myHasLower != ThreeState.NO) return;
+        for (PsiStatement statement : body.getStatements()) {
+          if (statement instanceof PsiSwitchLabelStatementBase) {
+            PsiCaseLabelElementList labels = ((PsiSwitchLabelStatementBase)statement).getCaseLabelElementList();
+            if (labels != null) {
+              for (PsiCaseLabelElement label : labels.getElements()) {
+                if (label instanceof PsiExpression) {
+                  StringCase labelCase = fromExpression((PsiExpression)label, ANALYSIS_COMPLEXITY);
+                  String errorMessage;
+                  if (selectorCase.myHasLower == ThreeState.NO && labelCase.myHasLower == ThreeState.YES) {
+                    errorMessage = InspectionGadgetsBundle.message("inspection.case.mismatch.message.label.is.lower");
+                  } else if (selectorCase.myHasUpper == ThreeState.NO && labelCase.myHasUpper == ThreeState.YES) {
+                    errorMessage = InspectionGadgetsBundle.message("inspection.case.mismatch.message.label.is.upper");
+                  } else {
+                    continue;
+                  }
+                  holder.registerProblem(label, errorMessage);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      @Override
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!STRING_COMPARISON_METHODS.test(call)) return;
         PsiExpression arg = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
         PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();

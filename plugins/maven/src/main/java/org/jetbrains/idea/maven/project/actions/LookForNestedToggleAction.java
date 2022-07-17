@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,5 +28,10 @@ public class LookForNestedToggleAction extends ToggleAction {
 
   public static void setSelected(boolean state) {
     PropertiesComponent.getInstance().setValue(CONFIG_LOOK_FOR_NESTED, state);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

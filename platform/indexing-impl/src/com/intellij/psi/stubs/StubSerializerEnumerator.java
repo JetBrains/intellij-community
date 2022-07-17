@@ -37,7 +37,7 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
 
   private final Int2ObjectMap<String> myIdToName = new Int2ObjectOpenHashMap<>();
   private final Object2IntMap<String> myNameToId = new Object2IntOpenHashMap<>();
-  private final Map<String, Supplier<ObjectStubSerializer<?, ? extends Stub>>> myNameToLazySerializer = CollectionFactory.createSmallMemoryFootprintMap();
+  private final Map<String, Supplier<? extends ObjectStubSerializer<?, ? extends Stub>>> myNameToLazySerializer = CollectionFactory.createSmallMemoryFootprintMap();
 
   private final ConcurrentIntObjectMap<ObjectStubSerializer<?, ? extends Stub>> myIdToSerializer =
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
@@ -81,8 +81,8 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
     return idValue;
   }
 
-  void assignId(@NotNull Supplier<ObjectStubSerializer<?, ? extends Stub>> serializer, String name) throws IOException {
-    Supplier<ObjectStubSerializer<?, ? extends Stub>> old = myNameToLazySerializer.put(name, serializer);
+  void assignId(@NotNull Supplier<? extends ObjectStubSerializer<?, ? extends Stub>> serializer, String name) throws IOException {
+    Supplier<? extends ObjectStubSerializer<?, ? extends Stub>> old = myNameToLazySerializer.put(name, serializer);
     if (old != null) {
       ObjectStubSerializer<?, ? extends Stub> existing = old.get();
       ObjectStubSerializer<?, ? extends Stub> computed = serializer.get();
@@ -133,7 +133,7 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
   private @NotNull ObjectStubSerializer<?, ? extends Stub> instantiateSerializer(int id,
                                                                                  @NotNull MissingSerializerReporter reporter) throws SerializerNotFoundException {
     String name = myIdToName.get(id);
-    Supplier<ObjectStubSerializer<?, ? extends Stub>> lazy = name == null ? null : myNameToLazySerializer.get(name);
+    Supplier<? extends ObjectStubSerializer<?, ? extends Stub>> lazy = name == null ? null : myNameToLazySerializer.get(name);
     ObjectStubSerializer<?, ? extends Stub> serializer = lazy == null ? null : lazy.get();
     if (serializer == null) {
       throw reportMissingSerializer(id, name, reporter);

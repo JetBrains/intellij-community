@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.table;
 import com.google.common.primitives.Ints;
 import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -14,7 +15,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ValueKey;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -89,6 +89,17 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private static final Color HOVERED_BACKGROUND = JBColor.namedColor("VersionControl.Log.Commit.hoveredBackground",
                                                                      DEFAULT_HOVERED_BACKGROUND);
 
+  private static final Color SELECTION_BACKGROUND = JBColor.namedColor("VersionControl.Log.Commit.selectionBackground",
+                                                                       UIUtil.getListSelectionBackground(true));
+
+  private static final Color SELECTION_BACKGROUND_INACTIVE = JBColor.namedColor("VersionControl.Log.Commit.selectionInactiveBackground",
+                                                                                UIUtil.getListSelectionBackground(false));
+
+  private static final Color SELECTION_FOREGROUND = JBColor.namedColor("VersionControl.Log.Commit.selectionForeground",
+                                                                       UIUtil.getListSelectionForeground(true));
+
+  private static final Color SELECTION_FOREGROUND_INACTIVE = JBColor.namedColor("VersionControl.Log.Commit.selectionInactiveForeground",
+                                                                                UIUtil.getListSelectionForeground(false));
   @NotNull private final VcsLogData myLogData;
   @NotNull private final String myId;
   @NotNull private final VcsLogUiProperties myProperties;
@@ -150,12 +161,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     getColumnModel().setColumnSelectionAllowed(false);
 
     ScrollingUtil.installActions(this, false);
-    new IndexSpeedSearch(myLogData.getProject(), myLogData.getIndex(), this) {
-      @Override
-      protected boolean isSpeedSearchEnabled() {
-        return VcsLogGraphTable.this.isSpeedSearchEnabled() && super.isSpeedSearchEnabled();
-      }
-    };
   }
 
   public @NotNull @NonNls String getId() {
@@ -172,10 +177,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
   }
 
-  protected boolean isSpeedSearchEnabled() {
-    return Registry.is("vcs.log.speedsearch");
-  }
-
   protected void updateEmptyText() {
     getEmptyText().setText(VcsLogBundle.message("vcs.log.default.status"));
   }
@@ -183,7 +184,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   protected void setErrorEmptyText(@NotNull Throwable error, @NlsContexts.StatusText @NotNull String defaultText) {
     String message = ObjectUtils.chooseNotNull(error.getLocalizedMessage(), defaultText);
     String shortenedMessage = StringUtil.shortenTextWithEllipsis(message, 150, 0, true);
-    //noinspection HardCodedStringLiteral
     getEmptyText().setText(shortenedMessage.replace('\n', ' '));
   }
 
@@ -237,20 +237,24 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     LOG.debug("Incorrect column order was saved in properties " + columnOrder + ", replacing it with default order.");
-    updateOrder(myProperties, ContainerUtil.map(getVisibleColumns(), it ->
-      VcsLogColumnManager.getInstance().getColumn(it)
-    ));
+    updateOrder(myProperties, getVisibleColumns());
     return null;
   }
 
   @NotNull
-  private List<Integer> getVisibleColumns() {
+  private List<Integer> getVisibleColumnIndices() {
     List<Integer> columnOrder = new ArrayList<>();
 
     for (int i = 0; i < getVisibleColumnCount(); i++) {
       columnOrder.add(getColumnModel().getColumn(i).getModelIndex());
     }
     return columnOrder;
+  }
+
+  @NotNull
+  public List<VcsLogColumn<?>> getVisibleColumns() {
+    return ContainerUtil.map2List(getVisibleColumnIndices(),
+                                  columnModelIndex -> VcsLogColumnManager.getInstance().getColumn(columnModelIndex));
   }
 
   private int getVisibleColumnCount() {
@@ -288,7 +292,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   private void resetColumnWidth(@NotNull VcsLogColumn<?> column) {
-    VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.COLUMN_RESET, null, myLogData.getProject());
+    VcsLogUsageTriggerCollector.triggerColumnReset(myLogData.getProject());
     if (VcsLogColumnUtilKt.getWidth(column, myProperties) != -1) {
       setWidth(column, myProperties, -1);
     }
@@ -534,7 +538,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public void performCopy(@NotNull DataContext dataContext) {
     StringBuilder sb = new StringBuilder();
 
-    List<Integer> visibleColumns = getVisibleColumns();
+    List<Integer> visibleColumns = getVisibleColumnIndices();
     int[] selectedRows = getSelectedRows();
     for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
       int row = selectedRows[i];
@@ -550,6 +554,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     CopyPasteManager.getInstance().setContents(new StringSelection(sb.toString()));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
@@ -620,7 +629,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     int commitId = rowInfo.getCommit();
     VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(commitId);
     if (details != null) {
-      List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(commitId, details, selected));
+      int columnModelIndex = convertColumnIndexToModel(column);
+      List<VcsCommitStyle> styles =
+        ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(commitId, details, columnModelIndex, selected));
       style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
     }
 
@@ -770,8 +781,19 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @NotNull
     public VcsCommitStyle getBaseStyle(int row, int column, boolean hasFocus, boolean selected) {
       Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(myTable, "", selected, hasFocus, row, column);
-      Color background = selected ? UIUtil.getListSelectionBackground(myTable.hasFocus()) : UIUtil.getListBackground();
+      Color background = selected ? getSelectionBackground(myTable.hasFocus()) : getBackground();
+
       return createStyle(dummyRendererComponent.getForeground(), background, VcsLogHighlighter.TextStyle.NORMAL);
+    }
+
+    @NotNull
+    private static Color getBackground() {
+      return ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.ToolWindow.background() : UIUtil.getListBackground();
+    }
+
+    @NotNull
+    private static Color getSelectionBackground(boolean hasFocus) {
+      return hasFocus ? SELECTION_BACKGROUND : SELECTION_BACKGROUND_INACTIVE;
     }
   }
 
@@ -1047,5 +1069,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       myInitializedColumns.remove(column);
       onColumnOrderSettingChanged();
     }
+  }
+
+  @NotNull
+  public static Color getSelectionForeground(boolean hasFocus) {
+    return hasFocus ? SELECTION_FOREGROUND : SELECTION_FOREGROUND_INACTIVE;
   }
 }

@@ -78,14 +78,17 @@ class A {
         s.regionMatches(0, "st", 1, 2);
         s.replaceAll("\\w+", "---")
                 .replaceFirst("([s-t])", "A$1");
-        /* TODO
-        s.matches("\\w+");
         useSplit(s.split("\\s+"));
         useSplit(s.split("\\s+", 0));
         useSplit(s.split("\\s+", -1));
         useSplit(s.split("\\s+", 2));
+        String pattern = "\\s+";
+        useSplit(s.split(pattern));
         int limit = 5;
         useSplit(s.split("\\s+", limit));
+        useSplit(s.split("\\s+", (limit + 5)));
+        /* TODO
+        s.matches("\\w+");
         */
         s.trim();
         s.concat(" another");

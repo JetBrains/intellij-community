@@ -19,7 +19,7 @@ class Client {
         try {
             a.acting(s);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     });
   }

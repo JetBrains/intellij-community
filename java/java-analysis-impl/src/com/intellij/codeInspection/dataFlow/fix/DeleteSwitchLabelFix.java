@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.fix;
 
+import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.editor.Editor;
@@ -25,11 +27,13 @@ import java.util.Objects;
 
 public class DeleteSwitchLabelFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final String myName;
+  private final boolean myAddDefaultIfNecessary;
   private final boolean myBranch;
 
-  public DeleteSwitchLabelFix(@NotNull PsiCaseLabelElement label) {
+  public DeleteSwitchLabelFix(@NotNull PsiCaseLabelElement label, boolean addDefaultIfNecessary) {
     super(label);
     myName = label.getText();
+    myAddDefaultIfNecessary = addDefaultIfNecessary;
     PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
     PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
     boolean multiple = labelElementList != null && labelElementList.getElementCount() > 1;
@@ -69,7 +73,17 @@ public class DeleteSwitchLabelFix extends LocalQuickFixAndIntentionActionOnPsiEl
                      @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     PsiCaseLabelElement labelElement = ObjectUtils.tryCast(startElement, PsiCaseLabelElement.class);
     if (labelElement == null) return;
+    PsiSwitchLabelStatementBase label = PsiImplUtil.getSwitchLabel(labelElement);
+    if (label == null) return;
+    PsiSwitchBlock block = label.getEnclosingSwitchBlock();
+    if (block == null) return;
     deleteLabelElement(labelElement);
+    if (myAddDefaultIfNecessary) {
+      IntentionAction addDefaultFix = SwitchBlockHighlightingModel.createAddDefaultFixIfNecessary(block);
+      if (addDefaultFix != null) {
+        addDefaultFix.invoke(project, editor, file);
+      }
+    }
   }
 
   public static void deleteLabelElement(@NotNull PsiCaseLabelElement labelElement) {

@@ -438,6 +438,31 @@ public class PyMoveTest extends PyTestCase {
     doMoveSymbolTest("func", "dst.py");
   }
 
+  // PY-16221
+  public void testFromFutureImports() {
+    doMoveSymbolTest("C", "b.py");
+  }
+
+  // PY-16221
+  public void testExistingFromFutureImportsNotDuplicated() {
+    doMoveSymbolTest("C", "b.py");
+  }
+
+  // PY-23831
+  public void testWithImportedForwardReferencesInTypeHints() {
+    doMoveSymbolTest("test", "dst.py");
+  }
+
+  // PY-23831
+  public void testWithImportedFunctionTypeComments() {
+    doMoveSymbolTest("test", "dst.py");
+  }
+
+  // PY-23831
+  public void testWithImportedTypeComments() {
+    doMoveSymbolTest("test", "dst.py");
+  }
+
   private void doComparingDirectories(@NotNull Consumer<VirtualFile> testDirConsumer) {
     final String root = "/refactoring/move/" + getTestName(true);
     final String rootBefore = root + "/before/src";

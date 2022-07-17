@@ -1,20 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 
@@ -22,11 +20,6 @@ import java.util.HashSet;
  * @author dsl
  */
 public class ChangeSignatureTest extends ChangeSignatureBaseTest {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_15;
-  }
-
   private CommonCodeStyleSettings getJavaSettings() {
     return getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
   }
@@ -224,12 +217,26 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  public void testParamJavadoc4() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("a").withType(PsiType.BOOLEAN),
+    }, false);
+  }
+
   public void testParamJavadocRenamedReordered() {
     doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("a").withType(PsiType.BOOLEAN),
       ParameterInfoImpl.createNew().withName("c").withType(PsiType.BOOLEAN),
       ParameterInfoImpl.create(1).withName("b1").withType(PsiType.BOOLEAN),
     }, false);
+  }
+  
+  public void testReturnJavadocAdded() {
+    doTest("int", new ParameterInfoImpl[0], false);
+  }
+  
+  public void testReturnJavadocUnchanged() {
+    doTest("int", new ParameterInfoImpl[0], false);
   }
 
   public void testJavadocNoNewLineInserted() {
@@ -564,6 +571,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
   
+  public void testRecordComponentWithImportToBeAdded() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(-1).withName("y").withType(myFactory.createTypeFromText("java.util.List<java.lang.String>", method))
+      };
+    }, false);
+  }
+  
   public void testRecordCanonicalConstructorMissingHeader() {
     doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
@@ -581,6 +596,38 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testAddReturnAnnotation() {
     doTest(null, null, "@org.jetbrains.annotations.NotNull java.lang.String", method -> new ParameterInfoImpl[0], false);
+  }
+
+  public void testMultilineJavadoc() { // IDEA-281568
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withType(PsiType.INT).withName("b"),
+      ParameterInfoImpl.create(0).withType(PsiType.INT).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiType.INT).withName("c"),
+    }, false);
+  }
+
+  public void testMultilineJavadocWithoutFormatting() { // IDEA-281568
+    JavaCodeStyleSettings.getInstance(getProject()).ENABLE_JAVADOC_FORMATTING = false;
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withType(PsiType.INT).withName("b"),
+      ParameterInfoImpl.create(0).withType(PsiType.INT).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiType.INT).withName("c"),
+    }, false);
+  }
+
+  public void testJavadocNotBrokenAfterDelete() { // IDEA-139879
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withType(PsiType.INT).withName("i1")
+    }, false);
+  }
+
+  public void testNoGapsInParameterTags() { // IDEA-139879
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withType(PsiType.INT).withName("b"),
+      ParameterInfoImpl.create(1).withType(PsiType.LONG).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiType.BOOLEAN).withName("c"),
+      ParameterInfoImpl.createNew().withType(PsiType.SHORT).withName("d"),
+    }, false);
   }
 
   /* workers */

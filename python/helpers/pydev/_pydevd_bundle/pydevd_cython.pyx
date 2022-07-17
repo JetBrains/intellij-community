@@ -13,7 +13,7 @@ pydev_log.debug("Using Cython speedups")
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 32
+version = 35
 
 if not hasattr(sys, '_current_frames'):
 
@@ -840,7 +840,7 @@ cdef class PyDBFrame:
                 context_end_line = info.pydev_smart_step_context.end_line
                 is_within_context = context_start_line <= line <= context_end_line
 
-                if not is_return and info.pydev_state != STATE_SUSPEND and breakpoints_for_file is not None and line in breakpoints_for_file:
+                if not is_return and info.pydev_state != STATE_SUSPEND and breakpoints_for_file is not None and line in breakpoints_for_file and not is_exception_event:
                     breakpoint = breakpoints_for_file[line]
                     new_frame = frame
                     stop = True
@@ -1140,7 +1140,7 @@ from os.path import basename, splitext
 from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
 from _pydevd_bundle.pydevd_collect_try_except_info import collect_try_except_info
 
-threadingCurrentThread = threading.currentThread
+threadingCurrentThread = threading.current_thread
 get_file_type = DONT_TRACE.get
 
 # Note: this is different from pydevd_constants.thread_get_ident because we want Jython
@@ -1210,7 +1210,7 @@ def fix_top_level_trace_and_get_trace_func(py_db, frame):
                 return None, False
 
             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):
-                # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
+                # Note: be careful not to use threading.current_thread to avoid creating a dummy thread.
                 t = f_unhandled.f_locals.get('self')
                 force_only_unhandled_tracer = True
                 if t is not None and isinstance(t, threading.Thread):

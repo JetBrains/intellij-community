@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.github
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.impl.isTrusted
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
@@ -67,9 +69,13 @@ import javax.swing.JPanel
 class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.action"),
                                           GithubBundle.messagePointer("share.action.description"),
                                           AllIcons.Vcs.Vendors.Github) {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
-    e.presentation.isEnabledAndVisible = project != null && !project.isDefault
+    e.presentation.isEnabledAndVisible = project != null && !project.isDefault && project.isTrusted()
   }
 
   // get gitRepository
@@ -233,7 +239,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
                                                  root: VirtualFile,
                                                  repository: GitRepository,
                                                  indicator: ProgressIndicator,
-                                                 @NlsSafe name: String,
+                                                 name: @NlsSafe String,
                                                  url: String): Boolean {
           // check if there is no commits
           if (!repository.isFresh) {
@@ -360,7 +366,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
       init()
     }
 
-    override fun createCenterPanel(): JComponent? {
+    override fun createCenterPanel(): JComponent {
       val mainText = JBLabel(if (remotes.size == 1) GithubBundle.message("share.action.remote.is.on.github")
                              else GithubBundle.message("share.action.remotes.are.on.github"))
 
@@ -406,7 +412,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
       return null
     }
 
-    override fun createCenterPanel(): JComponent? {
+    override fun createCenterPanel(): JComponent {
       val tree = super.createCenterPanel()
 
       val commitMessage = CommitMessage(myProject)
@@ -430,7 +436,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
       else null
     }
 
-    override fun getDimensionServiceKey(): String? {
+    override fun getDimensionServiceKey(): String {
       return "Github.UntrackedFilesDialog"
     }
   }

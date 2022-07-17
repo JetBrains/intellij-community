@@ -1,5 +1,5 @@
 // CHOOSE_NULLABLE_TYPE_IF_EXISTS
-// WITH_RUNTIME
+// WITH_STDLIB
 interface Base {
     val nullable: String?
 }

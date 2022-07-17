@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import Any, Callable, Mapping, Match, Pattern, Sequence, Tuple
+from typing import Any, Callable, Mapping, Match, Pattern, Sequence
 
 from .rfc7230 import OBS_TEXT as OBS_TEXT, VCHAR as VCHAR
 
@@ -21,14 +21,14 @@ months: Sequence[str]
 monmap: Mapping[str, int]
 months_reg: str
 rfc822_date: str
-rfc822_reg: Pattern
+rfc822_reg: Pattern[Any]
 
-def unpack_rfc822(m: Match) -> Tuple[int, int, int, int, int, int, int, int, int]: ...
+def unpack_rfc822(m: Match[Any]) -> tuple[int, int, int, int, int, int, int, int, int]: ...
 
 rfc850_date: str
-rfc850_reg: Pattern
+rfc850_reg: Pattern[Any]
 
-def unpack_rfc850(m: Match) -> Tuple[int, int, int, int, int, int, int, int, int]: ...
+def unpack_rfc850(m: Match[Any]) -> tuple[int, int, int, int, int, int, int, int, int]: ...
 
 weekdayname: Sequence[str]
 monthname: Sequence[str]
@@ -41,8 +41,8 @@ obs_text_re: str
 qdtext_re: str
 quoted_pair_re: str
 quoted_string_re: str
-quoted_string: Pattern
-quoted_pair: Pattern
+quoted_string: Pattern[Any]
+quoted_pair: Pattern[Any]
 
 def undquote(value: str) -> str: ...
 def cleanup_unix_socket(path: str) -> None: ...
@@ -52,8 +52,8 @@ class Error:
     reason: str = ...
     body: str = ...
     def __init__(self, body: str) -> None: ...
-    def to_response(self) -> Tuple[str, Sequence[Tuple[str, str]], str]: ...
-    def wsgi_response(self, environ: Any, start_response: Callable[[str, Sequence[Tuple[str, str]]], None]) -> str: ...
+    def to_response(self) -> tuple[str, Sequence[tuple[str, str]], str]: ...
+    def wsgi_response(self, environ: Any, start_response: Callable[[str, Sequence[tuple[str, str]]], None]) -> str: ...
 
 class BadRequest(Error):
     code: int = ...

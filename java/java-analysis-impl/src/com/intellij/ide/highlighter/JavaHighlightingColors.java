@@ -6,8 +6,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 
 /**
  * Highlighting text attributes for Java language.
- *
- * @author Rustam Vishnyakov
  */
 public final class JavaHighlightingColors {
   public static final TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey("JAVA_LINE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);

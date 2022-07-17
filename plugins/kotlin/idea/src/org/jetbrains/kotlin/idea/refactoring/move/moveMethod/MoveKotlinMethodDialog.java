@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.move.moveMethod;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeJavaClassChooserDialog;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -17,12 +18,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.asJava.LightClassUtilsKt;
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration;
-import org.jetbrains.kotlin.idea.KotlinBundle;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinFileType;
-import org.jetbrains.kotlin.idea.KotlinIconProviderBase;
+import org.jetbrains.kotlin.idea.KotlinIconProvider;
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider;
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester;
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator;
 import org.jetbrains.kotlin.idea.completion.CompletionUtilsKt;
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester;
-import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator;
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject;
 import org.jetbrains.kotlin.idea.core.completion.PackageLookupObject;
 import org.jetbrains.kotlin.idea.projectView.KtClassOrObjectTreeNode;
@@ -133,7 +135,7 @@ public class MoveKotlinMethodDialog extends RefactoringDialog {
     }
 
     private void initTargetVariableList() {
-        AbstractListModel<KtNamedDeclaration> listModel = new AbstractListModel<KtNamedDeclaration>() {
+        AbstractListModel<KtNamedDeclaration> listModel = new AbstractListModel<>() {
             @Override
             public int getSize() {
                 return variables.length;
@@ -159,11 +161,12 @@ public class MoveKotlinMethodDialog extends RefactoringDialog {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof KtNamedDeclaration) {
                     KtNamedDeclaration variable = (KtNamedDeclaration) value;
-                    setIcon(KotlinIconProviderBase.Companion.getBaseIcon(variable));
+                    setIcon(KotlinIconProvider.Companion.getBaseIcon(variable));
                     setText(variable.getName());
                     KotlinType type = MoveKotlinMethodProcessorKt.type(variable);
                     if (type != null) {
-                        setText(getText() + ": " + renderer.renderType(type));
+                        @NlsSafe String renderType = renderer.renderType(type);
+                        setText(getText() + ": " + renderType);
                     }
                 }
                 return this;
@@ -251,15 +254,20 @@ public class MoveKotlinMethodDialog extends RefactoringDialog {
     private void initParametersPanel() {
         if (thisClassesToMembers.isEmpty()) return;
         parametersPanel.setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
-        NewDeclarationNameValidator validator =
-                new NewDeclarationNameValidator((PsiElement) method, null, NewDeclarationNameValidator.Target.VARIABLES, new ArrayList<>());
+        Fe10KotlinNewDeclarationNameValidator validator = new Fe10KotlinNewDeclarationNameValidator(
+                (PsiElement) method,
+                null,
+                KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER,
+                new ArrayList<>()
+        );
 
         for (KtClass ktClass : thisClassesToMembers.keySet()) {
             KotlinType type = MoveKotlinMethodProcessorKt.defaultType(ktClass);
             if (type == null) continue;
-            String text = KotlinBundle.message("text.select.a.name.for.this.parameter", ktClass.getName());
+            @SuppressWarnings("DialogTitleCapitalization")
+            String text = KotlinBundle.message("title.select.a.name.for.this.parameter", ktClass.getName());
             parametersPanel.add(new TitledSeparator(text, null));
-            List<String> suggestedNames = KotlinNameSuggester.INSTANCE.suggestNamesByType(type, validator, null);
+            List<String> suggestedNames = Fe10KotlinNameSuggester.INSTANCE.suggestNamesByType(type, validator, null);
             String suggestedName = suggestedNames.isEmpty() ? "parameter" : suggestedNames.get(0);
             EditorTextField field = new EditorTextField(suggestedName, myProject, KotlinFileType.INSTANCE);
             oldClassParameterNameFields.put(ktClass, field);

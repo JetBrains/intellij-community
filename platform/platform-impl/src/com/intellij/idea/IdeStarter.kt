@@ -1,5 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
+
 package com.intellij.idea
 
 import com.intellij.diagnostic.LoadingState
@@ -9,14 +10,12 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.diagnostic.runChild
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
-import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.internal.inspector.UiInspectorAction
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.*
@@ -24,6 +23,7 @@ import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -32,183 +32,182 @@ import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.mac.touchbar.TouchbarSupport
+import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import com.intellij.util.ui.accessibility.ScreenReader
-import java.awt.EventQueue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.beans.PropertyChangeListener
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ForkJoinPool
 import javax.swing.JOptionPane
 
-open class IdeStarter : ApplicationStarter {
+open class IdeStarter : ModernApplicationStarter() {
   companion object {
     private var filesToLoad: List<Path> = Collections.emptyList()
-    private var wizardStepProvider: CustomizeIDEWizardStepsProvider? = null
+    private var uriToOpen: String? = null
 
+    @JvmStatic
     fun openFilesOnLoading(value: List<Path>) {
       filesToLoad = value
     }
 
-    fun setWizardStepsProvider(provider: CustomizeIDEWizardStepsProvider) {
-      wizardStepProvider = provider
+    @JvmStatic
+    fun openUriOnLoading(value: String) {
+      uriToOpen = value
     }
   }
 
-  override fun isHeadless() = false
+  override val isHeadless: Boolean
+    get() = false
 
-  override fun getCommandName(): String? = null
+  override val commandName: String?
+    get() = null
 
-  final override fun getRequiredModality() = ApplicationStarter.NOT_IN_EDT
-
-  override fun main(args: List<String>) {
+  override suspend fun start(args: List<String>) {
     val app = ApplicationManagerEx.getApplicationEx()
     assert(!app.isDispatchThread)
 
-    if (app.isLightEditMode && !app.isHeadlessEnvironment) {
-      // In a light mode UI is shown very quickly, tab layout requires ActionManager, but it is forbidden to init ActionManager in EDT,
-      // so, preload
-      ForkJoinPool.commonPool().execute {
-        ActionManager.getInstance()
+    coroutineScope {
+      if (app.isLightEditMode && !app.isHeadlessEnvironment) {
+        // In a light mode UI is shown very quickly, tab layout requires ActionManager, but it is forbidden to init ActionManager in EDT,
+        // so, preload
+        launch {
+          ActionManager.getInstance()
+        }
       }
-    }
 
-    val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
-    openProjectIfNeeded(args, app, lifecyclePublisher).thenRun {
-      reportPluginErrors()
+      val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
+      openProjectIfNeeded(args, app, lifecyclePublisher)
 
-      if (!app.isHeadlessEnvironment) {
-        postOpenUiTasks(app)
-      }
+      launch { reportPluginErrors() }
 
       StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
       lifecyclePublisher.appStarted()
 
-      if (!app.isHeadlessEnvironment && PluginManagerCore.isRunningFromSources()) {
-        AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+      if (!app.isHeadlessEnvironment) {
+        postOpenUiTasks(app)
       }
     }
   }
 
-  protected open fun openProjectIfNeeded(args: List<String>,
-                                         app: ApplicationEx,
-                                         lifecyclePublisher: AppLifecycleListener): CompletableFuture<*> {
+  @OptIn(IntellijInternalApi::class)
+  protected open suspend fun openProjectIfNeeded(args: List<String>,
+                                                 app: ApplicationEx,
+                                                 lifecyclePublisher: AppLifecycleListener) {
     val frameInitActivity = startActivity("frame initialization")
     frameInitActivity.runChild("app frame created callback") {
       lifecyclePublisher.appFrameCreated(args)
     }
 
-    // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
+    // must be after `AppLifecycleListener#appFrameCreated`, because some listeners can mutate the state of `RecentProjectsManager`
     if (app.isHeadlessEnvironment) {
       frameInitActivity.end()
-
       LifecycleUsageTriggerCollector.onIdeStart()
-      @Suppress("DEPRECATION")
-      lifecyclePublisher.appStarting(null)
-      return CompletableFuture.completedFuture(null)
+      return
     }
 
-    if (ApplicationManager.getApplication().isInternal) {
-      UiInspectorAction.initGlobalInspector()
+    if (app.isInternal) {
+      app.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        UiInspectorAction.initGlobalInspector()
+      }
     }
 
-    if (JetBrainsProtocolHandler.appStartedWithCommand()) {
-      val needToOpenProject = showWelcomeFrame(lifecyclePublisher, willOpenProject = false)
-      frameInitActivity.end()
+    app.coroutineScope.launch {
       LifecycleUsageTriggerCollector.onIdeStart()
-
-      val project = when {
-        !needToOpenProject -> null
-        !filesToLoad.isEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
-        !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
-        else -> null
-      }
-      @Suppress("DEPRECATION")
-      lifecyclePublisher.appStarting(project)
     }
-    else {
-      val recentProjectManager = RecentProjectsManager.getInstance()
-      val willReopenRecentProjectOnStart = recentProjectManager.willReopenProjectOnStart()
-      val willOpenProject = willReopenRecentProjectOnStart || !args.isEmpty() || !filesToLoad.isEmpty()
-      val needToOpenProject = showWelcomeFrame(lifecyclePublisher, willOpenProject)
+
+    if (uriToOpen != null || args.isNotEmpty() && args.first().contains(SCHEME_SEPARATOR)) {
       frameInitActivity.end()
-      ForkJoinPool.commonPool().execute {
-        LifecycleUsageTriggerCollector.onIdeStart()
-      }
+      processUriParameter(uriToOpen ?: args.first(), lifecyclePublisher)
+      return
+    }
 
-      if (!needToOpenProject) {
-        @Suppress("DEPRECATION")
-        lifecyclePublisher.appStarting(null)
-        return CompletableFuture.completedFuture(null)
-      }
+    val recentProjectManager = RecentProjectsManager.getInstance()
+    val willReopenRecentProjectOnStart = recentProjectManager.willReopenProjectOnStart()
+    val willOpenProject = willReopenRecentProjectOnStart || !args.isEmpty() || !filesToLoad.isEmpty()
+    val needToOpenProject = willOpenProject || showWelcomeFrame(lifecyclePublisher)
+    frameInitActivity.end()
 
-      val project = when {
-        !filesToLoad.isEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
-        !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
-        else -> null
-      }
-      @Suppress("DEPRECATION")
-      lifecyclePublisher.appStarting(project)
+    if (!needToOpenProject) {
+      return
+    }
 
-      if (project == null && willReopenRecentProjectOnStart) {
-        return recentProjectManager.reopenLastProjectsOnStart()
-          .thenAccept { isOpened ->
-            if (!isOpened) {
-              WelcomeFrame.showIfNoProjectOpened()
-            }
-          }
+    val project = when {
+      filesToLoad.isNotEmpty() -> ProjectUtil.openOrImportFilesAsync(filesToLoad, "IdeStarter")
+      args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
+      else -> null
+    }
+
+    when {
+      project != null -> {
+        return
+      }
+      willReopenRecentProjectOnStart -> {
+        if (!recentProjectManager.reopenLastProjectsOnStart()) {
+          WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
+        }
+      }
+      else -> {
+        WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
       }
     }
-    return CompletableFuture.completedFuture(null)
   }
 
-  private fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener, willOpenProject: Boolean): Boolean {
-    val doShowWelcomeFrame = if (willOpenProject) null else WelcomeFrame.prepareToShow()
-
-    if (doShowWelcomeFrame == null) return true
-
+  private fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
+    val showWelcomeFrameTask = WelcomeFrame.prepareToShow() ?: return true
     ApplicationManager.getApplication().invokeLater {
-      doShowWelcomeFrame.run()
+      showWelcomeFrameTask.run()
       lifecyclePublisher.welcomeScreenDisplayed()
     }
     return false
   }
 
+  private suspend fun processUriParameter(uri: String, lifecyclePublisher: AppLifecycleListener) {
+    val result = CommandLineProcessor.processProtocolCommand(uri)
+    if (result.exitCode == ProtocolHandler.PLEASE_QUIT) {
+      withContext(Dispatchers.EDT) {
+        ApplicationManagerEx.getApplicationEx().exit(false, true)
+      }
+    }
+    else if (result.exitCode != ProtocolHandler.PLEASE_NO_UI) {
+      WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
+    }
+  }
+
   internal class StandaloneLightEditStarter : IdeStarter() {
-    override fun openProjectIfNeeded(args: List<String>,
-                                     app: ApplicationEx,
-                                     lifecyclePublisher: AppLifecycleListener): CompletableFuture<*> {
+    override suspend fun openProjectIfNeeded(args: List<String>,
+                                             app: ApplicationEx,
+                                             lifecyclePublisher: AppLifecycleListener) {
       val project = when {
-        !filesToLoad.isEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
-        !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
+        filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
+        args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
         else -> null
       }
 
-      if (project != null || JetBrainsProtocolHandler.appStartedWithCommand()) {
-        return CompletableFuture.completedFuture(null)
+      if (project != null) {
+        return
       }
 
       val recentProjectManager = RecentProjectsManager.getInstance()
-      return (if (recentProjectManager.willReopenProjectOnStart()) recentProjectManager.reopenLastProjectsOnStart()
-      else CompletableFuture.completedFuture(true))
-        .thenAccept { isOpened ->
-          if (!isOpened) {
-            ApplicationManager.getApplication().invokeLater {
-              LightEditService.getInstance().showEditorWindow()
-            }
-          }
+      val isOpened = (if (recentProjectManager.willReopenProjectOnStart()) recentProjectManager.reopenLastProjectsOnStart() else true)
+      if (!isOpened) {
+        ApplicationManager.getApplication().invokeLater {
+          LightEditService.getInstance().showEditorWindow()
         }
+      }
     }
   }
 }
 
-private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
+private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
   val currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
   @Suppress("SSBasedInspection")
   Logger.getInstance("#com.intellij.idea.ApplicationLoader").info("ApplicationLoader.loadProject (cwd=${currentDirectory})")
   val result = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory)
   if (result.hasError) {
-    ApplicationManager.getApplication().invokeAndWait {
+    withContext(Dispatchers.EDT) {
       result.showErrorIfFailed()
       ApplicationManager.getApplication().exit(true, true, false)
     }
@@ -216,54 +215,62 @@ private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): P
   return result.project
 }
 
-private fun postOpenUiTasks(app: Application) {
-  if (SystemInfoRt.isMac) {
-    ForkJoinPool.commonPool().execute {
-      runActivity("mac touchbar on app init") {
-        TouchbarSupport.onApplicationLoaded()
-      }
+private suspend fun postOpenUiTasks(app: Application) {
+  coroutineScope {
+    if (PluginManagerCore.isRunningFromSources()) {
+      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
     }
-  }
-  else if (SystemInfoRt.isXWindow && SystemInfo.isJetBrainsJvm) {
-    ForkJoinPool.commonPool().execute {
-      runActivity("input method disabling on Linux") {
-        disableInputMethodsIfPossible()
-      }
-    }
-  }
 
-  invokeLaterWithAnyModality("system dock menu") {
-    SystemDock.updateMenu()
-  }
-  invokeLaterWithAnyModality("ScreenReader") {
-    val generalSettings = GeneralSettings.getInstance()
-    generalSettings.addPropertyChangeListener(GeneralSettings.PROP_SUPPORT_SCREEN_READERS, app, PropertyChangeListener { e ->
-      ScreenReader.setActive(e.newValue as Boolean)
-    })
-    ScreenReader.setActive(generalSettings.isSupportScreenReaders)
+    if (SystemInfoRt.isMac) {
+      launch {
+        runActivity("mac touchbar on app init") {
+          TouchbarSupport.onApplicationLoaded()
+        }
+      }
+    }
+    else if (SystemInfoRt.isXWindow && SystemInfo.isJetBrainsJvm) {
+      launch {
+        runActivity("input method disabling on Linux") {
+          disableInputMethodsIfPossible()
+        }
+      }
+    }
+
+    invokeLaterWithAnyModality("system dock menu") {
+      SystemDock.updateMenu()
+    }
+    invokeLaterWithAnyModality("ScreenReader") {
+      val generalSettings = GeneralSettings.getInstance()
+      generalSettings.addPropertyChangeListener(GeneralSettings.PROP_SUPPORT_SCREEN_READERS, app, PropertyChangeListener { e ->
+        ScreenReader.setActive(e.newValue as Boolean)
+      })
+      ScreenReader.setActive(generalSettings.isSupportScreenReaders)
+    }
   }
 }
 
-private fun invokeLaterWithAnyModality(name: String, task: () -> Unit) {
-  EventQueue.invokeLater {
+private suspend fun invokeLaterWithAnyModality(name: String, task: () -> Unit) {
+  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     runActivity(name, task = task)
   }
 }
 
-private fun reportPluginErrors() {
+private suspend fun reportPluginErrors() {
   val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors()
   if (pluginErrors.isEmpty()) {
     return
   }
 
-  ApplicationManager.getApplication().invokeLater({
+  withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
     val title = IdeBundle.message("title.plugin.error")
     val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
-    Notification(NotificationGroup.createIdWithTitle("Plugin Error", title), title, content, NotificationType.ERROR)
+    @Suppress("DEPRECATION")
+    NotificationGroupManager.getInstance().getNotificationGroup(
+      "Plugin Error").createNotification(title, content, NotificationType.ERROR)
       .setListener { notification, event ->
         notification.expire()
         PluginManagerMain.onEvent(event.description)
       }
       .notify(null)
-  }, ModalityState.NON_MODAL)
+  }
 }

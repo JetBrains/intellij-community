@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.project.Project
@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.ProjectFileOrDirOrigin
-import com.intellij.util.indexing.roots.kind.ProjectFileOrDirOriginImpl
+import com.intellij.util.indexing.roots.origin.ProjectFileOrDirOriginImpl
 
 class ProjectIndexableFilesIteratorImpl(private val fileOrDir: VirtualFile) : ProjectIndexableFilesIterator {
   override fun getDebugName(): String = "Files under `${fileOrDir.path}`"
@@ -28,4 +28,8 @@ class ProjectIndexableFilesIteratorImpl(private val fileOrDir: VirtualFile) : Pr
     fileIterator: ContentIterator,
     fileFilter: VirtualFileFilter
   ): Boolean = ProjectFileIndex.getInstance(project).iterateContentUnderDirectory(fileOrDir, fileIterator, fileFilter)
+
+  override fun getRootUrls(project: Project): Set<String> {
+    throw UnsupportedOperationException()
+  }
 }

@@ -1,0 +1,12 @@
+public final class TypeAliasConstructorReferenceKt {
+    @org.jetbrains.annotations.NotNull private static final var a: A = <init>("10")
+    @org.jetbrains.annotations.NotNull private static final var b: A = <init>("10")
+    @org.jetbrains.annotations.NotNull private static final var c: A = <init>("10")
+    public static final fun getA() : A = UastEmptyExpression
+    public static final fun getB() : A = UastEmptyExpression
+    public static final fun getC() : A = UastEmptyExpression
+}
+
+public final class A {
+    public fun A(@org.jetbrains.annotations.NotNull param: java.lang.String) = UastEmptyExpression
+}

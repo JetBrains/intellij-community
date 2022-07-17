@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -13,6 +14,12 @@ import javax.swing.*;
  * @author Vladislav.Soroka
  */
 public abstract class ExternalSystemTreeAction extends ExternalSystemAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   @Override
   protected boolean isEnabled(@NotNull AnActionEvent e) {
     return super.isEnabled(e) && getTree(e) != null;

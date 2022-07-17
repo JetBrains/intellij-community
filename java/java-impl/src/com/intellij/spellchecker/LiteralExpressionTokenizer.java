@@ -29,6 +29,8 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
     }
     else if (expression.isTextBlock()) {
       text = expression.getText();
+      if (text.length() < 7) return;
+      text = text.substring(3, text.length() - 3);
     }
     else {
       text = PsiLiteralUtil.getStringLiteralContent(expression);
@@ -70,11 +72,12 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
   }
 
   public static void processTextWithEscapeSequences(PsiLiteralExpression element, String text, TokenConsumer consumer) {
-    StringBuilder unescapedText = new StringBuilder();
+    StringBuilder unescapedText = new StringBuilder(text.length());
     int[] offsets = new int[text.length() + 1];
     CodeInsightUtilCore.parseStringCharacters(text, unescapedText, offsets);
 
-    processTextWithOffsets(element, consumer, unescapedText, offsets, 1);
+    int startOffset = (element != null && element.isTextBlock()) ? 3 : 1;
+    processTextWithOffsets(element, consumer, unescapedText, offsets, startOffset);
   }
 
   public static PsiElement getCompleteStringValueExpression(PsiExpression expression) {

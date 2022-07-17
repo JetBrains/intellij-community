@@ -16,6 +16,33 @@ import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.util.*;
 
+/**
+ * Represents nodes of the {@link InspectionTree}.
+ *
+ * <ul>
+ *   <li>Nodes for sorting:</li>
+ *     <ul>
+ *       <li>{@link InspectionRootNode}</li>
+ *       <li>{@link InspectionPackageNode}</li>
+ *       <li>{@link InspectionModuleNode}</li>
+ *       <li>{@link InspectionSeverityGroupNode}</li>
+ *       <li>{@link InspectionGroupNode} for <b>Editor | Inspections</b> categories</li>
+ *     </ul>
+ *   <li>Nodes for inspection tools:</li>
+ *     <ul>
+ *       <li> {@link InspectionNode}</li>
+ *     </ul>
+ *   <li>Nodes for problems:</li>
+ *     <ul>
+ *       <li>{@link SuppressableInspectionTreeNode}</li>
+ *       <ul>
+ *         <li>{@link RefElementNode} for the element concerned by the problem</li>
+ *         <li>{@link ProblemDescriptionNode} for the description of the problem</li>
+ *         <li>{@link com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptorNode}</li>
+ *       </ul>
+ *     </ul>
+ * </ul>
+ */
 public abstract class InspectionTreeNode implements TreeNode {
   private static final Interner<LevelAndCount[]> LEVEL_AND_COUNT_INTERNER = new WeakInterner<>(new HashingStrategy<>() {
     @Override
@@ -29,7 +56,7 @@ public abstract class InspectionTreeNode implements TreeNode {
     }
   });
 
-  protected final ProblemLevels myProblemLevels = new ProblemLevels();
+  final ProblemLevels myProblemLevels = new ProblemLevels();
   @Nullable
   volatile Children myChildren;
   final InspectionTreeNode myParent;
@@ -48,9 +75,6 @@ public abstract class InspectionTreeNode implements TreeNode {
   }
 
   LevelAndCount @NotNull [] getProblemLevels() {
-    if (!isProblemCountCacheValid()) {
-      dropProblemCountCaches();
-    }
     return myProblemLevels.getValue();
   }
 
@@ -60,10 +84,6 @@ public abstract class InspectionTreeNode implements TreeNode {
       current.myProblemLevels.drop();
       current = current.getParent();
     }
-  }
-
-  protected boolean isProblemCountCacheValid() {
-    return true;
   }
 
   protected void visitProblemSeverities(@NotNull Object2IntMap<HighlightDisplayLevel> counter) {
@@ -163,17 +183,13 @@ public abstract class InspectionTreeNode implements TreeNode {
   }
 
   @Override
-  public Enumeration children() {
+  public Enumeration<? extends TreeNode> children() {
     return Collections.enumeration(getChildren());
   }
 
   @Override
   public String toString() {
     return getPresentableText();
-  }
-
-  void uiRequested() {
-
   }
 
   static class Children {

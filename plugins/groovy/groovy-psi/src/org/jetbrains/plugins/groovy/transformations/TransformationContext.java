@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations;
 
 import com.intellij.openapi.project.Project;
@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.GrModifierConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.transformations.dsl.MemberBuilder;
@@ -40,7 +41,7 @@ public interface TransformationContext {
   Collection<PsiMethod> getMethods();
 
   @NotNull
-  Collection<GrField> getFields();
+  Collection<@NotNull GrField> getFields();
 
   @NotNull
   Collection<PsiField> getAllFields(boolean includeSynthetic);
@@ -92,6 +93,11 @@ public interface TransformationContext {
     addMethod(method, false);
   }
 
+  /**
+   * Adds method to the context class
+   * @param method the method to add
+   * @param prepend if true, adds method before others
+   */
   void addMethod(@NotNull PsiMethod method, boolean prepend);
 
   void addMethods(PsiMethod @NotNull [] methods);
@@ -113,6 +119,8 @@ public interface TransformationContext {
   void addInterface(@NotNull PsiClassType type);
 
   void addModifier(@NotNull GrModifierList modifierList, @GrModifierConstant @NotNull String modifier);
+
+  void addAnnotation(@NotNull GrAnnotation annotation);
 
   @NotNull
   MemberBuilder getMemberBuilder();

@@ -3,15 +3,17 @@
 
 package com.intellij.execution.target.value
 
-import com.intellij.execution.target.HostPort
-import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.TargetPlatform
+import com.intellij.execution.target.*
+import com.intellij.execution.target.local.LocalTargetEnvironment
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.function.Function
 import kotlin.io.path.name
 
@@ -25,8 +27,47 @@ import kotlin.io.path.name
  *  - the working directory;
  *  - the command-line parameters;
  *  - the values of environment variables.
+ *
+ *  It is recommended to subclass the default implementation [TraceableTargetEnvironmentFunction], see its documentation for rationale.
  */
 typealias TargetEnvironmentFunction<R> = Function<TargetEnvironment, R>
+
+/**
+ * Implementation of TraceableTargetEnvironmentFunction that holds the stack trace of its creation.
+ *
+ * Unless it's intended to create hundreds of such objects a second, prefer using this class as a base for [TargetEnvironmentFunction]
+ * to ease debugging in case of raised exceptions.
+ */
+@ApiStatus.Experimental
+abstract class TraceableTargetEnvironmentFunction<R> : TargetEnvironmentFunction<R> {
+  private val creationStack: Throwable = Throwable("Creation stack")
+
+  final override fun apply(t: TargetEnvironment): R =
+    try {
+      applyInner(t)
+    }
+    catch (err: Throwable) {
+      err.addSuppressed(creationStack)
+      throw err
+    }
+
+  abstract fun applyInner(t: TargetEnvironment): R
+
+  override fun <V> andThen(after: Function<in R, out V>): TraceableTargetEnvironmentFunction<V> =
+    TraceableTargetEnvironmentFunction { targetEnvironment ->
+      after.apply(apply(targetEnvironment))
+    }
+
+  companion object {
+    @JvmStatic
+    inline operator fun <R> invoke(
+      crossinline delegate: (targetEnvironment: TargetEnvironment) -> R,
+    ): TraceableTargetEnvironmentFunction<R> =
+      object : TraceableTargetEnvironmentFunction<R>() {
+        override fun applyInner(t: TargetEnvironment): R = delegate(t)
+      }
+  }
+}
 
 /**
  * This function is preferable to use over function literals in Kotlin
@@ -35,25 +76,65 @@ typealias TargetEnvironmentFunction<R> = Function<TargetEnvironment, R>
  * results in clear variable descriptions during debugging and better logging
  * abilities.
  */
-fun <T> constant(value: T): TargetEnvironmentFunction<T> = TargetEnvironmentFunction { value }
+fun <T> constant(value: T): TargetEnvironmentFunction<T> = Constant(value)
 
-fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: CharSequence): TargetEnvironmentFunction<String> =
-  JoinedStringTargetEnvironmentFunction(iterable = this, separator = separator)
+private class Constant<T>(private val value: T) : TraceableTargetEnvironmentFunction<T>() {
+  override fun toString(): String = "${javaClass.simpleName}($value)"
+  override fun applyInner(t: TargetEnvironment): T = value
+}
+
+@JvmOverloads
+fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: CharSequence,
+                                                                    transform: ((T) -> CharSequence)? = null): TargetEnvironmentFunction<String> =
+  JoinedStringTargetEnvironmentFunction(iterable = this, separator = separator, transform = transform)
 
 fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> {
-  val (uploadRoot, relativePath) = getUploadRootForLocalPath(localPath)
-                             ?: throw IllegalArgumentException("Local path \"$localPath\" is not registered within uploads in the request")
-  return TargetEnvironmentFunction { targetEnvironment ->
-    val volume = targetEnvironment.uploadVolumes[uploadRoot]
-                 ?: throw IllegalStateException("Upload root \"$uploadRoot\" is expected to be created in the target environment")
-    return@TargetEnvironmentFunction joinPaths(volume.targetRoot, relativePath, targetEnvironment.targetPlatform)
+  if (this is LocalTargetEnvironmentRequest) return constant(localPath)
+  return TraceableTargetEnvironmentFunction { targetEnvironment -> targetEnvironment.resolveLocalPath(localPath) }
+}
+
+fun getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> {
+  return TraceableTargetEnvironmentFunction { targetEnvironment ->
+    when (targetEnvironment) {
+      is LocalTargetEnvironment -> localPath
+      else -> targetEnvironment.resolveLocalPath(localPath)
+    }
   }
+}
+
+private fun TargetEnvironment.resolveLocalPath(localPath: String): String {
+  if (this is ExternallySynchronized) {
+    val pathForSynchronizedVolume = tryMapToSynchronizedVolume(localPath)
+    if (pathForSynchronizedVolume != null) return pathForSynchronizedVolume
+  }
+  val (uploadRoot, relativePath) = request.getUploadRootForLocalPath(localPath) ?: throw IllegalArgumentException(
+    "Local path \"$localPath\" is not registered within uploads in the request")
+  val volume = uploadVolumes[uploadRoot]
+               ?: throw IllegalStateException("Upload root \"$uploadRoot\" is expected to be created in the target environment")
+  return joinPaths(volume.targetRoot, relativePath, targetPlatform)
+}
+
+private fun ExternallySynchronized.tryMapToSynchronizedVolume(localPath: String): String? {
+  // TODO [targets] Does not look nice
+  this as TargetEnvironment
+  val targetFileSeparator = targetPlatform.platform.fileSeparator
+  val (volume, relativePath) = synchronizedVolumes.firstNotNullOfOrNull { volume ->
+    getRelativePathIfAncestor(ancestor = volume.localPath, file = localPath)?.let { relativePath ->
+      volume to if (File.separatorChar != targetFileSeparator) {
+        relativePath.replace(File.separatorChar, targetFileSeparator)
+      }
+      else {
+        relativePath
+      }
+    }
+  } ?: return null
+  return joinPaths(volume.targetPath, relativePath, targetPlatform)
 }
 
 fun TargetEnvironmentRequest.getUploadRootForLocalPath(localPath: String): Pair<TargetEnvironment.UploadRoot, String>? {
   val targetFileSeparator = targetPlatform.platform.fileSeparator
   return uploadVolumes.mapNotNull { uploadRoot ->
-    getRelativePathIfAncestor(ancestor = uploadRoot.localRootPath.toString(), file = localPath)?.let { relativePath ->
+    getRelativePathIfAncestor(ancestor = uploadRoot.localRootPath, file = localPath)?.let { relativePath ->
       uploadRoot to if (File.separatorChar != targetFileSeparator) {
         relativePath.replace(File.separatorChar, targetFileSeparator)
       }
@@ -64,47 +145,55 @@ fun TargetEnvironmentRequest.getUploadRootForLocalPath(localPath: String): Pair<
   }.firstOrNull()
 }
 
-private fun getRelativePathIfAncestor(ancestor: String, file: String): String? =
-  if (FileUtil.isAncestor(ancestor, file, false)) {
-    FileUtil.getRelativePath(ancestor, file, File.separatorChar)
+private fun getRelativePathIfAncestor(ancestor: Path, file: String): String? =
+  try {
+    ancestor.relativize(Paths.get(file)).takeIf { !it.startsWith("..") }?.toString()
   }
-  else {
+  catch (ignored: InvalidPathException) {
+    null
+  }
+  catch (ignored: IllegalArgumentException) {
+    // It should not happen, but some tests use relative paths, and they fail trying to call `Paths.get("\\").relativize(Paths.get("."))`
     null
   }
 
 private fun joinPaths(basePath: String, relativePath: String, targetPlatform: TargetPlatform): String {
+  if (relativePath == ".") {
+    return basePath
+  }
+
   val fileSeparator = targetPlatform.platform.fileSeparator.toString()
   return FileUtil.toSystemIndependentName("${basePath.removeSuffix(fileSeparator)}$fileSeparator$relativePath")
 }
 
 fun TargetEnvironment.UploadRoot.getTargetUploadPath(): TargetEnvironmentFunction<String> =
-  TargetEnvironmentFunction { targetEnvironment ->
+  TraceableTargetEnvironmentFunction { targetEnvironment ->
     val uploadRoot = this@getTargetUploadPath
     val uploadableVolume = targetEnvironment.uploadVolumes[uploadRoot]
                            ?: throw IllegalStateException("Upload root \"$uploadRoot\" cannot be found")
-    return@TargetEnvironmentFunction uploadableVolume.targetRoot
+    uploadableVolume.targetRoot
   }
 
 fun TargetEnvironmentFunction<String>.getRelativeTargetPath(targetRelativePath: String): TargetEnvironmentFunction<String> =
-  TargetEnvironmentFunction { targetEnvironment ->
+  TraceableTargetEnvironmentFunction { targetEnvironment ->
     val targetBasePath = this@getRelativeTargetPath.apply(targetEnvironment)
-    return@TargetEnvironmentFunction joinPaths(targetBasePath, targetRelativePath, targetEnvironment.targetPlatform)
+    joinPaths(targetBasePath, targetRelativePath, targetEnvironment.targetPlatform)
   }
 
 fun TargetEnvironment.DownloadRoot.getTargetDownloadPath(): TargetEnvironmentFunction<String> =
-  TargetEnvironmentFunction { targetEnvironment ->
+  TraceableTargetEnvironmentFunction { targetEnvironment ->
     val downloadRoot = this@getTargetDownloadPath
     val downloadableVolume = targetEnvironment.downloadVolumes[downloadRoot]
                              ?: throw IllegalStateException("Download root \"$downloadRoot\" cannot be found")
-    return@TargetEnvironmentFunction downloadableVolume.targetRoot
+    downloadableVolume.targetRoot
   }
 
 fun TargetEnvironment.LocalPortBinding.getTargetEnvironmentValue(): TargetEnvironmentFunction<HostPort> =
-  TargetEnvironmentFunction { targetEnvironment ->
+  TraceableTargetEnvironmentFunction { targetEnvironment ->
     val localPortBinding = this@getTargetEnvironmentValue
     val resolvedPortBinding = (targetEnvironment.localPortBindings[localPortBinding]
                                ?: throw IllegalStateException("Local port binding \"$localPortBinding\" cannot be found"))
-    return@TargetEnvironmentFunction resolvedPortBinding.targetEndpoint
+    resolvedPortBinding.targetEndpoint
   }
 
 @Throws(IOException::class)
@@ -117,10 +206,28 @@ fun TargetEnvironment.downloadFromTarget(localPath: Path, progressIndicator: Pro
 }
 
 private class JoinedStringTargetEnvironmentFunction<T>(private val iterable: Iterable<TargetEnvironmentFunction<T>>,
-                                                       private val separator: CharSequence) : TargetEnvironmentFunction<String> {
-  override fun apply(t: TargetEnvironment): String = iterable.map { it.apply(t) }.joinToString(separator = separator)
+                                                       private val separator: CharSequence,
+                                                       private val transform: ((T) -> CharSequence)?)
+  : TraceableTargetEnvironmentFunction<String>() {
+  override fun applyInner(t: TargetEnvironment): String = iterable.map { it.apply(t) }.joinToString(separator = separator,
+                                                                                                    transform = transform)
 
   override fun toString(): String {
-    return "JoinedStringTargetEnvironmentValue(iterable=$iterable, separator=$separator)"
+    return "JoinedStringTargetEnvironmentValue(iterable=$iterable, separator=$separator, transform=$transform)"
   }
 }
+
+private class ConcatTargetEnvironmentFunction(private val left: TargetEnvironmentFunction<String>,
+                                              private val right: TargetEnvironmentFunction<String>)
+  : TraceableTargetEnvironmentFunction<String>() {
+  override fun applyInner(t: TargetEnvironment): String = left.apply(t) + right.apply(t)
+
+  override fun toString(): String {
+    return "ConcatTargetEnvironmentFunction(left=$left, right=$right)"
+  }
+}
+
+operator fun TargetEnvironmentFunction<String>.plus(f: TargetEnvironmentFunction<String>): TargetEnvironmentFunction<String> =
+  ConcatTargetEnvironmentFunction(this, f)
+
+operator fun TargetEnvironmentFunction<String>.plus(str: String): TargetEnvironmentFunction<String> = this + constant(str)

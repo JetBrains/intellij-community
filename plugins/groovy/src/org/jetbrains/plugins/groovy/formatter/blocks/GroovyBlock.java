@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
@@ -26,7 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -54,6 +51,9 @@ public class GroovyBlock implements Block, ASTBlock {
 
   protected List<Block> mySubBlocks = null;
 
+  /**
+   * Consider using {@link FormattingContext#createBlock(ASTNode, Indent, Wrap)}
+   */
   public GroovyBlock(@NotNull final ASTNode node,
                      @NotNull final Indent indent,
                      @Nullable final Wrap wrap,
@@ -93,7 +93,7 @@ public class GroovyBlock implements Block, ASTBlock {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public Indent getIndent() {
     return myIndent;
   }
@@ -113,7 +113,6 @@ public class GroovyBlock implements Block, ASTBlock {
    *
    * @param child1 left element
    * @param child2 right element
-   * @return
    */
   @Override
   @Nullable
@@ -129,15 +128,11 @@ public class GroovyBlock implements Block, ASTBlock {
     if (psiParent instanceof GroovyFileBase) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
-    if (psiParent instanceof GrSwitchStatement) {
+    if (psiParent instanceof GrSwitchElement) {
       new ChildAttributes(Indent.getNoneIndent(), null);
     }
-
-    if (psiParent instanceof GrCaseLabel) {
-      return new ChildAttributes(GroovyIndentProcessor.getSwitchCaseIndent(getContext().getSettings()), null);
-    }
     if (psiParent instanceof GrCaseSection) {
-      return GroovyIndentProcessor.getChildSwitchIndent((GrCaseSection)psiParent, newChildIndex);
+      return new ChildAttributes(GroovyIndentProcessor.getSwitchCaseIndent(getContext().getSettings()), null);
     }
 
     if (astNode.getElementType() == LAMBDA_EXPRESSION) {
@@ -146,7 +141,7 @@ public class GroovyBlock implements Block, ASTBlock {
     if (astNode.getElementType() == BLOCK_LAMBDA_BODY) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
-    if (TokenSets.BLOCK_SET.contains(astNode.getElementType()) || GroovyElementTypes.SWITCH_STATEMENT.equals(astNode.getElementType())) {
+    if (TokenSets.BLOCK_SET.contains(astNode.getElementType()) || GroovyElementTypes.SWITCH_STATEMENT.equals(astNode.getElementType()) || GroovyElementTypes.SWITCH_EXPRESSION.equals(astNode.getElementType())) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     if (GroovyElementTypes.CASE_SECTION.equals(astNode.getElementType())) {

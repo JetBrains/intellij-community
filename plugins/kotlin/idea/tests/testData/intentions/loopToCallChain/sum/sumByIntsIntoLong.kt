@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'map{}.sum()'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().map{}.sum()'"
 fun foo(list: List<Int>): Long {

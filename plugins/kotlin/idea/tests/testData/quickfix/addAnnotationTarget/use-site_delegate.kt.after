@@ -1,5 +1,5 @@
 // "Add annotation target" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 @Target(AnnotationTarget.FIELD)
 annotation class DelegateAnn
 

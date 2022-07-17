@@ -50,7 +50,7 @@ public class UnqualifiedMethodAccessInspection extends BaseInspection implements
   private static class UnqualifiedMethodAccessVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       if (methodExpression.getQualifierExpression() != null) {

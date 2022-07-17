@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvi
 
   @Override
   public boolean acceptsTarget(@NotNull PsiElement target) {
-    return PropertyReferenceBase.isPropertyPsi(target);
+    return PropertyReferenceBase.isPropertyPsi(target) || target instanceof XmlTag;
   }
 
   @NotNull

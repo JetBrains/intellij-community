@@ -7,21 +7,21 @@ Reports String concatenation in loops.
   <code>StringBuffer.append()</code>.
 </p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   String str = "";
   for(int i=0; i&lt;10; i++) {
     str += i;
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   String str = "";
   StringBuilder strBuilder = new StringBuilder(str);
   for(int i = 0; i&lt;10; i++) {
     strBuilder.append(i);
   }
   str = strBuilder.toString();
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
   Sometimes, the quick-fixes allow you to convert a <code>String</code> variable to a <code>StringBuilder</code> or

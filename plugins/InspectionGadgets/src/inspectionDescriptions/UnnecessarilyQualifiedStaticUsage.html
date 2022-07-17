@@ -5,7 +5,7 @@ Reports usages of static members qualified with the class name.
   Such qualification is unnecessary and may be safely removed.
 </p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class Foo {
     static void foo() {}
     static int x;
@@ -17,9 +17,9 @@ Reports usages of static members qualified with the class name.
 
     static void baz() { Foo.foo(); }
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   class Foo {
     static void foo() {}
     static int x;
@@ -31,7 +31,7 @@ Reports usages of static members qualified with the class name.
 
     static void baz() { foo(); }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
   Use the inspection options to toggle the reporting for:

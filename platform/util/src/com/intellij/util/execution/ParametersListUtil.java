@@ -97,7 +97,7 @@ public final class ParametersListUtil {
    * </p>
    *
    * @param parameterString parameter string to split.
-   * @return array of parameters.
+   * @return list of parameters.
    */
   @NotNull
   public static List<String> parse(@NotNull String parameterString) {
@@ -192,7 +192,7 @@ public final class ParametersListUtil {
   public static @NotNull String escape(@NotNull CharSequence argument) {
     final StringBuilder builder = new StringBuilder(argument);
     StringUtil.escapeQuotes(builder);
-    if (builder.length() == 0 || StringUtil.indexOf(builder, ' ') >= 0 || StringUtil.indexOf(builder, '|') >= 0) {
+    if (builder.length() == 0 || StringUtil.containsWhitespaces(builder) || StringUtil.indexOf(builder, '|') >= 0) {
       // don't let a trailing backslash (if any) unintentionally escape the closing quote
       int numTrailingBackslashes = builder.length() - StringUtil.trimTrailing(builder, '\\').length();
       StringUtil.quote(builder);

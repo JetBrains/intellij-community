@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -6,13 +6,11 @@ import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
@@ -26,10 +24,7 @@ import org.jetbrains.annotations.*;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Various utility methods for working with {@link VirtualFile}.
@@ -598,8 +593,8 @@ public class VfsUtilCore {
       if (!SystemInfoRt.isWindows) uri = "/" + uri;
       file = VirtualFileManager.getInstance().findFileByUrl(StandardFileSystems.JAR_PROTOCOL_PREFIX + uri);
     }
-    else if (!SystemInfoRt.isWindows && StringUtil.startsWithChar(uri, '/') ||
-             SystemInfoRt.isWindows && uri.length() >= 2 && Character.isLetter(uri.charAt(0)) && uri.charAt(1) == ':') {
+    else if (SystemInfoRt.isUnix && uri.startsWith("/") ||
+             SystemInfoRt.isWindows && (OSAgnosticPathUtil.isAbsoluteDosPath(uri) || OSAgnosticPathUtil.isUncPath(uri))) {
       file = StandardFileSystems.local().findFileByPath(uri);
     }
 
@@ -611,16 +606,15 @@ public class VfsUtilCore {
     }
 
     if (file == null) {
-      if (base == null) {
-        return StandardFileSystems.local().findFileByPath(uri);
-      }
-      if (!base.isDirectory()) {
+      if (base != null && !base.isDirectory()) {
         base = base.getParent();
       }
       if (base == null) {
-        return StandardFileSystems.local().findFileByPath(uri);
+        file = StandardFileSystems.local().findFileByPath(uri);
       }
-      file = VirtualFileManager.getInstance().findFileByUrl(base.getUrl() + "/" + uri);
+      else {
+        file = VirtualFileManager.getInstance().findFileByUrl(base.getUrl() + '/' + uri);
+      }
     }
 
     return file;
@@ -702,6 +696,33 @@ public class VfsUtilCore {
     return components;
   }
 
+  /**
+   * Compares the virtual files by paths.
+   * This method is equivalent to {@code v1.getPath().compareTo(v2.getPath())} but more efficient, because
+   * it performs root traversal to avoid calling {@link VirtualFile#getPath()} which creates too many string objects.
+   */
+  public static int compareByPath(@Nullable VirtualFile v1, @Nullable VirtualFile v2) {
+    if (!Objects.equals(v1, v2)) {
+      if (v1 == null) {
+        return -1;
+      }
+
+      if (v2 == null) {
+        return 1;
+      }
+
+      VirtualFile[] parents1 = getPathComponents(v1);
+      VirtualFile[] parents2 = getPathComponents(v2);
+      for (int i = 0; i < Math.min(parents1.length, parents2.length); i++) {
+        if (!parents1[i].equals(parents2[i])) {
+          return parents1[i].getName().compareTo(parents2[i].getName());
+        }
+      }
+      return v1.getName().compareTo(v2.getName());
+    }
+    return 0;
+  }
+  
   public static boolean hasInvalidFiles(@NotNull Iterable<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
       if (!file.isValid()) {
@@ -762,10 +783,10 @@ public class VfsUtilCore {
   @ApiStatus.Experimental
   public static boolean isAncestorOrSelf(@NotNull @SystemIndependent String ancestorPath, @NotNull VirtualFile file) {
     ancestorPath = FileUtil.toCanonicalPath(ancestorPath);
-    List<VirtualFile> hierarchy = getHierarchy(file);
     if (ancestorPath.isEmpty()) {
       return true;
     }
+    List<VirtualFile> hierarchy = getHierarchy(file);
     int i = 0;
     boolean result = false;
     int j;
@@ -821,12 +842,15 @@ public class VfsUtilCore {
     return file;
   }
 
+  private static final NotNullLazyValue<VirtualFileSetFactory> VIRTUAL_FILE_SET_FACTORY =
+    NotNullLazyValue.lazy(VirtualFileSetFactory::getInstance);
+
   @NotNull
   public static VirtualFileSet createCompactVirtualFileSet() {
-    return new CompactVirtualFileSet();
+    return VIRTUAL_FILE_SET_FACTORY.getValue().createCompactVirtualFileSet();
   }
   @NotNull
   public static VirtualFileSet createCompactVirtualFileSet(@NotNull Collection<? extends VirtualFile> files) {
-    return new CompactVirtualFileSet(files);
+    return VIRTUAL_FILE_SET_FACTORY.getValue().createCompactVirtualFileSet(files);
   }
 }

@@ -466,9 +466,16 @@ public class PersistentMapTest extends PersistentMapTestBase {
       (file) -> IOUtil.openCleanOrResetBroken(
         () -> new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, throwingException), file);
 
-    runIteration(mapConstructorWithBrokenKeyDescriptor);
-    runIteration(mapConstructorWithBrokenValueDescriptor);
-
+    try {
+      runIteration(mapConstructorWithBrokenKeyDescriptor);
+    }
+    catch (AssertionError ignore) {
+    }
+    try {
+      runIteration(mapConstructorWithBrokenValueDescriptor);
+    }
+    catch (AssertionError ignore) {
+    }
     try {
       myMap.close();
       fail();

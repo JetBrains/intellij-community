@@ -7,7 +7,7 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.junit.Assert
 import kotlin.reflect.KMutableProperty0
 
@@ -42,7 +42,7 @@ abstract class AbstractKotlinTypeAliasByExpansionShortNameIndexTest : KotlinLigh
     private val regex = "\\(key=\"(.*?)\"[, ]*value=\"(.*?)\"\\)".toRegex()
 
     fun assertIndexContains(record: String) {
-        val index = KotlinTypeAliasByExpansionShortNameIndex.INSTANCE
+        val index = KotlinTypeAliasByExpansionShortNameIndex
         val (_, key, value) = regex.find(record)!!.groupValues
         val result = index.get(key, project, scope)
         if (value !in result.map { it.name }) {

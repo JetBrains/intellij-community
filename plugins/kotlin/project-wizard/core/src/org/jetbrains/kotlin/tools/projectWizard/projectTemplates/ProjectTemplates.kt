@@ -17,9 +17,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.*
-import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeAndroidTemplate
-import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeJvmDesktopTemplate
-import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeMppModuleTemplate
+import org.jetbrains.kotlin.tools.projectWizard.templates.compose.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.mpp.MobileMppTemplate
 
 abstract class ProjectTemplate : DisplayableSettingItem {
@@ -69,19 +67,18 @@ abstract class ProjectTemplate : DisplayableSettingItem {
         }
     }
 
-
     companion object {
         val ALL = listOf(
-            ConsoleApplicationProjectTemplate,
-            MultiplatformMobileApplicationProjectTemplate,
+            FullStackWebApplicationProjectTemplate,
             MultiplatformLibraryProjectTemplate,
             NativeApplicationProjectTemplate,
             FrontendApplicationProjectTemplate,
             ReactApplicationProjectTemplate,
-            FullStackWebApplicationProjectTemplate,
             NodeJsApplicationProjectTemplate,
             ComposeDesktopApplicationProjectTemplate,
             ComposeMultiplatformApplicationProjectTemplate,
+            ComposeWebApplicationProjectTemplate,
+            ConsoleApplicationProjectTemplateWithSample
         )
 
         fun byId(id: String): ProjectTemplate? = ALL.firstOrNull {
@@ -96,7 +93,7 @@ private infix fun <V : Any, T : SettingType<V>> PluginSettingReference<V, T>.wit
 private inline infix fun <V : Any, reified T : SettingType<V>> PluginSetting<V, T>.withValue(value: V): SettingWithValue<V, T> =
     SettingWithValue(reference, value)
 
-private fun createDefaultSourceSets() =
+fun createDefaultSourceSets() =
     SourcesetType.values().map { sourceSetType ->
         Sourceset(
             sourceSetType,
@@ -107,7 +104,8 @@ private fun createDefaultSourceSets() =
 private fun ModuleType.createDefaultTarget(name: String = this.name, permittedTemplateIds: Set<String>? = null) =
     MultiplatformTargetModule(name, defaultTarget, createDefaultSourceSets(), permittedTemplateIds)
 
-object ConsoleApplicationProjectTemplate : ProjectTemplate() {
+
+open class ConsoleApplicationProjectTemplate(private val addSampleCode: Boolean) : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.description")
     override val id = "consoleApplication"
@@ -124,11 +122,14 @@ object ConsoleApplicationProjectTemplate : ProjectTemplate() {
                     createDefaultSourceSets(),
                     permittedTemplateIds = setOf(ConsoleJvmApplicationTemplate.id)
                 ).apply {
-                    withTemplate(ConsoleJvmApplicationTemplate)
+                    if (addSampleCode)
+                        withTemplate(ConsoleJvmApplicationTemplate)
                 }
             )
         )
 }
+
+object ConsoleApplicationProjectTemplateWithSample : ConsoleApplicationProjectTemplate(addSampleCode = true)
 
 object MultiplatformLibraryProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.mpp.lib.title")
@@ -271,28 +272,6 @@ object ReactApplicationProjectTemplate : ProjectTemplate() {
         )
 }
 
-object MultiplatformMobileApplicationProjectTemplate : MultiplatformMobileApplicationProjectTemplateBase() {
-    override val id = "multiplatformMobileApplication"
-
-    override fun androidAppModule(shared: Module) = Module(
-        "androidApp",
-        AndroidSinglePlatformModuleConfigurator,
-        template = null,
-        sourceSets = createDefaultSourceSets(),
-        subModules = emptyList(),
-        dependencies = mutableListOf(ModuleReference.ByModule(shared))
-    )
-
-    override fun iosAppModule(shared: Module) = Module(
-        "iosApp",
-        IOSSinglePlatformModuleConfigurator,
-        template = null,
-        sourceSets = createDefaultSourceSets(),
-        subModules = emptyList(),
-        dependencies = mutableListOf(ModuleReference.ByModule(shared))
-    )
-}
-
 abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.mpp.mobile.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.mpp.mobile.description")
@@ -318,8 +297,9 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
                 },
                 Module(
                     "ios",
-                    RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.ios),
+                    sharedIosConfigurator,
                     null,
+                    permittedTemplateIds = emptySet(),
                     sourceSets = createDefaultSourceSets(),
                     subModules = emptyList()
                 )
@@ -332,6 +312,8 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
 
     protected abstract fun iosAppModule(shared: Module): Module
     protected abstract fun androidAppModule(shared: Module): Module
+
+    open val sharedIosConfigurator get() = RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.ios)
 }
 
 object NodeJsApplicationProjectTemplate : ProjectTemplate() {
@@ -419,7 +401,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                     Module(
                         "android",
                         AndroidTargetConfigurator,
-                        template = null,
+                        template = ComposeCommonAndroidTemplate(),
                         sourceSets = createDefaultSourceSets(),
                         subModules = emptyList()
                     ).withConfiguratorSettings<AndroidTargetConfigurator> {
@@ -429,7 +411,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                     Module(
                         "desktop",
                         JvmTargetConfigurator,
-                        template = null,
+                        template = ComposeCommonDesktopTemplate(),
                         sourceSets = createDefaultSourceSets(),
                         subModules = emptyList()
                     ).withConfiguratorSettings<JvmTargetConfigurator> {
@@ -451,7 +433,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
             +Module(
                 "desktop",
                 MppModuleConfigurator,
-                template = null,
+                template = ComposeCommonDesktopTemplate(),
                 sourceSets = createDefaultSourceSets(),
                 subModules = listOf(
                     Module(
@@ -469,4 +451,40 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
             )
             +common
         }
+}
+
+object ComposeWebApplicationProjectTemplate : ProjectTemplate() {
+    override val title = KotlinNewProjectWizardBundle.message("project.template.compose.web.title")
+    override val description = KotlinNewProjectWizardBundle.message("project.template.compose.web.description")
+    override val id = "composeWebApplication"
+
+    @NonNls
+    override val suggestedProjectName = "myComposeWebApplication"
+    override val projectKind = ProjectKind.COMPOSE
+
+    override val setsPluginSettings: List<SettingWithValue<*, *>>
+        get() = listOf(
+            GradlePlugin.gradleVersion withValue Versions.GRADLE_VERSION_FOR_COMPOSE,
+            StructurePlugin.version withValue "1.0",
+        )
+
+    override val setsModules: List<Module>
+        get() = listOf(
+            Module(
+                "web",
+                MppModuleConfigurator,
+                template = null,
+                sourceSets = createDefaultSourceSets(),
+                subModules = listOf(
+                    Module(
+                        "js",
+                        JsComposeMppConfigurator,
+                        template = ComposeWebModuleTemplate,
+                        permittedTemplateIds = setOf(ComposeWebModuleTemplate.id),
+                        sourceSets = createDefaultSourceSets(),
+                        subModules = emptyList()
+                    )
+                )
+            )
+        )
 }

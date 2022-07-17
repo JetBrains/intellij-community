@@ -1,4 +1,5 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Variable 'c' is never used
 
 fun <E> listOf(vararg elements: E): List<E> {
     val result = ArrayList<E>()

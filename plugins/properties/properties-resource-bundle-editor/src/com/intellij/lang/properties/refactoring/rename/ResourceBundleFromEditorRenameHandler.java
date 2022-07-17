@@ -6,7 +6,7 @@ import com.intellij.lang.properties.editor.*;
 import com.intellij.lang.properties.structureView.PropertiesPrefixGroup;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -35,7 +35,7 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
     if (bundle == null) {
       return false;
     }
-    final FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
+    final FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
     if (!(fileEditor instanceof ResourceBundleEditor)) {
       return false;
     }
@@ -45,7 +45,7 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
 
   @Override
   public void invoke(final @NotNull Project project, Editor editor, final PsiFile file, DataContext dataContext) {
-    final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)PlatformDataKeys.FILE_EDITOR.getData(dataContext);
+    final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
     assert resourceBundleEditor != null;
     final Object selectedElement = resourceBundleEditor.getSelectedElementIfOnlyOne();
     if (selectedElement != null) {

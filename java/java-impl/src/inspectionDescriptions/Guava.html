@@ -1,16 +1,16 @@
 <html>
 <body>
-Reports usages of Guava's functional primitives that can be replaced with Java API.
+Reports usages of Guava's functional primitives that can be migrated to standard Java API calls.
 <p>For example, the inspection reports usages of classes and interfaces like <code>FluentIterable</code>, <code>Optional</code>, <code>Function</code>,
   <code>Predicate</code>, or <code>Supplier</code>.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   ImmutableList&lt;String&gt; results = FluentIterable.from(List.of(1, 2, 3)).transform(Object::toString).toList();
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   List&lt;String&gt; results = List.of(1, 2, 3).stream().map(Object::toString).collect(Collectors.toList());
-</pre>
+</code></pre>
 <p>
 The quick-fix may change the semantics. Some lazy-evaluated Guava's iterables can be transformed to eager-evaluated.
 </p>

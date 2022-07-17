@@ -4,81 +4,109 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-import posixpath
-import shlex
-from mercurial.i18n import _
-from mercurial import util
-from common import SKIPREV, converter_source
+from __future__ import absolute_import, print_function
 
-def rpairs(name):
-    e = len(name)
-    while e != -1:
-        yield name[:e], name[e + 1:]
-        e = name.rfind('/', 0, e)
-    yield '.', name
+import posixpath
+
+from mercurial.i18n import _
+from mercurial import (
+    error,
+    pycompat,
+)
+from . import common
+
+SKIPREV = common.SKIPREV
+
+
+def rpairs(path):
+    """Yield tuples with path split at '/', starting with the full path.
+    No leading, trailing or double '/', please.
+    >>> for x in rpairs(b'foo/bar/baz'): print(x)
+    ('foo/bar/baz', '')
+    ('foo/bar', 'baz')
+    ('foo', 'bar/baz')
+    ('.', 'foo/bar/baz')
+    """
+    i = len(path)
+    while i != -1:
+        yield path[:i], path[i + 1 :]
+        i = path.rfind(b'/', 0, i)
+    yield b'.', path
+
 
 def normalize(path):
-    ''' We use posixpath.normpath to support cross-platform path format.
-    However, it doesn't handle None input. So we wrap it up. '''
+    """We use posixpath.normpath to support cross-platform path format.
+    However, it doesn't handle None input. So we wrap it up."""
     if path is None:
         return None
     return posixpath.normpath(path)
 
+
 class filemapper(object):
-    '''Map and filter filenames when importing.
+    """Map and filter filenames when importing.
     A name can be mapped to itself, a new name, or None (omit from new
-    repository).'''
+    repository)."""
 
     def __init__(self, ui, path=None):
         self.ui = ui
         self.include = {}
         self.exclude = {}
         self.rename = {}
+        self.targetprefixes = None
         if path:
             if self.parse(path):
-                raise util.Abort(_('errors in filemap'))
+                raise error.Abort(_(b'errors in filemap'))
 
     def parse(self, path):
         errs = 0
+
         def check(name, mapping, listname):
             if not name:
-                self.ui.warn(_('%s:%d: path to %s is missing\n') %
-                             (lex.infile, lex.lineno, listname))
+                self.ui.warn(
+                    _(b'%s:%d: path to %s is missing\n')
+                    % (lex.infile, lex.lineno, listname)
+                )
                 return 1
             if name in mapping:
-                self.ui.warn(_('%s:%d: %r already in %s list\n') %
-                             (lex.infile, lex.lineno, name, listname))
+                self.ui.warn(
+                    _(b'%s:%d: %r already in %s list\n')
+                    % (lex.infile, lex.lineno, name, listname)
+                )
                 return 1
-            if (name.startswith('/') or
-                name.endswith('/') or
-                '//' in name):
-                self.ui.warn(_('%s:%d: superfluous / in %s %r\n') %
-                             (lex.infile, lex.lineno, listname, name))
+            if name.startswith(b'/') or name.endswith(b'/') or b'//' in name:
+                self.ui.warn(
+                    _(b'%s:%d: superfluous / in %s %r\n')
+                    % (lex.infile, lex.lineno, listname, pycompat.bytestr(name))
+                )
                 return 1
             return 0
-        lex = shlex.shlex(open(path), path, True)
-        lex.wordchars += '!@#$%^&*()-=+[]{}|;:,./<>?'
+
+        lex = common.shlexer(
+            filepath=path, wordchars=b'!@#$%^&*()-=+[]{}|;:,./<>?'
+        )
         cmd = lex.get_token()
         while cmd:
-            if cmd == 'include':
+            if cmd == b'include':
                 name = normalize(lex.get_token())
-                errs += check(name, self.exclude, 'exclude')
+                errs += check(name, self.exclude, b'exclude')
                 self.include[name] = name
-            elif cmd == 'exclude':
+            elif cmd == b'exclude':
                 name = normalize(lex.get_token())
-                errs += check(name, self.include, 'include')
-                errs += check(name, self.rename, 'rename')
+                errs += check(name, self.include, b'include')
+                errs += check(name, self.rename, b'rename')
                 self.exclude[name] = name
-            elif cmd == 'rename':
+            elif cmd == b'rename':
                 src = normalize(lex.get_token())
                 dest = normalize(lex.get_token())
-                errs += check(src, self.exclude, 'exclude')
+                errs += check(src, self.exclude, b'exclude')
                 self.rename[src] = dest
-            elif cmd == 'source':
+            elif cmd == b'source':
                 errs += self.parse(normalize(lex.get_token()))
             else:
-                self.ui.warn(_('%s:%d: unknown directive %r\n') %
-                             (lex.infile, lex.lineno, cmd))
+                self.ui.warn(
+                    _(b'%s:%d: unknown directive %r\n')
+                    % (lex.infile, lex.lineno, pycompat.bytestr(cmd))
+                )
                 errs += 1
             cmd = lex.get_token()
         return errs
@@ -90,7 +118,31 @@ class filemapper(object):
                 return mapping[pre], pre, suf
             except KeyError:
                 pass
-        return '', name, ''
+        return b'', name, b''
+
+    def istargetfile(self, filename):
+        """Return true if the given target filename is covered as a destination
+        of the filemap. This is useful for identifying what parts of the target
+        repo belong to the source repo and what parts don't."""
+        if self.targetprefixes is None:
+            self.targetprefixes = set()
+            for before, after in pycompat.iteritems(self.rename):
+                self.targetprefixes.add(after)
+
+        # If "." is a target, then all target files are considered from the
+        # source.
+        if not self.targetprefixes or b'.' in self.targetprefixes:
+            return True
+
+        filename = normalize(filename)
+        for pre, suf in rpairs(filename):
+            # This check is imperfect since it doesn't account for the
+            # include/exclude list, but it should work in filemaps that don't
+            # apply include/exclude to the same source directories they are
+            # renaming.
+            if pre in self.targetprefixes:
+                return True
+        return False
 
     def __call__(self, name):
         if self.include:
@@ -100,22 +152,23 @@ class filemapper(object):
         if self.exclude:
             exc = self.lookup(name, self.exclude)[0]
         else:
-            exc = ''
+            exc = b''
         if (not self.include and exc) or (len(inc) <= len(exc)):
             return None
         newpre, pre, suf = self.lookup(name, self.rename)
         if newpre:
-            if newpre == '.':
+            if newpre == b'.':
                 return suf
             if suf:
-                if newpre.endswith('/'):
+                if newpre.endswith(b'/'):
                     return newpre + suf
-                return newpre + '/' + suf
+                return newpre + b'/' + suf
             return newpre
         return name
 
     def active(self):
         return bool(self.include or self.exclude or self.rename)
+
 
 # This class does two additional things compared to a regular source:
 #
@@ -131,9 +184,10 @@ class filemapper(object):
 #   touch files we're interested in, but also merges that merge two
 #   or more interesting revisions.
 
-class filemap_source(converter_source):
+
+class filemap_source(common.converter_source):
     def __init__(self, ui, baseconverter, filemap):
-        super(filemap_source, self).__init__(ui)
+        super(filemap_source, self).__init__(ui, baseconverter.repotype)
         self.base = baseconverter
         self.filemapper = filemapper(ui, filemap)
         self.commits = {}
@@ -148,6 +202,10 @@ class filemap_source(converter_source):
         self.origparents = {}
         self.children = {}
         self.seenchildren = {}
+        # experimental config: convert.ignoreancestorcheck
+        self.ignoreancestorcheck = self.ui.configbool(
+            b'convert', b'ignoreancestorcheck'
+        )
 
     def before(self):
         self.base.before()
@@ -195,12 +253,19 @@ class filemap_source(converter_source):
         self.seenchildren.clear()
         for rev, wanted, arg in self.convertedorder:
             if rev not in self.origparents:
-                self.origparents[rev] = self.getcommit(rev).parents
+                try:
+                    self.origparents[rev] = self.getcommit(rev).parents
+                except error.RepoLookupError:
+                    self.ui.debug(b"unknown revmap source: %s\n" % rev)
+                    continue
             if arg is not None:
                 self.children[arg] = self.children.get(arg, 0) + 1
 
         for rev, wanted, arg in self.convertedorder:
-            parents = self.origparents[rev]
+            try:
+                parents = self.origparents[rev]
+            except KeyError:
+                continue  # unknown revmap source
             if wanted:
                 self.mark_wanted(rev, parents)
             else:
@@ -220,6 +285,9 @@ class filemap_source(converter_source):
             self.children[p] = self.children.get(p, 0) + 1
         return c
 
+    def numcommits(self):
+        return self.base.numcommits()
+
     def _cachedcommit(self, rev):
         if rev in self.commits:
             return self.commits[rev]
@@ -231,8 +299,8 @@ class filemap_source(converter_source):
                 continue
             self.seenchildren[r] = self.seenchildren.get(r, 0) + 1
             if self.seenchildren[r] == self.children[r]:
-                del self.wantedancestors[r]
-                del self.parentmap[r]
+                self.wantedancestors.pop(r, None)
+                self.parentmap.pop(r, None)
                 del self.seenchildren[r]
                 if self._rebuilt:
                     del self.children[r]
@@ -248,11 +316,22 @@ class filemap_source(converter_source):
         try:
             files = self.base.getchangedfiles(rev, i)
         except NotImplementedError:
-            raise util.Abort(_("source repository doesn't support --filemap"))
+            raise error.Abort(_(b"source repository doesn't support --filemap"))
         for f in files:
             if self.filemapper(f):
                 return True
-        return False
+
+        # The include directive is documented to include nothing else (though
+        # valid branch closes are included).
+        if self.filemapper.include:
+            return False
+
+        # Allow empty commits in the source revision through.  The getchanges()
+        # method doesn't even bother calling this if it determines that the
+        # close marker is significant (i.e. all of the branch ancestors weren't
+        # eliminated).  Therefore if there *is* a close marker, getchanges()
+        # doesn't consider it significant, and this revision should be dropped.
+        return not files and b'close' not in self.commits[rev].extra
 
     def mark_not_wanted(self, rev, p):
         # Mark rev as not interesting and update data structures.
@@ -262,7 +341,7 @@ class filemap_source(converter_source):
             # map to any revision in the restricted graph.  Put SKIPREV
             # in the set of wanted ancestors to simplify code elsewhere
             self.parentmap[rev] = SKIPREV
-            self.wantedancestors[rev] = set((SKIPREV,))
+            self.wantedancestors[rev] = {SKIPREV}
             return
 
         # Reuse the data from our parent.
@@ -281,13 +360,18 @@ class filemap_source(converter_source):
         # of wanted ancestors of its parents. Plus rev itself.
         wrev = set()
         for p in parents:
-            wrev.update(self.wantedancestors[p])
+            if p in self.wantedancestors:
+                wrev.update(self.wantedancestors[p])
+            else:
+                self.ui.warn(
+                    _(b'warning: %s parent %s is missing\n') % (rev, p)
+                )
         wrev.add(rev)
         self.wantedancestors[rev] = wrev
 
-    def getchanges(self, rev):
+    def getchanges(self, rev, full):
         parents = self.commits[rev].parents
-        if len(parents) > 1:
+        if len(parents) > 1 and not self.ignoreancestorcheck:
             self.rebuild()
 
         # To decide whether we're interested in rev we:
@@ -313,9 +397,14 @@ class filemap_source(converter_source):
             mp1 = self.parentmap[p1]
             if mp1 == SKIPREV or mp1 in knownparents:
                 continue
-            isancestor = util.any(p2 for p2 in parents
-                                  if p1 != p2 and mp1 != self.parentmap[p2]
-                                  and mp1 in self.wantedancestors[p2])
+
+            isancestor = not self.ignoreancestorcheck and any(
+                p2
+                for p2 in parents
+                if p1 != p2
+                and mp1 != self.parentmap[p2]
+                and mp1 in self.wantedancestors[p2]
+            )
             if not isancestor and not hasbranchparent and len(parents) > 1:
                 # This could be expensive, avoid unnecessary calls.
                 if self._cachedcommit(p1).branch == branch:
@@ -336,7 +425,7 @@ class filemap_source(converter_source):
         self.origparents[rev] = parents
 
         closed = False
-        if 'close' in self.commits[rev].extra:
+        if b'close' in self.commits[rev].extra:
             # A branch closing revision is only useful if one of its
             # parents belong to the branch being closed
             pbranches = [self._cachedcommit(p).branch for p in mparents]
@@ -365,12 +454,15 @@ class filemap_source(converter_source):
         # Get the real changes and do the filtering/mapping. To be
         # able to get the files later on in getfile, we hide the
         # original filename in the rev part of the return value.
-        changes, copies = self.base.getchanges(rev)
+        changes, copies, cleanp2 = self.base.getchanges(rev, full)
         files = {}
+        ncleanp2 = set(cleanp2)
         for f, r in changes:
             newf = self.filemapper(f)
             if newf and (newf != f or newf not in files):
                 files[newf] = (f, r)
+                if newf != f:
+                    ncleanp2.discard(f)
         files = sorted(files.items())
 
         ncopies = {}
@@ -381,7 +473,10 @@ class filemap_source(converter_source):
                 if newsource:
                     ncopies[newc] = newsource
 
-        return files, ncopies
+        return files, ncopies, ncleanp2
+
+    def targetfilebelongstosource(self, targetfilename):
+        return self.filemapper.istargetfile(targetfilename)
 
     def getfile(self, name, rev):
         realname, realrev = rev
@@ -398,3 +493,6 @@ class filemap_source(converter_source):
 
     def getbookmarks(self):
         return self.base.getbookmarks()
+
+    def converted(self, rev, sinkrev):
+        self.base.converted(rev, sinkrev)

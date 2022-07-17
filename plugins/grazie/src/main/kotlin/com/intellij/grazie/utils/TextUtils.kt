@@ -2,6 +2,8 @@
 package com.intellij.grazie.utils
 
 import com.intellij.openapi.util.TextRange
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 object Text {
   fun isNewline(char: Char) = char == '\n'
@@ -44,14 +46,36 @@ object Text {
 
   fun CharSequence.looksLikeCode(): Boolean {
     var codeChars = 0
-    var textChars = 0
+    var textTokens = 0
+    var inToken = false
     for (c in this) {
-      if ("(){}[]<>=+-*/%|&!;,.:\"'\\@$#^".contains(c)) {
-        codeChars++
-      } else if (c.isLetterOrDigit()) {
-        textChars++
+      if (c.isLetterOrDigit()) {
+        if (!inToken) {
+          inToken = true
+          textTokens++
+        }
+      } else {
+        inToken = false
+        if ("(){}[]<>=+-*/%|&!;,.:\"'\\@$#^".contains(c)) {
+          codeChars++
+        }
       }
     }
-    return codeChars > 0 && textChars / codeChars < 4
+    return codeChars > 0 && textTokens / codeChars < 2
+  }
+
+  /** @return all non-intersecting occurrences of the given pattern in the given text */
+  @JvmStatic
+  fun allOccurrences(pattern: Pattern, text: CharSequence): List<TextRange> {
+    var start = 0
+    val result = arrayListOf<TextRange>()
+    val matcher: Matcher = pattern.matcher(text)
+    while (true) {
+      if (!matcher.find(start)) break
+
+      result.add(TextRange(matcher.start(), matcher.end()))
+      start = matcher.end().coerceAtLeast(start + 1)
+    }
+    return result
   }
 }

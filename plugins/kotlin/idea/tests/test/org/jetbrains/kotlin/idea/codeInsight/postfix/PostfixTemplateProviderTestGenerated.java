@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.postfix;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -18,224 +18,253 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/codeInsight/postfix")
-public class PostfixTemplateProviderTestGenerated extends AbstractPostfixTemplateProviderTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-    }
+public abstract class PostfixTemplateProviderTestGenerated extends AbstractPostfixTemplateProviderTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/codeInsight/postfix")
+    public static class Uncategorized extends AbstractPostfixTemplateProviderTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("arg.kt")
-    public void testArg() throws Exception {
-        runTest("testData/codeInsight/postfix/arg.kt");
-    }
+        @TestMetadata("arg.kt")
+        public void testArg() throws Exception {
+            runTest("testData/codeInsight/postfix/arg.kt");
+        }
 
-    @TestMetadata("assert.kt")
-    public void testAssert() throws Exception {
-        runTest("testData/codeInsight/postfix/assert.kt");
-    }
+        @TestMetadata("argWithReturn.kt")
+        public void testArgWithReturn() throws Exception {
+            runTest("testData/codeInsight/postfix/argWithReturn.kt");
+        }
 
-    @TestMetadata("assertNonTopLevel.kt")
-    public void testAssertNonTopLevel() throws Exception {
-        runTest("testData/codeInsight/postfix/assertNonTopLevel.kt");
-    }
+        @TestMetadata("argWithThrow.kt")
+        public void testArgWithThrow() throws Exception {
+            runTest("testData/codeInsight/postfix/argWithThrow.kt");
+        }
 
-    @TestMetadata("doNotProposeWrappingIncrement.kt")
-    public void testDoNotProposeWrappingIncrement() throws Exception {
-        runTest("testData/codeInsight/postfix/doNotProposeWrappingIncrement.kt");
-    }
+        @TestMetadata("assert.kt")
+        public void testAssert() throws Exception {
+            runTest("testData/codeInsight/postfix/assert.kt");
+        }
 
-    @TestMetadata("else.kt")
-    public void testElse() throws Exception {
-        runTest("testData/codeInsight/postfix/else.kt");
-    }
+        @TestMetadata("assertNonTopLevel.kt")
+        public void testAssertNonTopLevel() throws Exception {
+            runTest("testData/codeInsight/postfix/assertNonTopLevel.kt");
+        }
 
-    @TestMetadata("for.kt")
-    public void testFor() throws Exception {
-        runTest("testData/codeInsight/postfix/for.kt");
-    }
+        @TestMetadata("doNotProposeWrappingIncrement.kt")
+        public void testDoNotProposeWrappingIncrement() throws Exception {
+            runTest("testData/codeInsight/postfix/doNotProposeWrappingIncrement.kt");
+        }
 
-    @TestMetadata("forOnMap.kt")
-    public void testForOnMap() throws Exception {
-        runTest("testData/codeInsight/postfix/forOnMap.kt");
-    }
+        @TestMetadata("else.kt")
+        public void testElse() throws Exception {
+            runTest("testData/codeInsight/postfix/else.kt");
+        }
 
-    @TestMetadata("forOnString.kt")
-    public void testForOnString() throws Exception {
-        runTest("testData/codeInsight/postfix/forOnString.kt");
-    }
+        @TestMetadata("for.kt")
+        public void testFor() throws Exception {
+            runTest("testData/codeInsight/postfix/for.kt");
+        }
 
-    @TestMetadata("if.kt")
-    public void testIf() throws Exception {
-        runTest("testData/codeInsight/postfix/if.kt");
-    }
+        @TestMetadata("forOnMap.kt")
+        public void testForOnMap() throws Exception {
+            runTest("testData/codeInsight/postfix/forOnMap.kt");
+        }
 
-    @TestMetadata("iter.kt")
-    public void testIter() throws Exception {
-        runTest("testData/codeInsight/postfix/iter.kt");
-    }
+        @TestMetadata("forOnString.kt")
+        public void testForOnString() throws Exception {
+            runTest("testData/codeInsight/postfix/forOnString.kt");
+        }
 
-    @TestMetadata("noParOnLoop.kt")
-    public void testNoParOnLoop() throws Exception {
-        runTest("testData/codeInsight/postfix/noParOnLoop.kt");
-    }
+        @TestMetadata("if.kt")
+        public void testIf() throws Exception {
+            runTest("testData/codeInsight/postfix/if.kt");
+        }
 
-    @TestMetadata("noReturnForNonStatement.kt")
-    public void testNoReturnForNonStatement() throws Exception {
-        runTest("testData/codeInsight/postfix/noReturnForNonStatement.kt");
-    }
+        @TestMetadata("iter.kt")
+        public void testIter() throws Exception {
+            runTest("testData/codeInsight/postfix/iter.kt");
+        }
 
-    @TestMetadata("notBoolean.kt")
-    public void testNotBoolean() throws Exception {
-        runTest("testData/codeInsight/postfix/notBoolean.kt");
-    }
+        @TestMetadata("noParOnLoop.kt")
+        public void testNoParOnLoop() throws Exception {
+            runTest("testData/codeInsight/postfix/noParOnLoop.kt");
+        }
 
-    @TestMetadata("notString.kt")
-    public void testNotString() throws Exception {
-        runTest("testData/codeInsight/postfix/notString.kt");
-    }
+        @TestMetadata("noReturnForNonStatement.kt")
+        public void testNoReturnForNonStatement() throws Exception {
+            runTest("testData/codeInsight/postfix/noReturnForNonStatement.kt");
+        }
 
-    @TestMetadata("notnull.kt")
-    public void testNotnull() throws Exception {
-        runTest("testData/codeInsight/postfix/notnull.kt");
-    }
+        @TestMetadata("notBoolean.kt")
+        public void testNotBoolean() throws Exception {
+            runTest("testData/codeInsight/postfix/notBoolean.kt");
+        }
 
-    @TestMetadata("null.kt")
-    public void testNull() throws Exception {
-        runTest("testData/codeInsight/postfix/null.kt");
-    }
+        @TestMetadata("notString.kt")
+        public void testNotString() throws Exception {
+            runTest("testData/codeInsight/postfix/notString.kt");
+        }
 
-    @TestMetadata("par.kt")
-    public void testPar() throws Exception {
-        runTest("testData/codeInsight/postfix/par.kt");
-    }
+        @TestMetadata("notnull.kt")
+        public void testNotnull() throws Exception {
+            runTest("testData/codeInsight/postfix/notnull.kt");
+        }
 
-    @TestMetadata("parAfterUserType.kt")
-    public void testParAfterUserType() throws Exception {
-        runTest("testData/codeInsight/postfix/parAfterUserType.kt");
-    }
+        @TestMetadata("null.kt")
+        public void testNull() throws Exception {
+            runTest("testData/codeInsight/postfix/null.kt");
+        }
 
-    @TestMetadata("parAssignment.kt")
-    public void testParAssignment() throws Exception {
-        runTest("testData/codeInsight/postfix/parAssignment.kt");
-    }
+        @TestMetadata("par.kt")
+        public void testPar() throws Exception {
+            runTest("testData/codeInsight/postfix/par.kt");
+        }
 
-    @TestMetadata("return.kt")
-    public void testReturn() throws Exception {
-        runTest("testData/codeInsight/postfix/return.kt");
-    }
+        @TestMetadata("parAfterUserType.kt")
+        public void testParAfterUserType() throws Exception {
+            runTest("testData/codeInsight/postfix/parAfterUserType.kt");
+        }
 
-    @TestMetadata("returnFromLoop.kt")
-    public void testReturnFromLoop() throws Exception {
-        runTest("testData/codeInsight/postfix/returnFromLoop.kt");
-    }
+        @TestMetadata("parAssignment.kt")
+        public void testParAssignment() throws Exception {
+            runTest("testData/codeInsight/postfix/parAssignment.kt");
+        }
 
-    @TestMetadata("sout.kt")
-    public void testSout() throws Exception {
-        runTest("testData/codeInsight/postfix/sout.kt");
-    }
+        @TestMetadata("return.kt")
+        public void testReturn() throws Exception {
+            runTest("testData/codeInsight/postfix/return.kt");
+        }
 
-    @TestMetadata("soutInIf.kt")
-    public void testSoutInIf() throws Exception {
-        runTest("testData/codeInsight/postfix/soutInIf.kt");
-    }
+        @TestMetadata("returnFromLoop.kt")
+        public void testReturnFromLoop() throws Exception {
+            runTest("testData/codeInsight/postfix/returnFromLoop.kt");
+        }
 
-    @TestMetadata("soutInLoop.kt")
-    public void testSoutInLoop() throws Exception {
-        runTest("testData/codeInsight/postfix/soutInLoop.kt");
-    }
+        @TestMetadata("sout.kt")
+        public void testSout() throws Exception {
+            runTest("testData/codeInsight/postfix/sout.kt");
+        }
 
-    @TestMetadata("spread.kt")
-    public void testSpread() throws Exception {
-        runTest("testData/codeInsight/postfix/spread.kt");
-    }
+        @TestMetadata("soutCompanionClassLiteral.kt")
+        public void testSoutCompanionClassLiteral() throws Exception {
+            runTest("testData/codeInsight/postfix/soutCompanionClassLiteral.kt");
+        }
 
-    @TestMetadata("spreadIntArray.kt")
-    public void testSpreadIntArray() throws Exception {
-        runTest("testData/codeInsight/postfix/spreadIntArray.kt");
-    }
+        @TestMetadata("soutInIf.kt")
+        public void testSoutInIf() throws Exception {
+            runTest("testData/codeInsight/postfix/soutInIf.kt");
+        }
 
-    @TestMetadata("try.kt")
-    public void testTry() throws Exception {
-        runTest("testData/codeInsight/postfix/try.kt");
-    }
+        @TestMetadata("soutInLoop.kt")
+        public void testSoutInLoop() throws Exception {
+            runTest("testData/codeInsight/postfix/soutInLoop.kt");
+        }
 
-    @TestMetadata("tryInLocalClass.kt")
-    public void testTryInLocalClass() throws Exception {
-        runTest("testData/codeInsight/postfix/tryInLocalClass.kt");
-    }
+        @TestMetadata("spread.kt")
+        public void testSpread() throws Exception {
+            runTest("testData/codeInsight/postfix/spread.kt");
+        }
 
-    @TestMetadata("tryOnFor.kt")
-    public void testTryOnFor() throws Exception {
-        runTest("testData/codeInsight/postfix/tryOnFor.kt");
-    }
+        @TestMetadata("spreadIntArray.kt")
+        public void testSpreadIntArray() throws Exception {
+            runTest("testData/codeInsight/postfix/spreadIntArray.kt");
+        }
 
-    @TestMetadata("tryOnImportStatement.kt")
-    public void testTryOnImportStatement() throws Exception {
-        runTest("testData/codeInsight/postfix/tryOnImportStatement.kt");
-    }
+        @TestMetadata("try.kt")
+        public void testTry() throws Exception {
+            runTest("testData/codeInsight/postfix/try.kt");
+        }
 
-    @TestMetadata("tryOnStatement.kt")
-    public void testTryOnStatement() throws Exception {
-        runTest("testData/codeInsight/postfix/tryOnStatement.kt");
-    }
+        @TestMetadata("tryInLocalClass.kt")
+        public void testTryInLocalClass() throws Exception {
+            runTest("testData/codeInsight/postfix/tryInLocalClass.kt");
+        }
 
-    @TestMetadata("val.kt")
-    public void testVal() throws Exception {
-        runTest("testData/codeInsight/postfix/val.kt");
-    }
+        @TestMetadata("tryOnFor.kt")
+        public void testTryOnFor() throws Exception {
+            runTest("testData/codeInsight/postfix/tryOnFor.kt");
+        }
 
-    @TestMetadata("valAfterReceiver.kt")
-    public void testValAfterReceiver() throws Exception {
-        runTest("testData/codeInsight/postfix/valAfterReceiver.kt");
-    }
+        @TestMetadata("tryOnImportStatement.kt")
+        public void testTryOnImportStatement() throws Exception {
+            runTest("testData/codeInsight/postfix/tryOnImportStatement.kt");
+        }
 
-    @TestMetadata("valAfterSelector.kt")
-    public void testValAfterSelector() throws Exception {
-        runTest("testData/codeInsight/postfix/valAfterSelector.kt");
-    }
+        @TestMetadata("tryOnStatement.kt")
+        public void testTryOnStatement() throws Exception {
+            runTest("testData/codeInsight/postfix/tryOnStatement.kt");
+        }
 
-    @TestMetadata("valAtLamba.kt")
-    public void testValAtLamba() throws Exception {
-        runTest("testData/codeInsight/postfix/valAtLamba.kt");
-    }
+        @TestMetadata("val.kt")
+        public void testVal() throws Exception {
+            runTest("testData/codeInsight/postfix/val.kt");
+        }
 
-    @TestMetadata("valAtLambaArgumentInCall.kt")
-    public void testValAtLambaArgumentInCall() throws Exception {
-        runTest("testData/codeInsight/postfix/valAtLambaArgumentInCall.kt");
-    }
+        @TestMetadata("valAfterReceiver.kt")
+        public void testValAfterReceiver() throws Exception {
+            runTest("testData/codeInsight/postfix/valAfterReceiver.kt");
+        }
 
-    @TestMetadata("var.kt")
-    public void testVar() throws Exception {
-        runTest("testData/codeInsight/postfix/var.kt");
-    }
+        @TestMetadata("valAfterSelector.kt")
+        public void testValAfterSelector() throws Exception {
+            runTest("testData/codeInsight/postfix/valAfterSelector.kt");
+        }
 
-    @TestMetadata("when.kt")
-    public void testWhen() throws Exception {
-        runTest("testData/codeInsight/postfix/when.kt");
-    }
+        @TestMetadata("valAtLamba.kt")
+        public void testValAtLamba() throws Exception {
+            runTest("testData/codeInsight/postfix/valAtLamba.kt");
+        }
 
-    @TestMetadata("whenExpression.kt")
-    public void testWhenExpression() throws Exception {
-        runTest("testData/codeInsight/postfix/whenExpression.kt");
-    }
+        @TestMetadata("valAtLambaArgumentInCall.kt")
+        public void testValAtLambaArgumentInCall() throws Exception {
+            runTest("testData/codeInsight/postfix/valAtLambaArgumentInCall.kt");
+        }
 
-    @TestMetadata("whenForEnumClass.kt")
-    public void testWhenForEnumClass() throws Exception {
-        runTest("testData/codeInsight/postfix/whenForEnumClass.kt");
-    }
+        @TestMetadata("var.kt")
+        public void testVar() throws Exception {
+            runTest("testData/codeInsight/postfix/var.kt");
+        }
 
-    @TestMetadata("whenForSealedClass.kt")
-    public void testWhenForSealedClass() throws Exception {
-        runTest("testData/codeInsight/postfix/whenForSealedClass.kt");
-    }
+        @TestMetadata("when.kt")
+        public void testWhen() throws Exception {
+            runTest("testData/codeInsight/postfix/when.kt");
+        }
 
-    @TestMetadata("while.kt")
-    public void testWhile() throws Exception {
-        runTest("testData/codeInsight/postfix/while.kt");
-    }
+        @TestMetadata("whenExpression.kt")
+        public void testWhenExpression() throws Exception {
+            runTest("testData/codeInsight/postfix/whenExpression.kt");
+        }
 
-    @TestMetadata("with.kt")
-    public void testWith() throws Exception {
-        runTest("testData/codeInsight/postfix/with.kt");
+        @TestMetadata("whenForEnumClass.kt")
+        public void testWhenForEnumClass() throws Exception {
+            runTest("testData/codeInsight/postfix/whenForEnumClass.kt");
+        }
+
+        @TestMetadata("whenForSealedClass.kt")
+        public void testWhenForSealedClass() throws Exception {
+            runTest("testData/codeInsight/postfix/whenForSealedClass.kt");
+        }
+
+        @TestMetadata("whenOnThis.kt")
+        public void testWhenOnThis() throws Exception {
+            runTest("testData/codeInsight/postfix/whenOnThis.kt");
+        }
+
+        @TestMetadata("whenOnThisInExtension.kt")
+        public void testWhenOnThisInExtension() throws Exception {
+            runTest("testData/codeInsight/postfix/whenOnThisInExtension.kt");
+        }
+
+        @TestMetadata("while.kt")
+        public void testWhile() throws Exception {
+            runTest("testData/codeInsight/postfix/while.kt");
+        }
+
+        @TestMetadata("with.kt")
+        public void testWith() throws Exception {
+            runTest("testData/codeInsight/postfix/with.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

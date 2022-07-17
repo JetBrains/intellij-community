@@ -32,10 +32,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.net.URI;
 import java.text.Normalizer;
@@ -309,7 +306,8 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   /**
    * Converts a wrapper like WebDirectoryElement into plain PsiFile
    */
-  protected static PsiFileSystemItem getOriginalFile(PsiFileSystemItem fileSystemItem) {
+  @ApiStatus.Internal
+  public static PsiFileSystemItem getOriginalFile(PsiFileSystemItem fileSystemItem) {
     final VirtualFile file = fileSystemItem.getVirtualFile();
     if (file != null && !file.isDirectory()) {
       final PsiManager psiManager = fileSystemItem.getManager();
@@ -440,7 +438,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       PsiFileSystemItem root = null;
       PsiFileSystemItem dstItem = null;
       for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-        if (!helper.isMine(project, dstVFile)) continue;
+        if (!helper.isMine(project, curVFile, dstVFile)) continue;
         PsiFileSystemItem _dstItem = helper.getPsiFileSystemItem(project, dstVFile);
         if (_dstItem != null) {
           PsiFileSystemItem _root = helper.findRoot(project, dstVFile);

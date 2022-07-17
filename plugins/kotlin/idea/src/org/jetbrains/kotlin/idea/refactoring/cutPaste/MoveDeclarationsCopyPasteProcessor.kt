@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.cutPaste
 
@@ -16,6 +16,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiModificationTracker
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -97,12 +98,12 @@ class MoveDeclarationsCopyPasteProcessor : CopyPastePostProcessor<MoveDeclaratio
         fun putCookie() {
             if (bounds.isValid) {
                 val cookie =
-                    MoveDeclarationsEditorCookie(data, bounds, PsiModificationTracker.SERVICE.getInstance(project).modificationCount)
+                    MoveDeclarationsEditorCookie(data, bounds, PsiModificationTracker.getInstance(project).modificationCount)
                 editor.putUserData(MoveDeclarationsEditorCookie.KEY, cookie)
             }
         }
 
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             putCookie()
         } else {
             // in real application we put cookie later to allow all other paste handlers do their work (because modificationCount will change)

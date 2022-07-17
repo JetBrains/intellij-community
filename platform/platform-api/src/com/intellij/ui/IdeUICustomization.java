@@ -1,11 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.BundleBase;
 import com.intellij.DynamicBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.*;
+
+import java.util.function.Supplier;
 
 /**
  * Allows to apply IDE-specific customizations to the terms used in platform UI features.
@@ -19,8 +20,7 @@ public class IdeUICustomization {
    * @deprecated it's hard to properly localize 'project' term in the middle of a sentence; if you need to use a 'project' term,
    * put the whole message to ProjectConceptBundle.properties and refer to it via {@link #projectMessage} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public String getProjectConceptName() {
     return "project";
@@ -35,10 +35,17 @@ public class IdeUICustomization {
   }
 
   /**
+   * Returns a message which mentions 'project' concept.
+   */
+  @NotNull
+  public Supplier<@Nls String> projectMessagePointer(@NotNull @PropertyKey(resourceBundle = ProjectConceptBundle.BUNDLE) String key, Object @NotNull ... params) {
+    return ProjectConceptBundle.messagePointer(key, params);
+  }
+
+  /**
    * @deprecated use {@code projectMessage("tab.title.project")} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nls(capitalization = Nls.Capitalization.Title)
   public String getProjectDisplayName() {
     return projectMessage("tab.title.project");
@@ -55,10 +62,13 @@ public class IdeUICustomization {
   /**
    * @deprecated use {@code projectMessage("select.in.item.project.view")} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public String getProjectViewSelectInTitle() {
     return projectMessage("select.in.item.project.view");
+  }
+
+  public @Nls String getSelectAutopopupByCharsText() {
+    return IdeBundle.message("ui.customization.select.auto.popup.by.chars.text");
   }
 
   /**
@@ -85,12 +95,16 @@ public class IdeUICustomization {
  */
 final class ProjectConceptBundle {
   @NonNls public static final String BUNDLE = "messages.ProjectConceptBundle";
-  private static final DynamicBundle INSTANCE = new DynamicBundle(BUNDLE);
+  private static final DynamicBundle INSTANCE = new DynamicBundle(ProjectConceptBundle.class, BUNDLE);
 
   private ProjectConceptBundle() {
   }
 
   static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return BundleBase.messageOrDefault(INSTANCE.getResourceBundle(ProjectConceptBundle.class.getClassLoader()), key, null, params);
+    return INSTANCE.getMessage(key, params);
+  }
+
+  static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 }

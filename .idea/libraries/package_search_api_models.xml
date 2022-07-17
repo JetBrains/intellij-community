@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="package-search-api-models">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/pkgs-api-models-2.2.8.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/pkgs-api-models-2.2.8-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

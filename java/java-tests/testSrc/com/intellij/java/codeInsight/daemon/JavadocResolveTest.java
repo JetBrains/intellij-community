@@ -2,8 +2,8 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -29,7 +29,7 @@ public class JavadocResolveTest extends DaemonAnalyzerTestCase {
   }
 
   private void doTest(String testFileName) {
-    enableInspectionTools(new JavaDocLocalInspection(), myJavaDocReferenceInspection);
+    enableInspectionTools(new JavadocDeclarationInspection(), myJavaDocReferenceInspection);
     try {
       doTest(BASE_PATH + testFileName, BASE_PATH, false, false);
     }

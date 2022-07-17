@@ -90,7 +90,7 @@ public interface ExternalDependency extends Serializable {
    */
   @Nullable
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @ApiStatus.ScheduledForRemoval
   String getSelectionReason();
 
   /**

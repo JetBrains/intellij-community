@@ -5,21 +5,20 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.EmptyConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
 
 public final class ModuleRootModificationUtil {
@@ -62,6 +61,17 @@ public final class ModuleRootModificationUtil {
                                       @NotNull List<String> excludedRootUrls,
                                       @NotNull DependencyScope scope,
                                       boolean exported) {
+    addModuleLibrary(module, libName, classesRootUrls, sourceRootUrls, excludedRootUrls, scope, exported, EmptyConsumer.getInstance());
+  }
+
+  public static void addModuleLibrary(@NotNull Module module,
+                                      @Nullable String libName,
+                                      @NotNull List<String> classesRootUrls,
+                                      @NotNull List<String> sourceRootUrls,
+                                      @NotNull List<String> excludedRootUrls,
+                                      @NotNull DependencyScope scope,
+                                      boolean exported,
+                                      Consumer<? super LibraryEx.ModifiableModelEx> postProcessor) {
     updateModel(module, model -> {
       LibraryEx library = (LibraryEx)model.getModuleLibraryTable().createLibrary(libName);
       LibraryEx.ModifiableModelEx libraryModel = library.getModifiableModel();
@@ -80,6 +90,8 @@ public final class ModuleRootModificationUtil {
       assert entry != null : library;
       entry.setScope(scope);
       entry.setExported(exported);
+
+      postProcessor.consume(libraryModel);
 
       ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(libraryModel::commit));
     });
@@ -151,45 +163,6 @@ public final class ModuleRootModificationUtil {
     finally {
       if (!model.isDisposed()) {
         model.dispose();
-      }
-    }
-  }
-
-  public static void batchUpdateModels(@NotNull Collection<Module> modules, @NotNull Function<? super ModifiableRootModel, Boolean> modifier) {
-    MultiMap<Project, Module> modulesByProject = ContainerUtil.groupBy(modules, Module::getProject);
-    for (Map.Entry<Project, Collection<Module>> entry : modulesByProject.entrySet()) {
-      batchUpdateModels(entry.getKey(), entry.getValue(), modifier);
-    }
-  }
-
-  private static void batchUpdateModels(@NotNull Project project, @NotNull Collection<Module> modules, @NotNull Function<? super ModifiableRootModel, Boolean> modifier) {
-    Collection<ModifiableRootModel> modifiableModels = ReadAction.compute(() -> {
-      return ContainerUtil.map(modules, module -> ModuleRootManager.getInstance(module).getModifiableModel());
-    });
-    Collection<ModifiableRootModel> toCommit = new HashSet<>();
-    try {
-      for (ModifiableRootModel model : modifiableModels) {
-        if (modifier.apply(model)) {
-          toCommit.add(model);
-        }
-      }
-
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        WriteAction.run(() -> {
-          ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(() -> {
-            for (ModifiableRootModel rootModel : toCommit) {
-              if (!rootModel.getModule().isDisposed()) {
-                rootModel.commit();
-              }
-            }
-          });
-        });
-      });
-    } finally {
-      for (ModifiableRootModel model : modifiableModels) {
-        if (!model.isDisposed()) {
-          model.dispose();
-        }
       }
     }
   }

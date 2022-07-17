@@ -13,12 +13,7 @@ import org.gradle.api.specs.Specs;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.compile.AbstractCompile;
-import org.gradle.internal.impldep.com.google.common.base.Function;
-import org.gradle.internal.impldep.com.google.common.base.Predicate;
-import org.gradle.internal.impldep.com.google.common.collect.ArrayListMultimap;
-import org.gradle.internal.impldep.com.google.common.collect.HashMultimap;
-import org.gradle.internal.impldep.com.google.common.collect.Lists;
-import org.gradle.internal.impldep.com.google.common.collect.Multimap;
+import org.gradle.internal.impldep.com.google.common.collect.*;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.ExternalDependencyId;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.model.*;
-import org.jetbrains.plugins.gradle.tooling.util.*;
+import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver;
+import org.jetbrains.plugins.gradle.tooling.util.DependencyTraverser;
+import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil;
+import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -38,9 +36,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.codehaus.groovy.runtime.StringGroovyMethods.capitalize;
-import static org.gradle.internal.impldep.com.google.common.base.Predicates.isNull;
-import static org.gradle.internal.impldep.com.google.common.base.Predicates.not;
-import static org.gradle.internal.impldep.com.google.common.collect.Iterables.filter;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.*;
 
 /**
@@ -160,7 +155,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
     result.addAll(compileDependencies);
     result.addAll(runtimeDependencies);
 
-    result = Lists.newArrayList(filter(result, not(isNull())));
+    result = Lists.newArrayList(filter(result, isNotNull()));
 
 
     // merge file dependencies
@@ -244,9 +239,8 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
       Map<String, Collection<Configuration>> providedPlusScopes = scopes.get(PROVIDED_SCOPE);
 
       if (providedPlusScopes != null && providedPlusScopes.get("plus") != null) {
-        Iterable<Configuration> ideaPluginProvidedConfigurations = filter(providedPlusScopes.get("plus"), new Predicate<Configuration>() {
+        Iterable<Configuration> ideaPluginProvidedConfigurations = filter(providedPlusScopes.get("plus"), new MyPredicate<Configuration>() {
           @Override
-
           public boolean apply(Configuration cfg) {
             // filter default 'compileClasspath' for slight optimization since it has been already processed as compile dependencies
             return !cfg.getName().equals("compileClasspath")
@@ -368,12 +362,10 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
     List<String> jvmLanguages = Lists.newArrayList(languages);
     final String sourceSetCompileTaskPrefix = sourceSet.getName() == "main" ? "" : sourceSet.getName();
 
-    List<String> compileTaskNames = Lists.transform(jvmLanguages, new Function<String, String>() {
-      @Override
-      public String apply(String s) {
-        return "compile" + capitalize(sourceSetCompileTaskPrefix) + s;
-      }
-    });
+    List<String> compileTaskNames = new ArrayList<String>(jvmLanguages.size());
+    for (String language : jvmLanguages) {
+      compileTaskNames.add("compile" + capitalize(sourceSetCompileTaskPrefix) + language);
+    }
 
     Set<File> compileClasspathFiles = new LinkedHashSet<File>();
 
@@ -486,7 +478,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
   @NotNull
   public static List<ExternalDependency> removeDuplicates(Collection<ExternalDependency> result) {
     new DeduplicationVisitor().visit(result);
-    return Lists.newArrayList(filter(result, not(isNull())));
+    return Lists.newArrayList(filter(result, isNotNull()));
   }
 
   private static class DeduplicationVisitor {
@@ -849,5 +841,56 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
 
   private static MyModuleIdentifier toMyModuleIdentifier(String name, String group) {
     return new MyModuleIdentifier(name, group);
+  }
+
+
+  /*
+  DeprecatedDependencyResolver used Google Guava library, repackaged insinde Gradle Impl Dep artifact.
+  Starting with Gradle 7.4, the Guava library requires JDK 8
+  All usages were inlined to keep code compatibility with JDK 1.6
+   */
+  // inlined guava method for compatibility
+  private interface MyPredicate<T> {
+    boolean apply(@Nullable T input);
+  }
+  // inlined guava field for compatibility
+  private static final MyPredicate<?> IS_NOT_NULL = new MyPredicate<Object>() {
+    @Override
+    public boolean apply(@Nullable Object input) {
+      return input != null;
+    }
+  };
+
+  // inlined guava method for compatibility
+  @SuppressWarnings("unchecked")
+  private static <T> MyPredicate<T> isNotNull() {
+    return (MyPredicate<T>)IS_NOT_NULL;
+  }
+
+  // inlined guava method for compatibility
+  private static <T> Iterable<T> filter(@NotNull final Iterable<T> sourceIterable, @NotNull final MyPredicate<? super T> predicate) {
+    return new Iterable<T>() {
+      @NotNull
+      @Override
+      public Iterator<T> iterator() {
+        final Iterator<T> source = sourceIterable.iterator();
+        return new AbstractIterator<T>() {
+          @Override
+          protected T computeNext() {
+            while(true) {
+              if (source.hasNext()) {
+                T element = source.next();
+                if (!predicate.apply(element)) {
+                  continue;
+                }
+
+                return element;
+              }
+              return this.endOfData();
+            }
+          }
+        };
+      }
+    };
   }
 }

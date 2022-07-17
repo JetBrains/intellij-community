@@ -23,6 +23,7 @@
     <properties>
         <maven.compiler.source>${COMPILER_LEVEL_SOURCE}</maven.compiler.source>
         <maven.compiler.target>${COMPILER_LEVEL_TARGET}</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 #end
     ${END}

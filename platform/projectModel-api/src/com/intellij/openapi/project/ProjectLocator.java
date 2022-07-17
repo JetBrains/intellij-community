@@ -32,12 +32,11 @@ public abstract class ProjectLocator {
   /**
    * Returns an open project which contains the given file.
    * This is a guess-method, so if several projects contain the file, only one will be returned.
-   * Also a project may be returned though it doesn't contain the file for sure (see implementations).
    * @param file file to be located in projects.
    * @return project which probably contains the file, or null if couldn't guess (for example, there are no open projects).
    */
   @Nullable
-  public abstract Project guessProjectForFile(@Nullable VirtualFile file);
+  public abstract Project guessProjectForFile(@NotNull VirtualFile file);
 
   /**
   * Gets all open projects containing the given file.

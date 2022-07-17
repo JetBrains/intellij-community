@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.codeInspection.local;
 
@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection;
+import org.jetbrains.plugins.groovy.ext.spock.SpockUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -75,22 +76,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     final HighlightDisplayKey unusedDefKey = HighlightDisplayKey.find(GroovyUnusedDeclarationInspection.SHORT_NAME);
     final boolean deadCodeEnabled = profile.isToolEnabled(unusedDefKey, myFile);
     final UnusedDeclarationInspectionBase deadCodeInspection = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, myFile);
-    final GlobalUsageHelper usageHelper = new GlobalUsageHelper() {
-      @Override
-      public boolean isCurrentFileAlreadyChecked() {
-        return false;
-      }
-
-      @Override
-      public boolean isLocallyUsed(@NotNull PsiNamedElement member) {
-        return false;
-      }
-
-      @Override
-      public boolean shouldCheckUsages(@NotNull PsiMember member) {
-        return deadCodeInspection == null || !deadCodeInspection.isEntryPoint(member);
-      }
-    };
+    final GroovyUsageHelper usageHelper = new GroovyUsageHelper(deadCodeInspection);
 
     final List<HighlightInfo> unusedDeclarations = new ArrayList<>();
 
@@ -98,7 +84,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     myFile.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof GrReferenceExpression && !((GrReferenceElement)element).isQualified()) {
+        if (element instanceof GrReferenceExpression && !((GrReferenceElement<?>)element).isQualified()) {
           GroovyResolveResult[] results = ((GrReferenceExpression)element).multiResolve(false);
           if (results.length == 0) {
             results = ((GrReferenceExpression)element).multiResolve(true);
@@ -129,16 +115,23 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
             }
             else if (element instanceof GrMethod) {
               GrMethod method = (GrMethod)element;
-              if (!UnusedSymbolUtil.isMethodReferenced(method.getProject(), method.getContainingFile(), method, progress, usageHelper)) {
-                String message;
-                if (method.isConstructor()) {
-                  message = GroovyBundle.message("text.constructor.0.is.unused", name);
-                } else {
-                  message = GroovyBundle.message("text.method.0.is.unused", name);
+              if (SpockUtils.isUnusedInSpock(method, usageHelper)) {
+                usageHelper.shouldCheckContributors = false;
+              }
+              try {
+                if (!UnusedSymbolUtil.isMethodReferenced(method.getProject(), method.getContainingFile(), method, progress, usageHelper)) {
+                  String message;
+                  if (method.isConstructor()) {
+                    message = GroovyBundle.message("text.constructor.0.is.unused", name);
+                  } else {
+                    message = GroovyBundle.message("text.method.0.is.unused", name);
+                  }
+                  HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(nameId, message, HighlightInfoType.UNUSED_SYMBOL, GroovyUnusedDeclarationInspection.SHORT_NAME);
+                  QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(method), unusedDefKey);
+                  ContainerUtil.addIfNotNull(unusedDeclarations, highlightInfo);
                 }
-                HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(nameId, message, HighlightInfoType.UNUSED_SYMBOL, GroovyUnusedDeclarationInspection.SHORT_NAME);
-                QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(method), unusedDefKey);
-                ContainerUtil.addIfNotNull(unusedDeclarations, highlightInfo);
+              } finally {
+                usageHelper.shouldCheckContributors = true;
               }
             }
             else if (element instanceof GrField && isFieldUnused((GrField)element, progress, usageHelper)) {
@@ -259,6 +252,32 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
       }
     }
     return new TextRange(start, range.getEndOffset());
+  }
+
+  private static class GroovyUsageHelper extends GlobalUsageHelper {
+    private boolean shouldCheckContributors = true;
+    private final UnusedDeclarationInspectionBase deadCodeInspection;
+
+    private GroovyUsageHelper(UnusedDeclarationInspectionBase inspection) { deadCodeInspection = inspection; }
+
+    @Override
+    public boolean isCurrentFileAlreadyChecked() {
+      return false;
+    }
+
+    @Override
+    public boolean isLocallyUsed(@NotNull PsiNamedElement member) {
+      return false;
+    }
+
+    @Override
+    public boolean shouldCheckUsages(@NotNull PsiMember member) {
+      if (shouldCheckContributors) {
+        return deadCodeInspection == null || !deadCodeInspection.isEntryPoint(member);
+      } else {
+        return true;
+      }
+    }
   }
 
 

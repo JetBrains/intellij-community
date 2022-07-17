@@ -1,12 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
@@ -36,6 +38,7 @@ import java.lang.reflect.Method;
  */
 public class MacWinTabsHandler {
   private static final String WIN_TAB_FILLER = "WIN_TAB_FILLER_KEY";
+  private static final String CLOSE_MARKER = "TABS_CLOSE_MARKER";
 
   private final JFrame myFrame;
   private final boolean myFrameAllowed;
@@ -86,7 +89,7 @@ public class MacWinTabsHandler {
   }
 
   public void frameInit() {
-    if (!myFrameAllowed || !isTransparentTitleBar()) {
+    if (!myFrameAllowed) {
       return;
     }
 
@@ -148,7 +151,7 @@ public class MacWinTabsHandler {
     ApplicationManager.getApplication().invokeLater(() -> updateTabBars(myFrame));
   }
 
-  private static void updateTabBars(@Nullable JFrame newFrame) {
+  static void updateTabBars(@Nullable JFrame newFrame) {
     if (!isAllowedFrame(newFrame) || !JdkEx.isTabbingModeAvailable()) {
       return;
     }
@@ -291,17 +294,28 @@ public class MacWinTabsHandler {
       if (cPlatformWindow != null) {
         Class<?> windowClass = cPlatformWindow.getClass();
 
-        Method deliverMoveResize = ReflectionUtil
-          .getDeclaredMethod(windowClass, "deliverMoveResizeEvent", int.class, int.class, int.class, int.class, boolean.class);
-        if (deliverMoveResize == null) {
+        Method deliverMoveResize = ReflectionUtil.getDeclaredMethod(windowClass, "doDeliverMoveResizeEvent");
+        if (deliverMoveResize != null) {
+          try {
+            deliverMoveResize.invoke(cPlatformWindow);
+          }
+          catch (Throwable e) {
+            Logger.getInstance(MacWinTabsHandler.class).error(e);
+          }
           return;
         }
 
-        DisplayMode displayMode = window.getGraphicsConfiguration().getDevice().getDisplayMode();
+        Method javaDeliverMoveResize = ReflectionUtil
+          .getDeclaredMethod(windowClass, "deliverMoveResizeEvent", int.class, int.class, int.class, int.class, boolean.class);
+        if (javaDeliverMoveResize == null) {
+          return;
+        }
+
+        Rectangle rect = window.getGraphicsConfiguration().getBounds();
 
         Foundation.executeOnMainThread(true, false, () -> {
           try {
-            deliverMoveResize.invoke(cPlatformWindow, 0, 0, displayMode.getWidth(), displayMode.getHeight(), true);
+            javaDeliverMoveResize.invoke(cPlatformWindow, rect.x, rect.y, rect.width, rect.height, true);
           }
           catch (Throwable e) {
             Logger.getInstance(MacWinTabsHandler.class).error(e);
@@ -352,6 +366,59 @@ public class MacWinTabsHandler {
       Foundation.executeOnMainThread(true, false, () -> {
         Foundation.invoke(MacUtil.getWindowFromJavaWindow(frame), next ? "selectNextTab:" : "selectPreviousTab:", ID.NIL);
       });
+    }
+  }
+
+  public void appClosing() {
+    if (!myFrameAllowed) {
+      return;
+    }
+
+    IdeFrame[] frames = WindowManager.getInstance().getAllProjectFrames();
+    int length = frames.length;
+
+    if (length < 2) {
+      return;
+    }
+
+    ID[] windows = new ID[length];
+
+    for (int i = 0; i < length; i++) {
+      IdeFrameImpl frame = ((ProjectFrameHelper)frames[i]).getFrame();
+      if (frame == null) {
+        return;
+      }
+      JRootPane pane = frame.getRootPane();
+      if (pane.getClientProperty(CLOSE_MARKER) != null) {
+        return;
+      }
+      pane.putClientProperty(CLOSE_MARKER, Boolean.TRUE);
+      windows[i] = MacUtil.getWindowFromJavaWindow(frame);
+    }
+
+    ID tabs = Foundation.invoke(windows[0], "tabbedWindows");
+
+    if (Foundation.invoke(tabs, "count").intValue() != length) {
+      return;
+    }
+
+    IdeFrame[] orderedFrames = new IdeFrame[length];
+
+    for (int i = 0; i < length; i++) {
+      int index = Foundation.invoke(tabs, "indexOfObject:", windows[i]).intValue();
+      orderedFrames[index] = frames[i];
+    }
+
+    RecentProjectsManagerBase manager = RecentProjectsManagerBase.getInstanceEx();
+
+    for (IdeFrame frame : orderedFrames) {
+      Project project = frame.getProject();
+      if (project != null) {
+        String path = manager.getProjectPath(project);
+        if (path != null) {
+          manager.markPathRecent(path, project);
+        }
+      }
     }
   }
 }

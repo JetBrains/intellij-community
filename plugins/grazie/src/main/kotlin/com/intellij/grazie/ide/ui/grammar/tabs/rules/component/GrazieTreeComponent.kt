@@ -17,9 +17,9 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.ui.*
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.tree.TreeUtil
 import java.awt.BorderLayout
 import javax.swing.ScrollPaneConstants
-import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
 internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : CheckboxTree(GrazieRulesTreeCellRenderer(), GrazieRulesTreeNode()),
@@ -30,7 +30,7 @@ internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : Ch
 
   init {
     selectionModel.addTreeSelectionListener { event ->
-      val meta = (event?.path?.lastPathComponent as DefaultMutableTreeNode).userObject
+      val meta = TreeUtil.getLastUserObject(event?.path)
       if (meta != null) onSelectionChanged(meta)
     }
 
@@ -117,14 +117,23 @@ internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : Ch
       val langNode = GrazieRulesTreeNode(lang)
       model.insertNodeInto(langNode, root, root.childCount)
 
-      rules.groupBy { it.category }.entries.sortedBy { it.key }.forEach { (category, rules) ->
-        val categoryNode = GrazieRulesTreeNode(category)
-        model.insertNodeInto(categoryNode, langNode, langNode.childCount)
-
-        rules.sortedBy { it.presentableName }.forEach { rule ->
-          model.insertNodeInto(GrazieRulesTreeNode(rule), categoryNode, categoryNode.childCount)
-        }
+      fun splitIntoCategories(level: Int, rules: List<Rule>, parent: GrazieRulesTreeNode) {
+        rules.groupBy { it.categories.getOrNull(level) }.entries
+          .sortedWith(Comparator.comparing({ it.key }, nullsLast(Comparator.comparing { it.lowercase() })))
+          .forEach { (category, catRules) ->
+            if (category != null) {
+              val categoryNode = GrazieRulesTreeNode(category)
+              model.insertNodeInto(categoryNode, parent, parent.childCount)
+              splitIntoCategories(level + 1, catRules, categoryNode)
+            }
+            else {
+              catRules.sortedBy { it.presentableName.lowercase() }.forEach { rule ->
+                model.insertNodeInto(GrazieRulesTreeNode(rule), parent, parent.childCount)
+              }
+            }
+          }
       }
+      splitIntoCategories(0, rules, langNode)
     }
 
     model.setRoot(root)
@@ -138,7 +147,7 @@ internal fun allRules(state: GrazieConfig.State = GrazieConfig.get()): Map<Lang,
   state.enabledLanguages.forEach { lang ->
     val jLanguage = lang.jLanguage
     if (jLanguage != null) {
-      val rules = TextChecker.allCheckers().flatMap { it.getRules(jLanguage.locale) }
+      val rules = TextChecker.allCheckers().flatMap { it.getRules(jLanguage.localeWithCountryAndVariant) }
       if (rules.isNotEmpty()) {
         result[lang] = rules
       }

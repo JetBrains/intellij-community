@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general.navigation
 
-import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
@@ -19,13 +18,14 @@ import training.dsl.LessonUtil.restorePopupPosition
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.learn.course.LessonType
-import training.util.toNullableString
+import training.util.LessonEndInfo
+import training.util.isToStringContains
 import java.awt.Point
 import java.awt.event.KeyEvent
 import javax.swing.JList
 
 abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBundle.message("search.everywhere.lesson.name")) {
-  abstract override val existedFile: String?
+  abstract override val sampleFilePath: String?
 
   abstract val resultFileName: String
 
@@ -36,8 +36,10 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
   private var backupPopupLocation: Point? = null
 
   override val lessonContent: LessonContext.() -> Unit = {
+    sdkConfigurationTasks()
+
     task("SearchEverywhere") {
-      triggerByUiComponentAndHighlight(highlightInside = false) { ui: ExtendableTextField ->
+      triggerAndBorderHighlight().component { ui: ExtendableTextField ->
         UIUtil.getParentOfType(SearchEverywhereUI::class.java, ui) != null
       }
       text(LessonsBundle.message("search.everywhere.invoke.search.everywhere", LessonUtil.actionName(it),
@@ -61,10 +63,10 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     }
 
     task {
-      triggerByListItemAndHighlight { item ->
+      triggerAndBorderHighlight().listItem { item ->
         if (item is PsiNameIdentifierOwner)
           item.name == requiredClassName
-        else item.toNullableString()?.contains(requiredClassName) ?: false
+        else item.isToStringContains(requiredClassName)
       }
       restoreByUi()
     }
@@ -76,7 +78,17 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       }
       restoreByUi()
       test {
-        invokeActionViaShortcut("ENTER")
+        Thread.sleep(500) // wait items loading
+        val jList = previous.ui as? JList<*> ?: error("No list")
+        val itemIndex = LessonUtil.findItem(jList) { item ->
+          if (item is PsiNameIdentifierOwner)
+            item.name == requiredClassName
+          else item.isToStringContains(requiredClassName)
+        } ?: error("No item")
+
+        ideFrame {
+          jListFixture(jList).clickItem(itemIndex)
+        }
       }
     }
 
@@ -94,12 +106,11 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     task(EverythingGlobalScope.getNameText()) {
       text(LessonsBundle.message("search.everywhere.use.all.places",
                                  strong(ProjectScope.getProjectFilesScopeName()), strong(it)))
-      triggerByUiComponentAndHighlight { _: ActionButtonWithText -> true }
-      triggerByUiComponentAndHighlight(false, false) { button: ActionButtonWithText ->
+      triggerAndFullHighlight().component { _: ActionButtonWithText -> true }
+      triggerUI().component { button: ActionButtonWithText ->
         button.accessibleContext.accessibleName == it
       }
-      showWarning(LessonsBundle.message("search.everywhere.class.popup.closed.warning.message", action("GotoClass")),
-                  restoreTaskWhenResolved = true) {
+      showWarning(LessonsBundle.message("search.everywhere.class.popup.closed.warning.message", action("GotoClass"))) {
         !checkInsideSearchEverywhere() && focusOwner !is JList<*>
       }
       test {
@@ -109,7 +120,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
 
     task("QuickJavaDoc") {
       text(LessonsBundle.message("search.everywhere.quick.documentation", action(it)))
-      triggerByUiComponentAndHighlight(false, false) { _: DocumentationComponent -> true }
+      triggerOnQuickDocumentationPopup()
       restoreByUi()
       test { actions(it) }
     }
@@ -135,7 +146,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     epilogue()
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
     backupPopupLocation = null
   }
@@ -148,4 +159,11 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
   private fun TaskRuntimeContext.checkInsideSearchEverywhere(): Boolean {
     return UIUtil.getParentOfType(SearchEverywhereUI::class.java, focusOwner) != null
   }
+
+  override val suitableTips = listOf("SearchEverywhere", "GoToClass", "search_everywhere_general")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("help.search.everywhere"),
+         LessonUtil.getHelpLink("searching-everywhere.html")),
+  )
 }

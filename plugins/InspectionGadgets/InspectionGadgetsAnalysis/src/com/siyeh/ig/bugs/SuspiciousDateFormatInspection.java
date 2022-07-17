@@ -34,14 +34,14 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (PATTERN_METHODS.test(call)) {
           ExpressionUtils.nonStructuralChildren(call.getArgumentList().getExpressions()[0]).forEach(this::processExpression);
         }
       }
 
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         if (ConstructionUtils.isReferenceTo(expression.getClassReference(), "java.text.SimpleDateFormat")) {
           PsiExpressionList args = expression.getArgumentList();
           if (args != null) {
@@ -187,7 +187,9 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
   }
 
   private static class IncorrectDateFormatFix implements LocalQuickFix {
+    @SafeFieldForPreview
     private final Token myToken;
+    @SafeFieldForPreview
     private final TextRange myRange;
 
     IncorrectDateFormatFix(Token token, TextRange range) {

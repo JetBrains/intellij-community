@@ -49,7 +49,7 @@ internal class EventLogExternalSettingsServiceTest : StatisticsServiceBaseTest()
   }
 
   private fun configureDynamicConfig(configCacheTimeoutMs: Long): EventLogUploadSettingsService {
-    val applicationInfo = TestEventLogApplicationInfo(RECORDER_ID, container.getBaseUrl("config/dynamic_config.php").toString())
+    val applicationInfo = TestEventLogApplicationInfo(container.getBaseUrl("config/dynamic_config.php").toString())
     return EventLogUploadSettingsService(RECORDER_ID, applicationInfo, configCacheTimeoutMs)
   }
 

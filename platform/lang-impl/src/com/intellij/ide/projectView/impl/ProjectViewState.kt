@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl
 
 import com.intellij.ide.projectView.ProjectViewSettings
@@ -8,6 +8,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.xmlb.XmlSerializerUtil
 
 @State(name = "ProjectViewState", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])
@@ -21,8 +22,8 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
   }
 
   var abbreviatePackageNames = ProjectViewSettings.Immutable.DEFAULT.isAbbreviatePackageNames
-  var autoscrollFromSource = false
-  var autoscrollToSource = UISettings.instance.state.defaultAutoScrollToSource
+  var autoscrollFromSource = ExperimentalUI.isNewUI()
+  var autoscrollToSource = UISettings.getInstance().state.defaultAutoScrollToSource
   var compactDirectories = ProjectViewSettings.Immutable.DEFAULT.isCompactDirectories
   var flattenModules = ProjectViewSettings.Immutable.DEFAULT.isFlattenModules
   var flattenPackages = ProjectViewSettings.Immutable.DEFAULT.isFlattenPackages
@@ -64,7 +65,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
     XmlSerializerUtil.copyBean(state, this)
   }
 
-  override fun getState(): ProjectViewState? {
+  override fun getState(): ProjectViewState {
     return this
   }
 }

@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@SuppressWarnings("ForLoopReplaceableByForEach")
 public class CompositeFilter implements Filter, FilterMixin, DumbAware {
   private static final Logger LOG = Logger.getInstance(CompositeFilter.class);
 
@@ -64,13 +63,14 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
 
   @Override
   @Nullable
-  public Result applyFilter(@NotNull final String line, final int entireLength) {
+  public Result applyFilter(@NotNull String line, int entireLength) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    final boolean dumb = myDumbService.isDumb();
+    boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
     int count = filters.size();
 
     List<ResultItem> resultItems = null;
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < count; i++) {
       ProgressManager.checkCanceled();
       Filter filter = filters.get(i);
@@ -85,7 +85,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
           result = null;
         }
         catch (Throwable t) {
-          throw new RuntimeException("Error while applying " + filter + " to '" + line + "'", t);
+          throw new ApplyFilterException("Error while applying " + filter + " to '" + line + "'", t);
         }
         if (result != null) {
           resultItems = merge(resultItems, result, entireLength, filter);
@@ -127,14 +127,14 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
 
   @NotNull
   private static List<ResultItem> merge(@Nullable List<ResultItem> resultItems, @NotNull Result newResult, int entireLength, @NotNull Filter filter) {
-    if (resultItems == null) {
-      resultItems = new ArrayList<>();
-    }
     List<ResultItem> newItems = newResult.getResultItems();
+    if (resultItems == null) {
+      resultItems = new ArrayList<>(newItems.size());
+    }
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < newItems.size(); i++) {
       ResultItem item = newItems.get(i);
-      if ((item.getHyperlinkInfo() == null || !
-        intersects(resultItems, item)) && checkOffsetsCorrect(item, entireLength, filter)) {
+      if ((item.getHyperlinkInfo() == null || !intersects(resultItems, item)) && checkOffsetsCorrect(item, entireLength, filter)) {
         resultItems.add(item);
       }
     }
@@ -155,6 +155,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
   protected static boolean intersects(@NotNull List<? extends ResultItem> items, @NotNull ResultItem newItem) {
     TextRange newItemTextRange = null;
 
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < items.size(); i++) {
       ResultItem item = items.get(i);
       if (item.getHyperlinkInfo() != null) {
@@ -182,6 +183,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
     List<Filter> filters = myFilters;
     int count = filters.size();
 
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < count; i++) {
       Filter filter = filters.get(i);
       if (filter instanceof FilterMixin && ((FilterMixin)filter).shouldRunHeavy()) {
@@ -195,9 +197,10 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
   @Nls
   public String getUpdateMessage() {
     List<Filter> filters = myFilters;
-    final List<String> updateMessage = new ArrayList<>();
+    List<String> updateMessage = new ArrayList<>();
     int count = filters.size();
 
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < count; i++) {
       Filter filter = filters.get(i);
 
@@ -233,5 +236,11 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
   @Override
   public String toString() {
     return "CompositeFilter: " + myFilters;
+  }
+
+  public static class ApplyFilterException extends RuntimeException {
+    private ApplyFilterException(String message, Throwable cause) {
+      super(message, cause);
+    }
   }
 }

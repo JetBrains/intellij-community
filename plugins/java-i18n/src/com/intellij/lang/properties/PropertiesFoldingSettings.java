@@ -3,12 +3,13 @@ package com.intellij.lang.properties;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "PropertiesFoldingSettings", storages = @Storage("editor.xml"))
+@State(name = "PropertiesFoldingSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public class PropertiesFoldingSettings implements PersistentStateComponent<PropertiesFoldingSettings> {
   private boolean myFoldPlaceholdersToContext;
 

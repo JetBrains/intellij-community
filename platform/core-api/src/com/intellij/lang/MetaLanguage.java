@@ -27,7 +27,7 @@ public abstract class MetaLanguage extends Language {
           for (Language matchingLanguage : metaLanguage.getMatchingLanguages()) {
             LanguageUtil.clearMatchingMetaLanguages(matchingLanguage);
           }
-          Language.unregisterLanguage(metaLanguage);
+          metaLanguage.unregisterLanguage(pluginDescriptor);
         }
       }
     }, null);

@@ -12,7 +12,6 @@ import com.intellij.psi.util.proximity.PsiProximityComparator
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.completion.smart.*
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
-import org.jetbrains.kotlin.idea.core.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.core.completion.PackageLookupObject
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -27,7 +26,7 @@ import org.jetbrains.kotlin.resolve.findOriginalTopMostOverriddenDescriptors
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 
 object PriorityWeigher : LookupElementWeigher("kotlin.priority") {
-    override fun weigh(element: LookupElement, context: WeighingContext) = element.getUserData(ITEM_PRIORITY_KEY) ?: ItemPriority.DEFAULT
+    override fun weigh(element: LookupElement, context: WeighingContext) = element.priority ?: ItemPriority.DEFAULT
 }
 
 object PreferDslMembers : LookupElementWeigher("kotlin.preferDsl") {
@@ -61,7 +60,7 @@ class NotImportedWeigher(private val classifier: ImportableFqNameClassifier) : L
 class NotImportedStaticMemberWeigher(private val classifier: ImportableFqNameClassifier) :
     LookupElementWeigher("kotlin.notImportedMember") {
     override fun weigh(element: LookupElement): Comparable<*>? {
-        if (element.getUserData(ITEM_PRIORITY_KEY) != ItemPriority.STATIC_MEMBER) return null
+        if (element.priority != ItemPriority.STATIC_MEMBER) return null
         val fqName = (element.`object` as DeclarationLookupObject).importableFqName ?: return null
         return classifier.classify(fqName.parent(), false)
     }
@@ -108,25 +107,32 @@ object KindWeigher : LookupElementWeigher("kotlin.kind") {
         callable,
         keyword,
         default,
+
+        /**
+         * This does not mean that the keyword cannot be used at all; it just means that
+         * it is highly unlikely that it will be used.
+         */
+        notProbableKeyword,
         packages
     }
 
     override fun weigh(element: LookupElement): Comparable<*> {
-        val o = element.`object`
-
-        return when (o) {
+        return when (val o = element.`object`) {
             is PackageLookupObject -> Weight.packages
 
             is DeclarationLookupObject -> {
-                val descriptor = o.descriptor
-                when (descriptor) {
+                when (val descriptor = o.descriptor) {
                     is VariableDescriptor, is FunctionDescriptor -> Weight.callable
                     is ClassDescriptor -> if (descriptor.kind == ClassKind.ENUM_ENTRY) Weight.enumMember else Weight.default
                     else -> Weight.default
                 }
             }
 
-            is KeywordLookupObject -> if (element.isProbableKeyword) Weight.probableKeyword else Weight.keyword
+            is KeywordLookupObject -> when (element.keywordProbability) {
+                KeywordProbability.HIGH -> Weight.probableKeyword
+                KeywordProbability.DEFAULT -> Weight.keyword
+                KeywordProbability.LOW -> Weight.notProbableKeyword
+            }
 
             else -> Weight.default
         }
@@ -250,8 +256,7 @@ object PreferMatchingItemWeigher : LookupElementWeigher("kotlin.preferMatching",
         if (element.lookupString != prefix) {
             return Weight.notExactMatch
         } else {
-            val o = element.`object`
-            return when (o) {
+            return when (val o = element.`object`) {
                 is KeywordLookupObject -> Weight.keywordExactMatch
 
                 is DeclarationLookupObject -> {

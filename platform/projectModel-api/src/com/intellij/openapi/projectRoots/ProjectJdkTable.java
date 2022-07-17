@@ -14,6 +14,9 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.EventListener;
 import java.util.List;
 
+/**
+ * Provides access to SDKs configured in the IDE. Despite its name, this class operates on SDKs of all kinds, not only on Java SDKs.
+ */
 @ApiStatus.NonExtendable
 public abstract class ProjectJdkTable {
   public static ProjectJdkTable getInstance() {

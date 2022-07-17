@@ -7,7 +7,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
+import com.intellij.openapi.progress.util.ProgressIndicatorListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
@@ -51,7 +51,7 @@ public final class ProgressSuspender implements AutoCloseable {
 
     attachToProgress(progress);
 
-    new ProgressIndicatorListenerAdapter() {
+    new ProgressIndicatorListener() {
       @Override
       public void cancelled() {
         resumeProcess();
@@ -108,6 +108,10 @@ public final class ProgressSuspender implements AutoCloseable {
 
   public boolean isSuspended() {
     return mySuspended;
+  }
+
+  public boolean isClosed() {
+    return myClosed;
   }
 
   /**

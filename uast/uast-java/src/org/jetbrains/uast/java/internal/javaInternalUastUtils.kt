@@ -15,6 +15,8 @@
  */
 package org.jetbrains.uast.java
 
+import com.intellij.lang.Language
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
@@ -79,3 +81,13 @@ internal inline fun <reified T : UDeclaration, reified P : PsiElement> unwrap(el
 }
 
 internal fun PsiElement.getChildByRole(role: Int) = (this as? CompositeElement)?.findChildByRoleAsPsiElement(role)
+
+/** Returns true if the given element is written in Java. */
+fun isJava(element: PsiElement?): Boolean {
+  return element != null && isJava(element.language)
+}
+
+/** Returns true if the given language is Java. */
+fun isJava(language: Language?): Boolean {
+  return language == JavaLanguage.INSTANCE
+}

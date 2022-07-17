@@ -134,7 +134,6 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
   public void tearDown() throws Exception {
     try {
       Disposer.dispose(myConsole);
-      setVFile(null);
     }
     catch (Throwable e) {
       addSuppressedException(e);

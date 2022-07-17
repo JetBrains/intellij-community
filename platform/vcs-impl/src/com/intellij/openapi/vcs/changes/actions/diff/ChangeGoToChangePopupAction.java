@@ -28,9 +28,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @deprecated use {@link SimpleGoToChangePopupAction}
+ * @deprecated use {@link PresentableGoToChangePopupAction}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain>
   extends GoToChangePopupBuilder.BaseGoToChangePopupAction {
 
@@ -127,7 +127,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
     protected void onDoubleClick() {
       myRef.get().cancel();
 
-      ChangesBrowserNode selection = VcsTreeModelData.selected(myViewer).nodesStream().findFirst().orElse(null);
+      ChangesBrowserNode<?> selection = VcsTreeModelData.selected(myViewer).iterateNodes().first();
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> onSelected(selection));
     }
   }

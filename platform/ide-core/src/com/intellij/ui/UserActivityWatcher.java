@@ -186,14 +186,14 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     }
     else if (parentComponent instanceof JList) {
       ((JList)parentComponent).getModel().addListDataListener(myListDataListener);
-      ((JList)parentComponent).addListSelectionListener(myListSelectionListener);
+      if (trackListSelection()) ((JList<?>)parentComponent).addListSelectionListener(myListSelectionListener);
     }
     else if (parentComponent instanceof JTree) {
       ((JTree)parentComponent).getModel().addTreeModelListener(myTreeModelListener);
     }
 
     if (parentComponent instanceof JComboBox) {
-      ComboBoxEditor editor = ((JComboBox)parentComponent).getEditor();
+      ComboBoxEditor editor = ((JComboBox<?>)parentComponent).getEditor();
       if (editor != null) {
         register(editor.getEditorComponent());
       }
@@ -213,9 +213,14 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
       ((JSlider)parentComponent).addChangeListener(myChangeListener);
     }
 
-    if (parentComponent instanceof UserActivityProviderComponent) {
-      ((UserActivityProviderComponent)parentComponent).addChangeListener(myChangeListener);
+    UserActivityProviderComponent provider = getActivityProviderComponent(parentComponent);
+    if (provider != null) {
+      provider.addChangeListener(myChangeListener);
     }
+  }
+
+  protected boolean trackListSelection() {
+    return true;
   }
 
   @Override
@@ -246,9 +251,16 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
       ((JSlider)component).removeChangeListener(myChangeListener);
     }
 
-    if (component instanceof UserActivityProviderComponent) {
-      ((UserActivityProviderComponent)component).removeChangeListener(myChangeListener);
+    UserActivityProviderComponent provider = getActivityProviderComponent(component);
+    if (provider != null) {
+      provider.removeChangeListener(myChangeListener);
     }
+  }
+
+  private static UserActivityProviderComponent getActivityProviderComponent(Component component) {
+    return component instanceof UserActivityProviderComponent
+           ? (UserActivityProviderComponent)component
+           : UIUtil.getClientProperty(component, UserActivityProviderComponent.class);
   }
 
   public boolean isModified() {
@@ -257,5 +269,33 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
 
   public void commit() {
     myIsModified = false;
+  }
+
+  public static class UserActivityProvider implements UserActivityProviderComponent, ChangeListener {
+    private final EventDispatcher<ChangeListener> myDispatcher = EventDispatcher.create(ChangeListener.class);
+    @Override
+    public void addChangeListener(@NotNull ChangeListener changeListener) {
+      myDispatcher.addListener(changeListener);
+    }
+
+    @Override
+    public void removeChangeListener(@NotNull ChangeListener changeListener) {
+      myDispatcher.removeListener(changeListener);
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent e) {
+      myDispatcher.getMulticaster().stateChanged(e);
+    }
+
+    public void stateChanged(Object source) {
+      stateChanged(new ChangeEvent(source));
+    }
+
+    public static UserActivityProvider create(JComponent component) {
+      UserActivityProvider provider = new UserActivityProvider();
+      component.putClientProperty(UserActivityProviderComponent.class, provider);
+      return provider;
+    }
   }
 }

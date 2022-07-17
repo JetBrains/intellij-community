@@ -102,6 +102,9 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor) visitor).visitParameterList(this);
     }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

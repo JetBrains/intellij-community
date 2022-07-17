@@ -30,7 +30,6 @@ import java.nio.file.Files;
 import java.util.*;
 
 import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
@@ -392,7 +391,7 @@ public class GeneralCommandLineTest {
     String uni = SystemInfo.isWindows ? IoTestUtil.getUnicodeName() : IoTestUtil.getUnicodeName(System.getProperty("file.encoding"));
     assumeTrue(uni != null);
 
-    Map<String, String> testEnv = newHashMap(pair("VALUE_1", uni + "_1"), pair("VALUE_2", uni + "_2"));
+    Map<String, String> testEnv = Map.of("VALUE_1", uni + "_1", "VALUE_2", uni + "_2");
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ENV);
     checkEnvPassing(command, testEnv, true);
     checkEnvPassing(command, testEnv, false);

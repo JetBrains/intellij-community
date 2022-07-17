@@ -87,7 +87,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
           if (psiFile != null) {
             psiFile.accept(new JavaRecursiveElementWalkingVisitor() {
               @Override
-              public void visitClass(PsiClass candidate) {
+              public void visitClass(@NotNull PsiClass candidate) {
                 ProgressManager.checkCanceled();
                 PsiMethod overridingMethod = candidate.isInheritor(methodContainingClass, true)
                                              ? findOverridingMethod(candidate, method, methodContainingClass) : null;

@@ -26,7 +26,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,8 +108,7 @@ public abstract class TaskRepository {
   /**
    * @deprecated use #createCancellableConnection()
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void testConnection() throws Exception {
   }
 
@@ -136,8 +134,7 @@ public abstract class TaskRepository {
    * @throws Exception
    * @deprecated To be removed in IDEA 14. Use {@link #getIssues(String, int, int, boolean)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2014")
+  @Deprecated(forRemoval = true)
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     throw new UnsupportedOperationException("Deprecated: should not be called");
   }
@@ -230,8 +227,7 @@ public abstract class TaskRepository {
   /**
    * @deprecated Use {@link #setTaskState(Task, CustomTaskState)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
     throw new UnsupportedOperationException("Setting task to state " + state + " is not supported");
   }

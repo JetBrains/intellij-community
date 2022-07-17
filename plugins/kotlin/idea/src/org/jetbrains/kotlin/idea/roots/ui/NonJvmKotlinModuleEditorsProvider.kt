@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.ui.configuration.ClasspathEditor
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProviderEx
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
 import com.intellij.openapi.roots.ui.configuration.OutputEditor
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
 class NonJvmKotlinModuleEditorsProvider : ModuleConfigurationEditorProviderEx {
@@ -18,9 +18,10 @@ class NonJvmKotlinModuleEditorsProvider : ModuleConfigurationEditorProviderEx {
     override fun createEditors(state: ModuleConfigurationState): Array<ModuleConfigurationEditor> {
         val rootModel = state.rootModel
         val module = rootModel.module
-        if (ModuleType.get(module) !is JavaModuleType) return ModuleConfigurationEditor.EMPTY
-        val targetPlatform = TargetPlatformDetector.getPlatform(module)
-        if (targetPlatform.isJvm()) return ModuleConfigurationEditor.EMPTY
+
+        if (ModuleType.get(module) !is JavaModuleType || module.platform.isJvm()) {
+            return ModuleConfigurationEditor.EMPTY
+        }
 
         val moduleName = module.name
         return arrayOf(

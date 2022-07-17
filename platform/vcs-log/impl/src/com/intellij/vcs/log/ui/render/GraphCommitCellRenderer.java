@@ -1,17 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleColoredRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TableCellState;
+import com.intellij.ui.*;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -39,6 +39,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   implements VcsLogCellRenderer {
   private static final int MAX_GRAPH_WIDTH = 6;
   private static final int VERTICAL_PADDING = JBUIScale.scale(7);
+  @NotNull private static final JBValue.UIInteger LOG_ROW_HEIGHT = new JBValue.UIInteger("VersionControl.Log.Commit.rowHeight", 26);
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogGraphTable myGraphTable;
@@ -159,7 +160,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   public static Font getLabelFont() {
-    return UIUtil.getLabelFont();
+    return StartupUiUtil.getLabelFont();
   }
 
   private static class MyComponent extends SimpleColoredRenderer {
@@ -167,7 +168,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull private final VcsLogGraphTable myGraphTable;
     @NotNull private final GraphCellPainter myPainter;
     @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
-    @NotNull private final LabelPainter myReferencePainter;
+    @NotNull private final VcsLogLabelPainter myReferencePainter;
 
     @NotNull protected GraphImage myGraphImage = new GraphImage(ImageUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
     @NotNull private Font myFont;
@@ -181,9 +182,9 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       myPainter = painter;
       myGraphTable = table;
 
-      myReferencePainter = new LabelPainter(data, table, iconCache);
+      myReferencePainter = new VcsLogLabelPainter(data, table, iconCache);
       myIssueLinkRenderer = new IssueLinkRenderer(data.getProject(), this);
-      setCellState(new BorderlessTableCellState());
+      setCellState(new VcsLogTableCellState());
 
       myFont = getLabelFont();
       GraphicsConfiguration configuration = myGraphTable.getGraphicsConfiguration();
@@ -276,6 +277,13 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     private int calculateHeight() {
+      int rowContentHeight = calculateRowContentHeight();
+      return ExperimentalUI.isNewUI() ?
+             Math.max(rowContentHeight, LOG_ROW_HEIGHT.get()) :
+             rowContentHeight;
+    }
+
+    private int calculateRowContentHeight() {
       return Math.max(myReferencePainter.getSize().height, getFontMetrics(myFont).getHeight() + VERTICAL_PADDING);
     }
 
@@ -326,7 +334,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     @NotNull
-    public LabelPainter getReferencePainter() {
+    public VcsLogLabelPainter getReferencePainter() {
       return myReferencePainter;
     }
 
@@ -360,10 +368,16 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
   }
 
-  public static class BorderlessTableCellState extends TableCellState {
+  public static class VcsLogTableCellState extends TableCellState {
     @Override
     protected @Nullable Border getBorder(boolean isSelected, boolean hasFocus) {
       return null;
+    }
+
+    @Override
+    protected @NotNull Color getSelectionForeground(JTable table, boolean isSelected) {
+      if (!isSelected) return super.getSelectionForeground(table, isSelected);
+      return VcsLogGraphTable.getSelectionForeground(RenderingUtil.isFocused(table));
     }
   }
 }

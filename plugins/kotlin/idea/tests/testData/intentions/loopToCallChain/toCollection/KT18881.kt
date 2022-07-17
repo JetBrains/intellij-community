@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // IS_APPLICABLE: false
 // IS_APPLICABLE_2: false
 data class Node(private val data: MutableList<String>) {

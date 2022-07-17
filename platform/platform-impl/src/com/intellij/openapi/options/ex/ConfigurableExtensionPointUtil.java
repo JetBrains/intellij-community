@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.BundleBase;
+import com.intellij.ide.actions.ConfigurablesPatcher;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,15 +27,15 @@ public final class ConfigurableExtensionPointUtil {
 
   public static @NotNull List<Configurable> buildConfigurablesList(@NotNull List<? extends ConfigurableEP<Configurable>> extensions, @Nullable ConfigurableFilter filter) {
     final List<Configurable> result = new ArrayList<>();
-    final Map<String, ConfigurableWrapper> idToConfigurable = new HashMap<>();
+    final Map<String, HierarchicalConfigurable> idToConfigurable = new HashMap<>();
     List<String> idsInEpOrder = new ArrayList<>();
     for (ConfigurableEP<Configurable> ep : extensions) {
       Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
       if (isSuppressed(configurable, filter)) {
         continue;
       }
-      if (configurable instanceof ConfigurableWrapper) {
-        ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+      if (configurable instanceof HierarchicalConfigurable) {
+        HierarchicalConfigurable wrapper = (HierarchicalConfigurable)configurable;
         idToConfigurable.put(wrapper.getId(), wrapper);
         idsInEpOrder.add(wrapper.getId());
       }
@@ -56,7 +57,7 @@ public final class ConfigurableExtensionPointUtil {
     }
     // add roots only (i.e. configurables without parents)
     for (String id : idsInEpOrder) {
-      ConfigurableWrapper wrapper = idToConfigurable.get(id);
+      HierarchicalConfigurable wrapper = idToConfigurable.get(id);
       String parentId = wrapper.getParentId();
       if (parentId == null || !idToConfigurable.containsKey(parentId)) {
         result.add(wrapper);
@@ -66,11 +67,11 @@ public final class ConfigurableExtensionPointUtil {
     return result;
   }
 
-  private static @NotNull ConfigurableWrapper addChildrenRec(@NotNull String id,
-                                                             @NotNull Map<String, ConfigurableWrapper> idToConfigurable,
-                                                             @NotNull Set<? super String> visited,
-                                                             @NotNull Map<String, List<String>> idTree) {
-    ConfigurableWrapper wrapper = idToConfigurable.get(id);
+  private static @NotNull HierarchicalConfigurable addChildrenRec(@NotNull String id,
+                                                                  @NotNull Map<String, HierarchicalConfigurable> idToConfigurable,
+                                                                  @NotNull Set<? super String> visited,
+                                                                  @NotNull Map<String, List<String>> idTree) {
+    HierarchicalConfigurable wrapper = idToConfigurable.get(id);
     if (visited.contains(id)) {
       return wrapper;
     }
@@ -78,7 +79,7 @@ public final class ConfigurableExtensionPointUtil {
     List<String> childIds = idTree.get(id);
     if (childIds != null) {
       for (String childId : childIds) {
-        ConfigurableWrapper childWrapper = addChildrenRec(childId, idToConfigurable, visited, idTree);
+        HierarchicalConfigurable childWrapper = addChildrenRec(childId, idToConfigurable, visited, idTree);
         wrapper = wrapper.addChild(childWrapper);
       }
       idToConfigurable.put(id, wrapper);
@@ -86,16 +87,16 @@ public final class ConfigurableExtensionPointUtil {
     return wrapper;
   }
 
-  private static @NotNull Map<String, List<String>> buildIdTree(@NotNull Map<String, ConfigurableWrapper> idToConfigurable,
+  private static @NotNull Map<String, List<String>> buildIdTree(@NotNull Map<String, HierarchicalConfigurable> idToConfigurable,
                                                                 @NotNull List<String> idsInEpOrder) {
     Map<String, List<String>> tree = new HashMap<>();
     for (String id : idsInEpOrder) {
-      ConfigurableWrapper wrapper = idToConfigurable.get(id);
-      String parentId = wrapper.getParentId();
+      HierarchicalConfigurable hierarchical = idToConfigurable.get(id);
+      String parentId = hierarchical.getParentId();
       if (parentId != null) {
-        ConfigurableWrapper parent = idToConfigurable.get(parentId);
+        HierarchicalConfigurable parent = idToConfigurable.get(parentId);
         if (parent == null) {
-          LOG.warn("Can't find parent for " + parentId + " (" + wrapper + ")");
+          LOG.warn("Can't find parent for " + parentId + " (" + hierarchical + ")");
           continue;
         }
         tree.computeIfAbsent(parentId, k -> new ArrayList<>(5)).add(id);
@@ -113,7 +114,14 @@ public final class ConfigurableExtensionPointUtil {
     Project targetProject = withIdeSettings ? project : ProjectUtil.currentOrDefaultProject(project);
     return new EpBasedConfigurableGroup(
       targetProject,
-      () -> getConfigurableGroup(getConfigurables(targetProject, withIdeSettings), targetProject)
+      () -> {
+        List<Configurable> configurables = getConfigurables(targetProject, withIdeSettings);
+        List<ConfigurablesPatcher> modificators = ConfigurablesPatcher.EP_NAME.getExtensionList();
+        for (ConfigurablesPatcher modificator : modificators) {
+          modificator.modifyOriginalConfigurablesList(configurables, targetProject);
+        }
+        return getConfigurableGroup(configurables, targetProject);
+      }
     );
   }
 
@@ -193,8 +201,9 @@ public final class ConfigurableExtensionPointUtil {
   private static void addGroup(@NotNull Map<String, Node<SortedConfigurableGroup>> tree, Project project,
                                String groupId, List<? extends Configurable> configurables, ResourceBundle alternative) {
     boolean root = "root".equals(groupId);
+    ConfigurableGroupEP ep = root ? null : ConfigurableGroupEP.find(groupId);
     String id = "configurable.group." + groupId;
-    ResourceBundle bundle = getBundle(id + ".settings.display.name", configurables, alternative);
+    ResourceBundle bundle = ep != null ? ep.getResourceBundle() : getBundle(id + ".settings.display.name", configurables, alternative);
     if (bundle == null) {
       bundle = OptionsBundle.INSTANCE.getResourceBundle();
       if (!root) {
@@ -203,7 +212,6 @@ public final class ConfigurableExtensionPointUtil {
         id = "configurable.group." + groupId;
       }
     }
-    ConfigurableGroupEP ep = root ? null : ConfigurableGroupEP.find(groupId);
     Node<SortedConfigurableGroup> node = Node.get(tree, groupId);
     if (node.myValue == null) {
       if (ep != null) {
@@ -251,17 +259,17 @@ public final class ConfigurableExtensionPointUtil {
    * @return the map of different groups of settings
    */
   public static @NotNull Map<String, List<Configurable>> groupConfigurables(@NotNull List<? extends Configurable> configurables) {
-    Map<String, Node<ConfigurableWrapper>> tree = new HashMap<>();
+    Map<String, Node<HierarchicalConfigurable>> tree = new HashMap<>();
     for (Configurable configurable : configurables) {
-      if (!(configurable instanceof ConfigurableWrapper)) {
+      if (!(configurable instanceof HierarchicalConfigurable)) {
         Node.add(tree, "other", configurable);
         continue;
       }
 
-      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+      HierarchicalConfigurable hierarchical = (HierarchicalConfigurable)configurable;
       String id;
       try {
-        id = wrapper.getId();
+        id = hierarchical.getId();
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -271,31 +279,35 @@ public final class ConfigurableExtensionPointUtil {
         continue;
       }
 
-      Node<ConfigurableWrapper> node = Node.get(tree, id);
+      Node<HierarchicalConfigurable> node = Node.get(tree, id);
       if (node.myValue != null) {
         LOG.warn("ignore configurable with duplicated id: " + id);
         continue;
       }
 
-      String parentId = wrapper.getParentId();
-      String groupId = wrapper.getExtensionPoint().groupId;
-      if (groupId != null) {
-        if (parentId != null) {
-          LOG.warn("ignore deprecated groupId: " + groupId + " for id: " + id);
-        }
-        else {
-          //TODO:LOG.warn("use deprecated groupId: " + groupId + " for id: " + id);
-          parentId = groupId;
+      String parentId = hierarchical.getParentId();
+
+      if (hierarchical instanceof ConfigurableWrapper) {
+        String groupId = ((ConfigurableWrapper)hierarchical).getExtensionPoint().groupId;
+        if (groupId != null) {
+          if (parentId != null) {
+            LOG.warn("ignore deprecated groupId: " + groupId + " for id: " + id);
+          }
+          else {
+            //TODO:LOG.warn("use deprecated groupId: " + groupId + " for id: " + id);
+            parentId = groupId;
+          }
         }
       }
+
       parentId = Node.cyclic(tree, parentId, "other", id, node);
       node.myParent = Node.add(tree, parentId, node);
-      node.myValue = wrapper;
+      node.myValue = hierarchical;
     }
 
     Map<String, List<Configurable>> map = new HashMap<>();
     for (String id : ArrayUtilRt.toStringArray(tree.keySet())) {
-      Node<ConfigurableWrapper> node = tree.get(id);
+      Node<HierarchicalConfigurable> node = tree.get(id);
       if (node != null) {
         List<Configurable> list = getConfigurables(tree, node);
         if (list != null) {
@@ -312,7 +324,8 @@ public final class ConfigurableExtensionPointUtil {
    * @param node a current node to process children recursively
    * @return the list of settings for a group or {@code null} for internal node
    */
-  private static List<Configurable> getConfigurables(Map<String, Node<ConfigurableWrapper>> tree, Node<ConfigurableWrapper> node) {
+  private static List<Configurable> getConfigurables(Map<String, Node<HierarchicalConfigurable>> tree,
+                                                     Node<HierarchicalConfigurable> node) {
     if (node.myChildren == null) {
       if (node.myValue == null) {
         // for group only
@@ -329,7 +342,7 @@ public final class ConfigurableExtensionPointUtil {
       }
       else {
         @SuppressWarnings("unchecked") // expected type
-        Node<ConfigurableWrapper> value = (Node<ConfigurableWrapper>)child;
+        Node<HierarchicalConfigurable> value = (Node<HierarchicalConfigurable>)child;
         if (getConfigurables(tree, value) != null) {
           throw new IllegalStateException("unexpected algorithm state");
         }
@@ -469,6 +482,35 @@ public final class ConfigurableExtensionPointUtil {
   }
 
   /**
+   * @return path from configurable to Settings/Preferences root as a string of display names separated by '|' e.g., Editor | Inspections
+   */
+  @Nls
+  public static String getConfigurablePath(Class<? extends Configurable> configurableClass, Project project) {
+    List<String> path = new ArrayList<>();
+    collectPath(configurableClass, path, getConfigurableGroup(project, true).getConfigurables());
+    return StringUtil.join(path, " | ");
+  }
+
+  private static void collectPath(Class<? extends Configurable> configurableClass, List<String> path, Configurable[] configurables) {
+    for (Configurable configurable : configurables) {
+      if (configurableClass.equals(configurable.getClass()) ||
+          configurable instanceof ConfigurableWrapper &&
+          configurableClass.getName().equals(((ConfigurableWrapper)configurable).getExtensionPoint().instanceClass)) {
+        path.add(configurable.getDisplayName());
+      }
+      if (configurable instanceof Configurable.Composite) {
+        ArrayList<String> thisPart = new ArrayList<>();
+        collectPath(configurableClass, thisPart, ((Configurable.Composite)configurable).getConfigurables());
+        if (!thisPart.isEmpty()) {
+          path.add(configurable.getDisplayName());
+          path.addAll(thisPart);
+          break;
+        }
+      }
+    }
+  }
+
+  /**
    * Utility class that helps to build a tree.
    */
   private static final class Node<V> {
@@ -512,6 +554,17 @@ public final class ConfigurableExtensionPointUtil {
         id = idDefault;
       }
       return id;
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void patch(@NotNull String id, @Nullable String parentId, @Nullable String bundle) {
+    ConfigurableGroupEP ep = ConfigurableGroupEP.find(id);
+    if (ep != null) {
+      ep.parentId = parentId;
+      if (bundle != null) {
+        ep.bundle = bundle;
+      }
     }
   }
 }

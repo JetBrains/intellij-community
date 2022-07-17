@@ -2,7 +2,7 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
-import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.java.JavaBundle;
@@ -239,7 +239,7 @@ public final class JavaSdkImpl extends JavaSdk {
 
     String vendorPrefix = Registry.is("use.jdk.vendor.in.suggested.jdk.name", true) ? info.variant.prefix : null;
     String name = JdkUtil.suggestJdkName(info.version, vendorPrefix);
-    if (WslDistributionManager.isWslPath(sdkHome)) name += " (WSL)";
+    if (WslPath.isWslUncPath(sdkHome)) name += " (WSL)";
     return name;
   }
 
@@ -340,26 +340,33 @@ public final class JavaSdkImpl extends JavaSdk {
   static VirtualFile internalJdkAnnotationsPath(@NotNull List<? super String> pathsChecked, boolean refresh) {
     Path javaPluginClassesRootPath = PathManager.getJarForClass(JavaSdkImpl.class);
     LOG.assertTrue(javaPluginClassesRootPath != null);
-    File javaPluginClassesRoot = javaPluginClassesRootPath.toFile();
+    javaPluginClassesRootPath = javaPluginClassesRootPath.toAbsolutePath();
     VirtualFile root;
     VirtualFileManager vfm = VirtualFileManager.getInstance();
     LocalFileSystem lfs = LocalFileSystem.getInstance();
-    if (javaPluginClassesRoot.isFile()) {
-      String annotationsJarPath = FileUtil.toSystemIndependentName(new File(javaPluginClassesRoot.getParentFile(), "jdkAnnotations.jar").getAbsolutePath());
-      String url = "jar://" + annotationsJarPath + "!/";
+    String pathInResources = "resources/jdkAnnotations.jar";
+    if (Files.isRegularFile(javaPluginClassesRootPath)) {
+      Path annotationsJarPath = javaPluginClassesRootPath.resolveSibling(pathInResources);
+      String annotationsJarPathString = FileUtil.toSystemIndependentName(annotationsJarPath.toString());
+      String url = "jar://" + annotationsJarPathString + "!/";
       root = refresh ? vfm.refreshAndFindFileByUrl(url) : vfm.findFileByUrl(url);
-      pathsChecked.add(annotationsJarPath);
+      pathsChecked.add(annotationsJarPathString);
     }
     else {
       // when run against IDEA plugin JDK, something like this comes up: "$IDEA_HOME$/out/classes/production/intellij.java.impl"
-      File projectRoot = JBIterable.generate(javaPluginClassesRoot, File::getParentFile).get(4);
-      File root1 = new File(projectRoot, "community/java/jdkAnnotations");
-      File root2 = new File(projectRoot, "java/jdkAnnotations");
-      root = root1.exists() && root1.isDirectory() ? refresh ? lfs.refreshAndFindFileByIoFile(root1) : lfs.findFileByIoFile(root1) :
-      root2.exists() && root2.isDirectory() ? refresh ? lfs.refreshAndFindFileByIoFile(root2) : lfs.findFileByIoFile(root2) : null;
+      Path projectRoot = JBIterable.generate(javaPluginClassesRootPath, Path::getParent).get(4);
+      if (projectRoot != null) {
+        Path root1 = projectRoot.resolve("community/java/jdkAnnotations");
+        Path root2 = projectRoot.resolve("java/jdkAnnotations");
+        root = Files.isDirectory(root1) ? (refresh ? lfs.refreshAndFindFileByNioFile(root1) : lfs.findFileByNioFile(root1)) :
+               Files.isDirectory(root2) ? (refresh ? lfs.refreshAndFindFileByNioFile(root2) : lfs.findFileByNioFile(root2)) : null;
+      }
+      else {
+        root = null;
+      }
     }
     if (root == null) {
-      String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
+      String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/" + pathInResources + "!/";
       root = refresh ? vfm.refreshAndFindFileByUrl(url) : vfm.findFileByUrl(url);
       pathsChecked.add(url);
     }
@@ -464,7 +471,7 @@ public final class JavaSdkImpl extends JavaSdk {
       try {
         try (DirectoryStream<Path> roots = Files.newDirectoryStream(jdkHome.resolve("modules"))) {
           for (Path root : roots) {
-            result.add(VfsUtil.getUrlForLibraryRoot(root.toFile()));
+            result.add(VfsUtil.getUrlForLibraryRoot(root));
           }
         }
       }
@@ -489,7 +496,7 @@ public final class JavaSdkImpl extends JavaSdk {
     }
     else {
       for (Path root : JavaSdkUtil.getJdkClassesRoots(jdkHome, isJre)) {
-        result.add(VfsUtil.getUrlForLibraryRoot(root.toFile()));
+        result.add(VfsUtil.getUrlForLibraryRoot(root));
       }
     }
 

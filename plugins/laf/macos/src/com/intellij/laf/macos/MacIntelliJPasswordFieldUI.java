@@ -15,8 +15,7 @@ import static com.intellij.laf.macos.MacIntelliJTextBorder.MINIMUM_HEIGHT;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
-
+public final class MacIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     return new MacIntelliJPasswordFieldUI();

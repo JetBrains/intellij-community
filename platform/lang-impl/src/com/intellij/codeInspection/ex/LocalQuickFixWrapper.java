@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -12,6 +11,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -24,12 +24,12 @@ import java.util.List;
 import java.util.Set;
 
 public class LocalQuickFixWrapper extends QuickFixAction {
-  private final QuickFix myFix;
+  private final QuickFix<?> myFix;
 
-  public LocalQuickFixWrapper(@NotNull QuickFix fix, @NotNull InspectionToolWrapper toolWrapper) {
-    super(fix.getName(), toolWrapper);
+  public LocalQuickFixWrapper(@NotNull QuickFix<?> fix, @NotNull InspectionToolWrapper<?,?> toolWrapper) {
+    super(StringUtil.escapeMnemonics(fix.getName()),
+          fix instanceof Iconable ? ((Iconable)fix).getIcon(0) : null, null, toolWrapper);
     myFix = fix;
-    setText(StringUtil.escapeMnemonics(myFix.getName()));
   }
 
   public void setText(@NotNull @NlsActions.ActionText String text) {
@@ -42,13 +42,13 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   }
 
   @NotNull
-  public QuickFix getFix() {
+  public QuickFix<?> getFix() {
     return myFix;
   }
 
   @Nullable
-  private QuickFix getWorkingQuickFix(QuickFix @NotNull [] fixes) {
-    for (QuickFix fix : fixes) {
+  private QuickFix<?> getWorkingQuickFix(QuickFix<?> @NotNull [] fixes) {
+    for (QuickFix<?> fix : fixes) {
       if (fix.getFamilyName().equals(myFix.getFamilyName())) {
         return fix;
       }
@@ -90,7 +90,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     boolean restart = false;
     for (CommonProblemDescriptor descriptor : descriptors) {
       if (descriptor == null) continue;
-      final QuickFix[] fixes = descriptor.getFixes();
+      final QuickFix<?>[] fixes = descriptor.getFixes();
       if (fixes != null) {
         final QuickFix fix = getWorkingQuickFix(fixes);
         if (fix != null) {

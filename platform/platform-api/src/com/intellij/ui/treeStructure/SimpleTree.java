@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -112,22 +112,8 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   public SimpleNode getNodeFor(TreePath aPath) {
-    if (aPath == null) {
-      return NULL_NODE;
-    }
-
-    DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)aPath.getLastPathComponent();
-    if (treeNode == null) {
-      return NULL_NODE;
-    }
-
-    final Object userObject = treeNode.getUserObject();
-    if (userObject instanceof SimpleNode) {
-      return (SimpleNode)userObject;
-    }
-    else {
-      return NULL_NODE;
-    }
+    SimpleNode node = TreeUtil.getLastUserObject(SimpleNode.class, aPath);
+    return node != null ? node : NULL_NODE;
   }
 
   @Nullable
@@ -240,11 +226,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
   @Override
   public boolean isPathEditable(TreePath path) {
     return true;
-  }
-
-  @Override
-  public boolean isFileColorsEnabled() {
-    return false;
   }
 
   @Override
@@ -513,10 +494,5 @@ public class SimpleTree extends Tree implements CellEditorListener {
       boxWidth = 8;
     }
     return boxWidth;
-  }
-
-  @Override
-  public void updateUI() {
-    super.updateUI();
   }
 }

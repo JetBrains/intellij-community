@@ -15,6 +15,7 @@
  */
 package git4idea.reset;
 
+import com.intellij.openapi.util.NlsContexts;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +47,7 @@ public enum GitResetMode {
   }
 
   @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @NlsContexts.RadioButton
   public String getName() {
     return GitBundle.message(myName);
   }

@@ -1,11 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity
-import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTestCase.Companion.openProjectFrom
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.use
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 class GradleAutoLinkTest : GradleAutoLinkTestCase() {
@@ -20,12 +17,11 @@ class GradleAutoLinkTest : GradleAutoLinkTestCase() {
       </project>
     """.trimIndent())
     createProjectSubFile("project/settings.gradle", "rootProject.name = 'project'")
-    openProjectFrom(projectDirectory).use { project ->
-      UnlinkedProjectStartupActivity().runActivity(project)
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-      val gradleSettings = GradleSettings.getInstance(project)
-      assertEquals(1, gradleSettings.linkedProjectsSettings.size)
+    runBlocking {
+      openProjectFrom(projectDirectory).use { project ->
+        val gradleSettings = GradleSettings.getInstance(project)
+        assertEquals(1, gradleSettings.linkedProjectsSettings.size)
+      }
     }
   }
 
@@ -50,10 +46,7 @@ class GradleAutoLinkTest : GradleAutoLinkTestCase() {
       </project>
     """.trimIndent())
     createProjectSubFile("project/settings.gradle", "rootProject.name = 'project'")
-    openProjectFrom(projectDirectory).use { project ->
-      UnlinkedProjectStartupActivity().runActivity(project)
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+    runBlocking { openProjectFrom(projectDirectory) }.use { project ->
       val gradleSettings = GradleSettings.getInstance(project)
       assertEquals(0, gradleSettings.linkedProjectsSettings.size)
     }

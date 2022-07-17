@@ -5,6 +5,7 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.diverged
+import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
@@ -22,6 +23,7 @@ import com.intellij.vcs.log.ui.actions.BooleanPropertyToggleAction
 import com.intellij.vcs.log.util.VcsLogUtil.HEAD
 import git4idea.GitUtil
 import git4idea.actions.GitFetch
+import git4idea.actions.branch.GitBranchActionsUtil.calculateNewBranchInitialName
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitBrancher
 import git4idea.config.GitVcsSettings
@@ -46,10 +48,9 @@ internal object BranchesDashboardActions {
   class BranchesTreeActionGroup(private val project: Project, private val tree: FilteringBranchesTree) : ActionGroup(), DumbAware {
 
     init {
-      isPopup = true
+      templatePresentation.isPopupGroup = true
+      templatePresentation.isHideGroupIfEmpty = true
     }
-
-    override fun hideIfNoVisibleChildren() = true
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> =
       BranchActionsBuilder(project, tree).build()?.getChildren(e) ?: AnAction.EMPTY_ARRAY
@@ -189,17 +190,23 @@ internal object BranchesDashboardActions {
       val project = e.project!!
       val branchFilters = e.getData(GIT_BRANCH_FILTERS)
       if (branchFilters != null && branchFilters.contains(HEAD)) {
-        createOrCheckoutNewBranch(project, GitRepositoryManager.getInstance(project).repositories, HEAD)
+        val repositories = GitRepositoryManager.getInstance(project).repositories
+
+        createOrCheckoutNewBranch(project, repositories, HEAD, initialName = repositories.getCommonCurrentBranch())
       }
       else {
         val branches = e.getData(GIT_BRANCHES)!!
         val controller = e.getData(BRANCHES_UI_CONTROLLER)!!
         val repositories = branches.flatMap(controller::getSelectedRepositories).distinct()
-        val branchName = branches.first().branchName
+        val branchInfo = branches.first()
+        val branchName = branchInfo.branchName
 
-        createOrCheckoutNewBranch(project, repositories, "$branchName^0", message("action.Git.New.Branch.dialog.title", branchName))
+        createOrCheckoutNewBranch(project, repositories, "$branchName^0",
+                                  message("action.Git.New.Branch.dialog.title", branchName),
+                                  calculateNewBranchInitialName(branchName, !branchInfo.isLocal))
       }
     }
+
   }
 
   class UpdateSelectedBranchAction : BranchesActionBase(text = messagePointer("action.Git.Update.Selected.text"),
@@ -453,7 +460,7 @@ internal object BranchesDashboardActions {
 
   class GroupingSettingsGroup: DefaultActionGroup(), DumbAware {
     override fun update(e: AnActionEvent) {
-      isPopup = GroupBranchByRepositoryAction.isEnabledAndVisible(e)
+      e.presentation.isPopupGroup = GroupBranchByRepositoryAction.isEnabledAndVisible(e)
     }
   }
 
@@ -570,7 +577,7 @@ internal object BranchesDashboardActions {
       val controller = e.getData(BRANCHES_UI_CONTROLLER)
       val branches = e.getData(GIT_BRANCHES)
       val project = e.project
-      val enabled = project != null && controller != null && branches != null && branches.isNotEmpty()
+      val enabled = project != null && controller != null && !branches.isNullOrEmpty()
       e.presentation.isEnabled = enabled
       e.presentation.description = description()
       if (enabled) {
@@ -611,8 +618,8 @@ internal object BranchesDashboardActions {
       val branchFilters = e.getData(GIT_BRANCH_FILTERS)
       val uiController = e.getData(BRANCHES_UI_CONTROLLER)
       val project = e.project
-      val enabled = project != null && uiController != null && branchFilters != null && branchFilters.isNotEmpty()
-                    && e.getData(PlatformDataKeys.CONTEXT_COMPONENT) is BranchesTreeComponent
+      val enabled = project != null && uiController != null && !branchFilters.isNullOrEmpty()
+                    && e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) is BranchesTreeComponent
       e.presentation.isEnabled = enabled
     }
 

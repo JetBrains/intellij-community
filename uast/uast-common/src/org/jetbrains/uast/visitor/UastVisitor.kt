@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.visitor
 
 import org.jetbrains.uast.*
@@ -124,7 +124,6 @@ abstract class AbstractUastVisitor : UastVisitor {
  * So make sure that overridden methods returns `true` and please think twice before returning `false` if you are passing implementation to
  * [com.intellij.uast.UastVisitorAdapter].
  */
-@Suppress("KDocUnresolvedReference")
 abstract class AbstractUastNonRecursiveVisitor : UastVisitor {
   override fun visitElement(node: UElement): Boolean = true
 }

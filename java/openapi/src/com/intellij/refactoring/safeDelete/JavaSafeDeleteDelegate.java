@@ -20,18 +20,28 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReference;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.SlowOperations;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
- * @author Max Medvedev
+ * The extension helps to encapsulate a custom logic for "Safe delete" refactoring.
  */
 public interface JavaSafeDeleteDelegate {
   LanguageExtension<JavaSafeDeleteDelegate> EP =
     new LanguageExtension<>("com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate");
 
-  void createUsageInfoForParameter(final PsiReference reference,
-                                   final List<UsageInfo> usages,
-                                   final PsiParameter parameter,
-                                   final PsiMethod method);
+  /**
+   * Method is used to create usage information according to the input <code>reference</code> to the method
+   * and <code>parameter</code> that belongs to the <code>method</code>.
+   * The result will be filled into the list of the usages.
+   * <p> The method should be called under read action.
+   *     A caller should be also aware that an implementation may use an index access,
+   *     so using the method in EDT may lead to get the exception from {@link SlowOperations#assertSlowOperationsAreAllowed()}
+   */
+  void createUsageInfoForParameter(@NotNull PsiReference reference,
+                                   @NotNull List<UsageInfo> usages,
+                                   @NotNull PsiParameter parameter,
+                                   @NotNull PsiMethod method);
 }

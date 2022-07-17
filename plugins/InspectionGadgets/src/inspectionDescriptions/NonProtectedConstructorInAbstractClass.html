@@ -1,10 +1,9 @@
 <html>
 <body>
-Reports the constructors of abstract classes that are declared as <code>public</code>.
+Reports <code>public</code> constructors of <code>abstract</code> classes.
 <p>
-  Constructors of abstract classes can only be called in constructors of
-  their subclasses. So making constructors of abstract classes public may
-  be confusing.
+  Constructors of <code>abstract</code> classes can only be called from the constructors of
+  their subclasses, declaring them <code>public</code> may be confusing.
 </p>
 <p>The quick-fix makes such constructors protected.</p>
 <p><b>Example:</b></p>
@@ -25,6 +24,6 @@ Reports the constructors of abstract classes that are declared as <code>public</
 </code></pre>
 <!-- tooltip end -->
 <p>Configure the inspection:</p>
-<p>Use the option below to ignore non-public classes.</p>
+<p>Use the <b>Ignore for non-public classes</b> option below to ignore <code>public</code> constructors in non-public classes.</p>
 </body>
 </html>

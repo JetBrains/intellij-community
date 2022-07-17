@@ -7,6 +7,7 @@ import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.filter;
+import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
 import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
 
@@ -31,7 +33,7 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
-    setPopup(isPopup(e));
+    e.getPresentation().setPopupGroup(isPopup(e));
     e.getPresentation().setEnabledAndVisible(isEnabledAndVisible(e));
   }
 
@@ -41,10 +43,12 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
     if (e != null && !isPopup(e)) {
       actions.add(Separator.create(VcsLogBundle.message("action.title.select.columns.to.see")));
     }
-    for (VcsLogColumn<?> column : getDefaultDynamicColumns()) {
-      actions.add(new ToggleColumnAction(column));
-    }
-    for (VcsLogColumn<?> column : filter(VcsLogCustomColumn.KEY.getExtensionList(), (it) -> it.isDynamic())) {
+
+    List<VcsLogColumn<?>> columns = new ArrayList<>();
+    columns.addAll(getDefaultDynamicColumns());
+    columns.addAll(VcsLogCustomColumn.KEY.getExtensionList());
+    columns.addAll(map(VcsCommitExternalStatusProvider.getExtensionsWithColumns(), ext -> ext.getLogColumn()));
+    for (VcsLogColumn<?> column : filter(columns, (it) -> it.isDynamic())) {
       actions.add(new ToggleColumnAction(column));
     }
 

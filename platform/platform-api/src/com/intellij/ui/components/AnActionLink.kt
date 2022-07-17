@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.SwingUtilities
 
@@ -24,11 +25,11 @@ open class AnActionLink(@Nls text: String, anAction: AnAction, @NonNls place: St
 
   override fun getData(dataId: String) = when {
     PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.`is`(dataId) -> {
-      val point = SwingUtilities.getRoot(this).locationOnScreen
+      val point = SwingUtilities.convertPoint(this, 0, 0, UIUtil.getRootPane(this))
       Rectangle(point.x, point.y, width, height)
     }
     PlatformDataKeys.CONTEXT_MENU_POINT.`is`(dataId) -> {
-      SwingUtilities.convertPoint(this, 0, height, UIUtil.getRootPane(this))
+      Point(0, height)
     }
     else -> dataProvider?.getData(dataId)
   }

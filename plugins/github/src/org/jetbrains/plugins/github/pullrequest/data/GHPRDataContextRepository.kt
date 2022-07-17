@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
@@ -15,21 +15,20 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
-import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GHRepositoryOwnerName
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchType
-import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModelImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.*
-import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolderImpl
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.util.*
+import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
+import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
+import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
+import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.io.IOException
 import java.util.concurrent.CompletableFuture
 
@@ -119,19 +118,12 @@ internal class GHPRDataContextRepository(private val project: Project) {
     val changesService = GHPRChangesServiceImpl(ProgressManager.getInstance(), project, requestExecutor,
                                                 remoteCoordinates, apiRepositoryCoordinates)
     val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), securityService, requestExecutor, apiRepositoryCoordinates)
+    val filesService = GHPRFilesServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
 
-    val searchHolder = GHPRSearchQueryHolderImpl().apply {
-      query = GHPRSearchQuery.DEFAULT
-    }
-    val listLoader = GHGQLPagedListLoader(ProgressManager.getInstance(),
-                                          SimpleGHGQLPagesLoader(requestExecutor, { p ->
-                                            GHGQLRequests.PullRequest.search(account.server,
-                                                                             buildQuery(apiRepositoryPath, searchHolder.query),
-                                                                             p)
-                                          }))
+    val listLoader = GHPRListLoader(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
     val listUpdatesChecker = GHPRListETagUpdateChecker(ProgressManager.getInstance(), requestExecutor, account.server, apiRepositoryPath)
 
-    val dataProviderRepository = GHPRDataProviderRepositoryImpl(detailsService, stateService, reviewService, commentService,
+    val dataProviderRepository = GHPRDataProviderRepositoryImpl(detailsService, stateService, reviewService, filesService, commentService,
                                                                 changesService) { id ->
       GHGQLPagedListLoader(ProgressManager.getInstance(),
                            SimpleGHGQLPagesLoader(requestExecutor, { p ->
@@ -151,7 +143,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
 
     indicator.checkCanceled()
     val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
-    return GHPRDataContext(searchHolder, listLoader, listUpdatesChecker, dataProviderRepository,
+    return GHPRDataContext(listLoader, listUpdatesChecker, dataProviderRepository,
                            securityService, repoDataService, creationService, detailsService, avatarIconsProvider, filesManager,
                            GHPRDiffRequestModelImpl())
   }
@@ -163,13 +155,5 @@ internal class GHPRDataContextRepository(private val project: Project) {
     private val LOG = logger<GHPRDataContextRepository>()
 
     fun getInstance(project: Project) = project.service<GHPRDataContextRepository>()
-
-    private fun buildQuery(repoPath: GHRepositoryPath, searchQuery: GHPRSearchQuery?): String {
-      return GithubApiSearchQueryBuilder.searchQuery {
-        qualifier("type", GithubIssueSearchType.pr.name)
-        qualifier("repo", repoPath.toString())
-        searchQuery?.buildApiSearchQuery(this)
-      }
-    }
   }
 }

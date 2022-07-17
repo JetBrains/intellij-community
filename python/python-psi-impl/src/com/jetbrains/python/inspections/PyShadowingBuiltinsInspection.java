@@ -30,6 +30,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +71,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session, ignoredNames);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session), ignoredNames);
   }
 
   private static final class PyIgnoreBuiltinQuickFix implements LocalQuickFix, LowPriorityAction {
@@ -117,8 +118,8 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
   private class Visitor extends PyInspectionVisitor {
     private final Set<String> myIgnoredNames;
 
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, @NotNull Collection<String> ignoredNames) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context, @NotNull Collection<String> ignoredNames) {
+      super(holder, context);
       myIgnoredNames = ImmutableSet.copyOf(ignoredNames);
     }
 

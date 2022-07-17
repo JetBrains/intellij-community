@@ -15,16 +15,15 @@
  */
 package org.jetbrains.jps.eclipse.model;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.module.JpsModuleClasspathSerializer;
 
-public class JpsEclipseModelSerializerExtension extends JpsModelSerializerExtension {
+public final class JpsEclipseModelSerializerExtension extends JpsModelSerializerExtension {
   private static final JpsEclipseClasspathSerializer CLASSPATH_SERIALIZER = new JpsEclipseClasspathSerializer();
 
-  @Nullable
   @Override
-  public JpsModuleClasspathSerializer getClasspathSerializer() {
+  public @NotNull JpsModuleClasspathSerializer getClasspathSerializer() {
     return CLASSPATH_SERIALIZER;
   }
 }

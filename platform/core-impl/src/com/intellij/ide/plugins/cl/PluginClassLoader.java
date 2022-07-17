@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
@@ -9,24 +9,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.util.SmartList;
 import com.intellij.util.lang.ClassPath;
+import com.intellij.util.lang.ClasspathCache;
 import com.intellij.util.lang.Resource;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Writer;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.CodeSource;
-import java.security.ProtectionDomain;
-import java.security.cert.Certificate;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -35,18 +29,18 @@ import java.util.function.Function;
 
 @ApiStatus.Internal
 public final class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
-  public static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
+  private static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
 
-  private static final boolean isParallelCapable = registerAsParallelCapable();
+  static {
+    boolean parallelCapable = registerAsParallelCapable();
+    assert parallelCapable;
+  }
 
   private static final @Nullable Writer logStream;
   private static final AtomicInteger instanceIdProducer = new AtomicInteger();
   private static final AtomicInteger parentListCacheIdCounter = new AtomicInteger();
 
   private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES;
-
-  // avoid capturing reference to classloader in AccessControlContext
-  private static final ProtectionDomain PROTECTION_DOMAIN = new ProtectionDomain(new CodeSource(null, (Certificate[]) null), null);
 
   static {
     @SuppressWarnings("SSBasedInspection")
@@ -72,7 +66,17 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       "kotlin.coroutines.Continuation",
       "kotlin.coroutines.CoroutineContext",
       "kotlin.coroutines.CoroutineContext$Element",
-      "kotlin.coroutines.CoroutineContext$Key"
+      "kotlin.coroutines.CoroutineContext$Key",
+      "kotlin.Result",
+      "kotlin.Result$Failure",
+      // Even though it's internal class, it can leak (and it does) into API surface because it's exposed by public
+      // `kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED` property
+      "kotlin.coroutines.intrinsics.CoroutineSingletons",
+      "kotlin.coroutines.AbstractCoroutineContextElement",
+      "kotlin.coroutines.AbstractCoroutineContextKey",
+      "kotlin.coroutines.jvm.internal.ContinuationImpl", // IDEA-295189
+      "kotlin.coroutines.jvm.internal.BaseContinuationImpl", // IDEA-295189
+      "kotlin.coroutines.jvm.internal.CoroutineStackFrame" // IDEA-295189
     ));
     String classes = System.getProperty("idea.kotlin.classes.used.in.signatures");
     if (classes != null) {
@@ -113,7 +117,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     logStream = logStreamCandidate;
   }
 
-  private IdeaPluginDescriptorImpl[] parents;
+  private final IdeaPluginDescriptorImpl[] parents;
 
   // cache of computed list of all parents (not only direct)
   private volatile ClassLoader[] allParents;
@@ -139,31 +143,6 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   public interface ResolveScopeManager {
     String isDefinitelyAlienClass(String name, String packagePrefix, boolean force);
-  }
-
-  public PluginClassLoader(@NotNull UrlClassLoader.Builder builder,
-                           @NotNull IdeaPluginDescriptorImpl @NotNull [] dependencies,
-                           @NotNull PluginDescriptor pluginDescriptor,
-                           @Nullable Path pluginRoot,
-                           @NotNull ClassLoader coreLoader) {
-    super(builder, null, isParallelCapable, false);
-
-    instanceId = instanceIdProducer.incrementAndGet();
-
-    this.resolveScopeManager = (p1, p2, p3) -> null;
-    this.pluginDescriptor = pluginDescriptor;
-    pluginId = pluginDescriptor.getPluginId();
-    this.packagePrefix = null;
-    this.coreLoader = coreLoader;
-    this.parents = dependencies;
-
-    libDirectories = new SmartList<>();
-    if (pluginRoot != null) {
-      Path libDir = pluginRoot.resolve("lib");
-      if (Files.exists(libDir)) {
-        libDirectories.add(libDir.toAbsolutePath().toString());
-      }
-    }
   }
 
   public PluginClassLoader(@NotNull List<Path> files,
@@ -238,7 +217,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   /**
-   * See https://stackoverflow.com/a/5428795 about resolve flag.
+   * See <a href="https://stackoverflow.com/a/5428795">https://stackoverflow.com/a/5428795</a> about resolve flag.
    */
   @Override
   public @Nullable Class<?> tryLoadingClass(@NotNull String name, boolean forceLoadFromSubPluginClassloader)
@@ -247,13 +226,17 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       return coreLoader.loadClass(name);
     }
 
+    String fileNameWithoutExtension = name.replace('.', '/');
+    String fileName = fileNameWithoutExtension + ClasspathCache.CLASS_EXTENSION;
+    long packageNameHash = ClasspathCache.getPackageNameHash(fileNameWithoutExtension, fileNameWithoutExtension.lastIndexOf('/'));
+
     long startTime = StartUpMeasurer.measuringPluginStartupCosts ? StartUpMeasurer.getCurrentTime() : -1;
     Class<?> c;
     PluginException error = null;
     try {
       String consistencyError = resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix, forceLoadFromSubPluginClassloader);
       if (consistencyError == null) {
-        c = loadClassInsideSelf(name, forceLoadFromSubPluginClassloader);
+        c = loadClassInsideSelf(name, fileName, packageNameHash, forceLoadFromSubPluginClassloader);
       }
       else {
         if (!consistencyError.isEmpty()) {
@@ -281,7 +264,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
               }
               continue;
             }
-            c = pluginClassLoader.loadClassInsideSelf(name, false);
+            c = pluginClassLoader.loadClassInsideSelf(name, fileName, packageNameHash, false);
           }
           catch (IOException e) {
             throw new ClassNotFoundException(name, e);
@@ -292,7 +275,19 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
         }
         else if (classloader instanceof UrlClassLoader) {
           try {
-            c = ((UrlClassLoader)classloader).loadClassInsideSelf(name, false);
+            UrlClassLoader urlClassLoader = (UrlClassLoader)classloader;
+            BiFunction<String, Boolean, String> resolveScopeManager = urlClassLoader.resolveScopeManager;
+            String consistencyError = resolveScopeManager == null
+                                      ? null
+                                      : resolveScopeManager.apply(name, forceLoadFromSubPluginClassloader);
+            if (consistencyError != null) {
+              if (!consistencyError.isEmpty() && error == null) {
+                // yes, we blame requestor plugin
+                error = new PluginException(consistencyError, pluginId);
+              }
+              continue;
+            }
+            c = urlClassLoader.loadClassInsideSelf(name, fileName, packageNameHash, false);
           }
           catch (IOException e) {
             throw new ClassNotFoundException(name, e);
@@ -359,9 +354,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     return result;
   }
 
-  private void collectClassLoaders(@NotNull Deque<ClassLoader> queue) {
+  private void collectClassLoaders(@NotNull Deque<? super ClassLoader> queue) {
     for (IdeaPluginDescriptorImpl parent : parents) {
-      ClassLoader classLoader = parent.classLoader;
+      ClassLoader classLoader = parent.getPluginClassLoader();
       if (classLoader != null && classLoader != coreLoader) {
         queue.add(classLoader);
       }
@@ -382,12 +377,21 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     // We assume that these classes don't change between Kotlin versions, so it's safe to always load them from platform's kotlin-runtime.
     return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") ||
                                                (className.startsWith("kotlin.reflect.") &&
-                                                className.indexOf('.', 15 /* "kotlin.reflect".length */) < 0) ||
+                                                className.indexOf('.', 15 /* "kotlin.reflect.".length */) < 0) ||
                                                KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
   }
 
   @Override
-  public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
+  public boolean hasLoadedClass(String name) {
+    String consistencyError = resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix, false);
+    return consistencyError == null && super.hasLoadedClass(name);
+  }
+
+  @Override
+  public @Nullable Class<?> loadClassInsideSelf(String name,
+                                                String fileName,
+                                                long packageNameHash,
+                                                boolean forceLoadFromSubPluginClassloader) throws IOException {
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
       if (c != null && c.getClassLoader() == this) {
@@ -396,7 +400,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
       Writer logStream = PluginClassLoader.logStream;
       try {
-        c = classPath.findClass(name, classDataConsumer);
+        c = classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
       }
       catch (LinkageError e) {
         if (logStream != null) {
@@ -434,7 +438,46 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   @Override
   public @Nullable URL findResource(@NotNull String name) {
-    return findResource(name, Resource::getURL, ClassLoader::getResource);
+    return doFindResource(name, Resource::getURL, ClassLoader::getResource);
+  }
+
+  @Override
+  public byte @Nullable [] getResourceAsBytes(@NotNull String name, boolean checkParents) throws IOException {
+    byte[] result = super.getResourceAsBytes(name, checkParents);
+    if (result != null) {
+      return result;
+    }
+
+    if (!checkParents) {
+      return null;
+    }
+
+    for (ClassLoader classloader : getAllParents()) {
+      if (classloader instanceof UrlClassLoader) {
+        Resource resource = ((UrlClassLoader)classloader).getClassPath().findResource(name);
+        if (resource != null) {
+          return resource.getBytes();
+        }
+      }
+      else {
+        InputStream input = classloader.getResourceAsStream(name);
+        if (input != null) {
+          try {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            int read;
+            byte[] data = new byte[16384];
+            while ((read = input.read(data, 0, data.length)) != -1) {
+              buffer.write(data, 0, read);
+            }
+            return buffer.toByteArray();
+          }
+          finally {
+            input.close();
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Override
@@ -457,20 +500,11 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
         return null;
       }
     };
-    return findResource(name, f1, f2);
+    return doFindResource(name, f1, f2);
   }
 
-  private <T> @Nullable T findResource(String name, Function<Resource, T> f1, BiFunction<ClassLoader, String, T> f2) {
+  private <T> @Nullable T doFindResource(String name, Function<? super Resource, ? extends T> f1, BiFunction<? super ClassLoader, ? super String, ? extends T> f2) {
     String canonicalPath = toCanonicalPath(name);
-
-    if (canonicalPath.startsWith("/")) {
-      //noinspection SpellCheckingInspection
-      if (!canonicalPath.startsWith("/org/bridj/")) {
-        String message = "Do not request resource from classloader using path with leading slash";
-        Logger.getInstance(PluginClassLoader.class).error(message, new PluginException(name, pluginId));
-      }
-      canonicalPath = canonicalPath.substring(1);
-    }
 
     Resource resource = classPath.findResource(canonicalPath);
     if (resource != null) {
@@ -490,6 +524,13 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
           return t;
         }
       }
+    }
+
+    if (canonicalPath.startsWith("/") && classPath.findResource(canonicalPath.substring(1)) != null) {
+      // reporting malformed paths only when there's a resource at the right one - which is rarely the case
+      // (see also `UrlClassLoader#doFindResource`)
+      String message = "Calling `ClassLoader#getResource` with leading slash doesn't work; strip";
+      Logger.getInstance(PluginClassLoader.class).error(message, new PluginException(name, pluginId));
     }
 
     return null;
@@ -556,7 +597,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     private final @NotNull List<? extends Enumeration<URL>> list;
     private int myIndex;
 
-    DeepEnumeration(@NotNull List<? extends Enumeration<URL>> enumerations) {
+    private DeepEnumeration(@NotNull List<? extends Enumeration<URL>> enumerations) {
       list = enumerations;
     }
 
@@ -582,53 +623,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   @TestOnly
-  @ApiStatus.Internal
   public @NotNull List<IdeaPluginDescriptorImpl> _getParents() {
     //noinspection SSBasedInspection
     return Collections.unmodifiableList(Arrays.asList(parents));
-  }
-
-  @ApiStatus.Internal
-  public void attachParent(@NotNull IdeaPluginDescriptorImpl parent) {
-    //noinspection SSBasedInspection
-    if (Arrays.stream(parents).anyMatch(it -> it == parent)) {
-      return;
-    }
-
-    int length = parents.length;
-    IdeaPluginDescriptorImpl[] result = new IdeaPluginDescriptorImpl[length + 1];
-    System.arraycopy(parents, 0, result, 0, length);
-    result[length] = parent;
-    parents = result;
-    allParents = null;
-    parentListCacheIdCounter.incrementAndGet();
-  }
-
-  /**
-   * You must clear allParents cache for all loaded plugins.
-   */
-  @ApiStatus.Internal
-  public boolean detachParent(@NotNull IdeaPluginDescriptorImpl parent) {
-    for (int i = 0; i < parents.length; i++) {
-      if (parent != parents[i]) {
-        continue;
-      }
-
-      int length = parents.length;
-      IdeaPluginDescriptorImpl[] result = new IdeaPluginDescriptorImpl[length - 1];
-      System.arraycopy(parents, 0, result, 0, i);
-      System.arraycopy(parents, i + 1, result, i, length - i - 1);
-      parents = result;
-      allParents = null;
-      parentListCacheIdCounter.incrementAndGet();
-      return true;
-    }
-    return false;
-  }
-
-  @Override
-  protected ProtectionDomain getProtectionDomain() {
-    return PROTECTION_DOMAIN;
   }
 
   private static void flushDebugLog() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
@@ -22,12 +22,14 @@ public class SimpleAssignmentInstruction extends ExpressionPushingInstruction {
     super(anchor);
     myDestination = destination;
   }
-  
+
+  public @NotNull DfaVariableValue getDestination() {
+    return myDestination;
+  }
+
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
-    var instruction = new SimpleAssignmentInstruction(getDfaAnchor(), myDestination.bindToFactory(factory));
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new SimpleAssignmentInstruction(getDfaAnchor(), myDestination.bindToFactory(factory));
   }
 
   @Override

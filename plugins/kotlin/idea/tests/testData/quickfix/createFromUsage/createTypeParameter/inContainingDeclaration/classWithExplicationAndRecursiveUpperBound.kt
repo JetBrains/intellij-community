@@ -2,7 +2,7 @@
 // ERROR: Unresolved reference: _
 // ERROR: Unresolved reference: _
 // ERROR: Unresolved reference: _
-// ERROR: Type mismatch: inferred type is A<I> but A<List<[ERROR : _]>> was expected
+// ERROR: Type mismatch: inferred type is A<I> but A<List<[Error type: Unresolved type for _]>> was expected
 // COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 class A<T : List<T>>
 

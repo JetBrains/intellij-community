@@ -45,10 +45,9 @@ fun replace0(comp0: String, components: ArrayList<String>): QualifiedName {
 fun restoreStdlibCanonicalPath(qName: QualifiedName): QualifiedName? {
   if (qName.componentCount > 0) {
     val components = ArrayList(qName.components)
-    val head = components[0]
-
-    return when (head) {
-      "_abcoll", "_collections", "_collections_abc" -> replace0("collections", components)
+    return when (components[0]) {
+      "_abcoll", "_collections" -> replace0("collections", components)
+      "_collections_abc" -> replace0("collections.abc", components)
 
       "posix", "nt" -> replace0("os", components)
       "_functools" -> replace0("functools", components)

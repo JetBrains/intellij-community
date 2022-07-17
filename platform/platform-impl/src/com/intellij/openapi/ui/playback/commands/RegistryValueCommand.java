@@ -3,6 +3,7 @@ package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -15,7 +16,7 @@ public class RegistryValueCommand extends AbstractCommand {
   }
 
   @Override
-  protected Promise<Object> _execute(PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     final String[] keyValue = getText().substring(PREFIX.length()).trim().split("=");
     if (keyValue.length != 2) {
       context.error("Expected expresstion: " + PREFIX + " key=value", getLine());

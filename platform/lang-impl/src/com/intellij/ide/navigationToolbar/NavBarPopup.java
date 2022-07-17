@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.OpenInRightSplitAction;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
+import com.intellij.ide.ui.NavBarLocation;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -38,11 +39,13 @@ public class NavBarPopup extends LightweightHint implements Disposable{
 
   private final NavBarPanel myPanel;
   private final int myIndex;
+  private final int myItemIndex;
 
-  public NavBarPopup(final NavBarPanel panel, int sourceItemIndex, Object[] siblings, final int selectedIndex) {
+  public NavBarPopup(final NavBarPanel panel, int sourceItemIndex, Object[] siblings, int itemIndex, final int selectedIndex) {
     super(createPopupContent(panel, sourceItemIndex, siblings));
     myPanel = panel;
     myIndex = selectedIndex;
+    myItemIndex = itemIndex;
     setFocusRequestor(getComponent());
     setForceShowAsPopup(true);
     panel.installPopupHandler(getList(), selectedIndex);
@@ -69,7 +72,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         int idx = getList().locationToIndex(e.getPoint());
         if (idx != -1) {
           Object value = getList().getModel().getElementAt(idx);
-          myPanel.navigateInsideBar(sourceItemIndex, value, e.isControlDown());
+          myPanel.navigateInsideBar(sourceItemIndex, value, SystemInfo.isMac ? e.isMetaDown() : e.isControlDown());
         }
       }
     });
@@ -96,7 +99,11 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   private void show(final NavBarItem item, boolean checkRepaint) {
     UIEventLogger.NavBarShowPopup.log(myPanel.getProject());
 
-    final RelativePoint point = new RelativePoint(item, new Point(0, item.getHeight()));
+    int relativeY = ExperimentalUI.isNewUI() && UISettings.getInstance().getNavBarLocation() == NavBarLocation.BOTTOM
+                    ? -getComponent().getPreferredSize().height
+                    : item.getHeight();
+
+    final RelativePoint point = new RelativePoint(item, new Point(0, relativeY));
     final Point p = point.getPoint(myPanel);
     if (p.x == 0 && p.y == 0 && checkRepaint) { // need repaint of nav bar panel
       //noinspection SSBasedInspection
@@ -119,20 +126,27 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     }
     if (myPanel.isInFloatingMode()) {
       final Window window = SwingUtilities.windowForComponent(getList());
-      window.addWindowFocusListener(new WindowFocusListener() {
-        @Override
-        public void windowGainedFocus(WindowEvent e) {
-        }
-
-        @Override
-        public void windowLostFocus(WindowEvent e) {
-          final Window w = e.getOppositeWindow();
-          if (w != null && DialogWrapper.findInstance(w.getComponent(0)) != null) {
-            myPanel.hideHint();
+      if (window != null) {
+        // add listener only if hint is not hidden yet
+        window.addWindowFocusListener(new WindowFocusListener() {
+          @Override
+          public void windowGainedFocus(WindowEvent e) {
           }
-        }
-      });
+
+          @Override
+          public void windowLostFocus(WindowEvent e) {
+            final Window w = e.getOppositeWindow();
+            if (w != null && DialogWrapper.findInstance(w.getComponent(0)) != null) {
+              myPanel.hideHint();
+            }
+          }
+        });
+      }
     }
+  }
+
+  public int getItemIndex() {
+    return myItemIndex;
   }
 
   @Override
@@ -153,7 +167,6 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       }
     }
     JBList<Object> list = new MyList<>();
-    DataManager.registerDataProvider(list, dataId -> panel.getDataImpl(dataId, list, () -> JBIterable.from(list.getSelectedValuesList())));
     list.setModel(new CollectionListModel<>(siblings));
     HintUpdateSupply.installSimpleHintUpdateSupply(list);
     List<NavBarItem> items = new ArrayList<>();

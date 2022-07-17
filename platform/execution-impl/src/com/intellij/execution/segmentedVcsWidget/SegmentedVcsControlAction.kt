@@ -1,37 +1,42 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.segmentedVcsWidget // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.segmentedVcsWidget
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedBarActionComponent
-import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.NotNull
+import javax.swing.BorderFactory
 import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.SwingUtilities
 
-class SegmentedVcsControlAction : SegmentedBarActionComponent(ActionPlaces.RUN_TOOLBAR) {
+private const val TOOLBAR_GAP = 4
+
+internal class SegmentedVcsControlAction : SegmentedBarActionComponent() {
+
+
   init {
     ActionManager.getInstance().getAction("SegmentedVcsActionsBarGroup")?.let {
-      if(it is ActionGroup) {
-        SwingUtilities.invokeLater {
-          actionGroup = it
-        }
+      if (it is ActionGroup) {
+        actionGroup = it
       }
     }
   }
 
-  override fun update(e: @NotNull AnActionEvent) {
-    super.update(e)
-    e.presentation.isVisible = actionGroup != null
-  }
-  override fun createCustomComponent(presentation: Presentation, place_: String): JComponent {
-    return JPanel(MigLayout("novisualpadding, ins 1 2 1 2")).apply{
-      add(super.createCustomComponent(presentation, place_), "gap 0")
+  override fun update(e: AnActionEvent) {
+    if (e.place !== ActionPlaces.MAIN_TOOLBAR) {
+      e.presentation.isEnabledAndVisible = false
+      return
     }
+    super.update(e)
   }
 
-  override fun createSegmentedActionToolbar(presentation: Presentation, place: String, group: ActionGroup): SegmentedActionToolbarComponent {
+  override fun createSegmentedActionToolbar(presentation: Presentation,
+                                            place: String,
+                                            group: ActionGroup): SegmentedActionToolbarComponent {
     return SegmentedActionToolbarComponent(place, group, false)
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    return super.createCustomComponent(presentation, place).apply {
+      border = BorderFactory.createEmptyBorder(0, TOOLBAR_GAP, 0, TOOLBAR_GAP)
+    }
   }
 }

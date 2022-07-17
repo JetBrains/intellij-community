@@ -1,8 +1,0 @@
-{
-    "mainFile": "Main.kt",
-    "usages": [
-        "Explicit.kt",
-        "Implicit.kt",
-        "Implicit2.kt"
-    ]
-}

@@ -32,9 +32,7 @@ public class ControlTransferInstruction extends Instruction {
 
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
-    var instruction = new ControlTransferInstruction(myTransfer.bindToFactory(factory), false);
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new ControlTransferInstruction(myTransfer.bindToFactory(factory), false);
   }
 
   @Override

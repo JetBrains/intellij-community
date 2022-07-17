@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.Editor;
@@ -5,6 +6,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -42,7 +44,7 @@ public class DefaultLineMarkerRenderer implements LineMarkerRendererEx {
 
   @Override
   public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-    if (myColor == null) return;
+    if (myColor == null || ExperimentalUI.isNewUI()) return;
 
     g.setColor(myColor);
     g.fillRect(r.x, r.y, myThickness, r.height);
@@ -65,5 +67,9 @@ public class DefaultLineMarkerRenderer implements LineMarkerRendererEx {
   @Override
   public @NotNull Position getPosition() {
     return myPosition;
+  }
+
+  public Color getColor() {
+    return myColor;
   }
 }

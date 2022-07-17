@@ -14,10 +14,10 @@ import java.util.*;
 
 class GitLogFullRecord extends GitLogRecord {
 
-  @NotNull private final List<? extends VcsFileStatusInfo> myStatusInfo;
+  @NotNull private final List<VcsFileStatusInfo> myStatusInfo;
 
   GitLogFullRecord(@NotNull Map<GitLogParser.GitLogOption, String> options,
-                   @NotNull List<? extends VcsFileStatusInfo> statusInfo,
+                   @NotNull List<VcsFileStatusInfo> statusInfo,
                    boolean supportsRawBody) {
     super(options, supportsRawBody);
     myStatusInfo = statusInfo;
@@ -34,7 +34,7 @@ class GitLogFullRecord extends GitLogRecord {
   }
 
   @NotNull
-  List<? extends VcsFileStatusInfo> getStatusInfos() {
+  List<VcsFileStatusInfo> getStatusInfos() {
     return myStatusInfo;
   }
 

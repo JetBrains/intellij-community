@@ -28,13 +28,13 @@ import java.util.function.Predicate;
 public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTablesDialog {
   private final ClasspathPanel myClasspathPanel;
   private final StructureConfigurableContext myContext;
-  private final Predicate<Library> myAcceptedLibraries;
+  private final Predicate<? super Library> myAcceptedLibraries;
   private final List<Library> myCreatedModuleLibraries = new ArrayList<>();
   private JButton myCreateLibraryButton;
 
   public ProjectStructureChooseLibrariesDialog(ClasspathPanel classpathPanel,
                                                StructureConfigurableContext context,
-                                               Predicate<Library> acceptedLibraries) {
+                                               Predicate<? super Library> acceptedLibraries) {
     super(classpathPanel.getComponent(), JavaUiBundle.message("project.structure.dialog.title.choose.libraries"), classpathPanel.getProject(), true);
     myClasspathPanel = classpathPanel;
     myContext = context;

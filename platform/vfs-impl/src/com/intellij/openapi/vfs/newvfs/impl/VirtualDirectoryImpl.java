@@ -416,21 +416,22 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
       else {
         files = new VirtualFile[children.size()];
-        int[] errorsCount = {0};
+        int[] errorCount = {0};
         children.sort((o1, o2) -> {
           CharSequence name1 = o1.getName();
           CharSequence name2 = o2.getName();
           int cmp = compareNames(name1, name2, isCaseSensitive);
-          if (cmp == 0 && name1 != name2 && errorsCount[0] < 10) {
-            LOG.error(ourPersistence + " returned duplicate file names('" + name1 + "', '" + name2 + "')" +
-                      " caseSensitive: " + isCaseSensitive +
-                      " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
-                      " isCaseSensitive(): " + isCaseSensitive +
-                      " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
-                      " wasChildrenLoaded: " + wasChildrenLoaded +
-                      " in the dir: " + this + "; " + children.size() +
-                      " children: " + StringUtil.first(children.toString(), 300, true));
-            errorsCount[0]++;
+          if (cmp == 0 && name1 != name2) {
+            if (errorCount[0]++ == 0) {
+              LOG.error(ourPersistence + " returned duplicate file names('" + name1 + "', '" + name2 + "')" +
+                        " caseSensitive: " + isCaseSensitive +
+                        " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
+                        " isCaseSensitive(): " + isCaseSensitive +
+                        " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
+                        " wasChildrenLoaded: " + wasChildrenLoaded +
+                        " in the dir: " + this + "; " + children.size() +
+                        " children: " + StringUtil.first(children.toString(), 300, true));
+            }
             if (!isCaseSensitive) {
               // Sometimes file system rules for case insensitive comparison differ from Java rules.
               // E.g. on NTFS files named \u1E9B (small long S with dot) and \u1E60 (capital S with dot)
@@ -538,6 +539,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
 
+  @ApiStatus.Internal
   public VirtualFileSystemEntry doFindChildById(int id) {
     int i = ArrayUtil.indexOf(myData.myChildrenIds, id);
     if (i >= 0) {
@@ -550,8 +552,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     String name = ourPersistence.getName(id);
     VirtualFileSystemEntry fileByName = findChild(name, false, false, getFileSystem());
-    if (fileByName != null) {
-      LOG.assertTrue(fileByName.getId() == id, "Name storage is in inconsistent state");
+    if (fileByName != null && fileByName.getId() != id) {
+      // child with the same name and different id was recreated after refresh session
+      // it doesn't make sense to check it earlier because it is executed outside vfs r-w lock
+      LOG.assertTrue(FSRecords.isDeleted(id));
+      return null;
     }
     return fileByName;
   }

@@ -3,7 +3,10 @@ package com.intellij.debugger.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ConcurrencyUtil;
@@ -25,8 +28,8 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
   public static final class WorkerThreadRequest<E extends PrioritizedTask> implements Runnable {
     private final InvokeThread<E> myOwner;
+    private final ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
     private volatile Future<?> myRequestFuture;
-    private volatile boolean myStopRequested = false;
 
     WorkerThreadRequest(InvokeThread<E> owner) {
       myOwner = owner;
@@ -57,14 +60,14 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     public void requestStop() {
       final Future<?> future = myRequestFuture;
       assert future != null;
-      myStopRequested = true;
+      myProgressIndicator.cancel();
       future.cancel(true);
     }
 
     public boolean isStopRequested() {
       final Future<?> future = myRequestFuture;
       assert future != null;
-      return myStopRequested || future.isCancelled() || future.isDone();
+      return myProgressIndicator.isCanceled() || future.isCancelled() || future.isDone();
     }
 
     public void join() throws InterruptedException, ExecutionException {
@@ -122,7 +125,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
   private void run(final @NotNull WorkerThreadRequest threadRequest) {
     try {
-      DumbService.getInstance(myProject).runWithAlternativeResolveEnabled(() -> {
+      DumbService.getInstance(myProject).runWithAlternativeResolveEnabled(() -> ProgressManager.getInstance().runProcess(() -> {
         while(true) {
           try {
             if(threadRequest.isStopRequested()) {
@@ -137,10 +140,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
             processEvent(myEvents.get());
           }
-          catch (VMDisconnectedException ignored) {
-            break;
-          }
-          catch (EventQueueClosedException ignored) {
+          catch (VMDisconnectedException | EventQueueClosedException ignored) {
             break;
           }
           catch (ProcessCanceledException ignored) {}
@@ -160,7 +160,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
             reportCommandError(e);
           }
         }
-      });
+      }, threadRequest.myProgressIndicator));
     }
     finally {
       // ensure that all scheduled events are processed

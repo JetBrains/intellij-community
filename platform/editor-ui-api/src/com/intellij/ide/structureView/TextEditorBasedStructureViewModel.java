@@ -161,7 +161,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
    * When determining the current editor element, the PSI tree is walked up until an element
    * matching one of these classes is found.
    *
-   * @return the list of classes
+   * @return the array of classes
    */
   protected Class @NotNull [] getSuitableClasses() {
     return ArrayUtil.EMPTY_CLASS_ARRAY;

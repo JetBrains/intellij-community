@@ -101,7 +101,7 @@ public interface CheckinEnvironment {
    */
   @SuppressWarnings("unused")
   @Deprecated
-  default boolean keepChangeListAfterCommit(ChangeList changeList) {return false;}
+  default boolean keepChangeListAfterCommit(ChangeList changeList) { return false; }
 
   /**
    * @return true if VFS refresh has to be performed after commit, because files might have changed during commit

@@ -148,11 +148,6 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
     private void setSelected(final boolean selected) {
       mySelected = selected;
     }
-
-    @Override
-    protected boolean shouldPaintBackground() {
-      return true;
-    }
   }
 
   private static final class TreeModelWrapper extends AbstractListModel implements ComboBoxModel {

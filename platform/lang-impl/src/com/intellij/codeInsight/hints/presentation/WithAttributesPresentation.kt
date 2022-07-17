@@ -8,11 +8,13 @@ import java.awt.Graphics2D
 
 class WithAttributesPresentation(presentation: InlayPresentation,
                                  val textAttributesKey: TextAttributesKey,
-                                 private val editor: Editor,
+                                 editor: Editor,
                                  val flags: AttributesFlags = AttributesFlags()
 ) : StaticDelegatePresentation(presentation) {
+  private val colorsScheme = editor.colorsScheme
+
   override fun paint(g: Graphics2D, attributes: TextAttributes) {
-    val other = editor.colorsScheme.getAttributes(textAttributesKey) ?: TextAttributes()
+    val other = colorsScheme.getAttributes(textAttributesKey) ?: TextAttributes()
     if (flags.skipEffects) {
       other.effectType = null
     }

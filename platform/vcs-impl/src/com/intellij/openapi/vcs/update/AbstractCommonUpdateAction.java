@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -10,8 +10,8 @@ import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -51,7 +51,7 @@ import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.UPDATE_ACTIVITY;
 import static com.intellij.util.ui.UIUtil.BR;
 
-public abstract class AbstractCommonUpdateAction extends AbstractVcsAction implements UpdateInBackground {
+public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
   private final static Logger LOG = Logger.getInstance(AbstractCommonUpdateAction.class);
 
   private final boolean myAlwaysVisible;
@@ -63,6 +63,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     myActionInfo = actionInfo;
     myScopeInfo = scopeInfo;
     myAlwaysVisible = alwaysVisible;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private @NlsActions.ActionText String getCompleteActionName(VcsContext dataContext) {
@@ -112,7 +117,13 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
         StoreUtil.saveDocumentsAndProjectSettings(project);
       }
 
-      Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles, myActionInfo, getTemplatePresentation().getText());
+      Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles, myActionInfo, getTemplatePresentation().getText()) {
+        @Override
+        public void onSuccess() {
+          super.onSuccess();
+          AbstractCommonUpdateAction.this.onSuccess();
+        }
+      };
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         task.run(new EmptyProgressIndicator());
@@ -124,6 +135,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     catch (ProcessCanceledException ignored) {
     }
   }
+
+  protected void onSuccess() {}
 
   private static boolean someSessionWasCanceled(List<? extends UpdateSession> updateSessions) {
     for (UpdateSession updateSession : updateSessions) {
@@ -447,7 +460,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
         content += additionalContent;
       }
 
-      return STANDARD_NOTIFICATION.createNotification(title, content, type).setDisplayId("vcs.project.partially.updated");
+      return STANDARD_NOTIFICATION.createNotification(title, content, type).setDisplayId(VcsNotificationIdsHolder.PROJECT_PARTIALLY_UPDATED);
     }
 
     private int getUpdatedFilesCount() {
@@ -555,7 +568,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
           type = NotificationType.INFORMATION;
         }
         VcsNotifier.getInstance(myProject).notify(
-          STANDARD_NOTIFICATION.createNotification(content, type).setDisplayId("vcs.project.update.finished"));
+          STANDARD_NOTIFICATION.createNotification(content, type).setDisplayId(VcsNotificationIdsHolder.PROJECT_UPDATE_FINISHED));
       }
       else if (!myUpdatedFiles.isEmpty()) {
 

@@ -6,7 +6,7 @@ import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.InspectionTestUtil
 import org.jetbrains.kotlin.idea.quickfix.utils.findInspectionFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.io.File
 
 interface QuickFixTest {

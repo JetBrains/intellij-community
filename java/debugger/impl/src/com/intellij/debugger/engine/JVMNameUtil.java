@@ -410,7 +410,7 @@ public final class JVMNameUtil {
     try {
         parent.accept(new JavaRecursiveElementVisitor() {
           @Override
-          public void visitAnonymousClass(PsiAnonymousClass cls) {
+          public void visitAnonymousClass(@NotNull PsiAnonymousClass cls) {
             classIndex.set(classIndex.get() + 1);
             if (aClass.equals(cls)) {
               throw new ProcessCanceledException();

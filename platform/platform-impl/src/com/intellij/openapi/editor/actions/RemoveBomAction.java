@@ -2,14 +2,11 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -37,6 +34,11 @@ public class RemoveBomAction extends AnAction implements DumbAware {
 
   public RemoveBomAction() {
     super(IdeBundle.messagePointer("remove.BOM"));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -101,9 +103,8 @@ public class RemoveBomAction extends AnAction implements DumbAware {
           String title = IdeBundle.message("notification.title.was.unable.to.remove.bom.in", filesUnableToProcess.size());
           String msg = IdeBundle.message("notification.content.mandatory.bom.br", filesUnableToProcess.size(),
                                          StringUtil.join(filesUnableToProcess, VirtualFile::getName, "<br/>    "));
-          Notifications.Bus.notify(new Notification(
-            NotificationGroup.createIdWithTitle("Failed to remove BOM", IdeBundle.message("notification.group.failed.to.remove.bom")),
-            title, msg, NotificationType.ERROR));
+          NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("Failed to remove BOM");
+          Notifications.Bus.notify(group.createNotification(title, msg, NotificationType.ERROR));
         }
       }
     }.queue();

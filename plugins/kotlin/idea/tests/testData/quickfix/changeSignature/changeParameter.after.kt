@@ -1,7 +1,7 @@
 // "Change function signature to 'fun someL(l: MutableList<Int>?)'" "true"
 // ERROR: 'someL' overrides nothing
 // ERROR: Class 'Bla' is not abstract and does not implement abstract member public abstract fun someL(l: (Mutable)List<Int!>!): Unit defined in ImplementMe
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class Bla : ImplementMe {
     <caret>override fun someL(l: MutableList<Int>?) {

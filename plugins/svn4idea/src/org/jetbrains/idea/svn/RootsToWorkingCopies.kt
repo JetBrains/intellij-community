@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ZipperUpdater
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
-import com.intellij.openapi.vcs.VcsListener
+import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -24,7 +24,7 @@ import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier
 // 1. listen to roots changes
 // 2. - possibly - to deletion/checkouts??? what if WC roots can be
 @Service
-class RootsToWorkingCopies(private val project: Project) : VcsListener, Disposable {
+class RootsToWorkingCopies(private val project: Project) : VcsMappingListener, Disposable {
   private val myLock = Any()
   private val myRootMapping = mutableMapOf<VirtualFile, WorkingCopy>()
   private val myUnversioned = mutableSetOf<VirtualFile>()

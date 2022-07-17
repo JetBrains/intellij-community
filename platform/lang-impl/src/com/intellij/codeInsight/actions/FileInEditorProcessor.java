@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.formatting.service.CoreFormattingService;
+import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.lang.LangBundle;
@@ -81,7 +83,7 @@ public class FileInEditorProcessor {
       return;
     }
 
-    if (myOptions.isOptimizeImports()) {
+    if (myOptions.isOptimizeImports() && myOptions.getTextRangeType() != SELECTED_TEXT) {
       myProcessor = new OptimizeImportsProcessor(myProject, myFile);
     }
 
@@ -101,8 +103,11 @@ public class FileInEditorProcessor {
     if (shouldNotify()) {
       myProcessor.setCollectInfo(true);
       myProcessor.setPostRunnable(() -> {
-        if (!myEditor.isDisposed() && myEditor.getComponent().isShowing() &&
-            (!myProcessSelectedText || Objects.requireNonNull(myProcessor.getInfoCollector()).getSecondFormatNotification() != null)) {
+        if (myEditor.isDisposed() || !myEditor.getComponent().isShowing()) {
+          return;
+        }
+        if ((!myProcessSelectedText || Objects.requireNonNull(myProcessor.getInfoCollector()).getSecondFormatNotification() != null)
+            && !isExternalFormatterInUse()) {
           showHint(myEditor, new FormattedMessageBuilder());
         }
       });
@@ -113,6 +118,11 @@ public class FileInEditorProcessor {
     if (myEditor != null && myOptions.getTextRangeType() == TextRangeType.WHOLE_FILE) {
       CodeStyleSettingsManager.getInstance(myProject).notifyCodeStyleSettingsChanged();
     }
+  }
+
+  private boolean isExternalFormatterInUse() {
+    return !(FormattingServiceUtil.findService(myFile, true, myOptions.getTextRangeType() == TextRangeType.WHOLE_FILE)
+               instanceof CoreFormattingService);
   }
 
   @NotNull
@@ -337,7 +347,7 @@ public class FileInEditorProcessor {
     public final HyperlinkListener createHyperlinkListener() {
       return new HyperlinkAdapter() {
         @Override
-        protected void hyperlinkActivated(HyperlinkEvent e) {
+        protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
           getHyperlinkRunnable().run();
         }
       };

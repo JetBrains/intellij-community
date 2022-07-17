@@ -4,11 +4,11 @@ Reports classes that refer to their subclasses in static initializers or static 
 <p>Such references can cause JVM-level deadlocks in multithreaded environment, when one thread tries to load the superclass
   and another thread tries to load the subclass at the same time.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class Parent {
     static final Child field = new Child();
   }
   class Child extends Parent { }
-</pre>
+</code></pre>
 </body>
 </html>

@@ -4,14 +4,15 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
 
-class RemoveAnnotationFix(private val text: String, annotationEntry: KtAnnotationEntry) :
+class RemoveAnnotationFix(@Nls private val text: String, annotationEntry: KtAnnotationEntry) :
     KotlinQuickFixAction<KtAnnotationEntry>(annotationEntry) {
 
     override fun getText() = text
@@ -26,6 +27,13 @@ class RemoveAnnotationFix(private val text: String, annotationEntry: KtAnnotatio
         override fun createAction(diagnostic: Diagnostic): RemoveAnnotationFix? {
             val annotationEntry = diagnostic.psiElement as? KtAnnotationEntry ?: return null
             return RemoveAnnotationFix(KotlinBundle.message("remove.jvmoverloads.annotation"), annotationEntry)
+        }
+    }
+
+    object JvmField : KotlinSingleIntentionActionFactory() {
+        override fun createAction(diagnostic: Diagnostic): RemoveAnnotationFix? {
+            val annotationEntry = diagnostic.psiElement as? KtAnnotationEntry ?: return null
+            return RemoveAnnotationFix(KotlinBundle.message("remove.jvmfield.annotation"), annotationEntry)
         }
     }
 

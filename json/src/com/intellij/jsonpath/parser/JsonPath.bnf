@@ -36,27 +36,23 @@
 
 private root ::= functionCall | (head_ segments_*)
 
-private head_ ::= (rootSegment | evalSegment | idSegment | quotedSegment | wildcardSegment)
-private segments_ ::= dotExpr | scanExpr | dotSegment | quotedSegment
+private head_ ::= (rootSegment | evalSegment | wildcardSegment | idSegment | expressionSegment)
+private segments_ ::= wildcardSegment | dotSegment | expressionSegment
 
-rootSegment ::= ROOT_CONTEXT segmentExpression*
-evalSegment ::= EVAL_CONTEXT segmentExpression*
+rootSegment ::= ROOT_CONTEXT
+evalSegment ::= EVAL_CONTEXT
 
-private dotSegment ::= ((RECURSIVE_DESCENT | DOT) (functionCall | idSegment | wildcardSegment | quotedSegment))
-private dotExpr ::= DOT segmentExpression+
-private scanExpr ::= RECURSIVE_DESCENT segmentExpression+
-
-wildcardSegment ::= WILDCARD segmentExpression* {
+private dotSegment ::= ((RECURSIVE_DESCENT | DOT) (functionCall | wildcardSegment | idSegment | expressionSegment)) {
   pin=1
+}
+
+wildcardSegment ::= WILDCARD {
   name="*"
 }
 id ::= IDENTIFIER {
   name="identifier"
 }
-idSegment ::= id segmentExpression*
-
-quotedSegment ::= LBRACKET quotedPathsList RBRACKET segmentExpression*
-quotedPathsList ::= stringLiteral (COMMA stringLiteral)*
+idSegment ::= id
 
 functionCall ::= id LPARENTH functionArgsList? RPARENTH {
   pin=2
@@ -65,14 +61,15 @@ functionArgsList ::= expression (COMMA expression)* {
   name="function arguments"
 }
 
-segmentExpression ::= LBRACKET nestedExpression_ RBRACKET
+expressionSegment ::= LBRACKET nestedExpression_ RBRACKET
 
 private nestedExpression_ ::=
   wildcardSegment |
   filterExpression | // standalone filter operator may be substituted by programmatic filter
   indexExpression | // supported only in some implementations
   sliceExpression |
-  indexesList
+  indexesList |
+  quotedPathsList
 
 filterExpression ::= FILTER_OPERATOR (LPARENTH expression RPARENTH)? {
   pin=1
@@ -90,6 +87,8 @@ sliceExpression ::=
 indexesList ::= (INTEGER_NUMBER (COMMA INTEGER_NUMBER)*) {
   name="indexes list"
 }
+
+quotedPathsList ::= stringLiteral (COMMA stringLiteral)*
 
 expression ::=
   unaryGroup_ |

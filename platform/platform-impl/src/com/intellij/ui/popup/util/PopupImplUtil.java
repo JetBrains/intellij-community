@@ -2,7 +2,7 @@
 package com.intellij.ui.popup.util;
 
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.FocusEvent;
+import java.awt.event.WindowEvent;
 
 @ApiStatus.Internal
 public final class PopupImplUtil {
@@ -25,9 +25,11 @@ public final class PopupImplUtil {
     boolean[] insideOnChosen = { true };
     //noinspection resource
     AccessToken token = ProhibitAWTEvents.startFiltered("Popup.handleSelect", e -> {
-      if (!(e instanceof FocusEvent) || ((FocusEvent)e).isTemporary()) return null;
-      Throwable throwable = new Throwable("Focus events are prohibited inside Popup.handleSelect; got " + e +
-                                          "Please put the handler into BaseStep.doFinalStep or PopupStep.getFinalRunnable.");
+      if (!(e instanceof WindowEvent && e.getID() == WindowEvent.WINDOW_ACTIVATED && ((WindowEvent)e).getWindow() instanceof JDialog)) {
+        return null;
+      }
+      Throwable throwable = new Throwable("Showing dialogs in PopupStep.onChosen can result in focus issues. " +
+                                          "Please put the handler into BaseStep.doFinalStep or PopupStep.getFinalRunnable.\n  " + e);
       // give the secondary event loop in `actionSystem.impl.Utils.expandActionGroupImpl`
       // a chance to quit in case the focus event is created right inside `dispatchEvents` code
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -45,11 +47,11 @@ public final class PopupImplUtil {
   }
 
   public static @Nullable Object getDataImplForList(@NotNull JList<?> list, @NotNull String dataId) {
-    if (PlatformDataKeys.SELECTED_ITEM.is(dataId)) {
+    if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
       int index = list.getSelectedIndex();
       return index > -1 ? list.getSelectedValue() : ObjectUtils.NULL;
     }
-    else if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
+    else if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
       Object[] values = list.getSelectedValues();
       for (int i = 0; i < values.length; i++) {
         if (values[i] == null) {

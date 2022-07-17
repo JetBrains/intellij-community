@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.deprecation.getSinceVersion
@@ -38,10 +38,7 @@ abstract class DeclarationLookupObjectImpl(
     override fun toString() = super.toString() + " " + (descriptor ?: psiElement)
 
     override fun hashCode(): Int {
-        return if (descriptor != null)
-            descriptor.original.hashCode()
-        else
-            psiElement!!.hashCode()
+        return descriptor?.original?.hashCode() ?: psiElement!!.hashCode()
     }
 
     override fun equals(other: Any?): Boolean {

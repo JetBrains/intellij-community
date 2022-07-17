@@ -1,5 +1,6 @@
 /**
- * Record javadoc 
+ * Record javadoc
+ *
  * @param x x
  * @param y
  */

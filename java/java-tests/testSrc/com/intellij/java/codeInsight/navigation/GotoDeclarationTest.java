@@ -25,11 +25,41 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testContinue() { doTest(); }
+
   public void testContinueLabel() { doTest(); }
-  public void testBreak() {  doTest(); }
-  public void testBreak1() {  doTest(); }
-  public void testBreakLabel() {  doTest(); }
-  public void testAnonymous() {  doTest(); }
+
+  public void testBreak() { doTest(); }
+
+  public void testBreak1() { doTest(); }
+
+  public void testBreakLabel() { doTest(); }
+
+  public void testAnonymous() { doTest(); }
+
+  public void testFromGuardToDestructuringVariable() { doGotoTest(); }
+
+  public void testFromGuardToDestructuringPattern() { doGotoTest(); }
+
+  public void testFromArrowToDestructuringVariable() { doGotoTest(); }
+
+  public void testFromArrowToDestructuringPattern() { doGotoTest(); }
+
+  public void testFromStatementToDestructuringVariable() { doGotoTest(); }
+
+  public void testFromStatementToDestructuringPattern() { doGotoTest(); }
+
+  public void testFromIfToDestructuringVariable() { doGotoTest(); }
+
+  public void testFromIfToDestructuringPattern() { doGotoTest(); }
+
+  public void testToGuardedTypeTest() { doGotoTest(); }
+
+  private void doGotoTest() {
+    String name = getTestName(false);
+    configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
+    performAction();
+    checkResultByFile("/codeInsight/gotoDeclaration/" + name + "_after.java");
+  }
 
   private void performAction() {
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
@@ -101,6 +131,20 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
     assertInstanceOf(containingClass, PsiAnonymousClass.class);
   }
 
+  public void testToFieldFromQualifierInNew() {
+    configureFromFileText("A.java", "class A {Util myContext;\n" +
+                                    "    private class Util {\n" +
+                                    "        public class Filter {\n" +
+                                    "            public Filter() {\n" +
+                                    "            }\n" +
+                                    "        }}\n" +
+                                    "    private void method() {\n" +
+                                    "        Util.Filter filter = my<caret>Context.new Filter();\n" +
+                                    "    }}");
+    PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertInstanceOf(element, PsiField.class);
+  }
+
   public void testArrayIndexNotCovered() {
     configureFromFileText("A.java", "class A {{ String[] arr; int index; arr[index]<caret>; }}");
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
@@ -121,38 +165,47 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testPatternMatchingGuardInSwitchExpression() {
-    doTestPatternMatchingGuard();
+    doTestGoToField();
   }
 
   public void testPatternMatchingGuardInSwitchStatement() {
-    doTestPatternMatchingGuard();
+    doTestGoToField();
   }
 
   public void testPatternMatchingWithParensAroundReference() {
-    doTestPatternMatchingGuard();
+    doTestGoToField();
   }
 
 
   public void testReferenceFieldInPatternMatchingInSwitchStatement() {
-    doTestPatternMatchingGuard();
+    doTestGoToField();
   }
 
-  public void testCaseNullDefaultAfterPatternMatching() {
-    configure();
-    final PsiElement patternVariable = PsiTreeUtil.findChildOfType(getFile(), PsiPatternVariable.class);
-    final PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
-    assertThat(element).isEqualTo(patternVariable);
+  public void testCaseNullAfterPatternMatching() {
+    doTestGoToPatternVariable();
+  }
+
+  public void testCaseNullAfterPatternMatchingExpr() {
+    doTestGoToPatternVariable();
+  }
+
+  public void testDefaultAfterPatternMatching() {
+    doTestGoToField();
+  }
+
+  public void testDefaultAfterPatternMatchingExpr() {
+    doTestGoToField();
   }
 
   public void testGuardWithInstanceOfPatternMatchingInIf() {
-    doTestGoToPatternVariable();
+    doTestGoToSecondPatternVariable();
   }
 
   public void testGuardWithInstanceOfPatternMatchingInSwitch() {
-    doTestGoToPatternVariable();
+    doTestGoToSecondPatternVariable();
   }
 
-  private void doTestPatternMatchingGuard() {
+  private void doTestGoToField() {
     configure();
     final PsiField field = PsiTreeUtil.findChildOfType(getFile(), PsiField.class);
     final PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
@@ -160,6 +213,13 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTestGoToPatternVariable() {
+    configure();
+    final PsiPatternVariable patternVariable = PsiTreeUtil.findChildOfType(getFile(), PsiPatternVariable.class);
+    final PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertThat(element).isEqualTo(patternVariable);
+  }
+
+  private void doTestGoToSecondPatternVariable() {
     configure();
     final Iterator<PsiPatternVariable> iterator = PsiTreeUtil.findChildrenOfType(getFile(), PsiPatternVariable.class).iterator();
     iterator.next();

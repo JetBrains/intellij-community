@@ -50,7 +50,7 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
 
   @Override
   @Nullable
-  public JComponent createOptionsPanel() {
+  public JComponent createGroovyOptionsPanel() {
     return new SingleCheckboxOptionsPanel(GroovyBundle.message("checkbox.only.warn.if.loop.empty"),
                                           this, "ignoreNonEmtpyLoops");
   }

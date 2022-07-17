@@ -22,9 +22,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class PolicyOptions {
 
-    private static final transient InsertWhere[] newMethodOptions = {InsertWhere.AT_CARET, InsertWhere.AFTER_EQUALS_AND_HASHCODE, InsertWhere.AT_THE_END_OF_A_CLASS};
+    private static final InsertWhere[] newMethodOptions = {InsertWhere.AT_CARET, InsertWhere.AFTER_EQUALS_AND_HASHCODE, InsertWhere.AT_THE_END_OF_A_CLASS};
 
-    private static final transient DuplicationPolicy[] conflictOptions = {DuplicationPolicy.ASK, DuplicationPolicy.REPLACE, DuplicationPolicy.DUPLICATE};
+    private static final DuplicationPolicy[] conflictOptions = {DuplicationPolicy.ASK, DuplicationPolicy.REPLACE, DuplicationPolicy.DUPLICATE};
 
     private PolicyOptions() {}
 

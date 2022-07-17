@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,44 +19,47 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.reference.RefClass;
-import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseGlobalInspection;
+import com.siyeh.ig.PackageGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
-public class PackageWithTooManyClassesInspection extends BaseGlobalInspection {
+public class PackageWithTooManyClassesInspection extends PackageGlobalInspection {
 
   @SuppressWarnings("PublicField")
-  public int limit = 10;
+  public int limit = 50;
 
   @Override
-  public CommonProblemDescriptor @Nullable [] checkElement(
-    @NotNull RefEntity refEntity,
-    @NotNull AnalysisScope analysisScope,
-    @NotNull InspectionManager inspectionManager,
-    @NotNull GlobalInspectionContext globalInspectionContext) {
-    if (!(refEntity instanceof RefPackage)) {
-      return null;
-    }
-    final List<RefEntity> children = refEntity.getChildren();
-    if (children.size() <= limit) {
-      return null;
-    }
-    final int numClasses = (int)children.stream().filter(c -> c instanceof RefClass).count();
+  public CommonProblemDescriptor @Nullable [] checkPackage(@NotNull RefPackage refPackage,
+                                                           @NotNull AnalysisScope analysisScope,
+                                                           @NotNull InspectionManager inspectionManager,
+                                                           @NotNull GlobalInspectionContext globalInspectionContext) {
+    int numClasses = ReadAction.compute(() -> {
+      final Project project = inspectionManager.getProject();
+      final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(refPackage.getQualifiedName());
+      if (aPackage == null) {
+        return -1;
+      }
+      return aPackage.getClasses(GlobalSearchScope.allScope(project)).length;
+    });
     if (numClasses <= limit) {
       return null;
     }
-    final String errorString = InspectionGadgetsBundle.message(
-      "package.with.too.many.classes.problem.descriptor",
-      refEntity.getQualifiedName(), Integer.valueOf(numClasses), Integer.valueOf(limit));
-    return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
+    final String errorString = InspectionGadgetsBundle.message("package.with.too.many.classes.problem.descriptor",
+                                                               refPackage.getQualifiedName(), Integer.valueOf(numClasses),
+                                                               Integer.valueOf(limit));
+    return new CommonProblemDescriptor[]{
+      inspectionManager.createProblemDescriptor(errorString)
+    };
   }
 
   @Override

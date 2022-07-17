@@ -31,7 +31,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,8 +62,7 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
     return JavaResolveCache.getInstance(getProject()).getType(this, MY_TYPE_EVALUATOR);
   }
 
-  private static final Function<PsiPolyadicExpressionImpl,PsiType> MY_TYPE_EVALUATOR =
-    (NullableFunction<PsiPolyadicExpressionImpl, PsiType>)expression -> doGetType(expression);
+  private static final Function<PsiPolyadicExpressionImpl,PsiType> MY_TYPE_EVALUATOR = expression -> doGetType(expression);
 
   @Nullable
   private static PsiType doGetType(PsiPolyadicExpressionImpl param) {

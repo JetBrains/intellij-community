@@ -1,8 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author: Eugene Zhuravlev
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress;
 
 import com.intellij.compiler.CompilerManagerImpl;
@@ -14,15 +10,12 @@ import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -30,9 +23,11 @@ import com.intellij.pom.Navigatable;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.AppIcon;
 import com.intellij.util.ModalityUiUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -74,7 +69,7 @@ public final class CompilerTask extends Task.Backgroundable {
     myContentId = new IDObject("content_id");
     mySessionId = myContentId; // by default sessionID should be unique, just as content ID
 
-    if (Registry.is("ide.jps.use.build.tool.window", true)) {
+    if (SystemProperties.getBooleanProperty("ide.jps.use.build.tool.window", true)) {
       myBuildViewService = new BuildOutputService(project, contentName);
     } else {
       myBuildViewService = new CompilerMessagesService(project, myContentId, contentName, headlessMode);
@@ -262,7 +257,13 @@ public final class CompilerTask extends Task.Backgroundable {
   public void start(Runnable compileWork, Runnable restartWork) {
     myCompileWork = compileWork;
     myRestartWork = restartWork;
-    queue();
+    ProgressManager.getInstance().run(this);
+  }
+
+  public @NotNull CompletableFuture<?> startAsync(Runnable compileWork, Runnable restartWork) {
+    myCompileWork = compileWork;
+    myRestartWork = restartWork;
+    return (CompletableFuture<?>)((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(this);
   }
 
   public void run(Runnable compileWork, Runnable restartWork, ProgressIndicator progressIndicator) {

@@ -15,10 +15,12 @@ import java.util.Arrays;
 import java.util.Map;
 
 final class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestFixture> {
+  @NotNull
   private final HeavyIdeaTestFixtureImpl myFixture;
+  @NotNull
   private final Map<Class<? extends ModuleFixtureBuilder<?>>, Class<? extends ModuleFixtureBuilder<?>>> myProviders;
 
-  HeavyTestFixtureBuilderImpl(HeavyIdeaTestFixtureImpl fixture, Map<Class<? extends ModuleFixtureBuilder<?>>, Class<? extends ModuleFixtureBuilder<?>>> providers) {
+  HeavyTestFixtureBuilderImpl(@NotNull HeavyIdeaTestFixtureImpl fixture, @NotNull Map<Class<? extends ModuleFixtureBuilder<?>>, Class<? extends ModuleFixtureBuilder<?>>> providers) {
     myFixture = fixture;
     myProviders = providers;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -12,10 +12,15 @@ import java.nio.file.Path;
 import java.util.Date;
 
 public interface PluginDescriptor {
-  @NotNull
-  PluginId getPluginId();
+  @NotNull PluginId getPluginId();
 
-  ClassLoader getPluginClassLoader();
+  @Nullable ClassLoader getPluginClassLoader();
+
+  @ApiStatus.Experimental
+  default @NotNull ClassLoader getClassLoader() {
+    ClassLoader classLoader = getPluginClassLoader();
+    return classLoader == null ? getClass().getClassLoader() : classLoader;
+  }
 
   default boolean isBundled() {
     return false;
@@ -56,7 +61,7 @@ public interface PluginDescriptor {
 
   //TODO: remove default implementation in 2021.3
   default @Nullable @NlsSafe String getOrganization() {
-    return "";
+    return null;
   }
 
   @NlsSafe String getVersion();
@@ -75,7 +80,7 @@ public interface PluginDescriptor {
    * @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   default @Nullable String getDownloads() {
     return null;
   }
@@ -91,7 +96,13 @@ public interface PluginDescriptor {
   /**
    * If true, this plugin is hidden from the list of installed plugins in Settings | Plugins.
    */
+  @ApiStatus.Internal
   default boolean isImplementationDetail() {
+    return false;
+  }
+
+  @ApiStatus.Experimental
+  default boolean isOnDemand() {
     return false;
   }
 

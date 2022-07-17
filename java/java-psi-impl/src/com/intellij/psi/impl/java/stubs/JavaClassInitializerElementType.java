@@ -41,7 +41,7 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
   @Override
   public PsiClassInitializerStub createStub(@NotNull final LighterAST tree,
                                             @NotNull final LighterASTNode node,
-                                            @NotNull final StubElement parentStub) {
+                                            final @NotNull StubElement<?> parentStub) {
     return new PsiClassInitializerStubImpl(parentStub);
   }
 

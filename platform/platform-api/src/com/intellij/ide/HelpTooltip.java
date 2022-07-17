@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -26,10 +26,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -104,6 +101,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.html;
  */
 public class HelpTooltip {
   private static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", UIUtil.getContextHelpForeground());
+  private static final Color LINK_COLOR = JBColor.namedColor("ToolTip.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
 
   private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
   private static final JBValue X_OFFSET = new JBValue.UIInteger("HelpTooltip.xOffset", 0);
@@ -432,7 +430,8 @@ public class HelpTooltip {
   }
 
   @NotNull
-  protected final JPanel createTipPanel() {
+  @ApiStatus.Internal
+  public final JPanel createTipPanel() {
     JPanel tipPanel = new JPanel();
     tipPanel.setLayout(new VerticalLayout(JBUI.getInt("HelpTooltip.verticalGap", 4)));
     tipPanel.setBackground(UIUtil.getToolTipBackground());
@@ -459,6 +458,7 @@ public class HelpTooltip {
     }
 
     if (link != null) {
+      link.setForeground(LINK_COLOR);
       link.setFont(deriveDescriptionFont(link.getFont(), hasTitle));
       tipPanel.add(link, VerticalLayout.TOP);
     }
@@ -477,6 +477,11 @@ public class HelpTooltip {
   private void uninstallMouseListeners(@NotNull JComponent owner) {
     owner.removeMouseListener(myMouseListener);
     owner.removeMouseMotionListener(myMouseListener);
+  }
+
+  @Nullable
+  public static HelpTooltip getTooltipFor(@NotNull JComponent owner) {
+    return (HelpTooltip)owner.getClientProperty(TOOLTIP_PROPERTY);
   }
 
   /**

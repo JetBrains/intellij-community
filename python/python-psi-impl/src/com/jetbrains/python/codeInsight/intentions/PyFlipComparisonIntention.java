@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
  */
 public class PyFlipComparisonIntention extends PyBaseIntentionAction {

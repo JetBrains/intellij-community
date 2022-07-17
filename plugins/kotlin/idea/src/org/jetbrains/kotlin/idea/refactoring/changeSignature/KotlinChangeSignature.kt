@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -20,17 +19,20 @@ import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.util.VisibilityUtil
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.refactoring.CallableRefactoring
 import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
 import org.jetbrains.kotlin.idea.refactoring.createJavaMethod
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
@@ -125,11 +127,12 @@ class KotlinChangeSignature(
             }
 
             else -> throw KotlinExceptionWithAttachments("Unexpected declaration: ${baseDeclaration::class}")
-                .withAttachment("element", baseDeclaration.text)
-                .withAttachment("file", baseDeclaration.containingFile.text)
+                .withPsiAttachment("element.kt", baseDeclaration)
+                .withPsiAttachment("file.kt", baseDeclaration.containingFile)
         }
     }
 
+    @TestOnly
     fun createSilentRefactoringProcessor(methodDescriptor: KotlinMethodDescriptor): BaseRefactoringProcessor? = selectRefactoringProcessor(
         methodDescriptor,
         propertyProcessor = { KotlinChangePropertySignatureDialog.createProcessorForSilentRefactoring(project, commandName, it) },
@@ -189,7 +192,7 @@ class KotlinChangeSignature(
             },
         ) ?: return
 
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             try {
                 dialog.performOKAction()
             } finally {

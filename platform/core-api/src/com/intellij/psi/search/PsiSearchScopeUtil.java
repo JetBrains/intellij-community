@@ -5,6 +5,7 @@ import com.intellij.lang.LanguageMatcher;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PsiSearchScopeUtil {
+
+  public static final Key<SearchScope> USE_SCOPE_KEY = Key.create("search.use.scope");
 
   @Nullable
   public static SearchScope union(@Nullable SearchScope a, @Nullable SearchScope b) {

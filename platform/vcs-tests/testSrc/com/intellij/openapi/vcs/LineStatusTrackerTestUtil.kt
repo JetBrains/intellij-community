@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs
 
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
+import com.intellij.diff.util.DiffRangeUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
@@ -251,8 +252,8 @@ open class TrackerModificationsTest(val tracker: LocalLineStatusTracker<*>) {
     val iterable = DiffIterableUtil.fair(DiffIterableUtil.create(diffRanges, lineOffsets1.lineCount, lineOffsets2.lineCount))
 
     for (range in iterable.iterateUnchanged()) {
-      val lines1 = DiffUtil.getLines(content1, lineOffsets1, range.start1, range.end1)
-      val lines2 = DiffUtil.getLines(content2, lineOffsets2, range.start2, range.end2)
+      val lines1 = DiffRangeUtil.getLines(content1, lineOffsets1, range.start1, range.end1)
+      val lines2 = DiffRangeUtil.getLines(content2, lineOffsets2, range.start2, range.end2)
       UsefulTestCase.assertOrderedEquals(lines1, lines2)
     }
   }
@@ -312,7 +313,7 @@ open class TrackerModificationsTest(val tracker: LocalLineStatusTracker<*>) {
         for (i in innerRange.line1 until innerRange.line2) {
           val line = lines2[i]
           val searchSpace = lines1.subList(start, lines1.size)
-          val index = ContainerUtil.indexOf(searchSpace) { it -> StringUtil.equalsIgnoreWhitespaces(it, line) }
+          val index = ContainerUtil.indexOf(searchSpace) { StringUtil.equalsIgnoreWhitespaces(it, line) }
           TestCase.assertTrue(index != -1)
           start += index + 1
         }

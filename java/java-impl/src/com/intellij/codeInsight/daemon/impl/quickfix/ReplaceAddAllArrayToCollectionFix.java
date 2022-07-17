@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.editor.Editor;
@@ -31,15 +32,22 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
   private final PsiMethodCallExpression myMethodCall;
 
   public ReplaceAddAllArrayToCollectionFix(@NotNull PsiMethodCallExpression methodCall) {
     myMethodCall = methodCall;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new ReplaceAddAllArrayToCollectionFix(PsiTreeUtil.findSameElementInCopy(myMethodCall, target));
   }
 
   @Override

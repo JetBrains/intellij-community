@@ -79,7 +79,7 @@ fun ByteBuffer.toByteArray(isClear: Boolean = false): ByteArray {
     return result
   }
 
-  val bytes = ByteArray(limit())
+  val bytes = ByteArray(limit() - position())
   get(bytes)
   return bytes
 }

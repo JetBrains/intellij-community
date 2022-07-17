@@ -4,9 +4,10 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.psi.*
 
 class ConvertStringTemplateToBuildStringIntention : SelfTargetingIntention<KtStringTemplateExpression>(
@@ -14,7 +15,7 @@ class ConvertStringTemplateToBuildStringIntention : SelfTargetingIntention<KtStr
     KotlinBundle.lazyMessage("convert.string.template.to.build.string"),
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtStringTemplateExpression, caretOffset: Int): Boolean {
-        return !element.text.startsWith("\"\"\"")
+        return !element.text.startsWith("\"\"\"") && !element.mustBeConstant()
     }
 
     override fun applyTo(element: KtStringTemplateExpression, editor: Editor?) {
@@ -37,7 +38,7 @@ class ConvertStringTemplateToBuildStringIntention : SelfTargetingIntention<KtStr
                     appendExpression(singleEntry.expression)
                 } else {
                     appendFixedText("\"")
-                    it.forEach { entry -> appendFixedText(entry.text) }
+                    it.forEach { entry -> appendNonFormattedText(entry.text) }
                     appendFixedText("\"")
                 }
                 appendFixedText(")\n")

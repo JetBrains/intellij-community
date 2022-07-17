@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution
 
 import com.intellij.execution.ExecutionException
@@ -10,16 +10,17 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.FakeConfigurationFactory
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.TestDialog
-import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.runInEdtAndWait
 import org.hamcrest.CoreMatchers.containsString
+import org.hamcrest.CoreMatchers.hasItem
 import org.junit.Assert.assertThat
+import java.util.*
 
 class ExternalSystemRunConfigurationJavaExtensionTest : RunConfigurationJavaExtensionManagerTestCase() {
   override fun getTestAppPath(): String = ""
@@ -30,20 +31,19 @@ class ExternalSystemRunConfigurationJavaExtensionTest : RunConfigurationJavaExte
   fun `test ExecutionException thrown from RunConfigurationExtension#updateJavaParameters should terminate execution`() {
     ExtensionTestUtil.maskExtensions(RunConfigurationExtension.EP_NAME, listOf(CantUpdateJavaParametersExtension()), testRootDisposable)
     val configuration = createExternalSystemRunConfiguration()
-    val notificationsCollector = NotificationsCollector()
-    val oldTestDialog = TestDialogManager.setTestDialog(notificationsCollector)
-    try {
-      LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean =
-          t !is FakeExecutionException  // don't fail this if `LOG.error()` was called for our exception somewhere
-      })
+
+    LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> =
+        // don't fail this if `LOG.error()` was called for our exception somewhere
+        if (t is FakeExecutionException) Action.NONE else Action.ALL
+    }) {
       runInEdtAndWait {
         ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).buildAndExecute()
       }
-      assertThat(assertOneElement(notificationsCollector.notifications), containsString(FakeExecutionException.MESSAGE))
-    }
-    finally {
-      TestDialogManager.setTestDialog(oldTestDialog)
+
+      val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(Notification::class.java, project)
+        .map { it.content }
+      assertThat(notifications, hasItem(containsString(FakeExecutionException.MESSAGE)))
     }
   }
 
@@ -75,14 +75,6 @@ class ExternalSystemRunConfigurationJavaExtensionTest : RunConfigurationJavaExte
     class FakeExecutionException : ExecutionException(MESSAGE) {
       companion object {
         const val MESSAGE = "Fake Execution Exception"
-      }
-    }
-
-    class NotificationsCollector : TestDialog {
-      val notifications = mutableListOf<String>()
-      override fun show(message: String): Int {
-        notifications += message
-        return Messages.OK
       }
     }
   }

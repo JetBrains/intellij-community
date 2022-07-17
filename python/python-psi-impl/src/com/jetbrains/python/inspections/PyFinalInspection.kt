@@ -19,15 +19,17 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiUtil
+import com.jetbrains.python.refactoring.PyDefUseUtil
 
 class PyFinalInspection : PyInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
-                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(holder, session)
+                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(holder, PyInspectionVisitor.getContext(session))
 
-  private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
+  private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyClass(node: PyClass) {
       super.visitPyClass(node)
@@ -144,7 +146,9 @@ class PyFinalInspection : PyInspection() {
         checkFinalReassignment(node)
       }
 
-      if (isFinal(node) && PyUtil.multiResolveTopPriority(node, resolveContext).any { it != node }) {
+      if (isFinal(node) && PyUtil.multiResolveTopPriority(node, resolveContext).any {
+          it != node && !PyDefUseUtil.isDefinedBefore(node, it)
+        }) {
         registerProblem(node, PyPsiBundle.message("INSP.final.already.declared.name.could.not.be.redefined.as.final"))
       }
     }

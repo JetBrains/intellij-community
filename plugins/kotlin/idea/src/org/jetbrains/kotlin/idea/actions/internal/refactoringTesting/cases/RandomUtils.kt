@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.apache.commons.lang.RandomStringUtils
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.psi.KtClass
 import java.io.File
 import kotlin.random.Random

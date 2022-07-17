@@ -1,6 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.notification.ActionCenter;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
@@ -34,13 +36,10 @@ import com.intellij.ui.*;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
@@ -52,13 +51,14 @@ import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
 public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor, DataProvider, Disposable {
-  private static final Logger LOG = Logger.getInstance(IdeFrameImpl.class);
+  private static final Logger LOG = Logger.getInstance(ProjectFrameHelper.class);
 
   private boolean isUpdatingTitle;
 
@@ -68,15 +68,19 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
   private Project project;
 
-  private IdeRootPane myRootPane;
-  private BalloonLayout myBalloonLayout;
+  private IdeRootPane rootPane;
+  private BalloonLayout balloonLayout;
 
-  private @Nullable IdeFrameDecorator myFrameDecorator;
+  private @Nullable IdeFrameDecorator frameDecorator;
 
   @SuppressWarnings("unused")
   private volatile Image selfie;
 
   private IdeFrameImpl frame;
+
+  // frame can be activated before project is assigned to it,
+  // so we remember the activation time and report it against the assgned project later
+  private Long activationTimestamp;
 
   public ProjectFrameHelper(@NotNull IdeFrameImpl frame, @Nullable Image selfie) {
     this.frame = frame;
@@ -108,11 +112,11 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   private void preInit() {
-    myRootPane = createIdeRootPane();
-    frame.setRootPane(myRootPane);
+    rootPane = createIdeRootPane();
+    frame.setRootPane(rootPane);
     // NB!: the root pane must be set before decorator,
     // which holds its own client properties in a root pane
-    myFrameDecorator = IdeFrameDecorator.decorate(frame, this);
+    frameDecorator = IdeFrameDecorator.decorate(frame, this);
 
     frame.setFrameHelper(new IdeFrameImpl.FrameHelper() {
       @Override
@@ -143,11 +147,6 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       }
 
       @Override
-      public void updateView() {
-        ProjectFrameHelper.this.updateView();
-      }
-
-      @Override
       public @Nullable Project getProject() {
         return project;
       }
@@ -168,10 +167,14 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
         updateTitle();
       }
-    }, myFrameDecorator);
+    }, frameDecorator);
 
-    myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
-    frame.setBackground(UIUtil.getPanelBackground());
+    balloonLayout = ActionCenter.isEnabled()
+                      ? new ActionCenterBalloonLayout(rootPane, JBUI.insets(8))
+                      : new BalloonLayoutImpl(rootPane, JBUI.insets(8));
+    frame.setBackground(JBColor.PanelBackground);
+
+    rootPane.prepareToolbar();
   }
 
   protected @NotNull IdeRootPane createIdeRootPane() {
@@ -179,33 +182,35 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   public void releaseFrame() {
-    myRootPane.removeToolbar();
+    rootPane.removeToolbar();
     WindowManagerEx.getInstanceEx().releaseFrame(this);
   }
 
   // purpose of delayed init - to show project frame as earlier as possible (and start loading of project too) and use it as project loading "splash"
   // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
   public void init() {
-    myRootPane.createAndConfigureStatusBar(this, this);
+    rootPane.createAndConfigureStatusBar(this, this);
     MnemonicHelper.init(frame);
     frame.setFocusTraversalPolicy(new IdeFocusTraversalPolicy());
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
-    if (SystemInfoRt.isMac) {
+    if (SystemInfoRt.isLinux) {
       frame.setIconImage(null);
     }
 
     IdeMenuBar.installAppMenuIfNeeded(frame);
     // in production (not from sources) makes sense only on Linux
-    AppUIUtil.updateWindowIcon(frame);
+    if (SystemInfoRt.isLinux) {
+      AppUIUtil.updateWindowIcon(frame);
+    }
 
     MouseGestureManager.getInstance().add(this);
 
     ApplicationManager.getApplication().invokeLater(
       () -> ((NotificationsManagerImpl)NotificationsManager.getNotificationsManager()).dispatchEarlyNotifications(),
       ModalityState.NON_MODAL,
-      ignored -> frame == null);
+      __ -> frame == null);
   }
 
   @Override
@@ -219,7 +224,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     frame.addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(@NotNull WindowEvent e) {
-        if (isTemporaryDisposed(frame) || LaterInvocator.isInModalContext()) {
+        if (isTemporaryDisposed(frame) || LaterInvocator.isInModalContext(frame, project)) {
           return;
         }
 
@@ -237,7 +242,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
   @Override
   public @Nullable IdeStatusBarImpl getStatusBar() {
-    return myRootPane == null ? null : myRootPane.getStatusBar();
+    return rootPane == null ? null : rootPane.getStatusBar();
   }
 
   @Override
@@ -249,8 +254,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     if (project != null) {
       project = null;
       // already disposed
-      if (myRootPane != null) {
-        myRootPane.deinstallNorthComponents();
+      if (rootPane != null) {
+        rootPane.deinstallNorthComponents();
       }
     }
 
@@ -271,7 +276,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
   @Override
   public @Nullable IdeRootPaneNorthExtension getNorthExtension(String key) {
-    return myRootPane.findByName(key);
+    return rootPane.findByName(key);
   }
 
   protected @NotNull List<TitleInfoProvider> getTitleInfoProviders() {
@@ -320,9 +325,10 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   public void updateView() {
-    myRootPane.updateToolbar();
-    myRootPane.updateMainMenuActions();
-    myRootPane.updateNorthComponents();
+    IdeRootPane rootPane = this.rootPane;
+    rootPane.updateToolbar();
+    rootPane.updateMainMenuActions();
+    rootPane.updateNorthComponents();
   }
 
   @Override
@@ -371,10 +377,10 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     }
 
     this.project = project;
-    if (myRootPane != null) {
-      myRootPane.setProject(project);
-      myRootPane.installNorthComponents(project);
-      StatusBar statusBar = myRootPane.getStatusBar();
+    if (rootPane != null) {
+      rootPane.setProject(project);
+      rootPane.installNorthComponents(project);
+      StatusBar statusBar = rootPane.getStatusBar();
       if (statusBar != null) {
         project.getMessageBus().connect().subscribe(StatusBar.Info.TOPIC, statusBar);
       }
@@ -388,34 +394,48 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       });
     }
 
-    if (myFrameDecorator != null) {
-      myFrameDecorator.setProject();
+    if (frameDecorator != null) {
+      frameDecorator.setProject();
+    }
+    if (activationTimestamp != null) {
+      RecentProjectsManagerBase.getInstanceEx().setActivationTimestamp(project, activationTimestamp);
     }
   }
 
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
-    project.getService(StatusBarWidgetsManager.class).updateAllWidgets();
+    project.getService(StatusBarWidgetsManager.class).installPendingWidgets();
     IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
     PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
+
+    var navBar = rootPane.findByName(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
+    if (navBar instanceof StatusBarCentralWidget) {
+      statusBar.setCentralWidget((StatusBarCentralWidget)navBar);
+    }
+  }
+
+  public void appClosing() {
+    if (frameDecorator != null) {
+      frameDecorator.appClosing();
+    }
   }
 
   @Override
   public void dispose() {
     MouseGestureManager.getInstance().remove(this);
 
-    if (myBalloonLayout != null) {
+    if (balloonLayout != null) {
       //noinspection SSBasedInspection
-      ((BalloonLayoutImpl)myBalloonLayout).dispose();
-      myBalloonLayout = null;
+      ((BalloonLayoutImpl)balloonLayout).dispose();
+      balloonLayout = null;
     }
 
     // clear both our and swing hard refs
-    if (myRootPane != null) {
+    if (rootPane != null) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        myRootPane.removeNotify();
+        rootPane.removeNotify();
       }
       frame.setRootPane(new JRootPane());
-      myRootPane = null;
+      rootPane = null;
     }
 
     if (frame != null) {
@@ -423,11 +443,15 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       frame.setFrameHelper(null, null);
       frame = null;
     }
-    myFrameDecorator = null;
+    frameDecorator = null;
   }
 
   private static boolean isTemporaryDisposed(@Nullable RootPaneContainer frame) {
-    return UIUtil.isClientPropertyTrue(frame == null ? null : frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY);
+    return ClientProperty.isTrue(frame == null ? null : frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY);
+  }
+
+  public @Nullable IdeFrameImpl getFrameOrNull() {
+    return this.frame;
   }
 
   public @Nullable IdeFrameImpl getFrame() {
@@ -457,8 +481,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   @ApiStatus.Internal
-  @Nullable IdeRootPane getRootPane() {
-    return myRootPane;
+  public @Nullable IdeRootPane getRootPane() {
+    return rootPane;
   }
 
   @Override
@@ -473,21 +497,21 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
   @Override
   public final @Nullable BalloonLayout getBalloonLayout() {
-    return myBalloonLayout;
+    return balloonLayout;
   }
 
   @Override
   public boolean isInFullScreen() {
-    return myFrameDecorator != null && myFrameDecorator.isInFullScreen();
+    return frameDecorator != null && frameDecorator.isInFullScreen();
   }
 
   @Override
-  public @NotNull Promise<?> toggleFullScreen(boolean state) {
-    if (temporaryFixForIdea156004(state) || myFrameDecorator == null) {
-      return Promises.resolvedPromise();
+  public @NotNull CompletableFuture<?> toggleFullScreen(boolean state) {
+    if (temporaryFixForIdea156004(state) || frameDecorator == null) {
+      return CompletableFuture.completedFuture(null);
     }
     else {
-      return myFrameDecorator.toggleFullScreen(state);
+      return frameDecorator.toggleFullScreen(state);
     }
   }
 
@@ -508,5 +532,13 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     }
 
     return false;
+  }
+
+  @Override
+  public void notifyProjectActivation() {
+    activationTimestamp = System.currentTimeMillis();
+    if (project != null) {
+      RecentProjectsManagerBase.getInstanceEx().setActivationTimestamp(project, activationTimestamp);
+    }
   }
 }

@@ -24,7 +24,7 @@ import com.intellij.psi.stubs.StubIndexKey;
  * use {@link com.intellij.psi.stubs.StubIndex#getContainingFiles(StubIndexKey, Object, Project, GlobalSearchScope)} instead.
  * It lazily will restore files from its ids.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface IdIterator {
   IdIterator EMPTY = new IdIterator() {
     @Override

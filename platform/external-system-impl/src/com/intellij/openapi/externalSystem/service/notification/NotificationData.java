@@ -1,9 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.notification;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.NlsContexts.NotificationTitle;
@@ -35,7 +33,8 @@ public class NotificationData implements Disposable {
   private int myLine;
   private int myColumn;
   private boolean myBalloonNotification;
-  @Nullable private String myBalloonGroup;
+  @Nullable private NotificationGroup myBalloonGroup;
+  private boolean myIsSuggestion;
 
   private final Map<String, NotificationListener> myListenerMap;
 
@@ -187,11 +186,19 @@ public class NotificationData implements Disposable {
   }
 
   @Nullable
-  public String getBalloonGroup() {
+  public NotificationGroup getBalloonGroup() {
     return myBalloonGroup;
   }
 
+  /**
+   * @deprecated Pass {@code NotificationGroup} instead of {@code String}
+   */
+  @Deprecated
   public void setBalloonGroup(@Nullable String balloonGroup) {
+    myBalloonGroup = balloonGroup == null ? null : NotificationGroupManager.getInstance().getNotificationGroup(balloonGroup);
+  }
+
+  public void setBalloonGroup(NotificationGroup balloonGroup) {
     myBalloonGroup = balloonGroup;
   }
 

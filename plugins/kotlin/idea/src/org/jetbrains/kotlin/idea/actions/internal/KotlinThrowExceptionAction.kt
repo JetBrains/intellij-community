@@ -2,16 +2,18 @@
 
 package org.jetbrains.kotlin.idea.actions.internal
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 
 class KotlinThrowExceptionAction : AnAction() {
-    override fun update(e: AnActionEvent) {
-        super.update(e)
 
-        e.presentation.isEnabledAndVisible = KotlinPluginUtil.isPatched() || ApplicationManager.getApplication().isInternal
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+        e.presentation.isEnabledAndVisible = KotlinIdePlugin.hasPatchedVersion || isApplicationInternalMode()
     }
 
     override fun actionPerformed(e: AnActionEvent) {

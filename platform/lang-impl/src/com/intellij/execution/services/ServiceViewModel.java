@@ -4,6 +4,7 @@ package com.intellij.execution.services;
 import com.intellij.execution.services.ServiceEventListener.ServiceEvent;
 import com.intellij.execution.services.ServiceModel.ContributorNode;
 import com.intellij.execution.services.ServiceModel.ServiceGroupNode;
+import com.intellij.execution.services.ServiceModel.ServiceNode;
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.execution.services.ServiceModelFilter.ServiceViewFilter;
 import com.intellij.execution.services.ServiceViewState.ServiceState;
@@ -200,12 +201,22 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
         AtomicReference<ServiceGroupNode> ref = new AtomicReference<>((ServiceGroupNode)item);
         return new GroupModel(model, modelFilter, ref, parentFilter);
       }
-      else if (item.getChildren().isEmpty()) {
+      else if (isSingleService(item)) {
         AtomicReference<ServiceViewItem> ref = new AtomicReference<>(item);
         return new SingeServiceModel(model, modelFilter, ref, parentFilter);
       }
     }
     return new ServiceListModel(model, modelFilter, items, parentFilter);
+  }
+
+  private static boolean isSingleService(ServiceViewItem item) {
+    if (item instanceof ServiceNode) {
+      ServiceNode node = (ServiceNode)item;
+      if (!node.isChildrenInitialized() || !node.isLoaded()) {
+        return false;
+      }
+    }
+    return item.getChildren().isEmpty();
   }
 
   @Nullable

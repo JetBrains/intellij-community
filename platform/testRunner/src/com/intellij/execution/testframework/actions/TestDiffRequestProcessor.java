@@ -14,6 +14,8 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.ListSelection;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
@@ -26,12 +28,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class TestDiffRequestProcessor {
   @NotNull
   public static DiffRequestChain createRequestChain(@Nullable Project project, @NotNull ListSelection<? extends DiffHyperlink> requests) {
     ListSelection<DiffRequestProducer> producers = requests.map(hyperlink -> new DiffHyperlinkRequestProducer(project, hyperlink));
 
-    SimpleDiffRequestChain chain = SimpleDiffRequestChain.fromProducers(producers.getList(), producers.getSelectedIndex());
+    SimpleDiffRequestChain chain = SimpleDiffRequestChain.fromProducers(producers);
     chain.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.TESTS_FAILED_ASSERTIONS);
     chain.putUserData(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES, true);
     chain.putUserData(DiffUserDataKeys.DIALOG_GROUP_KEY,
@@ -56,6 +60,12 @@ public class TestDiffRequestProcessor {
     }
 
     @Override
+    public @Nullable FileType getContentType() {
+      VirtualFile file = findFile(myHyperlink.getFilePath());
+      return file != null ? file.getFileType() : PlainTextFileType.INSTANCE;
+    }
+
+    @Override
     @NotNull
     public DiffRequest process(@NotNull UserDataHolder context,
                                @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
@@ -75,6 +85,19 @@ public class TestDiffRequestProcessor {
                                     : ExecutionBundle.message("diff.content.actual.title");
 
       return new SimpleDiffRequest(windowTitle, content1, content2, title1, title2);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      DiffHyperlinkRequestProducer producer = (DiffHyperlinkRequestProducer)o;
+      return Objects.equals(myHyperlink, producer.myHyperlink);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myHyperlink);
     }
   }
 

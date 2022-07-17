@@ -1,17 +1,19 @@
-<idea-plugin implementation-detail="true">
+<idea-plugin implementation-detail="true" package="org.intellij.images">
   <vendor>JetBrains</vendor>
   <name>Images</name>
   <id>com.intellij.platform.images</id>
-
-  <depends optional="true" config-file="images-copyright-plugin.xml">com.intellij.copyright</depends>
+  <description>Adds support for image file type preview, SVG file type contents language</description>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.images.themeFilter" interface="org.intellij.images.thumbnail.actions.ThemeFilter" dynamic="true"/>
   </extensionPoints>
 
   <resource-bundle>messages.ImagesBundle</resource-bundle>
-  <depends>com.intellij.modules.lang</depends>
-  <depends>com.intellij.modules.xml</depends>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.xml"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
@@ -41,6 +43,7 @@
     <registryKey key="ide.images.show.grid.only.when.zoom.factor.equal.or.more.than" defaultValue="3" description="Hide grid if zoom factor is less than value"/>
     <registryKey key="ide.images.show.grid.after.every.x.pixels" defaultValue="1" description="Pixels between grid lines"/>
     <registryKey key="ide.images.change.background.action.enabled" defaultValue="false" description="Show action for changing background in the editor toolbar"/>
+    <iconMapper mappingFile="ImagesIconMappings.json"/>
   </extensions>
 
   <actions>
@@ -64,7 +67,7 @@
       <group id="Images.ImageViewActions">
         <action class="org.intellij.images.actions.ToggleTransparencyChessboardAction"
                 id="Images.ToggleTransparencyChessboard"
-                icon="ImagesIcons.ToggleTransparencyChessboard">
+                icon="org.intellij.images.ImagesIcons.ToggleTransparencyChessboard">
         </action>
         <action class="org.intellij.images.editor.actions.SetBackgroundImageAction"
                 id="Images.SetBackgroundImage">
@@ -164,8 +167,6 @@
       <separator/>
       <reference id="Images.SetBackgroundImage"/>
       <separator/>
-      <reference id="AddToFavorites"/>
-      <separator/>
       <reference id="VersionControlsGroup"/>
       <separator/>
       <reference id="Images.EditExternally"/>
@@ -195,8 +196,6 @@
       <separator/>
       <reference id="FindUsages"/>
       <reference id="RefactoringMenu"/>
-      <separator/>
-      <reference id="AddToFavorites"/>
       <separator/>
       <reference id="$Delete"/>
       <separator/>

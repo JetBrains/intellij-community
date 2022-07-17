@@ -45,8 +45,7 @@ public class UnnecessaryLabelOnContinueStatementInspection
     return new UnnecessaryLabelOnContinueStatementFix();
   }
 
-  private static class UnnecessaryLabelOnContinueStatementFix
-    extends InspectionGadgetsFix {
+  private static class UnnecessaryLabelOnContinueStatementFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
@@ -57,15 +56,10 @@ public class UnnecessaryLabelOnContinueStatementInspection
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiElement continueKeywordElement =
-        descriptor.getPsiElement();
-      final PsiContinueStatement continueStatement =
-        (PsiContinueStatement)continueKeywordElement.getParent();
-      final PsiIdentifier labelIdentifier =
-        continueStatement.getLabelIdentifier();
-      if (labelIdentifier == null) {
-        return;
-      }
+      final PsiElement continueKeywordElement = descriptor.getPsiElement();
+      final PsiContinueStatement continueStatement = (PsiContinueStatement)continueKeywordElement.getParent();
+      final PsiIdentifier labelIdentifier = continueStatement.getLabelIdentifier();
+      if (labelIdentifier == null) return;
       labelIdentifier.delete();
     }
   }
@@ -79,34 +73,17 @@ public class UnnecessaryLabelOnContinueStatementInspection
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitContinueStatement(
-      @NotNull PsiContinueStatement statement) {
-      final PsiIdentifier labelIdentifier =
-        statement.getLabelIdentifier();
-      if (labelIdentifier == null) {
-        return;
-      }
+    public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
+      final PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
+      if (labelIdentifier == null) return;
       final String labelText = labelIdentifier.getText();
-      if (labelText == null || labelText.isEmpty()) {
-        return;
-      }
-      final PsiStatement exitedStatement =
-        statement.findContinuedStatement();
-      if (exitedStatement == null) {
-        return;
-      }
-      final PsiStatement labelEnabledParent =
-        PsiTreeUtil.getParentOfType(statement,
-                                    PsiForStatement.class, PsiDoWhileStatement.class,
-                                    PsiForeachStatement.class, PsiWhileStatement.class,
-                                    PsiSwitchStatement.class);
-      if (labelEnabledParent == null) {
-        return;
-      }
-      if (!exitedStatement.equals(labelEnabledParent)) {
-        return;
-      }
-      registerStatementError(statement);
+      if (labelText == null || labelText.isEmpty()) return;
+      final PsiStatement exitedStatement = statement.findContinuedStatement();
+      if (exitedStatement == null) return;
+      final PsiStatement labelEnabledParent = PsiTreeUtil.getParentOfType(statement, PsiLoopStatement.class);
+      if (labelEnabledParent == null) return;
+      if (!exitedStatement.equals(labelEnabledParent)) return;
+      registerError(labelIdentifier);
     }
   }
 }

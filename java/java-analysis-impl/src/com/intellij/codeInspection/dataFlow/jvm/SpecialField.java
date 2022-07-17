@@ -3,13 +3,13 @@ package com.intellij.codeInspection.dataFlow.jvm;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.util.PsiUtil;
@@ -18,6 +18,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.*;
 
+import java.util.Arrays;
 import java.util.function.Function;
 
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnFalse;
@@ -227,6 +228,54 @@ public enum SpecialField implements DerivedVariableDescriptor {
     boolean isMyAccessor(PsiMember accessor) {
       return false;
     }
+  },
+  ENUM_ORDINAL("ordinal", "special.field.enum.ordinal", true) {
+    private final CallMatcher ENUM_ORDINAL_METHOD = CallMatcher.instanceCall(JAVA_LANG_ENUM, "ordinal").parameterCount(0);
+
+    @Override
+    public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
+      if (qualifier != null) {
+        TypeConstraint constraint = TypeConstraint.fromDfType(qualifier.getDfType());
+        if (constraint.isExact()) {
+          PsiClass cls = PsiUtil.resolveClassInClassTypeOnly(constraint.getPsiType(qualifier.getFactory().getProject()));
+          if (cls != null) {
+            long count = Arrays.stream(cls.getFields()).filter(field -> field instanceof PsiEnumConstant).count();
+            // Keep +1 ordinal for possible enum changes
+            return DfTypes.intRange(LongRangeSet.range(0, count));
+          }
+        }
+      }
+      return super.getDfType(qualifier);
+    }
+
+    @Override
+    public @NotNull DfType fromConstant(@Nullable Object obj) {
+      if (obj instanceof PsiEnumConstant) {
+        PsiEnumConstant constant = (PsiEnumConstant)obj;
+        PsiClass psiClass = constant.getContainingClass();
+        if (psiClass != null) {
+          int ordinal = 0;
+          for (PsiField field : psiClass.getFields()) {
+            if (field == constant) return DfTypes.intValue(ordinal);
+            if (field instanceof PsiEnumConstant) {
+              ordinal++;
+            }
+          }
+        }
+      }
+      return super.fromConstant(obj);
+    }
+
+    @Override
+    boolean isMyQualifierType(DfType type) {
+      TypeConstraint constraint = TypeConstraint.fromDfType(type);
+      return constraint.isEnum();
+    }
+
+    @Override
+    boolean isMyAccessor(PsiMember accessor) {
+      return accessor instanceof PsiMethod && ENUM_ORDINAL_METHOD.methodMatches((PsiMethod)accessor);
+    }
   };
 
   private static final SpecialField[] VALUES = values();
@@ -250,7 +299,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
   /**
    * Checks whether supplied accessor (field or method) can be used to read this special field
    *
-   * @param accessor accessor to test to test
+   * @param accessor accessor to test
    * @return true if supplied accessor can be used to read this special field
    */
   abstract boolean isMyAccessor(PsiMember accessor);
@@ -341,7 +390,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
   }
 
   /**
-   * @return a list of method contracts which equivalent to checking this special field for zero
+   * @return a array of method contracts which equivalent to checking this special field for zero
    */
   public MethodContract[] getEmptyContracts() {
     ContractValue thisValue = ContractValue.qualifier().specialField(this);
@@ -369,12 +418,21 @@ public enum SpecialField implements DerivedVariableDescriptor {
 
   @Override
   @NotNull
-  public DfType asDfType(@NotNull DfType fieldValue, @NotNull Project project) {
+  public DfType asDfType(@NotNull DfType qualifierType, @NotNull DfType fieldValue) {
     if (this == STRING_LENGTH && fieldValue.isConst(0)) {
-      return DfTypes.referenceConstant("", JavaPsiFacade.getElementFactory(project)
-        .createTypeByFQClassName(JAVA_LANG_STRING));
+      return DfTypes.referenceConstant("", TypeConstraint.fromDfType(qualifierType));
     }
-    return asDfType(fieldValue);
+    if (this == ENUM_ORDINAL) {
+      Integer constValue = fieldValue.getConstantOfType(Integer.class);
+      if (constValue != null) {
+        TypeConstraint qualifier = TypeConstraint.fromDfType(qualifierType);
+        PsiEnumConstant constant = qualifier.getEnumConstant(constValue);
+        if (constant != null) {
+          return DfTypes.referenceConstant(constant, TypeConstraint.fromDfType(qualifierType));
+        }
+      }
+    }
+    return asDfType(fieldValue).meet(qualifierType);
   }
 
   /**

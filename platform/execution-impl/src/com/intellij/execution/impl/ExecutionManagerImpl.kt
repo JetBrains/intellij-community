@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.CommonBundle
@@ -64,6 +64,7 @@ import java.io.OutputStream
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Consumer
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
@@ -149,7 +150,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   @Volatile
   var forceCompilationInTests = false
 
-  private val awaitingTerminationAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD)
+  private val awaitingTerminationAlarm = Alarm()
   private val awaitingRunProfiles = HashMap<RunProfile, ExecutionEnvironment>()
   private val runningConfigurations: MutableList<RunningConfigurationEntry> = ContainerUtil.createLockFreeCopyOnWriteList()
 
@@ -449,7 +450,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
                                  executor: Executor,
                                  target: ExecutionTarget,
                                  configuration: RunnerAndConfigurationSettings?,
-                                 processHandler: ProcessHandler?) {
+                                 processHandler: ProcessHandler?,
+                                 environmentCustomization: Consumer<in ExecutionEnvironment>?) {
     val builder = createEnvironmentBuilder(project, executor, configuration)
     if (processHandler != null) {
       for (descriptor in getAllDescriptors(project)) {
@@ -459,7 +461,9 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         }
       }
     }
-    restartRunProfile(builder.target(target).build())
+    val environment = builder.target(target).build()
+    environmentCustomization?.accept(environment)
+    restartRunProfile(environment)
   }
 
   override fun restartRunProfile(environment: ExecutionEnvironment) {
@@ -702,7 +706,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           val runner = ProgramRunner.getRunner(environment.executor.id, environment.runnerAndConfigurationSettings!!.configuration)
           if (runner == null) {
             ExecutionUtil.handleExecutionError(environment,
-                                               ExecutionException(ExecutionBundle.message("dialog.message.cannot.find.runner.for",
+                                               ExecutionException(ExecutionBundle.message("dialog.message.cannot.find.runner",
                                                                                           environment.runProfile.name)))
           }
           else {
@@ -819,6 +823,13 @@ fun RunnerAndConfigurationSettings.isOfSameType(runnerAndConfigurationSettings: 
   val thatConfiguration = runnerAndConfigurationSettings.configuration
   if (thisConfiguration === thatConfiguration) return true
 
+  if (this is RunnerAndConfigurationSettingsImpl &&
+      runnerAndConfigurationSettings is RunnerAndConfigurationSettingsImpl &&
+      this.filePathIfRunningCurrentFile != null) {
+    // These are special run configurations, which are used for running 'Current File' (a special item in the combobox). They are not stored in RunManager.
+    return this.filePathIfRunningCurrentFile == runnerAndConfigurationSettings.filePathIfRunningCurrentFile
+  }
+
   if (thisConfiguration is UserDataHolder) {
     val originalRunProfile = DELEGATED_RUN_PROFILE_KEY[thisConfiguration] ?: return false
     if (originalRunProfile === thatConfiguration) return true
@@ -882,9 +893,7 @@ private fun userApprovesStopForSameTypeConfigurations(project: Project, configNa
 private fun userApprovesStopForIncompatibleConfigurations(project: Project,
                                                           configName: String,
                                                           runningIncompatibleDescriptors: List<RunContentDescriptor>): Boolean {
-  @Suppress("DuplicatedCode")
   val config = RunManagerImpl.getInstanceImpl(project).config
-  @Suppress("DuplicatedCode")
   if (!config.isStopIncompatibleRequiresConfirmation) {
     return true
   }
@@ -948,7 +957,10 @@ private class ProcessExecutionListener(private val project: Project,
 
     project.messageBus.syncPublisher(ExecutionManager.EXECUTION_TOPIC).processTerminated(executorId, environment, processHandler, event.exitCode)
 
-    RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationFinishType.UNKNOWN)
+    val runConfigurationFinishType =
+      if (event.processHandler.getUserData(ProcessHandler.TERMINATION_REQUESTED) == true) RunConfigurationFinishType.TERMINATED
+      else RunConfigurationFinishType.UNKNOWN
+    RunConfigurationUsageTriggerCollector.logProcessFinished(activity, runConfigurationFinishType)
 
     processHandler.removeProcessListener(this)
     SaveAndSyncHandler.getInstance().scheduleRefresh()

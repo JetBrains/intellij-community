@@ -10,6 +10,8 @@ import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.util.*
+import com.intellij.diff.util.DiffDrawUtil.InlineHighlighterBuilder
+import com.intellij.diff.util.DiffDrawUtil.LineHighlighterBuilder
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -31,6 +33,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalSeparatorComponent
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.ex.Range
@@ -141,7 +144,7 @@ class GitStageLineStatusTracker(
   }
 
   @RequiresEdt
-  private fun updateDocument(side: ThreeSide, commandName: String?, task: (Document) -> Unit): Boolean {
+  private fun updateDocument(side: ThreeSide, commandName: @NlsContexts.Command String?, task: (Document) -> Unit): Boolean {
     val affectedDocument = side.selectNotNull(vcsDocument, stagedDocument, document)
     return LineStatusTrackerBase.updateDocument(project, affectedDocument, commandName, task)
   }
@@ -540,17 +543,31 @@ class GitStageLineStatusTracker(
       }
 
       if (stagedWordDiff != null || vcsWordDiff != null) {
-        val currentStartOffset = myTracker.document.getLineStartOffset(range.line1)
-        installMasterEditorWordHighlighters(editor, currentStartOffset, stagedWordDiff.orEmpty(), vcsWordDiff.orEmpty(), disposable)
+        installMasterEditorWordHighlighters(editor, range.line1, range.line2, stagedWordDiff.orEmpty(), vcsWordDiff.orEmpty(), disposable)
       }
     }
 
     private fun installMasterEditorWordHighlighters(editor: Editor,
-                                                    currentStartOffset: Int,
+                                                    startLine: Int,
+                                                    endLine: Int,
                                                     wordDiff1: List<DiffFragment>,
                                                     wordDiff2: List<DiffFragment>,
                                                     parentDisposable: Disposable) {
-      val highlighters = WordDiffMerger(editor, currentStartOffset, wordDiff1, wordDiff2).run()
+      val currentTextRange = DiffUtil.getLinesRange(editor.document, startLine, endLine)
+
+      DiffDrawUtil.setupLayeredRendering(editor, startLine, endLine,
+                                         DiffDrawUtil.LAYER_PRIORITY_LST, parentDisposable)
+
+      val highlighters = mutableListOf<RangeHighlighter>()
+      highlighters += LineHighlighterBuilder(editor, startLine, endLine, TextDiffType.MODIFIED)
+        .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_LST)
+        .withIgnored(true)
+        .withHideStripeMarkers(true)
+        .withHideGutterMarkers(true)
+        .done()
+
+      highlighters += WordDiffMerger(editor, currentTextRange.startOffset, wordDiff1, wordDiff2).run()
+
       Disposer.register(parentDisposable, Disposable {
         highlighters.forEach(RangeHighlighter::dispose)
       })
@@ -616,7 +633,9 @@ class GitStageLineStatusTracker(
           val currentStart = currentStartOffset + dirtyStart
           val currentEnd = currentStartOffset + dirtyEnd
           val type = affectedFragments.map { DiffUtil.getDiffType(it) }.distinct().singleOrNull() ?: TextDiffType.MODIFIED
-          highlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type))
+          highlighters.addAll(InlineHighlighterBuilder(editor, currentStart, currentEnd, type)
+                                .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_LST)
+                                .done())
 
           dirtyStart = -1
           dirtyEnd = -1
@@ -730,9 +749,12 @@ class GitStageLineStatusTracker(
           DiffBundle.message("dialog.title.diff.for.range"),
           vcsContent, stagedContent, currentContent,
           GitUtil.HEAD, GitBundle.message("stage.content.staged"), GitBundle.message("stage.content.local"))
-        request.putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_RIGHT_TO_BASE_ACTION_TEXT, GitBundle.message("action.label.add.unstaged.range"))
-        request.putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_BASE_TO_RIGHT_ACTION_TEXT, DiffBundle.message("action.presentation.diff.revert.text"))
-        request.putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_TO_BASE_ACTION_TEXT, GitBundle.message("action.label.reset.staged.range"))
+        request.putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_RIGHT_TO_BASE_ACTION_TEXT,
+                            GitBundle.message("action.label.add.unstaged.range"))
+        request.putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_BASE_TO_RIGHT_ACTION_TEXT,
+                            DiffBundle.message("action.presentation.diff.revert.text"))
+        request.putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_TO_BASE_ACTION_TEXT,
+                            GitBundle.message("action.label.reset.staged.range"))
         DiffManager.getInstance().showDiff(myTracker.project, request)
       }
 

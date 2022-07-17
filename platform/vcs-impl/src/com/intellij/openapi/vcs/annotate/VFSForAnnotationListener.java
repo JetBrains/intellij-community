@@ -22,6 +22,10 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Prefer using {@link AnnotationsWriteableFilesVfsListener}
+ */
+@Deprecated
 public class VFSForAnnotationListener implements VirtualFileListener {
   private final VirtualFile myFile;
   private final FileAnnotation myFileAnnotation;
@@ -33,8 +37,8 @@ public class VFSForAnnotationListener implements VirtualFileListener {
 
   @Override
   public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-    if (! Comparing.equal(myFile, event.getFile())) return;
-    if (! event.isFromRefresh()) return;
+    if (!Comparing.equal(myFile, event.getFile())) return;
+    if (!event.isFromRefresh()) return;
 
     if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
       if (((Boolean)event.getOldValue()).booleanValue()) {
@@ -45,9 +49,9 @@ public class VFSForAnnotationListener implements VirtualFileListener {
 
   @Override
   public void contentsChanged(@NotNull VirtualFileEvent event) {
-    if (! Comparing.equal(myFile, event.getFile())) return;
-    if (! event.isFromRefresh()) return;
-    if (! myFile.isWritable()) {
+    if (!Comparing.equal(myFile, event.getFile())) return;
+    if (!event.isFromRefresh()) return;
+    if (!myFile.isWritable()) {
       myFileAnnotation.close();
     }
   }

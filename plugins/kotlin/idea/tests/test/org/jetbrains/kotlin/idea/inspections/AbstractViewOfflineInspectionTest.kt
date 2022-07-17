@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.actions.ViewOfflineResultsAction
@@ -14,9 +14,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.pom.Navigatable
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import java.io.File
 import java.nio.file.Paths
@@ -25,7 +25,7 @@ abstract class AbstractViewOfflineInspectionTest: KotlinLightCodeInsightFixtureT
     override fun mainFile(): File = File(testDataDirectory, fileName().replace("_report.xml", ".kt"))
 
     fun doTest(path: String) {
-        val testDataFile = testDataFile()
+        val testDataFile = dataFile()
         val testPath = testDataFile.toString()
         val shortName = run {
             val parent = testDataFile.parentFile.name

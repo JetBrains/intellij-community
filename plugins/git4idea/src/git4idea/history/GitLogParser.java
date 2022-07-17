@@ -1,20 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import git4idea.GitFormatException;
 import git4idea.GitUtil;
 import git4idea.config.GitVersionSpecialty;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -44,6 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @see GitLogRecord
  */
+@ApiStatus.Internal
 public class GitLogParser<R extends GitLogRecord> {
   private static final Logger LOG = Logger.getInstance(GitLogParser.class);
 
@@ -189,8 +186,10 @@ public class GitLogParser<R extends GitLogRecord> {
     if (myPathsParser.getErrorText() != null ||
         !myOptionsParser.hasCompleteOptionsList()) {
       if (myPathsParser.getErrorText() != null) LOG.debug("Creating record was skipped: " + myPathsParser.getErrorText());
-      if (!myOptionsParser.hasCompleteOptionsList()) LOG.debug("Parsed incomplete options " + myOptionsParser.myResult.getResult() + " for " +
-                                                               Arrays.toString(myOptionsParser.myOptions));
+      if (!myOptionsParser.hasCompleteOptionsList()) {
+        LOG.debug("Parsed incomplete options " + myOptionsParser.myResult.getResult() + " for " +
+                  Arrays.toString(myOptionsParser.myOptions));
+      }
       myOptionsParser.clear();
       myRecordBuilder.clear();
       myPathsParser.clear();
@@ -221,8 +220,12 @@ public class GitLogParser<R extends GitLogRecord> {
 
   @NotNull
   private String makeFormatFromOptions(GitLogOption @NotNull [] options) {
-    Function<GitLogOption, String> function = option -> "%" + option.getPlaceholder();
-    return encodeForGit(myRecordStart) + StringUtil.join(options, function, encodeForGit(myItemsSeparator)) + encodeForGit(myRecordEnd);
+    return encodeForGit(myRecordStart) + makeFormatFromOptions(options, encodeForGit(myItemsSeparator)) + encodeForGit(myRecordEnd);
+  }
+
+  @NotNull
+  public static String makeFormatFromOptions(GitLogOption @NotNull [] options, @NotNull String separator) {
+    return StringUtil.join(options, option -> "%" + option.getPlaceholder(), separator);
   }
 
   @NotNull
@@ -281,7 +284,8 @@ public class GitLogParser<R extends GitLogRecord> {
    * Options which may be passed to 'git log --pretty=format:' as placeholders and then parsed from the result.
    * These are the pieces of information about a commit which we want to get from 'git log'.
    */
-  enum GitLogOption {
+  @ApiStatus.Internal
+  public enum GitLogOption {
     HASH("H"), TREE("T"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_TIME("at"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"),
     COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"), PARENTS("P"), REF_NAMES("d"), SHORT_REF_LOG_SELECTOR("gd"),
     RAW_BODY("B");

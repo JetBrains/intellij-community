@@ -1,16 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.printing
 
-import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.nj2k.*
+import org.jetbrains.kotlin.nj2k.printing.JKPrinterBase.ParenthesisKind
 import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitorWithCommentsPrinting
 import org.jetbrains.kotlin.nj2k.types.JKContextType
+import org.jetbrains.kotlin.nj2k.types.isAnnotationMethod
 import org.jetbrains.kotlin.nj2k.types.isInterface
 import org.jetbrains.kotlin.nj2k.types.isUnit
-import org.jetbrains.kotlin.nj2k.types.updateNullability
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
@@ -207,34 +208,31 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitInheritanceInfoRaw(inheritanceInfo: JKInheritanceInfo) {
-            val parentClass = inheritanceInfo.parentOfType<JKClass>()!!
-            val isInInterface = parentClass.classKind == JKClass.ClassKind.INTERFACE
-            val extendTypes = inheritanceInfo.extends.map { it.type.updateNullability(Nullability.NotNull) }
-            val implementTypes = inheritanceInfo.implements.map { it.type.updateNullability(Nullability.NotNull) }
-            if (isInInterface) {
-                printer.renderList(extendTypes) { printer.renderType(it, null) }
-            } else {
-                extendTypes.singleOrNull()?.also { superType ->
-                    printer.renderType(superType, null)
-                    val primaryConstructor = parentClass.primaryConstructor()
-                    val delegationCall =
-                        primaryConstructor
-                            ?.delegationCall
-                            ?.let { it as? JKDelegationConstructorCall }
-                    if (delegationCall != null) {
-                        printer.par { delegationCall.arguments.accept(this) }
-                    } else if (!superType.isInterface() && (primaryConstructor != null || parentClass.isObjectOrCompanionObject)) {
-                        printer.print("()")
-                    }
+            val thisClass = inheritanceInfo.parentOfType<JKClass>()!!
+            if (thisClass.classKind == INTERFACE) {
+                renderTypes(inheritanceInfo.extends)
+                return
+            }
+            inheritanceInfo.extends.singleOrNull()?.let { superTypeElement ->
+                superTypeElement.accept(this)
+                val primaryConstructor = thisClass.primaryConstructor()
+                val delegationCall = primaryConstructor?.delegationCall.safeAs<JKDelegationConstructorCall>()
+                if (delegationCall != null) {
+                    printer.par { delegationCall.arguments.accept(this) }
+                } else if (!superTypeElement.type.isInterface() && (primaryConstructor != null || thisClass.isObjectOrCompanionObject)) {
+                    printer.print("()")
                 }
+                if (inheritanceInfo.implements.isNotEmpty()) printer.print(", ")
             }
-
-            if (implementTypes.isNotEmpty() && extendTypes.size == 1) {
-                printer.print(", ")
-            }
-            printer.renderList(implementTypes) { printer.renderType(it, null) }
+            renderTypes(inheritanceInfo.implements)
         }
 
+        private fun renderTypes(types: List<JKTypeElement>) {
+            printer.renderList(types) {
+                it.annotationList.accept(this)
+                printer.renderType(it.type)
+            }
+        }
 
         private fun renderEnumConstants(enumConstants: List<JKEnumConstant>) {
             printer.renderList(enumConstants) {
@@ -297,12 +295,11 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             renderModifiersList(parameter)
             printer.print(" ")
             parameter.annotationList.accept(this)
-            printer.print(" ")
             if (parameter.isVarArgs) {
                 printer.print("vararg ")
             }
             if (parameter.parent is JKKtPrimaryConstructor
-                && (parameter.parent?.parent?.parent as? JKClass)?.classKind == JKClass.ClassKind.ANNOTATION
+                && (parameter.parent?.parent?.parent as? JKClass)?.classKind == ANNOTATION
             ) {
                 printer.print(" val ")
             }
@@ -328,6 +325,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitForLoopVariableRaw(forLoopVariable: JKForLoopVariable) {
+            forLoopVariable.annotationList.accept(this)
             forLoopVariable.name.accept(this)
             if (forLoopVariable.type.present() && forLoopVariable.type.type !is JKContextType) {
                 printer.print(": ")
@@ -336,10 +334,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitMethodRaw(method: JKMethod) {
-            if (method.annotationList.annotations.isNotEmpty()) {
-                method.annotationList.accept(this)
-                printer.print(" ")
-            }
+            method.annotationList.accept(this)
             renderModifiersList(method)
             printer.print(" fun ")
             method.typeParameterList.accept(this)
@@ -399,7 +394,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitTypeParameterListRaw(typeParameterList: JKTypeParameterList) {
             if (typeParameterList.typeParameters.isNotEmpty()) {
-                printer.par(JKPrinterBase.ParenthesisKind.ANGLE) {
+                printer.par(ParenthesisKind.ANGLE) {
                     printer.renderList(typeParameterList.typeParameters) {
                         it.accept(this)
                     }
@@ -408,6 +403,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitTypeParameterRaw(typeParameter: JKTypeParameter) {
+            typeParameter.annotationList.accept(this)
             typeParameter.name.accept(this)
             if (typeParameter.upperBounds.size == 1) {
                 printer.print(" : ")
@@ -431,7 +427,13 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitSuperExpressionRaw(superExpression: JKSuperExpression) {
             printer.print("super")
-            superExpression.qualifierLabel.accept(this)
+            if (superExpression.superTypeQualifier != null) {
+                printer.par(ParenthesisKind.ANGLE) {
+                    printer.renderSymbol(superExpression.superTypeQualifier, superExpression)
+                }
+            } else {
+                superExpression.outerTypeQualifier.accept(this)
+            }
         }
 
         override fun visitContinueStatementRaw(continueStatement: JKContinueStatement) {
@@ -488,6 +490,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitCallExpressionRaw(callExpression: JKCallExpression) {
             printer.renderSymbol(callExpression.identifier, callExpression)
+            if (callExpression.identifier.isAnnotationMethod()) return
             callExpression.typeArgumentList.accept(this)
             printer.par {
                 callExpression.arguments.accept(this)
@@ -496,7 +499,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitTypeArgumentListRaw(typeArgumentList: JKTypeArgumentList) {
             if (typeArgumentList.typeArguments.isNotEmpty()) {
-                printer.par(JKPrinterBase.ParenthesisKind.ANGLE) {
+                printer.par(ParenthesisKind.ANGLE) {
                     printer.renderList(typeArgumentList.typeArguments) {
                         it.accept(this)
                     }
@@ -536,7 +539,6 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         override fun visitLocalVariableRaw(localVariable: JKLocalVariable) {
             printer.print(" ")
             localVariable.annotationList.accept(this)
-            printer.print(" ")
             renderModifiersList(localVariable)
             printer.print(" ")
             localVariable.name.accept(this)
@@ -573,7 +575,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             printer.renderSymbol(newExpression.classSymbol, newExpression)
             newExpression.typeArgumentList.accept(this)
             if (!newExpression.classSymbol.isInterface() || newExpression.arguments.arguments.isNotEmpty()) {
-                printer.par(JKPrinterBase.ParenthesisKind.ROUND) {
+                printer.par(ParenthesisKind.ROUND) {
                     newExpression.arguments.accept(this)
                 }
             }
@@ -595,7 +597,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
                     val enumConstants = declarationsToPrint.filterIsInstance<JKEnumConstant>()
                     val otherDeclarations = declarationsToPrint.filterNot { it is JKEnumConstant }
                     renderEnumConstants(enumConstants)
-                    if ((classBody.parent as? JKClass)?.classKind == JKClass.ClassKind.ENUM
+                    if ((classBody.parent as? JKClass)?.classKind == ENUM
                         && otherDeclarations.isNotEmpty()
                     ) {
                         printer.print(";")
@@ -675,7 +677,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         private fun renderParameterList(parameters: List<JKParameter>) {
-            printer.par(JKPrinterBase.ParenthesisKind.ROUND) {
+            printer.par(ParenthesisKind.ROUND) {
                 printer.renderList(parameters) {
                     it.accept(this)
                 }
@@ -694,12 +696,13 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
                 printer.print(" : ")
                 constructor.delegationCall.accept(this)
             }
-            constructor.block.accept(this)
+            if (constructor.block.statements.isNotEmpty()) {
+                constructor.block.accept(this)
+            }
         }
 
         override fun visitKtPrimaryConstructorRaw(ktPrimaryConstructor: JKKtPrimaryConstructor) {
             ktPrimaryConstructor.annotationList.accept(this)
-            printer.print(" ")
             renderModifiersList(ktPrimaryConstructor)
             printer.print(" constructor ")
             if (ktPrimaryConstructor.parameters.isNotEmpty()) {
@@ -711,7 +714,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitLambdaExpressionRaw(lambdaExpression: JKLambdaExpression) {
             val printLambda = {
-                printer.par(JKPrinterBase.ParenthesisKind.CURVED) {
+                printer.par(ParenthesisKind.CURVED) {
                     if (lambdaExpression.statement.statements.size > 1)
                         printer.println()
                     printer.renderList(lambdaExpression.parameters) {
@@ -735,7 +738,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             if (lambdaExpression.functionalType.present()) {
                 printer.renderType(lambdaExpression.functionalType.type, lambdaExpression)
                 printer.print(" ")
-                printer.par(JKPrinterBase.ParenthesisKind.ROUND, printLambda)
+                printer.par(ParenthesisKind.ROUND, printLambda)
             } else {
                 printLambda()
             }
@@ -791,6 +794,9 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         override fun visitAnnotationListRaw(annotationList: JKAnnotationList) {
             printer.renderList(annotationList.annotations, " ") {
                 it.accept(this)
+            }
+            if (annotationList.annotations.isNotEmpty()) {
+                printer.print(" ")
             }
         }
 

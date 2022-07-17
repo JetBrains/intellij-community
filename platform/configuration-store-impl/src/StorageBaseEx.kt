@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.diagnostic.PluginException
@@ -7,7 +7,6 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.isEmpty
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
@@ -78,7 +77,7 @@ private class StateGetterImpl<S : Any, T : Any>(private val component: Persisten
     }
     else {
       serializeState(stateAfterLoad)?.normalizeRootName().let {
-        if (it.isEmpty()) null else it
+        if (JDOMUtil.isEmpty(it)) null else it
       }
     }
 

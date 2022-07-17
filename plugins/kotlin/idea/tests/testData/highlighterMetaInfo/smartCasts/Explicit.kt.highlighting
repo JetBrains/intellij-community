@@ -1,0 +1,12 @@
+// FIR_IDENTICAL
+interface <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>Foo<!> {
+    fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>function<!>()
+    val <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>property<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>
+}
+
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>parameter<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Any<!>) {
+    if (<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>parameter<!> is <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>Foo<!>) {
+        <!HIGHLIGHTING("descr='Smart cast to Foo'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>parameter<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_CALL'")!>function<!>()
+        <!HIGHLIGHTING("descr='Smart cast to Foo'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>parameter<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>property<!>
+    }
+}

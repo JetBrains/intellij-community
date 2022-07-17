@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -49,6 +50,7 @@ public class GrAccessibilityChecker {
     myDisplayKey = GroovyAccessibilityInspection.findDisplayKey();
   }
 
+  @SuppressWarnings("MagicConstant")
   static GroovyFix[] buildFixes(PsiElement location, GroovyResolveResult resolveResult) {
     final PsiElement element = resolveResult.getElement();
     if (!(element instanceof PsiMember)) return GroovyFix.EMPTY_ARRAY;
@@ -96,16 +98,18 @@ public class GrAccessibilityChecker {
     return checkReferenceImpl(ref);
   }
 
-  private HighlightInfo checkReferenceImpl(@NotNull GrReferenceElement ref) {
+  private HighlightInfo checkReferenceImpl(@NotNull GrReferenceElement<?> ref) {
     boolean isCompileStatic = CompileStaticUtil.isCompileStatic(ref);
 
     if (!needToCheck(ref, isCompileStatic)) return null;
 
     PsiElement parent = ref.getParent();
     if (parent instanceof GrConstructorCall) {
-      String constructorError = checkConstructorCall((GrConstructorCall)parent);
+      var constructorError = checkConstructorCall((GrConstructorCall)parent);
       if (constructorError != null) {
-        return createAnnotationForRef(ref, isCompileStatic, constructorError);
+        HighlightInfo info = createAnnotationForRef(ref, isCompileStatic, constructorError.first);
+        registerFixes(ref, constructorError.second, info);
+        return info;
       }
     }
 
@@ -123,7 +127,7 @@ public class GrAccessibilityChecker {
     return null;
   }
 
-  private void registerFixes(GrReferenceElement ref, GroovyResolveResult result, HighlightInfo info) {
+  private void registerFixes(GrReferenceElement<?> ref, GroovyResolveResult result, HighlightInfo info) {
     PsiElement element = result.getElement();
     assert element != null;
     if (element instanceof LightElement) return;
@@ -136,7 +140,8 @@ public class GrAccessibilityChecker {
     }
     else {
       ProblemDescriptor descriptor = InspectionManager.getInstance(ref.getProject()).
-        createProblemDescriptor(element, element, "", HighlightInfo.convertSeverityToProblemHighlight(info.getSeverity()), true, LocalQuickFix.EMPTY_ARRAY);
+        createProblemDescriptor(element, element, "", HighlightInfo.convertSeverityToProblemHighlight(info.getSeverity()), true,
+                                LocalQuickFix.EMPTY_ARRAY);
       for (GroovyFix fix : fixes) {
         QuickFixAction.registerQuickFixAction(info, new LocalQuickFixAsIntentionAdapter(fix, descriptor), myDisplayKey);
       }
@@ -154,7 +159,7 @@ public class GrAccessibilityChecker {
            !result.isAccessible();
   }
 
-  private boolean needToCheck(GrReferenceElement ref, boolean isCompileStatic) {
+  private boolean needToCheck(GrReferenceElement<?> ref, boolean isCompileStatic) {
     if (isCompileStatic) return true;
     if (!myInspectionEnabled) return false;
     if (GroovyAccessibilityInspection.isSuppressed(ref)) return false;
@@ -162,23 +167,27 @@ public class GrAccessibilityChecker {
     return true;
   }
 
-  private static @DetailedDescription String checkConstructorCall(GrConstructorCall constructorCall) {
+  private static Pair<@DetailedDescription String, GroovyResolveResult> checkConstructorCall(GrConstructorCall constructorCall) {
     GroovyResolveResult result = constructorCall.advancedResolve();
+    PsiElement resultElement = result.getElement();
+    if (!(resultElement instanceof PsiMethod)) {
+      return null;
+    }
     if (checkResolveResult(result)) {
-      return GroovyBundle.message("cannot.access", PsiFormatUtil.formatMethod((PsiMethod)result.getElement(), PsiSubstitutor.EMPTY,
-                                                                              PsiFormatUtilBase.SHOW_NAME |
-                                                                              PsiFormatUtilBase.SHOW_TYPE |
-                                                                              PsiFormatUtilBase.TYPE_AFTER |
-                                                                              PsiFormatUtilBase.SHOW_PARAMETERS,
-                                                                              PsiFormatUtilBase.SHOW_TYPE
-      ));
+      return new Pair<>(GroovyBundle.message("cannot.access", PsiFormatUtil.formatMethod((PsiMethod)resultElement, PsiSubstitutor.EMPTY,
+                                                                                         PsiFormatUtilBase.SHOW_NAME |
+                                                                                         PsiFormatUtilBase.SHOW_TYPE |
+                                                                                         PsiFormatUtilBase.TYPE_AFTER |
+                                                                                         PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                                                         PsiFormatUtilBase.SHOW_TYPE
+      )), result);
     }
 
     return null;
   }
 
   @Nullable
-  private static HighlightInfo createAnnotationForRef(@NotNull GrReferenceElement ref,
+  private static HighlightInfo createAnnotationForRef(@NotNull GrReferenceElement<?> ref,
                                                       boolean strongError,
                                                       @DetailedDescription @NotNull String message) {
     HighlightDisplayLevel displayLevel = strongError ? HighlightDisplayLevel.ERROR

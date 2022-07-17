@@ -85,7 +85,7 @@ public final class WeakList<T> extends UnsafeWeakList<T> {
 
   @Override
   @NotNull
-  public Iterator<T> iterator() {
+  public Iterator<@NotNull T> iterator() {
     final Iterator<T> iterator;
     synchronized (myList) {
       iterator = super.iterator();
@@ -116,14 +116,14 @@ public final class WeakList<T> extends UnsafeWeakList<T> {
 
   @NotNull
   @Override
-  public List<T> toStrongList() {
+  public List<@NotNull T> toStrongList() {
     synchronized (myList) {
       return super.toStrongList();
     }
   }
 
   @NotNull
-  public List<T> copyAndClear() {
+  public List<@NotNull T> copyAndClear() {
     synchronized (myList) {
       List<T> result = toStrongList();
       clear();

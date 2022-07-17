@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,6 +19,10 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.lang.JavaVersion;
+import gnu.trove.TObjectIntHashMap;
+import gnu.trove.TObjectIntIterator;
+import it.unimi.dsi.fastutil.objects.AbstractObject2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +44,7 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
+import org.jetbrains.jps.javac.ast.api.JavacRef;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -104,17 +109,12 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     "-g", "-deprecation", "-nowarn", "-verbose", PROC_NONE_OPTION, PROC_ONLY_OPTION, "-proceedOnError"
   );
   private static final Set<String> POSSIBLY_CONFLICTING_OPTIONS = ContainerUtil.newHashSet(
-    "--boot-class-path", "-bootclasspath", "--class-path", "-classpath", "-cp", PROCESSORPATH_OPTION, "-sourcepath", "--module-path", "-p", "--module-source-path"
+    SOURCE_OPTION, "--boot-class-path", "-bootclasspath", "--class-path", "-classpath", "-cp", PROCESSORPATH_OPTION, "-sourcepath", "--module-path", "-p", "--module-source-path"
   );
 
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<>();
-  private static final Set<JpsModuleType<?>> ourCompilableModuleTypes = new HashSet<>();
   @Nullable private static final File ourDefaultRtJar;
   static {
-    for (JavaBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
-      ourCompilableModuleTypes.addAll(extension.getCompilableModuleTypes());
-    }
-
     File rtJar = null;
     StringTokenizer tokenizer = new StringTokenizer(System.getProperty("sun.boot.class.path", ""), File.pathSeparator, false);
     while (tokenizer.hasMoreTokens()) {
@@ -125,6 +125,16 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       }
     }
     ourDefaultRtJar = rtJar;
+  }
+
+  private static final class CompilableModuleTypesHolder {
+    // avoid loading extensions on JavaBuilder.class load. Init compilable types atomically on demand
+    static final Set<JpsModuleType<?>> ourCompilableModuleTypes = new HashSet<>();
+    static {
+      for (JavaBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
+        ourCompilableModuleTypes.addAll(extension.getCompilableModuleTypes());
+      }
+    }
   }
 
   public static void registerClassPostProcessor(ClassPostProcessor processor) {
@@ -242,7 +252,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     try {
       Set<File> filesToCompile = FileCollectionFactory.createCanonicalFileLinkedSet();
       dirtyFilesHolder.processDirtyFiles((target, file, descriptor) -> {
-        if (JAVA_SOURCES_FILTER.accept(file) && ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {
+        if (JAVA_SOURCES_FILTER.accept(file) && CompilableModuleTypesHolder.ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {
           filesToCompile.add(file);
         }
         return true;
@@ -393,7 +403,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
                               DiagnosticOutputConsumer diagnosticSink,
                               OutputFileConsumer outputSink,
                               JavaCompilingTool compilingTool,
-                              File moduleInfoFile) {
+                              File moduleInfoFile) throws IOException {
     final Semaphore counter = new Semaphore();
     COUNTER_KEY.set(context, counter);
 
@@ -454,7 +464,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       if (moduleInfoFile != null) { // has modules
         final ModulePathSplitter splitter = MODULE_PATH_SPLITTER.get(context);
         final Pair<ModulePath, Collection<File>> pair = splitter.splitPath(
-          moduleInfoFile, outs.keySet(), ProjectPaths.getCompilationModulePath(chunk, false)
+          moduleInfoFile, outs.keySet(), ProjectPaths.getCompilationModulePath(chunk, false), collectAdditionalRequires(options)
         );
         final boolean useModulePathOnly = Boolean.parseBoolean(System.getProperty(USE_MODULE_PATH_ONLY_OPTION))/*compilerConfig.useModulePathOnly()*/;
         if (useModulePathOnly) {
@@ -521,7 +531,24 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static void logJavacCall(ModuleChunk chunk, Iterable<? extends String> options, final String mode) {
+  @NotNull
+  private static Collection<String> collectAdditionalRequires(Iterable<String> options) {
+    // --add-reads module=other-module(,other-module)*
+    // The option specifies additional modules to be considered as required by a given module.
+    final Set<String> result = new SmartHashSet<>();
+    for (Iterator<String> it = options.iterator(); it.hasNext(); ) {
+      final String option = it.next();
+      if ("--add-reads".equalsIgnoreCase(option) && it.hasNext()) {
+        final String moduleNames = StringUtil.substringAfter(it.next(), "=");
+        if (moduleNames != null) {
+          result.addAll(StringUtil.split(moduleNames, ","));
+        }
+      }
+    }
+    return result;
+  }
+
+  private static void logJavacCall(ModuleChunk chunk, Iterable<String> options, final String mode) {
     if (LOG.isDebugEnabled()) {
       LOG.debug((Iterators.contains(options, PROC_ONLY_OPTION)? "Running processors for chunk" : "Compiling chunk") + " [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\", mode=" + mode);
     }
@@ -665,7 +692,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       final Pair<JpsSdk<JpsDummyElement>, Integer> sdkVersionPair = getAssociatedSdk(chunk);
       if (sdkVersionPair != null) {
         final Integer chunkSdkVersion = sdkVersionPair.second;
-        if (chunkSdkVersion != compilerSdkVersion && chunkSdkVersion >= 6 /*min. supported compiler version*/) {
+        if (chunkSdkVersion != compilerSdkVersion && chunkSdkVersion >= ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION) {
           // there is a special case because of difference in type inference behavior between javac8 and javac6-javac7
           // so if corresponding JDK is associated with the module chunk, prefer compiler from this JDK over the newer compiler version
           return true;
@@ -761,7 +788,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   }
 
   @NotNull
-  private static synchronized ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) {
+  private static synchronized ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) throws IOException {
     ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
     if (server != null) {
       return server;
@@ -1034,7 +1061,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     }
 
     // using older -source, -target and -bootclasspath options
-    if (languageLevel > 0) {
+    if (languageLevel > 0 && !options.contains(SOURCE_OPTION)) {
       options.add(SOURCE_OPTION);
       options.add(complianceOption(languageLevel));
     }
@@ -1148,6 +1175,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
         // current javac compiler does support required language level
         return Pair.create(sdkVersionPair.first.getHomePath(), sdkVersion);
       }
+      LOG.warn("Target bytecode version " + targetLanguageLevel + " is not supported by SDK version " + sdkVersion);
     }
     final String fallbackJdkHome = System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null);
     if (fallbackJdkHome == null) {
@@ -1206,8 +1234,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     private final AtomicInteger myErrorCount = new AtomicInteger(0);
     private final AtomicInteger myWarningCount = new AtomicInteger(0);
     private final Set<File> myFilesWithErrors = FileCollectionFactory.createCanonicalFileSet();
-    @NotNull
-    private final Collection<? extends JavacFileReferencesRegistrar> myRegistrars;
+    private final @NotNull Collection<? extends JavacFileReferencesRegistrar> myRegistrars;
 
     private DiagnosticSink(CompileContext context, @NotNull Collection<? extends JavacFileReferencesRegistrar> refRegistrars) {
       myContext = context;
@@ -1221,7 +1248,25 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     @Override
     public void registerJavacFileData(JavacFileData data) {
       for (JavacFileReferencesRegistrar registrar : myRegistrars) {
-        registrar.registerFile(myContext, data.getFilePath(), data.getRefs(), data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
+        TObjectIntHashMap<JavacRef> refs = data.getRefs();
+        registrar.registerFile(myContext, data.getFilePath(), new Iterable<Object2IntMap.Entry<? extends JavacRef>>() {
+          @Override
+          public @NotNull Iterator<Object2IntMap.Entry<? extends JavacRef>> iterator() {
+            TObjectIntIterator<JavacRef> iterator = refs.iterator();
+            return new Iterator<Object2IntMap.Entry<? extends JavacRef>>() {
+              @Override
+              public boolean hasNext() {
+                return iterator.hasNext();
+              }
+
+              @Override
+              public Object2IntMap.Entry<? extends JavacRef> next() {
+                iterator.advance();
+                return new AbstractObject2IntMap.BasicEntry<>(iterator.key(), iterator.value());
+              }
+            };
+          }
+        }, data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
       }
     }
 

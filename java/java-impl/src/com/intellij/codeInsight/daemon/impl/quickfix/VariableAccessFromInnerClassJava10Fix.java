@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
@@ -13,7 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -43,6 +44,11 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
 
   public VariableAccessFromInnerClassJava10Fix(PsiElement context) {
     myContext = context;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new VariableAccessFromInnerClassJava10Fix(PsiTreeUtil.findSameElementInCopy(myContext, target));
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -159,7 +165,7 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
 
     @Nullable
     static DeclarationInfo findExistingAnonymousClass(@NotNull PsiVariable variable) {
-      PsiElement varDeclarationStatement = RefactoringUtil.getParentStatement(variable, false);
+      PsiElement varDeclarationStatement = CommonJavaRefactoringUtil.getParentStatement(variable, false);
       if (varDeclarationStatement == null) return null;
       PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(varDeclarationStatement, PsiStatement.class);
       PsiDeclarationStatement nextDeclarationStatement = tryCast(nextStatement, PsiDeclarationStatement.class);
@@ -228,7 +234,8 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     List<PsiReferenceExpression> references = new SmartList<>();
     outerCodeBlock.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
         if (ExpressionUtils.isReferenceTo(expression, variable)) {
           references.add(expression);
         }

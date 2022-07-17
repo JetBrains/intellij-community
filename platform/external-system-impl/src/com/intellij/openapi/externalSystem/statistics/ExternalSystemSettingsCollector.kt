@@ -1,41 +1,61 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.newBooleanMetric
-import com.intellij.internal.statistic.beans.newCounterMetric
-import com.intellij.internal.statistic.beans.newMetric
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import java.util.*
 
 class ExternalSystemSettingsCollector : ProjectUsagesCollector() {
-  override fun getGroupId() = "build.tools.state"
+  override fun getGroup(): EventLogGroup {
+    return GROUP
+  }
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val usages = mutableSetOf<MetricEvent>()
 
     val trackerSettings = ExternalSystemProjectTrackerSettings.getInstance(project)
-    usages.add(newMetric("autoReloadType", trackerSettings.autoReloadType))
+    usages.add(AUTO_RELOAD_TYPE.metric(trackerSettings.autoReloadType))
 
     for (manager in ExternalSystemApiUtil.getAllManagers()) {
-      val systemId = getAnonymizedSystemId(manager.getSystemId())
-      fun addWithSystemId(desc: MetricEvent) {
-        desc.data.addData("externalSystemId", systemId)
-        usages.add(desc)
-      }
+      val systemId = getAnonymizedSystemId(manager.systemId)
 
-      val projects = manager.getSettingsProvider().`fun`(project).getLinkedProjectsSettings()
+      val projects = manager.settingsProvider.`fun`(project).linkedProjectsSettings
 
-      addWithSystemId(newCounterMetric("numberOfLinkedProject", projects.size))
+      usages.add(NUMBER_OF_LINKED_PROJECT.metric(projects.size, systemId))
 
       for (projectsSetting in projects) {
-        addWithSystemId(newBooleanMetric("useQualifiedModuleNames", projectsSetting.isUseQualifiedModuleNames))
-        addWithSystemId(newCounterMetric("modules.count", projectsSetting.modules.size))
+        usages.add(USE_QUALIFIED_MODULE_NAMES.metric(projectsSetting.isUseQualifiedModuleNames, systemId))
+        usages.add(MODULES_COUNT.metric(projectsSetting.modules.size, systemId))
       }
     }
 
+    val mavenModules = ModuleManager.getInstance(project).modules.count {
+      ExternalSystemModulePropertyManager.getInstance(it).isMavenized()
+    }
+    if (mavenModules > 0) {
+      usages.add(MODULES_COUNT.metric(mavenModules, "Maven"))
+    }
+
     return usages
+  }
+
+  companion object {
+    private val GROUP = EventLogGroup("build.tools.state", 4)
+    private val AUTO_RELOAD_TYPE = GROUP.registerEvent("autoReloadType",
+                                                       EventFields.Enum("value",
+                                                                        ExternalSystemProjectTrackerSettings.AutoReloadType::class.java) {
+                                                         it.name.lowercase(Locale.ENGLISH)
+                                                       })
+    private val EXTERNAL_SYSTEM_ID = EventFields.StringValidatedByEnum("externalSystemId", "build_tools")
+    private val NUMBER_OF_LINKED_PROJECT = GROUP.registerEvent("numberOfLinkedProject", EventFields.Count, EXTERNAL_SYSTEM_ID)
+    private val USE_QUALIFIED_MODULE_NAMES = GROUP.registerEvent("useQualifiedModuleNames", EventFields.Enabled, EXTERNAL_SYSTEM_ID)
+    private val MODULES_COUNT = GROUP.registerEvent("modules.count", EventFields.RoundedInt("count_rounded"), EXTERNAL_SYSTEM_ID)
   }
 }

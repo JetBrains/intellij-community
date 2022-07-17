@@ -10,7 +10,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -21,17 +20,18 @@ class JavaHomeFinderWsl extends JavaHomeFinderBasic {
   private final WSLDistribution myDistro;
 
   JavaHomeFinderWsl(@NotNull WSLDistribution distro) {
-    super(false, false, lookupPaths(distro));
+    super(new WslSystemInfoProvider(distro));
     myDistro = distro;
+    checkDefaultInstallDir(false);
+    checkUsedInstallDirs(false);
+    checkConfiguredJdks(false);
+    checkSpecifiedPaths(lookupPaths(distro));
   }
 
   private static String[] lookupPaths(WSLDistribution distro) {
     List<String> list = new ArrayList<>();
     for (String defaultPath : JavaHomeFinder.DEFAULT_JAVA_LINUX_PATHS) {
-      String path = distro.getWindowsPath(defaultPath);
-      if (path != null) {
-        list.add(path);
-      }
+      list.add(distro.getWindowsPath(defaultPath));
     }
     String home = distro.getUserHome();
     if (home != null) {
@@ -41,33 +41,42 @@ class JavaHomeFinderWsl extends JavaHomeFinderBasic {
   }
 
   @Override
-  protected @Nullable String getEnvironmentVariable(@NotNull String name) {
-    String value = myDistro.getEnvironmentVariable(name);
-    if (value == null) {
-      return null;
-    }
-    else if (value.indexOf(':') < 0) {
-      return myDistro.getWindowsPath(value);
-    }
-    else {
-      String mntRoot = myDistro.getMntRoot();
-      String converted = Stream.of(value.split(":"))
-        .filter(p -> !DEFAULT_PATHS.contains(p) && !p.startsWith(mntRoot))
-        .map(myDistro::getWindowsPath)
-        .collect(Collectors.joining(File.pathSeparator));
-      return converted.isEmpty() ? null : converted;
-    }
-  }
-
-  @Override
   protected @Nullable Path getPathInUserHome(@NotNull String relativePath) {
     String wslPath = myDistro.getUserHome();
     if (wslPath != null) {
-      String winPath = myDistro.getWindowsPath(wslPath);
-      if (winPath != null) {
-        return Path.of(winPath, relativePath);
-      }
+      return Path.of(myDistro.getWindowsPath(wslPath), relativePath);
     }
     return null;
+  }
+
+  private static class WslSystemInfoProvider extends JavaHomeFinder.SystemInfoProvider {
+    private final @NotNull WSLDistribution myDistro;
+
+    private WslSystemInfoProvider(@NotNull WSLDistribution distro) { myDistro = distro; }
+
+    @Override
+    public @Nullable String getEnvironmentVariable(@NotNull String name) {
+      String value = myDistro.getEnvironmentVariable(name);
+      if (value == null) {
+        return null;
+      }
+      else if (value.indexOf(':') < 0) {
+        return myDistro.getWindowsPath(value);
+      }
+      else {
+        String mntRoot = myDistro.getMntRoot();
+        String converted = Stream.of(value.split(":"))
+          .filter(p -> !DEFAULT_PATHS.contains(p) && !p.startsWith(mntRoot))
+          .map(myDistro::getWindowsPath)
+          .collect(Collectors.joining(File.pathSeparator));
+        return converted.isEmpty() ? null : converted;
+      }
+    }
+
+    @Override
+    public @Nullable Path getUserHome() {
+      String wslPath = myDistro.getUserHome();
+      return wslPath != null ? Path.of(myDistro.getWindowsPath(wslPath)) : null;
+    }
   }
 }

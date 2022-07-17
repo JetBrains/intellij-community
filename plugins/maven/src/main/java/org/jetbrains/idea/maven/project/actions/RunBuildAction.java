@@ -63,8 +63,6 @@ public class RunBuildAction extends MavenAction {
                                                                    explicitProfiles.getDisabledProfiles());
 
     MavenRunConfigurationType.runConfiguration(project, params, null);
-
-
     return true;
   }
 }

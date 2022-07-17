@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
@@ -48,6 +49,7 @@ import java.util.*;
 public final class ActionsTree {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
   private static final Icon CLOSE_ICON = AllIcons.Nodes.Folder;
+  private final SimpleTextAttributes GRAY_LINK = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.gray);
 
   private final JTree myTree;
   private DefaultMutableTreeNode myRoot;
@@ -98,7 +100,7 @@ public final class ActionsTree {
       @Override
       public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         if (value instanceof DefaultMutableTreeNode) {
-          String path = ActionsTree.this.getPath((DefaultMutableTreeNode)value);
+          String path = ActionsTree.this.getPath((DefaultMutableTreeNode)value, true);
           return StringUtil.notNullize(path);
         }
         return super.convertValueToText(value, selected, expanded, leaf, row, hasFocus);
@@ -326,7 +328,7 @@ public final class ActionsTree {
   private static boolean areGroupShortcutsCustomized(@NotNull Group group, @NotNull Keymap keymap) {
     if (!keymap.canModify()) return false;
 
-    ArrayList children = group.getChildren();
+    ArrayList<Object> children = group.getChildren();
     for (Object child : children) {
       if (child instanceof Group) {
         if (areGroupShortcutsCustomized((Group)child, keymap)) {
@@ -351,10 +353,10 @@ public final class ActionsTree {
   }
 
   public void selectAction(String actionId) {
-    String path = myMainGroup.getActionQualifiedPath(actionId);
+    String path = myMainGroup.getActionQualifiedPath(actionId, false);
     String boundId = path == null ? KeymapManagerEx.getInstanceEx().getActionBinding(actionId) : null;
     if (path == null && boundId != null) {
-      path = myMainGroup.getActionQualifiedPath(boundId);
+      path = myMainGroup.getActionQualifiedPath(boundId, false);
       if (path == null) {
         return;
       }
@@ -370,10 +372,10 @@ public final class ActionsTree {
 
   @Nullable
   private DefaultMutableTreeNode getNodeForPath(String path) {
-    Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
+    Enumeration<TreeNode> enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
-      if (Objects.equals(getPath(node), path)) {
+      if (Objects.equals(getPath(node, false), path)) {
         return node;
       }
     }
@@ -382,10 +384,10 @@ public final class ActionsTree {
 
   private List<DefaultMutableTreeNode> getNodesByPaths(List<String> paths) {
     List<DefaultMutableTreeNode> result = new SmartList<>();
-    Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
+    Enumeration<TreeNode> enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
-      final String path = getPath(node);
+      final String path = getPath(node, false);
       if (paths.contains(path)) {
         result.add(node);
       }
@@ -394,7 +396,7 @@ public final class ActionsTree {
   }
 
   @Nullable
-  private String getPath(DefaultMutableTreeNode node) {
+  private String getPath(DefaultMutableTreeNode node, boolean presentable) {
     final Object userObject = node.getUserObject();
     if (userObject instanceof String) {
       String actionId = (String)userObject;
@@ -403,14 +405,14 @@ public final class ActionsTree {
       if (parent instanceof DefaultMutableTreeNode) {
         final Object object = ((DefaultMutableTreeNode)parent).getUserObject();
         if (object instanceof Group) {
-          return ((Group)object).getActionQualifiedPath(actionId);
+          return ((Group)object).getActionQualifiedPath(actionId, presentable);
         }
       }
 
-      return myMainGroup.getActionQualifiedPath(actionId);
+      return myMainGroup.getActionQualifiedPath(actionId, presentable);
     }
     if (userObject instanceof Group) {
-      return ((Group)userObject).getQualifiedPath();
+      return ((Group)userObject).getQualifiedPath(presentable);
     }
     if (userObject instanceof QuickList) {
       return ((QuickList)userObject).getName();
@@ -449,7 +451,7 @@ public final class ActionsTree {
     }
 
     private void addPathToList(DefaultMutableTreeNode root, ArrayList<? super String> list) {
-      String path = getPath(root);
+      String path = getPath(root, false);
       if (!StringUtil.isEmpty(path)) {
         list.add(path);
       }
@@ -516,7 +518,9 @@ public final class ActionsTree {
       Icon icon = null;
       String text;
       @NlsSafe String actionId = null;
-      boolean bound = false;
+      String boundId = null;
+      @NlsActions.ActionText
+      String boundText = null;
       setToolTipText(null);
 
       if (value instanceof DefaultMutableTreeNode) {
@@ -536,22 +540,18 @@ public final class ActionsTree {
         }
         else if (userObject instanceof String) {
           actionId = (String)userObject;
-          bound = myShowBoundActions && ((KeymapImpl)myKeymap).isActionBound(actionId);
-          AnAction action = ActionManager.getInstance().getAction(actionId);
+          boundId = ((KeymapImpl)myKeymap).hasShortcutDefined(actionId) ? null : KeymapManagerEx.getInstanceEx().getActionBinding(actionId);
+          ActionManager manager = ActionManager.getInstance();
+          AnAction action = manager.getAction(actionId);
+          text = getActionText(action, actionId);
           if (action != null) {
-            text = action.getTemplatePresentation().getText();
-            if (text == null || text.length() == 0) { //fill dynamic presentation gaps
-              text = actionId;
-            }
             Icon actionIcon = action.getTemplatePresentation().getIcon();
             if (actionIcon != null) {
               icon = actionIcon;
             }
             setToolTipText(action.getTemplatePresentation().getDescription());
           }
-          else {
-            text = actionId;
-          }
+          boundText = boundId == null ? null : getActionText(manager.getAction(boundId), boundId);
           changed = myKeymap != null && isShortcutCustomized(actionId, myKeymap);
         }
         else if (userObject instanceof QuickList) {
@@ -594,19 +594,22 @@ public final class ActionsTree {
         }
         else {
           if (changed) {
-            foreground = PlatformColors.BLUE;
+            foreground = JBColor.namedColor("Tree.modifiedItemForeground", PlatformColors.BLUE);
           }
           else {
             foreground = UIUtil.getTreeForeground();
-          }
-
-          if (bound) {
-            foreground = JBColor.MAGENTA;
           }
         }
         if (!myHaveLink) {
           Color background = UIUtil.getTreeBackground(selected, true);
           SearchUtil.appendFragments(myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
+          if (boundId != null) {
+            append(" ");
+            append(IdeBundle.message("uses.shortcut.of"), SimpleTextAttributes.GRAY_ATTRIBUTES);
+            append(" ");
+            ActionHyperlink link = new ActionHyperlink(boundId, boundText);
+            append(link.getLinkText(), link.getTextAttributes(), link);
+          }
           if (actionId != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
             @NlsSafe String pluginName = myPluginNames.get(actionId);
             if (pluginName != null) {
@@ -621,6 +624,15 @@ public final class ActionsTree {
       putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
     }
 
+    @NlsActions.ActionText
+    private String getActionText(@Nullable AnAction action, @NlsSafe String actionId) {
+      String text = action == null ? null : action.getTemplatePresentation().getText();
+      if (text == null || text.length() == 0) { //fill dynamic presentation gaps
+        text = actionId;
+      }
+      return text;
+    }
+
     private void setupLinkDimensions(Rectangle treeVisibleRect, int rowX) {
       Dimension linkSize = myLink.getPreferredSize();
       myLinkWidth = linkSize.width;
@@ -629,7 +641,7 @@ public final class ActionsTree {
 
     @Override
     public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
-      if (tag instanceof Hyperlink) {
+      if (tag instanceof Hyperlink && !(tag instanceof ActionHyperlink)) {
         myHaveLink = true;
         myLink.append(fragment, attributes, tag);
       }
@@ -692,8 +704,8 @@ public final class ActionsTree {
         if (node instanceof DefaultMutableTreeNode) {
           Object data = ((DefaultMutableTreeNode)node).getUserObject();
           if (!(data instanceof Hyperlink)) {
-            Pair<Shortcut[], Set<String>>  rowData = extractRowData(data);
-            Shortcut[] shortcuts = rowData.first;
+            RowData rowData = extractRowData(data);
+            Shortcut[] shortcuts = rowData.shortcuts;
             if (shortcuts != null && shortcuts.length > 0) {
               StringBuilder sb = new StringBuilder();
               for (Shortcut shortcut : shortcuts) {
@@ -712,31 +724,55 @@ public final class ActionsTree {
         return AccessibleContextUtil.combineAccessibleStrings(name, ", ", shortcutName);
       }
     }
+
+    private class ActionHyperlink extends Hyperlink {
+      private final String myActionId;
+
+      ActionHyperlink(String actionId, @NlsContexts.LinkLabel String actionText) {
+        super(null, actionText, GRAY_LINK);
+        myActionId = actionId;
+      }
+
+      @Override
+      public void onClick(MouseEvent event) {
+        selectAction(myActionId);
+      }
+    }
   }
 
   @NotNull
-  private Pair<Shortcut[], Set<String>> extractRowData(Object data) {
+  private RowData extractRowData(Object data) {
+    String actionId = null;
     if (data instanceof String) {
-      String actionId = (String)data;
-      return Pair.create(myKeymap.getShortcuts(actionId), AbbreviationManager.getInstance().getAbbreviations(actionId));
+      actionId = (String)data;
     }
-
-    Shortcut[] shortcuts = null;
-    if (data instanceof QuickList) {
-      shortcuts = myKeymap.getShortcuts(((QuickList)data).getActionId());
+    else if (data instanceof QuickList) {
+      actionId = ((QuickList)data).getActionId();
     }
     else if (data instanceof Group) {
-      shortcuts = myKeymap.getShortcuts(((Group)data).getId());
+      actionId = ((Group)data).getId();
     }
+    if (actionId == null) return new RowData(null, null);
+    Shortcut[] shortcuts = myKeymap.getShortcuts(actionId);
+    Set<String> abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
+    return new RowData(shortcuts, abbreviations);
+  }
 
-    return Pair.create(shortcuts, null);
+  private static final class RowData {
+    public final Shortcut[] shortcuts;
+    public final Set<String> abbreviations;
+
+    private RowData(Shortcut[] shortcuts, Set<String> abbreviations) {
+      this.shortcuts = shortcuts;
+      this.abbreviations = abbreviations;
+    }
   }
 
   @SuppressWarnings("UseJBColor")
   private void paintRowData(Tree tree, Object data, Rectangle bounds, Graphics2D g) {
-    Pair<Shortcut[], Set<String>> rowData = extractRowData(data);
-    Shortcut[] shortcuts = rowData.first;
-    Set<String> abbreviations = rowData.second;
+    RowData rowData = extractRowData(data);
+    Shortcut[] shortcuts = rowData.shortcuts;
+    Set<String> abbreviations = rowData.abbreviations;
 
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
 
@@ -768,7 +804,7 @@ public final class ActionsTree {
       }
       g.translate(0, -bounds.y + 1);
     }
-    if (Registry.is("actionSystem.enableAbbreviations") && abbreviations != null && abbreviations.size() > 0) {
+    if (abbreviations != null && abbreviations.size() > 0) {
       for (String abbreviation : abbreviations) {
         totalWidth += metrics.stringWidth(abbreviation);
         totalWidth += 10;

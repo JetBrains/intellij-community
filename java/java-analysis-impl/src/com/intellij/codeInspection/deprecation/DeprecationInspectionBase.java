@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -208,7 +208,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
       .map(resolved -> ObjectUtils.tryCast(resolved, clazz))
       .filter(Objects::nonNull)
       .filter(tagMethod -> !tagMethod.isDeprecated()) // not deprecated
-      .filter(tagMethod -> PsiResolveHelper.SERVICE.getInstance(context.getProject()).isAccessible(tagMethod, context, qualifierClass)) // accessible
+      .filter(tagMethod -> PsiResolveHelper.getInstance(context.getProject()).isAccessible(tagMethod, context, qualifierClass)) // accessible
       .filter(tagMethod -> !member.getManager().areElementsEquivalent(tagMethod, member)); // not the same
   }
 

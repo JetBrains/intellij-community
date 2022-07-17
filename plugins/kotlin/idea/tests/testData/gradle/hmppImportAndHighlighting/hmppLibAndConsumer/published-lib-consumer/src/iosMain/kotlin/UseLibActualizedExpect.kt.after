@@ -3,6 +3,6 @@ package com.h0tk3y.hmpp.klib.demo.app
 import com.h0tk3y.hmpp.klib.demo.*
 
 fun f() {
-    LibCommonMainExpect().<!HIGHLIGHTING{Unix}("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference: additionalFunInIosActual'")!>additionalFunInIosActual<!>()
+    LibCommonMainExpect().<!HIGHLIGHTING{Unix;Windows}("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference: additionalFunInIosActual'")!>additionalFunInIosActual<!>()
     useExpect(LibCommonMainExpect())
 }

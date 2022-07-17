@@ -2,7 +2,7 @@
 <problems>
   <problem>
     <file>ThisClass.java</file>
-    <line>5</line>
+    <line>6</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Declaration access can be weaker</problem_class>
     <hints>
       <hint value="packageLocal" />
@@ -11,7 +11,7 @@
   </problem>
   <problem>
     <file>ThisClass.java</file>
-    <line>4</line>
+    <line>5</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Declaration access can be weaker</problem_class>
     <hints>
       <hint value="packageLocal" />

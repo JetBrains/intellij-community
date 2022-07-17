@@ -1,4 +1,4 @@
-// "Merge 'boxed' call and 'forEach' call" "true"
+// "Merge 'boxed()' call and 'forEach()' call" "true"
 import java.util.List;
 import java.util.stream.IntStream;
 

@@ -295,33 +295,4 @@ public class ParametersListTest {
     List<String> lines = ParametersListUtil.parse(paramString, true);
     assertEquals(paramString, StringUtil.join(lines, " "));
   }
-
-  @Test
-  public void testParameterListUtil() {
-    final List<String> expected = asList(
-      "cmd",
-      "-a",
-      "-b",
-      "arg0",
-      "-c",
-      "--long-option",
-      "--long-opt2=arg1",
-      "arg2",
-      "arg3",
-      "-a",
-      "a \"r g",
-      "--foo=d e f"
-    );
-    final String doubleQuotes = "cmd -a -b arg0 -c --long-option    --long-opt2=arg1 arg2 arg3 -a \"a \\\"r g\" --foo=\"d e f\"\"\"";
-    assertEquals("Double quotes broken", expected, ParametersListUtil.parse(doubleQuotes, false, true));
-
-    final String singleQuotes = "cmd -a -b arg0 -c --long-option    --long-opt2=arg1 arg2 arg3 -a 'a \"r g' --foo='d e f'";
-    assertEquals("Single quotes broken", expected, ParametersListUtil.parse(singleQuotes, false, true));
-
-    final String mixedQuotes = "cmd -a -b arg0 -c --long-option    --long-opt2=arg1 arg2 arg3 -a \"a \\\"r g\" --foo='d e f'";
-    assertEquals("Mixed quotes broken", expected, ParametersListUtil.parse(mixedQuotes, false, true));
-
-    assertEquals("Empty trailing parameter broken", asList("cmd", "", "-a", "", "", "text", "--long-option", ""),
-                 ParametersListUtil.parse("cmd  -a   'text' --long-option ", false, true, true));
-  }
 }

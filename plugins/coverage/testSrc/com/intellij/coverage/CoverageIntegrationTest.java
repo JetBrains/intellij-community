@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
@@ -13,6 +14,8 @@ import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,6 +54,19 @@ public class CoverageIntegrationTest extends JavaModuleTestCase {
     ClassData classData = bundle.getCoverageData().getClassData("foo.FooClass");
     // getStatus() never returns full coverage; it can only distinguish between none and partial
     assertEquals(LineCoverage.PARTIAL, classData.getStatus("method1()I").intValue());
+  }
+
+  public void testHTMLReport() throws IOException {
+    CoverageSuitesBundle bundle = loadCoverageSuite(IDEACoverageRunner.class, "simple$foo_in_simple.coverage");
+    File htmlDir = Files.createTempDirectory("html").toFile();
+    try {
+      ExportToHTMLSettings.getInstance(myProject).OUTPUT_DIRECTORY = htmlDir.getAbsolutePath();
+      new IDEACoverageRunner().generateReport(bundle, myProject);
+      assertTrue(htmlDir.exists());
+      assertTrue(new File(htmlDir, "index.html").exists());
+    } finally {
+      htmlDir.delete();
+    }
   }
 
   private CoverageSuitesBundle loadCoverageSuite(Class<? extends CoverageRunner> coverageRunnerClass, String coverageDataPath) {

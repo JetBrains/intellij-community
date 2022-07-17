@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.WriteAction;
@@ -45,8 +47,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_NOT_PATCH_FILE;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_CANNOT_FIND_PATCH_FILE;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_NOT_PATCH_FILE;
 import static com.intellij.openapi.vcs.changes.patch.PatchFileType.isPatchFile;
 
 public final class ApplyPatchAction extends DumbAwareAction {
@@ -63,6 +65,11 @@ public final class ApplyPatchAction extends DumbAwareAction {
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(project != null);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -124,26 +131,6 @@ public final class ApplyPatchAction extends DumbAwareAction {
     return dialog.showAndGet();
   }
 
-  public static void applySkipDirs(final List<? extends FilePatch> patches, final int skipDirs) {
-    if (skipDirs < 1) {
-      return;
-    }
-    for (FilePatch patch : patches) {
-      patch.setBeforeName(skipN(patch.getBeforeName(), skipDirs));
-      patch.setAfterName(skipN(patch.getAfterName(), skipDirs));
-    }
-  }
-
-  private static String skipN(final String path, final int num) {
-    final String[] pieces = path.split("/");
-    final StringBuilder sb = new StringBuilder();
-    for (int i = num; i < pieces.length; i++) {
-      final String piece = pieces[i];
-      sb.append('/').append(piece);
-    }
-    return sb.toString();
-  }
-
   public static @NotNull ApplyPatchStatus applyContent(@NotNull Project project,
                                                        @NotNull ApplyFilePatchBase<?> patch,
                                                        @Nullable ApplyPatchContext context,
@@ -169,9 +156,21 @@ public final class ApplyPatchAction extends DumbAwareAction {
       return ApplyPatchStatus.FAILURE;
     }
 
+    if (mergeData.getBase() == null && ApplyPatchStatus.PARTIAL.equals(status)) {
+      WriteAction.run(() -> {
+        VcsFacade.getInstance().runHeavyModificationTask(project, document, () -> document.setText(mergeData.getPatched()));
+        FileDocumentManager.getInstance().saveDocument(document);
+      });
+      return status;
+    }
+
     String baseContent = convertLineSeparators(mergeData.getBase());
     String localContent = convertLineSeparators(mergeData.getLocal());
     String patchedContent = mergeData.getPatched();
+
+    if (localContent.equals(patchedContent)) {
+      return ApplyPatchStatus.ALREADY_APPLIED;
+    }
 
     Ref<ApplyPatchStatus> applyPatchStatusReference = new Ref<>();
     Consumer<MergeResult> callback = result13 -> {
@@ -213,15 +212,8 @@ public final class ApplyPatchAction extends DumbAwareAction {
         String yesText = VcsBundle.message("patch.apply.abort.and.rollback.action");
         String noText = VcsBundle.message("patch.apply.skip.action");
         String cancelText = VcsBundle.message("patch.apply.continue.resolve.action");
-        int result1 = 0;
-
-        if (Messages.canShowMacSheetPanel()) {
-          result1 = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(), "", message, yesText, noText, cancelText, Messages.getQuestionIcon());
-        }
-        else {
-          result1 = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(), message, title, yesText, noText, cancelText, Messages.getQuestionIcon());
-        }
-
+        int result1 = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(), message, title, yesText, noText, cancelText,
+                                                     Messages.getQuestionIcon());
         if (result1 == Messages.YES) {
           applyPatchStatusReference.set(ApplyPatchStatus.ABORT);
         }
@@ -248,9 +240,8 @@ public final class ApplyPatchAction extends DumbAwareAction {
     return WriteAction.compute(() -> {
       try {
         return patch.apply(file, context, project, VcsUtil.getFilePath(file), () -> {
-          BaseRevisionTextPatchEP baseRevisionTextPatchEP = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class);
           String path = ObjectUtils.chooseNotNull(patchBase.getBeforeName(), patchBase.getAfterName());
-          return baseRevisionTextPatchEP.provideContent(project, path, commitContext);
+          return BaseRevisionTextPatchEP.getBaseContent(project, path, commitContext);
         }, commitContext);
       }
       catch (IOException e) {

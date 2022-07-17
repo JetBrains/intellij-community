@@ -7,8 +7,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ui.tree.TreeUtil
 import junit.framework.TestCase
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
-import org.jetbrains.idea.maven.project.MavenProjectsManager
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.junit.Test
 import javax.swing.JTree
 
@@ -42,7 +41,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
                      "<packaging>pom</packaging>" +
                      "<modules>" +
                      "  <module>m1</module>" +
-                     "</modules>");
+                     "</modules>")
 
     createModulePom("m1", "<groupId>test</groupId>" +
                           "<artifactId>m1</artifactId>" +
@@ -74,7 +73,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
                      "<packaging>pom</packaging>" +
                      "<modules>" +
                      "  <module>m1</module>" +
-                     "</modules>");
+                     "</modules>")
 
     val modulePom = createModulePom("m1", "<groupId>test</groupId>" +
                                           "<artifactId>m1</artifactId>" +

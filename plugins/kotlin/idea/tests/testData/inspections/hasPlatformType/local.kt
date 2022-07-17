@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo() {
     val local = java.lang.String.valueOf(1)

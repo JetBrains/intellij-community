@@ -53,6 +53,11 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     List<VirtualFile> unversionedFiles = getUnversionedFiles(e, project).collect(Collectors.toList());
@@ -101,7 +106,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
     // As an optimization, we assume that if {@link ChangesListView#UNVERSIONED_FILES_DATA_KEY} is empty, but {@link VcsDataKeys#CHANGES} is
     // not, then there will be either versioned (files from changes, hijacked files, locked files, switched files) or ignored files in
-    // {@link VcsDataKeys#VIRTUAL_FILE_STREAM}. So there will be no files with {@link FileStatus#UNKNOWN} status and we should not explicitly
+    // {@link VcsDataKeys#VIRTUAL_FILE_STREAM}. So there will be no files with {@link FileStatus#UNKNOWN} status, and we should not explicitly
     // check {@link VcsDataKeys#VIRTUAL_FILE_STREAM} files in this case.
     if (!ArrayUtil.isEmpty(context.getData(VcsDataKeys.CHANGES))) return Stream.empty();
 
@@ -140,7 +145,9 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     ProgressManager.getInstance().run(new Task.Modal(project, VcsBundle.message("progress.title.adding.files.to.vcs"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        ChangesUtil.processVirtualFilesByVcs(project, files, (vcs, files) -> addUnversionedFilesToVcs(project, vcs, files, allProcessedFiles, exceptions));
+        ChangesUtil.processVirtualFilesByVcs(project, files, (vcs, files) -> {
+          addUnversionedFilesToVcs(project, vcs, files, allProcessedFiles, exceptions);
+        });
 
         if (additionalTask != null) additionalTask.consume(indicator, exceptions);
       }
@@ -175,7 +182,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
         });
 
         if (moveRequired && !newChanges.isEmpty()) {
-          changeListManager.moveChangesTo(list, newChanges.toArray(new Change[0]));
+          changeListManager.moveChangesTo(list, newChanges.toArray(Change.EMPTY_CHANGE_ARRAY));
         }
 
         if (changesConsumer != null) {

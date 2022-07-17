@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 val v = 1
 
 fun foo(@[volatile S<caret>) { }

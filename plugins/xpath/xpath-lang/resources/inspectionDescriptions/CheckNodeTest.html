@@ -1,30 +1,13 @@
 <html>
-<head>
-  <style type="text/css">
-    body, table {
-      font-family: Verdana, sans-serif;
-      font-size: 100%;
-      padding-left: 2mm;
-    }
-
-    #footer {
-      font-size: 95%;
-      padding-top: 10px;
-    }
-  </style>
-</head>
-
 <body>
-<p>
-  Reports the name of an element or an attribute that is used in an XPath-expression but is missing in the associated XML file and is not defined in the referenced schema. This prevents problems caused by typos in
-  XPath-expressions that otherwise occur when running the script and may even happen not to be recognized immediately.
-</p>
+Reports names of elements or attributes that are used in an XPath-expression but are missing in the associated XML files and are not
+defined in the referenced schemas.
+Such names are often the result of typos and would otherwise probably only be discovered at runtime.
 
-<p>Example:</p>
-
-<p>
-  <code>&lt;xsl:template match="<b>h:txtarea</b>" /></code>
-</p>
+<p><b>Example:</b></p>
+<pre><code>
+  &lt;xsl:template match="<b>h:txtarea</b>" />
+</code></pre>
 
 <p>
   If the <code>h</code> is bound to the XHTML namespace, the inspection will report this part of the <code>match</code> expression as an
@@ -32,6 +15,5 @@
 </p>
 
 
-<p id="footer">Powered by XPathView + XSLT-Support</p>
 </body>
 </html>

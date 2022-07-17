@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.notification.ActionCenter;
 import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.notification.impl.NotificationsConfigurable;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
@@ -99,7 +100,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
         final int modifiers = event.getModifiers();
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
-          if ((modifiers & InputEvent.ALT_MASK) != 0) {
+          if ((modifiers & InputEvent.ALT_MASK) != 0 && myLayoutData.closeAll != null) {
             myLayoutData.closeAll.run();
           }
           else {
@@ -110,7 +111,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
               }
             }
             NotificationCollector.getInstance().logNotificationBalloonClosedByUser(myLayoutData.project, myNotificationId, myNotificationDisplayId, myDisplayGroupId);
-            myBalloon.hide();
+            myBalloon.hide(ActionCenter.isEnabled());
           }
         });
       }) {

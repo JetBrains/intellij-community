@@ -3,7 +3,6 @@
 package com.intellij.formatting;
 
 import com.intellij.formatting.engine.ExpandableIndent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -19,8 +18,6 @@ import java.util.*;
  * The main idea of block wrapping is to associate information about {@link WhiteSpace white space before block} with the block itself.
  */
 public final class InitialInfoBuilder {
-  @SuppressWarnings("unused") private static final Logger LOG = Logger.getInstance(InitialInfoBuilder.class);
-
   private static final RangesAssert ASSERT = new RangesAssert();
   private static final boolean INLINE_TABS_ENABLED = "true".equalsIgnoreCase(System.getProperty("inline.tabs.enabled"));
 

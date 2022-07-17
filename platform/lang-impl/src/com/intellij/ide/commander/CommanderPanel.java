@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.commander;
 
@@ -39,6 +39,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -243,7 +244,7 @@ public class CommanderPanel extends JPanel {
   }
 
   protected boolean shouldDrillDownOnEmptyElement(final AbstractTreeNode node) {
-    return node instanceof ProjectViewNode && ((ProjectViewNode)node).shouldDrillDownOnEmptyElement();
+    return node instanceof ProjectViewNode && ((ProjectViewNode<?>)node).shouldDrillDownOnEmptyElement();
   }
 
   private boolean topElementIsSelected() {
@@ -261,7 +262,7 @@ public class CommanderPanel extends JPanel {
 
     myParentTitle = new MyTitleLabel(myTitlePanel);
     myParentTitle.setText(" ");
-    myParentTitle.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    myParentTitle.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     myParentTitle.setForeground(JBColor.foreground());
     myParentTitle.setUI(new RightAlignedLabelUI());
     final JPanel panel1 = new JPanel(new BorderLayout());
@@ -454,7 +455,7 @@ public class CommanderPanel extends JPanel {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteElementProvider;
     }
-    if (LangDataKeys.MODULE.is(dataId)) {
+    if (PlatformCoreDataKeys.MODULE.is(dataId)) {
       return selectedValue instanceof Module ? selectedValue : null;
     }
     if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
@@ -531,6 +532,11 @@ public class CommanderPanel extends JPanel {
   }
 
   private final class MyDeleteElementProvider implements DeleteProvider {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     @Override
     public void deleteElement(@NotNull final DataContext dataContext) {
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));

@@ -1,1 +1,0 @@
-_?curses.A_ITALIC

@@ -23,7 +23,7 @@ abstract class CloseProjectsActionBase : DumbAwareAction() {
         // ensure that last closed project frame bounds will be used as newly created project frame bounds
         // (if will be no another focused opened project)
         WindowManager.getInstance().updateDefaultFrameInfoOnProjectClose(it)
-        ProjectManagerEx.getInstanceEx().closeAndDispose(it)
+        ProjectManager.getInstance().closeAndDispose(it)
 
         // RecentProjectsManager cannot distinguish close as part of exit (no need to remove project),
         // and close as explicit user initiated action (need to remove project), because reason is not provided to `projectClosed` event.

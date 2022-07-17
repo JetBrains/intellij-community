@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.actions.generate
 
 import com.intellij.ide.util.MemberChooser
 import com.intellij.java.JavaBundle
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -13,12 +12,20 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.DescriptorMemberChooserObject
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.core.util.DescriptorMemberChooserObject
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.getTypeSubstitution
+import org.jetbrains.kotlin.idea.util.orEmpty
+import org.jetbrains.kotlin.idea.util.toSubstitutor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -26,10 +33,8 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
-import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
@@ -54,9 +59,9 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
         val project = klass.project
         val superClassDescriptor = classDescriptor.getSuperClassNotAny() ?: return emptyList()
         val candidates = superClassDescriptor.constructors
-            .filter { it.isVisible(classDescriptor) }
+            .filter { it.isVisible(classDescriptor, klass.getResolutionFacade().languageVersionSettings) }
             .map { DescriptorMemberChooserObject(DescriptorToSourceUtilsIde.getAnyDeclaration(project, it) ?: klass, it) }
-        if (ApplicationManager.getApplication().isUnitTestMode || candidates.size <= 1) return candidates
+        if (isUnitTestMode() || candidates.size <= 1) return candidates
 
         return with(MemberChooser(candidates.toTypedArray(), false, true, klass.project)) {
             title = JavaBundle.message("generate.constructor.super.constructor.chooser.title")
@@ -75,7 +80,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
             .map { context.get(BindingContext.VARIABLE, it) as PropertyDescriptor }
             .map { DescriptorMemberChooserObject(it.source.getPsi()!!, it) }
             .toList()
-        if (ApplicationManager.getApplication().isUnitTestMode || candidates.isEmpty()) return candidates
+        if (isUnitTestMode() || candidates.isEmpty()) return candidates
 
         return with(MemberChooser(candidates.toTypedArray(), true, true, klass.project, false, null)) {
             title = KotlinBundle.message("action.generate.secondary.constructor.choose.properties")
@@ -120,7 +125,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
                 return emptyList()
             }
 
-            insertMembersAfter(editor, targetClass, prototypes, findAnchor())
+            insertMembersAfterAndReformat(editor, targetClass, prototypes, findAnchor())
         }
     }
 
@@ -151,13 +156,14 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
         val parameterList = constructor.valueParameterList!!
 
         if (superConstructor != null) {
-            val substitutor = getTypeSubstitutor(superConstructor.containingDeclaration.defaultType, classDescriptor.defaultType)
-                ?: TypeSubstitutor.EMPTY
+            val superClassType = superConstructor.containingDeclaration.defaultType
+            val substitutor = getTypeSubstitution(superClassType, classDescriptor.defaultType)?.toSubstitutor().orEmpty()
+
             val delegationCallArguments = ArrayList<String>()
             for (parameter in superConstructor.valueParameters) {
                 val isVararg = parameter.varargElementType != null
 
-                val paramName = KotlinNameSuggester.suggestNameByName(parameter.name.asString(), validator)
+                val paramName = Fe10KotlinNameSuggester.suggestNameByName(parameter.name.asString(), validator)
 
                 val typeToUse = parameter.varargElementType ?: parameter.type
                 val paramType = IdeDescriptorRenderers.SOURCE_CODE.renderType(
@@ -179,7 +185,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
             val body = psiFactory.createEmptyBody()
             for (property in propertiesToInitialize) {
                 val propertyName = property.name
-                val paramName = KotlinNameSuggester.suggestNameByName(propertyName.asString(), validator)
+                val paramName = Fe10KotlinNameSuggester.suggestNameByName(propertyName.asString(), validator)
                 val paramType = IdeDescriptorRenderers.SOURCE_CODE.renderType(property.type)
 
                 parameterList.addParameter(psiFactory.createParameter("$paramName: $paramType"))

@@ -4,17 +4,20 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -71,7 +74,8 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     try {
       NavBarModel model = myPanel.getModel();
       if (dataContext != null) {
-        Component parent = UIUtil.findUltimateParent(PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext));
+        Component parent = UIUtil.findUltimateParent(PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext));
+        if (parent == null) return;
         Project project = parent instanceof IdeFrame ? ((IdeFrame)parent).getProject() : null;
         if (myPanel.getProject() != project || myPanel.isNodePopupActive()) {
           requestModelUpdate(null, myPanel.getContextObject(), true);
@@ -215,7 +219,11 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
         final LightweightHint hint = myPanel.getHint();
         if (hint != null) {
           myPanel.getHintContainerShowPoint().doWhenDone((Consumer<RelativePoint>)relativePoint -> {
-            hint.setSize(myPanel.getPreferredSize());
+            Dimension size = myPanel.getPreferredSize();
+            if (ExperimentalUI.isNewUI()) {
+              JBInsets.addTo(size, JBUI.CurrentTheme.StatusBar.Breadcrumbs.floatingBorderInsets());
+            }
+            hint.setSize(size);
             hint.setLocation(relativePoint);
             if (after != null) {
               after.run();
@@ -249,10 +257,6 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
         }
       }
     });
-  }
-
-  boolean isUpdating() {
-    return myModelUpdating.get();
   }
 
   private abstract class AfterModelUpdate extends Update {

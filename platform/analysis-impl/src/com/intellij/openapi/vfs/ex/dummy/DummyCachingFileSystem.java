@@ -138,7 +138,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     }
   }
 
-  private void cleanup() {
+  protected void cleanup() {
     myCachedFiles.clear();
   }
 

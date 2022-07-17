@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.popup.PopupDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -56,7 +57,7 @@ import static java.util.stream.Collectors.toList;
  * <p/>
  */
 public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
-  @NonNls private static final String DIMENSION_SERVICE_KEY = "Git.Branch.Popup";
+  @NonNls static final String DIMENSION_SERVICE_KEY = "Git.Branch.Popup";
   @NonNls static final String SHOW_ALL_LOCALS_KEY = "Git.Branch.Popup.ShowAllLocals";
   @NonNls static final String SHOW_ALL_REMOTES_KEY = "Git.Branch.Popup.ShowAllRemotes";
   @NonNls static final String SHOW_ALL_REPOSITORIES = "Git.Branch.Popup.ShowAllRepositories";
@@ -94,8 +95,7 @@ public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
 
   @Nullable
   private static GitBranchPopupActions.LocalBranchActions getBranchAction(@NotNull AnAction action) {
-    AnAction resultAction =
-      action instanceof EmptyAction.MyDelegatingActionGroup ? ((EmptyAction.MyDelegatingActionGroup)action).getDelegate() : action;
+    AnAction resultAction = action instanceof ActionGroupWrapper ? ((ActionGroupWrapper)action).getDelegate() : action;
     return tryCast(resultAction, GitBranchPopupActions.LocalBranchActions.class);
   }
 
@@ -180,7 +180,10 @@ public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       popupGroup.addAll(GitBranchPopupActions.getRebaseActions());
     }
     popupGroup.add(new GitBranchPopupActions.GitNewBranchAction(myProject, allRepositories));
-    popupGroup.add(new GitBranchPopupActions.CheckoutRevisionActions(myProject, allRepositories));
+
+    if (!ExperimentalUI.isNewUI()) {
+      popupGroup.add(new GitBranchPopupActions.CheckoutRevisionActions(myProject, allRepositories));
+    }
 
     popupGroup.addAll(createRepositoriesActions());
 

@@ -29,6 +29,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.plugins.relaxNG.model.descriptors.CompositeDescriptor;
 import org.intellij.plugins.relaxNG.model.descriptors.RngElementDescriptor;
 import org.intellij.plugins.relaxNG.model.descriptors.RngXmlAttributeDescriptor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.kohsuke.rngom.digested.DElementPattern;
@@ -44,7 +45,7 @@ final class RngDocumentationProvider implements DocumentationProvider {
 
   @Override
   @Nullable
-  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     final XmlElement c = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class, XmlAttribute.class);
     if (c != null && c.getManager() == null) {
       LOG.warn("Invalid context element passed to generateDoc()", new Throwable("<stack trace>"));

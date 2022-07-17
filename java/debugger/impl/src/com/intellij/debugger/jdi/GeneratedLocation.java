@@ -6,6 +6,7 @@ import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 
 public class GeneratedLocation implements Location {
@@ -43,22 +44,22 @@ public class GeneratedLocation implements Location {
 
   @Override
   public String sourceName() throws AbsentInformationException {
-    throw new AbsentInformationException();
+    return myReferenceType.sourceName();
   }
 
   @Override
-  public String sourceName(String s) throws AbsentInformationException {
-    throw new AbsentInformationException();
+  public String sourceName(String stratum) throws AbsentInformationException {
+    return firstOrThrow(myReferenceType.sourceNames(stratum));
   }
 
   @Override
   public String sourcePath() throws AbsentInformationException {
-    throw new AbsentInformationException();
+    return firstOrThrow(myReferenceType.sourcePaths(myReferenceType.defaultStratum()));
   }
 
   @Override
-  public String sourcePath(String s) throws AbsentInformationException {
-    throw new AbsentInformationException();
+  public String sourcePath(String stratum) throws AbsentInformationException {
+    return firstOrThrow(myReferenceType.sourcePaths(stratum));
   }
 
   @Override
@@ -103,5 +104,10 @@ public class GeneratedLocation implements Location {
 
   public String toString() {
     return myReferenceType.name() + "." + myMethodName + ":" + myLineNumber;
+  }
+
+  private static String firstOrThrow(@NotNull List<String> list) throws AbsentInformationException {
+    if (list.isEmpty()) throw new AbsentInformationException();
+    return list.get(0);
   }
 }

@@ -3,11 +3,11 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
@@ -34,7 +34,7 @@ public class ShowTypesAction extends DumbAwareToggleAction {
           tree.rebuildAndRestore(XDebuggerTreeState.saveState(tree));
         }
       }
-      XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+      XDebugSession session = DebuggerUIUtil.getSession(e);
       if (session != null) {
         session.rebuildViews();
       }
@@ -45,7 +45,7 @@ public class ShowTypesAction extends DumbAwareToggleAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
-      XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+      XDebugSession session = DebuggerUIUtil.getSession(e);
       if (session != null && session.getDebugProcess() instanceof JavaDebugProcess) {
         e.getPresentation().setEnabledAndVisible(true);
         super.update(e);
@@ -53,5 +53,10 @@ public class ShowTypesAction extends DumbAwareToggleAction {
       }
     }
     e.getPresentation().setEnabledAndVisible(false);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

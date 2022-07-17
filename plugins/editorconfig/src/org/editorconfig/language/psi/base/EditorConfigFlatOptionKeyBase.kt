@@ -16,7 +16,7 @@ abstract class EditorConfigFlatOptionKeyBase(node: ASTNode) : EditorConfigIdenti
   final override fun getPresentation() = PresentationData(text, declarationSite, AllIcons.Nodes.Property, null)
 
   final override fun definesSameOption(element: EditorConfigFlatOptionKey): Boolean {
-    element as? EditorConfigDescribableElement ?: return false
+    if (element !is EditorConfigDescribableElement) return false
     val descriptor = option.getDescriptor(false)
     val otherDescriptor = element.option.getDescriptor(false)
 

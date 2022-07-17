@@ -52,7 +52,7 @@ public class OverlyLongLambdaInspection extends MethodMetricInspection {
   private class OverlyLongLambdaVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
       final PsiElement body = expression.getBody();
       if (!(body instanceof PsiCodeBlock)) {
         return;

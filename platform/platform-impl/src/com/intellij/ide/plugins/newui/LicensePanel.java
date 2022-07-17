@@ -6,8 +6,8 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
@@ -17,6 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Date;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -34,6 +36,7 @@ public class LicensePanel extends NonOpaquePanel {
   private final JPanel myPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
   private final JLabel myMessage = new JLabel();
   private final ActionLink myLink = new ActionLink();
+  private Runnable myLinkRunnable;
 
   public LicensePanel(boolean tiny) {
     setLayout(new BorderLayout());
@@ -43,6 +46,8 @@ public class LicensePanel extends NonOpaquePanel {
 
     myPanel.add(tiny ? PluginManagerConfigurable.setTinyFont(myMessage) : myMessage);
     myPanel.add(tiny ? PluginManagerConfigurable.setTinyFont(myLink) : myLink);
+
+    myLink.addActionListener(e -> myLinkRunnable.run());
 
     hideElements();
   }
@@ -80,7 +85,7 @@ public class LicensePanel extends NonOpaquePanel {
       myMessage.setIcon(warning ? EmptyIcon.ICON_16 : null);
     }
 
-    myMessage.setForeground(errorColor ? DialogWrapper.ERROR_FOREGROUND_COLOR : null);
+    myMessage.setForeground(errorColor ? UIUtil.getErrorForeground() : null);
     myMessage.setVisible(true);
 
     myPanel.setVisible(true);
@@ -113,6 +118,8 @@ public class LicensePanel extends NonOpaquePanel {
   }
 
   public void setLink(@NotNull @Nls String text, @NotNull Runnable action, boolean external) {
+    myLinkRunnable = action;
+
     myLink.setText(text);
     if (external) {
       myLink.setExternalLinkIcon();
@@ -120,7 +127,6 @@ public class LicensePanel extends NonOpaquePanel {
     else {
       myLink.setIcon(null);
     }
-    myLink.addActionListener(e -> action.run());
     myLink.setVisible(true);
 
     myPanel.setVisible(true);
@@ -151,11 +157,18 @@ public class LicensePanel extends NonOpaquePanel {
     setLink(IdeBundle.message("plugins.configurable.buy.the.plugin"), () ->
       BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode())), true);
 
-    PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), false), price -> {
-      if (plugin == getPlugin.get()) {
-        updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), true);
+    if (plugin instanceof PluginNode) {
+      List<String> tags = ((PluginNode)plugin).getTags();
+      if (tags.contains(Tags.Freemium.name())) {
+        updateLink(IdeBundle.message("plugins.configurable.activate.trial.for.full.access"), false);
       }
-    });
+    } else {
+      PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), false), price -> {
+        if (plugin == getPlugin.get()) {
+          updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), true);
+        }
+      });
+    }
   }
 
   public static boolean isEA2Product(@Nullable String productCodeOrPluginId) {

@@ -15,36 +15,39 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 public class FlipIntersectionSidesFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(FlipIntersectionSidesFix.class);
   private final String myClassName;
-  private final List<PsiTypeElement> myConjuncts;
   private final PsiTypeElement myConjunct;
   private final PsiTypeElement myCastTypeElement;
 
   public FlipIntersectionSidesFix(String className,
-                                  @NotNull List<PsiTypeElement> conjList,
                                   PsiTypeElement conjunct,
                                   PsiTypeElement castTypeElement) {
     myClassName = className;
-    myConjuncts = conjList;
-    LOG.assertTrue(!conjList.isEmpty());
     myConjunct = conjunct;
     myCastTypeElement = castTypeElement;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiTypeElement cast = PsiTreeUtil.findSameElementInCopy(myCastTypeElement, target);
+    PsiTypeElement conjunct = PsiTreeUtil.findSameElementInCopy(myConjunct, target);
+    return new FlipIntersectionSidesFix(myClassName, conjunct, cast);
   }
 
   @NotNull
@@ -61,18 +64,18 @@ public class FlipIntersectionSidesFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    for (PsiTypeElement typeElement : myConjuncts) {
-      if (!typeElement.isValid()) return false;
-    }
-    return !Comparing.strEqual(myConjunct.getText(), myConjuncts.get(0).getText());
+    if (!myCastTypeElement.isValid() || !myConjunct.isValid()) return false;
+    PsiTypeElement firstChild = PsiTreeUtil.findChildOfType(myCastTypeElement, PsiTypeElement.class);
+    if (firstChild == null || myConjunct.textMatches(firstChild.getText())) return false;
+    return true;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myConjuncts.remove(myConjunct);
-    myConjuncts.add(0, myConjunct);
-
-    final String intersectionTypeText = StringUtil.join(myConjuncts, element -> element.getText(), " & ");
+    PsiTypeElement[] conjuncts = PsiTreeUtil.getChildrenOfType(myCastTypeElement, PsiTypeElement.class);
+    if (conjuncts == null) return;
+    final String intersectionTypeText =
+      StreamEx.of(conjuncts).without(myConjunct).prepend(myConjunct).map(PsiElement::getText).joining(" & ");
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final PsiTypeCastExpression fixedCast =
       (PsiTypeCastExpression)elementFactory.createExpressionFromText("(" + intersectionTypeText + ") a", myCastTypeElement);

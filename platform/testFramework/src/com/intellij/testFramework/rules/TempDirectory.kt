@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.rules
 
 import com.intellij.openapi.util.io.FileUtil
@@ -12,7 +12,9 @@ import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.util.io.zipFile
-import org.jetbrains.annotations.ApiStatus
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -25,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * An improved variant of [org.junit.rules.TemporaryFolder] with lazy init, no symlinks in a temporary directory path, better directory name,
  * and more convenient [newFile], [newDirectory] methods.
  */
-class TempDirectory : ExternalResource() {
+open class TempDirectory : ExternalResource() {
   private var myName: String? = null
   private val myNextDirNameSuffix = AtomicInteger()
   private var myRoot: File? = null
@@ -54,38 +56,54 @@ class TempDirectory : ExternalResource() {
     }
 
   override fun apply(base: Statement, description: Description): Statement {
-    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.methodName.take(30), true), true)
+    before(description.methodName)
     return super.apply(base, description)
   }
 
-  override fun after() {
+  fun before(methodName: String) {
+    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(methodName.take(30), true), true)
+  }
+
+  public override fun after() {
     val path = myRoot?.toPath()
     val vfsDir = myVirtualFileRoot
 
     myVirtualFileRoot = null
     myRoot = null
     myName = null
-    JarFileSystemImpl.cleanupForNextTest()
 
     RunAll(
+      { JarFileSystemImpl.cleanupForNextTest() },
       { if (vfsDir != null) VfsTestUtil.deleteFile(vfsDir) },
       { if (path != null) FileUtil.delete(path) }
     ).run()
   }
 
   /**
-   * Creates a new directory with random name under the root temp directory.
+   * Creates a new directory with a random name under the root temp directory.
    */
-  fun newDirectory(): File = newDirectory("dir" + myNextDirNameSuffix.incrementAndGet())
+  fun newDirectory(): File = newDirectoryPath().toFile()
+
+  /**
+   * Creates a new directory with a random name under the root temp directory.
+   */
+  fun newDirectoryPath(): Path = newDirectoryPath("dir" + myNextDirNameSuffix.incrementAndGet())
 
   /**
    * Creates a new directory at the given path relative to the root temp directory. Throws an exception if such a directory already exists.
    */
   fun newDirectory(relativePath: String): File {
+    return newDirectoryPath(relativePath).toFile()
+  }
+
+  /**
+   * Creates a new directory at the given path relative to the root temp directory. Throws an exception if such a directory already exists.
+   */
+  fun newDirectoryPath(relativePath: String): Path {
     val dir = rootPath.resolve(relativePath)
     require(!Files.exists(dir)) { "Already exists: $dir" }
     makeDirectories(dir)
-    return dir.toFile()
+    return dir
   }
 
   /**
@@ -149,5 +167,15 @@ class TempDirectory : ExternalResource() {
       makeDirectories(path.parent)
       Files.createDirectory(path)
     }
+  }
+}
+
+class TempDirectoryExtension : TempDirectory(), BeforeEachCallback, AfterEachCallback {
+  override fun beforeEach(context: ExtensionContext) {
+    before(context.displayName)
+  }
+
+  override fun afterEach(context: ExtensionContext) {
+    after()
   }
 }

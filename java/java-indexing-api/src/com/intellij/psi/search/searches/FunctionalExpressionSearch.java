@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.application.ReadAction;
@@ -11,19 +11,34 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.EmptyQuery;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
   private static final FunctionalExpressionSearch INSTANCE = new FunctionalExpressionSearch();
 
   public static class SearchParameters {
     private final PsiClass myElementToSearch;
+    private final PsiMethod myMethod;
     private final SearchScope myScope;
     private final @NotNull Project myProject;
 
-    public SearchParameters(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
+    public SearchParameters(@NotNull PsiClass aClass,
+                        @NotNull SearchScope scope) {
+      this(aClass, null, scope);
+    }
+
+    public SearchParameters(@NotNull PsiClass aClass,
+                            @Nullable PsiMethod psiMethod,
+                            @NotNull SearchScope scope) {
       myProject = aClass.getProject();
       myElementToSearch = aClass;
+      myMethod = psiMethod;
       myScope = scope;
+    }
+
+    @Nullable
+    public PsiMethod getMethod() {
+      return myMethod;
     }
 
     @NotNull
@@ -56,10 +71,10 @@ public final class FunctionalExpressionSearch extends ExtensibleQueryFactory<Psi
   @NotNull
   public static Query<PsiFunctionalExpression> search(@NotNull PsiMethod psiMethod, @NotNull SearchScope scope) {
     return ReadAction.compute(() -> {
-      if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) && !psiMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+      if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         PsiClass containingClass = psiMethod.getContainingClass();
         if (containingClass != null) {
-          return INSTANCE.createUniqueResultsQuery(new SearchParameters(containingClass, scope));
+          return INSTANCE.createUniqueResultsQuery(new SearchParameters(containingClass, psiMethod, scope));
         }
       }
       return EmptyQuery.getEmptyQuery();

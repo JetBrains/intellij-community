@@ -1,15 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.postProcessing.processings
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.idea.analysis.analyzeInContext
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.inspections.*
@@ -22,9 +22,8 @@ import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
-import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.isInSingleLine
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -40,7 +39,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class RemoveExplicitPropertyTypeProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
     override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
-        if (element.typeReference == null) return false
+        val typeReference = element.typeReference
+        if (typeReference == null || typeReference.annotationEntries.isNotEmpty()) return false
         val needFieldTypes = settings?.specifyFieldTypeByDefault == true
         val needLocalVariablesTypes = settings?.specifyLocalVariableTypeByDefault == true
 
@@ -101,7 +101,7 @@ class RemoveExplicitTypeArgumentsProcessing : InspectionLikeProcessingForElement
     }
 }
 
-// the types arguments for Stream.collect calls cannot be explicitly specified in Kotlin
+// the types arguments for Stream.collect calls cannot be explicitly specified in Kotlin,
 // but we need them in nullability inference, so we remove it here
 class RemoveJavaStreamsCollectCallTypeArgumentsProcessing :
     InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
@@ -285,9 +285,12 @@ class JavaObjectEqualsToEqOperatorProcessing : InspectionLikeProcessingForElemen
 
 class RemoveForExpressionLoopParameterTypeProcessing :
     InspectionLikeProcessingForElement<KtForExpression>(KtForExpression::class.java) {
-    override fun isApplicableTo(element: KtForExpression, settings: ConverterSettings?): Boolean =
-        element.loopParameter?.typeReference?.typeElement != null
-                && settings?.specifyLocalVariableTypeByDefault != true
+    override fun isApplicableTo(element: KtForExpression, settings: ConverterSettings?): Boolean {
+        val typeReference = element.loopParameter?.typeReference ?: return false
+        return (typeReference.annotationEntries.isEmpty()
+                && typeReference.typeElement != null
+                && settings?.specifyLocalVariableTypeByDefault != true)
+    }
 
     override fun apply(element: KtForExpression) {
         element.loopParameter?.typeReference = null
@@ -408,26 +411,13 @@ class MayBeConstantInspectionBasedProcessing : InspectionLikeProcessingForElemen
     }
 }
 
-class RemoveExplicitUnitTypeProcessing : InspectionLikeProcessingForElement<KtNamedFunction>(KtNamedFunction::class.java) {
-    override fun isApplicableTo(element: KtNamedFunction, settings: ConverterSettings?): Boolean {
-        val typeReference = element.typeReference?.typeElement ?: return false
-        if (!typeReference.textMatches("Unit")) return false
-        return RedundantUnitReturnTypeInspection.hasRedundantUnitReturnType(element)
-    }
-
-    override fun apply(element: KtNamedFunction) {
-        element.typeReference = null
-    }
-}
-
-
 class RemoveExplicitGetterInspectionBasedProcessing :
     InspectionLikeProcessingForElement<KtPropertyAccessor>(KtPropertyAccessor::class.java) {
     override fun isApplicableTo(element: KtPropertyAccessor, settings: ConverterSettings?): Boolean =
         element.isRedundantGetter()
 
     override fun apply(element: KtPropertyAccessor) {
-        RemoveRedundantGetterFix.removeRedundantGetter(element)
+        removeRedundantGetter(element)
     }
 }
 
@@ -437,19 +427,7 @@ class RemoveExplicitSetterInspectionBasedProcessing :
         element.isRedundantSetter()
 
     override fun apply(element: KtPropertyAccessor) {
-        RemoveRedundantSetterFix.removeRedundantSetter(element)
-    }
-}
-
-
-class RedundantSemicolonInspectionBasedProcessing :
-    InspectionLikeProcessingForElement<PsiElement>(PsiElement::class.java) {
-    override fun isApplicableTo(element: PsiElement, settings: ConverterSettings?): Boolean =
-        element.node.elementType == KtTokens.SEMICOLON
-                && RedundantSemicolonInspection.isRedundantSemicolon(element)
-
-    override fun apply(element: PsiElement) {
-        element.delete()
+        removeRedundantSetter(element)
     }
 }
 

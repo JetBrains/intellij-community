@@ -18,15 +18,13 @@ package com.intellij.debugger.engine.evaluation.expression;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.sun.jdi.Value;
-import org.jetbrains.annotations.ApiStatus;
 
 public interface ExpressionEvaluator {
 
   /**
    * @deprecated obsolete API, use {@link #evaluate(EvaluationContext)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default Value getValue() {
     return null;
   }

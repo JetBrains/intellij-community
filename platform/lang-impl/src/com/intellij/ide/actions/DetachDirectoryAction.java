@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -25,7 +23,7 @@ public class DetachDirectoryAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    ProjectFileIndex index = project == null ? null : ProjectFileIndex.SERVICE.getInstance(project);
+    ProjectFileIndex index = project == null ? null : ProjectFileIndex.getInstance(project);
     JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
     boolean enabled = index != null &&
                       files.isNotEmpty() &&
@@ -40,7 +38,7 @@ public class DetachDirectoryAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
-    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     List<VirtualFile> roots = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
       .filter(o -> o.equals(index.getContentRootForFile(o))).toList();
     String target = AttachDirectoryUtils.getDisplayName(roots);
@@ -63,8 +61,6 @@ public class DetachDirectoryAction extends DumbAwareAction {
   }
 
   public static void detachDirectoriesWithUndo(@NotNull Project project, @NotNull List<VirtualFile> files) {
-    Module[] modules = ModuleManager.getInstance(project).getModules();
-    if (modules.length == 0) return;
-    AttachDirectoryUtils.addRemoveEntriesWithUndo(modules[0], files, false);
+    AttachDirectoryUtils.addRemoveEntriesWithUndo(project, null, files, false);
   }
 }

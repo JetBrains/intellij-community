@@ -6,8 +6,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ModalityState;
@@ -69,6 +68,16 @@ public class NavBarModel {
     return mySelectedIndex;
   }
 
+  @Nullable Object getRawSelectedObject() {
+    List<Object> model = myModel;
+    if (model.isEmpty()) return null;
+    int index = mySelectedIndex;
+    int adjusted = index >= 0 && index < model.size()
+                   ? index
+                   : model.size() - 1;
+    return model.get(adjusted);
+  }
+
   @Nullable
   public Object getSelectedValue() {
     return getElement(mySelectedIndex);
@@ -76,8 +85,9 @@ public class NavBarModel {
 
   @Nullable
   public Object getElement(int index) {
-    if (index != -1 && index < myModel.size()) {
-      return get(index);
+    List<Object> model = myModel;
+    if (index != -1 && index < model.size()) {
+      return get(model, index);
     }
     return null;
   }
@@ -91,14 +101,15 @@ public class NavBarModel {
   }
 
   public int getIndexByModel(int index) {
-    if (index < 0) return myModel.size() + index;
-    if (index >= myModel.size() && myModel.size() > 0) return index % myModel.size();
+    List<Object> model = myModel;
+    if (index < 0) return model.size() + index;
+    if (index >= model.size() && model.size() > 0) return index % model.size();
     return index;
   }
 
   public void updateModelAsync(@NotNull DataContext dataContext, @Nullable Runnable callback) {
     if (LaterInvocator.isInModalContext() ||
-        PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) {
+        PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) {
       return;
     }
 
@@ -122,9 +133,9 @@ public class NavBarModel {
       CommonDataKeys.PSI_FILE,
       CommonDataKeys.PROJECT,
       CommonDataKeys.VIRTUAL_FILE,
-      LangDataKeys.MODULE,
+      PlatformCoreDataKeys.MODULE,
       CommonDataKeys.EDITOR,
-      PlatformDataKeys.SELECTED_ITEMS).build();
+      PlatformCoreDataKeys.SELECTED_ITEMS).build();
   }
 
   private void setModelWithUpdate(@Nullable List<Object> model) {
@@ -164,13 +175,16 @@ public class NavBarModel {
     if (ownerExtension == null) {
       psiElement = normalize(psiElement);
     }
-    if (!myModel.isEmpty() && Objects.equals(get(myModel.size() - 1), psiElement) && !myChanged) return null;
+
+    // Save to a local variable in order to avoid OutOfBounds exception while working with a volatile property
+    final List<Object> model = myModel;
+    if (!model.isEmpty() && Objects.equals(get(model, model.size() - 1), psiElement) && !myChanged) return null;
 
     if (psiElement != null && psiElement.isValid()) {
       return createModel(psiElement, dataContext, ownerExtension);
     }
     else {
-      if (UISettings.getInstance().getShowNavigationBar() && !myModel.isEmpty()) return null;
+      if (UISettings.getInstance().getShowNavigationBar() && !model.isEmpty()) return null;
 
       Object root = calculateRoot(dataContext);
 
@@ -184,7 +198,7 @@ public class NavBarModel {
 
   private Object calculateRoot(DataContext dataContext) {
     // Narrow down the root element to the first interesting one
-    Module root = LangDataKeys.MODULE.getData(dataContext);
+    Module root = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (root != null && !ModuleType.isInternal(root)) return root;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -239,7 +253,7 @@ public class NavBarModel {
     final List<Object> objects = new ArrayList<>();
     boolean update = false;
     for (Object o : myModel) {
-      if (isValid(TreeAnchorizer.getService().retrieveElement(o))) {
+      if (isValid(unwrapRaw(o))) {
         objects.add(o);
       }
       else {
@@ -351,14 +365,23 @@ public class NavBarModel {
     return true;
   }
 
-  public Object get(final int index) {
-    return TreeAnchorizer.getService().retrieveElement(myModel.get(index));
+  @Nullable Object unwrapRaw(@NotNull Object o) {
+    return TreeAnchorizer.getService().retrieveElement(o);
+  }
+
+  public @Nullable Object get(int index) {
+    return get(myModel, index);
+  }
+
+  private @Nullable Object get(List<Object> model, int index) {
+    return unwrapRaw(model.get(index));
   }
 
   public int indexOf(Object value) {
-    for (int i = 0; i < myModel.size(); i++) {
-      Object o = myModel.get(i);
-      if (Objects.equals(TreeAnchorizer.getService().retrieveElement(o), value)) {
+    List<Object> model = myModel;
+    for (int i = 0; i < model.size(); i++) {
+      Object o = model.get(i);
+      if (Objects.equals(unwrapRaw(o), value)) {
         return i;
       }
     }

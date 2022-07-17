@@ -46,6 +46,12 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-35936
+  public void testPep8MultipleStatementsOnOneLine() {
+    getPythonCodeStyleSettings().NEW_LINE_AFTER_COLON = true;
+    doTest();
+  }
+
   public void testUnaryMinus() {
     doTest();
   }
@@ -1209,6 +1215,47 @@ public class PyFormatterTest extends PyTestCase {
   // PY-48009
   public void testSpacesAroundEqualSignsInKeywordPatterns() {
     getPythonCodeStyleSettings().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = true;
+    doTest();
+  }
+
+  // PY-52930
+  public void testSpaceAfterStarredExcept() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testParenthesizedWithItems() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testHangingClosingBracketInParenthesizedWithItems() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-42200
+  public void testParenthesizedWithItemsHangingIndentProcessedSimilarlyToCollectionsInStatementHeaders() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testParenthesizedWithItemsWrapping() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
+    doTest();
+  }
+
+  // PY-28496
+  public void testHangingIndentsInMultilineCallChainInParenthesis() {
+    doTest();
+  }
+
+  // PY-27660
+  public void testHangingIndentsInMultilineCallChainInSquareBrackets() {
+    doTest();
+  }
+
+  public void testMultiLineCallChainSplitByBackslashes() {
     doTest();
   }
 }

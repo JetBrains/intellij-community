@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -26,10 +26,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
-import git4idea.GitBranch;
-import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
+import git4idea.*;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
@@ -206,13 +203,13 @@ abstract class GitMergeAction extends GitRepositoryAction {
           String content = getBodyForUpdateNotification(notificationData.getFilteredCommitsCount());
           notification = VcsNotifier.STANDARD_NOTIFICATION
             .createNotification(title, content, INFORMATION)
-            .setDisplayId("git.files.updated.after.merge")
+            .setDisplayId(GitNotificationIdsHolder.FILES_UPDATED_AFTER_MERGE)
             .addAction(NotificationAction.createSimple(GitBundle.message("action.NotificationAction.GitMergeAction.text.view.commits"), notificationData.getViewCommitAction()));
         }
         else {
           notification = VcsNotifier.STANDARD_NOTIFICATION
             .createNotification(VcsBundle.message("message.text.all.files.are.up.to.date"), INFORMATION)
-            .setDisplayId("git.all.files.are.up.to.date");
+            .setDisplayId(GitNotificationIdsHolder.FILES_UP_TO_DATE);
         }
         VcsNotifier.getInstance(project).notify(notification);
       }

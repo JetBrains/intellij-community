@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.configurationStore.RenameableStateStorageManager;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -78,7 +77,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
 
   @ApiStatus.Internal
   public ModuleImpl(@NotNull String name, @NotNull Project project) {
-    super((ComponentManagerImpl)project);
+    super((ComponentManagerImpl)project, false);
 
     registerServiceInstance(Module.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
     myProject = project;
@@ -90,7 +89,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   public void init(@Nullable Runnable beforeComponentCreation) {
     // do not measure (activityNamePrefix method not overridden by this class)
     // because there are a lot of modules and no need to measure each one
-    registerComponents(PluginManagerCore.getLoadedPlugins(null), ApplicationManager.getApplication(), null, null);
+    registerComponents();
     if (!isPersistent()) {
       registerService(IComponentStore.class,
                       NonPersistentModuleStore.class,
@@ -166,8 +165,13 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     }
   }
 
-  private @NotNull IComponentStore getStore() {
+  protected @NotNull IComponentStore getStore() {
     return Objects.requireNonNull(getService(IComponentStore.class));
+  }
+
+  @Override
+  public boolean canStoreSettings() {
+    return !(getStore() instanceof NonPersistentModuleStore);
   }
 
   @Override
@@ -244,11 +248,12 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return isModuleAdded;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void moduleAdded() {
     isModuleAdded = true;
+    //noinspection deprecation
     processInitializedComponents(ModuleComponent.class, (component, __) -> {
+      //noinspection deprecation
       component.moduleAdded();
       return Unit.INSTANCE;
     });
@@ -336,6 +341,18 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   @Override
   public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleRuntimeScope(includeTests);
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getModuleProductionSourceScope() {
+    return myModuleScopeProvider.getModuleProductionSourceScope();
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getModuleTestSourceScope() {
+    return myModuleScopeProvider.getModuleTestSourceScope();
   }
 
   @Override

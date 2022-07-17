@@ -53,9 +53,4 @@ public class JavaFxWrapWithDefineIntention extends PsiElementBaseIntentionAction
     tagFromText.addSubTag(myTag, true);
     myTag.replace(tagFromText);
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

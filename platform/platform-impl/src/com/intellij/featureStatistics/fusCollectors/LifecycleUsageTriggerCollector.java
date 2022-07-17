@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.internal.DebugAttachDetector;
+import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator;
+import com.intellij.internal.statistic.collectors.fus.MethodNameRuleValidator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.events.*;
@@ -27,7 +29,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 59);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 63);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -44,17 +46,19 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final EventId PROJECT_OPENED = LIFECYCLE.registerEvent("project.opened");
   private static final EventId PROJECT_CLOSED = LIFECYCLE.registerEvent("project.closed");
   private static final EventId PROJECT_MODULE_ATTACHED = LIFECYCLE.registerEvent("project.module.attached");
+  private static final EventId PROTOCOL_OPEN_COMMAND_HANDLED = LIFECYCLE.registerEvent("protocol.open.command.handled");
   private static final EventId FRAME_ACTIVATED = LIFECYCLE.registerEvent("frame.activated");
   private static final EventId FRAME_DEACTIVATED = LIFECYCLE.registerEvent("frame.deactivated");
   private static final EventField<String> DURATION_GROUPED = new DurationEventField();
   private static final EventId2<Long, String> IDE_FREEZE =
     LIFECYCLE.registerEvent("ide.freeze", EventFields.Long("duration_ms"), DURATION_GROUPED);
 
-  private static final EventField<String> errorField = EventFields.StringValidatedByCustomRule("error", "class_name");
+  private static final EventField<String> errorField = EventFields.StringValidatedByCustomRule("error", ClassNameRuleValidator.class);
   private static final EventField<VMOptions.MemoryKind> memoryErrorKindField =
     EventFields.Enum("memory_error_kind", VMOptions.MemoryKind.class, (kind) -> StringUtil.toLowerCase(kind.name()));
   private static final EventField<Integer> errorHashField = EventFields.Int("error_hash");
-  private static final StringListEventField errorFramesField = EventFields.StringListValidatedByCustomRule("error_frames", "method_name");
+  private static final StringListEventField errorFramesField =
+    EventFields.StringListValidatedByCustomRule("error_frames", MethodNameRuleValidator.class);
   private static final EventField<Integer> errorSizeField = EventFields.Int("error_size");
   private static final EventField<Boolean> tooManyErrorsField = EventFields.Boolean("too_many_errors");
   private static final VarargEventId IDE_ERROR = LIFECYCLE.registerVarargEvent("ide.error",
@@ -66,6 +70,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
                                                                                errorSizeField,
                                                                                tooManyErrorsField);
   private static final EventId IDE_CRASH_DETECTED = LIFECYCLE.registerEvent("ide.crash.detected");
+
+  private static final EventId IDE_DEADLOCK_DETECTED = LIFECYCLE.registerEvent("ide.deadlock.detected");
 
   private enum ProjectOpenMode { New, Same, Attach }
   private static final EventField<ProjectOpenMode> projectOpenModeField = EventFields.Enum("mode", ProjectOpenMode.class, (mode) -> StringUtil.toLowerCase(mode.name()));
@@ -110,6 +116,10 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     PROJECT_MODULE_ATTACHED.log(project);
   }
 
+  public static void onProtocolOpenCommandHandled(@Nullable Project project) {
+    PROTOCOL_OPEN_COMMAND_HANDLED.log(project);
+  }
+
   public static void onFrameActivated(@Nullable Project project) {
     FRAME_ACTIVATED.log(project);
   }
@@ -151,7 +161,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
         data.add(tooManyErrorsField.with(true));
       }
 
-      IDE_ERROR.log(data.toArray(new EventPair[0]));
+      IDE_ERROR.log(data);
     }
     catch (Exception e) {
       LOG.warn(e);
@@ -160,6 +170,10 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   public static void onCrashDetected() {
     IDE_CRASH_DETECTED.log();
+  }
+
+  public static void onDeadlockDetected() {
+    IDE_DEADLOCK_DETECTED.log();
   }
 
   @NotNull
@@ -195,7 +209,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     PROJECT_FRAME_SELECTED.log(optionValue);
   }
 
-  private static class DurationEventField extends PrimitiveEventField<String> {
+  private static final class DurationEventField extends PrimitiveEventField<String> {
     @NotNull
     @Override
     public List<String> getValidationRule() {

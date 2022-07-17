@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.setupPy;
 
 import com.intellij.ide.IdeView;
@@ -7,10 +7,7 @@ import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateAction;
 import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -55,8 +52,13 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
-    final Module module = e.getData(LangDataKeys.MODULE);
+    final Module module = e.getData(PlatformCoreDataKeys.MODULE);
     e.getPresentation().setEnabled(module != null && !PyPackageUtil.hasSetupPy(module));
   }
 
@@ -78,7 +80,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
 
   @NotNull
   private static String getSetupImport(@NotNull DataContext dataContext) {
-    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     return hasSetuptoolsPackage(module) ? "from setuptools import setup" : "from distutils.core import setup";
   }
 
@@ -91,7 +93,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
   }
 
   private static String getPackageList(DataContext dataContext) {
-    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (module != null) {
       return "['" + StringUtil.join(PyPackageUtil.getPackageNames(module), "', '") + "']";
     }
@@ -99,13 +101,13 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
   }
 
   private static String getPackageDirs(DataContext dataContext) {
-    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (module != null) {
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
       if (sourceRoots.length > 0) {
         for (VirtualFile sourceRoot : sourceRoots) {
           // TODO notify if we have multiple source roots and can't build mapping automatically
-          final VirtualFile contentRoot = ProjectFileIndex.SERVICE.getInstance(module.getProject()).getContentRootForFile(sourceRoot);
+          final VirtualFile contentRoot = ProjectFileIndex.getInstance(module.getProject()).getContentRootForFile(sourceRoot);
           if (contentRoot != null && !Comparing.equal(contentRoot, sourceRoot)) {
             final String relativePath = VfsUtilCore.getRelativePath(sourceRoot, contentRoot, '/');
             return "\n    package_dir={'': '" + relativePath + "'},";
@@ -118,7 +120,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
 
   @Override
   protected PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
-    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (module != null) {
       final Collection<VirtualFile> sourceRoots = PyUtil.getSourceRoots(module);
       if (sourceRoots.size() > 0) {

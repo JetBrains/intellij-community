@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions.internal
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -24,12 +24,13 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.resolve.calls.callUtil.getCalleeExpressionIfAny
+import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.types.KotlinType
 import javax.swing.SwingUtilities
 
@@ -44,7 +45,7 @@ class FindImplicitNothingAction : AnAction() {
 
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
             { find(selectedFiles, project) },
-            KotlinBundle.message("finding.implicit.nothing.s"),
+            KotlinBundle.message("progress.finding.implicit.nothing.s"),
             true,
             project
         )
@@ -101,7 +102,6 @@ class FindImplicitNothingAction : AnAction() {
     }
 
     private fun KtExpression.hasExplicitNothing(bindingContext: BindingContext): Boolean {
-        @Suppress("MoveVariableDeclarationIntoWhen")
         val callee = getCalleeExpressionIfAny() ?: return false
         when (callee) {
             is KtSimpleNameExpression -> {
@@ -124,9 +124,10 @@ class FindImplicitNothingAction : AnAction() {
                 (isFunctionType && this.getReturnTypeFromFunctionType().isNothingOrNothingFunctionType())
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent) {
-        e.presentation.isVisible = ApplicationManager.getApplication().isInternal
-        e.presentation.isEnabled = ApplicationManager.getApplication().isInternal
+        e.presentation.isEnabledAndVisible = isApplicationInternalMode()
     }
 
     private fun selectedKotlinFiles(e: AnActionEvent): Sequence<KtFile> {

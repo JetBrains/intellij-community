@@ -1,35 +1,22 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsoleProperties;
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocationCustomizer;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
+import static org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocationCustomizer.GradleTestLocationInfo;
 
 /**
  * @author Vladislav.Soroka
@@ -79,5 +66,17 @@ public abstract class AbstractTestEvent implements TestEvent {
 
   protected boolean showInternalTestNodes() {
     return GradleConsoleProperties.SHOW_INTERNAL_TEST_NODES.value(getProperties());
+  }
+
+  protected final @NotNull String computeLocationUrl(@Nullable SMTestProxy parentProxy, @NotNull String fqClassName, @Nullable String name, @Nullable String displayName) {
+    if (parentProxy != null) {
+      for (GradleTestLocationCustomizer customizer : GradleTestLocationCustomizer.EP_NAME.getExtensionList()) {
+        GradleTestLocationInfo location = customizer.getLocationInfo(getProject(), parentProxy, fqClassName, name, displayName);
+        if (location != null) {
+          return findLocationUrl(location.getMethodName(), location.getFqClassName());
+        }
+      }
+    }
+    return findLocationUrl(name, fqClassName);
   }
 }

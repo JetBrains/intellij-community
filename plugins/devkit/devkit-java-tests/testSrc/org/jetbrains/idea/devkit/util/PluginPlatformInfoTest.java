@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.util.BuildNumber;
@@ -24,12 +24,28 @@ public class PluginPlatformInfoTest extends JavaCodeInsightFixtureTestCase {
     doTestResolved("something:193.6911.18", "193.6911.18");
   }
 
-  public void testGradle202_6397_EAP_CANDIDATE_SNAPSHOT	() {
+  public void testGradle202_6397_EAP_CANDIDATE_SNAPSHOT() {
     doTestResolved("something:202.6397-EAP-CANDIDATE-SNAPSHOT", "202.6397");
   }
 
   public void testGradle201_EAP_SNAPSHOT() {
     doTestResolved("something:201-EAP-SNAPSHOT", "201");
+  }
+
+  public void testGradleLocalPath_IU_Snapshot() {
+    doTestResolved("Gradle: com.jetbrains:ideaLocal:IU-222.SNAPSHOT", "222.SNAPSHOT");
+  }
+
+  public void testGradleLocalPath_IU_2020_1() {
+    doTestResolved("Gradle: com.jetbrains:ideaLocal:IU-2020.1", "201.0");
+  }
+
+  public void testGradleLocalPath_IC_2021_3_3() {
+    doTestResolved("Gradle: com.jetbrains:ideaLocal:IC-213.7172.25", "213.7172.25");
+  }
+
+  public void testGradleLocalPath_AC_2021_3_3() {
+    doTestResolved("Gradle: com.jetbrains:ideaLocal:OC-213.7172.21", "213.7172.21");
   }
 
   private void doTestResolved(String libraryName, String expectedBuildNumber) {

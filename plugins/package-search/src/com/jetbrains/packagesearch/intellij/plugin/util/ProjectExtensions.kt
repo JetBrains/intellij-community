@@ -1,63 +1,120 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.ProjectTopics
-import com.intellij.ide.impl.TrustChangeNotifier
-import com.intellij.ide.impl.getTrustedState
+import com.intellij.ide.impl.TrustStateListener
+import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.Function
-import com.intellij.util.ThreeState
+import com.intellij.util.messages.Topic
+import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectService
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
-import com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHolderService
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchDataService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.lifecycle.PackageSearchLifecycleScope
+import com.jetbrains.packagesearch.intellij.plugin.ui.UiCommandsService
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateSource
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchCachesService
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchProjectCachesService
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onEach
-import kotlin.streams.toList
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
-internal val Project.packageSearchDataService
-    get() = service<PackageSearchDataService>()
+internal val Project.packageSearchProjectService
+    get() = service<PackageSearchProjectService>()
 
-internal val Project.trustedProjectFlow: Flow<ThreeState>
-    get() = callbackFlow {
-        send(getTrustedState())
-        val connection = messageBus.simpleConnect()
-        connection.subscribe(
-            TrustChangeNotifier.TOPIC,
-            TrustChangeNotifier {
-                if (it == this@trustedProjectFlow) trySend(getTrustedState())
+internal val packageSearchApplicationCaches
+    get() = service<PackageSearchCachesService>()
+
+internal val packageVersionNormalizer
+    get() = packageSearchApplicationCaches.normalizer
+
+internal val Project.packageSearchProjectCachesService
+    get() = service<PackageSearchProjectCachesService>()
+
+internal val Project.toolWindowManagerFlow
+    get() = messageBusFlow(ToolWindowManagerListener.TOPIC) {
+        object : ToolWindowManagerListener {
+            override fun toolWindowShown(toolWindow: ToolWindow) {
+                trySend(toolWindow)
             }
-        )
-        awaitClose { connection.disconnect() }
+        }
+    }
+
+fun <L : Any, K> Project.messageBusFlow(
+    topic: Topic<L>,
+    initialValue: (suspend () -> K)? = null,
+    listener: suspend ProducerScope<K>.() -> L
+) = callbackFlow {
+    initialValue?.let { send(it()) }
+    val connection = messageBus.simpleConnect()
+    connection.subscribe(topic, listener())
+    awaitClose { connection.disconnect() }
+}
+
+fun <L : Any, K> Application.messageBusFlow(
+    topic: Topic<L>,
+    initialValue: (suspend () -> K)? = null,
+    listener: suspend ProducerScope<K>.() -> L
+) = callbackFlow {
+    initialValue?.let { send(it()) }
+    val connection = messageBus.simpleConnect()
+    connection.subscribe(topic, listener())
+    awaitClose { connection.disconnect() }
+}
+
+internal val Project.trustedProjectFlow: Flow<Boolean>
+    get() = messageBusFlow(TrustStateListener.TOPIC, { isTrusted() }) {
+        object : TrustStateListener {
+            override fun onProjectTrusted(project: Project) {
+                if (project == this@trustedProjectFlow) trySend(isTrusted())
+            }
+        }
     }.distinctUntilChanged()
 
-@Suppress("BlockingMethodInNonBlockingContext")
-internal fun Project.getNativeModulesChangesFlow(vararg replays: Flow<*>) = callbackFlow {
-    send(getNativeModules())
-
-    merge(*replays).onEach { send(getNativeModules()) }.launchIn(this)
-
-    val connection = messageBus.simpleConnect()
-    connection.subscribe(
-        ProjectTopics.MODULES,
+internal val Project.nativeModulesFlow
+    get() = messageBusFlow(ProjectTopics.MODULES, { getNativeModules() }) {
         object : ModuleListener {
             override fun moduleAdded(project: Project, module: Module) {
                 trySend(getNativeModules())
@@ -67,47 +124,75 @@ internal fun Project.getNativeModulesChangesFlow(vararg replays: Flow<*>) = call
                 trySend(getNativeModules())
             }
 
-            override fun modulesRenamed(project: Project, modules: MutableList<out Module>, oldNameProvider: Function<in Module, String>) {
+            override fun modulesRenamed(
+                project: Project,
+                modules: MutableList<out Module>,
+                oldNameProvider: Function<in Module, String>
+            ) {
                 trySend(getNativeModules())
             }
         }
-    )
-    awaitClose { connection.disconnect() }
-}.mapLatest { it.toList() }
-
-internal fun Project.getPackageSearchModulesChangesFlow(vararg replayFlows: Flow<*>) = trustedProjectFlow.flatMapConcat { trustedState ->
-    when (trustedState) {
-        ThreeState.YES -> getNativeModulesChangesFlow(*replayFlows, moduleChangesSignalFlow)
-        else -> flowOf(emptyList())
     }
-}
-    .map { modules -> moduleTransformers.flatMapTransform(this, modules) }
-    .flowOn(Dispatchers.ReadActions)
 
-internal fun Project.getNativeModules(): Array<Module> = ModuleManager.getInstance(this).modules
+val Project.filesChangedEventFlow
+    get() = messageBusFlow(VirtualFileManager.VFS_CHANGES) {
+        object : BulkFileListener {
+            override fun after(events: MutableList<out VFileEvent>) {
+                trySend(events)
+            }
+        }
+    }
+
+internal fun Project.getNativeModules(): List<Module> = ModuleManager.getInstance(this).modules.toList()
 
 internal val Project.moduleChangesSignalFlow
-    get() = ModuleChangesSignalProvider.listenToModuleChanges(this)
+    get() = merge(
+        *ModuleChangesSignalProvider.extensions(this),
+        *FlowModuleChangesSignalProvider.extensions(this)
+    )
 
-internal fun List<ModuleTransformer>.flatMapTransform(project: Project, nativeModule: List<Module>) =
-    flatMap { it.transformModules(project, nativeModule) }
+internal val Project.lifecycleScope: PackageSearchLifecycleScope
+    get() = service()
 
-internal val Project.lifecycleScope: CoroutineScope
-    get() = service<ProjectLifecycleHolderService>()
+internal val ProjectModule.lifecycleScope: PackageSearchLifecycleScope
+    get() = nativeModule.project.lifecycleScope
 
-internal val Project.dumbService: DumbService
+internal val Project.uiStateModifier: UiStateModifier
+    get() = service<UiCommandsService>()
+
+internal val Project.uiStateSource: UiStateSource
+    get() = service<UiCommandsService>()
+
+val Project.dumbService: DumbService
     get() = DumbService.getInstance(this)
 
-internal val Project.moduleTransformers: List<ModuleTransformer>
-    get() = ModuleTransformer.extensionPointName.extensions(this).toList()
+suspend fun DumbService.awaitSmart(): Unit = suspendCoroutine {
+    runWhenSmart { it.resume(Unit) }
+}
+
+internal val Project.moduleTransformers: List<CoroutineModuleTransformer>
+    get() = CoroutineModuleTransformer.extensions(this) + ModuleTransformer.extensions(this)
 
 internal val Project.lookAndFeelFlow
+    get() = messageBusFlow(LafManagerListener.TOPIC, { LafManager.getInstance()!! }) {
+        LafManagerListener { trySend(it) }
+    }
+
+internal val Project.toolWindowManager
+    get() = service<ToolWindowManager>()
+
+val <T : Any> ExtensionPointName<T>.extensionsFlow: Flow<List<T>>
     get() = callbackFlow {
-        val connection = messageBus.simpleConnect()
-        send(LafManager.getInstance()!!)
-        connection.subscribe(
-            LafManagerListener.TOPIC,
-            LafManagerListener { trySend(it) }
-        )
-        awaitClose { connection.disconnect() }
+        val listener = object : ExtensionPointListener<T> {
+            override fun extensionAdded(extension: T, pluginDescriptor: PluginDescriptor) {
+                trySendBlocking(extensions.toList())
+            }
+
+            override fun extensionRemoved(extension: T, pluginDescriptor: PluginDescriptor) {
+                trySendBlocking(extensions.toList())
+            }
+        }
+        send(extensions.toList())
+        addExtensionPointListener(listener)
+        awaitClose { removeExtensionPointListener(listener) }
     }

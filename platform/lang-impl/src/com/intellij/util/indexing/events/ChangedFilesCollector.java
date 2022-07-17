@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
@@ -35,7 +36,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @ApiStatus.Internal
 public final class ChangedFilesCollector extends IndexedFilesListener {
@@ -73,9 +73,6 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   public void scheduleForUpdate(@NotNull VirtualFile file) {
-    if (VfsEventsMerger.LOG != null) {
-      VfsEventsMerger.LOG.info("File " + file + " is scheduled for update");
-    }
     int fileId = FileBasedIndex.getFileId(file);
     if (!(file instanceof DeletedVirtualFileStub)) {
       Set<Project> projects = myFileBasedIndex.getContainingProjects(file);
@@ -85,6 +82,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       }
     }
 
+    VfsEventsMerger.tryLog("ADD_TO_UPDATE", file);
     myFilesToUpdate.put(fileId, file);
   }
 
@@ -92,6 +90,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     int fileId = FileBasedIndex.getFileId(file);
     VirtualFile alreadyScheduledFile = myFilesToUpdate.get(fileId);
     if (!(alreadyScheduledFile instanceof DeletedVirtualFileStub)) {
+      VfsEventsMerger.tryLog("PULL_OUT_FROM_UPDATE", file);
       myFilesToUpdate.remove(fileId);
     }
   }
@@ -104,8 +103,8 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     return myFilesToUpdate.containsKey(fileId);
   }
 
-  public Stream<VirtualFile> getFilesToUpdate() {
-    return myFilesToUpdate.values().stream();
+  public Iterator<@NotNull VirtualFile> getFilesToUpdate() {
+    return myFilesToUpdate.values().iterator();
   }
 
   public Collection<VirtualFile> getAllFilesToUpdate() {
@@ -162,7 +161,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     if (CLEAR_NON_INDEXABLE_FILE_DATA) {
       List<ID<?, ?>> extensions = getIndexedContentDependentExtensions(fileId);
       if (!extensions.isEmpty()) {
-        myFileBasedIndex.removeDataFromIndicesForFile(fileId, file);
+        myFileBasedIndex.removeDataFromIndicesForFile(fileId, file, "non_indexable_file");
       }
       IndexingFlag.cleanProcessingFlag(file);
     }
@@ -218,7 +217,8 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         Application app = ApplicationManager.getApplication();
         if (!app.isHeadlessEnvironment()  /*avoid synchronous ensureUpToDate to prevent deadlock*/ &&
             app.isDispatchThread() &&
-            !LaterInvocator.isInModalContext()) {
+            !LaterInvocator.isInModalContext() &&
+            !NoAccessDuringPsiEvents.isInsideEventProcessing()) {
           startDumbMode.run();
         }
         else {
@@ -228,7 +228,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     }
   }
 
-  private void processFilesToUpdateInReadAction() {
+  public void processFilesToUpdateInReadAction() {
     processFilesInReadAction(info -> {
       int fileId = info.getFileId();
       VirtualFile file = info.getFile();
@@ -320,7 +320,10 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   @TestOnly
   public void waitForVfsEventsExecuted(long timeout, @NotNull TimeUnit unit) throws Exception {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      ((BoundedTaskExecutor)myVfsEventsExecutor).waitAllTasksExecuted(timeout, unit);
+      return;
+    }
     long deadline = System.nanoTime() + unit.toNanos(timeout);
     while (System.nanoTime() < deadline) {
       try {

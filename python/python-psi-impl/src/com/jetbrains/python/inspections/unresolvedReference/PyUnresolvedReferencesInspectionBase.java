@@ -2,6 +2,7 @@ package com.jetbrains.python.inspections.unresolvedReference;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -29,7 +30,6 @@ public abstract class PyUnresolvedReferencesInspectionBase extends PyInspection 
     if (existingVisitor == null) {
       session.putUserData(KEY, visitor);
     }
-    session.putUserData(PyUnresolvedReferencesVisitor.INSPECTION, this);
     return visitor;
   }
 
@@ -37,10 +37,14 @@ public abstract class PyUnresolvedReferencesInspectionBase extends PyInspection 
   public final void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder holder) {
     final PyUnresolvedReferencesVisitor visitor = session.getUserData(KEY);
     assert visitor != null;
-    if (PyCodeInsightSettings.getInstance().HIGHLIGHT_UNUSED_IMPORTS) {
-      visitor.highlightUnusedImports();
-    }
-    visitor.highlightImportsInsideGuards();
+    ReadAction.run(
+      () -> {
+        if (PyCodeInsightSettings.getInstance().HIGHLIGHT_UNUSED_IMPORTS) {
+          visitor.highlightUnusedImports();
+        }
+        visitor.highlightImportsInsideGuards();
+      }
+    );
     session.putUserData(KEY, null);
   }
 

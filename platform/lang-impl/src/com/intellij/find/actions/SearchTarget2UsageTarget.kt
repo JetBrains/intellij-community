@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("DEPRECATION")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.find.actions
 
@@ -15,10 +14,10 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.usageView.UsageViewBundle
+import com.intellij.usageView.UsageViewUtil
 import com.intellij.usages.ConfigurableUsageTarget
 import com.intellij.usages.UsageTarget
 import com.intellij.usages.UsageView
-import com.intellij.usages.impl.UsageViewImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -65,7 +64,7 @@ class SearchTarget2UsageTarget<O>(
 
   // ----- actions -----
 
-  override fun getShortcut(): KeyboardShortcut? = UsageViewImpl.getShowUsagesWithSettingsShortcut()
+  override fun getShortcut(): KeyboardShortcut? = UsageViewUtil.getShowUsagesWithSettingsShortcut()
 
   override fun getLongDescriptiveName(): @Nls String {
     val target = myPointer.dereference() ?: return UsageViewBundle.message("node.invalid")

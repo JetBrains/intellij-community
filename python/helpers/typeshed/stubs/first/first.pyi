@@ -1,0 +1,13 @@
+from typing import Any, Callable, Iterable, TypeVar, overload
+
+_T = TypeVar("_T")
+_S = TypeVar("_S")
+
+@overload
+def first(iterable: Iterable[_T]) -> _T | None: ...
+@overload
+def first(iterable: Iterable[_T], default: _S) -> _T | _S: ...
+@overload
+def first(iterable: Iterable[_T], default: _S, key: Callable[[_T], Any] | None) -> _T | _S: ...
+@overload
+def first(iterable: Iterable[_T], *, key: Callable[[_T], Any] | None) -> _T | None: ...

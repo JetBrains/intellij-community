@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.statusBar;
 
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
@@ -29,11 +28,6 @@ public class LightEditEncodingWidgetWrapper extends LightEditAbstractPopupWidget
       @Override
       protected @Nullable Editor getEditor() {
         return getLightEditor();
-      }
-
-      @Override
-      protected @NotNull DataContext getContext() {
-        return getEditorDataContext(super.getContext());
       }
     };
   }

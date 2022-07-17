@@ -14,5 +14,5 @@ fun foo(xxx: Int) {
     }
 }
 
-// EXIST: { lookupString: "xxx", itemText: "xxx", typeText: "Char" }
+// EXIST: { lookupString: "xxx", itemText: "xxx", typeText: "Char", icon: "org/jetbrains/kotlin/idea/icons/value.svg"}
 // NOTHING_ELSE

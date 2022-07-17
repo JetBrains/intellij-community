@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -13,11 +13,11 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.agent.extractor.ProxyExtractor;
 import com.intellij.debugger.memory.agent.parsers.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.CpuArch;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -394,7 +394,7 @@ public class IdeaNativeAgentProxyMirror {
       JdkVersionDetector.JdkVersionInfo info = JdkVersionDetector.getInstance().detectJdkVersionInfo(javaHomePath);
       if (info == null) return null;
 
-      String agentPath = getMemoryAgentPath(info.bitness);
+      String agentPath = getMemoryAgentPath(info.arch);
       if (agentPath == null) return null;
 
       setAgentPathPropertyValue(evaluationContext, systemClassType, agentPath);
@@ -422,11 +422,8 @@ public class IdeaNativeAgentProxyMirror {
     );
   }
 
-  @Nullable private static String getMemoryAgentPath(@NotNull Bitness bitness)
-    throws ExecutionException, InterruptedException, TimeoutException {
-    return MemoryAgentUtil.getAgentFilePathAsString(
-      Registry.is("debugger.memory.agent.debug"), MemoryAgentUtil.detectAgentKindByBitness(bitness)
-    );
+  private static @Nullable String getMemoryAgentPath(CpuArch arch) throws ExecutionException, InterruptedException, TimeoutException {
+    return MemoryAgentUtil.getAgentFilePathAsString(Registry.is("debugger.memory.agent.debug"), MemoryAgentUtil.detectAgentKindByArch(arch));
   }
 
   // Evaluates System.getProperty(propertyName)

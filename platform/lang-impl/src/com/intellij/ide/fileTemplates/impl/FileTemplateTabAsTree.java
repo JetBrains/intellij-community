@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.impl;
 
@@ -42,7 +28,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
   private final JTree myTree;
   private final FileTemplateNode myRoot;
 
-  protected FileTemplateTabAsTree(@NlsContexts.TabTitle String title) {
+  FileTemplateTabAsTree(@NlsContexts.TabTitle String title) {
     super(title);
     myRoot = initModel();
     MyTreeModel treeModel = new MyTreeModel(myRoot);
@@ -81,10 +67,6 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
       this(name, icon, children, null);
     }
 
-    FileTemplateNode(Icon icon, String templateName) {
-      this(templateName, icon, Collections.emptyList(), templateName);
-    }
-
     private FileTemplateNode(String name, Icon icon, List<? extends FileTemplateNode> children, String templateName) {
       super(name);
       myIcon = icon;
@@ -104,8 +86,8 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
 
   }
 
-  private static class MyTreeModel extends DefaultTreeModel {
-    MyTreeModel(FileTemplateNode root) {
+  private static final class MyTreeModel extends DefaultTreeModel {
+    private MyTreeModel(FileTemplateNode root) {
       super(root);
     }
   }
@@ -179,10 +161,10 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
   @Nullable
   private FileTemplate getTemplate(final FileTemplateNode node) {
     final String templateName = node.getTemplateName();
-    if (templateName == null || myTemplates.isEmpty()) {
+    if (templateName == null || templates.isEmpty()) {
       return null;
     }
-    for (FileTemplateBase template : myTemplates) {
+    for (FileTemplateBase template : templates) {
       if (templateName.equals(template.getQualifiedName()) || templateName.equals(template.getName())) {
         return template;
       }

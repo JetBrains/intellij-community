@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -47,6 +47,10 @@ public final class RepositoryHelper {
     if (pluginsUrl != null && !"__BUILTIN_PLUGINS_URL__".equals(pluginsUrl)) {
       hosts.add(pluginsUrl);
     }
+    List<CustomPluginRepoContributor> repoContributors = CustomPluginRepoContributor.EP_NAME.getExtensionsIfPointIsRegistered();
+    for (CustomPluginRepoContributor contributor : repoContributors) {
+      hosts.addAll(contributor.getRepoUrls());
+    }
     hosts.add(null);  // main plugin repository
     return hosts;
   }
@@ -56,8 +60,7 @@ public final class RepositoryHelper {
    *
    * @deprecated Please use {@link #loadPlugins(String, BuildNumber, ProgressIndicator)} to get a list of {@link PluginNode}s.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
                                                                 @Nullable ProgressIndicator indicator) throws IOException {
     return new ArrayList<>(loadPlugins(repositoryUrl, null, indicator));
@@ -166,9 +169,8 @@ public final class RepositoryHelper {
   }
 
   private static boolean ideContainsUltimateModule() {
-    IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
-    IdeaPluginDescriptorImpl corePluginImpl = (corePlugin instanceof IdeaPluginDescriptorImpl) ? (IdeaPluginDescriptorImpl)corePlugin : null;
-    return corePluginImpl != null && corePluginImpl.modules.contains(PluginId.getId(ULTIMATE_MODULE));
+    IdeaPluginDescriptorImpl corePlugin = PluginManagerCore.findPlugin(PluginManagerCore.CORE_ID);
+    return corePlugin != null && corePlugin.modules.contains(PluginId.getId(ULTIMATE_MODULE));
   }
 
   @ApiStatus.Internal

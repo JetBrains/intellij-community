@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -8,15 +8,16 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
@@ -49,14 +50,13 @@ class ExpressionEditorWithHistory extends XDebuggerExpressionEditor {
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("DOWN"), getComponent(), parentDisposable);
 
-    ApplicationManager.getApplication().executeOnPooledThread(()->
-      ApplicationManager.getApplication().runReadAction(() -> {
-        if (!project.isDisposed()) {
-          final PsiClass psiClass = DebuggerUtils.findClass(className,
-                                                            project, GlobalSearchScope.allScope(project));
-          ApplicationManager.getApplication().invokeLater(() -> setContext(psiClass), project.getDisposed());
+    ReadAction.nonBlocking(() -> DebuggerUtils.findClass(className, project, GlobalSearchScope.allScope(project)))
+      .finishOnUiThread(ModalityState.defaultModalityState(), context -> {
+        if (context != null) {
+          setContext(context);
         }
-      }));
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private void showHistory() {

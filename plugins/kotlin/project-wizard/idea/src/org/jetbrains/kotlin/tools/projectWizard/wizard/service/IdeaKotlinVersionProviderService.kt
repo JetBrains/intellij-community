@@ -2,12 +2,11 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.service
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.asNullable
 import org.jetbrains.kotlin.tools.projectWizard.core.safe
@@ -33,12 +32,11 @@ class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWiz
             ?: VersionsDownloader.downloadLatestEapOrStableKotlinVersion()
             ?: Versions.KOTLIN
 
-        val jvmTargetVersions = JvmTarget.values().map { it.description }.toSet()
         return kotlinVersionWithDefaultValues(version)
     }
 
     private fun getPatchedKotlinVersion() =
-        if (ApplicationManager.getApplication().isInternal) {
+        if (isApplicationInternalMode()) {
             System.getProperty(KOTLIN_COMPILER_VERSION_TAG)?.let { Version.fromString(it) }
         } else {
             null
@@ -47,10 +45,11 @@ class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWiz
     companion object {
         private const val KOTLIN_COMPILER_VERSION_TAG = "kotlin.compiler.version"
 
-        private fun getKotlinVersionFromCompiler() =
-            KotlinCompilerVersion.getVersion()
-                ?.takeUnless { it.contains(SNAPSHOT_TAG, ignoreCase = true) }
-                ?.let { Version.fromString(it.substringBefore("-release")) }
+        private fun getKotlinVersionFromCompiler(): Version? {
+            val kotlinCompilerVersion = KotlinPluginLayout.standaloneCompilerVersion
+            val kotlinArtifactVersion = kotlinCompilerVersion.takeUnless { it.isSnapshot }?.artifactVersion ?: return null
+            return Version.fromString(kotlinArtifactVersion)
+        }
     }
 }
 

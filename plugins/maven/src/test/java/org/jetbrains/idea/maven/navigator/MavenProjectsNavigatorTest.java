@@ -15,11 +15,16 @@
  */
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.project.importing.FilesList;
+import org.jetbrains.idea.maven.project.importing.MavenImportFlow;
+import org.jetbrains.idea.maven.project.importing.MavenInitialImportContext;
+import org.jetbrains.idea.maven.project.importing.MavenReadContext;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -60,10 +65,12 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     createModulePom("m", "<groupId>test</groupId>" +
                          "<artifactId>m</artifactId>" +
                          "<version>1</version>");
-    myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(myProjectPom), MavenExplicitProfiles.NONE);
-    waitForReadingCompletion();
+
+    readFiles(myProjectPom);
+
 
     myProjectsManager.fireActivatedInTests();
+    waitForMavenUtilRunnablesComplete();
     assertEquals(1, getRootNodes().size());
     assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
   }
@@ -164,8 +171,10 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     resolveDependenciesAndImport();
     assertEquals(1, getRootNodes().size());
 
+    MavenUtil.cleanAllRunnables();
     myProjectsManager.removeManagedFiles(Collections.singletonList(myProjectPom));
-    waitForReadingCompletion();
+    waitForImportCompletion();
+    readFiles();
     assertEquals(0, getRootNodes().size());
   }
 
@@ -200,9 +209,11 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().get(0).getProjectNodesInTests().size());
 
     myNavigator.setGroupModules(false);
+    waitForMavenUtilRunnablesComplete();
     assertEquals(3, getRootNodes().size());
 
     myNavigator.setGroupModules(true);
+    waitForMavenUtilRunnablesComplete();
     assertEquals(1, getRootNodes().size());
     assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
     assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().get(0).getProjectNodesInTests().size());
@@ -225,13 +236,15 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                                          "<version>1</version>");
     readFiles(myProjectPom, m);
 
-    myProjectsTree.setIgnoredFilesPaths(Arrays.asList(m.getPath()));
+    myProjectsManager.getProjectsTree().setIgnoredFilesPaths(Arrays.asList(m.getPath()));
 
     myNavigator.setShowIgnored(true);
+    waitForMavenUtilRunnablesComplete();
     assertTrue(getRootNodes().get(0).isVisible());
     assertEquals(2, getRootNodes().get(0).getChildren().length);
 
     myNavigator.setShowIgnored(false);
+    waitForMavenUtilRunnablesComplete();
     assertTrue(getRootNodes().get(0).isVisible());
     assertEquals(1, getRootNodes().get(0).getChildren().length);
   }
@@ -253,7 +266,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                                          "<version>1</version>");
     readFiles(myProjectPom, m);
 
-    myProjectsTree.setIgnoredFilesPaths(Arrays.asList(myProjectPom.getPath()));
+    getProjectsTree().setIgnoredFilesPaths(Arrays.asList(myProjectPom.getPath()));
 
     myNavigator.setShowIgnored(true);
     assertEquals(1, getRootNodes().size());
@@ -263,6 +276,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     assertEquals(1, projectNode.getProjectNodesInTests().size());
 
     myNavigator.setShowIgnored(false);
+    waitForMavenUtilRunnablesComplete();
     assertEquals(2, getRootNodes().size());
     assertEquals(1, myStructure.getRootElement().getChildren().length); // only one of them is visible
     projectNode = (MavenProjectsStructure.ProjectNode)myStructure.getRootElement().getChildren()[0];
@@ -321,6 +335,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     newState.groupStructurally = false;
     myNavigator.loadState(newState);
 
+    waitForMavenUtilRunnablesComplete();
     assertEquals(2, getRootNodes().size());
   }
 
@@ -337,8 +352,26 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
   }
 
   private void readFiles(VirtualFile... files) {
-    myProjectsManager.addManagedFiles(Arrays.asList(files));
-    waitForReadingCompletion();
+    if (isNewImportingProcess) {
+      MavenImportFlow flow = new MavenImportFlow();
+      List<VirtualFile> allFiles = new ArrayList<>(myProjectsManager.getProjectsFiles());
+      allFiles.addAll(Arrays.asList(files));
+      MavenInitialImportContext initialImportContext =
+        flow.prepareNewImport(myProject,
+                              new FilesList(allFiles),
+                              getMavenGeneralSettings(),
+                              getMavenImporterSettings(),
+                              Collections.emptyList(), Collections.emptyList());
+      MavenReadContext readContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
+      flow.updateProjectManager(readContext);
+      myNavigator.scheduleStructureUpdate();
+
+      waitForMavenUtilRunnablesComplete();
+    }
+    else {
+      myProjectsManager.addManagedFiles(Arrays.asList(files));
+      waitForReadingCompletion();
+    }
   }
 
   private List<MavenProjectsStructure.ProjectNode> getRootNodes() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts
 
 import com.intellij.openapi.Disposable
@@ -16,7 +16,6 @@ import com.intellij.packaging.ui.ArtifactPropertiesEditor
 import com.intellij.packaging.ui.PackagingElementPresentation
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.ui.EmptyIcon
-import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -53,7 +52,7 @@ class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
     assertOneElement(artifactManager.allArtifactsIncludingInvalid)
     val artifact = assertOneElement(artifactManager.getArtifactsByType(PlainArtifactType.getInstance()))
     assertEquals("mock", artifact.name)
-    assertEquals("data", (artifact.rootElement.children.single() as MockPackagingElement).state.data)
+    assertEmpty(artifact.rootElement.children)
   }
 
   fun `test unload and load artifact properties`() {
@@ -110,7 +109,7 @@ private class MockArtifactType : ArtifactType("mock", Supplier { "Mock" }) {
 
   override fun getIcon(): Icon = EmptyIcon.ICON_16
 
-  override fun getDefaultPathFor(kind: PackagingElementOutputKind): String? = ""
+  override fun getDefaultPathFor(kind: PackagingElementOutputKind): String = ""
 
   override fun createRootElement(artifactName: String): CompositePackagingElement<*> {
     return PackagingElementFactory.getInstance().createArtifactRootElement()

@@ -5,8 +5,11 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.text.StringUtilRt
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.replaced
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateEntry
@@ -19,6 +22,11 @@ class ToRawStringLiteralIntention : SelfTargetingOffsetIndependentIntention<KtSt
     KotlinBundle.lazyMessage("to.raw.string.literal")
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtStringTemplateExpression): Boolean {
+        if (PsiTreeUtil.nextLeaf(element) is PsiErrorElement) {
+            // Parse error right after the literal
+            // the replacement may make things even worse, suppress the action
+            return false
+        }
         val text = element.text
         if (text.startsWith("\"\"\"")) return false // already raw
 

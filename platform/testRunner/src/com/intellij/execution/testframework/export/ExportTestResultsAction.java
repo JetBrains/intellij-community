@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.export;
 
 import com.intellij.CommonBundle;
@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -45,6 +46,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 public final class ExportTestResultsAction extends DumbAwareAction {
+
   private static final String ID = "ExportTestResults";
 
   private static final Logger LOG = Logger.getInstance(ExportTestResultsAction.class.getName());
@@ -64,6 +66,11 @@ public final class ExportTestResultsAction extends DumbAwareAction {
 
   public void setModel(TestFrameworkRunningModel model) {
     myModel = model;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

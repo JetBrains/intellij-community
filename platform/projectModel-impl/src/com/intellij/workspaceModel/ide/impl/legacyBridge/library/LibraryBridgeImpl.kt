@@ -26,10 +26,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRootTypeId
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
@@ -37,7 +36,7 @@ interface LibraryBridge : LibraryEx {
   val libraryId: LibraryId
 
   @ApiStatus.Internal
-  fun getModifiableModel(builder: WorkspaceEntityStorageBuilder): LibraryEx.ModifiableModelEx
+  fun getModifiableModel(builder: MutableEntityStorage): LibraryEx.ModifiableModelEx
 }
 
 @ApiStatus.Internal
@@ -46,7 +45,7 @@ class LibraryBridgeImpl(
   val project: Project,
   initialId: LibraryId,
   initialEntityStorage: VersionedEntityStorage,
-  private var targetBuilder: WorkspaceEntityStorageDiffBuilder?
+  private var targetBuilder: MutableEntityStorage?
 ) : LibraryBridge, RootProvider, TraceableDisposable(true) {
 
   override fun getModule(): Module? = (libraryTable as? ModuleLibraryTableBridge)?.module
@@ -94,10 +93,10 @@ class LibraryBridgeImpl(
   }
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx {
-    return getModifiableModel(WorkspaceEntityStorageBuilder.from(librarySnapshot.storage))
+    return getModifiableModel(MutableEntityStorage.from(librarySnapshot.storage))
   }
 
-  override fun getModifiableModel(builder: WorkspaceEntityStorageBuilder): LibraryEx.ModifiableModelEx {
+  override fun getModifiableModel(builder: MutableEntityStorage): LibraryEx.ModifiableModelEx {
     return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder, false)
   }
 
@@ -146,13 +145,20 @@ class LibraryBridgeImpl(
 
   private fun checkDisposed() {
     if (isDisposed) {
-      val libraryEntity = entityStorage.cachedValue(librarySnapshotCached).libraryEntity
-      val isDisposedGlobally = WorkspaceModel.getInstance(project).entityStorage.current.libraryMap.getDataByEntity(libraryEntity)?.isDisposed
+      val libraryEntity = try {
+        entityStorage.cachedValue(librarySnapshotCached).libraryEntity
+      }
+      catch (t: Throwable) {
+        null
+      }
+      val isDisposedGlobally = libraryEntity?.let {
+        WorkspaceModel.getInstance(project).entityStorage.current.libraryMap.getDataByEntity(it)?.isDisposed
+      }
       val message = """
         Library $entityId already disposed:
         Library id: $libraryId
         Entity: ${libraryEntity.run { "$name, $this" }}
-        Is disposed in project model: $isDisposedGlobally
+        Is disposed in project model: ${isDisposedGlobally != false}
         Stack trace: $stackTrace
         """.trimIndent()
       try {

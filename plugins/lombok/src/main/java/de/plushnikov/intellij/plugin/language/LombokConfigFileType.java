@@ -35,7 +35,6 @@ public class LombokConfigFileType extends LanguageFileType {
     return "config";
   }
 
-  @Nullable
   @Override
   public Icon getIcon() {
     return LombokIcons.Config;

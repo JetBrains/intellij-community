@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
@@ -9,6 +10,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
@@ -20,88 +22,183 @@ import java.util.List;
 import java.util.Map;
 
 public class VarTypeProcessor {
-  public static final int VAR_NON_FINAL = 1;
-  public static final int VAR_EXPLICIT_FINAL = 2;
-  public static final int VAR_FINAL = 3;
-
   private final StructMethod method;
   private final MethodDescriptor methodDescriptor;
-  private final Map<VarVersionPair, VarType> mapExprentMinTypes = new HashMap<>();
-  private final Map<VarVersionPair, VarType> mapExprentMaxTypes = new HashMap<>();
-  private final Map<VarVersionPair, Integer> mapFinalVars = new HashMap<>();
 
-  public VarTypeProcessor(StructMethod mt, MethodDescriptor md) {
-    method = mt;
-    methodDescriptor = md;
+  private final Map<VarVersionPair, VarType> minExprentTypes = new HashMap<>();
+  private final Map<VarVersionPair, VarType> maxExprentTypes = new HashMap<>();
+  private final Map<VarVersionPair, Integer> finalVariables = new HashMap<>();
+
+  public VarTypeProcessor(@NotNull StructMethod method, @NotNull MethodDescriptor methodDescriptor) {
+    this.method = method;
+    this.methodDescriptor = methodDescriptor;
   }
 
-  public void calculateVarTypes(RootStatement root, DirectGraph graph) {
-    setInitVars(root);
-
+  public void calculateVarTypes(@NotNull RootStatement root, @NotNull DirectGraph graph) {
+    setInitVariables();
+    setCatchBlockVariables(root);
     resetExprentTypes(graph);
-
     //noinspection StatementWithEmptyBody
     while (!processVarTypes(graph)) ;
   }
 
-  private void setInitVars(RootStatement root) {
+  private void setInitVariables() {
     boolean thisVar = !method.hasModifier(CodeConstants.ACC_STATIC);
-
-    MethodDescriptor md = methodDescriptor;
-
     if (thisVar) {
-      StructClass cl = (StructClass)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS);
-      VarType clType = new VarType(CodeConstants.TYPE_OBJECT, 0, cl.qualifiedName);
-      mapExprentMinTypes.put(new VarVersionPair(0, 1), clType);
-      mapExprentMaxTypes.put(new VarVersionPair(0, 1), clType);
+      StructClass currentClass = (StructClass)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS);
+      VarType classType = new VarType(CodeConstants.TYPE_OBJECT, 0, currentClass.qualifiedName);
+      minExprentTypes.put(new VarVersionPair(0, 1), classType);
+      maxExprentTypes.put(new VarVersionPair(0, 1), classType);
     }
-
     int varIndex = 0;
-    for (int i = 0; i < md.params.length; i++) {
-      mapExprentMinTypes.put(new VarVersionPair(varIndex + (thisVar ? 1 : 0), 1), md.params[i]);
-      mapExprentMaxTypes.put(new VarVersionPair(varIndex + (thisVar ? 1 : 0), 1), md.params[i]);
-      varIndex += md.params[i].stackSize;
-    }
-
-    // catch variables
-    LinkedList<Statement> stack = new LinkedList<>();
-    stack.add(root);
-
-    while (!stack.isEmpty()) {
-      Statement stat = stack.removeFirst();
-
-      List<VarExprent> lstVars = null;
-      if (stat.type == Statement.TYPE_CATCHALL) {
-        lstVars = ((CatchAllStatement)stat).getVars();
-      }
-      else if (stat.type == Statement.TYPE_TRYCATCH) {
-        lstVars = ((CatchStatement)stat).getVars();
-      }
-
-      if (lstVars != null) {
-        for (VarExprent var : lstVars) {
-          mapExprentMinTypes.put(new VarVersionPair(var.getIndex(), 1), var.getVarType());
-          mapExprentMaxTypes.put(new VarVersionPair(var.getIndex(), 1), var.getVarType());
-        }
-      }
-
-      stack.addAll(stat.getStats());
+    VarType[] methodParameters = methodDescriptor.params;
+    for (VarType parameter : methodParameters) {
+      minExprentTypes.put(new VarVersionPair(varIndex + (thisVar ? 1 : 0), 1), parameter);
+      maxExprentTypes.put(new VarVersionPair(varIndex + (thisVar ? 1 : 0), 1), parameter);
+      varIndex += parameter.getStackSize();
     }
   }
 
-  private static void resetExprentTypes(DirectGraph graph) {
-    graph.iterateExprents(exprent -> {
-      List<Exprent> lst = exprent.getAllExprents(true);
-      lst.add(exprent);
-
-      for (Exprent expr : lst) {
-        if (expr.type == Exprent.EXPRENT_VAR) {
-          ((VarExprent)expr).setVarType(VarType.VARTYPE_UNKNOWN);
+  private void setCatchBlockVariables(@NotNull RootStatement root) {
+    LinkedList<Statement> statements = new LinkedList<>();
+    statements.add(root);
+    while (!statements.isEmpty()) {
+      Statement statement = statements.removeFirst();
+      List<VarExprent> catchVariables = null;
+      if (statement.type == StatementType.CATCH_ALL) {
+        catchVariables = ((CatchAllStatement)statement).getVars();
+      }
+      else if (statement.type == StatementType.TRY_CATCH) {
+        catchVariables = ((CatchStatement)statement).getVars();
+      }
+      if (catchVariables != null) {
+        for (VarExprent catchVariable : catchVariables) {
+          minExprentTypes.put(new VarVersionPair(catchVariable.getIndex(), 1), catchVariable.getVarType());
+          maxExprentTypes.put(new VarVersionPair(catchVariable.getIndex(), 1), catchVariable.getVarType());
         }
-        else if (expr.type == Exprent.EXPRENT_CONST) {
-          ConstExprent constExpr = (ConstExprent)expr;
-          if (constExpr.getConstType().typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
-            constExpr.setConstType(new ConstExprent(constExpr.getIntValue(), constExpr.isBoolPermitted(), null).getConstType());
+      }
+      statements.addAll(statement.getStats());
+    }
+  }
+
+  private boolean checkTypeExprent(@NotNull Exprent currentExprent) {
+    for (Exprent exprent : currentExprent.getAllExprents()) {
+      if (!checkTypeExprent(exprent)) return false;
+    }
+    if (currentExprent.type == Exprent.EXPRENT_CONST) {
+      ConstExprent constExprent = (ConstExprent)currentExprent;
+      if (constExprent.getConstType().getTypeFamily() <= CodeConstants.TYPE_FAMILY_INTEGER) { // boolean or integer
+        VarVersionPair varVersion = new VarVersionPair(constExprent.id, -1);
+        if (!minExprentTypes.containsKey(varVersion)) {
+          minExprentTypes.put(varVersion, constExprent.getConstType());
+        }
+      }
+    }
+
+    CheckTypesResult exprentTypeBounds = currentExprent.checkExprTypeBounds();
+    if (exprentTypeBounds == null) return true;
+
+    for (var entry : exprentTypeBounds.getMaxTypeExprents()) {
+      if (entry.type.getTypeFamily() != CodeConstants.TYPE_FAMILY_OBJECT) {
+        changeExprentType(entry.exprent, entry.type, false);
+      }
+    }
+    boolean result = true;
+    for (var entry : exprentTypeBounds.getMinTypeExprents()) {
+      result &= changeExprentType(entry.exprent, entry.type, true);
+    }
+    return result;
+  }
+
+  private boolean processVarTypes(@NotNull DirectGraph graph) {
+    return graph.iterateExprents(exprent -> checkTypeExprent(exprent) ? 0 : 1);
+  }
+
+  private boolean changeExprentType(@NotNull Exprent exprent, @NotNull VarType newType, boolean checkMinExprentType) {
+    if (exprent.type == Exprent.EXPRENT_CONST) {
+      ConstExprent constExprent = (ConstExprent)exprent;
+      VarType constType = constExprent.getConstType();
+      if (newType.getTypeFamily() > CodeConstants.TYPE_FAMILY_INTEGER || constType.getTypeFamily() > CodeConstants.TYPE_FAMILY_INTEGER) return true;
+      if (newType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
+        VarType integerType = new ConstExprent((Integer)constExprent.getValue(), false, null).getConstType();
+        if (integerType.isStrictSuperset(newType)) {
+          newType = integerType;
+        }
+      }
+      return changeConstExprentType(new VarVersionPair(exprent.id, -1), exprent, newType, checkMinExprentType);
+    }
+    if (exprent.type == Exprent.EXPRENT_VAR) {
+      return changeConstExprentType(new VarVersionPair((VarExprent)exprent), exprent, newType, checkMinExprentType);
+    }
+    if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+      return changeExprentType(((AssignmentExprent)exprent).getRight(), newType, checkMinExprentType);
+    }
+    if (exprent.type == Exprent.EXPRENT_FUNCTION) {
+      FunctionExprent functionExprent = (FunctionExprent)exprent;
+      switch (functionExprent.getFuncType()) {
+        case FunctionExprent.FUNCTION_IIF:   // FIXME:
+          return changeExprentType(functionExprent.getLstOperands().get(1), newType, checkMinExprentType) &
+                 changeExprentType(functionExprent.getLstOperands().get(2), newType, checkMinExprentType);
+        case FunctionExprent.FUNCTION_AND:
+        case FunctionExprent.FUNCTION_OR:
+        case FunctionExprent.FUNCTION_XOR:
+          return changeExprentType(functionExprent.getLstOperands().get(0), newType, checkMinExprentType) &
+                 changeExprentType(functionExprent.getLstOperands().get(1), newType, checkMinExprentType);
+      }
+    }
+    return true;
+  }
+
+  private boolean changeConstExprentType(@NotNull VarVersionPair varVersion,
+                                         @NotNull Exprent exprent,
+                                         @NotNull VarType newType,
+                                         boolean checkMinExprentType) {
+    if (checkMinExprentType) {
+      VarType currentMinType = minExprentTypes.get(varVersion);
+      VarType newMinType;
+      if (currentMinType == null || newType.getTypeFamily() > currentMinType.getTypeFamily()) {
+        newMinType = newType;
+      }
+      else if (newType.getTypeFamily() < currentMinType.getTypeFamily()) {
+        return true;
+      }
+      else {
+        newMinType = VarType.getCommonSupertype(currentMinType, newType);
+      }
+      minExprentTypes.put(varVersion, newMinType);
+      if (exprent.type == Exprent.EXPRENT_CONST) {
+        ((ConstExprent)exprent).setConstType(newMinType);
+      }
+      return currentMinType == null ||
+             (newMinType.getTypeFamily() <= currentMinType.getTypeFamily() && !newMinType.isStrictSuperset(currentMinType));
+    }
+    VarType currentMaxType = maxExprentTypes.get(varVersion);
+    VarType newMaxType;
+    if (currentMaxType == null || newType.getTypeFamily() < currentMaxType.getTypeFamily()) {
+      newMaxType = newType;
+    }
+    else if (newType.getTypeFamily() > currentMaxType.getTypeFamily()) {
+      return true;
+    }
+    else {
+      newMaxType = VarType.getCommonMinType(currentMaxType, newType);
+    }
+    maxExprentTypes.put(varVersion, newMaxType);
+    return true;
+  }
+
+  private static void resetExprentTypes(@NotNull DirectGraph graph) {
+    graph.iterateExprents(currExprent -> {
+      List<Exprent> allExprents = currExprent.getAllExprents(true);
+      allExprents.add(currExprent);
+      for (Exprent exprent : allExprents) {
+        if (exprent.type == Exprent.EXPRENT_VAR) {
+          ((VarExprent)exprent).setVarType(VarType.VARTYPE_UNKNOWN);
+        }
+        else if (exprent.type == Exprent.EXPRENT_CONST) {
+          ConstExprent constExprent = (ConstExprent)exprent;
+          if (constExprent.getConstType().getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
+            constExprent.setConstType(new ConstExprent(constExprent.getIntValue(), constExprent.isBoolPermitted(), null).getConstType());
           }
         }
       }
@@ -109,151 +206,23 @@ public class VarTypeProcessor {
     });
   }
 
-  private boolean processVarTypes(DirectGraph graph) {
-    return graph.iterateExprents(exprent -> checkTypeExprent(exprent) ? 0 : 1);
+  public Map<VarVersionPair, VarType> getMaxExprentTypes() {
+    return maxExprentTypes;
   }
 
-  private boolean checkTypeExprent(Exprent exprent) {
-
-    for (Exprent expr : exprent.getAllExprents()) {
-      if (!checkTypeExprent(expr)) {
-        return false;
-      }
-    }
-
-    if (exprent.type == Exprent.EXPRENT_CONST) {
-      ConstExprent constExpr = (ConstExprent)exprent;
-      if (constExpr.getConstType().typeFamily <= CodeConstants.TYPE_FAMILY_INTEGER) { // boolean or integer
-        VarVersionPair pair = new VarVersionPair(constExpr.id, -1);
-        if (!mapExprentMinTypes.containsKey(pair)) {
-          mapExprentMinTypes.put(pair, constExpr.getConstType());
-        }
-      }
-    }
-
-    CheckTypesResult result = exprent.checkExprTypeBounds();
-
-    boolean res = true;
-    if (result != null) {
-      for (CheckTypesResult.ExprentTypePair entry : result.getLstMaxTypeExprents()) {
-        if (entry.type.typeFamily != CodeConstants.TYPE_FAMILY_OBJECT) {
-          changeExprentType(entry.exprent, entry.type, 1);
-        }
-      }
-
-      for (CheckTypesResult.ExprentTypePair entry : result.getLstMinTypeExprents()) {
-        res &= changeExprentType(entry.exprent, entry.type, 0);
-      }
-    }
-
-    return res;
+  public Map<VarVersionPair, VarType> getMinExprentTypes() {
+    return minExprentTypes;
   }
 
-
-  private boolean changeExprentType(Exprent exprent, VarType newType, int minMax) {
-    boolean res = true;
-
-    switch (exprent.type) {
-      case Exprent.EXPRENT_CONST:
-        ConstExprent constExpr = (ConstExprent)exprent;
-        VarType constType = constExpr.getConstType();
-
-        if (newType.typeFamily > CodeConstants.TYPE_FAMILY_INTEGER || constType.typeFamily > CodeConstants.TYPE_FAMILY_INTEGER) {
-          return true;
-        }
-        else if (newType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
-          VarType minInteger = new ConstExprent((Integer)constExpr.getValue(), false, null).getConstType();
-          if (minInteger.isStrictSuperset(newType)) {
-            newType = minInteger;
-          }
-        }
-      case Exprent.EXPRENT_VAR:
-        VarVersionPair pair = null;
-        if (exprent.type == Exprent.EXPRENT_CONST) {
-          pair = new VarVersionPair(exprent.id, -1);
-        }
-        else if (exprent.type == Exprent.EXPRENT_VAR) {
-          pair = new VarVersionPair((VarExprent)exprent);
-        }
-
-        if (minMax == 0) { // min
-          VarType currentMinType = mapExprentMinTypes.get(pair);
-          VarType newMinType;
-          if (currentMinType == null || newType.typeFamily > currentMinType.typeFamily) {
-            newMinType = newType;
-          }
-          else if (newType.typeFamily < currentMinType.typeFamily) {
-            return true;
-          }
-          else {
-            newMinType = VarType.getCommonSupertype(currentMinType, newType);
-          }
-
-          mapExprentMinTypes.put(pair, newMinType);
-          if (exprent.type == Exprent.EXPRENT_CONST) {
-            ((ConstExprent)exprent).setConstType(newMinType);
-          }
-
-          if (currentMinType != null && (newMinType.typeFamily > currentMinType.typeFamily || newMinType.isStrictSuperset(currentMinType))) {
-            return false;
-          }
-        }
-        else {  // max
-          VarType currentMaxType = mapExprentMaxTypes.get(pair);
-          VarType newMaxType;
-          if (currentMaxType == null || newType.typeFamily < currentMaxType.typeFamily) {
-            newMaxType = newType;
-          }
-          else if (newType.typeFamily > currentMaxType.typeFamily) {
-            return true;
-          }
-          else {
-            newMaxType = VarType.getCommonMinType(currentMaxType, newType);
-          }
-
-          mapExprentMaxTypes.put(pair, newMaxType);
-        }
-        break;
-
-      case Exprent.EXPRENT_ASSIGNMENT:
-        return changeExprentType(((AssignmentExprent)exprent).getRight(), newType, minMax);
-
-      case Exprent.EXPRENT_FUNCTION:
-        FunctionExprent func = (FunctionExprent)exprent;
-        switch (func.getFuncType()) {
-          case FunctionExprent.FUNCTION_IIF:   // FIXME:
-            res = changeExprentType(func.getLstOperands().get(1), newType, minMax) &
-                  changeExprentType(func.getLstOperands().get(2), newType, minMax);
-            break;
-          case FunctionExprent.FUNCTION_AND:
-          case FunctionExprent.FUNCTION_OR:
-          case FunctionExprent.FUNCTION_XOR:
-            res = changeExprentType(func.getLstOperands().get(0), newType, minMax) &
-                  changeExprentType(func.getLstOperands().get(1), newType, minMax);
-            break;
-        }
-    }
-
-    return res;
-  }
-
-  public Map<VarVersionPair, VarType> getMapExprentMaxTypes() {
-    return mapExprentMaxTypes;
-  }
-
-  public Map<VarVersionPair, VarType> getMapExprentMinTypes() {
-    return mapExprentMinTypes;
-  }
-
-  public Map<VarVersionPair, Integer> getMapFinalVars() {
-    return mapFinalVars;
-  }
-
-  public void setVarType(VarVersionPair pair, VarType type) {
-    mapExprentMinTypes.put(pair, type);
+  public Map<VarVersionPair, Integer> getFinalVariables() {
+    return finalVariables;
   }
 
   public VarType getVarType(VarVersionPair pair) {
-    return mapExprentMinTypes.get(pair);
+    return minExprentTypes.get(pair);
+  }
+
+  public void setVarType(VarVersionPair pair, VarType type) {
+    minExprentTypes.put(pair, type);
   }
 }

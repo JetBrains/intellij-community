@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiUtilCore;
@@ -27,7 +28,10 @@ import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.BufferedReader;
@@ -58,6 +62,22 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     Set<InspectionSuppressor> suppressors = getSuppressors(element);
     return !suppressors.isEmpty() && isSuppressedFor(element, suppressors);
+  }
+
+  public static boolean isSuppressedBySuppressors(@NotNull PsiElement element, @NotNull String toolId) {
+    Set<InspectionSuppressor> suppressors = getSuppressors(element);
+    return !suppressors.isEmpty() && isSuppressedFor(element, toolId, suppressors);
+  }
+
+  private static boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String toolId, Set<? extends InspectionSuppressor> suppressors) {
+    for (InspectionSuppressor suppressor : suppressors) {
+      if (suppressor.isSuppressedFor(element, toolId)) {
+        return true;
+      }
+    }
+
+    InspectionElementsMerger merger = InspectionElementsMerger.getMerger(toolId);
+    return merger != null && isSuppressedForMerger(element, suppressors, merger);
   }
 
   private boolean isSuppressedFor(@NotNull PsiElement element, Set<? extends InspectionSuppressor> suppressors) {
@@ -170,7 +190,11 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
   public static @NotNull Set<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
     PsiUtilCore.ensureValid(element);
-    FileViewProvider viewProvider = element.getContainingFile().getViewProvider();
+    PsiFile file = element.getContainingFile();
+    if (file == null) {
+      return Collections.emptySet();
+    }
+    FileViewProvider viewProvider = file.getViewProvider();
     final List<InspectionSuppressor> elementLanguageSuppressor = LanguageInspectionSuppressors.INSTANCE.allForLanguage(element.getLanguage());
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
       Set<InspectionSuppressor> suppressors = new LinkedHashSet<>();
@@ -227,7 +251,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     String getDefaultGroupDisplayName();
   }
 
-  protected volatile DefaultNameProvider myNameProvider;
+  volatile DefaultNameProvider myNameProvider;
 
   /**
    * @see InspectionEP#groupDisplayName
@@ -335,7 +359,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   }
 
   /**
-   * @return true iff default configuration options should be shown for the tool. E.g. scope-severity settings.
+   * @return true iff default configuration options should be shown for the tool. E.g., scope-severity settings.
    * @apiNote if {@code false} returned, only panel provided by {@link #createOptionsPanel()} is shown if any.
    */
   public boolean showDefaultConfigurationOptions() {
@@ -344,13 +368,12 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
   /**
    * Read in settings from XML config.
-   * Default implementation uses XmlSerializer so you may use public fields (like {@code int TOOL_OPTION})
+   * Default implementation uses XmlSerializer, so you may use public fields (like {@code int TOOL_OPTION})
    * and bean-style getters/setters (like {@code int getToolOption(), void setToolOption(int)}) to store your options.
    *
    * @param node to read settings from.
    * @throws InvalidDataException if the loaded data was not valid.
    */
-  @SuppressWarnings("deprecation")
   public void readSettings(@NotNull Element node) {
     if (useNewSerializer()) {
       try {
@@ -361,13 +384,14 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       }
     }
     else {
+      //noinspection deprecation
       DefaultJDOMExternalizer.readExternal(this, node);
     }
   }
 
   /**
    * Store current settings in XML config.
-   * Default implementation uses XmlSerializer so you may use public fields (like {@code int TOOL_OPTION})
+   * Default implementation uses XmlSerializer, so you may use public fields (like {@code int TOOL_OPTION})
    * and bean-style getters/setters (like {@code int getToolOption(), void setToolOption(int)}) to store your options.
    *
    * @param node to store settings to.
@@ -427,15 +451,13 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    *
    * @return serialization filter.
    */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected @Nullable SerializationFilter getSerializationFilter() {
     return XmlSerializer.getJdomSerializer().getDefaultSerializationFilter();
   }
 
   /**
-   * Override this method to return a HTML inspection description. Otherwise it will be loaded from resources using ID.
+   * Override this method to return an HTML inspection description. Otherwise, it will be loaded from resources using ID.
    *
    * @return hard-coded inspection description.
    */
@@ -447,7 +469,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return null;
   }
 
-  protected @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
+  @NotNull
+  private Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getClass();
   }
 
@@ -482,6 +505,17 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
     return null;
   }
+
+  /**
+   * Do not override the method, register attributes in plugin.xml
+   *
+   * @return attributesKey's external name if editor presentation should be different from severity presentation
+   * {@code null} if attributes should correspond to chosen severity
+   */
+  public String getEditorAttributesKey() {
+    return null;
+  }
+
 
   public static @Nls String getGeneralGroupName() {
     return InspectionsBundle.message("inspection.general.tools.group.name");

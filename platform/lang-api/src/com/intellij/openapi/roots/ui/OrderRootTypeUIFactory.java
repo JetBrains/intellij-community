@@ -13,7 +13,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
+ * Defines a factory to create visual representations for root types that can be queried from OrderEntry.
  * @author anna
+ * @see com.intellij.openapi.roots.OrderEntry
+ * @see SdkPathEditor
  */
 public interface OrderRootTypeUIFactory {
   KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType> FACTORY =

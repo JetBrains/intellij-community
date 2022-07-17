@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.learnIde
 
 import com.intellij.icons.AllIcons
@@ -8,7 +8,7 @@ import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.MouseAdapter
@@ -119,7 +119,7 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
 
     val learnIdeFeaturesHeader = DynamicFontLabel(data.getName())
 
-    learnIdeFeaturesHeader.apply { val labelFont = UIUtil.getLabelFont()
+    learnIdeFeaturesHeader.apply { val labelFont = StartupUiUtil.getLabelFont()
       font = labelFont.deriveFont(Font.BOLD).deriveFont(labelFont.size2D + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0 )
     }
     learnIdeFeaturesHeader.alignmentX = LEFT_ALIGNMENT
@@ -263,7 +263,8 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
     override fun setUI(ui: LabelUI?) {
       super.setUI(ui)
       if (font != null) {
-        font = FontUIResource(font.deriveFont(UIUtil.getLabelFont().size.toFloat() + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0 ).deriveFont(Font.BOLD))
+        font = FontUIResource(font.deriveFont(
+          StartupUiUtil.getLabelFont().size.toFloat() + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0 ).deriveFont(Font.BOLD))
       }
     }
   }

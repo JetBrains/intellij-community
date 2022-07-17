@@ -3,11 +3,11 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
+import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,9 +30,11 @@ final class ValueSerializationChecker<Value, Input> {
   }
 
   void checkValueSerialization(@NotNull Map<?, Value> data, @NotNull Input input) {
-    Exception problem = getValueSerializationProblem(data, input);
-    if (problem != null) {
-      myProblemReporter.reportProblem(problem);
+    if (IndexDebugProperties.DEBUG && !IndexDebugProperties.IS_IN_STRESS_TESTS) {
+      Exception problem = getValueSerializationProblem(data, input);
+      if (problem != null) {
+        myProblemReporter.reportProblem(problem);
+      }
     }
   }
 
@@ -44,12 +46,10 @@ final class ValueSerializationChecker<Value, Input> {
       }
 
       try {
-        final BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
-        DataOutputStream outputStream = new DataOutputStream(out);
-        myValueExternalizer.save(outputStream, value);
-        outputStream.close();
-        final Value deserializedValue =
-          myValueExternalizer.read(new DataInputStream(out.toInputStream()));
+        ByteArraySequence sequence = AbstractForwardIndexAccessor.serializeValueToByteSeq(value,
+                                                                                          myValueExternalizer,
+                                                                                          4);
+        Value deserializedValue = sequence == null ? null : myValueExternalizer.read(new DataInputStream(sequence.toInputStream()));
 
         if (!(Comparing.equal(value, deserializedValue) && (value == null || value.hashCode() == deserializedValue.hashCode()))) {
           LOG.error(("Index " + myIndexId + " deserialization violates equals / hashCode contract for Value parameter") +

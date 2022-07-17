@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 interface T
 
 interface <caret>U: T {

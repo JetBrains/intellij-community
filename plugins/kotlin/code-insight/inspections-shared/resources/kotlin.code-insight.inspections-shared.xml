@@ -1,0 +1,12 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.codeInsight.inspections.shared">
+  <extensions defaultExtensionNs="com.intellij">
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RemoveRedundantBackticksInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin" key="inspection.remove.redundant.backticks.display.name" bundle="messages.KotlinBundle"/>
+
+  </extensions>
+</idea-plugin>

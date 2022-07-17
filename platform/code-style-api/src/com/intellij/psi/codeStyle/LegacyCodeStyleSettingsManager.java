@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Supports old code style settings (before version 2017.3). The settings are returned as is without any
  * changes.
- * @author Rustam Vishnyakov
  */
 @State(name = "ProjectCodeStyleSettingsManager", storages = @Storage("codeStyleSettings.xml"))
 public class LegacyCodeStyleSettingsManager implements PersistentStateComponent<Element> {

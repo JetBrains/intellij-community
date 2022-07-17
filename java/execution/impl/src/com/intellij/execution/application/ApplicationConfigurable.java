@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -60,8 +60,10 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myModuleSelector.applyTo(configuration);
 
     String className = getMainClassField().getText();
-    PsiClass aClass = myModuleSelector.findClass(className);
-    configuration.setMainClassName(aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className);
+    if (!className.equals(getInitialMainClassName(configuration))) {
+      PsiClass aClass = myModuleSelector.findClass(className);
+      configuration.setMainClassName(aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className);
+    }
     configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
     configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
     configuration.setShortenCommandLine(myShortenClasspathModeCombo.getComponent().getSelectedItem());
@@ -83,12 +85,17 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myCommonProgramParameters.reset(configuration);
     myModuleSelector.reset(configuration);
 
-    getMainClassField().setText(configuration.getMainClassName() != null ? configuration.getMainClassName().replaceAll("\\$", "\\.") : "");
+    getMainClassField().setText(getInitialMainClassName(configuration));
     myJrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
     myShortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
     myIncludeProvidedDeps.getComponent().setSelected(configuration.isProvidedScopeIncluded());
 
     hideUnsupportedFieldsIfNeeded();
+  }
+
+  @NotNull
+  private String getInitialMainClassName(@NotNull ApplicationConfiguration configuration) {
+    return configuration.getMainClassName() != null ? configuration.getMainClassName().replaceAll("\\$", "\\.") : "";
   }
 
   public EditorTextFieldWithBrowseButton getMainClassField() {

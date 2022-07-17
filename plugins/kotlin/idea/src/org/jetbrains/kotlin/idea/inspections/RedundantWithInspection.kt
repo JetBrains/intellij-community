@@ -1,26 +1,30 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.moveCaret
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.inspections.UnusedLambdaExpressionBodyInspection.Companion.replaceBlockExpressionWithLambdaBody
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 
 class RedundantWithInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
@@ -51,9 +55,7 @@ class RedundantWithInspection : AbstractKotlinInspection() {
                         return
                     }
 
-                    val resolvedCall = element.getResolvedCall(context) ?: return
-
-                    if (isUsageOfDescriptor(lambdaDescriptor, resolvedCall, context)) {
+                    if (isUsageOfDescriptor(lambdaDescriptor, element, context)) {
                         used = true
                     }
                 }
@@ -66,8 +68,7 @@ class RedundantWithInspection : AbstractKotlinInspection() {
                 }
                 holder.registerProblem(
                     callee,
-                    KotlinBundle.message("redundant.with.call"),
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                    KotlinBundle.message("inspection.redundant.with.display.name"),
                     quickfix
                 )
             }
@@ -92,12 +93,18 @@ private class RemoveRedundantWithFix : LocalQuickFix {
             if (singleReturnedExpression != null) {
                 callExpression.replaced(singleReturnedExpression)
             } else {
-                declaration.equalsToken?.delete()
-                declaration.bodyExpression?.replaced(KtPsiFactory(project).createSingleStatementBlock(lambdaBody))
+                declaration.replaceBlockExpressionWithLambdaBody(lambdaBody)
+                declaration.bodyExpression
             }
         } else {
-            callExpression.replaced(lambdaBody)
+            val result = lambdaBody.allChildren.takeUnless { it.isEmpty }?.let { range ->
+                callExpression.parent.addRangeAfter(range.first, range.last, callExpression)
+            }
+
+            callExpression.delete()
+            result
         }
+
         if (replaced != null) {
             replaced.findExistingEditor()?.moveCaret(replaced.startOffset)
         }

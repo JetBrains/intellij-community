@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("unused", "DuplicatedCode", "HardCodedStringLiteral")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("unused", "HardCodedStringLiteral")
 
 package com.intellij.util.indexing.diagnostic.presentation
 
@@ -7,17 +7,20 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.*
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.indexing.diagnostic.ChangedFilesPushedEvent
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
-import com.intellij.util.indexing.diagnostic.IndexingJobStatistics
+import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.JsonSharedIndexDiagnosticEvent
 import com.intellij.util.indexing.diagnostic.dto.*
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
+import java.util.*
 
 fun createAggregateHtml(
   projectName: String,
   diagnostics: List<IndexDiagnosticDumper.ExistingDiagnostic>,
-  sharedIndexEvents: List<JsonSharedIndexDiagnosticEvent>
+  sharedIndexEvents: List<JsonSharedIndexDiagnosticEvent>,
+  changedFilesPushEvents: List<ChangedFilesPushedEvent>
 ): String = html {
   head {
     title("Indexing diagnostics of '$projectName'")
@@ -35,13 +38,15 @@ fun createAggregateHtml(
           appendRaw("<caption style=\"caption-side: bottom; text-align: right; font-size: 14px\">Hover for details</caption>")
           thead {
             tr {
-              th("Time", colspan = "6")
+              th("Time", colspan = "7")
               th("Files", colspan = "6")
               th("IDE", rowspan = "2")
+              th("Type", rowspan = "2")
             }
             tr {
               th("Started")
               th("Total")
+              th("Creating iterators")
               th("Scanning")
               th("Indexing")
               th("Content loading")
@@ -66,9 +71,10 @@ fun createAggregateHtml(
                   text(diagnostic.indexingTimes.updatingStart.presentableLocalDateTime())
                 }
                 td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
+                td(diagnostic.indexingTimes.creatingIteratorsTime.presentableDuration())
                 td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
                 td(diagnostic.indexingTimes.indexingTime.presentableDuration())
-                td(diagnostic.indexingTimes.contentLoadingTime.presentableDuration())
+                td(diagnostic.indexingTimes.contentLoadingVisibleTime.presentableDuration())
                 td {
                   if (diagnostic.indexingTimes.wasInterrupted) {
                     strong("Cancelled")
@@ -88,6 +94,9 @@ fun createAggregateHtml(
 
                 // IDE section.
                 td(diagnostic.appInfo.productCode + "-" + diagnostic.appInfo.build)
+
+                //Indexing type section
+                td(diagnostic.indexingTimes.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' '))
               }
             }
           }
@@ -109,6 +118,7 @@ fun createAggregateHtml(
                 th("Download speed")
                 th("Status")
                 th("ID")
+                th("Generation time")
               }
             }
             tbody {
@@ -126,8 +136,40 @@ fun createAggregateHtml(
                     " FB: ${it.fbMatch.presentablePercentages()}, Stub: ${it.stubMatch.presentablePercentages()}"
                   } ?: " Incompatible"))
                   td(event.chunkUniqueId)
+                  td(event.generationTime?.presentableLocalDateTime() ?: "unknown")
                 }
               }
+            }
+          }
+        }
+      }
+
+      if (changedFilesPushEvents.isNotEmpty()) {
+        div {
+          h1("Scanning to push properties of changed files")
+          table {
+            thead {
+              tr {
+                th("Time")
+                th("Reason")
+                th("Full duration")
+                th("Is cancelled")
+                th("Number")
+              }
+            }
+            tbody {
+              val eventsToUnify = mutableListOf<ChangedFilesPushedEvent>()
+              for (event in changedFilesPushEvents.sortedByDescending { it.startTime.instant }) {
+                if (canUnify(event, eventsToUnify)) {
+                  eventsToUnify.add(event)
+                }
+                else {
+                  printUnified(eventsToUnify)
+                  eventsToUnify.clear()
+                  print(event)
+                }
+              }
+              printUnified(eventsToUnify)
             }
           }
         }
@@ -135,6 +177,43 @@ fun createAggregateHtml(
     }
   }
 }.toString()
+
+private fun HtmlBuilder.print(event: ChangedFilesPushedEvent) {
+  tr {
+    td(event.startTime.presentableLocalDateTime())
+    td(event.reason)
+    td(event.duration.presentableDuration())
+    td(if (event.isCancelled) "cancelled" else "fully finished")
+    td("1")
+  }
+}
+
+private fun HtmlBuilder.printUnified(eventsToUnify: List<ChangedFilesPushedEvent>) {
+  if (eventsToUnify.isEmpty()) return
+  val event = eventsToUnify[0]
+  if (eventsToUnify.size == 1) {
+    print(event)
+    return
+  }
+  tr {
+    td(event.startTime.presentableLocalDateTime())
+    td(event.reason)
+    td(JsonDuration(eventsToUnify.sumOf { it.duration.nano }).presentableDuration())
+    td(if (event.isCancelled) "cancelled" else "fully finished")
+    td(eventsToUnify.size.toString())
+  }
+}
+
+private fun canUnify(event: ChangedFilesPushedEvent, baseList: List<ChangedFilesPushedEvent>): Boolean {
+  if (event.isCancelled || event.duration.nano > 1_000_000) {
+    return false
+  }
+  if (baseList.isEmpty()) {
+    return true
+  }
+  val first = baseList[0]
+  return first.reason == event.reason
+}
 
 private const val NOT_APPLICABLE = "N/A"
 
@@ -292,7 +371,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               }
               tr {
                 td("Number of too large for indexing files")
-                td(projectIndexingHistory.fileProviderStatistics.sumBy { it.numberOfTooLargeForIndexingFiles }.toString())
+                td(projectIndexingHistory.fileProviderStatistics.sumOf { it.numberOfTooLargeForIndexingFiles }.toString())
               }
 
               val times = projectIndexingHistory.times
@@ -300,21 +379,42 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               if (times.indexingReason != null) {
                 tr { td("Reason"); td(times.indexingReason) }
               }
+              tr { td("Type"); td(times.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' ')) }
               tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
               tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
               tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
               tr { td("Total time"); td(times.totalUpdatingTime.presentableDuration()) }
               tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
+              tr { td("Iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
+              if (IndexDiagnosticDumper.shouldProvideVisibleAndAllThreadsTimeInfo) {
+                tr {
+                  td("Total processing visible time")
+                  td(JsonDuration(
+                    projectIndexingHistory.fileProviderStatistics.sumOf { stat -> stat.totalIndexingVisibleTime.nano }).presentableDuration())
+                }
+                tr {
+                  td("All threads time to visible time ratio")
+                  td(String.format("%.2f", projectIndexingHistory.visibleTimeToAllThreadTimeRatio))
+                }
+              }
               tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
-              tr { td("Content loading time"); td(times.contentLoadingTime.presentableDuration()) }
+              tr { td("Content loading time"); td(times.contentLoadingVisibleTime.presentableDuration()) }
               tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
               tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
+              tr {
+                td("Index writing time")
+                td(if (times.isAppliedAllValuesSeparately)
+                     StringUtil.formatDuration(times.separateApplyingIndexesVisibleTime.milliseconds)
+                   else
+                     "Applied under read lock"
+                )
+              }
             }
           }
         }
 
         div(id = SECTION_SLOW_FILES_ID) {
-          h1("$SECTION_SLOW_FILES_TITLE (> ${IndexingJobStatistics.SLOW_FILE_PROCESSING_THRESHOLD_MS} ms)")
+          h1("$SECTION_SLOW_FILES_TITLE (> ${IndexingFileSetStatistics.SLOW_FILE_PROCESSING_THRESHOLD_MS} ms)")
           table {
             thead {
               tr {
@@ -333,7 +433,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                     td(if (index == 0) providerStatistic.providerName else "^")
                     td(slowFile.fileName)
                     td(slowFile.contentLoadingTime.presentableDuration())
-                    td(slowFile.indexingTime.presentableDuration())
+                    td(slowFile.evaluationOfIndexValueChangerTime.presentableDuration())
                     td(slowFile.processingTime.presentableDuration())
                   }
                 }
@@ -349,10 +449,10 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               tr {
                 th("File type")
                 th("Number of files")
-                th("Indexing time")
+                th("Total processing time")
                 th("Content loading time")
                 th("Total files size")
-                th("Indexing speed")
+                th("Total processing speed")
                 th("The biggest contributors")
               }
             }
@@ -362,7 +462,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                   (projectIndexingHistory.times.indexingTime.nano * statsPerFileType.partOfTotalProcessingTime.partition).toLong()
                 )
                 val visibleContentLoadingTime = JsonDuration(
-                  (projectIndexingHistory.times.contentLoadingTime.nano * statsPerFileType.partOfTotalContentLoadingTime.partition).toLong()
+                  (projectIndexingHistory.times.contentLoadingVisibleTime.nano * statsPerFileType.partOfTotalContentLoadingTime.partition).toLong()
                 )
                 tr(className = getMinorDataClass(visibleIndexingTime.milliseconds < 500)) {
                   td(statsPerFileType.fileType)
@@ -370,7 +470,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                   td(visibleIndexingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalProcessingTime.presentablePercentages() + ")")
                   td(visibleContentLoadingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalContentLoadingTime.presentablePercentages() + ")")
                   td(statsPerFileType.totalFilesSize.presentableSize())
-                  td(statsPerFileType.indexingSpeed.presentableSpeed())
+                  td(statsPerFileType.totalProcessingSpeed.presentableSpeed())
                   td(
                     statsPerFileType.biggestContributors.joinToString("\n") {
                       it.partOfTotalProcessingTimeOfThisFileType.presentablePercentages() + ": " +
@@ -407,7 +507,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                   td(statsPerIndexer.partOfTotalIndexingTime.presentablePercentages())
                   td(statsPerIndexer.totalNumberOfFilesIndexedByExtensions.toString())
                   td(statsPerIndexer.totalFilesSize.presentableSize())
-                  td(statsPerIndexer.indexingSpeed.presentableSpeed())
+                  td(statsPerIndexer.indexValueChangerEvaluationSpeed.presentableSpeed())
 
                   fun JsonProjectIndexingHistory.JsonStatsPerIndexer.JsonSnapshotInputMappingStats.presentable(): String {
                     val hitsPercentages = JsonPercentages(totalHits, totalRequests)
@@ -424,6 +524,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
         }
 
         val shouldPrintScannedFiles = projectIndexingHistory.scanningStatistics.any { it.scannedFiles.orEmpty().isNotEmpty() }
+        val shouldPrintProviderRoots = projectIndexingHistory.scanningStatistics.any { it.roots.isNotEmpty() }
         div(id = SECTION_SCANNING_ID) {
           h1(SECTION_SCANNING_TITLE)
           table {
@@ -434,10 +535,14 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                 th("Number of files scheduled for indexing")
                 th("Number of files fully indexed by $INDEX_INFRA_EXTENSIONS")
                 th("Number of double-scanned skipped files")
+                th("Total time of getting files' statuses (part of scanning)")
                 th("Scanning time")
                 th("Time processing up-to-date files")
                 th("Time updating content-less indexes")
                 th("Time indexing without content")
+                if (shouldPrintProviderRoots) {
+                  th("Roots")
+                }
                 if (shouldPrintScannedFiles) {
                   th("Scanned files")
                 }
@@ -451,10 +556,20 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                   td(scanningStats.numberOfFilesForIndexing.toString())
                   td(scanningStats.numberOfFilesFullyIndexedByInfrastructureExtensions.toString())
                   td(scanningStats.numberOfSkippedFiles.toString())
+                  td(scanningStats.statusTime.presentableDuration())
                   td(scanningStats.scanningTime.presentableDuration())
                   td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
                   td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())
                   td(scanningStats.timeIndexingWithoutContent.presentableDuration())
+                  if (shouldPrintProviderRoots) {
+                    td {
+                      textarea {
+                        rawText(
+                          scanningStats.roots.sorted().joinToString("\n")
+                        )
+                      }
+                    }
+                  }
                   if (shouldPrintScannedFiles) {
                     td {
                       textarea {
@@ -483,7 +598,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             thead {
               tr {
                 th("Provider name")
-                th("Indexing time")
+                th("Total processing time")
                 th("Content loading time")
                 th("Number of indexed files")
                 th("Number of files indexed by $INDEX_INFRA_EXTENSIONS")
@@ -495,10 +610,10 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             }
             tbody {
               for (providerStats in projectIndexingHistory.fileProviderStatistics) {
-                tr(className = getMinorDataClass(providerStats.totalIndexingTime.milliseconds < 100 && providerStats.totalNumberOfIndexedFiles < 1000)) {
+                tr(className = getMinorDataClass(providerStats.totalIndexingVisibleTime.milliseconds < 100 && providerStats.totalNumberOfIndexedFiles < 1000)) {
                   td(providerStats.providerName)
-                  td(providerStats.totalIndexingTime.presentableDuration())
-                  td(providerStats.contentLoadingTime.presentableDuration())
+                  td(providerStats.totalIndexingVisibleTime.presentableDuration())
+                  td(providerStats.contentLoadingVisibleTime.presentableDuration())
                   td(providerStats.totalNumberOfIndexedFiles.toString())
                   td(providerStats.totalNumberOfFilesFullyIndexedByExtensions.toString())
                   td(providerStats.numberOfTooLargeForIndexingFiles.toString())
@@ -667,7 +782,11 @@ private val JETBRAINS_GRAYSCALE_LOGO_SVG = """
   </svg>
 """.trimIndent()
 
-private fun createTag(body: HtmlBuilder.() -> Unit, tag: Element): Element {
+/*
+ * Attention: here we use DSL with inline+crossinline body functions in order to not declare 100+ classes in MetaSpace
+ */
+
+private inline fun createTag(crossinline body: HtmlBuilder.() -> Unit, tag: Element): Element {
   val tagBuilder = HtmlBuilder()
   tagBuilder.body()
   return tagBuilder.toFragment().wrapWith(tag)
@@ -689,29 +808,31 @@ private fun HtmlBuilder.h1(@Nls title: String) = append(HtmlChunk.text(title).wr
 
 private fun HtmlBuilder.hr(className: String) = append(HtmlChunk.hr().attr("class", className))
 
-private fun HtmlBuilder.table(className: String = "", body: HtmlBuilder.() -> Unit) = append(
-  createTag(body, tag("table").addAttrIfNotEmpty("class", className)))
+private inline fun HtmlBuilder.table(className: String = "", crossinline body: HtmlBuilder.() -> Unit): HtmlBuilder {
+  return append(createTag(body, tag("table").addAttrIfNotEmpty("class", className)))
+}
 
-private fun HtmlBuilder.thead(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("thead")))
-private fun HtmlBuilder.tbody(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("tbody")))
-private fun HtmlBuilder.tr(className: String = "", href: String = "", body: HtmlBuilder.() -> Unit) = append(
-  createTag(body, tag("tr").addAttrIfNotEmpty("class", className).addAttrIfNotEmpty("href", href)))
+private inline fun HtmlBuilder.thead(crossinline body: HtmlBuilder.() -> Unit): HtmlBuilder = append(createTag(body, tag("thead")))
+private inline fun HtmlBuilder.tbody(crossinline body: HtmlBuilder.() -> Unit): HtmlBuilder = append(createTag(body, tag("tbody")))
+private inline fun HtmlBuilder.tr(className: String = "", href: String = "", crossinline body: HtmlBuilder.() -> Unit): HtmlBuilder {
+  return append(createTag(body, tag("tr").addAttrIfNotEmpty("class", className).addAttrIfNotEmpty("href", href)))
+}
 
-private fun HtmlBuilder.th(body: HtmlBuilder.() -> Unit, colspan: String = "", rowspan: String = "") = append(createTag(body, tag("th")
-  .addAttrIfNotEmpty("colspan", colspan).addAttrIfNotEmpty("rowspan", rowspan))
-)
+private inline fun HtmlBuilder.th(crossinline body: HtmlBuilder.() -> Unit, colspan: String = "", rowspan: String = ""): HtmlBuilder {
+  return append(createTag(body, tag("th").addAttrIfNotEmpty("colspan", colspan).addAttrIfNotEmpty("rowspan", rowspan)))
+}
 
 private fun HtmlBuilder.th(@Nls text: String, colspan: String = "", rowspan: String = "") = th({ text(text) }, colspan, rowspan)
-private fun HtmlBuilder.td(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("td")))
+private inline fun HtmlBuilder.td(crossinline body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("td")))
 private fun HtmlBuilder.td(@Nls text: String) = td { text(text) }
 
-private fun HtmlBuilder.ul(body: HtmlBuilder.() -> Unit) = append(createTag(body, ul()))
-private fun HtmlBuilder.li(body: HtmlBuilder.() -> Unit) = append(createTag(body, li()))
+private inline fun HtmlBuilder.ul(crossinline body: HtmlBuilder.() -> Unit) = append(createTag(body, ul()))
+private inline fun HtmlBuilder.li(crossinline body: HtmlBuilder.() -> Unit) = append(createTag(body, li()))
 
-private fun HtmlBuilder.textarea(
+private inline fun HtmlBuilder.textarea(
   columns: Int = 75,
   rows: Int = 10,
-  body: HtmlBuilder.() -> Unit
+  crossinline body: HtmlBuilder.() -> Unit
 ) = append(
   createTag(
     body,
@@ -732,10 +853,11 @@ private fun HtmlBuilder.input(id: String, type: String, onClick: String = "", st
   """.trimIndent()))
 
 private fun HtmlBuilder.link(target: String, text: String) = append(HtmlBuilder().appendLink(target, text))
-private fun HtmlBuilder.div(className: String = "", id: String = "", body: HtmlBuilder.() -> Unit) = append(
-  createTag(body, div().addAttrIfNotEmpty("class", className).addAttrIfNotEmpty("id", id)))
+private inline fun HtmlBuilder.div(className: String = "", id: String = "", crossinline body: HtmlBuilder.() -> Unit): HtmlBuilder? {
+  return append(createTag(body, div().addAttrIfNotEmpty("class", className).addAttrIfNotEmpty("id", id)))
+}
 
-private fun HtmlBuilder.head(head: HtmlBuilder.() -> Unit) = append(createTag(head, HtmlChunk.head()))
-private fun HtmlBuilder.body(body: HtmlBuilder.() -> Unit) = append(createTag(body, HtmlChunk.body()))
-private fun HtmlBuilder.html(body: HtmlBuilder.() -> Unit) = createTag(body, html())
-private fun html(body: HtmlBuilder.() -> Unit) = HtmlBuilder().html(body)
+private inline fun HtmlBuilder.head(crossinline head: HtmlBuilder.() -> Unit) = append(createTag(head, HtmlChunk.head()))
+private inline fun HtmlBuilder.body(crossinline body: HtmlBuilder.() -> Unit) = append(createTag(body, HtmlChunk.body()))
+private inline fun HtmlBuilder.html(crossinline body: HtmlBuilder.() -> Unit) = createTag(body, html())
+private inline fun html(crossinline body: HtmlBuilder.() -> Unit) = HtmlBuilder().html(body)

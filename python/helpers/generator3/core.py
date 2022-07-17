@@ -116,6 +116,7 @@ def is_skipped_module(path, f, qname):
 def is_module(d, root):
     return (os.path.exists(os.path.join(root, d, "__init__.py")) or
             os.path.exists(os.path.join(root, d, "__init__.pyc")) or
+            os.path.exists(os.path.join(root, d, "__init__.pyi")) or
             os.path.exists(os.path.join(root, d, "__init__.pyo")) or
             is_valid_implicit_namespace_package_name(d))
 
@@ -221,7 +222,7 @@ def skeleton_status(base_dir, mod_qname, mod_path, sdk_skeleton_state=None):
         used_version = version_to_tuple(used_version)
 
     used_bin_mtime = skeleton_meta.get('bin_mtime')
-    # state.json is normally passed for remote skeletons only. Since we don't have neither cache,
+    # state.json is normally passed for remote skeletons only. Since we have neither cache,
     # nor physical sdk skeletons there, we have to rely on binary modification time to detect
     # outdated skeletons.
     if mod_path and used_bin_mtime is not None and used_bin_mtime < file_modification_timestamp(mod_path):

@@ -13,8 +13,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
-import com.intellij.util.concurrency.EdtExecutorService;
-import com.intellij.util.concurrency.SameThreadExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,15 +21,11 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-import java.util.function.Supplier;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
   private static final Key<Boolean> SAFE_PROGRESS_INDICATOR = Key.create("SAFE_PROGRESS_INDICATOR");
   private final Set<CheckCanceledHook> myHooks = ContainerUtil.newConcurrentSet();
-  private final CheckCanceledHook mySleepHook = __ -> sleepIfNeededToGivePriorityToAnotherThread();
+  private volatile boolean myRunSleepHook; // optimization: to avoid adding/removing mySleepHook to myHooks constantly this flag is used
 
   public ProgressManagerImpl() {
     ExtensionPointImpl.setCheckCanceledAction(ProgressManager::checkCanceled);
@@ -127,19 +121,14 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
 
   @Override
   @NotNull
-  public Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
-    Supplier<@NotNull ProgressIndicator> supplier = () -> {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        return shouldKeepTasksAsynchronousInHeadlessMode()
-               ? new ProgressIndicatorBase()
-               : new EmptyProgressIndicator();
-      }
-      Project project = task.getProject();
-      return project != null && project.isDisposed() ? new EmptyProgressIndicator() : new BackgroundableProcessIndicator(task);
-    };
-    Executor executor = ApplicationManager.getApplication().isDispatchThread() ? SameThreadExecutor.INSTANCE : EdtExecutorService.getInstance();
-    CompletableFuture<@NotNull ProgressIndicator> progressIndicator = CompletableFuture.supplyAsync(supplier, executor);
-    return runProcessWithProgressAsync(task, progressIndicator, null, null, null);
+  protected ProgressIndicator createDefaultAsynchronousProgressIndicator(@NotNull Task.Backgroundable task) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return shouldKeepTasksAsynchronousInHeadlessMode()
+             ? new ProgressIndicatorBase()
+             : new EmptyProgressIndicator();
+    }
+    Project project = task.getProject();
+    return project != null && project.isDisposed() ? new EmptyProgressIndicator() : new BackgroundableProcessIndicator(task);
   }
 
   @Override
@@ -192,31 +181,37 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     }
   }
 
-  @Nullable
   @Override
-  protected CheckCanceledHook createCheckCanceledHook() {
-    if (myHooks.isEmpty()) return null;
+  public boolean runCheckCanceledHooks(@Nullable ProgressIndicator indicator) {
+    if (!hasCheckCanceledHooks()) {
+      return false;
+    }
 
-    CheckCanceledHook[] activeHooks = myHooks.toArray(new CheckCanceledHook[0]);
-    return activeHooks.length == 1 ? activeHooks[0] : indicator -> {
-      boolean result = false;
-      for (CheckCanceledHook hook : activeHooks) {
-        if (hook.runHook(indicator)) {
-          result = true; // but still continue to other hooks
-        }
+    CheckCanceledHook[] activeHooks = myHooks.isEmpty() ? CheckCanceledHook.EMPTY_ARRAY : myHooks.toArray(CheckCanceledHook.EMPTY_ARRAY);
+    boolean result = myRunSleepHook && sleepIfNeededToGivePriorityToAnotherThread();
+    for (CheckCanceledHook hook : activeHooks) {
+      if (hook.runHook(indicator)) {
+        result = true; // but still continue to other hooks
       }
-      return result;
-    };
+    }
+    return result;
+  }
+
+  @Override
+  protected boolean hasCheckCanceledHooks() {
+    return myRunSleepHook || !myHooks.isEmpty();
   }
 
   @Override
   protected void prioritizingStarted() {
-    addCheckCanceledHook(mySleepHook);
+    myRunSleepHook = true;
+    updateShouldCheckCanceled();
   }
 
   @Override
   protected void prioritizingFinished() {
-    removeCheckCanceledHook(mySleepHook);
+    myRunSleepHook = false;
+    updateShouldCheckCanceled();
   }
 
   private static @NotNull ProgressManagerListener getProjectManagerListener() {

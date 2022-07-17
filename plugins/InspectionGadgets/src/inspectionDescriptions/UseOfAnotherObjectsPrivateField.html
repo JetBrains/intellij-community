@@ -1,29 +1,23 @@
 <html>
 <body>
-Reports an object that uses a <code>private</code> or <code>protected</code> field of another object.
-<p>Java allows using such fields for objects of the same class as the current object but
+Reports accesses to <code>private</code> or <code>protected</code> fields of another object.
+Java allows access to such fields for objects of the same class as the current object but
   some coding styles discourage this use. Additionally, such direct access to <code>private</code> fields
   may fail in component-oriented architectures, such as Spring or Hibernate, that expect all access
   to other objects to be through method calls so the framework can mediate access
-  using proxies.</p>
+  using proxies.
 <p><b>Example:</b></p>
 <pre><code>
-public class Base {
+  public class Base {
     protected int bar;
 
-    class Inside {
-        int f(Base base) {
-            return base.bar;  // warning: direct access to non-public field
-        }
+    void increment(Base base) {
+      bar++;
+      base.bar++; // warning: direct access to another object's non-public field
     }
-}
-
-class SomewhereElse {
-    void m(Base base) {
-        base.bar = 1; // warning: direct access to non-public field
-    }
-}
+  }
 </code></pre>
+A quick-fix to encapsulate the field is available.
 <!-- tooltip end -->
 <p>Configure the inspection:</p>
 <ul>

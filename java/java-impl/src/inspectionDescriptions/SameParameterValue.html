@@ -1,29 +1,28 @@
 <html>
 <body>
-Reports methods in which a parameter appears to always be the same constant.
+Reports method parameters that always have the same constant value.
 
 <p>Example:</p>
-<pre>
-<code>static void printPoint(int x, int y) { // x is always 0
-  System.out.println(x + ", " + y);
-}
+<pre><code>
+  static void printPoint(int x, int y) { // x is always 0
+    System.out.println(x + ", " + y);
+  }
 
-public static void main(String[] args) {
-  printPoint(0, 1);
-  printPoint(0, 2);
-}
-</code>
-</pre>
+  public static void main(String[] args) {
+    printPoint(0, 1);
+    printPoint(0, 2);
+  }
+</code></pre>
 <p>The quick-fix inlines the constant value. This may simplify the method implementation.</p>
 <!-- tooltip end -->
 <p>
   Use the <b>Ignore when inline parameter initializer would not succeed</b> option to suppress the inspections when:
-  <ul>
-    <li>the parameter is modified inside the method.</li>
-    <li>the parameter value that is being passed is a reference to an inaccessible field (only in Java).</li>
-    <li>the parameter is a vararg (only in Java).</li>
-  </ul>
 </p>
+<ul>
+  <li>the parameter is modified inside the method.</li>
+  <li>the parameter value that is being passed is a reference to an inaccessible field (only in Java).</li>
+  <li>the parameter is a vararg (only in Java).</li>
+</ul>
 <p>
   Use the <b>Maximal reported method visibility</b> option to control the maximum visibility of methods to be reported.
 </p>

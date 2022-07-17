@@ -34,7 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer {
+public final class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer {
   @NonNls public static final String CLASSPATH_STORAGE_ID = "eclipse";
   private static final Logger LOG = Logger.getInstance(JpsEclipseClasspathSerializer.class);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.PluginException
@@ -78,7 +78,7 @@ private fun findTargetAdapter(componentManager: ComponentManagerImpl,
                               requestorKey: Any,
                               requestorClass: Class<*>,
                               requestorConstructor: Constructor<*>,
-                              @Suppress("UNUSED_PARAMETER") pluginId: PluginId): ComponentAdapter? {
+                              pluginId: PluginId): ComponentAdapter? {
   val byKey = componentManager.getComponentAdapter(expectedType)
   if (byKey != null && requestorKey != byKey.componentKey) {
     return byKey

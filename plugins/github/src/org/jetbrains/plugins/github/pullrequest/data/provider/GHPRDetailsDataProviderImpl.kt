@@ -21,7 +21,6 @@ import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates
 
 class GHPRDetailsDataProviderImpl(private val detailsService: GHPRDetailsService,
-                                  private val commentService: GHPRCommentService,
                                   private val pullRequestId: GHPRIdentifier,
                                   private val messageBus: MessageBus)
   : GHPRDetailsDataProvider, Disposable {
@@ -43,9 +42,6 @@ class GHPRDetailsDataProviderImpl(private val detailsService: GHPRDetailsService
   override fun loadDetails(): CompletableFuture<GHPullRequest> = detailsRequestValue.value
 
   override fun reloadDetails() = detailsRequestValue.drop()
-
-  override fun getDescriptionMarkdownBody(indicator: ProgressIndicator) =
-    commentService.getCommentMarkdownBody(indicator, pullRequestId.id)
 
   override fun updateDetails(indicator: ProgressIndicator, title: String?, description: String?): CompletableFuture<GHPullRequest> {
     val future = detailsService.updateDetails(indicator, pullRequestId, title, description).completionOnEdt {

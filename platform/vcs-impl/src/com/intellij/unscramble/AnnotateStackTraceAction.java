@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.execution.filters.FileHyperlinkInfo;
@@ -164,7 +164,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
           VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
           if (historyProvider == null) return null;
 
-          FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+          FilePath filePath = VcsContextFactory.getInstance().createFilePathOn(file);
 
           if (historyProvider instanceof VcsHistoryProviderEx) {
             VcsFileRevision revision = ((VcsHistoryProviderEx)historyProvider).getLastRevision(filePath);

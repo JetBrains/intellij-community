@@ -3,7 +3,9 @@ package com.intellij.execution.target;
 
 import com.intellij.execution.target.value.TargetValue;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +24,9 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
   @NotNull private final Set<File> myFilesToDeleteOnTermination = new HashSet<>();
 
   @NotNull private final TargetEnvironmentRequest myRequest;
+  private boolean myRedirectErrorStream = false;
+
+  private @Nullable PtyOptions myPtyOptions = null;
 
   public TargetedCommandLineBuilder(@NotNull TargetEnvironmentRequest request) {
     myRequest = request;
@@ -39,7 +44,9 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
                                    myInputFilePath,
                                    myCharset,
                                    new ArrayList<>(myParameters),
-                                   new HashMap<>(myEnvironment));
+                                   new HashMap<>(myEnvironment),
+                                   myRedirectErrorStream,
+                                   myPtyOptions);
   }
 
   public void setCharset(@NotNull Charset charset) {
@@ -52,6 +59,10 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
 
   public void setExePath(@NotNull String exePath) {
     myExePath = TargetValue.fixed(exePath);
+  }
+
+  public @NotNull TargetValue<String> getExePath() {
+    return myExePath;
   }
 
   public void setWorkingDirectory(@NotNull TargetValue<String> workingDirectory) {
@@ -90,6 +101,17 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
     myParameters.add(index, parameter);
   }
 
+  public void addFixedParametersAt(int index, @NotNull List<String> parameters) {
+    addParametersAt(index, ContainerUtil.map(parameters, p -> TargetValue.fixed(p)));
+  }
+
+  public void addParametersAt(int index, @NotNull List<TargetValue<String>> parameters) {
+    int i = 0;
+    for (TargetValue<String> parameter : parameters) {
+      addParameterAt(index + i++, parameter);
+    }
+  }
+
   public void addEnvironmentVariable(@NotNull String name, @Nullable TargetValue<String> value) {
     if (value != null) {
       myEnvironment.put(name, value);
@@ -122,5 +144,21 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
   @NotNull
   public Set<File> getFilesToDeleteOnTermination() {
     return myFilesToDeleteOnTermination;
+  }
+
+  public void setRedirectErrorStreamFromRegistry() {
+    setRedirectErrorStream(Registry.is("run.processes.with.redirectedErrorStream", false));
+  }
+
+  public void setRedirectErrorStream(boolean redirectErrorStream) {
+    myRedirectErrorStream = redirectErrorStream;
+  }
+
+  public @Nullable PtyOptions getPtyOptions() {
+    return myPtyOptions;
+  }
+
+  public void setPtyOptions(@Nullable PtyOptions ptyOptions) {
+    myPtyOptions = ptyOptions;
   }
 }

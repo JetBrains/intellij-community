@@ -5,14 +5,15 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtil
-import com.intellij.openapi.options.UiDslConfigurable
+import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vcs.VcsEnvCustomizer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.remote.RemoteSdkAdditionalData
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindSelected
 import com.jetbrains.python.PyBundle
 
 class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
@@ -36,11 +37,12 @@ class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
 
   override fun getConfigurable(project: Project?): UnnamedConfigurable? {
     if (project == null) return null
-    return object : UiDslConfigurable.Simple() {
-      override fun RowBuilder.createComponentRow() {
+    return object : UiDslUnnamedConfigurable.Simple() {
+      override fun Panel.createContent() {
         val settings = PyVirtualEnvVcsSettings.getInstance(project)
         row {
-          checkBox(PyBundle.message("vcs.activate.virtualenv.checkbox.text"), settings::virtualEnvActivate)
+          checkBox(PyBundle.message("vcs.activate.virtualenv.checkbox.text"))
+            .bindSelected(settings::virtualEnvActivate)
         }
       }
     }

@@ -75,7 +75,7 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
   private static class PackageInfoWithoutPackageVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitJavaFile(PsiJavaFile file) {
+    public void visitJavaFile(@NotNull PsiJavaFile file) {
       @NonNls final String name = file.getName();
       if (!PsiPackage.PACKAGE_INFO_FILE.equals(name)) {
         return;

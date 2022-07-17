@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.inspections;
 
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
@@ -29,14 +29,14 @@ public class MojoAnnotationInJavadocTest extends LightJavaCodeInsightFixtureTest
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new JavaDocLocalInspection());
+    myFixture.enableInspections(new JavadocDeclarationInspection());
   }
 
   public void testTestMojo() {
-    doTes();
+    doTest();
   }
 
-  private void doTes() {
+  private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }

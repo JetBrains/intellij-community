@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.Disposable
@@ -9,7 +9,11 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.HashSetInterner
 import com.intellij.util.containers.Interner
-import com.intellij.util.io.*
+import com.intellij.util.io.IOUtil
+import com.intellij.util.io.KeyDescriptor
+import com.intellij.util.io.PersistentBTreeEnumerator
+import com.intellij.util.io.PersistentEnumeratorBase
+import com.intellij.util.io.storage.AbstractStorage
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.VcsUserRegistry
 import com.intellij.vcs.log.impl.VcsUserImpl
@@ -35,7 +39,7 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
     try {
       val enumerator = IOUtil.openCleanOrResetBroken({
                                                        PersistentBTreeEnumerator(mapFile.toPath(), VcsUserKeyDescriptor(this),
-                                                                                 Page.PAGE_SIZE, null, STORAGE_VERSION)
+                                                                                 AbstractStorage.PAGE_SIZE, null, STORAGE_VERSION)
                                                      }, mapFile)
       val wasSet = _persistentEnumerator.compareAndSet(null, enumerator)
       if (!wasSet) {
@@ -163,7 +167,7 @@ class VcsUserKeyDescriptor(private val userRegistry: VcsUserRegistry) : KeyDescr
     return value.hashCode()
   }
 
-  override fun isEqual(val1: VcsUser, val2: VcsUser): Boolean {
+  override fun isEqual(val1: VcsUser?, val2: VcsUser?): Boolean {
     return val1 == val2
   }
 }

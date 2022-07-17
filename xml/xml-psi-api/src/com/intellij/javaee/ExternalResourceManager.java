@@ -26,7 +26,7 @@ public abstract class ExternalResourceManager extends SimpleModificationTracker 
   /**
    * @deprecated use {@link #getResourceLocation(String, Project)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract String getResourceLocation(@NotNull @NonNls String url);
 
   public abstract String getResourceLocation(@NotNull @NonNls String url, @Nullable String version);

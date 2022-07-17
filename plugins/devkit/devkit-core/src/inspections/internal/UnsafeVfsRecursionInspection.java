@@ -23,7 +23,7 @@ public class UnsafeVfsRecursionInspection extends DevKitInspectionBase {
   public PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         PsiReferenceExpression methodRef = expression.getMethodExpression();
         if (!GET_CHILDREN_METHOD_NAME.equals(methodRef.getReferenceName())) return;
 
@@ -45,7 +45,7 @@ public class UnsafeVfsRecursionInspection extends DevKitInspectionBase {
         Ref<Boolean> result = Ref.create();
         containingMethod.accept(new JavaRecursiveElementVisitor() {
           @Override
-          public void visitMethodCallExpression(PsiMethodCallExpression expression2) {
+          public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression2) {
             super.visitMethodCallExpression(expression2);
             if (expression2 != expression &&
                 containingMethodName.equals(expression2.getMethodExpression().getReferenceName()) &&

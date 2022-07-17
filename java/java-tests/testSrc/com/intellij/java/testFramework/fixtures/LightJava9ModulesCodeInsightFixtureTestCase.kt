@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.testFramework.fixtures
 
 import com.intellij.analysis.AnalysisScope
@@ -18,16 +18,27 @@ abstract class LightJava9ModulesCodeInsightFixtureTestCase : LightJavaCodeInsigh
   override fun getProjectDescriptor(): LightProjectDescriptor = MultiModuleJava9ProjectDescriptor
 
   override fun tearDown() {
-    super.tearDown()
-    MultiModuleJava9ProjectDescriptor.cleanupSourceRoots()
+    try {
+      MultiModuleJava9ProjectDescriptor.cleanupSourceRoots()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   protected fun addFile(path: String, text: String, module: ModuleDescriptor = MAIN): VirtualFile =
-    VfsTestUtil.createFile(module.root()!!, path, text)
+    VfsTestUtil.createFile(module.sourceRoot()!!, path, text)
 
   @JvmOverloads
   protected fun addTestFile(path: String, text: String, module: ModuleDescriptor = MAIN): VirtualFile =
     VfsTestUtil.createFile(module.testRoot()!!, path, text)
+
+  @Suppress("SameParameterValue")
+  protected fun addResourceFile(path: String, text: String, module: ModuleDescriptor = MAIN): VirtualFile =
+    VfsTestUtil.createFile(module.resourceRoot()!!, path, text)
 
   /**
    * @param classNames is like <code>arrayOf("foo.api.Api", "foo.impl.Impl")</code>; the file's directory path is created based on FQN

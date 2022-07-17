@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun List<Int>.transform(x: Int = 0, f: (Int) -> Int) = map { f(it + x) }
 

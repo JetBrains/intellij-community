@@ -3,22 +3,42 @@ package git4idea.merge.dialog
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.ui.popup.list.ListPopupImpl
 import org.jetbrains.annotations.Nls
 import java.awt.event.InputEvent
+import javax.swing.ListCellRenderer
 
-internal class GitOptionsPopupBuilder<T>(private val project: Project,
-                                         @Nls private val title: String,
-                                         private val optionsProvider: () -> List<T>,
-                                         private val renderer: OptionListCellRenderer<T>,
-                                         private val selectHandler: (T) -> Unit = {},
-                                         private val optionEnabledPredicate: (T) -> Boolean = { true }) {
+internal class GitOptionsPopupBuilder<T>(
+  private val project: Project,
+  @Nls private val title: String,
+  private val optionsProvider: () -> List<T>,
+  private val optionInfoProvider: (T) -> OptionInfo<T>,
+  private val optionSelectedPredicate: (T) -> Boolean,
+  private val optionEnabledPredicate: (T) -> Boolean = { true },
+  private val selectHandler: (T) -> Unit = {},
+  private val hasSeparatorAbovePredicate: (T) -> Boolean = { false }
+) {
 
   fun createPopup(): ListPopup {
     return object : ListPopupImpl(project, createPopupStep(title, optionsProvider())) {
 
-      override fun getListElementRenderer() = renderer
+      override fun getListElementRenderer(): ListCellRenderer<T> {
+        val longestDescription: String = optionsProvider()
+                                           .map { optionInfoProvider(it).description }
+                                           .maxByOrNull { it.length }
+                                           .orEmpty()
+
+        return OptionListCellRenderer(
+          optionInfoProvider,
+          optionSelectedPredicate,
+          optionEnabledPredicate,
+          longestDescription,
+          this
+        )
+      }
+
 
       override fun handleSelect(handleFinalChoices: Boolean) {
         if (handleFinalChoices) {
@@ -48,5 +68,7 @@ internal class GitOptionsPopupBuilder<T>(private val project: Project,
     override fun isSelectable(value: T?) = optionEnabledPredicate(value!!)
 
     override fun onChosen(selectedValue: T?, finalChoice: Boolean) = doFinalStep(Runnable { selectedValue?.let(selectHandler) })
+
+    override fun getSeparatorAbove(value: T): ListSeparator? = if (hasSeparatorAbovePredicate(value)) ListSeparator() else null
   }
 }

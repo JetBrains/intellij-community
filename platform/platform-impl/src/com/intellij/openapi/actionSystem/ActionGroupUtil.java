@@ -11,8 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public final class ActionGroupUtil {
 
   /** @deprecated use {@link #isGroupEmpty(ActionGroup, AnActionEvent)} instead */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e, boolean unused) {
     return getActiveActions(actionGroup, e).isEmpty();
   }
@@ -21,17 +20,35 @@ public final class ActionGroupUtil {
     return getActiveActions(actionGroup, e).isEmpty();
   }
 
-  @Nullable
-  public static AnAction getSingleActiveAction(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
+  public static @Nullable AnAction getSingleActiveAction(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
     return getActiveActions(actionGroup, e).single();
   }
 
-  @NotNull
-  public static JBIterable<? extends AnAction> getActiveActions(@NotNull ActionGroup actionGroup,
-                                                                @NotNull AnActionEvent e) {
+  public static @NotNull JBIterable<? extends AnAction> getActiveActions(@NotNull ActionGroup actionGroup,
+                                                                         @NotNull AnActionEvent e) {
     UpdateSession updater = Utils.getOrCreateUpdateSession(e);
     return JBIterable.from(updater.expandedChildren(actionGroup))
       .filter(o -> !(o instanceof Separator) && updater.presentation(o).isEnabledAndVisible());
   }
 
+  public static @NotNull JBIterable<? extends AnAction> getVisibleActions(@NotNull ActionGroup actionGroup,
+                                                                          @NotNull AnActionEvent e) {
+    UpdateSession updater = Utils.getOrCreateUpdateSession(e);
+    return JBIterable.from(updater.expandedChildren(actionGroup))
+      .filter(o -> !(o instanceof Separator) && updater.presentation(o).isVisible());
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull ActionGroup forceRecursiveUpdateInBackground(@NotNull ActionGroup actionGroup) {
+    class MyGroup extends ActionGroup implements ActionUpdateThreadAware.Recursive {
+      {
+        setPopup(false);
+      }
+      @Override
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+        return new AnAction[] { actionGroup };
+      }
+    }
+    return new MyGroup();
+  }
 }

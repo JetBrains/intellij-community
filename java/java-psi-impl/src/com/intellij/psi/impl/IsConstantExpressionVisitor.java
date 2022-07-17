@@ -4,6 +4,7 @@ package com.intellij.psi.impl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,22 +18,22 @@ final class IsConstantExpressionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitExpression(PsiExpression expression) {
+  public void visitExpression(@NotNull PsiExpression expression) {
     myIsConstant = false;
   }
 
   @Override
-  public void visitLiteralExpression(PsiLiteralExpression expression) {
+  public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
     myIsConstant = !"null".equals(expression.getText());
   }
 
   @Override
-  public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
+  public void visitClassObjectAccessExpression(@NotNull PsiClassObjectAccessExpression expression) {
     myIsConstant = true;
   }
 
   @Override
-  public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+  public void visitParenthesizedExpression(@NotNull PsiParenthesizedExpression expression) {
     PsiExpression expr = expression.getExpression();
     if (expr != null) {
       expr.accept(this);
@@ -40,7 +41,7 @@ final class IsConstantExpressionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+  public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
     PsiExpression operand = expression.getOperand();
     if (operand == null) {
       myIsConstant = false;
@@ -60,7 +61,7 @@ final class IsConstantExpressionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitPrefixExpression(PsiPrefixExpression expression) {
+  public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
     PsiExpression operand = expression.getOperand();
     if (operand == null) {
       myIsConstant = false;
@@ -76,7 +77,7 @@ final class IsConstantExpressionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+  public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
     for (PsiExpression operand : expression.getOperands()) {
       operand.accept(this);
       if (!myIsConstant) return;
@@ -89,7 +90,7 @@ final class IsConstantExpressionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitConditionalExpression(PsiConditionalExpression expression) {
+  public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
     PsiExpression thenExpr = expression.getThenExpression();
     PsiExpression elseExpr = expression.getElseExpression();
     if (thenExpr == null || elseExpr == null) {
@@ -105,7 +106,7 @@ final class IsConstantExpressionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     PsiExpression qualifierExpression = expression.getQualifierExpression();
     if (qualifierExpression != null && !(qualifierExpression instanceof PsiReferenceExpression)) {
       myIsConstant = false;

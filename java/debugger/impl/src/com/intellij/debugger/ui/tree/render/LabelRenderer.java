@@ -1,28 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class LabelRenderer extends ReferenceRenderer implements ValueLabelRenderer, OnDemandRenderer {
   public static final @NonNls String UNIQUE_ID = "LabelRenderer";
   public boolean ON_DEMAND;
 
   private CachedEvaluator myLabelExpression = createCachedEvaluator();
+  private String myPrefix;
 
   public LabelRenderer() {
     super();
@@ -46,32 +46,42 @@ public class LabelRenderer extends ReferenceRenderer implements ValueLabelRender
     throws EvaluateException {
 
     if (!isShowValue(descriptor, evaluationContext)) {
-      return "";
+      return prefix("");
     }
 
-    final Value value = descriptor.getValue();
+    Value value = descriptor.getValue();
+    if (value == null) {
+      return prefix("null");
+    }
 
-    String result;
-    final DebugProcess debugProcess = evaluationContext.getDebugProcess();
-    if (value != null) {
-      try {
-        final ExpressionEvaluator evaluator = myLabelExpression.getEvaluator(debugProcess.getProject());
+    EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)evaluationContext;
+    DebugProcessImpl debugProcess = evaluationContextImpl.getDebugProcess();
+    debugProcess.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
+      @Override
+      public void syncAction(@NotNull SuspendContextImpl suspendContext) {
+        try {
+          ExpressionEvaluator evaluator = myLabelExpression.getEvaluator(debugProcess.getProject());
 
-        if(!debugProcess.isAttached()) {
-          throw EvaluateExceptionUtil.PROCESS_EXITED;
+          if (!debugProcess.isAttached()) {
+            throw EvaluateExceptionUtil.PROCESS_EXITED;
+          }
+          EvaluationContext thisEvaluationContext = evaluationContext.createEvaluationContext(value);
+          Value labelValue = evaluator.evaluate(thisEvaluationContext);
+          String result = StringUtil.notNullize(DebuggerUtils.getValueAsString(thisEvaluationContext, labelValue));
+          descriptor.setValueLabel(prefix(result));
         }
-        EvaluationContext thisEvaluationContext = evaluationContext.createEvaluationContext(value);
-        Value labelValue = evaluator.evaluate(thisEvaluationContext);
-        result = DebuggerUtils.getValueAsString(thisEvaluationContext, labelValue);
+        catch (EvaluateException ex) {
+          descriptor.setValueLabelFailed(
+            new EvaluateException(JavaDebuggerBundle.message("error.unable.to.evaluate.expression") + " " + ex.getMessage(), ex));
+        }
+        labelListener.labelChanged();
       }
-      catch (final EvaluateException ex) {
-        throw new EvaluateException(JavaDebuggerBundle.message("error.unable.to.evaluate.expression") + " " + ex.getMessage(), ex);
-      }
-    }
-    else {
-      result = "null";
-    }
-    return result;
+    });
+    return XDebuggerUIConstants.getCollectingDataMessage();
+  }
+
+  private String prefix(String result) {
+    return myPrefix != null ? myPrefix + result : result;
   }
 
   @NotNull
@@ -103,6 +113,10 @@ public class LabelRenderer extends ReferenceRenderer implements ValueLabelRender
 
   public void setLabelExpression(TextWithImports expression) {
     myLabelExpression.setReferenceExpression(expression);
+  }
+
+  public void setPrefix(@Nullable String prefix) {
+    myPrefix = prefix;
   }
 
   @Override

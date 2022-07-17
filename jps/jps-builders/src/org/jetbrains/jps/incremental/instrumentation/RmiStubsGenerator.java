@@ -146,11 +146,6 @@ public final class RmiStubsGenerator extends ClassProcessingBuilder {
               stdErrParser.append(event.getText());
             }
           }
-
-          @Override
-          public void processTerminated(@NotNull ProcessEvent event) {
-            super.processTerminated(event);
-          }
         });
         handler.startNotify();
         handler.waitFor();

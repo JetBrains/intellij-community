@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.advanced
 
 import com.intellij.openapi.application.ApplicationManager
@@ -9,6 +9,7 @@ enum class AdvancedSettingType { Int, Bool, String, Enum }
 
 abstract class AdvancedSettings  {
   protected abstract fun getSetting(id: String): Any
+  protected abstract fun getDefault(id: String): Any
   abstract fun setSetting(id: String, value: Any, expectType: AdvancedSettingType)
 
   companion object {
@@ -27,9 +28,20 @@ abstract class AdvancedSettings  {
     @JvmStatic
     fun getString(id: String): String = getInstance().getSetting(id) as String
 
-    @Suppress("UNCHECKED_CAST")
     @JvmStatic
     fun <T: Enum<T>> getEnum(id: String, enumClass: Class<T>): T = enumClass.cast(getInstance().getSetting(id))
+
+    @JvmStatic
+    fun getDefaultBoolean(id: String): Boolean = getInstance().getDefault(id) as Boolean
+
+    @JvmStatic
+    fun getDefaultInt(id: String): Int = getInstance().getDefault(id) as Int
+
+    @JvmStatic
+    fun getDefaultString(id: String): String = getInstance().getDefault(id) as String
+
+    @JvmStatic
+    fun <T: Enum<T>> getDefaultEnum(id: String, enumClass: Class<T>): T = enumClass.cast(getInstance().getDefault(id))
 
     @JvmStatic
     fun setBoolean(id: String, value: Boolean) {

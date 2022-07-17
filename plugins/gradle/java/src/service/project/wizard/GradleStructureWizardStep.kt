@@ -9,13 +9,13 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedStructureWizardStep
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.layout.*
 import icons.GradleIcons
-import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import javax.swing.Icon
 
@@ -52,13 +52,13 @@ class GradleStructureWizardStep(
 
   private fun ValidationInfoBuilder.validateNameAndArtifactId(): ValidationInfo? {
     if (artifactId == entityName) return null
-    val presentationName = context.presentationName.capitalize()
-    return error(GradleBundle.message("gradle.structure.wizard.name.and.artifact.id.is.different.error", presentationName))
+    return error(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.name.and.artifact.id.is.different.error",
+      if (context.isCreatingNewProject) 1 else 0))
   }
 
   override fun updateProjectData() {
     context.projectBuilder = builder
-    builder.setParentProject(parentData)
+    builder.parentProject = parentData
     builder.projectId = ProjectId(groupId, artifactId, version)
     builder.isInheritGroupId = parentData?.group == groupId
     builder.isInheritVersion = parentData?.version == version

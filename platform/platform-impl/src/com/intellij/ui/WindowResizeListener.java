@@ -3,14 +3,9 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.JBInsets;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static java.awt.Cursor.*;
 import static javax.swing.SwingUtilities.convertPointFromScreen;
@@ -125,7 +120,7 @@ public class WindowResizeListener extends WindowMouseListener {
 
   @Override
   void updateBounds(Rectangle bounds, Component view, int dx, int dy) {
-    Dimension minimum = getMinimumSize(view);
+    Dimension minimum = view.getMinimumSize();
     if (myCursorType == NE_RESIZE_CURSOR || myCursorType == E_RESIZE_CURSOR || myCursorType == SE_RESIZE_CURSOR || myCursorType == DEFAULT_CURSOR) {
       bounds.width += fixMinSize(dx, bounds.width, minimum.width);
     }
@@ -144,69 +139,7 @@ public class WindowResizeListener extends WindowMouseListener {
     }
   }
 
-  @Override
-  protected void setCursorType(int cursorType) {
-    super.setCursorType(cursorType);
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    ourIsResizing = myCursorType >= SW_RESIZE_CURSOR && myCursorType <= E_RESIZE_CURSOR;
-  }
-
-  /** Note: default implementation takes Component.getTreeLock() */
-  protected Dimension getMinimumSize(Component comp) {
-    return comp.getMinimumSize();
-  }
-
   private static int fixMinSize(int delta, int value, int min) {
     return delta + value < min ? min - value : delta;
-  }
-
-  /**
-   * @author tav
-   */
-  @ApiStatus.Experimental
-  public static class ToolkitListener extends WindowResizeListener {
-    private final ToolkitListenerHelper myHelper;
-    private final AtomicReference<Dimension> myMinSize = new AtomicReference<>();
-
-    public ToolkitListener(Component content, Insets border, Icon corner) {
-      super(content, border, corner);
-      myHelper = new ToolkitListenerHelper(this);
-      myMinSize.set(content.getMinimumSize());
-      Window window = ComponentUtil.getWindow(content);
-      if (window != null) window.addHierarchyListener(new HierarchyListener() {
-        @Override
-        public void hierarchyChanged(HierarchyEvent e) {
-          if (e.getID() == HierarchyEvent.HIERARCHY_CHANGED) {
-            myMinSize.set(content.getMinimumSize());
-          }
-          else if (e.getID() == HierarchyEvent.SHOWING_CHANGED && !window.isShowing()) {
-            window.removeHierarchyListener(this);
-          }
-        }
-      });
-    }
-
-    @Override
-    protected void setBounds(Component comp, Rectangle bounds) {
-      myHelper.setBounds(comp, bounds, () -> super.setBounds(comp, bounds));
-    }
-
-    @Override
-    protected void setCursor(@NotNull Component content, Cursor cursor) {
-      myHelper.setCursor(content, cursor, () -> super.setCursor(content, cursor));
-    }
-
-    @Override
-    protected Dimension getMinimumSize(Component comp) {
-      return myMinSize.get();
-    }
-
-    public void addTo(Component comp) {
-      myHelper.addTo(comp);
-    }
-
-    public void removeFrom(Component comp) {
-      myHelper.removeFrom(comp);
-    }
   }
 }

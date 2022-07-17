@@ -2,24 +2,24 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.analysis.analyzeInContext
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.imports.importableFqName
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.supertypes
@@ -68,7 +68,7 @@ internal fun chooseApplicableComponentFunctions(
     val functions = getApplicableComponentFunctions(contextExpression, type, receiverExpression)
     if (functions.size <= 1) return callback(emptyList())
 
-    if (ApplicationManager.getApplication().isUnitTestMode) return callback(functions)
+    if (isUnitTestMode()) return callback(functions)
 
     if (editor == null) return callback(emptyList())
 
@@ -94,8 +94,8 @@ internal fun suggestNamesForComponent(descriptor: FunctionDescriptor, project: P
         val componentName = (DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor) as? PsiNamedElement)?.name
             ?: descriptorName
         if (componentName == descriptorName) {
-            descriptor.returnType?.let { addAll(KotlinNameSuggester.suggestNamesByType(it, validator)) }
+            descriptor.returnType?.let { addAll(Fe10KotlinNameSuggester.suggestNamesByType(it, validator)) }
         }
-        add(KotlinNameSuggester.suggestNameByName(componentName, validator))
+        add(Fe10KotlinNameSuggester.suggestNameByName(componentName, validator))
     }
 }

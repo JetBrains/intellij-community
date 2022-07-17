@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.Disposable;
@@ -21,6 +21,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   private final List<SettingsEditorListener<Settings>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private UserActivityWatcher myWatcher;
   private boolean myIsInUpdate = false;
+  private boolean myFiredDuringUpdate = false;
   private final Factory<? extends Settings> mySettingsFactory;
   private CompositeSettingsEditor<Settings> myOwner;
   private JComponent myEditorComponent;
@@ -28,8 +29,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   protected abstract void resetEditorFrom(@NotNull Settings s);
   protected abstract void applyEditorTo(@NotNull Settings s) throws ConfigurationException;
 
-  @NotNull
-  protected abstract JComponent createEditor();
+  protected abstract @NotNull JComponent createEditor();
 
   protected void disposeEditor() {
   }
@@ -49,8 +49,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
     });
   }
 
-  @NotNull
-  public Settings getSnapshot() throws ConfigurationException {
+  public @NotNull Settings getSnapshot() throws ConfigurationException {
     if (myOwner != null) return myOwner.getSnapshot();
 
     Settings settings = mySettingsFactory.create();
@@ -86,7 +85,14 @@ public abstract class SettingsEditor<Settings> implements Disposable {
     finally {
       myIsInUpdate = wasInUpdate;
     }
-    fireEditorStateChanged();
+    if (forceChangeByBulkUpdate() || myFiredDuringUpdate) {
+      myFiredDuringUpdate = false;
+      fireEditorStateChanged();
+    }
+  }
+
+  protected boolean forceChangeByBulkUpdate() {
+    return true;
   }
 
   public final void applyTo(Settings s) throws ConfigurationException {
@@ -122,8 +128,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
     myWatcher.addUserActivityListener(userActivityListener, this);
   }
 
-  @NotNull
-  protected UserActivityWatcher createWatcher() {
+  protected @NotNull UserActivityWatcher createWatcher() {
     return new UserActivityWatcher();
   }
 
@@ -136,7 +141,10 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   }
 
   protected final void fireEditorStateChanged() {
-    if (myIsInUpdate) return;
+    if (myIsInUpdate) {
+      myFiredDuringUpdate = true;
+      return;
+    }
     for (SettingsEditorListener<Settings> listener : myListeners) {
       listener.stateChanged(this);
     }

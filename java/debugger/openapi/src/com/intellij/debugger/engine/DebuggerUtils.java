@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerContext;
@@ -88,7 +88,7 @@ public abstract class DebuggerUtils {
         final ObjectReference objRef = (ObjectReference)value;
         final DebugProcess debugProcess = evaluationContext.getDebugProcess();
         Method toStringMethod = debugProcess.getUserData(TO_STRING_METHOD_KEY);
-        if (toStringMethod == null) {
+        if (toStringMethod == null || !toStringMethod.virtualMachine().equals(objRef.virtualMachine())) {
           try {
             ReferenceType refType = getObjectClassType(objRef.virtualMachine());
             toStringMethod = findMethod(refType, "toString", "()Ljava/lang/String;");
@@ -491,12 +491,12 @@ public abstract class DebuggerUtils {
     final Ref<Boolean> rv = new Ref<>(Boolean.FALSE);
     element.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitPostfixExpression(final PsiPostfixExpression expression) {
+      public void visitPostfixExpression(final @NotNull PsiPostfixExpression expression) {
         rv.set(Boolean.TRUE);
       }
 
       @Override
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
         final PsiElement psiElement = expression.resolve();
         if (psiElement instanceof PsiLocalVariable) {
           if (visibleLocalVariables != null) {
@@ -518,7 +518,7 @@ public abstract class DebuggerUtils {
       }
 
       @Override
-      public void visitPrefixExpression(final PsiPrefixExpression expression) {
+      public void visitPrefixExpression(final @NotNull PsiPrefixExpression expression) {
         final IElementType op = expression.getOperationTokenType();
         if (JavaTokenType.PLUSPLUS.equals(op) || JavaTokenType.MINUSMINUS.equals(op)) {
           rv.set(Boolean.TRUE);
@@ -529,12 +529,12 @@ public abstract class DebuggerUtils {
       }
 
       @Override
-      public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
+      public void visitAssignmentExpression(final @NotNull PsiAssignmentExpression expression) {
         rv.set(Boolean.TRUE);
       }
 
       @Override
-      public void visitCallExpression(final PsiCallExpression callExpression) {
+      public void visitCallExpression(final @NotNull PsiCallExpression callExpression) {
         rv.set(Boolean.TRUE);
         //final PsiMethod method = callExpression.resolveMethod();
         //if (method == null || !isSimpleGetter(method)) {

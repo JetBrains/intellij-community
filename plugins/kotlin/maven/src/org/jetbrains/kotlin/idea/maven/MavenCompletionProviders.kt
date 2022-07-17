@@ -2,26 +2,26 @@
 
 package org.jetbrains.kotlin.idea.maven
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.idea.maven.plugins.api.MavenFixedValueReferenceProvider
 import org.jetbrains.kotlin.cli.common.arguments.DefaultValues
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.isStableOrReadyForPreview
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 
 class MavenLanguageVersionsCompletionProvider : MavenFixedValueReferenceProvider(
-    LanguageVersion.values().filter { it.isStableOrReadyForPreview() || ApplicationManager.getApplication().isInternal }.map { it.versionString }
+    LanguageVersion.values().filter { it.isStableOrReadyForPreview() || isApplicationInternalMode() }.map { it.versionString }
         .toTypedArray()
 )
 
 class MavenApiVersionsCompletionProvider : MavenFixedValueReferenceProvider(
-    LanguageVersion.values().filter { it.isStableOrReadyForPreview() || ApplicationManager.getApplication().isInternal }.map { it.versionString }
+    LanguageVersion.values().filter { it.isStableOrReadyForPreview() || isApplicationInternalMode() }.map { it.versionString }
         .toTypedArray()
 )
 
 class MavenJvmTargetsCompletionProvider : MavenFixedValueReferenceProvider(
-    JvmTarget.values().map(JvmTarget::description).toTypedArray()
+    JvmTarget.supportedValues().map(JvmTarget::description).toTypedArray()
 )
 
 class MavenJsModuleKindsCompletionProvider : MavenFixedValueReferenceProvider(

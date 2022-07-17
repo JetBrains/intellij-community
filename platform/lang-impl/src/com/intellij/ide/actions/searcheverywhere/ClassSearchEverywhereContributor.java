@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoClassPresentationUpdater;
 import com.intellij.ide.structureView.StructureView;
@@ -84,11 +83,6 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
       model.setFilterItems(myFilter.getSelectedElements());
     }
     return model;
-  }
-
-  @Override
-  protected @Nullable SearchEverywhereCommandInfo getFilterCommand() {
-    return new SearchEverywhereCommandInfo("c", IdeBundle.message("search.everywhere.filter.classes.description"), this);
   }
 
   @NotNull

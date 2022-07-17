@@ -1,8 +1,8 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 package test
 
 typealias Global = String
 fun usesGlobal(p: List<Global>) {
-    p.map(Global::toUpperCase)
+    p.map(Global::uppercase)
 }

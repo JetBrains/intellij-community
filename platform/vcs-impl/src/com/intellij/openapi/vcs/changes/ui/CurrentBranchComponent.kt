@@ -30,7 +30,8 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import kotlin.properties.Delegates.observable
 
-class CurrentBranchComponent(private val tree: ChangesTree) : JBLabel(), Disposable {
+class CurrentBranchComponent(private val tree: ChangesTree,
+                             private val pathsProvider: () -> Iterable<FilePath>) : JBLabel(), Disposable {
   private val changeEventDispatcher = EventDispatcher.create(ChangeListener::class.java)
 
   private var branches: Set<BranchData> by observable(setOf()) { _, oldValue, newValue ->
@@ -51,10 +52,6 @@ class CurrentBranchComponent(private val tree: ChangesTree) : JBLabel(), Disposa
 
   val project: Project get() = tree.project
 
-  var pathsProvider: () -> Iterable<FilePath> by observable({ emptyList() }) { _, _, _ ->
-    refresh()
-  }
-
   init {
     isVisible = false
     icon = AllIcons.Vcs.Branch
@@ -67,6 +64,8 @@ class CurrentBranchComponent(private val tree: ChangesTree) : JBLabel(), Disposa
     }
     tree.addPropertyChangeListener(treeChangeListener)
     Disposer.register(this, Disposable { tree.removePropertyChangeListener(treeChangeListener) })
+
+    refresh()
   }
 
   fun addChangeListener(block: () -> Unit, parent: Disposable) =
@@ -89,13 +88,13 @@ class CurrentBranchComponent(private val tree: ChangesTree) : JBLabel(), Disposa
       get() = namedDouble("VersionControl.RefLabel.backgroundBrightness", 0.08)
 
     private val BACKGROUND_BASE_COLOR = namedColor("VersionControl.RefLabel.backgroundBase", JBColor(Color.BLACK, Color.WHITE))
+
     @JvmField
     val TEXT_COLOR: JBColor = namedColor("VersionControl.RefLabel.foreground", JBColor(Color(0x7a7a7a), Color(0x909090)))
 
     @Suppress("SameParameterValue")
     private fun namedDouble(name: String, default: Double): Double {
-      val value = UIManager.get(name)
-      return when (value) {
+      return when (val value = UIManager.get(name)) {
         is Double -> value
         is Int -> value.toDouble()
         is String -> value.toDoubleOrNull() ?: default

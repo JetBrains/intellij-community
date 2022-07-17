@@ -2,13 +2,12 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -19,8 +18,6 @@ class SpecifyTypeExplicitlyFix : PsiElementBaseIntentionAction() {
     override fun getFamilyName() = KotlinBundle.message("specify.type.explicitly")
 
     override fun invoke(project: Project, editor: Editor, element: PsiElement) {
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return
-
         val declaration = declarationByElement(element)!!
         val type = SpecifyTypeExplicitlyIntention.getTypeForDeclaration(declaration)
         SpecifyTypeExplicitlyIntention.addTypeAnnotation(editor, declaration, type)

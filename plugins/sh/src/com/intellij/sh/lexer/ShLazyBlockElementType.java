@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.lexer;
 
 import com.intellij.lang.ASTNode;
@@ -24,9 +25,8 @@ public class ShLazyBlockElementType extends IReparseableElementType implements I
     return createNode(null);
   }
 
-  @NotNull
   @Override
-  public ASTNode createNode(CharSequence text) {
+  public @NotNull ASTNode createNode(CharSequence text) {
     return new ShBlockImpl(this, text);
   }
 

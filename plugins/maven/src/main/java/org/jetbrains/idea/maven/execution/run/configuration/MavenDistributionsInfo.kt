@@ -2,22 +2,23 @@
 package org.jetbrains.idea.maven.execution.run.configuration
 
 import com.intellij.ide.util.BrowseFilesListener
-import com.intellij.openapi.externalSystem.service.ui.distribution.AbstractDistributionInfo
-import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionInfo
-import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionsInfo
-import com.intellij.openapi.externalSystem.service.ui.distribution.LocalDistributionInfo
+import com.intellij.openapi.externalSystem.service.ui.util.DistributionsInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.roots.ui.distribution.AbstractDistributionInfo
+import com.intellij.openapi.roots.ui.distribution.DistributionInfo
+import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.addIfNotNull
-import com.intellij.util.ui.JBUI
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenDistributionsInfo : DistributionsInfo {
+  override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.label")
+
   override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.name")
-  override val settingsHint: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.hint")
+  override val settingsHint: String? = null
 
   override val comboBoxActionName: String = MavenConfigurableBundle.message("maven.run.configuration.specify.distribution.action.name")
 

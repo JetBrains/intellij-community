@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.CommonBundle;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,10 +29,17 @@ import java.security.cert.X509Certificate;
 public class CertificateWarningDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(CertificateWarningDialog.class);
 
-  public static CertificateWarningDialog createUntrustedCertificateWarning(@NotNull X509Certificate certificate) {
+  public static CertificateWarningDialog createUntrustedCertificateWarning(@NotNull X509Certificate certificate,
+                                                                           @Nullable @NlsContexts.DialogMessage String details) {
     return new CertificateWarningDialog(certificate,
                                         IdeBundle.message("dialog.title.untrusted.server.s.certificate"),
-                                        IdeBundle.message("text.server.s.certificate.trusted"));
+                                        details == null
+                                        ? IdeBundle.message("text.server.s.certificate.trusted")
+                                        : IdeBundle.message("text.server.s.certificate.trusted.details", details));
+  }
+
+  public static CertificateWarningDialog createUntrustedCertificateWarning(@NotNull X509Certificate certificate) {
+    return createUntrustedCertificateWarning(certificate, null);
   }
 
   public static CertificateWarningDialog createExpiredCertificateWarning(@NotNull X509Certificate certificate) {
@@ -51,8 +59,8 @@ public class CertificateWarningDialog extends DialogWrapper {
     super((Project)null, false);
 
     myRootPanel.setPreferredSize(new JBDimension(550, 650));
-    myNoticePane.setEditorKit(UIUtil.getHTMLEditorKit());
-    myMessagePane.setEditorKit(UIUtil.getHTMLEditorKit());
+    myNoticePane.setEditorKit(HTMLEditorKitBuilder.simple());
+    myMessagePane.setEditorKit(HTMLEditorKitBuilder.simple());
 
     myCertificate = certificate;
 

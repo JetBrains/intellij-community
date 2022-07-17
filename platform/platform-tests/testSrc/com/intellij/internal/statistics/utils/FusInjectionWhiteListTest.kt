@@ -1,14 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.utils
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.PluginType
-import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+
+private const val tbePluginId = "org.jetbrains.toolbox-enterprise-client"
 
 class FusInjectionWhiteListTest {
+  companion object {
+    @BeforeAll
+    @JvmStatic
+    fun setUp() {
+      PluginManagerCore.isUnitTestMode = true
+    }
+  }
 
   @Test
   fun allowedPluginsTBE() {
@@ -17,10 +26,10 @@ class FusInjectionWhiteListTest {
       .partition  { it.isAllowedToInjectIntoFUS() }
 
     allowed
-      .forEach { assertTrue(it.isDevelopedByJetBrains()) }
+      .forEach { assertThat(it.isDevelopedByJetBrains()).isTrue() }
 
     notAllowed
-      .forEach { assertFalse(it.isDevelopedByJetBrains()) }
+      .forEach { assertThat(it.isDevelopedByJetBrains()).isFalse() }
   }
 
   @Test
@@ -29,11 +38,6 @@ class FusInjectionWhiteListTest {
       .map    { PluginInfo(it, "some.plugin.id", "1.2.3") }
       .filter { it.isAllowedToInjectIntoFUS() }
 
-    assertEquals(1, allowed.size)
-    assertEquals(PluginType.PLATFORM, allowed.first().type)
-  }
-
-  companion object {
-    private const val tbePluginId = "org.jetbrains.toolbox-enterprise-client"
+    assertThat(allowed.map { it.type }).containsExactlyInAnyOrder(PluginType.PLATFORM, PluginType.FROM_SOURCES)
   }
 }

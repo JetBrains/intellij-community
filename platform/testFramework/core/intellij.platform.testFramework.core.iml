@@ -13,5 +13,6 @@
     <orderEntry type="module" module-name="intellij.tools.testsBootstrap" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="JUnit5" level="project" />
   </component>
 </module>

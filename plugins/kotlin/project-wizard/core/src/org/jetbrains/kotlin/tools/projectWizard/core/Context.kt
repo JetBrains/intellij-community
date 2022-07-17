@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.core
 
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.*
@@ -12,8 +12,6 @@ import org.jetbrains.kotlin.tools.projectWizard.core.service.SettingSavingWizard
 import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardService
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.allIRModules
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.path
-import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.allModulesPaths
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleReference
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.path
@@ -163,10 +161,17 @@ class Context private constructor(
         }
 
         val <V : Any> SettingReference<V, SettingType<V>>.savedOrDefaultValue: V?
-            get() = setting.getSavedValueForSetting() ?: when (val defaultValue = setting.defaultValue) {
-                is SettingDefaultValue.Value -> defaultValue.value
-                is SettingDefaultValue.Dynamic<V> -> defaultValue.getter(this@Reader, this)
-                null -> null
+            get() {
+                val savedValue = setting.getSavedValueForSetting()?.takeIf {
+                    // loaded value might be no longer relevant for the current context, e.g. IDE plugins can be disabled
+                    read { setting.validator.validate(this, it) } == ValidationResult.OK
+                }
+
+                return savedValue ?: when (val defaultValue = setting.defaultValue) {
+                    is SettingDefaultValue.Value -> defaultValue.value
+                    is SettingDefaultValue.Dynamic<V> -> defaultValue.getter(this@Reader, this)
+                    null -> null
+                }
             }
 
         val <V : Any, T : SettingType<V>> SettingReference<V, T>.setting: Setting<V, T>
@@ -187,8 +192,7 @@ class Context private constructor(
             get() = settingContext.eventManager
 
         fun <A, B : Any> Task1<A, B>.execute(value: A): TaskResult<B> {
-            @Suppress("UNCHECKED_CAST")
-            return action(this@Writer, value)
+          return action(this@Writer, value)
         }
 
         fun <T : Any> PluginProperty<T>.update(

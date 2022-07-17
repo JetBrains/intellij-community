@@ -16,7 +16,7 @@
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.ide.SmartSelectProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,9 +86,19 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
   @Nullable
   @Override
   public JTree getSource(DataContext context) {
-    Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
+    Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context);
     JTree tree = component instanceof JTree ? (JTree)component : null;
     return tree == null || SINGLE_TREE_SELECTION == tree.getSelectionModel().getSelectionMode() ? null : tree;
+  }
+
+  @Override
+  public boolean canIncreaseSelection(JTree tree) {
+    return tree != null && SINGLE_TREE_SELECTION != tree.getSelectionModel().getSelectionMode();
+  }
+
+  @Override
+  public boolean canDecreaseSelection(JTree tree) {
+    return tree != null && tree.getSelectionModel().getSelectionCount() > 1;
   }
 
   @Nullable
@@ -117,7 +127,7 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
   private static boolean acceptDescendants(@NotNull JTree tree,
                                            @NotNull TreePath parent,
                                            @NotNull Predicate<? super TreePath> predicate,
-                                           @NotNull Consumer<TreePath[]> consumer) {
+                                           @NotNull Consumer<? super TreePath[]> consumer) {
     ArrayList<TreePath> list = new ArrayList<>();
     testDescendants(tree, parent, child -> {
       if (predicate.test(child)) list.add(child);

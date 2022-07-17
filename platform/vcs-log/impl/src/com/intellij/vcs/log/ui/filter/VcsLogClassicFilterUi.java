@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.ide.HelpTooltip;
@@ -12,13 +12,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.Consumer;
@@ -32,7 +31,7 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -91,7 +90,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     myDataPack = VisiblePack.EMPTY;
     myColorManager = colorManager;
 
-    NotNullComputable<VcsLogDataPack> dataPackGetter = () -> myDataPack;
+    Supplier<VcsLogDataPack> dataPackGetter = () -> myDataPack;
     myBranchFilterModel = new BranchFilterModel(dataPackGetter, myLogData.getStorage(), myLogData.getRoots(), myUiProperties, filters);
     myUserFilterModel = new UserFilterModel(myUiProperties, filters);
     myDateFilterModel = new DateFilterModel(myUiProperties, filters);
@@ -194,7 +193,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   @Nullable
   protected FilterActionComponent createStructureFilterComponent() {
     return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.path.filter.action.text"),
-                                     () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel, myColorManager).initUi());
+                                     () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel,
+                                                                             myColorManager).initUi());
   }
 
   @Override
@@ -204,10 +204,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
   protected static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {
 
-    @NotNull private final Computable<? extends JComponent> myComponentCreator;
+    @NotNull private final Supplier<? extends JComponent> myComponentCreator;
 
     public FilterActionComponent(@NotNull Supplier<@Nls @NlsActions.ActionText String> dynamicText,
-                                 @NotNull Computable<? extends JComponent> componentCreator) {
+                                 @NotNull Supplier<? extends JComponent> componentCreator) {
       super(dynamicText);
       myComponentCreator = componentCreator;
     }
@@ -215,7 +215,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     @NotNull
     @Override
     public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      return myComponentCreator.compute();
+      return myComponentCreator.get();
     }
 
     @Override
@@ -224,7 +224,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       if (vcsLogUi == null) return;
 
       Component actionComponent = UIUtil.uiTraverser(vcsLogUi.getToolbar()).traverse().find(component -> {
-        return UIUtil.getClientProperty(component, ACTION_KEY) == this;
+        return ClientProperty.get(component, ACTION_KEY) == this;
       });
       if (actionComponent instanceof VcsLogPopupComponent) {
         ((VcsLogPopupComponent)actionComponent).showPopupMenu();
@@ -236,9 +236,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     @NotNull private final VcsLogStorage myStorage;
     @NotNull private final Collection<VirtualFile> myRoots;
     @Nullable private Collection<VirtualFile> myVisibleRoots;
-    @NotNull private final Computable<? extends VcsLogDataPack> myDataPackProvider;
+    @NotNull private final Supplier<? extends VcsLogDataPack> myDataPackProvider;
 
-    BranchFilterModel(@NotNull Computable<? extends VcsLogDataPack> dataPackProvider,
+    BranchFilterModel(@NotNull Supplier<? extends VcsLogDataPack> dataPackProvider,
                       @NotNull VcsLogStorage storage,
                       @NotNull Collection<VirtualFile> roots,
                       @NotNull MainVcsLogUiProperties properties,
@@ -345,7 +345,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @NotNull
     VcsLogDataPack getDataPack() {
-      return myDataPackProvider.compute();
+      return myDataPackProvider.get();
     }
 
     @Nullable
@@ -793,7 +793,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
         if (getText() != modelText) setText(modelText);
       });
       new HelpTooltip().setTitle(VcsLogBundle.message("vcs.log.filter.text.hash.tooltip"))
-        .setShortcut(KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.VCS_LOG_FOCUS_TEXT_FILTER))
+        .setShortcut(KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER))
         .setLocation(HelpTooltip.Alignment.BOTTOM)
         .installOn(getTextEditor());
       Disposer.register(parentDisposable, this::hidePopup);

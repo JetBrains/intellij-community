@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.psi.*;
@@ -121,7 +121,7 @@ public final class RemoveUnusedVariableUtil {
 
   static void collectReferences(@NotNull PsiElement context, final PsiVariable variable, final List<? super PsiElement> references) {
     context.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         if (expression.resolve() == variable) references.add(expression);
         super.visitReferenceExpression(expression);
       }
@@ -220,6 +220,9 @@ public final class RemoveUnusedVariableUtil {
   private static void deleteVariable(PsiVariable variable) {
     CommentTracker tracker = new CommentTracker();
     tracker.markUnchanged(variable.getInitializer()); // assume that initializer is used (e.g. inlined)
+    if (variable instanceof PsiJavaDocumentedElement) {
+      tracker.markUnchanged(((PsiJavaDocumentedElement)variable).getDocComment());
+    }
     tracker.deleteAndRestoreComments(variable);
   }
 

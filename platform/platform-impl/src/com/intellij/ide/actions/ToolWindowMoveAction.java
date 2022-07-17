@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -165,7 +166,13 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
   @Override
   public void update(@NotNull AnActionEvent e) {
     ToolWindow toolWindow = getToolWindow(e);
+    e.getPresentation().setVisible(toolWindow != null);
     e.getPresentation().setEnabled(toolWindow != null && !myAnchor.isApplied(toolWindow));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
@@ -197,6 +204,11 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
         isInitialized = true;
       }
       super.update(e);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }

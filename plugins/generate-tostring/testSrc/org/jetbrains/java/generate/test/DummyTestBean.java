@@ -23,10 +23,12 @@ import java.util.Date;
 /**
  * This is a dummy test bean for testing the toString() plugin.
  */
+@SuppressWarnings("unused")
 public class DummyTestBean extends Config implements Serializable {
 
     public static final String CONST_FIELD = "XXX_XXX";
     private static final String CONST_FIELD_PRIV = "XXX_XXX";
+    @SuppressWarnings("UnnecessaryModifier")
     private static final transient String tran = "xxx";
 
 //    private static String myStaticString;

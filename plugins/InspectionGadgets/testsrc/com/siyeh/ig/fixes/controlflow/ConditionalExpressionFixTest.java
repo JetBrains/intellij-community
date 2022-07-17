@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.controlflow;
 
 import com.intellij.application.options.CodeStyle;
@@ -22,6 +22,8 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
 
   public void testThisCall() { assertQuickfixNotAvailable(); }
   public void testBrokenCode() { assertQuickfixNotAvailable(); }
+  public void testIncompleteCode() { doTest(); }
+  public void testIncompleteCode2() { doTest(); }
   public void testField() { doTest(); }
   public void testNonDenotableVar() { assertQuickfixNotAvailable(); }
 

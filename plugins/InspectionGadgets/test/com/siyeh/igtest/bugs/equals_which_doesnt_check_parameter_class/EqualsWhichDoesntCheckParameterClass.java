@@ -1,6 +1,7 @@
 package com.siyeh.igtest.bugs.equals_which_doesnt_check_parameter;
 
 import java.util.Optional;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class EqualsWhichDoesntCheckParameterClass {
     private int foo;
@@ -126,5 +127,12 @@ class Cell2 {
                    .map(that -> (Cell2)that)
                    .filter(that -> x == that.x && y == that.y)
                    .isPresent();
+  }
+}
+class ReflectionEquals {
+
+  @Override
+  public boolean equals(Object o) {
+    return EqualsBuilder.reflectionEquals(this, o);
   }
 }

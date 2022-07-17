@@ -154,7 +154,6 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
     return null;
   }
 
-  @SuppressWarnings("StringConcatenationInLoop")
   @NonNls
   @NotNull
   public static String findOutInvalidationReason(@NotNull PsiElement root) {
@@ -182,7 +181,8 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
 
     String hierarchy = "";
     while (element != null && !(element instanceof PsiFile)) {
-      hierarchy += (hierarchy.isEmpty() ? "," : "") + element.getClass();
+      //noinspection StringConcatenationInLoop
+      hierarchy += (hierarchy.isEmpty() ? "" : ", ") + element.getClass();
       lastParent = element;
       element = element.getParent();
     }

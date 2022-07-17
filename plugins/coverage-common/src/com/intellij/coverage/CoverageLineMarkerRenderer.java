@@ -163,9 +163,11 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     final LineData lineData = getLineData(lineNumber);
     final EditorImpl uEditor;
-    if (lineData != null && lineData.getStatus() != LineCoverage.NONE && !mySubCoverageActive) {
+    final String report;
+    if (lineData != null && lineData.getStatus() != LineCoverage.NONE && !mySubCoverageActive &&
+        (report = getReport(editor, lineNumber)) != null) {
       final EditorFactory factory = EditorFactory.getInstance();
-      final Document doc = factory.createDocument(getReport(editor, lineNumber));
+      final Document doc = factory.createDocument(report);
       doc.setReadOnly(true);
       uEditor = (EditorImpl)factory.createEditor(doc, editor.getProject());
       panel.add(EditorFragmentComponent.createEditorFragmentComponent(uEditor, 0, doc.getLineCount(), false, false), BorderLayout.CENTER);
@@ -198,6 +200,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
                                                      HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT | HintManager.HIDE_BY_SCROLLING, -1, false, new HintHint(editor, point));
   }
 
+  @Nullable
   private String getReport(final Editor editor, final int lineNumber) {
     final LineData lineData = getLineData(lineNumber);
 
@@ -206,7 +209,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     assert project != null;
 
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    assert psiFile != null;
+    if (psiFile == null) return null;
 
     final int lineStartOffset = document.getLineStartOffset(lineNumber);
     final int lineEndOffset = document.getLineEndOffset(lineNumber);

@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
-
 
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.tree.*
 import java.math.BigInteger
+import java.util.*
 
 class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
@@ -29,7 +29,7 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
     }
 
     private fun cannotConvertLiteralMessage(element: JKLiteralExpression): String {
-        val literalType = element.type.toString().toLowerCase()
+        val literalType = element.type.toString().lowercase(Locale.getDefault())
         val literalValue = element.literal
         return "Could not convert $literalType literal '$literalValue' to Kotlin"
     }
@@ -55,7 +55,6 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
             if (text.endsWith(".")) "${text}0" else text
         }
 
-
     private fun JKLiteralExpression.toFloatLiteral() =
         literal.cleanFloatAndDoubleLiterals().let { text ->
             if (!text.endsWith("f")) "${text}f"
@@ -63,20 +62,18 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
         }
 
     private fun JKLiteralExpression.toStringLiteral() =
-        literal.replace("""((?:\\)*)\\([0-3]?[0-7]{1,2})""".toRegex()) { matchResult ->
+        literal.replace("""(\\*)\\([0-3]?[0-7]{1,2})""".toRegex()) { matchResult ->
             val leadingBackslashes = matchResult.groupValues[1]
             if (leadingBackslashes.length % 2 == 0)
                 String.format("%s\\u%04x", leadingBackslashes, Integer.parseInt(matchResult.groupValues[2], 8))
             else matchResult.value
-        }.replace("""(?<!\\)\$([A-Za-z]+|\{)""".toRegex(), "\\\\$0")
-            .replace( "\\f", "\\u000c")
-
+        }.replace("""\$([A-Za-z]+|\{)""".toRegex(), "\\\\$0")
+            .replace("\\f", "\\u000c")
 
     private fun JKLiteralExpression.convertCharLiteral() =
         literal.replace("""\\([0-3]?[0-7]{1,2})""".toRegex()) {
             String.format("\\u%04x", Integer.parseInt(it.groupValues[1], 8))
         }
-
 
     private fun JKLiteralExpression.toIntLiteral() =
         literal
@@ -84,7 +81,6 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
             .convertHexLiteral(isLongLiteral = false)
             .convertBinaryLiteral(isLongLiteral = false)
             .convertOctalLiteral(isLongLiteral = false)
-
 
     private fun JKLiteralExpression.toLongLiteral() =
         literal
@@ -114,7 +110,7 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
     }
 
     private fun String.convertOctalLiteral(isLongLiteral: Boolean): String {
-        if (!startsWith("0") || length == 1 || get(1).toLowerCase() == 'x') return this
+        if (!startsWith("0") || length == 1 || get(1).lowercaseChar() == 'x') return this
         val value = BigInteger(drop(1), 8)
         return if (isLongLiteral) value.toLong().toString(10) else value.toInt().toString(10)
     }

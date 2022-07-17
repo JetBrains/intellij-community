@@ -1,15 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAware
+import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.Paint
 import javax.swing.JComponent
+import javax.swing.JPanel
 
-open class SegmentedBarActionComponent(private val place: String = ActionPlaces.RUN_TOOLBAR) : AnAction(), CustomComponentAction, DumbAware {
+open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, DumbAware {
+
   companion object {
     @Deprecated("Use {@link SegmentedActionToolbarComponent#Companion#isCustomBar(Component)}",
                 ReplaceWith("SegmentedActionToolbarComponent.isCustomBar(component)"))
@@ -23,6 +26,7 @@ open class SegmentedBarActionComponent(private val place: String = ActionPlaces.
       return SegmentedActionToolbarComponent.paintButtonDecorations(g, c, paint)
     }
   }
+
   enum class ControlBarProperty {
     FIRST,
     LAST,
@@ -44,24 +48,27 @@ open class SegmentedBarActionComponent(private val place: String = ActionPlaces.
 
 
   override fun actionPerformed(e: AnActionEvent) {
-
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = actionGroup != null
   }
 
-  override fun createCustomComponent(presentation: Presentation, place_: String): JComponent {
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    return JPanel(BorderLayout()).apply {
       val bar = createSegmentedActionToolbar(presentation, place, group).apply {
         setForceMinimumSize(true)
       }
       bar.targetComponent = bar
-      return bar.component
+      add(bar.component, BorderLayout.CENTER)
+    }
   }
 
-  protected open fun createSegmentedActionToolbar(presentation: Presentation, place: String, group: ActionGroup): SegmentedActionToolbarComponent {
+  protected open fun createSegmentedActionToolbar(presentation: Presentation,
+                                                  place: String,
+                                                  group: ActionGroup): SegmentedActionToolbarComponent {
     return SegmentedActionToolbarComponent(place, group)
   }
 }
-
-interface BarCustomComponentAction

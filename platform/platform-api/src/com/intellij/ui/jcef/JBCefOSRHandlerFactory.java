@@ -46,7 +46,7 @@ public interface JBCefOSRHandlerFactory {
    *
    * @see GraphicsEnvironment#isHeadless
    */
-  default @NotNull Function<JComponent, Rectangle> createScreenBoundsProvider() {
+  default @NotNull Function<? super JComponent, ? extends Rectangle> createScreenBoundsProvider() {
     return component -> {
       if (component != null && !GraphicsEnvironment.isHeadless()) {
         try {

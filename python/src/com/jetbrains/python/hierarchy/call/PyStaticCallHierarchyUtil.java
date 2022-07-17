@@ -30,6 +30,9 @@ public class PyStaticCallHierarchyUtil {
   public static Collection<PsiElement> getCallees(@NotNull PyElement element) {
     final List<PsiElement> callees = new ArrayList<>();
 
+    final PyResolveContext resolveContext =
+      PyResolveContext.implicitContext(TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()));
+
     final PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
       @Override
       public void visitPyParameterList(@NotNull PyParameterList node) {
@@ -54,7 +57,7 @@ public class PyStaticCallHierarchyUtil {
         super.visitPyCallExpression(node);
 
         StreamEx
-          .of(node.multiResolveCalleeFunction(PyResolveContext.implicitContext(TypeEvalContext.codeInsightFallback(node.getProject()))))
+          .of(node.multiResolveCalleeFunction(resolveContext))
           .select(PyFunction.class)
           .forEach(callees::add);
       }

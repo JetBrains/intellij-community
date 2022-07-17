@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -20,6 +21,15 @@ public final class FileNameCache {
   @SuppressWarnings("unchecked") private static final IntSLRUCache<CharSequence>[] ourNameCache = new IntSLRUCache[16];
 
   static {
+    initialize();
+  }
+
+  public static void drop() {
+    Arrays.fill(ourArrayCache, null);
+    initialize();
+  }
+
+  private static void initialize() {
     final int protectedSize = 40000 / ourNameCache.length;
     final int probationalSize = 20000 / ourNameCache.length;
     for(int i = 0; i < ourNameCache.length; ++i) {
@@ -43,6 +53,9 @@ public final class FileNameCache {
       final int idx = name.indexOf('/', 2);
       start = idx == -1 ? 2 : idx + 1;
     }
+    else if (name.charAt(0) == '/') {
+      start = 1;
+    }
     if (name.endsWith(URLUtil.SCHEME_SEPARATOR)) {
       end -= URLUtil.SCHEME_SEPARATOR.length();
     }
@@ -52,7 +65,7 @@ public final class FileNameCache {
   }
 
   @NotNull
-  private static IntObjectLRUMap.MapEntry<CharSequence> cacheData(String name, int id, int stripe) {
+  private static IntObjectLRUMap.MapEntry<CharSequence> cacheData(CharSequence name, int id, int stripe) {
     if (name == null) {
       FSRecords.handleError(new RuntimeException("VFS name enumerator corrupted"));
     }
@@ -87,11 +100,11 @@ public final class FileNameCache {
 
   @FunctionalInterface
   public interface NameComputer {
-    String compute(int id) throws IOException;
+    CharSequence compute(int id) throws IOException;
   }
 
   @NotNull
-  public static CharSequence getVFileName(int nameId, @NotNull NameComputer computeName) throws IOException {
+  private static CharSequence getVFileName(int nameId, @NotNull NameComputer computeName) throws IOException {
     assert nameId > 0 : nameId;
 
     if (ourTrackStats) {

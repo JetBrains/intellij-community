@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -174,7 +174,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       for (PsiElement root : roots) {
         root.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
             if (!reference.isQualified()) {
               final JavaResolveResult resolveResult = reference.advancedResolve(false);
               if (!inTheSamePackage(file, resolveResult.getElement())) {
@@ -191,9 +191,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
           private boolean inTheSamePackage(PsiJavaFile file, PsiElement element) {
             if (element instanceof PsiClass && ((PsiClass)element).getContainingClass() == null) {
               final PsiFile containingFile = element.getContainingFile();
-              if (containingFile instanceof PsiJavaFile) {
-                return Comparing.strEqual(file.getPackageName(), ((PsiJavaFile)containingFile).getPackageName());
-              }
+              return containingFile instanceof PsiClassOwner &&
+                     Comparing.strEqual(file.getPackageName(), ((PsiClassOwner)containingFile).getPackageName());
             }
             return false;
           }
@@ -333,7 +332,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       return Collections.singletonList(fromTypeMap);
     }
 
-    Collection<String> fromTypeName = suggestNamesFromTypeName(type, variableKind, getTypeName(type));
+    List<String> fromTypeName = suggestNamesFromTypeName(type, variableKind, getTypeName(type));
     if (!(type instanceof PsiClassType)) {
       return fromTypeName;
     }
@@ -1047,7 +1046,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       }
       String unique = suggestUniqueVariableName(name, place, lookForward);
       if (!unique.equals(name)) {
-        String withShadowing = suggestUniqueVariableName(name, place, lookForward, true, v -> false);
+        String withShadowing = suggestUniqueVariableName(name, place, lookForward, place instanceof PsiParameter, v -> false);
         if (withShadowing.equals(name)) {
           uniqueNames.add(name);
         }
@@ -1101,10 +1100,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       boolean hasConflict = false;
 
       @Override
-      public void visitClass(final PsiClass aClass) {}
+      public void visitClass(final @NotNull PsiClass aClass) {}
 
       @Override
-      public void visitVariable(PsiVariable variable) {
+      public void visitVariable(@NotNull PsiVariable variable) {
         if (name.equals(variable.getName()) && !canBeReused.test(variable)) {
           hasConflict = true;
           stopWalking();

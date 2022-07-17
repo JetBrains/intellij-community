@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring
 
@@ -9,6 +9,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.command.CommandEvent
@@ -51,16 +52,22 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.getAccessorLightMethods
+import org.jetbrains.kotlin.asJava.isSyntheticValuesOrValueOfMethod
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
+import org.jetbrains.kotlin.idea.base.util.collapseSpaces
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -69,7 +76,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.core.util.showYesNoCancelDialog
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
@@ -77,11 +83,10 @@ import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.refactoring.rename.canonicalRender
 import org.jetbrains.kotlin.idea.roots.isOutsideKotlinAwareSourceRoot
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.underModalProgress
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.actualsForExpected
+import org.jetbrains.kotlin.idea.util.application.invokeLater
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.liftToExpected
-import org.jetbrains.kotlin.idea.util.string.collapseSpaces
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -89,7 +94,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.*
-import org.jetbrains.kotlin.resolve.calls.callUtil.getCallWithAssert
+import org.jetbrains.kotlin.resolve.calls.util.getCallWithAssert
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.source.getPsi
@@ -98,9 +103,10 @@ import java.lang.annotation.Retention
 import java.util.*
 import javax.swing.Icon
 import kotlin.math.min
-import org.jetbrains.kotlin.idea.core.util.getLineCount as newGetLineCount
+import org.jetbrains.kotlin.idea.base.psi.getLineCount as newGetLineCount
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber as _getLineNumber
 
 const val CHECK_SUPER_METHODS_YES_NO_DIALOG = "CHECK_SUPER_METHODS_YES_NO_DIALOG"
 
@@ -214,7 +220,7 @@ fun Project.checkConflictsInteractively(
     onAccept: () -> Unit
 ) {
     if (!conflicts.isEmpty) {
-        if (ApplicationManager.getApplication()!!.isUnitTestMode) throw ConflictsInTestsException(conflicts.values())
+        if (isUnitTestMode()) throw ConflictsInTestsException(conflicts.values())
 
         val dialog = ConflictsDialog(this, conflicts) { onAccept() }
         dialog.show()
@@ -302,8 +308,8 @@ class SelectionAwareScopeHighlighter(val editor: Editor) {
 }
 
 @Deprecated(
-    "Use org.jetbrains.kotlin.idea.core.util.getLineStartOffset() instead",
-    ReplaceWith("this.getLineStartOffset(line)", "org.jetbrains.kotlin.idea.core.util.getLineStartOffset"),
+    "Use org.jetbrains.kotlin.idea.base.psi.getLineStartOffset() instead",
+    ReplaceWith("this.getLineStartOffset(line)", "org.jetbrains.kotlin.idea.base.psi.getLineStartOffset"),
     DeprecationLevel.ERROR
 )
 fun PsiFile.getLineStartOffset(line: Int): Int? {
@@ -322,8 +328,8 @@ fun PsiFile.getLineStartOffset(line: Int): Int? {
 }
 
 @Deprecated(
-    "Use org.jetbrains.kotlin.idea.core.util.getLineEndOffset() instead",
-    ReplaceWith("this.getLineEndOffset(line)", "org.jetbrains.kotlin.idea.core.util.getLineEndOffset"),
+    "Use org.jetbrains.kotlin.idea.base.psi.getLineEndOffset() instead",
+    ReplaceWith("this.getLineEndOffset(line)", "org.jetbrains.kotlin.idea.base.psi.getLineEndOffset"),
     DeprecationLevel.ERROR
 )
 fun PsiFile.getLineEndOffset(line: Int): Int? {
@@ -331,11 +337,9 @@ fun PsiFile.getLineEndOffset(line: Int): Int? {
     return document?.getLineEndOffset(line)
 }
 
+@Deprecated("Use org.jetbrains.kotlin.idea.base.psi.GeneralPsiElementUtilsKt.getLineNumber instead",)
 fun PsiElement.getLineNumber(start: Boolean = true): Int {
-    val document = containingFile.viewProvider.document ?: PsiDocumentManager.getInstance(project).getDocument(containingFile)
-    val index = if (start) this.startOffset else this.endOffset
-    if (index > (document?.textLength ?: 0)) return 0
-    return document?.getLineNumber(index) ?: 0
+   return _getLineNumber(start)
 }
 
 class SeparateFileWrapper(manager: PsiManager) : LightElement(manager, KotlinLanguage.INSTANCE) {
@@ -451,7 +455,7 @@ private fun <T, E : PsiElement> choosePsiContainerElement(
         true
     }
 
-    ApplicationManager.getApplication().invokeLater {
+    invokeLater {
         popup.showInBestPositionFor(editor)
     }
 }
@@ -483,7 +487,7 @@ private fun <T> chooseContainerElementIfNecessaryImpl(
 ) {
     when {
         containers.isEmpty() -> return
-        containers.size == 1 || ApplicationManager.getApplication()!!.isUnitTestMode -> onSelect(containers.first())
+        containers.size == 1 || isUnitTestMode() -> onSelect(containers.first())
         toPsi != null -> chooseContainerElement(containers, editor, title, highlightSelection, toPsi, onSelect)
         else -> {
             @Suppress("UNCHECKED_CAST")
@@ -494,14 +498,15 @@ private fun <T> chooseContainerElementIfNecessaryImpl(
 
 fun PsiElement.isTrueJavaMethod(): Boolean = this is PsiMethod && this !is KtLightMethod
 
-fun PsiElement.canRefactor(): Boolean = when {
-    !isValid -> false
-    this is PsiPackage -> directories.any { it.canRefactor() }
-    this is KtElement || this is PsiMember && language == JavaLanguage.INSTANCE || this is PsiDirectory -> ProjectRootsUtil.isInProjectSource(
-        this,
-        includeScriptsOutsideSourceRoots = true
-    )
-    else -> false
+fun PsiElement.canRefactor(): Boolean {
+    return when {
+        !isValid -> false
+        this is PsiPackage ->
+            directories.any { it.canRefactor() }
+        this is KtElement || this is PsiMember && language == JavaLanguage.INSTANCE || this is PsiDirectory ->
+            RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this)
+        else -> false
+    }
 }
 
 private fun copyModifierListItems(from: PsiModifierList, to: PsiModifierList, withPsiModifiers: Boolean = true) {
@@ -662,6 +667,8 @@ fun createJavaClass(klass: KtClass, targetClass: PsiClass?, forcePlainClass: Boo
     }
 
     for (method in template.methods) {
+        if (isSyntheticValuesOrValueOfMethod(method)) continue
+
         val hasParams = method.parameterList.parametersCount > 0
         val needSuperCall = !template.isEnum &&
                 (template.superClass?.constructors ?: PsiMethod.EMPTY_ARRAY).all {
@@ -801,9 +808,7 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
         }
     }
 
-    if (commonCount == 0) return originalList.listReplacer(newList)
-
-    val lastOriginalParameter = oldParameters.last()
+    if (commonCount == 0 && !keepComments) return originalList.listReplacer(newList)
 
     if (oldCount > commonCount) {
         if (keepComments) {
@@ -818,9 +823,10 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
                 oldParameter.delete()
             }
         } else {
-            originalList.deleteChildRange(oldParameters[commonCount - 1].nextSibling, lastOriginalParameter)
+            originalList.deleteChildRange(oldParameters[commonCount - 1].nextSibling, oldParameters.last())
         }
     } else if (newCount > commonCount) {
+        val lastOriginalParameter = oldParameters.last()
         val psiBeforeLastParameter = lastOriginalParameter.prevSibling
         val withMultiline =
             (psiBeforeLastParameter is PsiWhiteSpace || psiBeforeLastParameter is PsiComment) && psiBeforeLastParameter.textContains('\n')
@@ -846,8 +852,7 @@ fun <T> Pass(body: (T) -> Unit) = object : Pass<T>() {
 
 fun KtExpression.removeTemplateEntryBracesIfPossible(): KtExpression {
     val parent = parent as? KtBlockStringTemplateEntry ?: return this
-    val newEntry = if (parent.canDropBraces()) parent.dropBraces() else parent
-    return newEntry.expression!!
+    return parent.dropCurlyBracketsIfPossible().expression!!
 }
 
 fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {
@@ -976,30 +981,39 @@ fun checkSuperMethods(
     return askUserForMethodsToSearch(declarationDescriptor, overriddenElementsToDescriptor)
 }
 
-private fun getSuperDescriptors(declaration: KtDeclaration, ignore: Collection<PsiElement>?) = underModalProgress(
-    declaration.project,
-    KotlinBundle.message("find.usages.progress.text.declaration.superMethods")
-) {
-    val declarationDescriptor = declaration.unsafeResolveToDescriptor() as CallableDescriptor
+private fun getSuperDescriptors(
+    declaration: KtDeclaration,
+    ignore: Collection<PsiElement>?
+): Pair<CallableDescriptor, Map<PsiElement, CallableDescriptor>> {
+    val progressTitle = KotlinBundle.message("find.usages.progress.text.declaration.superMethods")
+    return ActionUtil.underModalProgress(declaration.project, progressTitle) {
+        val declarationDescriptor = declaration.unsafeResolveToDescriptor() as CallableDescriptor
 
-    if (declarationDescriptor is LocalVariableDescriptor) return@underModalProgress (declarationDescriptor to emptyMap<PsiElement, CallableDescriptor>())
-
-    val overriddenElementsToDescriptor = HashMap<PsiElement, CallableDescriptor>()
-    for (overriddenDescriptor in DescriptorUtils.getAllOverriddenDescriptors(
-        declarationDescriptor
-    )) {
-        val overriddenDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
-            declaration.project,
-            overriddenDescriptor
-        ) ?: continue
-        if (overriddenDeclaration is KtNamedFunction || overriddenDeclaration is KtProperty || overriddenDeclaration is PsiMethod || overriddenDeclaration is KtParameter) {
-            overriddenElementsToDescriptor[overriddenDeclaration] = overriddenDescriptor
+        if (declarationDescriptor is LocalVariableDescriptor) {
+            return@underModalProgress (declarationDescriptor to emptyMap<PsiElement, CallableDescriptor>())
         }
+
+        val overriddenElementsToDescriptor = HashMap<PsiElement, CallableDescriptor>()
+        for (overriddenDescriptor in DescriptorUtils.getAllOverriddenDescriptors(declarationDescriptor)) {
+            val overriddenDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
+                declaration.project,
+                overriddenDescriptor
+            ) ?: continue
+            if (overriddenDeclaration is KtNamedFunction
+                || overriddenDeclaration is KtProperty
+                || overriddenDeclaration is PsiMethod
+                || overriddenDeclaration is KtParameter
+            ) {
+                overriddenElementsToDescriptor[overriddenDeclaration] = overriddenDescriptor
+            }
+        }
+
+        if (ignore != null) {
+            overriddenElementsToDescriptor.keys.removeAll(ignore)
+        }
+
+        return@underModalProgress (declarationDescriptor to overriddenElementsToDescriptor)
     }
-    if (ignore != null) {
-        overriddenElementsToDescriptor.keys.removeAll(ignore)
-    }
-    (declarationDescriptor to overriddenElementsToDescriptor)
 }
 
 fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> {
@@ -1011,7 +1025,6 @@ fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?)
 fun checkSuperMethodsWithPopup(
     declaration: KtNamedDeclaration,
     deepestSuperMethods: List<PsiElement>,
-    actionString: String,
     editor: Editor,
     action: (List<PsiElement>) -> Unit
 ) {
@@ -1026,32 +1039,32 @@ fun checkSuperMethodsWithPopup(
     } ?: return action(listOf(declaration))
     if (superClass == null) return action(listOf(declaration))
 
-    if (ApplicationManager.getApplication().isUnitTestMode) return action(deepestSuperMethods)
+    if (isUnitTestMode()) return action(deepestSuperMethods)
 
-    val kind = when (declaration) {
-        is KtNamedFunction -> "function"
-        is KtProperty, is KtParameter -> "property"
+    val kindIndex = when (declaration) {
+        is KtNamedFunction -> 1 // "function"
+        is KtProperty, is KtParameter -> 2 // "property"
         else -> return
     }
 
     val unwrappedSupers = deepestSuperMethods.mapNotNull { it.namedUnwrappedElement }
     val hasJavaMethods = unwrappedSupers.any { it is PsiMethod }
     val hasKtMembers = unwrappedSupers.any { it is KtNamedDeclaration }
-    val superKind = when {
-        hasJavaMethods && hasKtMembers -> "member"
-        hasJavaMethods -> "method"
-        else -> kind
+    val superKindIndex = when {
+        hasJavaMethods && hasKtMembers -> 3 // "member"
+        hasJavaMethods -> 4 // "method"
+        else -> kindIndex
     }
 
-    val renameBase = actionString + " base $superKind" + (if (deepestSuperMethods.size > 1) "s" else "")
-    val renameCurrent = "$actionString only current $kind"
-    val title = buildString {
-        append(declaration.name)
-        append(if (isAbstract) " implements " else " overrides ")
-        append(ElementDescriptionUtil.getElementDescription(superMethod, UsageViewTypeLocation.INSTANCE))
-        append(" of ")
-        append(SymbolPresentationUtil.getSymbolPresentableText(superClass))
-    }
+    val renameBase = KotlinBundle.message("rename.base.0", superKindIndex + (if (deepestSuperMethods.size > 1) 10 else 0))
+    val renameCurrent = KotlinBundle.message("rename.only.current.0", kindIndex)
+    val title = KotlinBundle.message(
+        "rename.declaration.title.0.implements.1.2.of.3",
+        declaration.name ?: "",
+        if (isAbstract) 1 else 2,
+        ElementDescriptionUtil.getElementDescription(superMethod, UsageViewTypeLocation.INSTANCE),
+        SymbolPresentationUtil.getSymbolPresentableText(superClass)
+    )
 
     JBPopupFactory.getInstance()
         .createPopupChooserBuilder(listOf(renameBase, renameCurrent))
@@ -1112,8 +1125,8 @@ fun <T : KtExpression> T.replaceWithCopyWithResolveCheck(
 }
 
 @Deprecated(
-    "Use org.jetbrains.kotlin.idea.core.util.getLineCount() instead",
-    ReplaceWith("this.getLineCount()", "org.jetbrains.kotlin.idea.core.util.getLineCount"),
+    "Use org.jetbrains.kotlin.idea.base.psi.getLineCount() instead",
+    ReplaceWith("this.getLineCount()", "org.jetbrains.kotlin.idea.base.psi.getLineCount"),
     DeprecationLevel.ERROR
 )
 fun PsiElement.getLineCount(): Int {

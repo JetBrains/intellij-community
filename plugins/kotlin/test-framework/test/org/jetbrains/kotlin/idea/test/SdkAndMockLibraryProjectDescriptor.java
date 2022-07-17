@@ -13,10 +13,9 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.IdeaTestUtil;
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts;
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts;
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind;
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType;
-import org.jetbrains.kotlin.test.KotlinCompilerStandalone;
 
 import java.io.File;
 import java.util.Collections;
@@ -77,11 +76,11 @@ public class SdkAndMockLibraryProjectDescriptor extends KotlinLightProjectDescri
         mockLibraryModel.addRoot(jarUrl, OrderRootType.CLASSES);
 
         if (withRuntime && !isJsLibrary) {
-            mockLibraryModel.addRoot(getJarUrl(KotlinArtifacts.getInstance().getKotlinStdlib()), OrderRootType.CLASSES);
+            mockLibraryModel.addRoot(getJarUrl(KotlinArtifacts.getKotlinStdlib()), OrderRootType.CLASSES);
         }
 
         if (isJsLibrary && mockLibraryModel instanceof LibraryEx.ModifiableModelEx) {
-            ((LibraryEx.ModifiableModelEx) mockLibraryModel).setKind(JSLibraryKind.INSTANCE);
+            ((LibraryEx.ModifiableModelEx) mockLibraryModel).setKind(KotlinJavaScriptLibraryKind.INSTANCE);
         }
 
         if (withSources) {

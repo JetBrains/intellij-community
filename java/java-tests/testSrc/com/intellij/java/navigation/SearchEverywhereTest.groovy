@@ -11,6 +11,7 @@ import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
 import com.intellij.util.Processor
@@ -27,7 +28,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
   SearchEverywhereUI mySearchUI
 
   private SEParam mixingResultsFlag
-  private SEParam twoTabsFlag
 
   void setUp() {
     super.setUp()
@@ -35,10 +35,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     mixingResultsFlag = new SEParam(
             { Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")},
             { Boolean it -> Experiments.getInstance().setFeatureEnabled("search.everywhere.mixed.results", it)}
-    )
-    twoTabsFlag = new SEParam(
-            { Registry.is("search.everywhere.group.contributors.by.type") },
-            { Boolean it -> Registry.get("search.everywhere.group.contributors.by.type").setValue(it) }
     )
   }
 
@@ -50,14 +46,11 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     }
 
     mixingResultsFlag.reset()
-    twoTabsFlag.reset()
 
     super.tearDown()
   }
 
   void "test switch to external files when nothing is found"() {
-    twoTabsFlag.set(false)
-
     def strBuffer = myFixture.addClass("class StrBuffer{ }")
     def stringBuffer = myFixture.findClass("java.lang.StringBuffer")
 
@@ -72,7 +65,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test mixing classes and files"() {
     mixingResultsFlag.set(true)
-    twoTabsFlag.set(false)
 
     def testClass = myFixture.addClass("class TestClass{}")
     def anotherTestClass = myFixture.addClass("class AnotherTestClass{}")
@@ -97,7 +89,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test mixing results from stub contributors"() {
     mixingResultsFlag.set(true)
-    twoTabsFlag.set(false)
 
     def contributor1 = new StubContributor("contributor1", 1)
     def contributor2 = new StubContributor("contributor2", 2)
@@ -114,7 +105,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test priority for actions with space in pattern"() {
     mixingResultsFlag.set(true)
-    twoTabsFlag.set(false)
 
     def action1 = new StubAction("Bravo Charlie")
     def action2 = new StubAction("Alpha Bravo Charlie")
@@ -147,7 +137,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test top hit priority"() {
     mixingResultsFlag.set(true)
-    twoTabsFlag.set(false)
 
     def action1 = new StubAction("Bravo Charlie")
     def action2 = new StubAction("Alpha Bravo Charlie")
@@ -155,34 +144,38 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     def class2 = myFixture.addClass("class AlphaBravoCharlie{}")
 
     def ui = createTestUI([
-            ChooseByNameTest.createClassContributor(project, testRootDisposable),
-            GotoActionTest.createActionContributor(project, testRootDisposable),
-            new TopHitSEContributor(project, null, null)
+      ChooseByNameTest.createClassContributor(project, testRootDisposable),
+      GotoActionTest.createActionContributor(project, testRootDisposable),
+      new TopHitSEContributor(project, null, null)
     ])
 
     def actions = ["ia1": action1, "ia2": action2]
     def actionManager = ActionManager.getInstance()
     def abbreviationManager = AbbreviationManager.getInstance()
-    actions.each {actionManager.registerAction(it.key, it.value)}
+    actions.each { actionManager.registerAction(it.key, it.value) }
     try {
       def matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "bravo")
       def matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "bravo")
+
+      // filter out occasional matches in IDE actions
+      def testElements = [action1, action2, matchedAction1, matchedAction2, class1, class2] as Set
+
       def future = ui.findElementsForPattern("bravo")
-      assert waitForFuture(future, SEARCH_TIMEOUT) == [class1, matchedAction1, class2, matchedAction2]
+      def bravoResult = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)
+      assert bravoResult.findAll { it in testElements } == [class1, matchedAction1, class2, matchedAction2]
 
       abbreviationManager.register("bravo", "ia2")
       future = ui.findElementsForPattern("bravo")
-      assert waitForFuture(future, SEARCH_TIMEOUT) == [action2, class1, matchedAction1, class2]
+      bravoResult = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)
+      assert bravoResult.findAll { it in testElements } == [action2, class1, matchedAction1, class2]
     }
     finally {
-      actions.each {actionManager.unregisterAction(it.key)}
-      abbreviationManager.removeAllAbbreviations("ia2" )
+      actions.each { actionManager.unregisterAction(it.key) }
+      abbreviationManager.removeAllAbbreviations("ia2")
     }
   }
 
   void "test abbreviations on top"() {
-    twoTabsFlag.set(false)
-
     def abbreviationManager = AbbreviationManager.getInstance()
     def actionManager = ActionManager.getInstance()
     def ui = createTestUI([GotoActionTest.createActionContributor(project, testRootDisposable)])
@@ -212,7 +205,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test recent files at the top of results"() {
     mixingResultsFlag.set(true)
-    twoTabsFlag.set(false)
 
     def registryValue = Registry.get("search.everywhere.recent.at.top")
     def savedFlag = registryValue.asBoolean()
@@ -248,19 +240,13 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
-  private SearchEverywhereUI createTestUI(List<SearchEverywhereContributor<Object>> contributors) {
-    def map = new HashMap<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor>()
-    contributors.forEach({map.put(it, null)})
-    return createTestUI(map)
-  }
-
-  private SearchEverywhereUI createTestUI(Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributorsMap) {
+  private SearchEverywhereUI createTestUI(List<SearchEverywhereContributor<Object>> contributorsList) {
     if (mySearchUI != null) Disposer.dispose(mySearchUI)
 
-    mySearchUI = new SearchEverywhereUI(project, contributorsMap)
-    def tab = contributorsMap.size() > 1
+    mySearchUI = new SearchEverywhereUI(project, contributorsList)
+    def tab = contributorsList.size() > 1
       ? SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
-      : contributorsMap.keySet().find().getSearchProviderId()
+      : contributorsList.find().getSearchProviderId()
     mySearchUI.switchToTab(tab)
     return mySearchUI
   }

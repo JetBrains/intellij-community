@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.ide.ui.UISettings
@@ -14,7 +14,8 @@ open class ProblemsViewState : BaseState() {
     fun getInstance(project: Project) = project.getService(ProblemsViewStateManager::class.java).state
   }
 
-  var selectedIndex by property(0)
+  var selectedTabId by string("")
+  
   var proportion by property(0.5f)
 
   var autoscrollToSource by property(false)
@@ -27,12 +28,12 @@ open class ProblemsViewState : BaseState() {
   var sortByName by property(false)
 
   @get:XCollection(style = XCollection.Style.v2)
-  val hideBySeverity: MutableSet<Int> by property(Collections.newSetFromMap(ConcurrentHashMap()), { it.isEmpty() })
+  val hideBySeverity: MutableSet<Int> by property(Collections.newSetFromMap(ConcurrentHashMap())) { it.isEmpty() }
 }
 
 @State(name = "ProblemsViewState", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])
 internal class ProblemsViewStateManager : SimplePersistentStateComponent<ProblemsViewState>(ProblemsViewState()) {
   override fun noStateLoaded() {
-    state.autoscrollToSource = UISettings.instance.state.defaultAutoScrollToSource
+    state.autoscrollToSource = UISettings.getInstance().state.defaultAutoScrollToSource
   }
 }

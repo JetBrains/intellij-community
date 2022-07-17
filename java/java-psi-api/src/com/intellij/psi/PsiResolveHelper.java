@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,12 +23,21 @@ public interface PsiResolveHelper {
   RecursionGuard<PsiExpression> ourGuard = RecursionManager.createGuard("typeArgInference");
   RecursionGuard<PsiElement> ourGraphGuard = RecursionManager.createGuard("graphTypeArgInference");
 
+  /**
+   * @deprecated use {@link PsiResolveHelper#getInstance(Project)} instead
+   */
+  @ScheduledForRemoval
+  @Deprecated
   final class SERVICE {
     private SERVICE() { }
 
     public static PsiResolveHelper getInstance(Project project) {
-      return project.getService(PsiResolveHelper.class);
+      return PsiResolveHelper.getInstance(project);
     }
+  }
+
+  static PsiResolveHelper getInstance(Project project) {
+    return project.getService(PsiResolveHelper.class);
   }
 
   /**

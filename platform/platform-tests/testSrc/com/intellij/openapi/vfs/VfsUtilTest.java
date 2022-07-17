@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -220,11 +220,13 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     VirtualFile jar = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempJar);
     assertNotNull(jar);
 
-    JarFileSystem fs = JarFileSystem.getInstance();
-    NewVirtualFile root1 = ManagingFS.getInstance().findRoot(jar.getPath() + "!/", fs);
-    NewVirtualFile root2 = ManagingFS.getInstance().findRoot(jar.getParent().getPath() + "//" + jar.getName() + "!/", fs);
+    NewVirtualFile root1 = ManagingFS.getInstance().findRoot(jar.getPath() + "!/", JarFileSystem.getInstance());
+    NewVirtualFile root2 = ManagingFS.getInstance().findRoot(jar.getParent().getPath() + "//" + jar.getName() + "!/", JarFileSystem.getInstance());
     assertNotNull(root1);
     assertSame(root1, root2);
+
+    assertNull(LocalFileSystem.getInstance().findFileByPath("//../blah-blah")); // must not crash in FsRoot("//..")
+    assertNull(LocalFileSystem.getInstance().findFileByPath("//./blah-blah")); // must not crash in FsRoot("//.")
   }
 
   @Test
@@ -266,10 +268,10 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertNull(vDir.findChild("xxx//extFiles"));
   }
 
-  @Test
+  @Test(timeout = 20_000)
   public void testRenameDuringFullRefresh() throws IOException { doRenameAndRefreshTest(true); }
 
-  @Test
+  @Test(timeout = 240_000)
   public void testRenameDuringPartialRefresh() throws IOException { doRenameAndRefreshTest(false); }
 
   private void doRenameAndRefreshTest(boolean full) throws IOException {
@@ -302,7 +304,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       TimeoutUtil.sleep(1);  // needed to prevent frequent event detector from triggering
     }
 
-    assertTrue(semaphore.waitFor(60000));
+    semaphore.waitFor();
   }
 
   @Test(timeout = 20_000)
@@ -554,7 +556,10 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assumeTrue("No WSL distributions found", !distributions.isEmpty());
 
     String wslName = distributions.get(0);
-    VirtualFile usrBin = LocalFileSystem.getInstance().findFileByIoFile(new File("\\\\wsl$\\" + wslName + "\\usr\\bin\\"));
+    File usrBinFile = new File("\\\\wsl$\\" + wslName + "\\usr\\bin\\");
+    assertTrue(usrBinFile + " doesn't exist, despite " +distributions.size()+
+               " WSL distributions found: " + distributions, usrBinFile.exists());
+    VirtualFile usrBin = LocalFileSystem.getInstance().findFileByIoFile(usrBinFile);
     assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "\\\\wsl$\\" + wslName + "\\usr\\bin\\"));
     assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "//wsl$/" + wslName + "/usr/bin"));
     assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "//wsl$/" + wslName + "/usr/bin/"));

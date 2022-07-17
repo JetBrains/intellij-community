@@ -27,7 +27,7 @@ public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbA
     TerminalView terminalView = TerminalView.getInstance(project);
     terminalView.initToolWindow((ToolWindowEx)toolWindow);
     TerminalCommandHandlerOptions options = new TerminalCommandHandlerOptions(project);
-    ((ToolWindowEx)toolWindow).setAdditionalGearActions(
+    toolWindow.setAdditionalGearActions(
       new DefaultActionGroup(new DumbAwareToggleAction(TerminalBundle.message("settings.terminal.smart.command.handling")) {
         @Override
         public boolean isSelected(@NotNull AnActionEvent e) {

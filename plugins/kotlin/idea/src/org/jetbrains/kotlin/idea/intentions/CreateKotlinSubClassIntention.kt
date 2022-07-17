@@ -1,26 +1,28 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.JavaDirectoryService
+import com.intellij.psi.PsiFile
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.refactoring.getOrCreateKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.ui.CreateKotlinClassDialog
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -68,6 +70,14 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
 
     override fun startInWriteAction() = false
 
+    override fun checkFile(file: PsiFile): Boolean {
+        return true
+    }
+
+    override fun preparePsiElementForWriteIfNeeded(target: KtClass): Boolean {
+        return true
+    }
+
     override fun applyTo(element: KtClass, editor: Editor?) {
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
 
@@ -84,9 +94,10 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
     private fun KtClassOrObject.hasSameDeclaration(name: String) = declarations.any { it is KtNamedDeclaration && it.name == name }
 
     private fun targetNameWithoutConflicts(baseName: String, container: KtClassOrObject?) =
-        KotlinNameSuggester.suggestNameByName(defaultTargetName(baseName)) { container?.hasSameDeclaration(it) != true }
+        Fe10KotlinNameSuggester.suggestNameByName(defaultTargetName(baseName)) { container?.hasSameDeclaration(it) != true }
 
     private fun createNestedSubclass(sealedClass: KtClass, sealedName: String, editor: Editor) {
+        if (!super.preparePsiElementForWriteIfNeeded(sealedClass)) return
         val project = sealedClass.project
         val klass = runWriteAction {
             val builder = buildClassHeader(targetNameWithoutConflicts(sealedName, sealedClass), sealedClass, sealedName)
@@ -121,7 +132,7 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
         }
         val project = baseClass.project
         val factory = KtPsiFactory(project)
-        if (container.containingClassOrObject == null && !ApplicationManager.getApplication().isUnitTestMode) {
+        if (container.containingClassOrObject == null && !isUnitTestMode()) {
             val dlg = chooseSubclassToCreate(baseClass, baseName) ?: return
             val targetName = dlg.className
             val (file, klass) = runWriteAction {
@@ -134,6 +145,7 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
             }
             chooseAndImplementMethods(project, klass, CodeInsightUtil.positionCursor(project, file, klass) ?: editor)
         } else {
+            if (!super.preparePsiElementForWriteIfNeeded(baseClass)) return
             val klass = runWriteAction {
                 val builder = buildClassHeader(
                     targetNameWithoutConflicts(baseName, baseClass.containingClassOrObject),
@@ -148,7 +160,7 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
     }
 
     private fun runInteractiveRename(klass: KtClass, project: Project, container: KtClassOrObject, editor: Editor) {
-        if (ApplicationManager.getApplication().isUnitTestMode) return
+        if (isUnitTestMode()) return
         PsiElementRenameHandler.rename(klass, project, container, editor)
     }
 

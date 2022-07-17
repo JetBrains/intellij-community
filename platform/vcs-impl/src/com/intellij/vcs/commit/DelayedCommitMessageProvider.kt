@@ -3,8 +3,12 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.ui.CommitMessageProvider
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * @see CommitMessageProvider
+ */
 @ApiStatus.Experimental
 interface DelayedCommitMessageProvider {
   companion object {

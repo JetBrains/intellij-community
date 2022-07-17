@@ -11,9 +11,11 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.JavaProjectModelModificationService
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -28,14 +30,17 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
-import org.jetbrains.kotlin.idea.facet.toApiVersion
+import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.idea.maven.*
-import org.jetbrains.kotlin.idea.quickfix.ChangeGeneralLanguageFeatureSupportFix
+import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
+import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
+import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
 
 abstract class KotlinMavenConfigurator
 protected constructor(
@@ -47,7 +52,7 @@ protected constructor(
 
     override fun getStatus(moduleSourceRootGroup: ModuleSourceRootGroup): ConfigureKotlinStatus {
         val module = moduleSourceRootGroup.baseModule
-        if (module.getBuildSystemType() != BuildSystemType.Maven)
+        if (module.buildSystemType != BuildSystemType.Maven)
             return ConfigureKotlinStatus.NON_APPLICABLE
 
         val psi = runReadAction { findModulePomFile(module) }
@@ -102,11 +107,11 @@ protected constructor(
         if (!dialog.isOK) return
 
         WriteCommandAction.runWriteCommandAction(project) {
-            val collector = createConfigureKotlinNotificationCollector(project)
+            val collector = NotificationMessageCollector.create(project)
             for (module in excludeMavenChildrenModules(project, dialog.modulesToConfigure)) {
                 val file = findModulePomFile(module)
                 if (file != null && canConfigureFile(file)) {
-                    configureModule(module, file, dialog.kotlinVersion, collector)
+                    configureModule(module, file, IdeKotlinVersion.get(dialog.kotlinVersion), collector)
                     OpenFileAction.openFile(file.virtualFile, project)
                 } else {
                     showErrorMessage(project, KotlinMavenBundle.message("error.cant.find.pom.for.module", module.name))
@@ -122,15 +127,15 @@ protected constructor(
     protected abstract fun isRelevantGoal(goalName: String): Boolean
 
     protected abstract fun createExecutions(pomFile: PomFile, kotlinPlugin: MavenDomPlugin, module: Module)
-    protected abstract fun getStdlibArtifactId(module: Module, version: String): String
+    protected abstract fun getStdlibArtifactId(module: Module, version: IdeKotlinVersion): String
 
-    open fun configureModule(module: Module, file: PsiFile, version: String, collector: NotificationMessageCollector): Boolean =
+    open fun configureModule(module: Module, file: PsiFile, version: IdeKotlinVersion, collector: NotificationMessageCollector): Boolean =
         changePomFile(module, file, version, collector)
 
     private fun changePomFile(
         module: Module,
         file: PsiFile,
-        version: String,
+        version: IdeKotlinVersion,
         collector: NotificationMessageCollector
     ): Boolean {
         val virtualFile = file.virtualFile ?: error("Virtual file should exists for psi file " + file.name)
@@ -141,7 +146,7 @@ protected constructor(
         }
 
         val pom = PomFile.forFileOrNull(file as XmlFile) ?: return false
-        pom.addProperty(KOTLIN_VERSION_PROPERTY, version)
+        pom.addProperty(KOTLIN_VERSION_PROPERTY, version.artifactVersion)
 
         pom.addDependency(
             MavenId(GROUP_ID, getStdlibArtifactId(module, version), "\${$KOTLIN_VERSION_PROPERTY}"),
@@ -175,7 +180,7 @@ protected constructor(
         return true
     }
 
-    protected open fun configurePlugin(pom: PomFile, plugin: MavenDomPlugin, module: Module, version: String) {
+    protected open fun configurePlugin(pom: PomFile, plugin: MavenDomPlugin, module: Module, version: IdeKotlinVersion) {
     }
 
     protected fun createExecution(
@@ -209,7 +214,7 @@ protected constructor(
             )
         }
 
-        val runtimeUpdateRequired = getRuntimeLibraryVersion(module)?.let { ApiVersion.parse(it) }?.let { runtimeVersion ->
+        val runtimeUpdateRequired = getRuntimeLibraryVersion(module)?.apiVersion?.let { runtimeVersion ->
             runtimeVersion < requiredStdlibVersion
         } ?: false
 
@@ -238,7 +243,8 @@ protected constructor(
         module: Module,
         element: PsiElement,
         library: ExternalLibraryDescriptor,
-        libraryJarDescriptors: List<LibraryJarDescriptor>
+        libraryJarDescriptor: LibraryJarDescriptor,
+        scope: DependencyScope
     ) {
         val scope = OrderEntryFix.suggestScopeByLocation(module, element)
         JavaProjectModelModificationService.getInstance(module.project).addDependency(module, library, scope)
@@ -252,8 +258,8 @@ protected constructor(
     ) {
         val sinceVersion = feature.sinceApiVersion
 
-        val messageTitle = ChangeGeneralLanguageFeatureSupportFix.getFixText(feature, state)
-        if (state != LanguageFeature.State.DISABLED && getRuntimeLibraryVersion(module).toApiVersion() < sinceVersion) {
+        val messageTitle = AbstractChangeFeatureSupportLevelFix.getFixText(state, feature.presentableName)
+        if (state != LanguageFeature.State.DISABLED && getRuntimeLibraryVersionOrDefault(module).apiVersion < sinceVersion) {
             Messages.showErrorDialog(
                 module.project,
                 KotlinMavenBundle.message("update.language.version.feature.support", feature.presentableName, sinceVersion),
@@ -276,7 +282,7 @@ protected constructor(
         module: Module,
         feature: LanguageFeature,
         state: LanguageFeature.State,
-        messageTitle: String
+        @NlsContexts.DialogTitle messageTitle: String
     ): PsiElement? {
         val psi = findModulePomFile(module) as? XmlFile ?: return null
         val pom = PomFile.forFileOrNull(psi) ?: return null
@@ -316,7 +322,7 @@ protected constructor(
             return WritingAccessProvider.isPotentiallyWritable(file.virtualFile, null)
         }
 
-        private fun showErrorMessage(project: Project, message: String?) {
+        private fun showErrorMessage(project: Project, @NlsContexts.DialogMessage message: String?) {
             val cantConfigureAutomatically = KotlinMavenBundle.message("error.cant.configure.maven.automatically")
             val seeInstructions = KotlinMavenBundle.message("error.see.installation.instructions")
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.generation.actions;
 
@@ -11,24 +11,20 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageSurrounders;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-public class SurroundWithAction extends BaseCodeInsightAction{
+public class SurroundWithAction extends BaseCodeInsightAction {
   public SurroundWithAction() {
     setEnabledInModalContext(true);
   }
 
   @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler(){
+  protected CodeInsightActionHandler getHandler() {
     return new SurroundWithHandler();
-  }
-
-  @Override
-  public boolean isUpdateInBackground() {
-    return false;
   }
 
   @Override
@@ -42,8 +38,11 @@ public class SurroundWithAction extends BaseCodeInsightAction{
       return true;
     }
 
-    if (!TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(
-      TemplateActionContext.surrounding(file, editor)).isEmpty()) {
+    if (file instanceof PsiBinaryFile) {
+      return true;
+    }
+
+    if (!TemplateManagerImpl.listApplicableTemplates(TemplateActionContext.surrounding(file, editor)).isEmpty()) {
       return true;
     }
 

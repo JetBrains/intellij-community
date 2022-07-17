@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -153,12 +154,18 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
         if (effectiveClass.hasAnnotation(ApiStatus.ScheduledForRemoval.class.getCanonicalName())) {
           return Kind.SCHEDULED_FOR_REMOVAL_API;
         }
-        
+
         if (effectiveClass.hasAnnotation(ApiStatus.Experimental.class.getCanonicalName())) {
           return Kind.EXPERIMENTAL_API;
         }
 
         if (effectiveClass.isDeprecated()) {
+          PsiAnnotation deprecatedAnno = effectiveClass.getAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED);
+          if (deprecatedAnno != null &&
+              AnnotationUtil.getBooleanAttributeValue(deprecatedAnno, "forRemoval") == Boolean.TRUE) {
+            return Kind.SCHEDULED_FOR_REMOVAL_API;
+          }
+
           return Kind.DEPRECATED;
         }
 
@@ -176,9 +183,9 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
         if (kind == Kind.SCHEDULED_FOR_REMOVAL_API) {
           final PsiClass effectiveClass = getEffectiveClass();
           assert effectiveClass != null;
-          final PsiAnnotation annotation = effectiveClass.getAnnotation(ApiStatus.ScheduledForRemoval.class.getCanonicalName());
-          assert annotation != null;
-          return AnnotationUtil.getDeclaredStringAttributeValue(annotation, "inVersion");
+          final PsiAnnotation scheduledAnno = effectiveClass.getAnnotation(ApiStatus.ScheduledForRemoval.class.getCanonicalName());
+          if (scheduledAnno == null) return null;
+          return AnnotationUtil.getDeclaredStringAttributeValue(scheduledAnno, "inVersion");
         }
 
         return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
@@ -15,6 +15,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.getEffectiveConfiguration
 import com.intellij.execution.util.ExecutionErrorDialog
 import com.intellij.execution.util.JavaParametersUtil
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -62,7 +63,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     val mainClass = runProfile.configurationModule.findClass(runClass) ?: return null
 
     val virtualFile = mainClass.containingFile.virtualFile
-    val module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile) ?: return null
+    val module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile) ?: return null
 
     val params = JavaParameters().apply {
       JavaParametersUtil.configureConfiguration(this, runProfile)
@@ -139,9 +140,11 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
 
     private fun findJavaModuleName(sdk: Sdk, module: JavaRunConfigurationModule, mainClass: PsiClass): String? {
       return if (JavaSdkUtil.isJdkAtLeast(sdk, JavaSdkVersion.JDK_1_9)) {
-        DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<PsiJavaModule, RuntimeException> {
-          JavaModuleGraphUtil.findDescriptorByElement(module.findClass(mainClass.qualifiedName))
-        }?.name ?: return null
+        runReadAction {
+          DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<PsiJavaModule, RuntimeException> {
+            JavaModuleGraphUtil.findDescriptorByElement(module.findClass(mainClass.qualifiedName))
+          }?.name
+        } ?: return null
       }
       else null
     }

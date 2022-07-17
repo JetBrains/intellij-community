@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ml
 
 open class ResourcesModelMetadataReader(protected val metadataHolder: Class<*>, private val featuresDirectory: String): ModelMetadataReader {
@@ -10,6 +10,10 @@ open class ResourcesModelMetadataReader(protected val metadataHolder: Class<*>, 
   override fun featureOrderDirect(): List<String> = resourceContent("features_order.txt").lines()
 
   override fun extractVersion(): String? {
+    val versionFile = "version.txt"
+    if (metadataHolder.classLoader.getResource("$featuresDirectory/$versionFile") != null) {
+      return resourceContent(versionFile).trim()
+    }
     val resource = metadataHolder.classLoader.getResource("$featuresDirectory/binary.json") ?: return null
     val result = resource.file.substringBeforeLast(".jar!", "").substringAfterLast("-", "")
     return if (result.isBlank()) null else result

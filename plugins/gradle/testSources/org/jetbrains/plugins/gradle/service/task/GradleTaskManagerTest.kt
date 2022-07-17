@@ -12,8 +12,11 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
@@ -50,23 +53,12 @@ class GradleTaskManagerTest: UsefulTestCase() {
 
   @Test
   fun `test task manager uses wrapper task when configured`() {
-
-    writeBuildScript(
-      """
-       | wrapper { gradleVersion = "4.8.1" }
-      """.trimMargin())
-
-    val listener = MyListener()
-    runHelpTask(listener)
-    assertTrue("Gradle 4.8.1 should be started", listener.anyLineContains("Welcome to Gradle 4.8.1"))
+    val output = runHelpTask(GradleVersion.version("4.8.1"))
+    assertTrue("Gradle 4.8.1 should be started", output.anyLineContains("Welcome to Gradle 4.8.1"))
   }
 
   @Test
   fun `test gradle-version-specific init scripts executed`() {
-    writeBuildScript(
-      """
-       | wrapper { gradleVersion = "4.9" }
-      """.trimMargin())
 
     val oldMessage = "this should be executed for gradle 3.0"
     val oldVer = VersionSpecificInitScript("""println('$oldMessage')""") { v ->
@@ -84,12 +76,11 @@ class GradleTaskManagerTest: UsefulTestCase() {
     val initScripts = listOf(oldVer, intervalVer, newerVer)
     gradleExecSettings.putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, initScripts)
 
-    val listener = MyListener()
-    runHelpTask(listener)
+    val output = runHelpTask(GradleVersion.version("4.9"))
 
-    assertFalse(listener.anyLineContains(oldMessage))
-    assertTrue(listener.anyLineContains(intervalMessage))
-    assertTrue(listener.anyLineContains(newerVerMessage))
+    assertFalse(output.anyLineContains(oldMessage))
+    assertTrue(output.anyLineContains(intervalMessage))
+    assertTrue(output.anyLineContains(newerVerMessage))
   }
 
   @Test
@@ -110,36 +101,43 @@ class GradleTaskManagerTest: UsefulTestCase() {
     """.trimIndent())
     }
 
-    writeBuildScript(
-      """
-       | wrapper { gradleVersion = "4.9" }
-      """.trimMargin())
+    val output = runHelpTask(GradleVersion.version("4.9"))
 
-    val listener = MyListener()
-
-    runHelpTask(listener)
-
-    assertTrue("Gradle 4.9 should execute 'help' task", listener.anyLineContains("Welcome to Gradle 4.9"))
-    assertFalse("Gradle 4.8 should not execute 'help' task", listener.anyLineContains("Welcome to Gradle 4.8"))
+    assertTrue("Gradle 4.9 should execute 'help' task", output.anyLineContains("Welcome to Gradle 4.9"))
+    assertFalse("Gradle 4.8 should not execute 'help' task", output.anyLineContains("Welcome to Gradle 4.8"))
   }
 
 
-  private fun runHelpTask(listener: MyListener) {
-    tm.executeTasks(taskId,
-                    listOf("help"),
-                    myProject.basePath!!,
-                    gradleExecSettings,
-                    null, listener)
-  }
-
-  private fun writeBuildScript(scriptText: String) {
-    runWriteAction {
-      VfsUtil.saveText(PlatformTestUtil.getOrCreateProjectBaseDir(myProject).createChildData(this, "build.gradle"), scriptText)
+  private fun runHelpTask(gradleVersion: GradleVersion): TaskExecutionOutput {
+    createBuildFile(gradleVersion) {
+      withPrefix {
+        call("wrapper") {
+          assign("gradleVersion", gradleVersion.version)
+        }
+      }
     }
+
+    gradleExecSettings.javaHome = GradleImportingTestCase.requireJdkHome(gradleVersion)
+
+    val listener = TaskExecutionOutput()
+    tm.executeTasks(
+      taskId,
+      listOf("help"),
+      myProject.basePath!!,
+      gradleExecSettings,
+      null,
+      listener
+    )
+    return listener
+  }
+
+  private fun createBuildFile(gradleVersion: GradleVersion, configure: TestGradleBuildScriptBuilder.() -> Unit) {
+    val projectRoot = runWriteAction { PlatformTestUtil.getOrCreateProjectBaseDir(myProject) }
+    projectRoot.createBuildFile(gradleVersion, configure)
   }
 }
 
-class MyListener: ExternalSystemTaskNotificationListenerAdapter() {
+class TaskExecutionOutput: ExternalSystemTaskNotificationListenerAdapter() {
   private val storage = mutableListOf<String>()
   override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
     storage.add(text)

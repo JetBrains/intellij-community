@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
 import com.intellij.buildsystem.model.OperationFailure
@@ -8,7 +24,16 @@ import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.externalSystem.DependencyModifierService
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
+@Deprecated(
+    "Use async version.",
+    ReplaceWith("AbstractAsyncProjectModuleOperationProvider"),
+    DeprecationLevel.ERROR
+)
+@ScheduledForRemoval
 abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationProvider {
 
     override fun addDependencyToModule(
@@ -82,22 +107,23 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
             operationMetadata.newScope ?: operationMetadata.currentScope
         )
 
-        try {
+        return try {
             runWriteAction {
                 DependencyModifierService.getInstance(module.nativeModule.project)
                     .updateDependency(operationMetadata.module.nativeModule, oldDependency, newDependency)
             }
-            return emptyList()
+            emptyList()
         } catch (e: Exception) {
-            return listOf(OperationFailure(OperationType.REMOVE, oldDependency, e))
+            listOf(OperationFailure(OperationType.REMOVE, oldDependency, e))
         }
     }
 
-    override fun listDependenciesInModule(module: ProjectModule): Collection<UnifiedDependency> = runReadAction {
+    override fun declaredDependenciesInModule(module: ProjectModule) = runReadAction {
         DependencyModifierService.getInstance(module.nativeModule.project)
             .declaredDependencies(module.nativeModule)
-            .map { dep -> dep.unifiedDependency }
     }
+
+    override fun resolvedDependenciesInModule(module: ProjectModule, scopes: Set<String>): List<UnifiedDependency> = emptyList()
 
     override fun addRepositoryToModule(repository: UnifiedDependencyRepository, module: ProjectModule): List<OperationFailure<out OperationItem>> {
         try {
@@ -125,6 +151,12 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
     }
 
     override fun listRepositoriesInModule(module: ProjectModule): Collection<UnifiedDependencyRepository> =
-        DependencyModifierService.getInstance(module.nativeModule.project)
-            .declaredRepositories(module.nativeModule)
+        runCatching {
+            DependencyModifierService.getInstance(module.nativeModule.project)
+                .declaredRepositories(module.nativeModule)
+        }.getOrElse {
+            if (it !is ProcessCanceledException) logWarn(this::class.qualifiedName!!, it)
+            else throw it
+            emptyList()
+        }
 }

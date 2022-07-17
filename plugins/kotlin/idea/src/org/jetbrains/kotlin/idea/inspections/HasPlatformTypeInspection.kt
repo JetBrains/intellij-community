@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.idea.intentions.isFlexibleRecursive
-import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
+import org.jetbrains.kotlin.idea.quickfix.getAddExclExclCallFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
@@ -44,14 +44,14 @@ class HasPlatformTypeInspection(
             if (expression != null &&
                 (!reportPlatformArguments || !TypeUtils.makeNotNullable(type).isFlexibleRecursive())
             ) {
-                return listOf(IntentionWrapper(AddExclExclCallFix(expression), element.containingFile))
+                return listOfNotNull(getAddExclExclCallFix(expression)?.let { IntentionWrapper(it, element.containingFile) })
             }
         }
 
         return null
     }
 
-    override fun createOptionsPanel(): JComponent? {
+    override fun createOptionsPanel(): JComponent {
         val panel = MultipleCheckboxOptionsPanel(this)
         panel.addCheckbox(KotlinBundle.message("apply.only.to.public.or.protected.members"), "publicAPIOnly")
         panel.addCheckbox(KotlinBundle.message("report.for.types.with.platform.arguments"), "reportPlatformArguments")

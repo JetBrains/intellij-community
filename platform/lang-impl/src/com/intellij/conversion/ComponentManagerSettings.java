@@ -8,6 +8,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
+/**
+ * Provides access to configuration of a component. It's important to do modification via this class to ensure that all changed files will be
+ * included into the backup.
+ */
 public interface ComponentManagerSettings {
   @Nullable Element getComponentElement(@NotNull @NonNls String componentName);
 

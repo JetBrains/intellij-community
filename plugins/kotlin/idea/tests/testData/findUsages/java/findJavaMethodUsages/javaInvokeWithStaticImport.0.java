@@ -10,5 +10,5 @@ public class JavaClassWI {
     public static class Other extends JavaClassWI {
     }
 }
-
-// CRI_IGNORE
+// FIR_COMPARISON
+// IGNORE_FIR_LOG

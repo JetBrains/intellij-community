@@ -1,6 +1,6 @@
 // "Create class 'Foo'" "false"
-// ACTION: Create function 'Foo'
 // ACTION: Convert to block body
+// ACTION: Create function 'Foo'
 // ACTION: Rename reference
 // ERROR: Unresolved reference: Foo
 

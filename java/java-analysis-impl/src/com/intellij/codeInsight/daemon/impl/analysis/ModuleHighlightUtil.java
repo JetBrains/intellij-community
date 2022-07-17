@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -11,8 +11,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -21,10 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
 import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,8 +37,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+// generates HighlightInfoType.ERROR-like HighlightInfos for modularity-related (Jigsaw) problems
 final class ModuleHighlightUtil {
-  static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule module) {
+  static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule javaModule) {
     if (PsiUtil.isModuleFile(file)) {
       String message = JavaErrorBundle.message("module.no.package");
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
@@ -47,13 +47,39 @@ final class ModuleHighlightUtil {
       return info;
     }
 
-    if (module != null) {
+    if (javaModule != null) {
       String packageName = statement.getPackageName();
       if (packageName != null) {
-        PsiJavaModule origin = JavaModuleGraphUtil.findOrigin(module, packageName);
+        PsiJavaModule origin = JavaModuleGraphUtil.findOrigin(javaModule, packageName);
         if (origin != null) {
           String message = JavaErrorBundle.message("module.conflicting.packages", packageName, origin.getName());
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
+        }
+      }
+    }
+    else {
+      Module module = ModuleUtilCore.findModuleForFile(file);
+      if (module == null) {
+        return null;
+      }
+      PsiJavaCodeReferenceElement reference = statement.getPackageReference();
+      PsiPackage pack = (PsiPackage)reference.resolve();
+      if (pack != null) {
+        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(pack.getProject()).getFileIndex();
+        for (PsiDirectory directory : pack.getDirectories()) {
+          PsiJavaModule anotherJavaModule = JavaModuleGraphUtil.findDescriptorByElement(directory);
+          if (anotherJavaModule != null) {
+            VirtualFile moduleVFile = PsiUtilCore.getVirtualFile(anotherJavaModule);
+            if (moduleVFile != null && ContainerUtil.find(fileIndex.getOrderEntriesForFile(moduleVFile), JdkOrderEntry.class::isInstance) != null) {
+              VirtualFile rootForFile = fileIndex.getSourceRootForFile(file.getVirtualFile());
+              if (rootForFile != null && JavaCompilerConfigurationProxy.isPatchedModuleRoot(anotherJavaModule.getName(), module, rootForFile)) {
+                return null;
+              }
+              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                .range(reference)
+                .descriptionAndTooltip(JavaErrorBundle.message("module.conflicting.packages", pack.getName(), anotherJavaModule.getName())).create();
+            }
+          }
         }
       }
     }
@@ -78,6 +104,10 @@ final class ModuleHighlightUtil {
       Project project = file.getProject();
       Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(PsiJavaModule.MODULE_INFO_FILE, module.getModuleScope());
       if (others.size() > 1) {
+        if (others.size() == 2 &&
+            others.stream().map(ModuleRootManager.getInstance(module).getFileIndex()::isInTestSourceContent).distinct().count() > 1) {
+          return null;
+        }
         String message = JavaErrorBundle.message("module.file.duplicate");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).descriptionAndTooltip(message).create();
         others.stream().map(f -> PsiManager.getInstance(project).findFile(f)).filter(f -> f != file).findFirst().ifPresent(
@@ -159,7 +189,7 @@ final class ModuleHighlightUtil {
   static HighlightInfo checkFileLocation(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
     if (vFile != null) {
-      VirtualFile root = ProjectFileIndex.SERVICE.getInstance(file.getProject()).getSourceRootForFile(vFile);
+      VirtualFile root = ProjectFileIndex.getInstance(file.getProject()).getSourceRootForFile(vFile);
       if (root != null && !root.equals(vFile.getParent())) {
         String message = JavaErrorBundle.message("module.file.wrong.location");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).descriptionAndTooltip(message).create();
@@ -367,7 +397,11 @@ final class ModuleHighlightUtil {
         }
         else {
           String message = JavaErrorBundle.message("module.service.impl");
-          results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
+          HighlightInfo info =
+            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create();
+           PsiClassType type = JavaPsiFacade.getElementFactory(file.getProject()).createType(((PsiClass)intTarget));
+           QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createExtendsListFix(implClass, type, true));
+          results.add(info);
         }
       }
     }

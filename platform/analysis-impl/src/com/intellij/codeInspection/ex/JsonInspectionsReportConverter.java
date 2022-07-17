@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.google.gson.Gson;
@@ -7,11 +7,11 @@ import com.google.gson.stream.JsonWriter;
 import com.intellij.codeInspection.DefaultInspectionToolResultExporter;
 import com.intellij.codeInspection.InspectionsReportConverter;
 import com.intellij.codeInspection.InspectionsResultUtil;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jdom.Document;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -59,7 +61,9 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
   @NonNls private static final String GROUPS = "groups";
   @NonNls private static final String INSPECTION = "inspection";
   @NonNls private static final String HIGHLIGHTED_ELEMENT = "highlighted_element";
-  @NonNls private static final String DUPLICATED_CODE_AGGREGATE = "DuplicatedCode" + InspectionsResultUtil.AGGREGATE;
+  @NonNls public static final String DUPLICATED_CODE = "DuplicatedCode";
+  @NonNls public static final String DUPLICATED_CODE_AGGREGATE = DUPLICATED_CODE + InspectionsResultUtil.AGGREGATE;
+  @NonNls public static final String PHP_VULNERABLE_PATHS_AGGREGATE = "PhpVulnerablePathsInspection" + InspectionsResultUtil.AGGREGATE;
 
   @Override
   public String getFormatName() {
@@ -86,21 +90,23 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
       throw new ConversionException("Cannot create dirs in output path: " + outputPath + " error: " + e.getMessage());
     }
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    SAXBuilder builder = new SAXBuilder();
     for (File inspectionDataFile : inspectionsResults) {
       String fileNameWithoutExt = FileUtil.getNameWithoutExtension(inspectionDataFile);
       File jsonFile = new File(outputPath, fileNameWithoutExt + JSON_EXTENSION);
       try (Writer writer = Files.newBufferedWriter(jsonFile.toPath(), StandardCharsets.UTF_8);
            JsonWriter jsonWriter = gson.newJsonWriter(writer)) {
-        Document doc = builder.build(inspectionDataFile);
+        Element element = JDOMUtil.load(inspectionDataFile);
         if (InspectionsResultUtil.DESCRIPTIONS.equals(fileNameWithoutExt)) {
-          convertDescriptions(jsonWriter, doc);
+          convertDescriptions(jsonWriter, element);
         }
         else if (DUPLICATED_CODE_AGGREGATE.equals(fileNameWithoutExt)) {
-          convertDuplicatedCode(jsonWriter, doc);
+          convertDuplicatedCode(jsonWriter, element);
+        }
+        else if (PHP_VULNERABLE_PATHS_AGGREGATE.equals(fileNameWithoutExt)) {
+          convertPhpVulnerablePaths(jsonWriter, element);
         }
         else {
-          convertProblems(jsonWriter, doc);
+          convertProblems(jsonWriter, element);
         }
       }
       catch (IOException | JDOMException e) {
@@ -109,41 +115,218 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     }
   }
 
-  private static void convertDuplicatedCode(@NotNull JsonWriter jsonWriter, @NotNull Document problems) throws IOException {
+  private static void convertDuplicatedCode(@NotNull JsonWriter jsonWriter, @NotNull Element problems) throws IOException {
     jsonWriter.beginObject();
     jsonWriter.name(PROBLEMS);
     jsonWriter.beginArray();
-    for (Element duplicates : problems.getRootElement().getChildren("duplicate")) {
-      jsonWriter.beginArray();
-      for (Element fragment : duplicates.getChildren("fragment")) {
-        convertDuplicateFragment(jsonWriter, fragment);
-      }
-      jsonWriter.endArray();
+    for (Element duplicates : problems.getChildren("duplicate")) {
+      convertDuplicates(jsonWriter, duplicates);
     }
     jsonWriter.endArray();
     jsonWriter.endObject();
   }
 
+  public static void convertDuplicates(@NotNull JsonWriter jsonWriter, Element duplicates) throws IOException {
+    jsonWriter.beginArray();
+    for (Element fragment : duplicates.getChildren("fragment")) {
+      convertDuplicateFragment(jsonWriter, fragment);
+    }
+    jsonWriter.endArray();
+  }
+
   private static void convertDuplicateFragment(@NotNull JsonWriter jsonWriter, Element fragment) throws IOException {
     jsonWriter.beginObject();
-    jsonWriter.name(FILE).value(fragment.getAttributeValue(FILE));
-    String line = fragment.getAttributeValue(LINE);
-    String start = fragment.getAttributeValue("start");
-    String end = fragment.getAttributeValue("end");
+    writeFileSegmentAttributes(jsonWriter, fragment);
+    jsonWriter.endObject();
+  }
+
+  private static void writeFileSegmentAttributes(@NotNull JsonWriter jsonWriter, Element fileSegment) throws IOException {
+    writeFileAttribute(jsonWriter, fileSegment);
+    writeSegmentAttributes(jsonWriter, fileSegment);
+  }
+
+  private static void writeFileAttribute(@NotNull JsonWriter jsonWriter, Element fileSegment) throws IOException {
+    jsonWriter.name(FILE).value(fileSegment.getAttributeValue(FILE));
+  }
+
+  private static void writeSegmentAttributes(@NotNull JsonWriter jsonWriter, Element segment) throws IOException {
+    String line = segment.getAttributeValue(LINE);
+    String start = segment.getAttributeValue("start");
+    String end = segment.getAttributeValue("end");
     assert line != null;
     assert start != null;
     assert end != null;
     jsonWriter.name(LINE).value(Integer.parseInt(line));
     jsonWriter.name("start").value(Integer.parseInt(start));
     jsonWriter.name("end").value(Integer.parseInt(end));
-    jsonWriter.endObject();
   }
 
-  private static void convertProblems(@NotNull JsonWriter jsonWriter, @NotNull Document problems) throws IOException {
+  public static void convertPhpVulnerablePaths(@NotNull JsonWriter jsonWriter, @NotNull Element problems) throws IOException {
     jsonWriter.beginObject();
     jsonWriter.name(PROBLEMS);
     jsonWriter.beginArray();
-    for (Element problem : problems.getRootElement().getChildren(PROBLEM)) {
+    for (Element problem : problems.getChildren(PROBLEM)) {
+      convertPhpVulnerablePath(jsonWriter, problem);
+    }
+    jsonWriter.endArray();
+    jsonWriter.endObject();
+  }
+
+  public static void convertPhpVulnerablePath(@NotNull JsonWriter jsonWriter, Element problem) throws IOException {
+    jsonWriter.beginObject();
+
+    jsonWriter.name(DESCRIPTION).value("Vulnerable code flow");
+    jsonWriter.name("fragments");
+    jsonWriter.beginArray();
+    Element fragmentsElement = problem.getChild("fragments");
+    assert fragmentsElement != null;
+    for (Element fragment : fragmentsElement.getChildren("fragment")) {
+      convertPhpVulnerableFragment(jsonWriter, fragment);
+    }
+    jsonWriter.endArray();
+
+    convertPhpSink(jsonWriter, problem);
+
+    jsonWriter.name("sources");
+    jsonWriter.beginArray();
+    Element sourcesElement = problem.getChild("sources");
+    assert sourcesElement != null;
+    for (Element source : sourcesElement.getChildren("source")) {
+      convertPhpTaintSource(jsonWriter, source);
+    }
+    jsonWriter.endArray();
+
+    jsonWriter.name(LANGUAGE).value(problem.getChildText(LANGUAGE));
+    Element problemClassElement = problem.getChild(DefaultInspectionToolResultExporter.INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
+    if (problemClassElement != null) {
+      convertProblemClass(jsonWriter, problemClassElement);
+    }
+
+    jsonWriter.endObject();
+  }
+
+  private static void convertPhpSink(@NotNull JsonWriter jsonWriter, @NotNull Element problem) throws IOException {
+    jsonWriter.name("sink");
+    Element sink = problem.getChild("sink");
+    assert sink != null;
+    jsonWriter.beginObject();
+    jsonWriter.name("text").value(sink.getAttributeValue("text"));
+    String sinkFqn = sink.getAttributeValue("fqn");
+    if (sinkFqn != null) {
+      jsonWriter.name("fqn").value(sinkFqn);
+    }
+    writeOrderAttribute(jsonWriter, sink);
+    jsonWriter.name("vulnerabilities");
+    jsonWriter.beginArray();
+    Collection<String> vulnerabilityValues = getVulnerabilityValues(sink, "vulnerabilities");
+    for (String vulnerability : vulnerabilityValues) {
+      jsonWriter.value(vulnerability);
+    }
+    jsonWriter.endArray();
+    jsonWriter.name("parameters");
+    jsonWriter.beginArray();
+    String parameterName = getParameterName(sink);
+    if (parameterName != null) {
+      jsonWriter.value(parameterName);
+    }
+    jsonWriter.endArray();
+    jsonWriter.endObject();
+  }
+
+  private static void convertPhpTaintSource(@NotNull JsonWriter jsonWriter, @NotNull Element source) throws IOException {
+    jsonWriter.beginObject();
+    jsonWriter.name("text").value(source.getAttributeValue("text"));
+    writeFileAttribute(jsonWriter, source);
+    writeOrderAttribute(jsonWriter, source);
+    writeSanitizedVulnerabilities(jsonWriter, source);
+    jsonWriter.endObject();
+  }
+
+  private static void convertPhpVulnerableFragment(@NotNull JsonWriter jsonWriter, Element fragment) throws IOException {
+    jsonWriter.beginObject();
+
+    writeFileSegmentAttributes(jsonWriter, fragment);
+
+    jsonWriter.name("markers");
+    jsonWriter.beginArray();
+    for (Element marker : fragment.getChildren("marker")) {
+      convertPhpTaintMarker(jsonWriter, marker);
+    }
+    jsonWriter.endArray();
+
+    jsonWriter.endObject();
+  }
+
+  private static void convertPhpTaintMarker(@NotNull JsonWriter jsonWriter, @NotNull Element marker) throws IOException {
+    jsonWriter.beginObject();
+
+    writeSegmentAttributes(jsonWriter, marker);
+    writeOrderAttribute(jsonWriter, marker);
+
+    jsonWriter.name("successors");
+    jsonWriter.beginArray();
+    Element successorsElement = marker.getChild("successors");
+    if (successorsElement != null) {
+      Collection<String> markerOrders = ContainerUtil.map(successorsElement.getChildren("marker"), Element::getText);
+      for (String markerOrder : markerOrders) {
+        jsonWriter.value(markerOrder);
+      }
+    }
+    jsonWriter.endArray();
+    jsonWriter.name("predecessors");
+    jsonWriter.beginArray();
+    Element predecessorsElement = marker.getChild("predecessors");
+    if (predecessorsElement != null) {
+      Collection<String> markerOrders = ContainerUtil.map(predecessorsElement.getChildren("marker"), Element::getText);
+      for (String markerOrder : markerOrders) {
+        jsonWriter.value(markerOrder);
+      }
+    }
+    jsonWriter.endArray();
+
+    writeSanitizedVulnerabilities(jsonWriter, marker);
+
+    jsonWriter.endObject();
+  }
+
+  private static void writeOrderAttribute(@NotNull JsonWriter jsonWriter, @NotNull Element marker) throws IOException {
+    jsonWriter.name("order").value(marker.getAttributeValue("order"));
+  }
+
+  private static void writeSanitizedVulnerabilities(@NotNull JsonWriter jsonWriter, @NotNull Element element) throws IOException {
+    jsonWriter.name("sanitized_vulnerabilities");
+    jsonWriter.beginArray();
+    Collection<String> vulnerabilityValues = getVulnerabilityValues(element, "sanitized_vulnerabilities");
+    for (String vulnerability : vulnerabilityValues) {
+      jsonWriter.value(vulnerability);
+    }
+    jsonWriter.endArray();
+  }
+
+  @Nullable
+  private static String getParameterName(@NotNull Element element) {
+    Element parameters = element.getChild("parameters");
+    Collection<? extends Element> parameterElements = parameters != null ? parameters.getChildren("parameter") : null;
+    Element parameter = ContainerUtil.getFirstItem(parameterElements);
+    return parameter != null ? parameter.getAttributeValue("name") : null;
+  }
+
+  @NotNull
+  private static Collection<String> getVulnerabilityValues(@NotNull Element element,
+                                                           @NotNull String vulnerabilitiesTagName) {
+    Element vulnerabilities = element.getChild(vulnerabilitiesTagName);
+    if (vulnerabilities == null) {
+      return Collections.emptyList();
+    }
+    return ContainerUtil.map(vulnerabilities.getChildren("vulnerability"),
+                             vulnerability -> vulnerability.getAttributeValue("name"));
+  }
+
+  private static void convertProblems(@NotNull JsonWriter jsonWriter, @NotNull Element problems) throws IOException {
+    jsonWriter.beginObject();
+    jsonWriter.name(PROBLEMS);
+    jsonWriter.beginArray();
+    for (Element problem : problems.getChildren(PROBLEM)) {
       convertProblem(jsonWriter, problem);
     }
     jsonWriter.endArray();
@@ -223,16 +406,15 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     writer.endArray();
   }
 
-  private static void convertDescriptions(@NotNull JsonWriter writer, @NotNull Document descriptions) throws IOException {
+  private static void convertDescriptions(@NotNull JsonWriter writer, @NotNull Element descriptions) throws IOException {
     writer.beginObject();
     convertDescriptionsContents(writer, descriptions, null);
     writer.endObject();
   }
 
   protected static void convertDescriptionsContents(@NotNull JsonWriter writer,
-                                                    @NotNull Document descriptions,
+                                                    @NotNull Element inspectionsElement,
                                                     @Nullable Predicate<? super String> inspectionFilter) throws IOException {
-    Element inspectionsElement = descriptions.getRootElement();
     writer.name(InspectionsResultUtil.PROFILE).value(inspectionsElement.getAttributeValue(InspectionsResultUtil.PROFILE));
     writer.name(GROUPS);
     writer.beginArray();

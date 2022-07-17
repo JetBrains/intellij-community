@@ -16,6 +16,7 @@ public interface JsonPathTypes {
   IElementType DIVIDE_EXPRESSION = new JsonPathElementType("DIVIDE_EXPRESSION");
   IElementType EVAL_SEGMENT = new JsonPathElementType("EVAL_SEGMENT");
   IElementType EXPRESSION = new JsonPathElementType("EXPRESSION");
+  IElementType EXPRESSION_SEGMENT = new JsonPathElementType("EXPRESSION_SEGMENT");
   IElementType FILTER_EXPRESSION = new JsonPathElementType("FILTER_EXPRESSION");
   IElementType FUNCTION_ARGS_LIST = new JsonPathElementType("FUNCTION_ARGS_LIST");
   IElementType FUNCTION_CALL = new JsonPathElementType("FUNCTION_CALL");
@@ -35,11 +36,9 @@ public interface JsonPathTypes {
   IElementType PATH_EXPRESSION = new JsonPathElementType("PATH_EXPRESSION");
   IElementType PLUS_EXPRESSION = new JsonPathElementType("PLUS_EXPRESSION");
   IElementType QUOTED_PATHS_LIST = new JsonPathElementType("QUOTED_PATHS_LIST");
-  IElementType QUOTED_SEGMENT = new JsonPathElementType("QUOTED_SEGMENT");
   IElementType REGEX_EXPRESSION = new JsonPathElementType("REGEX_EXPRESSION");
   IElementType REGEX_LITERAL = new JsonPathElementType("REGEX_LITERAL");
   IElementType ROOT_SEGMENT = new JsonPathElementType("ROOT_SEGMENT");
-  IElementType SEGMENT_EXPRESSION = new JsonPathElementType("SEGMENT_EXPRESSION");
   IElementType SLICE_EXPRESSION = new JsonPathElementType("SLICE_EXPRESSION");
   IElementType STRING_LITERAL = new JsonPathElementType("STRING_LITERAL");
   IElementType UNARY_MINUS_EXPRESSION = new JsonPathElementType("UNARY_MINUS_EXPRESSION");
@@ -112,6 +111,9 @@ public interface JsonPathTypes {
       else if (type == EVAL_SEGMENT) {
         return new JsonPathEvalSegmentImpl(node);
       }
+      else if (type == EXPRESSION_SEGMENT) {
+        return new JsonPathExpressionSegmentImpl(node);
+      }
       else if (type == FILTER_EXPRESSION) {
         return new JsonPathFilterExpressionImpl(node);
       }
@@ -166,9 +168,6 @@ public interface JsonPathTypes {
       else if (type == QUOTED_PATHS_LIST) {
         return new JsonPathQuotedPathsListImpl(node);
       }
-      else if (type == QUOTED_SEGMENT) {
-        return new JsonPathQuotedSegmentImpl(node);
-      }
       else if (type == REGEX_EXPRESSION) {
         return new JsonPathRegexExpressionImpl(node);
       }
@@ -177,9 +176,6 @@ public interface JsonPathTypes {
       }
       else if (type == ROOT_SEGMENT) {
         return new JsonPathRootSegmentImpl(node);
-      }
-      else if (type == SEGMENT_EXPRESSION) {
-        return new JsonPathSegmentExpressionImpl(node);
       }
       else if (type == SLICE_EXPRESSION) {
         return new JsonPathSliceExpressionImpl(node);

@@ -4,29 +4,29 @@ import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.tools.launch.ModulesProvider
 import com.intellij.tools.launch.PathsProvider
-import org.jetbrains.jps.model.JpsElementFactory
-import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
-import org.jetbrains.jps.model.serialization.JpsProjectLoader
-import java.io.File
 import com.intellij.util.SystemProperties
-import org.apache.log4j.Logger
+import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
+import org.jetbrains.jps.model.serialization.JpsProjectLoader
+import java.io.File
 import java.util.*
+import java.util.logging.Logger
 
 class ClassPathBuilder(private val paths: PathsProvider, private val modules: ModulesProvider) {
-  private val logger = Logger.getLogger(ClassPathBuilder::class.java)
+  private val logger = Logger.getLogger(ClassPathBuilder::class.java.name)
 
   companion object {
     fun createClassPathArgFile(paths: PathsProvider, classpath: List<String>): File {
-      val launcherFolder = paths.launcherFolder
+      val launcherFolder = paths.logFolder
       if (!launcherFolder.exists()) {
         launcherFolder.mkdirs()
       }
 
-      val classPathArgFile = launcherFolder.resolve("RiderLauncher_${UUID.randomUUID()}.classpath")
+      val classPathArgFile = launcherFolder.resolve("Launcher_${UUID.randomUUID().toString().take(4)}.classpath")
       CommandLineWrapperUtil.writeArgumentsFile(classPathArgFile, listOf("-classpath", classpath.distinct().joinToString(File.pathSeparator)), Charsets.UTF_8)
       return classPathArgFile
     }
@@ -41,18 +41,9 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
       .resolve(".m2")
       .resolve("repository")
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", m2HomePath.canonicalPath)
-    val kotlinPath = paths.ultimateRootFolder
-      .resolve("out")
-      .resolve("artifacts")
-      .resolve("KotlinPlugin")
-      .resolve("kotlinc")
-    if (!kotlinPath.exists()) {
-      error("$kotlinPath doesn't exist")
-    }
-    pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", kotlinPath.canonicalPath)
 
     val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
-    JpsProjectLoader.loadProject(model.project, pathVariables, paths.ultimateRootFolder.canonicalPath)
+    JpsProjectLoader.loadProject(model.project, pathVariables, paths.sourcesRootFolder.toPath())
 
     val productionOutput = paths.outputRootFolder.resolve("production")
     if (!productionOutput.isDirectory) {
@@ -89,6 +80,8 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
         logger.info("  $path")
       }
       logger.info("-- END")
+    } else {
+      logger.warning("Verbose classpath logging is disabled, set logClasspath to true to see it.")
     }
 
     return createClassPathArgFile(paths, classpath)

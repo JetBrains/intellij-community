@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 object Foo {
     fun bar(<caret>p: String){}
 }

@@ -1,5 +1,7 @@
 // "Make '<set-attribute>' public" "true"
-// ACTION: "Make '<set-attribute>' internal"
+// ACTION: Converts the assignment statement to an expression
+// ACTION: Make '<set-attribute>' internal
+// ACTION: Make '<set-attribute>' public
 
 class Demo {
     var attribute = "a"

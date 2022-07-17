@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.LazySchemeProcessor
@@ -21,17 +23,20 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.AppUIUtil
+import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import java.util.function.Function
 import java.util.function.Predicate
 
-internal const val KEYMAPS_DIR_PATH = "keymaps"
+const val KEYMAPS_DIR_PATH = "keymaps"
 
 private const val ACTIVE_KEYMAP = "active_keymap"
 private const val NAME_ATTRIBUTE = "name"
 
-@State(name = "KeymapManager", storages = [(Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS))], additionalExportDirectory = KEYMAPS_DIR_PATH, category = ComponentCategory.KEYMAP)
+@State(name = "KeymapManager", storages = [(Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS))],
+       additionalExportDirectory = KEYMAPS_DIR_PATH,
+       category = SettingsCategory.KEYMAP)
 class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<KeymapManagerListener>()
   private val boundShortcuts = HashMap<String, String>()
@@ -63,7 +68,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
           }
         }
       }
-    })
+    }, settingsCategory = SettingsCategory.KEYMAP)
 
     val defaultKeymapManager = DefaultKeymap.getInstance()
     val systemDefaultKeymap = WelcomeWizardUtil.getWizardMacKeymap() ?: defaultKeymapManager.defaultKeymapName
@@ -99,15 +104,16 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
 
     BundledKeymapBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<BundledKeymapBean> {
       override fun extensionAdded(ep: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
-        val keymapName = ep.keymapName
+        val keymapName = getKeymapName(ep)
         //if (!SystemInfo.isMac &&
         //    keymapName != KeymapManager.MAC_OS_X_KEYMAP &&
         //    keymapName != KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP &&
         //    DefaultKeymap.isBundledKeymapHidden(keymapName) &&
         //    schemeManager.findSchemeByName(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP) == null) return
         val keymap = DefaultKeymap.getInstance().loadKeymap(keymapName, object : SchemeDataHolder<KeymapImpl> {
-          override fun read() = pluginDescriptor.pluginClassLoader
-            .getResourceAsStream(ep.effectiveFile).use { JDOMUtil.load(it) }
+          override fun read(): Element {
+            return JDOMUtil.load(ResourceUtil.getResourceAsBytes(getEffectiveFile(ep), pluginDescriptor.classLoader, true))
+          }
         }, pluginDescriptor)
         schemeManager.addScheme(keymap)
         fireKeymapAdded(keymap)
@@ -115,7 +121,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
       }
 
       override fun extensionRemoved(ep: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
-        removeKeymap(ep.keymapName)
+        removeKeymap(getKeymapName(ep))
       }
     }, null)
   }
@@ -217,12 +223,6 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   }
 
   @Suppress("OverridingDeprecatedMember")
-  override fun addKeymapManagerListener(listener: KeymapManagerListener) {
-    pollQueue()
-    listeners.add(listener)
-  }
-
-  @Suppress("DEPRECATION", "OverridingDeprecatedMember")
   override fun addKeymapManagerListener(listener: KeymapManagerListener, parentDisposable: Disposable) {
     pollQueue()
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(KeymapManagerListener.TOPIC, listener)
@@ -238,7 +238,6 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     listeners.remove(listener)
   }
 
-  @Suppress("DEPRECATION")
   override fun addWeakListener(listener: KeymapManagerListener) {
     pollQueue()
     listeners.add(WeakKeymapManagerListener(this, listener))
@@ -247,13 +246,9 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   override fun removeWeakListener(listenerToRemove: KeymapManagerListener) {
     listeners.removeAll { it is WeakKeymapManagerListener && it.isWrapped(listenerToRemove) }
   }
-
-  internal fun fireShortcutChanged(keymap: Keymap, actionId: String) {
-    ApplicationManager.getApplication().messageBus.syncPublisher(KeymapManagerListener.TOPIC).shortcutChanged(keymap, actionId)
-  }
 }
 
-val keymapComparator: Comparator<Keymap?> by lazy {
+internal val keymapComparator: Comparator<Keymap?> by lazy {
   val defaultKeymapName = DefaultKeymap.getInstance().defaultKeymapName
   Comparator { keymap1, keymap2 ->
     if (keymap1 === keymap2) return@Comparator 0

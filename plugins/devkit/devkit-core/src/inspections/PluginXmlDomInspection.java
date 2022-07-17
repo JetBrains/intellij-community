@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
@@ -312,7 +312,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
       // only highlight if located in same module
       if (!StringUtil.startsWith(psiClassFqn, pluginPackage + ".") &&
-          domValue.getModule() == ModuleUtilCore.findModuleForPsiElement(psiClass)) {
+          module == ModuleUtilCore.findModuleForPsiElement(psiClass)) {
         holder.createProblem(domValue, HighlightSeverity.ERROR,
                              DevKitBundle.message("inspections.plugin.xml.dependency.class.located.in.wrong.package",
                                                   psiClassFqn, pluginPackage),
@@ -817,9 +817,13 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     ExtensionPoint.Status.Kind kind = status.getKind();
     if (kind == ExtensionPoint.Status.Kind.SCHEDULED_FOR_REMOVAL_API) {
       final String inVersion = status.getAdditionalData();
+      String message = inVersion == null ?
+                       DevKitBundle.message("inspections.plugin.xml.deprecated.ep.marked.for.removal",
+                                            effectiveQualifiedName) :
+                       DevKitBundle.message("inspections.plugin.xml.deprecated.ep.marked.for.removal.in.version",
+                                            effectiveQualifiedName, inVersion);
       highlightDeprecatedMarkedForRemoval(
-        extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep.marked.for.removal.in.version",
-                                        effectiveQualifiedName, StringUtil.notNullize(inVersion)),
+        extension, message,
         holder, false, false
       );
     }

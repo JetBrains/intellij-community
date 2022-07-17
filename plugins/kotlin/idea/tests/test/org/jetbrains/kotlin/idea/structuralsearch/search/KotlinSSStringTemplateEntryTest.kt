@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSStringTemplateEntryTest : KotlinSSResourceInspectionTest() {
+class KotlinSSStringTemplateEntryTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "stringTemplateEntry"
 
     fun testLiteral() { doTest(""" "foo" """) }

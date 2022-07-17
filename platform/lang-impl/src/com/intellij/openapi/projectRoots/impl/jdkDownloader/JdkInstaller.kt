@@ -5,7 +5,6 @@ import com.google.common.hash.Hashing
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
@@ -34,8 +33,6 @@ import java.nio.file.Paths
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
-import java.util.function.Consumer
-import java.util.function.Predicate
 import kotlin.concurrent.withLock
 import kotlin.math.absoluteValue
 import kotlin.streams.toList
@@ -121,9 +118,7 @@ class JdkInstaller : JdkInstallerBase() {
   fun defaultInstallDir(wslDistribution: WSLDistribution?) : Path {
     wslDistribution?.let { dist ->
       dist.userHome?.let { home ->
-        dist.getWindowsPath("$home/.jdks")?.let {
-          return Paths.get(it)
-        }
+        return Paths.get(dist.getWindowsPath("$home/.jdks"))
       }
     }
 
@@ -283,6 +278,7 @@ abstract class JdkInstallerBase {
         }
 
         runCatching { writeMarkerFile(request) }
+        JdkDownloaderLogger.logDownload(true)
       }
       catch (t: Throwable) {
         if (t is ControlFlowException) throw t
@@ -291,6 +287,7 @@ abstract class JdkInstallerBase {
     }
     catch (t: Throwable) {
       //if we were cancelled in the middle or failed, let's clean up
+      JdkDownloaderLogger.logDownload(false)
       targetDir.delete()
       markerFile(targetDir)?.delete()
       throw t
@@ -381,7 +378,7 @@ abstract class JdkInstallerBase {
       if (jdkPath == null) return null
       if (!jdkPath.isDirectory()) return null
       val predicate = when {
-        WslDistributionManager.isWslPath(jdkPath.toString()) -> JdkPredicate.forWSL()
+        WslPath.isWslUncPath(jdkPath.toString()) -> JdkPredicate.forWSL()
         else -> JdkPredicate.default()
       }
 

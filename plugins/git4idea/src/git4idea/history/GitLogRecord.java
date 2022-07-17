@@ -106,7 +106,7 @@ class GitLogRecord {
 
   long getCommitTime() {
     try {
-      return Long.parseLong(myOptions.get(COMMIT_TIME).trim()) * 1000;
+      return GitLogUtil.parseTime(myOptions.get(COMMIT_TIME));
     }
     catch (NumberFormatException e) {
       LOG.error("Couldn't get commit time from " + this + ", while executing " + myHandler, e);
@@ -116,7 +116,7 @@ class GitLogRecord {
 
   long getAuthorTimeStamp() {
     try {
-      return Long.parseLong(myOptions.get(AUTHOR_TIME).trim()) * 1000;
+      return GitLogUtil.parseTime(myOptions.get(AUTHOR_TIME));
     }
     catch (NumberFormatException e) {
       LOG.error("Couldn't get author time from " + this + ", while executing " + myHandler, e);

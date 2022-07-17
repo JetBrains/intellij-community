@@ -78,7 +78,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       return false;
     }
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiClass);
-    if (virtualFile == null || ScratchUtil.isScratch(virtualFile)) {
+    if (virtualFile == null) {
       return false;
     }
     if (!isSupportedLanguage(psiClass)) return false;
@@ -135,6 +135,10 @@ public class CreateSubclassAction extends BaseIntentionAction {
     if (shouldCreateInnerClass(psiClass)) {
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
       createInnerClass(psiClass);
+      return;
+    }
+    if (ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(psiClass))) {
+      createSameFileClass(suggestTargetClassName(psiClass), psiClass);
       return;
     }
     createTopLevelClass(psiClass);

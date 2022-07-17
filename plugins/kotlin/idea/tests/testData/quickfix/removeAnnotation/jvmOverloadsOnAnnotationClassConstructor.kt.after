@@ -1,4 +1,4 @@
 // "Remove @JvmOverloads annotation" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 annotation class A constructor(val x: Int = 1)

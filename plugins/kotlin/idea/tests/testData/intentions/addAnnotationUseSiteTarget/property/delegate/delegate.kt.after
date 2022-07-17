@@ -1,5 +1,5 @@
 // CHOOSE_USE_SITE_TARGET: delegate
-// WITH_RUNTIME
+// WITH_STDLIB
 
 annotation class A
 

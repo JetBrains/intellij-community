@@ -16,7 +16,10 @@
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.formatter.java.LegacyChainedMethodCallsBlockBuilder;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -620,18 +623,22 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
   }
   
   public void testAnnotatedParameters() {
+    // it is supposed that this
+    getJavaSettings().DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER = true;
+    getSettings().KEEP_LINE_BREAKS = false;
+    getSettings().RIGHT_MARGIN = 120;
+    getSettings().WRAP_LONG_LINES = true;
     String before = "public class Formatting {\n" +
                     "  @RequestMapping(value = \"/\", method = GET)\n" +
-                    "  public HttpEntity<String> helloWorld(@RequestParam(\"name\") String name, @PageableDefault(page = 0, size = 10)\n" +
-                    "  Pageable pageable) {\n" +
+                    "  public HttpEntity<String> helloWorld(@RequestParam(\"name\") String name, @PageableDefault(page = 0, size = 10) Pageable pageable) {\n" +
                     "    // I'd expect the line above to be indented by 4 spaces\n" +
                     "    return ResponseEntity.ok(\"Hello \" + name);\n" +
                     "  }\n" +
                     "}";
     String after = "public class Formatting {\n" +
                    "    @RequestMapping(value = \"/\", method = GET)\n" +
-                   "    public HttpEntity<String> helloWorld(@RequestParam(\"name\") String name, @PageableDefault(page = 0, size = 10)\n" +
-                   "            Pageable pageable) {\n" +
+                   "    public HttpEntity<String> helloWorld(@RequestParam(\"name\") String name,\n" +
+                   "                                         @PageableDefault(page = 0, size = 10) Pageable pageable) {\n" +
                    "        // I'd expect the line above to be indented by 4 spaces\n" +
                    "        return ResponseEntity.ok(\"Hello \" + name);\n" +
                    "    }\n" +
@@ -730,5 +737,61 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "        .setPriority(1)\n" +
       "        .build();"
     );
+  }
+
+  public void testIdea274755() {
+    getSettings().getIndentOptions().USE_RELATIVE_INDENTS = true;
+    doMethodTest(
+      "public class Test {\n" +
+      "void test() {\n" +
+      "    final var command = CreateUpload.builder()\n" +
+      ".identityId(userId)\n" +
+      "      .iotId(iotId)\n" +
+      ".build();\n" +
+      "   }\n" +
+      "}",
+
+      "public class Test {\n" +
+      "    void test() {\n" +
+      "        final var command = CreateUpload.builder()\n" +
+      "                                    .identityId(userId)\n" +
+      "                                    .iotId(iotId)\n" +
+      "                                    .build();\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testIdea274778() {
+    CommonCodeStyleSettings.IndentOptions indentOptions = getSettings().getIndentOptions();
+    indentOptions.INDENT_SIZE = 3;
+    indentOptions.CONTINUATION_INDENT_SIZE = 3;
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    RegistryValue pre212compat = Registry.get(LegacyChainedMethodCallsBlockBuilder.COMPATIBILITY_KEY);
+    try {
+      pre212compat.setValue(true);
+      doTextTest(
+        "class Foo {\n" +
+        "void foo() {\n" +
+        "LOG.error(DetailsMessage.of(\n" +
+        "\"TITLE\",\n" +
+        "\"LONG MESSAGE TEXT...\")\n" +
+        ".with(\"value\", value));\n" +
+        "}\n" +
+        "}",
+
+        "class Foo {\n" +
+        "   void foo() {\n" +
+        "      LOG.error(DetailsMessage.of(\n" +
+        "         \"TITLE\",\n" +
+        "         \"LONG MESSAGE TEXT...\")\n" +
+        "                              .with(\"value\", value));\n" +
+        "   }\n" +
+        "}"
+      );
+    }
+    finally {
+      pre212compat.setValue(false);
+    }
   }
 }

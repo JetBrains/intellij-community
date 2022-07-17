@@ -8,14 +8,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionStatement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +79,7 @@ public class JavaEditablePostfixTemplate
     }
     else {
       PsiFile file = context.getContainingFile();
-      expressions = new ArrayList<>(IntroduceVariableBase.collectExpressions(file, document, Math.max(offset - 1, 0), false));
+      expressions = new ArrayList<>(CommonJavaRefactoringUtil.collectExpressions(file, document, Math.max(offset - 1, 0), false));
     }
 
 
@@ -102,6 +100,21 @@ public class JavaEditablePostfixTemplate
     }
 
     return element;
+  }
+
+  @Override
+  protected @NotNull TextRange getRangeToRemove(@NotNull PsiElement element) {
+    PsiElement toRemove = getElementToRemove(element);
+    if (toRemove instanceof PsiExpressionStatement) {
+      PsiElement lastChild = toRemove.getLastChild();
+      while (lastChild instanceof PsiComment || lastChild instanceof PsiWhiteSpace) {
+        lastChild = lastChild.getPrevSibling();
+      }
+      if (lastChild != null) {
+        return TextRange.create(toRemove.getTextRange().getStartOffset(), lastChild.getTextRange().getEndOffset());
+      }
+    }
+    return toRemove.getTextRange();
   }
 
   @NotNull

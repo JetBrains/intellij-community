@@ -6,7 +6,9 @@ import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectChanges
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class RemoteRepositoriesImporter : MavenImporter("", "") {
@@ -15,17 +17,7 @@ class RemoteRepositoriesImporter : MavenImporter("", "") {
   override fun processChangedModulesOnly(): Boolean = false
 
   override fun isApplicable(mavenProject: MavenProject?): Boolean {
-    return true;
-  }
-
-  override fun process(modifiableModelsProvider: IdeModifiableModelsProvider?,
-                       module: Module?,
-                       rootModel: MavenRootModelAdapter?,
-                       mavenModel: MavenProjectsTree?,
-                       mavenProject: MavenProject?,
-                       changes: MavenProjectChanges?,
-                       mavenProjectToModuleName: MutableMap<MavenProject, String>?,
-                       postTasks: MutableList<MavenProjectsProcessorTask>?) {
+    return true
   }
 
   override fun preProcess(module: Module?,
@@ -53,14 +45,7 @@ class RemoteRepositoriesImporter : MavenImporter("", "") {
     val settingsFile = MavenWorkspaceSettingsComponent.getInstance(
       module.project).settings.generalSettings.effectiveUserSettingsIoFile
 
-    return MavenUtil.getMirroredUrl(settingsFile, url, id);
-  }
-
-  override fun postProcess(module: Module,
-                           mavenProject: MavenProject,
-                           changes: MavenProjectChanges,
-                           modifiableModelsProvider: IdeModifiableModelsProvider) {
-    //do nothing
+    return MavenUtil.getMirroredUrl(settingsFile, url, id)
   }
 
   companion object {

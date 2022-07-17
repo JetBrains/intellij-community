@@ -2,6 +2,7 @@
 package training.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.showYesNoDialog
@@ -14,5 +15,13 @@ private class ResetLearningProgressAction : AnAction(AllIcons.Actions.Restart) {
                         LearnBundle.message("learn.option.reset.progress.confirm"), null)) {
       clearTrainingProgress()
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = e.project != null
   }
 }

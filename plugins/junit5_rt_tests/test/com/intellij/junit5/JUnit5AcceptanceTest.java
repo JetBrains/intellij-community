@@ -1,21 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.junit.JUnit4Framework;
 import com.intellij.execution.junit.JUnit5Framework;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
@@ -64,7 +53,15 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
   void rejectStaticMethods() {
     PsiClass aClass =
       myFixture.addClass("import org.junit.jupiter.api.*; /** @noinspection ALL*/ class MyTest { @Test static void method() {}}");
-    assertTrue(JUnitUtil.isTestClass(aClass, false, false));
+    assertFalse(JUnitUtil.isTestClass(aClass, false, false));
+    assertFalse(JUnitUtil.isTestMethod(MethodLocation.elementInClass(aClass.getMethods()[0], aClass)));
+  }
+
+  @Test
+  void rejectPrivateMethods() {
+    PsiClass aClass =
+      myFixture.addClass("import org.junit.jupiter.api.*; /** @noinspection ALL*/ class MyTest { @Test private void method() {}}");
+    assertFalse(JUnitUtil.isTestClass(aClass, false, false));
     assertFalse(JUnitUtil.isTestMethod(MethodLocation.elementInClass(aClass.getMethods()[0], aClass)));
   }
 
@@ -73,7 +70,79 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
     PsiClass aClass = myFixture.addClass("/** @noinspection ALL*/ class MyTest {@org.junit.jupiter.api.Test void method() {}}");
     assertNotNull(aClass);
     TestFramework framework = TestFrameworks.detectFramework(aClass);
+    assertNotNull(framework, "No test framework detected");
     assertTrue(framework instanceof JUnit5Framework, framework.getName());
+  }
+
+  @Test
+  void testFrameworkDetectionWithMixedJunit4Junit5() throws ExecutionException {
+    myFixture.addClass("package org.junit; public @interface Test {}");
+    PsiClass aClass = myFixture.addClass("/** @noinspection ALL*/ public class MyTest {@org.junit.jupiter.api.Test void method() {} @org.junit.Test void method2(){} }");
+    assertNotNull(aClass);
+    TestFramework framework = TestFrameworks.detectFramework(aClass);
+    assertTrue(framework instanceof JUnit4Framework, framework.getName());
+    JUnitConfiguration configuration = new JUnitConfiguration("", myFixture.getProject());
+    configuration.beClassConfiguration(aClass);
+    JavaParameters parameters = configuration.getTestObject().createJavaParameters4Tests();
+    assertTrue(parameters.getProgramParametersList().hasParameter("-junit5"));
+  }
+
+  @Test
+  void testClassWithDisabledCondition() throws ExecutionException {
+    myFixture.addClass("package org.junit.jupiter.api; public @interface Disabled {}");
+    PsiClass aClass = myFixture.addClass(
+      "/** @noinspection ALL*/\n" +
+      "@org.junit.jupiter.api.Disabled\n" +
+      "public class MyTest " +
+      "{@org.junit.jupiter.api.Test " +
+      "void method() {}}");
+    assertNotNull(aClass);
+    TestFramework framework = TestFrameworks.detectFramework(aClass);
+    assertTrue(framework instanceof JUnit5Framework, framework.getName());
+    JUnitConfiguration configuration = new JUnitConfiguration("", myFixture.getProject());
+    configuration.beClassConfiguration(aClass);
+    JavaParameters parameters = configuration.getTestObject().createJavaParameters4Tests();
+    assertTrue(parameters.getProgramParametersList().hasParameter("-Djunit.jupiter.conditions.deactivate=org.junit.*DisabledCondition"));
+  }
+
+  @Test
+  void testMetaDisabledClass() throws ExecutionException {
+    myFixture.addClass("package org.test.sample;\n" +
+                       "@org.junit.jupiter.api.Disabled\n" +
+                       "public @interface " +
+                       "MetaDisabled {}");
+    PsiClass aClass = myFixture.addClass(
+      "/** @noinspection ALL*/\n" +
+      "@org.test.sample.MetaDisabled\n" +
+      "public class MyTest " +
+      "{@org.junit.jupiter.api.Test " +
+      "void method() {}}");
+    assertNotNull(aClass);
+    TestFramework framework = TestFrameworks.detectFramework(aClass);
+    assertTrue(framework instanceof JUnit5Framework, framework.getName());
+    JUnitConfiguration configuration = new JUnitConfiguration("", myFixture.getProject());
+    configuration.beClassConfiguration(aClass);
+    JavaParameters parameters = configuration.getTestObject().createJavaParameters4Tests();
+    assertTrue(parameters.getProgramParametersList().hasParameter("-Djunit.jupiter.conditions.deactivate=org.junit.*DisabledCondition"));
+  }
+
+  @Test
+  void testWithDisabledCondition() throws ExecutionException {
+    PsiClass aClass = myFixture.addClass(
+      "/** @noinspection ALL*/\n" +
+      "public class MyTest {\n" +
+      "  " +
+      "@org.junit.jupiter.api.Disabled\n" +
+      "  @org.junit.jupiter.api.Test " +
+      "void method() {}}");
+    assertNotNull(aClass);
+    TestFramework framework = TestFrameworks.detectFramework(aClass);
+    assertTrue(framework instanceof JUnit5Framework, framework.getName());
+    JUnitConfiguration configuration = new JUnitConfiguration("", myFixture.getProject());
+    @SuppressWarnings("OptionalGetWithoutIsPresent") PsiMethod method = Arrays.stream(aClass.getMethods()).findFirst().get();
+    configuration.beMethodConfiguration(MethodLocation.elementInClass(method, aClass));
+    JavaParameters parameters = configuration.getTestObject().createJavaParameters4Tests();
+    assertTrue(parameters.getProgramParametersList().hasParameter("-Djunit.jupiter.conditions.deactivate=org.junit.*DisabledCondition"));
   }
 
   @Test
@@ -102,8 +171,8 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
     final Set<String> frameworks = myFixture.getAllQuickFixes().stream()
       .map(action -> action.getText())
       .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
-    assertAll("Detected frameworks: " + frameworks.toString(),
-              () -> assertTrue(frameworks.contains("Add 'JUnit5.7.0' to classpath")));
+    assertAll("Detected frameworks: " + frameworks,
+              () -> assertTrue(frameworks.contains("Add 'JUnit5.8.1' to classpath")));
 
     myFixture.configureByText("MyTest.java",
                               "class MyTest {@<error descr=\"Cannot resolve symbol 'DisplayName'\">DisplayName</error> void method() {}}");
@@ -112,8 +181,8 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
     Set<String> displayNameFrameworks = myFixture.getAllQuickFixes().stream()
       .map(action -> action.getText())
       .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
-    assertAll("Detected frameworks: " + displayNameFrameworks.toString(),
-              () -> assertTrue(displayNameFrameworks.contains("Add 'JUnit5.7.0' to classpath")));
+    assertAll("Detected frameworks: " + displayNameFrameworks,
+              () -> assertTrue(displayNameFrameworks.contains("Add 'JUnit5.8.1' to classpath")));
   }
 
   @Test

@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.conversion.copy
 
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 import java.awt.datatransfer.DataFlavor
 

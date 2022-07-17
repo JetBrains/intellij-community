@@ -33,20 +33,97 @@ fun URI.withPath(newPath: String?): URI = URI(
   fragment
 )
 
-val URI.fragmentParameters: Map<String, String>
-  get() {
-    // TODO Url-decode values?
-    if (fragment.isNullOrBlank()) return emptyMap()
+fun URI.withQuery(newQuery: String?): URI = URI(
+  scheme,
+  userInfo,
+  host,
+  port,
+  path,
+  newQuery,
+  fragment
+)
 
-    return fragment
-      .split('&')
-      .mapNotNull {
-        val split = it.split('=', limit = 2)
-        if (split.size != 2) return@mapNotNull null
-        split[0] to split[1]
-      }
-      .toMap()
+fun URI.withPort(newPort: Int): URI = URI(
+  scheme,
+  userInfo,
+  host,
+  newPort,
+  path,
+  query,
+  fragment
+)
+
+fun URI.changeQuery(originalUri: URI, newRawQuery: String): URI =
+  fromRawParts(originalUri.scheme, originalUri.isOpaque, originalUri.rawSchemeSpecificPart,
+               originalUri.rawUserInfo, originalUri.host, originalUri.port, originalUri.authority,
+               originalUri.rawPath, newRawQuery, originalUri.rawFragment
+  )
+
+fun URI.fromRawParts(scheme: String?, isOpaque: Boolean, schemeSpecificPart: String?,
+                     userInfo: String?, host: String?, port: Int, authority: String?,
+                     path: String?, query: String?, fragment: String?): URI {
+  val sb = StringBuilder()
+  if (!scheme.isNullOrBlank()) {
+    sb.append(scheme)
+    sb.append(':')
   }
+  if (isOpaque) {
+    sb.append(schemeSpecificPart)
+  }
+  else {
+    if (!host.isNullOrBlank()) {
+      sb.append("//")
+      if (!userInfo.isNullOrBlank()) {
+        sb.append(userInfo)
+        sb.append('@')
+      }
+      val needBrackets = (host.indexOf(':') >= 0
+                          && !host.startsWith("[")
+                          && !host.endsWith("]"))
+      if (needBrackets) sb.append('[')
+      sb.append(host)
+      if (needBrackets) sb.append(']')
+      if (port != -1) {
+        sb.append(':')
+        sb.append(port)
+      }
+    }
+    else if (!authority.isNullOrBlank()) {
+      sb.append("//")
+      sb.append(authority)
+    }
+    if (path != null) sb.append(path)
+    if (query != null) {
+      sb.append('?')
+      sb.append(query)
+    }
+  }
+  if (fragment != null) {
+    sb.append('#')
+    sb.append(fragment)
+  }
+  return URI(sb.toString())
+}
+
+private fun parseParameters(input: String?): Map<String, String> {
+  if (input.isNullOrBlank()) return emptyMap()
+
+  // TODO Url-decode values?
+  return input
+    .split('&')
+    .mapNotNull {
+      val split = it.split('=', limit = 2)
+      if (split.size != 2) return@mapNotNull null
+      split[0] to split[1]
+    }
+    .toMap()
+}
+
+val URI.fragmentParameters: Map<String, String>
+  get() = parseParameters(fragment)
+
+val URI.queryParameters: Map<String, String>
+  get() = parseParameters(query)
 
 fun URI.newURIWithFragmentParameters(fragmentParameters: Map<String, String>): URI {
   val newFragment = fragmentParameters.toList().joinToString(separator = "&") { "${it.first}=${it.second}" }

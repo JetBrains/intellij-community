@@ -22,9 +22,7 @@ class ExampleClassWithNoTypos<T>(val name: String) {
 }
 
 /**
- * It is <warning descr="BEEN_PART_AGREEMENT">friend</warning>
- *
- * <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic; it's just a documentation example.
+ * It is <warning descr="EN_A_VS_AN">an</warning> friend of human
  *
  * @param T the <warning descr="KIND_OF_A">type of a</warning> <TYPO descr="Typo: In word 'membr'">membr</TYPO> in this group.
  * @property name the <warning descr="COMMA_WHICH">name which</warning> group
@@ -41,9 +39,9 @@ class ExampleClassWithTypos<T>(val name: String) {
     }
 
     /**
-     * @param name1 <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic
-     * @param name2 This guy
-     * @return have no useful logic
+     * @param name1 It is <warning descr="EN_A_VS_AN">an</warning> friend of human
+     * @param name2 It is an
+     * @return friend of human
      */
     fun withParam(name1: T, name2: T) {}
 }
@@ -66,3 +64,17 @@ class ForMultiLanguageSupport {
     // Das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
     // Das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <warning descr="MANNSTUNDE">Mannstunden</warning>.
 }
+
+/**
+ * Returns `an true` if expression is part of when condition expression that looks like
+ * ```
+ * when {
+ * a && b -> ...
+ * a && !b -> ...
+ * }
+ * ```
+ * * This is <warning descr="EN_A_VS_AN">a</warning> error.
+ * ```
+ * An non-checked code fragment
+ * ```
+ */

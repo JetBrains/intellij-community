@@ -1,5 +1,5 @@
 // "Make 'Foo' data class" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class Foo(val bar: String, var baz: Int)
 
 fun test() {

@@ -31,11 +31,6 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
   }
 
   @Override
-  public HistoryAsTreeProvider getHistoryAsTreeProvider() {
-    return null;
-  }
-
-  @Override
   @Nullable
   public VcsRevisionNumber calcCurrentRevisionNumber() {
     if (myCommittedPath == null) {

@@ -50,9 +50,7 @@ public class BaseFixture implements IdeaTestFixture {
 
   protected void disposeRootDisposable() {
     EdtTestUtil.runInEdtAndWait(() -> {
-      if (!Disposer.isDisposed(myTestRootDisposable)) {
-        Disposer.dispose(myTestRootDisposable);
-      }
+      Disposer.dispose(myTestRootDisposable);
     });
   }
 

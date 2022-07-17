@@ -42,12 +42,6 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.refactoring.typeMigration.inspections.GuavaInspection"
                      bundle="messages.TypeMigrationBundle" key="inspection.guava.name"/>
-
-    <localInspection groupPath="Java" language="JAVA" shortName="MigrateAssertToMatcherAssert"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.intellij.refactoring.typeMigration.inspections.MigrateAssertToMatcherAssertInspection"
-                     bundle="messages.TypeMigrationBundle" key="inspection.assertion.name"/>
-
     <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention$ConvertNonFinalLocalToAtomicFix"/>
   </extensions>
 </idea-plugin>

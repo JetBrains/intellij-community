@@ -21,27 +21,12 @@ import java.util.List;
 import java.util.Set;
 
 public class InvalidUsageNoteNode {
-  private final PercentDone myPercentDone = PercentDone._0;
-  private Set<Flag> myFlags;
-  private Set<Concept> myConcepts;
-
   final List<TextChunk> myText;
 
   public InvalidUsageNoteNode(List<TextChunk> text) {
     myText = text;
   }
 
-  public PercentDone getPercentDone() {
-    return myPercentDone;
-  }
-
-  public Set<Flag> getFlags() {
-    return myFlags;
-  }
-
-  public Set<Concept> getConcepts() {
-    return myConcepts;
-  }
 
   public List<TextChunk> getText() {
     return myText;

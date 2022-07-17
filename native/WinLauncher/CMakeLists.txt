@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
 project(WinLauncher)
-include(CheckSymbolExists)
 
 if (NOT WIN32)
   message(FATAL_ERROR "Windows only.")
@@ -16,24 +15,16 @@ endif ()
 
 string(TIMESTAMP YEAR "%Y")
 
-check_symbol_exists("_M_AMD64" "" TARGET_X64)
-if (TARGET_X64)
-  set(FILE_NAME "WinLauncher64")
-  set(JAVA_HOME $ENV{JDK_11_x64})
-else ()
-  set(FILE_NAME "WinLauncher")
-  set(JAVA_HOME $ENV{JDK_11})
-endif ()
+set(JAVA_HOME $ENV{JDK_11_x64})
 if (NOT JAVA_HOME)
-  message(FATAL_ERROR "JDK_11/JDK_11_x64 variables not defined (x64=${TARGET_X64}).")
+  message(FATAL_ERROR "JDK_11_x64 variable not defined.")
 endif ()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/WinLauncher.rc ${CMAKE_CURRENT_BINARY_DIR}/WinLauncher.rc @ONLY)
 
-add_executable(WinLauncher WIN32 WinLauncher.cpp ${CMAKE_CURRENT_BINARY_DIR}/WinLauncher.rc)
+add_executable(WinLauncher WIN32 WinLauncher.cpp WinLauncher.manifest ${CMAKE_CURRENT_BINARY_DIR}/WinLauncher.rc)
 
 set_target_properties(WinLauncher PROPERTIES
-    OUTPUT_NAME ${FILE_NAME}
     CXX_STANDARD 14
     MSVC_RUNTIME_LIBRARY "MultiThreaded")
 

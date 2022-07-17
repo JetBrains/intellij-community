@@ -5,8 +5,8 @@ class Main {
       <caret>
     }
   }
-}
 
-sealed interface Sealed permits Variant1, Variant2 { }
-final class Variant1 implements Sealed { }
-final class Variant2 implements Sealed { }
+  private static sealed interface Sealed permits Variant1, Variant2 { }
+  private static final class Variant1 implements Sealed { }
+  private static final class Variant2 implements Sealed { }
+}

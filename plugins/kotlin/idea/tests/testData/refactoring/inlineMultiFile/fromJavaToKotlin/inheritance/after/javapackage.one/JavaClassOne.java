@@ -1,7 +1,6 @@
 package javapackage.one;
 
 import javapackage.two.JavaClassTwo;
-import kotlinpackage.one.KotlinClassOneKt;
 import parentpack.JavaParent;
 
 public class JavaClassOne extends JavaParent {

@@ -31,9 +31,7 @@ public class JvmPushInstruction extends PushInstruction {
 
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
-    var instruction = new JvmPushInstruction(getValue().bindToFactory(factory), getDfaAnchor(), myReferenceWrite);
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new JvmPushInstruction(getValue().bindToFactory(factory), getDfaAnchor(), myReferenceWrite);
   }
 
   public boolean isReferenceWrite() {

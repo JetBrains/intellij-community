@@ -83,4 +83,20 @@ public class JavadocParsingTest extends JavaParsingTestCase {
   public void testThrowsTag() { doTest(true); }
   public void testUsesTag() { doTest(true); }
   public void testProvidesTag() { doTest(true); }
+  public void testInlineTagIndex() { doTest(true); }
+  public void testInlineTagSummary() { doTest(true); }
+
+  public void testSnippetTag0() { doTest(true); }
+  public void testSnippetTag1() { doTest(true); }
+  public void testSnippetTag2() { doTest(true); }
+  public void testSnippetTag3() { doTest(true); }
+  public void testSnippetTag4() { doTest(true); }
+  public void testSnippetTag5() { doTest(true); }
+  public void testSnippetTag6() { doTest(true); }
+  public void testSnippetTag7() { doTest(true); }
+  public void testSnippetTag8() { doTest(true); }
+  public void testSnippetTag9() { doTest(true); }
+  public void testSnippetTag10() { doTest(true); }
+  public void testSnippetTag11() { doTest(true); }
+  public void testSnippetTag12() { doTest(true); }
 }

@@ -1,6 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.zip;
-
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +11,7 @@ import java.util.zip.*;
 
 import static com.intellij.util.io.zip.JBZipFile.*;
 
-class JBZipOutputStream {
+final class JBZipOutputStream {
   private static final int ZIP64_MIN_VERSION = 45;
   private static final int ZIP_MIN_VERSION = 10;
 
@@ -211,26 +210,26 @@ class JBZipOutputStream {
   /**
    * local file header signature
    */
-  protected static final byte[] LFH_SIG = ZipLong.getBytes(0X04034B50L);
+  private static final byte[] LFH_SIG = ZipLong.getBytes(0X04034B50L);
 
   /**
    * central file header signature
    */
-  protected static final byte[] CFH_SIG = ZipLong.getBytes(0X02014B50L);
+  static final byte[] CFH_SIG = ZipLong.getBytes(0X02014B50L);
   /**
    * end of central dir signature
    */
-  protected static final byte[] EOCD_SIG = ZipLong.getBytes(0X06054B50L);
+  static final byte[] EOCD_SIG = ZipLong.getBytes(0X06054B50L);
 
   /**
    * end of zip 64 central dir locator signature
    */
-  protected static final byte[] ZIP64_EOCD_LOC_SIG = ZipLong.getBytes(0X07064B50L);
+  static final byte[] ZIP64_EOCD_LOC_SIG = ZipLong.getBytes(0X07064B50L);
 
   /**
    * end of zip 64 central dir signature
    */
-  protected static final byte[] ZIP64_EOCD_SIG = ZipLong.getBytes(0X06064B50L);
+  static final byte[] ZIP64_EOCD_SIG = ZipLong.getBytes(0X06064B50L);
 
   /**
    * Writes the local file header entry
@@ -238,7 +237,7 @@ class JBZipOutputStream {
    * @param ze the entry to write
    * @throws IOException on error
    */
-  protected ExtraFieldData writeLocalFileHeader(JBZipEntry ze) throws IOException {
+  private ExtraFieldData writeLocalFileHeader(JBZipEntry ze) throws IOException {
     long headerOffset = getWritten();
     ze.setHeaderOffset(headerOffset);
 
@@ -325,7 +324,7 @@ class JBZipOutputStream {
    * @param ze the entry to write
    * @throws IOException on error
    */
-  protected void writeCentralFileHeader(JBZipEntry ze) throws IOException {
+  private void writeCentralFileHeader(JBZipEntry ze) throws IOException {
     writeOut(CFH_SIG);
 
     // version made by
@@ -374,7 +373,7 @@ class JBZipOutputStream {
    *
    * @throws IOException on error
    */
-  protected void writeCentralDirectoryEnd(long cdLength, long cdOffset) throws IOException {
+  private void writeCentralDirectoryEnd(long cdLength, long cdOffset) throws IOException {
     writeOut(EOCD_SIG);
 
     // disk numbers
@@ -404,7 +403,7 @@ class JBZipOutputStream {
    * @return the bytes as a byte array
    * @throws ZipException on error
    */
-  protected byte[] getBytes(String name) throws ZipException {
+  private byte[] getBytes(String name) throws ZipException {
     if (encoding == null) {
       return name.getBytes(StandardCharsets.UTF_8);
     }

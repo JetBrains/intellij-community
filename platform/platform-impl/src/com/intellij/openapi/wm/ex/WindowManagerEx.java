@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.AppIcon;
@@ -39,17 +38,6 @@ public abstract class WindowManagerEx extends WindowManager {
   }
 
   public abstract @Nullable IdeFrame findFrameFor(@Nullable Project project);
-
-  /**
-   * @return default layout for tool windows.
-   */
-  @ApiStatus.Internal
-  public abstract @NotNull DesktopLayout getLayout();
-
-  /**
-   * Copies {@code layout} into internal default layout.
-   */
-  public abstract void setLayout(@NotNull DesktopLayout layout);
 
   /**
    * This method is invoked by {@code IdeEventQueue} to notify window manager that

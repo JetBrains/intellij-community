@@ -80,6 +80,43 @@ class YAMLQuotesTypingTest : BasePlatformTestCase(){
     """.trimIndent())
   }
   
+  fun testQuoteBeforeQuotes(){
+    myFixture.configureByText("test.yaml", """
+      bug:
+        yesno:
+          yes: <caret>
+          no: "nope"
+          undefined:
+          
+    """.trimIndent())
+    myFixture.type("\"")
+    myFixture.checkResult("""
+      bug:
+        yesno:
+          yes: "<caret>"
+          no: "nope"
+          undefined:
+          
+    """.trimIndent())
+  }
+  fun testQuoteBeforeQuotedKey(){
+    myFixture.configureByText("test.yaml", """
+      foo:
+        bar: <caret>
+        boo: 
+        'aaa bbb': aaa
+          
+    """.trimIndent())
+    myFixture.type("'")
+    myFixture.checkResult("""
+      foo:
+        bar: ''
+        boo: 
+        'aaa bbb': aaa
+          
+    """.trimIndent())
+  }
+  
   fun testQuoteCompletionInKey(){
     myFixture.configureByText("test.yaml", """
         myyaml: 

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.actions.generate
 
 import com.intellij.ide.util.MemberChooser
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -11,17 +10,16 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.descriptors.VariableDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.DescriptorMemberChooserObject
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.insertMembersAfter
-import org.jetbrains.kotlin.idea.core.util.DescriptorMemberChooserObject
+import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
@@ -35,7 +33,9 @@ import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
 private fun ClassDescriptor.findDeclaredToString(checkSupers: Boolean): FunctionDescriptor? {
-    return findDeclaredFunction("toString", checkSupers) { it.valueParameters.isEmpty() && it.typeParameters.isEmpty() }
+    return findDeclaredFunction("toString", checkSupers) {
+        it.modality != Modality.ABSTRACT && it.valueParameters.isEmpty() && it.typeParameters.isEmpty()
+    }
 }
 
 class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenerateToStringAction.Info>() {
@@ -53,7 +53,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
         val project: Project
     )
 
-    enum class Generator(val text: String) {
+    enum class Generator(@Nls val text: String) {
         SINGLE_TEMPLATE(KotlinBundle.message("action.generate.tostring.template.single")) {
             override fun generate(info: Info): String {
                 val className = info.classDescriptor.name.asString()
@@ -140,8 +140,11 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
             }
         }
 
+        val superToString = classDescriptor.getSuperClassOrAny().findDeclaredToString(true)!!
+        val allowSuperCall = !superToString.builtIns.isMemberOfAny(superToString)
+
         val properties = getPropertiesToUseInGeneratedMember(klass)
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             val info = Info(
                 classDescriptor,
                 properties.map { context[BindingContext.DECLARATION_TO_DESCRIPTOR, it] as VariableDescriptor },
@@ -149,14 +152,12 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
                 Generator.SINGLE_TEMPLATE,
                 project
             )
-            return klass.adjuster?.let { it(info) } ?: info
+            return klass.adjuster?.invoke(info)?.let { it.copy(generateSuperCall = it.generateSuperCall && allowSuperCall) } ?: info
         }
-
-        val superToString = classDescriptor.getSuperClassOrAny().findDeclaredToString(true)!!
 
         val memberChooserObjects = properties.map { DescriptorMemberChooserObject(it, it.unsafeResolveToDescriptor()) }.toTypedArray()
         val selectedElements = memberChooserObjects.filter { (it.descriptor as? PropertyDescriptor)?.getter?.isDefault ?: true }.toTypedArray()
-        val headerPanel = ToStringMemberChooserHeaderPanel(!superToString.builtIns.isMemberOfAny(superToString))
+        val headerPanel = ToStringMemberChooserHeaderPanel(allowSuperCall)
         val chooser = MemberChooser<DescriptorMemberChooserObject>(memberChooserObjects, true, true, project, false, headerPanel).apply {
             title = KotlinBundle.message("action.generate.tostring.name")
             setCopyJavadocVisible(false)
@@ -175,7 +176,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
                     project)
     }
 
-    private fun generateToString(targetClass: KtClassOrObject, info: Info): KtNamedFunction? {
+    private fun generateToString(targetClass: KtClassOrObject, info: Info): KtNamedFunction {
         val superToString = info.classDescriptor.getSuperClassOrAny().findDeclaredToString(true)!!
         return generateFunctionSkeleton(superToString, targetClass).apply {
             replaceBody {
@@ -186,8 +187,8 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
 
     override fun generateMembers(project: Project, editor: Editor?, info: Info): List<KtDeclaration> {
         val targetClass = info.classDescriptor.source.getPsi() as KtClass
-        val prototype = generateToString(targetClass, info) ?: return emptyList()
+        val prototype = generateToString(targetClass, info)
         val anchor = with(targetClass.declarations) { lastIsInstanceOrNull<KtNamedFunction>() ?: lastOrNull() }
-        return insertMembersAfter(editor, targetClass, listOf(prototype), anchor)
+        return insertMembersAfterAndReformat(editor, targetClass, listOf(prototype), anchor)
     }
 }

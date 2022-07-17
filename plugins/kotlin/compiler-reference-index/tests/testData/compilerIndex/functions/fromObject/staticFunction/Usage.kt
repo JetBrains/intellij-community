@@ -1,0 +1,3 @@
+fun usage() {
+    KotlinObject.staticFunction()
+}

@@ -60,12 +60,10 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     @Override
     public void findAndSelectElement(@NotNull String searchQuery) { }
   };
-  private final Project myProject;
   private final T myRoot;
   private final Tree myTree;
 
-  public FilteringTree(@NotNull Project project, @NotNull Tree tree, @NotNull T root) {
-    myProject = project;
+  public FilteringTree(@NotNull Tree tree, @NotNull T root) {
     myRoot = root;
     myTree = tree;
     myTree
@@ -217,11 +215,6 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   @SuppressWarnings("unchecked")
   public SearchTreeModel<T, U> getSearchModel() {
     return (SearchTreeModel)myTree.getModel();
-  }
-
-  @NotNull
-  public Project getProject() {
-    return myProject;
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.PropertiesUtil;
@@ -102,8 +102,10 @@ public class FileUtilLightTest {
   public void testCheckImmediateChildren() {
     String root = "/a";
     String[] data = {"/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/a/b/c/d/e"};
-    ThreeState[] expected1 = {ThreeState.UNSURE, ThreeState.YES, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
-    ThreeState[] expected2 = {ThreeState.UNSURE, ThreeState.NO, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
+    ThreeState[] expected1 =
+      {ThreeState.UNSURE, ThreeState.YES, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
+    ThreeState[] expected2 =
+      {ThreeState.UNSURE, ThreeState.NO, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
 
     for (int i = 0; i < data.length; i++) {
       ThreeState state = FileUtil.isAncestorThreeState(root, data[i], false);
@@ -195,6 +197,7 @@ public class FileUtilLightTest {
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void windowsAbsolutePath() {
     assertTrue(FileUtil.isWindowsAbsolutePath("C:\\Users"));
     assertTrue(FileUtil.isWindowsAbsolutePath("C:/Users"));
@@ -212,5 +215,23 @@ public class FileUtilLightTest {
     assertFalse(FileUtil.isWindowsAbsolutePath("1:"));
     assertFalse(FileUtil.isWindowsAbsolutePath("C:C"));
     assertFalse(FileUtil.isWindowsAbsolutePath("C?"));
+  }
+
+  @Test
+  public void relativePaths() {
+    assertThat(FileUtil.getRelativePath("/dir/subdir1/", "/dir/subdir2/file.txt", '/', true)).isEqualTo("../subdir2/file.txt");
+    assertThat(FileUtil.getRelativePath("/dir/subdir1/", "/dir/subdir2/", '/', true)).isEqualTo("../subdir2/");
+    assertThat(FileUtil.getRelativePath("/dir/subdir1/", "/dir/subdir2", '/', true)).isEqualTo("../subdir2");
+
+    assertThat(FileUtil.getRelativePath("/dir/subdir/", "/dir/subdir/file.txt", '/', true)).isEqualTo("file.txt");
+    assertThat(FileUtil.getRelativePath("/dir/subdir", "/dir/subdir/file.txt", '/', true)).isEqualTo("file.txt");
+
+    assertThat(FileUtil.getRelativePath("/dir/subdir/file.txt", "/dir/subdir/", '/', true)).isEqualTo("../");
+    assertThat(FileUtil.getRelativePath("/dir/subdir/file.txt", "/dir/subdir", '/', true)).isEqualTo("../../subdir");
+
+    assertThat(FileUtil.getRelativePath("/dir/subdir", "/dir/subdir/", '/', true)).isEqualTo(".");
+    assertThat(FileUtil.getRelativePath("/dir/subdir/", "/dir/subdir", '/', true)).isEqualTo(".");
+    assertThat(FileUtil.getRelativePath("/dir/subdir/", "/dir/subdir/", '/', true)).isEqualTo(".");
+    assertThat(FileUtil.getRelativePath("/dir/subdir", "/dir/subdir", '/', true)).isEqualTo(".");
   }
 }

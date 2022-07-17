@@ -96,10 +96,14 @@ public abstract class ActionButtonLook {
     if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet()) return;
     Rectangle rect = new Rectangle(component.getSize());
     JBInsets.removeFrom(rect, component.getInsets());
-    Color color = state == ActionButtonComponent.NORMAL ? component.getBackground() :
+    Color color = getStateBackground(component, state);
+    paintLookBackground(g, rect, color);
+  }
+
+  protected Color getStateBackground(JComponent component, int state) {
+    return state == ActionButtonComponent.NORMAL ? component.getBackground() :
                   state == ActionButtonComponent.PUSHED ? JBUI.CurrentTheme.ActionButton.pressedBackground() :
                   JBUI.CurrentTheme.ActionButton.hoverBackground();
-    paintLookBackground(g, rect, color);
   }
 
   public void paintBackground(Graphics g, JComponent component, Color color) {

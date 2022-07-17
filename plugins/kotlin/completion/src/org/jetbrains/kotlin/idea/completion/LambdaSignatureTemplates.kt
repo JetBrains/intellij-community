@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -14,10 +14,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.extractParameterNameFromFunctionTypeArgument
 import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
 import org.jetbrains.kotlin.idea.core.ExpectedInfos
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.fuzzyType
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -59,9 +59,15 @@ object LambdaSignatureTemplates {
                             }
                         }
 
-                        context.editor.caretModel.moveToOffset(startOffset)
+                        context.editor.caretModel.currentCaret.moveToOffset(startOffset)
                         val template = buildTemplate(lambdaType, signatureOnly, explicitParameterTypes, context.project)
-                        TemplateManager.getInstance(context.project).startTemplate(context.editor, template)
+                        TemplateManager.getInstance(context.project).startTemplate(
+                            /* editor = */ context.editor,
+                            /* template = */ template,
+                            /* inSeparateCommand = */ false,
+                            /* predefinedVarValues = */ null,
+                            /* listener = */ null,
+                        )
                     }
                 } finally {
                     rangeMarker.dispose()
@@ -97,8 +103,9 @@ object LambdaSignatureTemplates {
         return functionParameterTypes(lambdaType).joinToString(", ", transform = ::parameterPresentation) + " ->"
     }
 
-    fun explicitParameterTypesRequired(file: KtFile, placeholderRange: TextRange, lambdaType: KotlinType): Boolean {
-        PsiDocumentManager.getInstance(file.project).commitAllDocuments()
+    fun explicitParameterTypesRequired(context: InsertionContext, placeholderRange: TextRange, lambdaType: KotlinType): Boolean {
+        val file = context.file as? KtFile ?: return false
+        PsiDocumentManager.getInstance(file.project).commitDocument(context.document)
         val expression =
             PsiTreeUtil.findElementOfClassAtRange(file, placeholderRange.startOffset, placeholderRange.endOffset, KtExpression::class.java)
                 ?: return false
@@ -151,7 +158,7 @@ object LambdaSignatureTemplates {
             val nameExpression = if (parameterName != null) {
                 object : Expression() {
                     override fun calculateResult(context: ExpressionContext?) = TextResult(parameterName)
-                    override fun calculateQuickResult(context: ExpressionContext?): Result? = TextResult(parameterName)
+                    override fun calculateQuickResult(context: ExpressionContext?): Result = TextResult(parameterName)
                     override fun calculateLookupItems(context: ExpressionContext?) = emptyArray<LookupElement>()
                 }
             } else {
@@ -184,7 +191,7 @@ object LambdaSignatureTemplates {
     }
 
     private fun nameSuggestions(parameterType: KotlinType, suffix: String? = null): List<String> {
-        val suggestions = KotlinNameSuggester.suggestNamesByType(parameterType, { true }, "p")
+        val suggestions = Fe10KotlinNameSuggester.suggestNamesByType(parameterType, { true }, "p")
         return if (suffix != null) suggestions.map { "$it$suffix" } else suggestions
     }
 

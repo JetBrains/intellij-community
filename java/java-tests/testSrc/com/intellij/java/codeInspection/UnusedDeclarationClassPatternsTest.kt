@@ -94,6 +94,8 @@ class UnusedDeclarationClassPatternsTest : LightJavaCodeInsightFixtureTestCase()
     val aClass = myFixture.addClass("public class Foo {}")
     val entryPointsManager = EntryPointsManagerBase.getInstance(project)
     val context = (InspectionManager.getInstance(project) as InspectionManagerEx).createNewGlobalContext()
+    context.initializeTools(ArrayList(), ArrayList(), ArrayList())
+    
     try {
       val refClass = context.refManager.getReference(aClass)
       assertNotNull(refClass)
@@ -123,6 +125,7 @@ class UnusedDeclarationClassPatternsTest : LightJavaCodeInsightFixtureTestCase()
     val aClass = myFixture.addClass("public class Foo {void foo(){}}")
     val entryPointsManager = EntryPointsManagerBase.getInstance(project)
     val context = (InspectionManager.getInstance(project) as InspectionManagerEx).createNewGlobalContext()
+    context.initializeTools(ArrayList(),ArrayList(),ArrayList())
     try {
       val refMethod = context.refManager.getReference(aClass.methods[0])
       assertNotNull(refMethod)

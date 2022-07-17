@@ -46,7 +46,7 @@ public class ChainedEqualityInspection extends BaseInspection {
   private static class ChainedEqualityVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       if (!ComparisonUtils.isEqualityComparison(expression)) {
         return;

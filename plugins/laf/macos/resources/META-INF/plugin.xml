@@ -1,12 +1,10 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.laf.macos">
   <id>com.intellij.laf.macos</id>
   <name>macOS Light Theme</name>
   <vendor>JetBrains</vendor>
   <category>Themes</category>
 
   <description><![CDATA[Provides macOS Look And Feel that mimics macOS native Blue and Graphite themes]]></description>
-
-  <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <lafProvider implementation="com.intellij.laf.macos.MacLafProvider" os="mac"/>

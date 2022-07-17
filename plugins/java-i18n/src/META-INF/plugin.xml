@@ -26,7 +26,11 @@
     <referenceProviderType key="Properties File Key Provider"
                            implementationClass="com.intellij.lang.properties.PropertiesReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaReferenceContributor"/>
-    <psi.referenceContributor implementation="com.intellij.lang.properties.PropertiesReferenceContributor"/>
+    <psi.referenceContributor language="XML" implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaXmlClassListReferenceContributor"/>
+
+    <psi.referenceContributor language="Properties" implementation="com.intellij.lang.properties.PropertiesClassReferenceContributor"/>
+    <psi.referenceContributor language="UAST" implementation="com.intellij.lang.properties.PropertiesUastReferenceContributor"/>
+
     <lang.foldingBuilder language="UAST" implementationClass="com.intellij.codeInspection.i18n.folding.PropertyFoldingBuilder"
                          order="FIRST"/>
     <lang.foldingBuilder language="Properties" implementationClass="com.intellij.lang.properties.ResourceBundleContextFoldingBuilder"/>
@@ -67,7 +71,7 @@
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.SuspiciousLocalesLanguagesInspection"
                      key="inspection.suspicious.locales.languages.display.name" bundle="messages.JavaI18nBundle"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ConvertToBasicLatin" bundle="messages.JavaI18nBundle" key="inspection.convert.to.basic.latin"
+    <localInspection groupPath="Java" language="JAVA" shortName="ConvertToBasicLatin" bundle="messages.JavaI18nBundle" key="inspection.non.basic.latin.character.display.name"
                      groupKey="group.names.internationalization.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.i18n.ConvertToBasicLatinInspection" />

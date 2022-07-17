@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -104,7 +105,7 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   @TestOnly
   public void markDirtyAndRefreshVirtualFileDeepInsideJarForTest(@NotNull VirtualFile file) {
     // clear caches in ArchiveHandler so that refresh will actually refresh something
-    getHandler(file).dispose();
+    getHandler(file).clearCaches();
     VfsUtil.markDirtyAndRefresh(false, true, true, file);
   }
 
@@ -138,8 +139,8 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   }
 
   @Override
-  public long getEntryCrc(@NotNull VirtualFile file) throws IOException {
+  public @NotNull Map<String, Long> getArchiveCrcHashes(@NotNull VirtualFile file) throws IOException {
     ArchiveHandler handler = getHandler(file);
-    return ((ZipHandlerBase)handler).getEntryCrc(getRelativePath(file));
+    return ((ZipHandlerBase)handler).getArchiveCrcHashes();
   }
 }

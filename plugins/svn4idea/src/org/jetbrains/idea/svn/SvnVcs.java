@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.ide.FrameStateListener;
@@ -82,10 +82,7 @@ import static java.util.function.Function.identity;
 
 public final class SvnVcs extends AbstractVcs {
   private static final Logger LOG = new SvnFilteringExceptionLogger(Logger.getInstance(SvnVcs.class));
-
-  private static final String DO_NOT_LISTEN_TO_WC_DB = "svn.do.not.listen.to.wc.db";
   private static final Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
-  public static boolean ourListenToWcDb = !Boolean.getBoolean(DO_NOT_LISTEN_TO_WC_DB);
 
   public static final @NonNls @NotNull String VCS_NAME = "svn";
   public static final @NlsSafe @NotNull String VCS_DISPLAY_NAME = "Subversion";

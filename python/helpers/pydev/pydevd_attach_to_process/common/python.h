@@ -248,7 +248,7 @@ public:
     _PyOpcache *co_opcache;
     int co_opcache_flag;  // used to determine when create a cache.
     unsigned char co_opcache_size;  // length of co_opcache.
-    
+
     static bool IsFor(int majorVersion, int minorVersion) {
         return majorVersion == 3 && minorVersion == 8;
     }
@@ -382,7 +382,7 @@ public:
 };
 
 
-// 
+//
 // 2.5 - 3.7
 // While these are compatible there are fields only available on later versions.
 class PyTypeObject : public PyVarObject {
@@ -564,7 +564,7 @@ public:
     int recursion_depth;
     char overflowed; /* The stack has overflowed. Allow 50 more calls
                         to handle the runtime error. */
-    char recursion_critical; /* The current calls must not cause 
+    char recursion_critical; /* The current calls must not cause
                                 a stack overflow. */
     /* 'tracing' keeps track of the execution depth when tracing/profiling.
        This is to prevent the actual trace/profile code from being recorded in
@@ -664,9 +664,10 @@ struct _PyErr_StackItem {
     struct _PyErr_StackItem *previous_item;
 };
 
+
 class PyThreadState_37_38 : public PyThreadState {
 public:
-    PyThreadState * prev;
+    PyThreadState *prev;
     PyThreadState *next;
     PyInterpreterState *interp;
 
@@ -705,11 +706,56 @@ public:
     unsigned long thread_id; /* Thread id where this tstate was created */
 
     static bool IsFor(int majorVersion, int minorVersion) {
-        return majorVersion == 3 && minorVersion >= 7;
+        return majorVersion == 3 && (minorVersion == 7 || minorVersion == 8);
     }
 
     static bool IsFor(PythonVersion version) {
-        return version >= PythonVersion_37;
+        return version == PythonVersion_37 || version == PythonVersion_38;
+    }
+};
+
+// i.e.: https://github.com/python/cpython/blob/master/Include/cpython/pystate.h
+class PyThreadState_39 : public PyThreadState {
+public:
+    PyThreadState *prev;
+    PyThreadState *next;
+    PyInterpreterState *interp;
+
+    PyFrameObject *frame;
+    int recursion_depth;
+    char overflowed; /* The stack has overflowed. Allow 50 more calls
+                     to handle the runtime error. */
+    int stackcheck_counter;
+
+    int tracing;
+    int use_tracing;
+
+    Py_tracefunc c_profilefunc;
+    Py_tracefunc c_tracefunc;
+    PyObject *c_profileobj;
+    PyObject *c_traceobj;
+
+    PyObject *curexc_type;
+    PyObject *curexc_value;
+    PyObject *curexc_traceback;
+
+    _PyErr_StackItem exc_state;
+    _PyErr_StackItem *exc_info;
+
+    PyObject *dict;  /* Stores per-thread state */
+
+    int gilstate_counter;
+
+    PyObject *async_exc; /* Asynchronous exception to raise */
+
+    unsigned long thread_id; /* Thread id where this tstate was created */
+
+    static bool IsFor(int majorVersion, int minorVersion) {
+        return majorVersion == 3 && minorVersion == 9;
+    }
+
+    static bool IsFor(PythonVersion version) {
+        return version == PythonVersion_39;
     }
 };
 

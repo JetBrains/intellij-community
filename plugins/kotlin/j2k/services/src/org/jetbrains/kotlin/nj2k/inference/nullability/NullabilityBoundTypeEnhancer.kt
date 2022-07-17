@@ -9,11 +9,11 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isNullExpression
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.nj2k.inference.common.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValue
 import org.jetbrains.kotlin.resolve.calls.smartcasts.Nullability
@@ -93,7 +93,7 @@ class NullabilityBoundTypeEnhancer(private val resolutionFacade: ResolutionFacad
         val bindingContext = analyze(resolutionFacade)
         val type = getType(bindingContext) ?: return null
 
-        val dataFlowValue = resolutionFacade.getDataFlowValueFactory()
+        val dataFlowValue = resolutionFacade.dataFlowValueFactory
             .createDataFlowValue(this, type, bindingContext, resolutionFacade.moduleDescriptor)
         val dataFlowInfo = bindingContext[BindingContext.EXPRESSION_TYPE_INFO, this]?.dataFlowInfo ?: return null
         return analyzer(dataFlowValue, dataFlowInfo, type)

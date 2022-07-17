@@ -721,11 +721,11 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "c: Callable[[int, str], str]\n" +
                  "\n" +
                  "d: Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">...</error>]\n" +
-                 "e: Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">int</error>, str]\n" +
+                 "e: Callable[<error descr=\"'Callable' first parameter must be a parameter expression\">int</error>, str]\n" +
                  "f: Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">int, str</error>, str]\n" +
-                 "g: Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">(int, str)</error>, str]\n" +
+                 "g: Callable[<error descr=\"'Callable' first parameter must be a parameter expression\">(int, str)</error>, str]\n" +
                  "h: Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">int</error>]\n" +
-                 "h: Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">(int)</error>, str]\n" +
+                 "h: Callable[<error descr=\"'Callable' first parameter must be a parameter expression\">(int)</error>, str]\n" +
                  "\n" +
                  "A1: TypeAlias = Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">int</error>]\n" +
                  "A2: TypeAlias = 'Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">int</error>]'\n" +
@@ -1099,6 +1099,43 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "\n" +
                  "def func():\n" +
                  "    <warning descr=\"Type alias must be top-level declaration\">Alias</warning>: TypeAlias = str");
+  }
+
+  // PY-46602
+  public void testNoInspectionTypedDictInPython38() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, () -> {
+      doTestByText("from __future__ import annotations\n" +
+                   "\n" +
+                   "def hello(i: dict[str, str]):\n" +
+                   "    return i");
+    });
+  }
+
+  // PY-50401
+  public void testParamSpecNameAsLiteral() {
+    doTestByText("from typing import ParamSpec\n" +
+                 "\n" +
+                 "name = 'T0'\n" +
+                 "T0 = ParamSpec(<warning descr=\"'ParamSpec()' expects a string literal as first argument\">name</warning>)\n" +
+                 "T1 = ParamSpec('T1')");
+  }
+
+  // PY-50401
+  public void testParamSpecNameAndTargetNameEquality() {
+    doTestByText("from typing import ParamSpec\n" +
+                 "\n" +
+                 "T0 = ParamSpec(<warning descr=\"The argument to 'ParamSpec()' must be a string equal to the variable name to which it is assigned\">'T1'</warning>)\n" +
+                 "T1 = ParamSpec('T1')");
+  }
+
+  // PY-50930
+  public void testNoInspectionInCallableParameterParamSpecFromTypingExpressions() {
+    doTestByText("from typing import Callable, TypeVar\n" +
+                 "from typing_extensions import ParamSpec\n" +
+                 "P = ParamSpec(\"P\")\n" +
+                 "R = TypeVar(\"R\")\n" +
+                 "def foo(it: Callable[P, R]) -> Callable[P, R]:\n" +
+                 "    ...");
   }
 
   @NotNull

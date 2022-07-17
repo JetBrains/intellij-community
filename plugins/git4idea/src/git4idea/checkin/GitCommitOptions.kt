@@ -78,9 +78,8 @@ class GitCommitOptionsUi(
 
   private val panel = JPanel(GridBagLayout())
   private val authorField = VcsUserEditor(project, getKnownCommitAuthors())
-  private val signOffCommit = JBCheckBox(GitBundle.message("commit.options.sign.off.commit.checkbox"), settings.shouldSignOffCommit()).apply {
-    mnemonic = VK_G
-
+  private val signOffCommit = JBCheckBox(GitBundle.message("commit.options.sign.off.commit.checkbox"),
+                                         settings.shouldSignOffCommit()).apply {
     val user = commitPanel.roots.mapNotNull { userRegistry.getUser(it) }.firstOrNull()
     val signature = user?.let { escapeXmlEntities(VcsUserUtil.toExactString(it)) }.orEmpty()
     toolTipText = XmlStringUtil.wrapInHtml(GitBundle.message("commit.options.sign.off.commit.message.line", signature))
@@ -107,6 +106,13 @@ class GitCommitOptionsUi(
         }
       }
     })
+    if (commitPanel.isNonModalCommit) {
+      commitPanel.commitAuthorTracker?.addCommitAuthorListener(this, this)
+
+      panel.addHierarchyListener { e ->
+        if (e.isParentChanged && panel == e.changed && panel.parent != null) beforeShow()
+      }
+    }
 
     buildLayout()
 
@@ -137,18 +143,9 @@ class GitCommitOptionsUi(
   override fun getComponent(): JComponent = panel
 
   override fun restoreState() {
-    if (commitPanel.isNonModalCommit) {
-      commitPanel.commitAuthorTracker?.addCommitAuthorListener(this, this)
+    updateRenamesCheckboxState()
+    clearAuthorWarning()
 
-      panel.addHierarchyListener { e ->
-        if (e.isParentChanged && panel == e.changed && panel.parent != null) beforeShow()
-      }
-    }
-    refresh()
-  }
-
-  override fun refresh() {
-    refresh(null)
     commitAuthorChanged()
     commitAuthorDateChanged()
   }
@@ -157,33 +154,25 @@ class GitCommitOptionsUi(
     if (commitPanel.isNonModalCommit) updateRenamesCheckboxState()
     val author = getAuthor()
 
-    commitContext.apply {
-      commitAuthor = author
-      commitAuthorDate = authorDate
-      isSignOffCommit = signOffCommit.isSelected
-      isCommitRenamesSeparately = commitRenamesSeparately.run { isEnabled && isSelected }
-    }
+    commitContext.commitAuthor = author
+    commitContext.commitAuthorDate = authorDate
+    commitContext.isSignOffCommit = signOffCommit.isSelected
+    commitContext.isCommitRenamesSeparately = commitRenamesSeparately.run { isEnabled && isSelected }
 
-    settings.apply {
-      author?.let { saveCommitAuthor(it) }
-      setSignOffCommit(signOffCommit.isSelected)
-      isCommitRenamesSeparately = commitRenamesSeparately.isSelected
-    }
+    author?.let { settings.saveCommitAuthor(it) }
+    settings.setSignOffCommit(signOffCommit.isSelected)
+    settings.isCommitRenamesSeparately = commitRenamesSeparately.isSelected
   }
 
   override fun onChangeListSelected(list: LocalChangeList) {
-    refresh(list)
-
-    panel.revalidate()
-    panel.repaint()
-  }
-
-  private fun refresh(changeList: LocalChangeList?) {
     updateRenamesCheckboxState()
     clearAuthorWarning()
 
-    setAuthor(changeList?.author)
-    authorDate = changeList?.authorDate
+    setAuthor(list.author)
+    authorDate = list.authorDate
+
+    panel.revalidate()
+    panel.repaint()
   }
 
   fun getAuthor(): VcsUser? = authorField.user

@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
@@ -42,41 +43,23 @@ abstract class ExtensionPointReferenceBase extends PsiReferenceBase<PsiElement> 
   protected abstract String getExtensionPointFqn();
 
   /**
-   * Returns the name attribute for resolving.
-   * Must return {@code true} from {@link #hasCustomNameElement()} when overriding.
+   * Returns the name attribute for resolving, by default {@link Extension#getId()}.
    *
    * @see #getAttribute(Extension, String)
    */
-  protected GenericAttributeValue<?> getNameElement(Extension extension) {
+  @Nullable
+  protected GenericAttributeValue<String> getNameElement(Extension extension) {
     return extension.getId();
-  }
-
-  /**
-   * @see #getNameElement(Extension)
-   */
-  protected boolean hasCustomNameElement() {
-    return false;
   }
 
   @Nullable
   @Override
   public PsiElement resolve() {
     final String resolveId = getResolveValue();
+    if (StringUtil.isEmptyOrSpaces(resolveId)) return null;
 
-    final CommonProcessors.FindProcessor<Extension> resolveProcessor;
-    if (hasCustomNameElement()) {
-      resolveProcessor = new CommonProcessors.FindProcessor<>() {
-        @Override
-        protected boolean accept(Extension extension) {
-          final GenericAttributeValue<?> nameElement = getNameElement(extension);
-          return nameElement != null && resolveId.equals(nameElement.getStringValue());
-        }
-      };
-    }
-    else {
-      resolveProcessor = new CommonProcessors.FindFirstProcessor<>();
-    }
-    processCandidates(resolveProcessor, hasCustomNameElement() ? null : resolveId);
+    final CommonProcessors.FindProcessor<Extension> resolveProcessor = new CommonProcessors.FindFirstProcessor<>();
+    processCandidates(resolveProcessor, resolveId);
 
     final Extension value = resolveProcessor.getFoundValue();
     if (value == null) return null;
@@ -110,7 +93,7 @@ abstract class ExtensionPointReferenceBase extends PsiReferenceBase<PsiElement> 
   }
 
   /**
-   * @param extensionPointId To locate a specific instance by ID. Use only when {@link #hasCustomNameElement()} returns {@code false} (using default {@code id} attribute), {@code null} otherwise.
+   * @param extensionPointId To locate a specific extension instance by ID or {@code null} to process all.
    */
   private void processCandidates(Processor<? super Extension> processor,
                                  @Nullable String extensionPointId) {
@@ -125,8 +108,12 @@ abstract class ExtensionPointReferenceBase extends PsiReferenceBase<PsiElement> 
       candidates = ExtensionLocatorKt.locateExtensionsByExtensionPoint(extensionPointDomElement);
     }
     else {
-      candidates = ExtensionLocatorKt.locateExtensionsByExtensionPointAndId(extensionPointDomElement, extensionPointId)
-        .findCandidates();
+      candidates = ExtensionLocatorKt.
+        locateExtensionsByExtensionPointAndId(extensionPointDomElement, extensionPointId,
+                                              extension -> {
+                                                final GenericAttributeValue<String> nameElement = getNameElement(extension);
+                                                return nameElement != null ? nameElement.getStringValue() : null;
+                                              }).findCandidates();
     }
 
     final DomManager manager = DomManager.getDomManager(project);

@@ -40,17 +40,17 @@ public class GatheringChangelistBuilder extends EmptyChangelistBuilder {
   }
 
   @Override
-  public void processChange(final Change change, VcsKey vcsKey) {
+  public void processChange(@NotNull Change change, VcsKey vcsKey) {
     addChange(change);
   }
 
   @Override
-  public void processChangeInList(final Change change, @Nullable final ChangeList changeList, VcsKey vcsKey) {
+  public void processChangeInList(@NotNull Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
     addChange(change);
   }
 
   @Override
-  public void processChangeInList(final Change change, final String changeListName, VcsKey vcsKey) {
+  public void processChangeInList(@NotNull Change change, String changeListName, VcsKey vcsKey) {
     addChange(change);
   }
 

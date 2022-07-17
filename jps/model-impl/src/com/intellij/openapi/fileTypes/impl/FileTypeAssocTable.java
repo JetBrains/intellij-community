@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
@@ -10,37 +10,53 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class FileTypeAssocTable<T> {
   private final Map<CharSequence, T> myExtensionMappings;
   private final Map<CharSequence, T> myExactFileNameMappings;
   private final Map<CharSequence, T> myExactFileNameAnyCaseMappings;
   private final List<Pair<FileNameMatcher, T>> myMatchingMappings;
+  private final ConcurrentCharSequenceMapBuilder<T> myConcurrentCharSequenceMapBuilder;
   private final Map<String, T> myHashBangMap;
+
+  @FunctionalInterface
+  public interface ConcurrentCharSequenceMapBuilder<T> {
+    @NotNull Map<CharSequence, T> build(@NotNull Map<? extends CharSequence, ? extends T> source, boolean caseSensitive);
+  }
 
   private FileTypeAssocTable(@NotNull Map<? extends CharSequence, ? extends T> extensionMappings,
                              @NotNull Map<? extends CharSequence, ? extends T> exactFileNameMappings,
                              @NotNull Map<? extends CharSequence, ? extends T> exactFileNameAnyCaseMappings,
-                             @NotNull Map<String, ? extends T> hashBangMap,
+                             @NotNull ConcurrentCharSequenceMapBuilder<T> concurrentCharSequenceMapBuilder,
+                             @NotNull Map<? extends String, ? extends T> hashBangMap,
                              @NotNull List<? extends Pair<FileNameMatcher, T>> matchingMappings) {
-    myExtensionMappings = createCharSequenceConcurrentMap(extensionMappings);
-    myExactFileNameMappings = new ConcurrentHashMap<>(exactFileNameMappings);
-    myExactFileNameAnyCaseMappings = createCharSequenceConcurrentMap(exactFileNameAnyCaseMappings);
+    myExtensionMappings = concurrentCharSequenceMapBuilder.build(extensionMappings, false);
+    myExactFileNameMappings = concurrentCharSequenceMapBuilder.build(exactFileNameMappings, true);
+    myExactFileNameAnyCaseMappings = concurrentCharSequenceMapBuilder.build(exactFileNameAnyCaseMappings, false);
+    myConcurrentCharSequenceMapBuilder = concurrentCharSequenceMapBuilder;
     myHashBangMap = new ConcurrentHashMap<>(hashBangMap);
-    myMatchingMappings = Collections.synchronizedList(new ArrayList<>(matchingMappings));
+    myMatchingMappings = new CopyOnWriteArrayList<>(matchingMappings);
+  }
+
+  public FileTypeAssocTable(@NotNull ConcurrentCharSequenceMapBuilder<T> concurrentCharSequenceMapBuilder) {
+    this(Collections.emptyMap(),
+         Collections.emptyMap(),
+         Collections.emptyMap(),
+         concurrentCharSequenceMapBuilder,
+         Collections.emptyMap(),
+         Collections.emptyList());
   }
 
   public FileTypeAssocTable() {
-    this(Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList());
+    this(FileTypeAssocTable::createCharSequenceConcurrentMap);
   }
 
   boolean isAssociatedWith(@NotNull T type, @NotNull FileNameMatcher matcher) {
@@ -119,14 +135,12 @@ public final class FileTypeAssocTable<T> {
       if (t != null) return t;
     }
 
-    if (!myExactFileNameAnyCaseMappings.isEmpty()) {   // even hash lookup with case insensitive hasher is costly for isIgnored checks during compile
+    if (!myExactFileNameAnyCaseMappings.isEmpty()) {   // even hash lookup with case-insensitive hasher is costly for isIgnored checks during compile
       T t = myExactFileNameAnyCaseMappings.get(fileName);
       if (t != null) return t;
     }
 
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < myMatchingMappings.size(); i++) {
-      Pair<FileNameMatcher, T> mapping = myMatchingMappings.get(i);
+    for (Pair<FileNameMatcher, T> mapping : myMatchingMappings) {
       if (mapping.getFirst().acceptsCharSequence(fileName)) return mapping.getSecond();
     }
 
@@ -178,7 +192,14 @@ public final class FileTypeAssocTable<T> {
 
   @NotNull
   public FileTypeAssocTable<T> copy() {
-    return new FileTypeAssocTable<>(myExtensionMappings, myExactFileNameMappings, myExactFileNameAnyCaseMappings, myHashBangMap, myMatchingMappings);
+    return new FileTypeAssocTable<>(
+      myExtensionMappings,
+      myExactFileNameMappings,
+      myExactFileNameAnyCaseMappings,
+      myConcurrentCharSequenceMapBuilder,
+      myHashBangMap,
+      myMatchingMappings
+    );
   }
 
   @NotNull
@@ -277,9 +298,9 @@ public final class FileTypeAssocTable<T> {
     return CollectionFactory.createSmallMemoryFootprintMap(myHashBangMap);
   }
 
-  private static @NotNull <T> Map<CharSequence, T> createCharSequenceConcurrentMap(@NotNull Map<? extends CharSequence, ? extends T> source) {
-    // todo convert to ConcurrentCollectionFactory when it's available in the classpath
-    Map<CharSequence, T> map = CollectionFactory.createCharSequenceMap(false, source.size(), 0.5f);
+  // todo drop it, when ConcurrentCollectionFactory will be available in the classpath
+  private static @NotNull <T> Map<CharSequence, T> createCharSequenceConcurrentMap(@NotNull Map<? extends CharSequence, ? extends T> source, boolean caseSensetive) {
+    Map<CharSequence, T> map = CollectionFactory.createCharSequenceMap(caseSensetive, source.size(), 0.5f);
     map.putAll(source);
     return Collections.synchronizedMap(map);
   }
@@ -308,5 +329,26 @@ public final class FileTypeAssocTable<T> {
     myExtensionMappings.clear();
     myExactFileNameMappings.clear();
     myExactFileNameAnyCaseMappings.clear();
+  }
+
+  void removeAssociationsForFile(@NotNull CharSequence fileName, @NotNull T association) {
+    T t = myExactFileNameMappings.get(fileName);
+    if (association.equals(t)) {
+      myExactFileNameMappings.remove(fileName);
+    }
+
+    t = myExactFileNameAnyCaseMappings.get(fileName);
+    if (association.equals(t)) {
+      myExactFileNameAnyCaseMappings.remove(fileName);
+    }
+
+    myMatchingMappings.removeIf(pair -> association.equals(pair.second)
+                                        && pair.getFirst().acceptsCharSequence(fileName));
+
+    CharSequence extension = FileUtilRt.getExtension(fileName);
+    t = myExtensionMappings.get(extension);
+    if (association.equals(t)) {
+      myExtensionMappings.remove(extension);
+    }
   }
 }

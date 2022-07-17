@@ -34,6 +34,6 @@ class BranchStorage : BaseState() {
     if (branches.isEmpty()) {
       this.branches.remove(typeName)
     }
-    incrementModificationCount();
+    incrementModificationCount()
   }
 }

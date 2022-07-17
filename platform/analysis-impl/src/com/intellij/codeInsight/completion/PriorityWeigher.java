@@ -26,12 +26,12 @@ import org.jetbrains.annotations.NotNull;
 public class PriorityWeigher extends CompletionWeigher {
   @Override
   public Double weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
-    final PrioritizedLookupElement prioritized = element.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
+    final PrioritizedLookupElement<?> prioritized = element.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
     if (prioritized != null) {
       return prioritized.getPriority();
     }
 
-    final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
+    final LookupItem<?> item = element.as(LookupItem.CLASS_CONDITION_KEY);
     if (item != null) {
       return item.getPriority();
     }

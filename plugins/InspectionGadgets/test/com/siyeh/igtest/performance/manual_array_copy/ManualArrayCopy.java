@@ -83,10 +83,10 @@ public class ManualArrayCopy
 
     void isntThatCute() {
         String[] data = new String[100];
-        int index = 10;
+        String[] dst = new String[100];
         <warning descr="Manual array copy">for</warning> (int i = data.length - 1; i >= 0; i--)
         {
-            data[i] = data[i - 1];
+            dst[i] = data[i - 1];
         }
 
     }
@@ -96,5 +96,11 @@ public class ManualArrayCopy
         int v = 1;
         for (int i = 1; i <= n; i++)
             array[v][i] = array[array[v][i - 1]][i - 1];
+    }
+
+    void srcIsDst(String[] array) {
+      for (int i = 0; i < array.length - 1; i++) {
+        array[i + 1] = array[i];
+      }
     }
 }

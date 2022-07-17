@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.actions.DisableHighlightingIntentionAction;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInspection.*;
@@ -35,10 +36,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,15 +52,16 @@ public class HighlightInfo implements Segment {
   // optimization: if tooltip contains this marker object, then it replaced with description field in getTooltip()
   private static final String DESCRIPTION_PLACEHOLDER = "\u0000";
 
-  private static final byte BIJECTIVE_MASK = 0x1;
-  private static final byte HAS_HINT_MASK = 0x2;
-  private static final byte FROM_INJECTION_MASK = 0x4;
-  private static final byte AFTER_END_OF_LINE_MASK = 0x8;
-  private static final byte FILE_LEVEL_ANNOTATION_MASK = 0x10;
-  private static final byte NEEDS_UPDATE_ON_TYPING_MASK = 0x20;
+  private static final byte HAS_HINT_MASK = 0x1;
+  private static final byte FROM_INJECTION_MASK = 0x2;
+  private static final byte AFTER_END_OF_LINE_MASK = 0x4;
+  private static final byte FILE_LEVEL_ANNOTATION_MASK = 0x8;
+  private static final byte NEEDS_UPDATE_ON_TYPING_MASK = 0x10;
+  // this HighlightInfo was created during visiting PsiElement 'element' with element.getTextRange() = TextRange(startOffset+visitingRangeDeltaStartOffset, endOffset+visitingRangeDeltaEndOffset)
+  private int visitingRangeDeltaStartOffset;
+  private int visitingRangeDeltaEndOffset;
 
-  @MagicConstant(intValues = {
-    BIJECTIVE_MASK, HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK})
+  @MagicConstant(intValues = {HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK})
   private @interface FlagConstant { }
 
   public final TextAttributes forcedTextAttributes;
@@ -93,7 +92,7 @@ public class HighlightInfo implements Segment {
 
   final int navigationShift;
 
-  private @Nullable Map<FileEditor, JComponent> fileLevelComponents;
+  private @Nullable Object fileLevelComponentsStorage;
 
   @Nullable("null means it the same as highlighter")
   RangeMarker fixMarker;
@@ -102,6 +101,7 @@ public class HighlightInfo implements Segment {
   @Nullable
   PsiElement psiElement;
 
+  @ApiStatus.Internal
   protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
                           @Nullable TextAttributesKey forcedTextAttributesKey,
                           @NotNull HighlightInfoType type,
@@ -132,9 +132,9 @@ public class HighlightInfo implements Segment {
     // optimization: do not retain extra memory if can recompute
     toolTip = encodeTooltip(escapedToolTip, escapedDescription);
     this.severity = severity;
-    setFlag(AFTER_END_OF_LINE_MASK, afterEndOfLine);
-    setFlag(NEEDS_UPDATE_ON_TYPING_MASK, calcNeedUpdateOnTyping(needsUpdateOnTyping, type));
-    setFlag(FILE_LEVEL_ANNOTATION_MASK, isFileLevelAnnotation);
+    myFlags = (byte)((afterEndOfLine ? AFTER_END_OF_LINE_MASK : 0) |
+                     (calcNeedUpdateOnTyping(needsUpdateOnTyping, type) ? NEEDS_UPDATE_ON_TYPING_MASK : 0) |
+                     (isFileLevelAnnotation ? FILE_LEVEL_ANNOTATION_MASK : 0));
     this.navigationShift = navigationShift;
     myProblemGroup = problemGroup;
     this.gutterIconRenderer = gutterIconRenderer;
@@ -156,25 +156,59 @@ public class HighlightInfo implements Segment {
     return new ProperTextRange(fixStartOffset, fixEndOffset);
   }
 
-  void setFromInjection(boolean fromInjection) {
-    setFlag(FROM_INJECTION_MASK, fromInjection);
+  void markFromInjection() {
+    setFlag(FROM_INJECTION_MASK, true);
   }
 
+  @SuppressWarnings("unchecked")
   void addFileLeverComponent(@NotNull FileEditor fileEditor, @NotNull JComponent component) {
-    if (fileLevelComponents == null) {
-      fileLevelComponents = new HashMap<>();
+    if (fileLevelComponentsStorage == null) {
+      fileLevelComponentsStorage = new Pair<>(fileEditor, component);
     }
-    fileLevelComponents.put(fileEditor, component);
+    else if (fileLevelComponentsStorage instanceof Pair) {
+      Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
+      Map<FileEditor, JComponent> map = new HashMap<>();
+      map.put(pair.first, pair.second);
+      map.put(fileEditor, component);
+      fileLevelComponentsStorage = map;
+    }
+    else if (fileLevelComponentsStorage instanceof Map) {
+      ((Map<FileEditor, JComponent>)fileLevelComponentsStorage).put(fileEditor, component);
+    }
+    else {
+      LOG.error(new IllegalStateException("fileLevelComponents=" + fileLevelComponentsStorage));
+    }
   }
 
+  @SuppressWarnings("unchecked")
   void removeFileLeverComponent(@NotNull FileEditor fileEditor) {
-    if (fileLevelComponents != null) {
-      fileLevelComponents.remove(fileEditor);
+    if (fileLevelComponentsStorage instanceof Pair) {
+      Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
+      if (pair.first == fileEditor) {
+        fileLevelComponentsStorage = null;
+      }
+    }
+    else if (fileLevelComponentsStorage instanceof Map) {
+      ((Map<FileEditor, JComponent>)fileLevelComponentsStorage).remove(fileEditor);
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Nullable JComponent getFileLevelComponent(@NotNull FileEditor fileEditor) {
-    return fileLevelComponents != null ? fileLevelComponents.get(fileEditor) : null;
+    if (fileLevelComponentsStorage == null) {
+      return null;
+    }
+    else if (fileLevelComponentsStorage instanceof Pair) {
+      Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
+      return pair.first == fileEditor ? pair.second : null;
+    }
+    else if (fileLevelComponentsStorage instanceof Map) {
+      return ((Map<FileEditor, JComponent>)fileLevelComponentsStorage).get(fileEditor);
+    }
+    else {
+      LOG.error(new IllegalStateException("fileLevelComponents=" + fileLevelComponentsStorage));
+      return null;
+    }
   }
 
   @Nullable
@@ -232,12 +266,9 @@ public class HighlightInfo implements Segment {
     return isFlagSet(FILE_LEVEL_ANNOTATION_MASK);
   }
 
-  boolean isBijective() {
-    return isFlagSet(BIJECTIVE_MASK);
-  }
-
-  void setBijective(boolean bijective) {
-    setFlag(BIJECTIVE_MASK, bijective);
+  void setVisitingTextRange(long range) {
+    visitingRangeDeltaStartOffset = TextRange.startOffset(range) - getStartOffset();
+    visitingRangeDeltaEndOffset = TextRange.endOffset(range) - getEndOffset();
   }
 
   @NotNull
@@ -288,7 +319,6 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  @SuppressWarnings("deprecation")
   Color getErrorStripeMarkColor(@NotNull PsiElement element, @Nullable("when null, the global scheme will be used") EditorColorsScheme colorsScheme) {
     if (forcedTextAttributes != null) {
       return forcedTextAttributes.getErrorStripeColor();
@@ -782,7 +812,7 @@ public class HighlightInfo implements Segment {
 
   public static class IntentionActionDescriptor {
     private final IntentionAction myAction;
-    private volatile List<IntentionAction> myOptions;
+    private volatile List<? extends IntentionAction> myOptions;
     private volatile HighlightDisplayKey myKey;
     private final ProblemGroup myProblemGroup;
     private final HighlightSeverity mySeverity;
@@ -791,7 +821,7 @@ public class HighlightInfo implements Segment {
     private Boolean myCanCleanup;
 
     public IntentionActionDescriptor(@NotNull IntentionAction action,
-                                     @Nullable List<IntentionAction> options,
+                                     @Nullable List<? extends IntentionAction> options,
                                      @Nullable @Nls String displayName,
                                      @Nullable Icon icon,
                                      @Nullable HighlightDisplayKey key,
@@ -839,19 +869,19 @@ public class HighlightInfo implements Segment {
           myCanCleanup = false;
         }
         else {
-          InspectionToolWrapper toolWrapper = profile.getInspectionTool(key.toString(), element);
+          InspectionToolWrapper<?,?> toolWrapper = profile.getInspectionTool(key.toString(), element);
           myCanCleanup = toolWrapper != null && toolWrapper.isCleanupTool();
         }
       }
       return myCanCleanup;
     }
 
-    @Nullable
-    public List<IntentionAction> getOptions(@NotNull PsiElement element, @Nullable Editor editor) {
+    @NotNull
+    public Iterable<? extends IntentionAction> getOptions(@NotNull PsiElement element, @Nullable Editor editor) {
       if (editor != null && Boolean.FALSE.equals(editor.getUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY))) {
-        return null;
+        return Collections.emptyList();
       }
-      List<IntentionAction> options = myOptions;
+      List<? extends IntentionAction> options = myOptions;
       if (options != null) {
         return options;
       }
@@ -871,12 +901,12 @@ public class HighlightInfo implements Segment {
             return updateOptions(options);
           }
         }
-        return null;
+        return Collections.emptyList();
       }
       IntentionManager intentionManager = IntentionManager.getInstance();
       List<IntentionAction> newOptions = intentionManager.getStandardIntentionOptions(key, element);
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
-      InspectionToolWrapper toolWrapper = profile.getInspectionTool(key.toString(), element);
+      InspectionToolWrapper<?,?> toolWrapper = profile.getInspectionTool(key.toString(), element);
       if (!(toolWrapper instanceof LocalInspectionToolWrapper)) {
         HighlightDisplayKey idKey = HighlightDisplayKey.findById(key.toString());
         if (idKey != null) {
@@ -905,6 +935,10 @@ public class HighlightInfo implements Segment {
           }
           return actions;
         }
+        IntentionAction action = IntentionActionDelegate.unwrap(myAction);
+        if (!(action instanceof EmptyIntentionAction)) {
+          newOptions.add(new DisableHighlightingIntentionAction(toolWrapper.getShortName()));
+        }
         ContainerUtil.addIfNotNull(newOptions, fixAllIntention);
         if (wrappedTool instanceof CustomSuppressableInspectionTool) {
           IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)wrappedTool).getSuppressActions(element);
@@ -918,7 +952,6 @@ public class HighlightInfo implements Segment {
             newOptions.addAll(ContainerUtil.map(suppressFixes, SuppressIntentionActionFromFix::convertBatchToSuppressIntentionAction));
           }
         }
-
       }
       if (myProblemGroup instanceof SuppressableProblemGroup) {
         IntentionAction[] suppressActions = ((SuppressableProblemGroup)myProblemGroup).getSuppressActions(element);
@@ -928,8 +961,9 @@ public class HighlightInfo implements Segment {
       return updateOptions(newOptions);
     }
 
-    private synchronized List<IntentionAction> updateOptions(List<IntentionAction> newOptions) {
-      List<IntentionAction> options = myOptions;
+    @NotNull
+    private synchronized List<? extends IntentionAction> updateOptions(@NotNull List<? extends IntentionAction> newOptions) {
+      List<? extends IntentionAction> options = myOptions;
       if (options == null) {
         myOptions = options = newOptions;
       }
@@ -989,7 +1023,7 @@ public class HighlightInfo implements Segment {
   }
 
   public void registerFix(@Nullable IntentionAction action,
-                          @Nullable List<IntentionAction> options,
+                          @Nullable List<? extends IntentionAction> options,
                           @Nullable @Nls String displayName,
                           @Nullable TextRange fixRange,
                           @Nullable HighlightDisplayKey key) {
@@ -1021,5 +1055,11 @@ public class HighlightInfo implements Segment {
           action.belongsToMyFamily((IntentionActionWithFixAllOption)other)) return other;
     }
     return null;
+  }
+
+  long getVisitingTextRange() {
+    int visitStart = getActualStartOffset() + visitingRangeDeltaStartOffset;
+    int visitEnd = getActualEndOffset() + visitingRangeDeltaEndOffset;
+    return TextRange.isProperRange(visitStart, visitEnd) ? TextRange.toScalarRange(visitStart, visitEnd) : -1;
   }
 }

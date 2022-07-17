@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.Disposable;
@@ -11,6 +11,7 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.*;
 
@@ -22,6 +23,7 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   protected @NotNull final MavenDistribution myDistribution;
   protected final Sdk myJdk;
   protected final Set<String> myMultimoduleDirectories;
+  private final Object embedderLock = new Object();
 
   protected final String myVmOptions;
 
@@ -54,20 +56,25 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   protected abstract MavenServer getServer();
 
   MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException {
-    return getServer().createEmbedder(settings, MavenRemoteObjectWrapper.ourToken);
+    synchronized (embedderLock) {
+      return getServer().createEmbedder(settings, MavenRemoteObjectWrapper.ourToken);
+    }
   }
 
   MavenServerIndexer createIndexer() throws RemoteException {
-    return getServer().createIndexer(MavenRemoteObjectWrapper.ourToken);
+    synchronized (embedderLock) {
+      return getServer().createIndexer(MavenRemoteObjectWrapper.ourToken);
+    }
   }
 
   @NotNull
-  public MavenModel interpolateAndAlignModel(final MavenModel model, final File basedir) {
+  public MavenModel interpolateAndAlignModel(final MavenModel model, final Path basedir) {
     return perform(() -> {
-      MavenModel m = getServer().interpolateAndAlignModel(model, basedir, MavenRemoteObjectWrapper.ourToken);
       RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(myProject);
+      File targetBasedir = new File(transformer.toRemotePathOrSelf(basedir.toString()));
+      MavenModel m = getServer().interpolateAndAlignModel(model, targetBasedir, MavenRemoteObjectWrapper.ourToken);
       if (transformer != RemotePathTransformerFactory.Transformer.ID) {
-        new MavenBuildPathsChange((String s) -> transformer.toIdePath(s)).perform(m);
+        new MavenBuildPathsChange((String s) -> transformer.toIdePath(s), s -> transformer.canBeRemotePath(s)).perform(m);
       }
       return m;
     });
@@ -78,11 +85,15 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   }
 
   public ProfileApplicationResult applyProfiles(final MavenModel model,
-                                                final File basedir,
+                                                final Path basedir,
                                                 final MavenExplicitProfiles explicitProfiles,
                                                 final Collection<String> alwaysOnProfiles) {
     return perform(
-      () -> getServer().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles, MavenRemoteObjectWrapper.ourToken));
+      () -> {
+        RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(myProject);
+        File targetBasedir = new File(transformer.toRemotePathOrSelf(basedir.toString()));
+        return getServer().applyProfiles(model, targetBasedir, explicitProfiles, alwaysOnProfiles, MavenRemoteObjectWrapper.ourToken);
+      });
   }
 
 
@@ -91,9 +102,7 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   public abstract void removeDownloadListener(MavenServerDownloadListener listener);
 
   @ApiStatus.Internal
-  public void shutdown(boolean wait) {
-    myManager.cleanUp(this);
-  }
+  abstract void stop(boolean wait);
 
   protected <R, E extends Exception> R perform(RemoteObjectWrapper.Retriable<R, E> r) throws E {
     try {
@@ -119,7 +128,7 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
 
   @Override
   public void dispose() {
-    shutdown(true);
+    MavenServerManager.getInstance().shutdownConnector(this, true);
   }
 
   @NotNull
@@ -141,5 +150,15 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
 
   public List<String> getMultimoduleDirectories() {
     return new ArrayList<>(myMultimoduleDirectories);
+  }
+
+  @Override
+  public String toString() {
+    return "MavenServerConnector{" +
+           Integer.toHexString(this.hashCode()) +
+           ", myDistribution=" + myDistribution.getMavenHome() +
+           ", myJdk=" + myJdk.getName() +
+           ", myMultimoduleDirectories=" + myMultimoduleDirectories +
+           '}';
   }
 }

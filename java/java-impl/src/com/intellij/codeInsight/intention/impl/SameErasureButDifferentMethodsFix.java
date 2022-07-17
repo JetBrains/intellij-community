@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -9,7 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.JavaClassSupers;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +52,8 @@ public class SameErasureButDifferentMethodsFix extends LocalQuickFixAndIntention
       infos[i] = ParameterInfoImpl.create(i).withName(parameter.getName()).withType(superParameterType);
     }
 
-    ChangeSignatureProcessor processor =
-      new ChangeSignatureProcessor(project, method, false, null, method.getName(), method.getReturnType(), infos);
+    var processor = JavaRefactoringFactory.getInstance(project)
+      .createChangeSignatureProcessor(method, false, null, method.getName(), method.getReturnType(), infos, null, null, null, null);
 
     processor.run();
   }

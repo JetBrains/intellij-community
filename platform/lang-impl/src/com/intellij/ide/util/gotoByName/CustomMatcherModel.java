@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Roman.Chernyatchik
- * @date Mar 11, 2009
  */
 public interface CustomMatcherModel {
   /**

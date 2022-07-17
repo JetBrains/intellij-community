@@ -1,10 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.util;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,8 +11,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Set;
+import java.util.function.Predicate;
 
-public class ReflectionUtil {
+public final class ReflectionUtil {
     @Retention(RetentionPolicy.RUNTIME)
     public @interface SkipInEquals {
     }
@@ -32,7 +31,7 @@ public class ReflectionUtil {
 
         for (Field field : second.getClass().getFields()) {
             if (firstFields.contains(field)) {
-                if (isPublic(field) && !isFinal(field) && (acceptPredicate == null || acceptPredicate.apply(field))) {
+                if (isPublic(field) && !isFinal(field) && (acceptPredicate == null || acceptPredicate.test(field))) {
                     try {
                         if (!Comparing.equal(field.get(first), field.get(second))) {
                             return false;

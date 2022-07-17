@@ -5,10 +5,10 @@ package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression
 import com.intellij.codeInsight.CodeInsightUtilBase
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.surroundWith.KotlinExpressionSurrounder
-import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isBoolean
@@ -18,7 +18,7 @@ class KotlinWithIfExpressionSurrounder(val withElse: Boolean) : KotlinExpression
     override fun isApplicable(expression: KtExpression) =
         super.isApplicable(expression) && (expression.analyze(BodyResolveMode.PARTIAL).getType(expression)?.isBoolean() ?: false)
 
-    override fun surroundExpression(project: Project, editor: Editor, expression: KtExpression): TextRange? {
+    override fun surroundExpression(project: Project, editor: Editor, expression: KtExpression): TextRange {
         val factory = KtPsiFactory(project)
         val replaceResult = expression.replace(
             factory.createIf(
@@ -34,12 +34,13 @@ class KotlinWithIfExpressionSurrounder(val withElse: Boolean) : KotlinExpression
 
         val firstStatementInThenRange = (ifExpression.then as? KtBlockExpression).sure {
             "Then branch should exist and be a block expression"
-        }.statements.first().range
+        }.statements.first().textRange
 
         editor.document.deleteString(firstStatementInThenRange.startOffset, firstStatementInThenRange.endOffset)
 
         return TextRange(firstStatementInThenRange.startOffset, firstStatementInThenRange.startOffset)
     }
 
+    @NlsSafe
     override fun getTemplateDescription() = "if (expr) { ... }" + (if (withElse) " else { ... }" else "")
 }

@@ -72,14 +72,14 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
     /**
     * Returns the list of content roots for all modules in the project.
     *
-    * @return the list of content roots.
+    * @return the array of content roots.
     */
   public abstract VirtualFile @NotNull [] getContentRoots();
 
   /**
    * Returns the list of source roots under the content roots for all modules in the project.
    *
-   * @return the list of content source roots.
+   * @return the array of content source roots.
    */
   public abstract VirtualFile @NotNull [] getContentSourceRoots();
 

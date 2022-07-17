@@ -9,6 +9,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,8 +23,8 @@ import java.util.*;
  */
 public class ArrangementStandardSettingsManager {
 
-  @NotNull private final ObjectIntHashMap<ArrangementSettingsToken> myWidths  = new ObjectIntHashMap<>();
-  @NotNull private final ObjectIntHashMap<ArrangementSettingsToken> myWeights = new ObjectIntHashMap<>();
+  @NotNull private final ObjectIntMap<ArrangementSettingsToken> myWidths  = new ObjectIntHashMap<>();
+  @NotNull private final ObjectIntMap<ArrangementSettingsToken> myWeights = new ObjectIntHashMap<>();
 
   @NotNull private final Comparator<ArrangementSettingsToken> myComparator = (t1, t2) -> {
     if (myWeights.containsKey(t1)) {
@@ -81,8 +82,7 @@ public class ArrangementStandardSettingsManager {
       buildWeights(myMatchingTokens);
     }
 
-    final Set<ArrangementSettingsToken> aliasTokens = new HashSet<>();
-    aliasTokens.addAll(aliases);
+    final Set<ArrangementSettingsToken> aliasTokens = new HashSet<>(aliases);
 
     myRuleAliases = aliases;
     myRuleAliasMutex = aliasTokens;

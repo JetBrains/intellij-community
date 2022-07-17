@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.google.gson.reflect.TypeToken
@@ -15,7 +15,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresNoReadLock
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.io.getHostName
 import com.intellij.util.io.origin
 import com.intellij.util.net.NetUtils
@@ -28,7 +28,6 @@ import java.io.OutputStream
 import java.net.URI
 import java.net.URISyntaxException
 
-@Suppress("HardCodedStringLiteral")
 internal class InstallPluginService : RestService() {
   override fun getServiceName() = "installPlugin"
 
@@ -36,6 +35,13 @@ internal class InstallPluginService : RestService() {
 
   var isAvailable = true
   private val trustedHosts = System.getProperty("idea.api.install.hosts.trusted", "").split(",")
+
+  private val trustedPredefinedHosts = setOf(
+    "marketplace.jetbrains.com",
+    "plugins.jetbrains.com",
+    "package-search.services.jetbrains.com",
+    "package-search.jetbrains.com"
+  )
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
     val pluginId = getStringParameter("pluginId", urlDecoder)
@@ -61,15 +67,16 @@ internal class InstallPluginService : RestService() {
   }
 
   @RequiresBackgroundThread
-  @RequiresNoReadLock
+  @RequiresReadLockAbsence
   private fun checkCompatibility(
     request: FullHttpRequest,
     context: ChannelHandlerContext,
     pluginIds: List<String>,
   ): Nothing? {
+    val marketplaceRequests = MarketplaceRequests.getInstance()
     val compatibleUpdatesInfo = pluginIds
       .mapNotNull { PluginId.findId(it) }
-      .map { id -> id.idString to (MarketplaceRequests.Instance.getLastCompatiblePluginUpdate(id) != null) }
+      .map { id -> id.idString to (marketplaceRequests.getLastCompatiblePluginUpdate(id) != null) }
       .let { info ->
         if (info.size != 1) info
         else listOf("compatible" to info[0].second)
@@ -99,7 +106,7 @@ internal class InstallPluginService : RestService() {
       val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
       ApplicationManager.getApplication().invokeLater(Runnable {
         AppIcon.getInstance().requestAttention(effectiveProject, true)
-        installAndEnable(effectiveProject, plugins.toSet()) { }
+        installAndEnable(effectiveProject, plugins.toSet(), true) { }
         isAvailable = true
       }, effectiveProject.disposed)
     }
@@ -152,9 +159,8 @@ internal class InstallPluginService : RestService() {
     }
 
     return (originHost != null && (
-      listOf("plugins.jetbrains.com", "package-search.services.jetbrains.com", "package-search.jetbrains.com").contains(originHost) ||
+      trustedPredefinedHosts.contains(originHost) ||
       trustedHosts.contains(originHost) ||
-      originHost.endsWith(".dev.marketplace.intellij.net") ||
       NetUtils.isLocalhost(originHost))) || super.isHostTrusted(request, urlDecoder)
   }
 }

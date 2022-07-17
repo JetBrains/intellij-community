@@ -4,7 +4,7 @@
 // ACTION: Join with initializer
 // ACTION: Replace overloaded operator with function call
 // ACTION: Replace with ordinary assignment
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test() {
     var list = listOf(1, 2, 3)
     list -=<caret> 2

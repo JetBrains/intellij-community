@@ -16,15 +16,15 @@ internal fun Project.resolveClass(fqNameString: String, scope: GlobalSearchScope
         ?: resolveFqNameOfJavaClassByIndex(fqNameString, scope)
 
 private fun Project.resolveFqNameOfJavaClassByIndex(fqNameString: String, scope: GlobalSearchScope): PsiClass? {
-    return JavaFullClassNameIndex.getInstance()[fqNameString.hashCode(), this, scope]
+    return JavaFullClassNameIndex.getInstance()[fqNameString, this, scope]
         .firstOrNull {
             it.qualifiedName == fqNameString
         }
 }
 
 private fun Project.resolveFqNameOfKtClassByIndex(fqNameString: String, scope: GlobalSearchScope): KtDeclaration? {
-    val classesPsi = KotlinFullClassNameIndex.getInstance()[fqNameString, this, scope]
-    val typeAliasesPsi = KotlinTopLevelTypeAliasFqNameIndex.getInstance()[fqNameString, this, scope]
+    val classesPsi = KotlinFullClassNameIndex.get(fqNameString, this, scope)
+    val typeAliasesPsi = KotlinTopLevelTypeAliasFqNameIndex.get(fqNameString, this, scope)
 
     return scope.selectNearest(classesPsi, typeAliasesPsi)
 }

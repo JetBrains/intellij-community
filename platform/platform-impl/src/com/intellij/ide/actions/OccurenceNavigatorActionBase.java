@@ -22,7 +22,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedList;
 
-abstract class OccurenceNavigatorActionBase extends DumbAwareAction implements UpdateInBackground {
+abstract class OccurenceNavigatorActionBase extends DumbAwareAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -126,7 +132,7 @@ abstract class OccurenceNavigatorActionBase extends DumbAwareAction implements U
 
   private static @Nullable OccurenceNavigator getOccurenceNavigatorFromContext(@NotNull DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     for (Component c = component; c != null; c = c.getParent()) {
       if (c instanceof OccurenceNavigator) {
         return (OccurenceNavigator)c;

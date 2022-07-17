@@ -17,12 +17,10 @@
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @deprecated use {@link BreadcrumbsProvider}
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public abstract class BreadcrumbsInfoProvider implements BreadcrumbsProvider {
 }

@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +28,6 @@ import java.util.*;
 
 /**
  * Extension point for customization maven module import process.
- * Main import logic {@link MavenModuleImporter}.
  */
 public abstract class MavenImporter {
   public static final ExtensionPointName<MavenImporter> EXTENSION_POINT_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.importer");
@@ -104,8 +102,7 @@ public abstract class MavenImporter {
   }
 
   /** @deprecated use {@link #resolve(Project, MavenProject, NativeMavenProjectHolder, MavenEmbedderWrapper, ResolveContext)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("unused")
   public void resolve(Project project,
                       MavenProject mavenProject,
@@ -126,22 +123,22 @@ public abstract class MavenImporter {
   /**
    * Import pre process callback.
    */
-  public abstract void preProcess(Module module,
-                                  MavenProject mavenProject,
-                                  MavenProjectChanges changes,
-                                  IdeModifiableModelsProvider modifiableModelsProvider);
+  public void preProcess(Module module,
+                         MavenProject mavenProject,
+                         MavenProjectChanges changes,
+                         IdeModifiableModelsProvider modifiableModelsProvider) { }
 
   /**
    * Import process callback.
    */
-  public abstract void process(IdeModifiableModelsProvider modifiableModelsProvider,
-                               Module module,
-                               MavenRootModelAdapter rootModel,
-                               MavenProjectsTree mavenModel,
-                               MavenProject mavenProject,
-                               MavenProjectChanges changes,
-                               Map<MavenProject, String> mavenProjectToModuleName,
-                               List<MavenProjectsProcessorTask> postTasks);
+  public void process(IdeModifiableModelsProvider modifiableModelsProvider,
+                      Module module,
+                      MavenRootModelAdapter rootModel,
+                      MavenProjectsTree mavenModel,
+                      MavenProject mavenProject,
+                      MavenProjectChanges changes,
+                      Map<MavenProject, String> mavenProjectToModuleName,
+                      List<MavenProjectsProcessorTask> postTasks) { }
 
   /**
    * Import post process callback.
@@ -171,14 +168,12 @@ public abstract class MavenImporter {
   }
 
   /** @deprecated override {@link #collectSourceRoots} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("unused")
   public void collectSourceFolders(MavenProject mavenProject, List<String> result) { }
 
   /** @deprecated override {@link #collectSourceRoots} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("unused")
   public void collectTestFolders(MavenProject mavenProject, List<String> result) { }
 

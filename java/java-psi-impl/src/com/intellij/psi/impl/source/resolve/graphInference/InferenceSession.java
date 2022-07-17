@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.core.JavaPsiBundle;
@@ -276,6 +276,7 @@ public class InferenceSession {
   }
 
   private static boolean isTypeParameterType(PsiTypeParameterListOwner method, PsiType paramType) {
+    if (paramType instanceof PsiWildcardType) return isTypeParameterType(method, ((PsiWildcardType)paramType).getBound());
     final PsiClass psiClass = PsiUtil.resolveClassInType(paramType); //accept ellipsis here
     if (psiClass instanceof PsiTypeParameter && ((PsiTypeParameter)psiClass).getOwner() == method) return true;
     return false;
@@ -404,13 +405,12 @@ public class InferenceSession {
         final PsiSubstitutor nestedSubstitutor = myInferenceSessionContainer.findNestedSubstitutor(arg, myInferenceSubstitution);
         final PsiType parameterType = nestedSubstitutor.substitute(getParameterType(parameters, i, siteSubstitutor, varargs));
         if (parameterType == null) continue;
+        ExpressionCompatibilityConstraint compatibilityConstraint = new ExpressionCompatibilityConstraint(arg, parameterType);
+        if (arg instanceof PsiFunctionalExpression && ignoreLambdaConstraintTree(arg) || dependsOnIgnoredConstraint(ignoredConstraints, compatibilityConstraint)) {
+          ignoredConstraints.add(compatibilityConstraint);
+          continue;
+        }
         if (!isPertinentToApplicability(arg, parentMethod)) {
-          ExpressionCompatibilityConstraint compatibilityConstraint = new ExpressionCompatibilityConstraint(arg, parameterType);
-          if (arg instanceof PsiFunctionalExpression && ignoreLambdaConstraintTree(arg) || dependsOnIgnoredConstraint(ignoredConstraints, compatibilityConstraint)) {
-            ignoredConstraints.add(compatibilityConstraint);
-            continue;
-          }
-
           additionalConstraints.add(compatibilityConstraint);
         }
         additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(arg, parameterType));
@@ -1254,9 +1254,10 @@ public class InferenceSession {
         PsiClass oppositeConjunct = PsiUtil.resolveClassInClassTypeOnly(conjuncts[i1]);
         if (conjunct == null || oppositeConjunct == null) {
           if (conjuncts[i] instanceof PsiArrayType &&
-                TypesDistinctProver.proveArrayTypeDistinct((PsiArrayType)conjuncts[i], conjuncts[i1]) ||
+              TypesDistinctProver.proveArrayTypeDistinct((PsiArrayType)conjuncts[i], conjuncts[i1]) ||
               conjuncts[i] instanceof PsiCapturedWildcardType &&
-                oppositeConjunct != null && !oppositeConjunct.isInterface() && !(oppositeConjunct instanceof PsiTypeParameter)) {
+              oppositeConjunct != null && !oppositeConjunct.isInterface() && !(oppositeConjunct instanceof PsiTypeParameter) &&
+               !(((PsiCapturedWildcardType)conjuncts[i]).getWildcard().isSuper() && TypeConversionUtil.isAssignable(conjuncts[i1], ((PsiCapturedWildcardType)conjuncts[i]).getLowerBound()))) {
             return JavaPsiBundle.message("conflicting.conjuncts", conjuncts[i].getPresentableText(), conjuncts[i1].getPresentableText());
           }
         }

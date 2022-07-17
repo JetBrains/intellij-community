@@ -3,6 +3,7 @@ package com.jetbrains.python.defaultProjectAwareService;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,9 @@ public final class PyDefaultProjectAwareServiceClasses<
    * Use it for "getInstance" function. Returns module-level if module is set, app level otherwise
    */
   public SERVICE getService(@Nullable Module module) {
-    return (module != null ? getModuleService(module) : getAppService());
+    if (module == null) return getAppService();
+    if (module instanceof ModuleEx && !((ModuleEx)module).canStoreSettings()) return getAppService();
+    return getModuleService(module);
   }
 
   @NotNull

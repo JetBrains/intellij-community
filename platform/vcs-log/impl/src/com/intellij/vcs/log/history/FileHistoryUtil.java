@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -21,7 +21,6 @@ import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -66,15 +65,12 @@ public final class FileHistoryUtil {
     Hash commitHash = logData.getCommitId(commitIndex).getHash();
     ContentRevision afterRevision = createContentRevision(commitHash, commitIndex, visiblePack, diffHandler);
 
-    List<Integer> parentCommits = map(parentRows, r -> visiblePack.getVisibleGraph().getRowInfo(r).getCommit());
-    if (parentCommits.isEmpty() && commitRow + 1 < visiblePack.getVisibleGraph().getVisibleCommitCount()) {
-      parentCommits = Collections.singletonList(visiblePack.getVisibleGraph().getRowInfo(commitRow + 1).getCommit());
-    }
-    if (parentCommits.isEmpty()) {
+    if (parentRows.isEmpty()) {
       if (afterRevision == null) return null;
       return new Change(null, afterRevision);
     }
 
+    List<Integer> parentCommits = map(parentRows, r -> visiblePack.getVisibleGraph().getRowInfo(r).getCommit());
     List<Hash> parentHashes = map(parentCommits, c -> logData.getCommitId(c).getHash());
     List<Change> parentChanges = mapNotNull(toCollection(zip(parentCommits, parentHashes)), parent -> {
       ContentRevision beforeRevision = createContentRevision(parent.second, parent.first, visiblePack, diffHandler);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history.impl;
 
 import com.intellij.CommonBundle;
@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
@@ -62,7 +63,6 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -137,8 +137,6 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     myActiveVcs = vcs;
     myVcsHistoryProvider = vcsHistoryProvider;
 
-    setIsDecorated(false);
-
     myComments = new JEditorPane(UIUtil.HTML_MIME, "");
     myComments.setPreferredSize(new JBDimension(150, 100));
     myComments.setEditable(false);
@@ -171,7 +169,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
         final VcsFileRevision revision;
         if (myList.getSelectedRowCount() == 1 && !myList.isEmpty()) {
           revision = myList.getItems().get(myList.getSelectedRow());
-          String message = IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, Objects.requireNonNull(revision.getCommitMessage()));
+          String message = IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, StringUtil.notNullize(revision.getCommitMessage()));
           myComments.setText(message);
           myComments.setCaretPosition(0);
         }
@@ -484,7 +482,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     else if (VcsDataKeys.VCS.is(dataId)) {
       return myActiveVcs.getKeyInstanceMethod();
     }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return notNull(myVcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history");
     }
     return null;
@@ -607,8 +605,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     private String loadContents(@NotNull VcsFileRevision revision) throws VcsException {
       try {
         byte[] bytes = revision.loadContent();
-        if (bytes == null) throw new VcsException(
-          VcsBundle.message("history.failed.to.load.content.for.revision.0", revision.getRevisionNumber().asString()));
+        if (bytes == null) {
+          throw new VcsException(VcsBundle.message("history.failed.to.load.content.for.revision.0",
+                                                   revision.getRevisionNumber().asString()));
+        }
         return new String(bytes, myFile.getCharset());
       }
       catch (IOException e) {
@@ -672,6 +672,11 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
 
   public static class MyDiffAction implements AnActionExtensionProvider {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isActive(@NotNull AnActionEvent e) {
       return e.getData(SELECTION_HISTORY_DIALOG_KEY) != null;
     }
@@ -713,6 +718,11 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
   }
 
   public static class MyDiffAfterWithLocalAction implements AnActionExtensionProvider {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     @Override
     public boolean isActive(@NotNull AnActionEvent e) {
       return e.getData(SELECTION_HISTORY_DIALOG_KEY) != null;

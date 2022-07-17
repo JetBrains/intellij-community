@@ -5,14 +5,15 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.*
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.HelpID
@@ -23,24 +24,25 @@ import com.intellij.util.SmartList
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.analysis.analyzeInContext
-import org.jetbrains.kotlin.idea.analysis.computeTypeInfoInContext
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
+import org.jetbrains.kotlin.idea.caches.resolve.computeTypeInfoInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
-import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.application.executeCommand
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.*
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.toRange
+import org.jetbrains.kotlin.idea.util.psi.patternMatching.match
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -53,14 +55,17 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeConstructor
-import org.jetbrains.kotlin.types.checker.ClassicTypeCheckerContext
+import org.jetbrains.kotlin.types.checker.ClassicTypeSystemContext
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.checker.NewKotlinTypeChecker
+import org.jetbrains.kotlin.types.checker.createClassicTypeCheckerState
+import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.sure
 import kotlin.math.min
+import org.jetbrains.kotlin.idea.core.util.ElementKind
 
 object KotlinIntroduceVariableHandler : RefactoringActionHandler {
     val INTRODUCE_VARIABLE get() = KotlinBundle.message("introduce.variable")
@@ -72,13 +77,18 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
     private var KtExpression.isOccurrence: Boolean by NotNullablePsiCopyableUserDataProperty(Key.create("OCCURRENCE"), false)
 
     private class TypeCheckerImpl(private val project: Project) : KotlinTypeChecker by KotlinTypeChecker.DEFAULT {
-        private inner class ContextImpl : ClassicTypeCheckerContext(false) {
-            override fun areEqualTypeConstructors(a: TypeConstructor, b: TypeConstructor): Boolean =
-                compareDescriptors(project, a.declarationDescriptor, b.declarationDescriptor)
+        private inner class TypeSystemContextImpl : ClassicTypeSystemContext {
+            override fun areEqualTypeConstructors(c1: TypeConstructorMarker, c2: TypeConstructorMarker): Boolean {
+                require(c1 is TypeConstructor)
+                require(c2 is TypeConstructor)
+                return compareDescriptors(project, c1.declarationDescriptor, c2.declarationDescriptor)
+            }
         }
 
         override fun equalTypes(a: KotlinType, b: KotlinType): Boolean = with(NewKotlinTypeChecker.Default) {
-            ContextImpl().equalTypes(a.unwrap(), b.unwrap())
+            val state = createClassicTypeCheckerState(isErrorTypeEqualsToAnything = false, typeSystemContext = TypeSystemContextImpl())
+
+            state.equalTypes(a.unwrap(), b.unwrap())
         }
     }
 
@@ -333,7 +343,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         KtPsiUtil.isAssignment(it) && (it as KtBinaryExpression).left == this
     }
 
-    private fun KtExpression.findOccurrences(occurrenceContainer: PsiElement): List<KtExpression> =
+    fun KtExpression.findOccurrences(occurrenceContainer: PsiElement): List<KtExpression> =
         toRange().match(occurrenceContainer, KotlinPsiUnifier.DEFAULT).mapNotNull {
             val candidate = it.range.elements.first()
 
@@ -343,7 +353,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                 is KtExpression -> candidate
                 is KtStringTemplateEntryWithExpression -> candidate.expression
                 else -> throw KotlinExceptionWithAttachments("Unexpected candidate element ${candidate::class.java}")
-                    .withAttachment("candidate.kt", candidate.text)
+                    .withPsiAttachment("candidate.kt", candidate)
             }
         }
 
@@ -494,8 +504,17 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         val dataFlowInfo = bindingContext.getDataFlowInfoAfter(physicalExpression)
 
         val bindingTrace = ObservableBindingTrace(BindingTraceContext())
+        val typeInfoComputable = {
+            physicalExpression.computeTypeInfoInContext(scope, physicalExpression, bindingTrace, dataFlowInfo).type
+        }
         val typeNoExpectedType = substringInfo?.type
-            ?: physicalExpression.computeTypeInfoInContext(scope, physicalExpression, bindingTrace, dataFlowInfo).type
+            ?: if (container.isPhysical) {
+                ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                    ThrowableComputable { runReadAction(typeInfoComputable) }, KotlinBundle.message("progress.title.calculating.type"), true, project)
+            } else {
+                // Preview mode
+                typeInfoComputable()
+            }
         val noTypeInference = expressionType != null
                 && typeNoExpectedType != null
                 && !TypeCheckerImpl(project).equalTypes(expressionType, typeNoExpectedType)
@@ -510,7 +529,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
         val typeArgumentList = getQualifiedTypeArgumentList(KtPsiUtil.safeDeparenthesize(physicalExpression))
 
-        val isInplaceAvailable = editor != null && !ApplicationManager.getApplication().isUnitTestMode
+        val isInplaceAvailable = editor != null && !isUnitTestMode()
 
         val allOccurrences = occurrencesToReplace ?: expression.findOccurrences(occurrenceContainer)
 
@@ -549,17 +568,17 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             }
 
             physicalExpression.chooseApplicableComponentFunctionsForVariableDeclaration(replaceOccurrence, editor) { componentFunctions ->
-                val validator = NewDeclarationNameValidator(
+                val validator = Fe10KotlinNewDeclarationNameValidator(
                     commonContainer,
                     calculateAnchor(commonParent, commonContainer, allReplaces),
-                    NewDeclarationNameValidator.Target.VARIABLES
+                    KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
                 )
 
                 val suggestedNames = if (componentFunctions.isNotEmpty()) {
                     val collectingValidator = CollectingNameValidator(filter = validator)
                     componentFunctions.map { suggestNamesForComponent(it, project, collectingValidator) }
                 } else {
-                    KotlinNameSuggester.suggestNamesByExpressionAndType(
+                    Fe10KotlinNameSuggester.suggestNamesByExpressionAndType(
                         expression,
                         substringInfo?.type,
                         bindingContext,
@@ -572,6 +591,12 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     expression, suggestedNames, allReplaces, commonContainer, commonParent,
                     replaceOccurrence, noTypeInference, expressionType, componentFunctions, bindingContext, resolutionFacade
                 )
+
+                if (!container.isPhysical) {
+                    // Preview mode
+                    introduceVariableContext.runRefactoring(isVar)
+                    return@chooseApplicableComponentFunctionsForVariableDeclaration
+                }
 
                 project.executeCommand(INTRODUCE_VARIABLE, null) {
                     runWriteAction { introduceVariableContext.runRefactoring(isVar) }
@@ -627,7 +652,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     return occurrence.extractableSubstringInfo?.contentRange ?: occurrence.textRange
                 }
             }
-            ApplicationManager.getApplication().invokeLater {
+            invokeLater {
                 chooser.showChooser(expression, allOccurrences, callback)
             }
         } else {
@@ -749,7 +774,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
     ) { candidateContainers, doRefactoring ->
         if (editor == null) {
             doRefactoring(candidateContainers.first())
-        } else if (ApplicationManager.getApplication().isUnitTestMode) {
+        } else if (isUnitTestMode()) {
             doRefactoring(candidateContainers.last())
         } else {
             chooseContainerElementIfNecessary(
@@ -776,25 +801,25 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         occurrencesToReplace,
         onNonInteractiveFinish
     ) { candidateContainers, doRefactoring ->
-        val foundPair = candidateContainers.find { it.first.range == container.range }
+        val foundPair = candidateContainers.find { it.first.textRange == container.textRange }
         if (foundPair != null) {
             doRefactoring(foundPair)
         }
     }
 
-    fun getContainersForExpression(expression: KtExpression): List<KtElement> {
+    fun getContainersForExpression(expression: KtExpression): List<Pair<KtElement, KtElement>> {
         val physicalExpression = expression.substringContextOrThis
 
         val resolutionFacade = physicalExpression.getResolutionFacade()
         val bindingContext = resolutionFacade.analyze(physicalExpression, BodyResolveMode.FULL)
-        return expression.getCandidateContainers(resolutionFacade, bindingContext).map { it.first }
+        return expression.getCandidateContainers(resolutionFacade, bindingContext)
     }
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {
         if (file !is KtFile) return
 
         try {
-            selectElement(editor, file, listOf(CodeInsightUtils.ElementKind.EXPRESSION)) {
+            selectElement(editor, file, ElementKind.EXPRESSION) {
                 doRefactoring(project, editor, it as KtExpression?, false, null, null)
             }
         } catch (e: IntroduceRefactoringException) {

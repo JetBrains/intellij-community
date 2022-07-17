@@ -31,7 +31,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.FilteringProcessor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,8 +125,7 @@ public class EditorHyperlinkSupport {
   /**
    * @deprecated use {@link #findAllHyperlinksOnLine(int)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public Map<RangeHighlighter, HyperlinkInfo> getHyperlinks() {
     LinkedHashMap<RangeHighlighter, HyperlinkInfo> result = new LinkedHashMap<>();
     for (RangeHighlighter highlighter : getHyperlinks(0, myEditor.getDocument().getTextLength(), myEditor)) {
@@ -214,7 +212,7 @@ public class EditorHyperlinkSupport {
   }
 
   public void createHyperlink(@NotNull RangeHighlighter highlighter, @NotNull HyperlinkInfo hyperlinkInfo) {
-    associateHyperlink(highlighter, hyperlinkInfo, null);
+    associateHyperlink(highlighter, hyperlinkInfo, null, true);
   }
 
   @NotNull
@@ -243,15 +241,22 @@ public class EditorHyperlinkSupport {
           if (highlightAttributes != null) {
             ex.setTextAttributes(highlightAttributes);
           }
+          associateHyperlink(ex, hyperlinkInfo, followedHyperlinkAttributes, false);
         });
-    associateHyperlink(highlighter, hyperlinkInfo, followedHyperlinkAttributes);
     return highlighter;
   }
 
   private static void associateHyperlink(@NotNull RangeHighlighter highlighter,
-                                        @NotNull HyperlinkInfo hyperlinkInfo,
-                                        @Nullable TextAttributes followedHyperlinkAttributes) {
-    highlighter.putUserData(HYPERLINK, new HyperlinkInfoTextAttributes(hyperlinkInfo, followedHyperlinkAttributes));
+                                         @NotNull HyperlinkInfo hyperlinkInfo,
+                                         @Nullable TextAttributes followedHyperlinkAttributes,
+                                         boolean fireChanged) {
+    HyperlinkInfoTextAttributes attributes = new HyperlinkInfoTextAttributes(hyperlinkInfo, followedHyperlinkAttributes);
+    if (fireChanged) {
+      ((RangeHighlighterEx)highlighter).putUserDataAndFireChanged(HYPERLINK, attributes);
+    }
+    else {
+      highlighter.putUserData(HYPERLINK, attributes);
+    }
   }
 
   @Nullable

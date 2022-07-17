@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.icons.AllIcons;
@@ -34,42 +34,49 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public final class HintUtil {
   /** @deprecated use getInformationColor() */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public static final Color INFORMATION_COLOR = new JBColor(0xF7F7F7, 0x4B4D4D);
+  /** @deprecated use HINT_BORDER_COLOR_KEY */
+  @Deprecated(forRemoval = true)
   public static final Color INFORMATION_BORDER_COLOR = JBColor.namedColor("InformationHint.borderColor", new JBColor(0xE0E0E0, 0x5C5E61));
   /** @deprecated use getErrorColor() */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public static final Color ERROR_COLOR = new JBColor(0xffdcdc, 0x781732);
 
   public static final ColorKey INFORMATION_COLOR_KEY = ColorKey.createColorKey("INFORMATION_HINT", INFORMATION_COLOR);
   public static final ColorKey QUESTION_COLOR_KEY = ColorKey.createColorKey("QUESTION_HINT", new JBColor(0xb5d0fb, 0x376c89));
   public static final ColorKey ERROR_COLOR_KEY = ColorKey.createColorKey("ERROR_HINT", ERROR_COLOR);
+  /**
+   * Border color for tooltips with {@link #INFORMATION_COLOR_KEY}, {@link #QUESTION_COLOR_KEY} and {@link #ERROR_COLOR_KEY}
+   */
+  public static final ColorKey HINT_BORDER_COLOR_KEY = ColorKey.createColorKey("HINT_BORDER", new JBColor(0xC9CCD6, 0x5A5D63));
 
   public static final Color QUESTION_UNDERSCORE_COLOR = JBColor.foreground();
 
   public static final ColorKey RECENT_LOCATIONS_SELECTION_KEY = ColorKey.createColorKey("RECENT_LOCATIONS_SELECTION", new JBColor(0xE9EEF5, 0x383838));
   public static final ColorKey PROMOTION_PANE_KEY = ColorKey.createColorKey("PROMOTION_PANE", new JBColor(0xE6EDF7, 0x233953));
 
-  private HintUtil() {
-  }
+  private HintUtil() { }
 
-  @NotNull
-  public static Color getInformationColor() {
+  public static @NotNull Color getInformationColor() {
     return notNull(getGlobalOrDefaultColor(INFORMATION_COLOR_KEY), INFORMATION_COLOR_KEY.getDefaultColor());
   }
 
-  @NotNull
-  public static Color getQuestionColor() {
+  public static @NotNull Color getQuestionColor() {
     return notNull(getGlobalOrDefaultColor(QUESTION_COLOR_KEY), QUESTION_COLOR_KEY.getDefaultColor());
   }
 
-  @NotNull
-  public static Color getErrorColor() {
+  public static @NotNull Color getErrorColor() {
     return notNull(getGlobalOrDefaultColor(ERROR_COLOR_KEY), ERROR_COLOR_KEY.getDefaultColor());
   }
 
-  @NotNull
-  public static Color getRecentLocationsSelectionColor(EditorColorsScheme colorsScheme) {
+  public static @NotNull Color getHintBorderColor() {
+    return notNull(getGlobalOrDefaultColor(HINT_BORDER_COLOR_KEY), HINT_BORDER_COLOR_KEY.getDefaultColor());
+  }
+
+  public static @NotNull Color getRecentLocationsSelectionColor(EditorColorsScheme colorsScheme) {
     return notNull(colorsScheme.getColor(RECENT_LOCATIONS_SELECTION_KEY), RECENT_LOCATIONS_SELECTION_KEY.getDefaultColor());
   }
 
@@ -87,11 +94,10 @@ public final class HintUtil {
     return label;
   }
 
-  @NotNull
-  public static HintHint getInformationHint() {
+  public static @NotNull HintHint getInformationHint() {
     //noinspection UseJBColor
     return new HintHint()
-      .setBorderColor(INFORMATION_BORDER_COLOR)
+      .setBorderColor(getHintBorderColor())
       .setTextBg(getInformationColor())
       .setTextFg(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black)
       .setFont(getBoldFont())
@@ -99,60 +105,49 @@ public final class HintUtil {
   }
 
   public static CompoundBorder createHintBorder() {
-    //noinspection UseJBColor
     return BorderFactory.createCompoundBorder(
-      new ColoredSideBorder(Color.white, Color.white, Color.gray, Color.gray, 1),
-      BorderFactory.createEmptyBorder(2, 2, 2, 2)
+      JBUI.Borders.customLine(getHintBorderColor(), 1),
+      JBUI.Borders.empty(2)
     );
   }
 
-  @NotNull
-  public static JComponent createInformationLabel(SimpleColoredText text) {
+  public static @NotNull JComponent createInformationLabel(SimpleColoredText text) {
     return createInformationLabel(text, null);
   }
 
   public static JComponent createQuestionLabel(@HintText String text) {
-    final Icon icon = AllIcons.General.ContextHelp;
+    Icon icon = AllIcons.General.ContextHelp;
     return createQuestionLabel(text, icon);
   }
 
   public static JComponent createQuestionLabel(@HintText String text, Icon icon) {
     Color bg = getQuestionColor();
     HintHint hintHint = new HintHint().setTextBg(bg)
+      .setBorderColor(getHintBorderColor())
       .setTextFg(JBColor.foreground())
       .setFont(getBoldFont())
       .setAwtTooltip(true);
-
     return createLabel(text, icon, bg, hintHint);
   }
 
-  @Nullable
-  public static String getHintLabel(JComponent hintComponent) {
-    if (hintComponent instanceof HintLabel) {
-      return ((HintLabel) hintComponent).getText();
-    }
-    return null;
+  public static @Nullable String getHintLabel(JComponent hintComponent) {
+    return hintComponent instanceof HintLabel ? ((HintLabel)hintComponent).getText() : null;
   }
 
-  @Nullable
-  public static Icon getHintIcon(JComponent hintComponent) {
-    if (hintComponent instanceof HintLabel) {
-      return ((HintLabel) hintComponent).getIcon();
-    }
-    return null;
+  public static @Nullable Icon getHintIcon(JComponent hintComponent) {
+    return hintComponent instanceof HintLabel ? ((HintLabel)hintComponent).getIcon() : null;
   }
 
-  @NotNull
-  public static SimpleColoredComponent createInformationComponent() {
+  public static @NotNull SimpleColoredComponent createInformationComponent() {
     SimpleColoredComponent component = new SimpleColoredComponent();
     component.setBackground(getInformationColor());
     component.setForeground(JBColor.foreground());
     component.setFont(getBoldFont());
+    component.setTransparentIconBackground(true);
     return component;
   }
 
-  @NotNull
-  public static JComponent createInformationLabel(@NotNull SimpleColoredText text, @Nullable Icon icon) {
+  public static @NotNull JComponent createInformationLabel(@NotNull SimpleColoredText text, @Nullable Icon icon) {
     SimpleColoredComponent component = createInformationComponent();
     component.setIcon(icon);
     text.appendToComponent(component);
@@ -163,11 +158,12 @@ public final class HintUtil {
                                             @Nullable HyperlinkListener hyperlinkListener,
                                             @Nullable MouseListener mouseListener) {
     Color bg = getErrorColor();
-    HintHint hintHint = new HintHint().setTextBg(bg)
-                                      .setTextFg(JBColor.foreground())
-                                      .setFont(getBoldFont())
-                                      .setAwtTooltip(true);
-
+    HintHint hintHint = new HintHint()
+      .setBorderColor(getHintBorderColor())
+      .setTextBg(bg)
+      .setTextFg(JBColor.foreground())
+      .setFont(getBoldFont())
+      .setAwtTooltip(true);
     HintLabel label = createLabel(text, null, bg, hintHint);
     configureLabel(label, hyperlinkListener, mouseListener, null);
     return label;
@@ -178,12 +174,10 @@ public final class HintUtil {
   }
 
   @ApiStatus.Internal
-  public static @NotNull HintLabel createLabel(@HintText String text, @Nullable Icon icon,
-                                               @NotNull Color color, @NotNull HintHint hintHint) {
+  public static @NotNull HintLabel createLabel(@HintText String text, @Nullable Icon icon, @NotNull Color color, @NotNull HintHint hintHint) {
     HintLabel label = new HintLabel();
     label.setText(text, hintHint);
     label.setIcon(icon);
-
     if (!hintHint.isAwtTooltip()) {
       label.setBorder(createHintBorder());
       label.setForeground(JBColor.foreground());
@@ -198,15 +192,16 @@ public final class HintUtil {
     return StartupUiUtil.getLabelFont().deriveFont(Font.BOLD);
   }
 
-  @NotNull
-  public static JLabel createAdComponent(@NlsContexts.PopupAdvertisement String bottomText, final Border border, @JdkConstants.HorizontalAlignment int alignment) {
+  public static @NotNull JLabel createAdComponent(@NlsContexts.PopupAdvertisement String bottomText,
+                                                  Border border,
+                                                  @JdkConstants.HorizontalAlignment int alignment) {
     JLabel label = new JLabel();
     label.setText(bottomText);
     label.setHorizontalAlignment(alignment);
     label.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
     label.setBackground(JBUI.CurrentTheme.Advertiser.background());
     label.setOpaque(true);
-    label.setFont(RelativeFont.NORMAL.fromResource("Popup.Advertiser.fontSizeOffset", -2, JBUIScale.scale(11f)).derive(StartupUiUtil.getLabelFont()));
+    label.setFont(RelativeFont.NORMAL.scale(JBUI.CurrentTheme.Advertiser.FONT_SIZE_OFFSET.get(), JBUIScale.scale(11f)).derive(StartupUiUtil.getLabelFont()));
     if (bottomText != null) {
       label.setBorder(border);
     }
@@ -254,6 +249,9 @@ public final class HintUtil {
     private SimpleColoredComponent myColored;
     private JLabel myIcon;
 
+    @Nullable
+    private HintHint hintHint;
+
     private HintLabel() {
       setLayout(new BorderLayout());
     }
@@ -281,6 +279,7 @@ public final class HintUtil {
 
     public void setText(@NotNull SimpleColoredComponent colored) {
       clearText();
+      hintHint = null;
 
       myColored = colored;
       add(myColored, BorderLayout.CENTER);
@@ -294,6 +293,7 @@ public final class HintUtil {
 
     public void setText(@NlsContexts.Tooltip String s, HintHint hintHint) {
       clearText();
+      this.hintHint = hintHint;
 
       if (s != null) {
         myPane = IdeTooltipManager.initPane(s, hintHint, null);
@@ -305,6 +305,11 @@ public final class HintUtil {
 
       revalidate();
       repaint();
+    }
+
+    @Nullable
+    public HintHint getHintHint() {
+      return hintHint;
     }
 
     private void clearText() {
@@ -342,8 +347,7 @@ public final class HintUtil {
       return myPane != null ? myPane.getText() : "";
     }
 
-    @Nullable
-    public Icon getIcon() {
+    public @Nullable Icon getIcon() {
       return myIcon != null ? myIcon.getIcon() : null;
     }
   }

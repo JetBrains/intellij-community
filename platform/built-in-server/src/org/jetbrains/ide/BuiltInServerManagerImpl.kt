@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
-import com.intellij.idea.StartupUtil
+import com.intellij.idea.getServerFutureAsync
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
@@ -9,13 +9,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.serverBootstrap
 import com.intellij.util.net.NetUtils
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
 import org.jetbrains.builtInWebServer.TOKEN_PARAM_NAME
@@ -28,9 +28,6 @@ import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.URLConnection
 import java.util.*
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
-import java.util.function.Consumer
 
 private const val PORTS_COUNT = 20
 private const val PROPERTY_RPC_PORT = "rpc.port"
@@ -38,8 +35,9 @@ private const val PROPERTY_DISABLED = "idea.builtin.server.disabled"
 
 private val LOG = logger<BuiltInServerManager>()
 
+@OptIn(DelicateCoroutinesApi::class)
 class BuiltInServerManagerImpl : BuiltInServerManager() {
-  private var serverStartFuture: Future<*>? = null
+  private var serverStartFuture: Job? = null
   private var server: BuiltInServer? = null
 
   override val port: Int
@@ -51,7 +49,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   init {
     serverStartFuture = when {
       ApplicationManager.getApplication().isUnitTestMode -> null
-      else -> startServerInPooledThread()
+      else -> GlobalScope.async(Dispatchers.IO) { startServerInPooledThread() }
     }
   }
 
@@ -67,11 +65,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
         return false
       }
 
-      val port = StringUtil.parseInt(authority.substring(portIndex + 1), -1)
-      if (port == -1) {
-        return false
-      }
-
+      val port = authority.substring(portIndex + 1).toIntOrNull() ?: return false
       val options = BuiltInServerOptions.getInstance()
       val idePort = getInstance().port
       if (options.builtInServerPort != port && idePort != port) {
@@ -100,49 +94,46 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   override fun waitForStart(): BuiltInServerManager {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode ||
                    ApplicationManager.getApplication().isHeadlessEnvironment ||
-                   !ApplicationManager.getApplication().isDispatchThread)
+                   !ApplicationManager.getApplication().isDispatchThread,
+                   "Should not wait for built-in server on EDT")
 
-    var future: Future<*>?
+    var future: Job?
     synchronized(this) {
       future = serverStartFuture
       if (future == null) {
-        future = startServerInPooledThread()
+        future = GlobalScope.async(Dispatchers.IO) { startServerInPooledThread() }
         serverStartFuture = future
       }
     }
 
-    future!!.get()
+    future!!.asCompletableFuture().join()
     return this
   }
 
-  private fun startServerInPooledThread(): Future<*> {
+  private suspend fun startServerInPooledThread() {
     if (SystemProperties.getBooleanProperty(PROPERTY_DISABLED, false)) {
-      return CompletableFuture<Any>().apply {
-        completeExceptionally(Throwable("Built-in server is disabled by `$PROPERTY_DISABLED` VM option"))
-      }
+      throw Throwable("Built-in server is disabled by `$PROPERTY_DISABLED` VM option")
     }
 
-    return StartupUtil.getServerFuture()
-      .thenAcceptAsync(Consumer { mainServer ->
-        try {
-          @Suppress("DEPRECATION")
-          server = when (mainServer) {
-            null -> BuiltInServer.start(firstPort = defaultPort, portsCount = PORTS_COUNT, tryAnyPort = true)
-            else -> BuiltInServer.start(eventLoopGroup = mainServer.eventLoopGroup, isEventLoopGroupOwner = false, firstPort = defaultPort,
-                                        portsCount = PORTS_COUNT, tryAnyPort = true)
-          }
-          bindCustomPorts(server!!)
-        }
-        catch (e: Throwable) {
-          LOG.info(e)
-          val message = BuiltInServerBundle.message("notification.content.cannot.start.internal.http.server.and.ask.for.restart.0", ApplicationNamesInfo.getInstance().fullProductName)
-          Notification(NOTIFICATION_GROUP, message, NotificationType.ERROR).notify(null)
-          return@Consumer
-        }
+    val mainServer = getServerFutureAsync().await()
+    try {
+      server = when (mainServer) {
+        null -> BuiltInServer.start(firstPort = defaultPort, portsCount = PORTS_COUNT, tryAnyPort = true)
+        else -> BuiltInServer.start(eventLoopGroup = mainServer.eventLoopGroup, isEventLoopGroupOwner = false, firstPort = defaultPort,
+                                    portsCount = PORTS_COUNT, tryAnyPort = true)
+      }
+      bindCustomPorts(server!!)
+    }
+    catch (e: Throwable) {
+      LOG.info(e)
+      val message = BuiltInServerBundle.message("notification.content.cannot.start.internal.http.server.and.ask.for.restart.0",
+                                                ApplicationNamesInfo.getInstance().fullProductName)
+      Notification(NOTIFICATION_GROUP, message, NotificationType.ERROR).notify(null)
+      return
+    }
 
-        LOG.info("built-in server started, port ${server!!.port}")
-        Disposer.register(ApplicationManager.getApplication(), server!!)
-      }, AppExecutorUtil.getAppExecutorService())
+    LOG.info("built-in server started, port ${server!!.port}")
+    Disposer.register(ApplicationManager.getApplication(), server!!)
   }
 
   override fun isOnBuiltInWebServer(url: Url?): Boolean {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -38,9 +38,8 @@ class DependencyInspection : AbstractBaseUastLocalInspectionTool() {
       validationManager.getViolatorDependencyRules(file, dependencyFile!!)
     }
     DependenciesBuilder.analyzeFileDependencies(file) { place, dependency ->
-      val dependencyFile = dependency.containingFile
-      if (dependencyFile != null && dependencyFile.isPhysical && dependencyFile.virtualFile != null) {
-        for (dependencyRule in violations[dependencyFile]!!) {
+      dependency.containingFile?.let { dependencyFile ->
+        violations[dependencyFile]?.forEach { dependencyRule ->
           val message = JvmAnalysisBundle.message("jvm.inspections.dependency.violator.problem.descriptor", dependencyRule.displayText)
           val fixes = arrayOf(EditDependencyRulesAction(dependencyRule))
           problems.add(manager.createProblemDescriptor(place, message, isOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING))

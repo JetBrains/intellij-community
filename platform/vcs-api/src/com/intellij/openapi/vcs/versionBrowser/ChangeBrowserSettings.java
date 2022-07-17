@@ -133,7 +133,7 @@ public class ChangeBrowserSettings {
   @NotNull
   public Filter createFilter() {
     List<Filter> filters = createFilters();
-    return changeList -> filters.stream().allMatch(filter -> filter.accepts(changeList));
+    return changeList -> ContainerUtil.and(filters, filter -> filter.accepts(changeList));
   }
 
   public void filterChanges(@NotNull List<? extends CommittedChangeList> changeLists) {

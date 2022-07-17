@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -26,6 +27,7 @@ import java.util.Set;
  * @author ven
  */
 public class WrapExpressionFix implements IntentionAction {
+  private static final Logger LOG = Logger.getInstance(WrapExpressionFix.class);
 
   private final PsiExpression myExpression;
   private final PsiClassType myExpectedType;
@@ -121,16 +123,23 @@ public class WrapExpressionFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiType type = myExpression.getType();
-    assert type != null;
+    if (type == null) {
+      LOG.error("Expression type is null");
+      return;
+    }
     PsiMethod wrapper = findWrapper(type, myExpectedType, myPrimitiveExpected);
-    assert wrapper != null;
+    if (wrapper == null) {
+      LOG.error("Wrapper not found; expectedType = " + myExpectedType.getCanonicalText() + "; primitiveExpected = " + myPrimitiveExpected);
+      return;
+    }
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(file.getProject());
     @NonNls String methodCallText = "Foo." + wrapper.getName() + "()";
     PsiMethodCallExpression call = (PsiMethodCallExpression)factory.createExpressionFromText(methodCallText,
                                                                                              null);
     call.getArgumentList().add(myExpression);
-    ((PsiReferenceExpression)call.getMethodExpression().getQualifierExpression()).bindToElement(
-      wrapper.getContainingClass());
+    PsiReferenceExpression qualifier = (PsiReferenceExpression)Objects.requireNonNull(call.getMethodExpression().getQualifierExpression());
+    PsiClass wrapperClass = Objects.requireNonNull(wrapper.getContainingClass());
+    qualifier.bindToElement(wrapperClass);
     myExpression.replace(call);
   }
 

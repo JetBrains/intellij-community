@@ -5,11 +5,11 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class RemoveAtFromAnnotationArgument(constructor: KtAnnotationEntry) : KotlinQuickFixAction<KtAnnotationEntry>(constructor) {
 
@@ -20,8 +20,11 @@ class RemoveAtFromAnnotationArgument(constructor: KtAnnotationEntry) : KotlinQui
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val elementToReplace = (element?.parent as? KtAnnotatedExpression) ?: return
 
-        val noAt = KtPsiFactory(elementToReplace.project).createExpression(elementToReplace.text.replaceFirst("@", ""))
-        elementToReplace.replace(noAt)
+        val document = file.viewProvider.document
+        val pos = elementToReplace.textRange.startOffset
+        if (document.charsSequence[pos] == '@') {
+            document.deleteString(pos, pos + 1)
+        }
     }
 
     companion object : KotlinSingleIntentionActionFactory() {

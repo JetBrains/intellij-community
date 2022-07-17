@@ -4,7 +4,8 @@
 Depends on pytype being installed.
 
 If pytype is installed:
-    1. For every pyi, do nothing if it is in pytype_exclude_list.txt.
+    1. For every pyi, do nothing if it is in pytype_exclude_list.txt or is
+       Python 2-only.
     2. Otherwise, call 'pytype.io.parse_pyi'.
 Option two will load the file and all the builtins, typeshed dependencies. This
 will also discover incorrect usage of imported modules.
@@ -14,7 +15,7 @@ import argparse
 import os
 import sys
 import traceback
-from typing import List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence
 
 from pytype import config as pytype_config, load_pytd
 from pytype.pytd import typeshed
@@ -37,10 +38,7 @@ def main() -> None:
     os.environ[TYPESHED_HOME] = typeshed_location
     files_to_test = determine_files_to_test(typeshed_location=typeshed_location, paths=args.files or subdir_paths)
     run_all_tests(
-        files_to_test=files_to_test,
-        typeshed_location=typeshed_location,
-        print_stderr=args.print_stderr,
-        dry_run=args.dry_run,
+        files_to_test=files_to_test, typeshed_location=typeshed_location, print_stderr=args.print_stderr, dry_run=args.dry_run
     )
     if old_typeshed_home is UNSET:
         del os.environ[TYPESHED_HOME]
@@ -58,11 +56,7 @@ def create_parser() -> argparse.ArgumentParser:
         "--print-stderr", action="store_true", default=False, help="Print stderr every time an error is encountered."
     )
     parser.add_argument(
-        "files",
-        metavar="FILE",
-        type=str,
-        nargs="*",
-        help="Files or directories to check. (Default: Check all files.)",
+        "files", metavar="FILE", type=str, nargs="*", help="Files or directories to check. (Default: Check all files.)"
     )
     return parser
 
@@ -70,8 +64,7 @@ def create_parser() -> argparse.ArgumentParser:
 def run_pytype(*, filename: str, python_version: str, typeshed_location: str) -> Optional[str]:
     """Runs pytype, returning the stderr if any."""
     if python_version not in _LOADERS:
-        options = pytype_config.Options.create(
-            "", parse_pyi=True, python_version=python_version)
+        options = pytype_config.Options.create("", parse_pyi=True, python_version=python_version)
         loader = load_pytd.create_loader(options)
         _LOADERS[python_version] = (options, loader)
     options, loader = _LOADERS[python_version]
@@ -102,7 +95,7 @@ def _get_module_name(filename: str) -> str:
     """Converts a filename {subdir}/m.n/module/foo to module.foo."""
     parts = _get_relative(filename).split(os.path.sep)
     if "@python2" in parts:
-        module_parts = parts[parts.index("@python2") + 1:]
+        module_parts = parts[parts.index("@python2") + 1 :]
     elif parts[0] == "stdlib":
         module_parts = parts[1:]
     else:
@@ -121,7 +114,7 @@ def check_subdirs_discoverable(subdir_paths: List[str]) -> None:
             raise SystemExit("Cannot find typeshed subdir at {} (specify parent dir via --typeshed-location)".format(p))
 
 
-def determine_files_to_test(*, typeshed_location: str, paths: Sequence[str]) -> List[Tuple[str, int]]:
+def determine_files_to_test(*, typeshed_location: str, paths: Sequence[str]) -> List[str]:
     """Determine all files to test, checking if it's in the exclude list and which Python versions to use.
 
     Returns a list of pairs of the file path and Python version as an int."""
@@ -131,13 +124,9 @@ def determine_files_to_test(*, typeshed_location: str, paths: Sequence[str]) -> 
     files = []
     for f in sorted(filenames):
         rel = _get_relative(f)
-        if rel in skipped:
+        if rel in skipped or "@python2" in f:
             continue
-        versions = ts.get_python_major_versions(rel)
-        if versions:
-            files.extend((f, v) for v in versions)
-        else:
-            print("Unrecognized path: {}".format(f))
+        files.append(f)
     return files
 
 
@@ -152,21 +141,15 @@ def find_stubs_in_paths(paths: Sequence[str]) -> List[str]:
     return filenames
 
 
-def run_all_tests(*, files_to_test: Sequence[Tuple[str, int]], typeshed_location: str, print_stderr: bool, dry_run: bool) -> None:
+def run_all_tests(*, files_to_test: Sequence[str], typeshed_location: str, print_stderr: bool, dry_run: bool) -> None:
     bad = []
     errors = 0
     total_tests = len(files_to_test)
     print("Testing files with pytype...")
-    for i, (f, version) in enumerate(files_to_test):
-        python_version = "2.7" if version == 2 else "{0.major}.{0.minor}".format(sys.version_info)
+    for i, f in enumerate(files_to_test):
+        python_version = "{0.major}.{0.minor}".format(sys.version_info)
         stderr = (
-            run_pytype(
-                filename=f,
-                python_version=python_version,
-                typeshed_location=typeshed_location,
-            )
-            if not dry_run
-            else None
+            run_pytype(filename=f, python_version=python_version, typeshed_location=typeshed_location) if not dry_run else None
         )
         if stderr:
             if print_stderr:

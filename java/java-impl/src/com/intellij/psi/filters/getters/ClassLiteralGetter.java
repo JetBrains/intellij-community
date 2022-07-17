@@ -4,6 +4,7 @@ package com.intellij.psi.filters.getters;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.JavaSmartCompletionParameters;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,6 +13,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +36,8 @@ public final class ClassLiteralGetter {
     if (classParameter instanceof PsiWildcardType) {
       final PsiWildcardType wildcardType = (PsiWildcardType)classParameter;
       classParameter = wildcardType.isSuper() ? wildcardType.getSuperBound() : wildcardType.getExtendsBound();
-      addInheritors = wildcardType.isExtends() && classParameter instanceof PsiClassType;
+      addInheritors = !wildcardType.isSuper() && classParameter instanceof PsiClassType &&
+                    !(matcher.getPrefix().isEmpty() && TypeUtils.isJavaLangObject(classParameter));
     } else if (!matcher.getPrefix().isEmpty()) {
       addInheritors = true;
       classParameter = PsiType.getJavaLangObject(position.getManager(), position.getResolveScope());

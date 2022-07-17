@@ -2,7 +2,7 @@
 package org.intellij.plugins.markdown.editor.images
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImageImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
 
 class MarkdownPsiImageImplTest: LightPlatformCodeInsightTestCase() {
   fun `test image`() = doTest(
@@ -51,8 +51,8 @@ class MarkdownPsiImageImplTest: LightPlatformCodeInsightTestCase() {
     configureFromFileText("some.md", text)
     val root = file.firstChild!!
     val image = root.firstChild!!.firstChild!!
-    assertInstanceOf(image, MarkdownImageImpl::class.java)
-    image as MarkdownImageImpl
+    assertInstanceOf(image, MarkdownImage::class.java)
+    image as MarkdownImage
     assertEquals(description, image.collectLinkDescriptionText())
     assertEquals(title, image.collectLinkTitleText())
     assertEquals(destination, image.linkDestination?.text)

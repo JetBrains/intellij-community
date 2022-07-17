@@ -1,0 +1,3 @@
+# The "dest" argument is unused and will be removed.
+fpdf.FPDF.output
+fpdf.fpdf.FPDF.output

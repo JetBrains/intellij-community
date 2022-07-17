@@ -16,7 +16,7 @@ public class PyModuleListener implements ModuleListener {
     final RunManager runManager = RunManager.getInstance(project);
     for (RunnerAndConfigurationSettings configuration : runManager.getAllSettings()) {
       if (configuration.getConfiguration() instanceof AbstractPythonRunConfiguration) {
-        final Module configModule = ((AbstractPythonRunConfiguration)configuration.getConfiguration()).getModule();
+        final Module configModule = ((AbstractPythonRunConfiguration<?>)configuration.getConfiguration()).getModule();
         if (configModule == module) {
           runManager.removeConfiguration(configuration);
         }

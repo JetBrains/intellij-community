@@ -13,7 +13,7 @@ public abstract class LanguageLevelModuleExtensionImpl extends ModuleExtension i
   /**
    * @deprecated this method returns an implementation specific class, use {@link com.intellij.openapi.module.LanguageLevelUtil#getCustomLanguageLevel(Module)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static LanguageLevelModuleExtensionImpl getInstance(final Module module) {
     return ModuleRootManager.getInstance(module).getModuleExtension(LanguageLevelModuleExtensionImpl.class);
   }

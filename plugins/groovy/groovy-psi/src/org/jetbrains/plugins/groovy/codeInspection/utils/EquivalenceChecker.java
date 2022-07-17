@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.utils;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
@@ -30,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
@@ -329,15 +327,15 @@ public final class EquivalenceChecker {
   }
 
   private static boolean caseClausesAreEquivalent(GrCaseSection clause1, GrCaseSection clause2) {
-    final GrCaseLabel[] label1 = clause1.getCaseLabels();
-    final GrCaseLabel[] label2 = clause2.getCaseLabels();
+    final GrExpression[] label1 = clause1.getExpressions();
+    final GrExpression[] label2 = clause2.getExpressions();
     if (label1.length != label2.length) return false;
 
     for (int i = 0; i < label1.length; i++) {
-      GrCaseLabel l1 = label1[i];
-      GrCaseLabel l2 = label2[i];
+      GrExpression l1 = label1[i];
+      GrExpression l2 = label2[i];
 
-      if (!expressionsAreEquivalent(l1.getValue(), l2.getValue())) {
+      if (!expressionsAreEquivalent(l1, l2)) {
         return false;
       }
     }
@@ -714,16 +712,7 @@ public final class EquivalenceChecker {
                                                        @NotNull GrRangeExpression rangeExp2) {
     return expressionsAreEquivalent(rangeExp1.getFrom(), rangeExp2.getFrom()) &&
            expressionsAreEquivalent(rangeExp1.getTo(), rangeExp2.getTo()) &&
-           isInclusive(rangeExp1) == isInclusive(rangeExp2);
-  }
-
-  private static boolean isInclusive(GrRangeExpression range) {
-    for (PsiElement child : range.getChildren()) {
-      if ("..".equals(child.getText())) {
-        return true;
-      }
-    }
-    return false;
+           rangeExp1.getBoundaryType() == rangeExp2.getBoundaryType();
   }
 
   private static boolean assignmentExpressionsAreEquivalent(@NotNull GrAssignmentExpression assignExp1,

@@ -1,53 +1,52 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.PlatformUtils
+import com.intellij.util.lang.Java11Shim
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentSkipListMap
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Supplier
 
 // https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
 // If a plugin does not include any module dependency tags in its plugin.xml,
 // it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
 @ApiStatus.Internal
-class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<String?>>,
-                          @JvmField val productBuildNumber: Supplier<BuildNumber>,
-                          private val checkModuleDependencies: Boolean = !PlatformUtils.isIntelliJ()) {
+class PluginLoadingResult(
+  private val brokenPluginVersions: Map<PluginId, Set<String?>>,
+  @JvmField val productBuildNumber: Supplier<BuildNumber>,
+  private val checkModuleDependencies: Boolean = !PlatformUtils.isIntelliJ(),
+) {
+
   @JvmField val incompletePlugins = ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl>()
-  private val plugins = HashMap<PluginId, IdeaPluginDescriptorImpl>()
+  @JvmField val enabledPluginsById: SortedMap<PluginId, IdeaPluginDescriptorImpl> = ConcurrentSkipListMap()
 
   // only read is concurrent, write from the only thread
   @JvmField val idMap = ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl>()
   @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null
   private val pluginErrors = ConcurrentHashMap<PluginId, PluginLoadingError>()
-  private val globalErrors = Collections.synchronizedList(ArrayList<Supplier<String>>())
-  @JvmField val shadowedBundledIds = HashSet<PluginId>()
+  private val globalErrors = CopyOnWriteArrayList<Supplier<String>>()
 
-  // result, after calling finishLoading
-  private var enabledPlugins: List<IdeaPluginDescriptorImpl>? = null
+  @VisibleForTesting
+  @JvmField val shadowedBundledIds: MutableSet<PluginId> = Collections.newSetFromMap(ConcurrentHashMap())
 
   @get:TestOnly
   val hasPluginErrors: Boolean
     get() = !pluginErrors.isEmpty()
 
-  fun getEnabledPlugins(): List<IdeaPluginDescriptorImpl> = enabledPlugins!!
-
-  fun enabledPluginCount() = plugins.size
-
-  fun finishLoading() {
-    val enabledPlugins = plugins.values.toTypedArray()
-    plugins.clear()
-    Arrays.sort(enabledPlugins, Comparator.comparing { it.pluginId })
-    @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-    this.enabledPlugins = Arrays.asList(*enabledPlugins)
-  }
+  @get:TestOnly
+  val enabledPlugins: List<IdeaPluginDescriptorImpl>
+    get() = enabledPluginsById.values.toList()
 
   fun isBroken(id: PluginId): Boolean {
     val set = brokenPluginVersions.get(id) ?: return false
@@ -55,31 +54,31 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
     return descriptor != null && set.contains(descriptor.version)
   }
 
-  internal fun getPluginErrors(): Map<PluginId, PluginLoadingError> = Collections.unmodifiableMap(pluginErrors)
-
-  fun getGlobalErrors(): List<Supplier<String>> {
-    synchronized(globalErrors) {
-      return ArrayList(globalErrors)
-    }
+  fun isBroken(descriptor: IdeaPluginDescriptorImpl): Boolean {
+    return (brokenPluginVersions.get(descriptor.pluginId) ?: return false).contains(descriptor.version)
   }
+
+  internal fun copyPluginErrors(): MutableMap<PluginId, PluginLoadingError> = HashMap(pluginErrors)
+
+  internal fun copyGlobalErrors(): List<Supplier<String>> = ArrayList(globalErrors)
 
   internal fun addIncompletePlugin(plugin: IdeaPluginDescriptorImpl, error: PluginLoadingError?) {
-    if (!idMap.containsKey(plugin.pluginId)) {
-      val existingIncompletePlugin = incompletePlugins.get(plugin.pluginId)
-      if (existingIncompletePlugin == null || VersionComparatorUtil.compare(plugin.version, existingIncompletePlugin.version) > 0) {
-        incompletePlugins.put(plugin.pluginId, plugin)
-      }
-    }
-    if (error != null) {
-      pluginErrors.put(plugin.pluginId, error)
-    }
-  }
-
-  internal fun reportIncompatiblePlugin(plugin: IdeaPluginDescriptorImpl, error: PluginLoadingError) {
     // do not report if some compatible plugin were already added
     // no race condition here: plugins from classpath are loaded before and not in parallel to loading from plugin dir
-    if (!idMap.containsKey(plugin.pluginId)) {
-      pluginErrors.put(plugin.pluginId, error)
+    if (idMap.containsKey(plugin.pluginId)) {
+      return
+    }
+
+    val existingIncompletePlugin = incompletePlugins.putIfAbsent(plugin.pluginId, plugin)
+    if (existingIncompletePlugin != null && VersionComparatorUtil.compare(plugin.version, existingIncompletePlugin.version) > 0) {
+      incompletePlugins.put(plugin.pluginId, plugin)
+      if (error != null) {
+        // force put
+        pluginErrors.put(plugin.pluginId, error)
+      }
+    }
+    else if (error != null) {
+      pluginErrors.putIfAbsent(plugin.pluginId, error)
     }
   }
 
@@ -99,22 +98,19 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
     if (checkModuleDependencies &&
         !descriptor.isBundled && descriptor.packagePrefix == null &&
         !PluginManagerCore.hasModuleDependencies(descriptor)) {
-      val error = PluginLoadingError(plugin = descriptor,
-                                     detailedMessageSupplier = {
-                                       CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.name)
-                                     },
-                                     shortMessageSupplier = {
-                                       CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only")
-                                     },
-                                     isNotifyUser = true)
-      addIncompletePlugin(descriptor, error)
+      addIncompletePlugin(descriptor, PluginLoadingError(
+        plugin = descriptor,
+        detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.name) },
+        shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only") },
+        isNotifyUser = true
+      ))
       return false
     }
 
     // remove any error that occurred for plugin with the same `id`
     pluginErrors.remove(pluginId)
     incompletePlugins.remove(pluginId)
-    val prevDescriptor = plugins.put(pluginId, descriptor)
+    val prevDescriptor = if (descriptor.onDemand) null else enabledPluginsById.put(pluginId, descriptor)
     if (prevDescriptor == null) {
       idMap.put(pluginId, descriptor)
       for (module in descriptor.modules) {
@@ -134,7 +130,7 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
       return true
     }
     else {
-      plugins.put(pluginId, prevDescriptor)
+      enabledPluginsById.put(pluginId, prevDescriptor)
       return false
     }
   }
@@ -161,4 +157,15 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
     list.add(descriptor)
     duplicateModuleMap!!.put(id, list)
   }
+}
+
+// todo merge into PluginSetState?
+@ApiStatus.Internal
+class PluginManagerState internal constructor(@JvmField val pluginSet: PluginSet,
+                                              disabledRequiredIds: Set<IdeaPluginDescriptorImpl>,
+                                              effectiveDisabledIds: Set<IdeaPluginDescriptorImpl>) {
+  @JvmField val effectiveDisabledIds: Set<PluginId> =
+    Java11Shim.INSTANCE.copyOf(effectiveDisabledIds.mapTo(HashSet(effectiveDisabledIds.size), IdeaPluginDescriptorImpl::getPluginId))
+  @JvmField val disabledRequiredIds: Set<PluginId> =
+    Java11Shim.INSTANCE.copyOf(disabledRequiredIds.mapTo(HashSet(disabledRequiredIds.size), IdeaPluginDescriptorImpl::getPluginId))
 }

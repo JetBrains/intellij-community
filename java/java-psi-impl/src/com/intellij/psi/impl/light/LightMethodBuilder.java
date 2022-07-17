@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
@@ -7,6 +7,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -28,13 +29,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * @author peter
  */
 public class LightMethodBuilder extends LightElement implements PsiMethod, OriginInfoAwareElement {
   private final String myName;
-  private Computable<? extends PsiType> myReturnType;
+  private Supplier<? extends PsiType> myReturnType;
   private final PsiModifierList myModifierList;
   private final PsiParameterList myParameterList;
   private final PsiTypeParameterList myTypeParameterList;
@@ -166,10 +168,15 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
 
   @Override
   public PsiType getReturnType() {
-    return myReturnType == null ? null : myReturnType.compute();
+    return myReturnType == null ? null : myReturnType.get();
   }
 
   public LightMethodBuilder setMethodReturnType(Computable<? extends PsiType> returnType) {
+    myReturnType = () -> returnType.compute();
+    return this;
+  }
+
+  public LightMethodBuilder setMethodReturnType(Supplier<? extends PsiType> returnType) {
     myReturnType = returnType;
     return this;
   }
@@ -179,13 +186,8 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
   }
 
   public LightMethodBuilder setMethodReturnType(@NlsSafe @NotNull final String returnType) {
-    return setMethodReturnType(new Computable.NotNullCachedComputable<PsiType>() {
-      @NotNull
-      @Override
-      protected PsiType internalCompute() {
-        return JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(returnType, getResolveScope());
-      }
-    });
+    return setMethodReturnType(NotNullLazyValue.lazy(
+      () -> JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(returnType, getResolveScope()))::getValue);
   }
 
   @Override
@@ -303,6 +305,9 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitMethod(this);
     }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override
@@ -387,6 +392,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
     if (!Objects.equals(myContainingClass, that.myContainingClass)) return false;
     if (!myMethodKind.equals(that.myMethodKind)) return false;
     if (!myName.equals(that.myName)) return false;
+    if (getParametersCount() != that.getParametersCount()) return false;
     if (!getParameterTypes().equals(that.getParameterTypes())) return false;
     if (!Objects.equals(getReturnType(), that.getReturnType())) return false;
 
@@ -395,7 +401,11 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
 
   @Override
   public int hashCode() {
-    return Objects.hash(myName, getReturnType(), myConstructor, myMethodKind, myContainingClass, getParameterTypes());
+    return Objects.hash(myName, myConstructor, myMethodKind, myContainingClass, getParametersCount());
+  }
+
+  private int getParametersCount() {
+    return getParameterList().getParametersCount();
   }
 
   @NotNull

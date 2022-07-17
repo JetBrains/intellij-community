@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -11,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -23,19 +25,13 @@ import java.util.function.Supplier;
  * to implement your own {@code ActionGroup}.
  *
  * @see Constraints
- *
  * @see com.intellij.openapi.actionSystem.ComputableActionGroup
- *
  * @see com.intellij.ide.actions.NonEmptyActionGroup
  * @see com.intellij.ide.actions.NonTrivialActionGroup
  * @see com.intellij.ide.actions.SmartPopupActionGroup
- *
  */
 public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance(DefaultActionGroup.class);
-
-  private static final String CANT_ADD_ITSELF = "Cannot add a group to itself: ";
-  private static final String CANT_ADD_ACTION_TWICE = "Cannot add an action twice: ";
 
   private final List<AnAction> mySortedChildren = new ArrayList<>();
   private final List<Pair<AnAction, Constraints>> myPairs = new ArrayList<>();
@@ -76,8 +72,20 @@ public class DefaultActionGroup extends ActionGroup {
     this(() -> shortName, popup);
   }
 
-  protected DefaultActionGroup(@NotNull Supplier<@ActionText String> shortName, boolean popup) {
+  public DefaultActionGroup(@NotNull Supplier<@ActionText String> shortName, boolean popup) {
     super(shortName, popup);
+  }
+
+  public DefaultActionGroup(@Nullable @ActionText String text,
+                            @Nullable @NlsActions.ActionDescription String description,
+                            @Nullable Icon icon) {
+    super(text, description, icon);
+  }
+
+  public DefaultActionGroup(@NotNull Supplier<@ActionText String> dynamicText,
+                            @NotNull Supplier<@NlsActions.ActionDescription String> dynamicDescription,
+                            @Nullable Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   public static DefaultActionGroup createPopupGroup(@NotNull Supplier<@ActionText String> shortName) {
@@ -101,18 +109,31 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   private synchronized void addActions(@NotNull List<? extends AnAction> actions) {
-    Set<Object> actionSet = new HashSet<>();
+    Set<AnAction> actionSet = new HashSet<>(actions.size());
     List<AnAction> uniqueActions = new ArrayList<>(actions.size());
     for (AnAction action : actions) {
-      if (action == this) throw new IllegalArgumentException(CANT_ADD_ITSELF + action);
-      if (!(action instanceof Separator) && !actionSet.add(action)) {
-        LOG.error(CANT_ADD_ACTION_TWICE + action);
-        continue;
+      if (action == this) {
+        throw newThisGroupToItselfAddedException();
       }
-      uniqueActions.add(action);
+      if (action instanceof Separator || actionSet.add(action)) {
+        uniqueActions.add(action);
+      }
+      else {
+        LOG.error(newDuplicateActionAddedException(action));
+      }
     }
     mySortedChildren.addAll(uniqueActions);
     incrementModificationStamp();
+  }
+
+  private IllegalArgumentException newThisGroupToItselfAddedException() {
+    return new IllegalArgumentException("Cannot add a group to itself: " + this + " (" + getTemplateText() + ")");
+  }
+
+  private static IllegalArgumentException newDuplicateActionAddedException(@NotNull AnAction action) {
+    return new IllegalArgumentException(
+      "Cannot add an action twice: " + action + " (" +
+      (action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName()) + ")");
   }
 
   /**
@@ -151,7 +172,7 @@ public class DefaultActionGroup extends ActionGroup {
    *                                  <li>action is already in the group
    */
   public final void add(@NotNull AnAction action, @NotNull Constraints constraint) {
-    add(action, constraint, ActionManager.getInstance());
+    addAction(action, constraint, ActionManager.getInstance());
   }
 
   public final @NotNull ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint) {
@@ -162,14 +183,15 @@ public class DefaultActionGroup extends ActionGroup {
     addAction(action, constraint, actionManager);
   }
 
-  public final synchronized @NotNull ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint, @NotNull ActionManager actionManager) {
+  public final synchronized @NotNull ActionInGroup addAction(@NotNull AnAction action,
+                                                             @NotNull Constraints constraint,
+                                                             @NotNull ActionManager actionManager) {
     if (action == this) {
-      throw new IllegalArgumentException(CANT_ADD_ITSELF + action);
+      throw newThisGroupToItselfAddedException();
     }
 
-    // check that action isn't already registered
     if (!(action instanceof Separator) && containsAction(action)) {
-      LOG.error(CANT_ADD_ACTION_TWICE + action);
+      LOG.error(newDuplicateActionAddedException(action));
       remove(action, actionManager.getId(action));
     }
 
@@ -189,7 +211,7 @@ public class DefaultActionGroup extends ActionGroup {
     return new ActionInGroup(this, action);
   }
 
-  private boolean containsAction(@NotNull AnAction action) {
+  public synchronized boolean containsAction(@NotNull AnAction action) {
     if (mySortedChildren.contains(action)) return true;
     for (Pair<AnAction, Constraints> pair : myPairs) {
       if (action.equals(pair.first)) return true;
@@ -301,6 +323,7 @@ public class DefaultActionGroup extends ActionGroup {
 
   /**
    * Copies content from {@code group}.
+   *
    * @param other group to copy from
    */
   public synchronized void copyFromGroup(@NotNull DefaultActionGroup other) {
@@ -331,7 +354,8 @@ public class DefaultActionGroup extends ActionGroup {
     boolean hasNulls = false;
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
-    AnAction[] children = new AnAction[sortedSize + myPairs.size()];
+    int pairsSize = myPairs.size();
+    AnAction[] children = new AnAction[sortedSize + pairsSize];
     for (int i = 0; i < sortedSize; i++) {
       AnAction action = mySortedChildren.get(i);
       if (action == null) {
@@ -339,35 +363,39 @@ public class DefaultActionGroup extends ActionGroup {
       }
       if (action instanceof ActionStubBase) {
         action = unStub(actionManager, (ActionStubBase)action);
-        if (action == null) {
-          LOG.error("Can't unstub " + mySortedChildren.get(i));
-        }
-        else {
+        if (action != null) {
           mySortedChildren.set(i, action);
         }
       }
 
       hasNulls |= action == null;
       children[i] = action;
+      if (action == null && sortedSize == mySortedChildren.size() + 1) {
+        sortedSize--;
+        //noinspection AssignmentToForLoopParameter
+        i--;
+      }
     }
-    for (int i = 0; i < myPairs.size(); i++) {
-      final Pair<AnAction, Constraints> pair = myPairs.get(i);
+    for (int i = 0; i < pairsSize; i++) {
+      Pair<AnAction, Constraints> pair = myPairs.get(i);
       AnAction action = pair.first;
       if (action == null) {
         LOG.error("Empty pair child: " + this + ", " + getClass() + "; index=" + i);
       }
       else if (action instanceof ActionStubBase) {
         action = unStub(actionManager, (ActionStubBase)action);
-        if (action == null) {
-          LOG.error("Can't unstub " + pair);
-        }
-        else {
+        if (action != null) {
           myPairs.set(i, Pair.create(action, pair.second));
         }
       }
 
       hasNulls |= action == null;
       children[i + sortedSize] = action;
+      if (action == null && pairsSize == myPairs.size() + 1) {
+        pairsSize--;
+        //noinspection AssignmentToForLoopParameter
+        i--;
+      }
     }
 
     if (hasNulls) {
@@ -380,7 +408,9 @@ public class DefaultActionGroup extends ActionGroup {
     try {
       AnAction action = actionManager.getAction(stub.getId());
       if (action == null) {
-        LOG.error("Null child action in group " + this + " of class " + getClass() + ", id=" + stub.getId());
+        if (containsAction((AnAction)stub)) {
+          LOG.error("Null action returned for stub in group " + this + " of class " + getClass() + ", id=" + stub.getId());
+        }
         return null;
       }
       replace((AnAction)stub, action);
@@ -454,6 +484,7 @@ public class DefaultActionGroup extends ActionGroup {
    * Creates an action group with specified template text.
    * It is necessary to redefine template text if the group contains
    * user-specific data such as Project name, file name, etc.
+   *
    * @param templateText template text which will be used in statistics
    * @return action group
    */

@@ -1,115 +1,94 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ift
 
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
-import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl
-import com.intellij.openapi.roots.ui.configuration.SdkLookup
-import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.pom.java.LanguageLevel
-import com.intellij.util.lang.JavaVersion
-import training.lang.AbstractLangSupport
-import training.learn.LearnBundle
-import training.project.ProjectUtils
+import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox
+import com.intellij.openapi.roots.ui.configuration.SdkListItem
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.components.panels.NonOpaquePanel
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
+import training.learn.course.KLesson
 import training.project.ReadMeCreator
+import training.ui.LearningUiHighlightingManager
+import training.ui.LearningUiHighlightingManager.HighlightingOptions
+import training.ui.LearningUiUtil
 import training.util.getFeedbackLink
-import java.nio.file.Path
+import javax.swing.JList
 
-class JavaLangSupport : AbstractLangSupport() {
-  override val defaultProjectName = "IdeaLearningProject"
+internal class JavaLangSupport : JavaBasedLangSupport() {
+  override val contentRootDirectoryName = "IdeaLearningProject"
   override val projectResourcePath = "learnProjects/java/LearnProject"
 
   override val primaryLanguage: String = "JAVA"
 
   override val defaultProductName: String = "IDEA"
 
-  override val filename: String = "Learning.java"
+  override val scratchFileName: String = "Learning.java"
 
-  override val projectSandboxRelativePath: String = "Sample.java"
+  override val sampleFilePath: String = "$sourcesDirectoryPath/Sample.java"
 
-  override val langCourseFeedback get() = getFeedbackLink(this, false)
+  override val langCourseFeedback
+    get() = getFeedbackLink(this, false)
 
-  override val readMeCreator = ReadMeCreator()
+  override val readMeCreator by lazy { ReadMeCreator() }
 
-  override fun installAndOpenLearningProject(projectPath: Path,
-                                             projectToClose: Project?,
-                                             postInitCallback: (learnProject: Project) -> Unit) {
-    super.installAndOpenLearningProject(projectPath, projectToClose) { project ->
-      findJavaSdkAsync(project) { sdk ->
-        if (sdk != null) {
-          applyProjectSdk(sdk, project)
-        }
-        postInitCallback(project)
+  override val sdkConfigurationTasks: LessonContext.(lesson: KLesson) -> Unit = {
+    val setupSdkText = ProjectBundle.message("project.sdk.setup")
+
+    task {
+      if (isSdkConfigured(project)) return@task
+      triggerAndBorderHighlight().component { ui: HyperlinkLabel ->
+        ui.text == setupSdkText
       }
     }
-  }
 
-  private fun findJavaSdkAsync(project: Project, onSdkSearchCompleted: (Sdk?) -> Unit) {
-    val javaSdkType = JavaSdk.getInstance()
-    val notification = ProjectUtils.createSdkDownloadingNotification()
-    SdkLookup.newLookupBuilder()
-      .withSdkType(javaSdkType)
-      .withVersionFilter {
-        JavaVersion.tryParse(it)?.isAtLeast(6) == true
-      }
-      .onDownloadableSdkSuggested { sdkFix ->
-        val userDecision = invokeAndWaitIfNeeded {
-          Messages.showYesNoDialog(
-            LearnBundle.message("learn.project.initializing.jdk.download.message", sdkFix.downloadDescription),
-            LearnBundle.message("learn.project.initializing.jdk.download.title"),
-            null
-          )
-        }
-        if (userDecision == Messages.YES) {
-          notification.notify(project)
-          SdkLookupDecision.CONTINUE
-        }
-        else {
-          onSdkSearchCompleted(null)
-          SdkLookupDecision.STOP
+    task {
+      if (isSdkConfigured(project)) return@task
+
+      rehighlightPreviousUi = true
+      text(JavaLessonsBundle.message("java.missed.sdk.click.setup", strong(setupSdkText)))
+      text(JavaLessonsBundle.message("java.missed.sdk.show.options"), LearningBalloonConfig(Balloon.Position.below, 0))
+      text(JavaLessonsBundle.message("java.missed.sdk.read.more.tip", LessonUtil.getHelpLink("sdk.html#jdk")))
+      triggerAndBorderHighlight().component { list: JList<*> ->
+        val model = list.model
+        (0 until model.size).any {
+          model.getElementAt(it).let { item -> item is SdkListItem || item is JdkComboBox.JdkComboBoxItem }
         }
       }
-      .onSdkResolved { sdk ->
-        if (sdk != null && sdk.sdkType === javaSdkType) {
-          onSdkSearchCompleted(sdk)
-          DumbService.getInstance(project).runWhenSmart {
-            notification.expire()
+    }
+
+    task {
+      if (isSdkConfigured(project)) return@task
+
+      rehighlightPreviousUi = true
+      text(JavaLessonsBundle.message("java.missed.sdk.configure"))
+      var progressHighlightingStarted = false
+      timerCheck {
+        val jdk = JavaProjectUtil.getEffectiveJdk(project)
+
+        if (jdk != null && !progressHighlightingStarted) {
+          progressHighlightingStarted = true
+          invokeInBackground {
+            LearningUiUtil.findComponentOrNull(project, NonOpaquePanel::class.java) { panel ->
+              panel.javaClass.name.contains("InlineProgressPanel")
+            }?.let { panel ->
+              taskInvokeLater {
+                if (!disposed) {
+                  LearningUiHighlightingManager.highlightComponent(panel, HighlightingOptions(highlightInside = false))
+                  this@task.text(JavaLessonsBundle.message("java.missed.sdk.wait.installation"),
+                                 LearningBalloonConfig(Balloon.Position.above, width = 0, highlightingComponent = panel))
+                }
+              }
+            }
           }
         }
+
+        jdk != null && jdk.rootProvider.getFiles(OrderRootType.CLASSES).isNotEmpty()
       }
-      .executeLookup()
-  }
-
-  override fun getSdkForProject(project: Project): Sdk? {
-    return null
-  }
-
-  override fun applyProjectSdk(sdk: Sdk, project: Project) {
-    val applySdkAction = {
-      runWriteAction { JavaSdkUtil.applyJdkToProject(project, sdk) }
     }
-    runInEdt {
-      CommandProcessor.getInstance().executeCommand(project, applySdkAction, null, null)
-    }
-  }
-
-  override fun applyToProjectAfterConfigure(): (Project) -> Unit = { newProject ->
-    //Set language level for LearnProject
-    LanguageLevelProjectExtensionImpl.getInstanceImpl(newProject).currentLevel = LanguageLevel.JDK_1_6
-  }
-
-  override fun checkSdk(sdk: Sdk?, project: Project) {}
-
-  override fun blockProjectFileModification(project: Project, file: VirtualFile): Boolean {
-    return file.name != projectSandboxRelativePath
   }
 }

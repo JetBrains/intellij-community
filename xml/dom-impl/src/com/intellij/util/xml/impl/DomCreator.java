@@ -35,6 +35,7 @@ import com.intellij.util.xml.stubs.DomStub;
 import com.intellij.util.xml.stubs.ElementStub;
 import com.intellij.util.xml.stubs.FileStub;
 import com.intellij.xml.util.IncludedXmlTag;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,10 +130,10 @@ final class DomCreator {
     DomStub parentStub = parent.getStub();
     if (parentStub != null) {
       int index = JBIterable
-        .of(findSubTagsWithoutIncludes(parentTag, tag.getName(), tag.getNamespace()))
+        .of(findSubTagsWithoutIncludes(parentTag, tag.getLocalName(), tag.getNamespace()))
         .filter(t -> !(t instanceof IncludedXmlTag))
         .indexOf(t -> t == tag);
-      ElementStub stub = parentStub.getElementStub(tag.getLocalName(), index);
+      ElementStub stub = parentStub.getElementStub(tag.getName(), index);
       if (stub != null) {
         XmlName name = description.getXmlName();
         EvaluatedXmlNameImpl evaluatedXmlName = EvaluatedXmlNameImpl.createEvaluatedXmlName(name, name.getNamespaceKey(), true);
@@ -200,7 +201,7 @@ final class DomCreator {
     FileStub stub = null;
     DomFileMetaData meta = DomApplicationComponent.getInstance().findMeta(description);
     if (meta != null && meta.hasStubs() && file instanceof VirtualFileWithId && !isFileParsed(xmlFile)) {
-      if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null) {
+      if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null && !XmlUtil.isStubBuilding()) {
         ObjectStubTree<?> stubTree = StubTreeLoader.getInstance().readFromVFile(xmlFile.getProject(), file);
         if (stubTree != null) {
           stub = (FileStub)stubTree.getRoot();

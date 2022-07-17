@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter
 
@@ -10,8 +10,9 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.table.JBTable
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.JBUI
-import org.jetbrains.kotlin.idea.KotlinBundle
+import com.intellij.util.ui.JBInsets
+import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntryTable
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
@@ -23,7 +24,7 @@ import javax.swing.JTable
 import javax.swing.ListSelectionModel
 import javax.swing.table.AbstractTableModel
 
-open class BaseKotlinImportLayoutPanel(title: String) : JPanel(BorderLayout()) {
+open class BaseKotlinImportLayoutPanel(@Nls title: String) : JPanel(BorderLayout()) {
     val packageTable = KotlinPackageEntryTable()
     val layoutTable = createTableForPackageEntries(packageTable)
 
@@ -31,7 +32,7 @@ open class BaseKotlinImportLayoutPanel(title: String) : JPanel(BorderLayout()) {
         border = IdeBorderFactory.createTitledBorder(
             title,
             false,
-            JBUI.emptyInsets()
+            JBInsets.emptyInsets()
         )
     }
 
@@ -121,17 +122,17 @@ open class BaseKotlinImportLayoutPanel(title: String) : JPanel(BorderLayout()) {
             ) {
                 val entry = packageTable.getEntryAt(row)
                 val attributes = KotlinHighlightingColors.KEYWORD.defaultAttributes
-                append("import", SimpleTextAttributes.fromTextAttributes(attributes))
+                append(KotlinBundle.message("import.text.import"), SimpleTextAttributes.fromTextAttributes(attributes))
                 append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
 
                 when (entry) {
                     KotlinPackageEntry.ALL_OTHER_IMPORTS_ENTRY -> append(
-                        "all other imports",
+                        KotlinBundle.message("import.text.all.other.imports"),
                         SimpleTextAttributes.REGULAR_ATTRIBUTES
                     )
 
                     KotlinPackageEntry.ALL_OTHER_ALIAS_IMPORTS_ENTRY -> append(
-                        "all alias imports",
+                        KotlinBundle.message("import.text.all.alias.imports"),
                         SimpleTextAttributes.REGULAR_ATTRIBUTES
                     )
 
@@ -168,8 +169,8 @@ class KotlinStarImportLayoutPanel : BaseKotlinImportLayoutPanel(KotlinBundle.mes
             .setAddAction { addPackage() }
             .setRemoveAction { removePackage() }
             .setButtonComparator(
-                "Add",
-                "Remove"
+                KotlinBundle.message("start.import.button.text.add"),
+                KotlinBundle.message("start.import.button.text.remove")
             ).setPreferredSize(Dimension(-1, 100))
             .createPanel()
 
@@ -205,10 +206,10 @@ class KotlinImportOrderLayoutPanel : BaseKotlinImportLayoutPanel(KotlinBundle.me
 
                 entry?.isSpecial == false
             }.setButtonComparator(
-                "Add Package",
-                "Remove",
-                "Up",
-                "Down"
+                KotlinBundle.message("import.order.button.text.add.package"),
+                KotlinBundle.message("import.order.button.text.remove"),
+                KotlinBundle.message("import.order.button.text.up"),
+                KotlinBundle.message("import.order.button.text.down")
             ).setPreferredSize(Dimension(-1, 100))
             .createPanel()
 

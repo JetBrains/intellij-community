@@ -1,3 +1,4 @@
+// IGNORE_FIR
 // COMPILER_ARGUMENTS: -XXLanguage:-TrailingCommas
 // See KT-14484
 

@@ -51,7 +51,7 @@
 
     extends("container|literal|reference_expression")=value
     extends("array|object")=container
-    extends("string_literal|number_literal|boolean_literal|null_literal")=literal
+    extends("string_literal|number_literal|boolean_literal|null_literal|parameter_literal")=literal
     implements("property")=[
       "com.intellij.json.psi.JsonElement"
       "com.intellij.psi.PsiNamedElement"
@@ -78,7 +78,9 @@ private object_element ::= property (','|&'}') {
   pin = 1
 }
 
-property ::= property_name (':' value) {
+private property_value ::= value
+
+property ::= property_name (':' property_value) {
   methods=[
     getName
     getNameElement
@@ -128,7 +130,11 @@ boolean_literal ::= TRUE | FALSE {
 }
 null_literal ::= NULL
 
-literal ::= string_literal | number_literal | boolean_literal | null_literal {
+// 'PARAMETER' element is used by MongoDb-JSON-Query language to highlight params
+// Can be used both as property name or/and value
+parameter_literal ::= PARAMETER
+
+literal ::= string_literal | number_literal | boolean_literal | null_literal | parameter_literal {
   methods=[
     isQuotedString
   ]

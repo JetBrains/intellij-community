@@ -2,9 +2,7 @@
 
 package org.jetbrains.kotlin.idea.actions
 
-import com.intellij.ide.actions.CreateFileFromTemplateAction
-import com.intellij.ide.actions.CreateFileFromTemplateDialog
-import com.intellij.ide.actions.CreateFromTemplateAction
+import com.intellij.ide.actions.*
 import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults
@@ -13,9 +11,8 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
@@ -26,11 +23,16 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
+import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
+import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -38,6 +40,7 @@ import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.util.*
 
 class NewKotlinFileAction : CreateFileFromTemplateAction(
@@ -59,18 +62,26 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
 
             val ktClass = createdElement.declarations.singleOrNull() as? KtNamedDeclaration
             if (ktClass != null) {
+                if (ktClass is KtClass && ktClass.isData()) {
+                    val primaryConstructor = ktClass.primaryConstructor
+                    if (primaryConstructor != null) {
+                        createdElement.editor()?.caretModel?.moveToOffset(primaryConstructor.startOffset + 1)
+                        return
+                    }
+                }
                 CreateFromTemplateAction.moveCaretAfterNameIdentifier(ktClass)
             } else {
-                val editor = FileEditorManager.getInstance(createdElement.project).selectedTextEditor ?: return
-                if (editor.document == createdElement.viewProvider.document) {
-                    val lineCount = editor.document.lineCount
-                    if (lineCount > 0) {
-                        editor.caretModel.moveToLogicalPosition(LogicalPosition(lineCount - 1, 0))
-                    }
+                val editor = createdElement.editor() ?: return
+                val lineCount = editor.document.lineCount
+                if (lineCount > 0) {
+                    editor.caretModel.moveToLogicalPosition(LogicalPosition(lineCount - 1, 0))
                 }
             }
         }
     }
+
+    private fun KtFile.editor() =
+        FileEditorManager.getInstance(this.project).selectedTextEditor?.takeIf { it.document == this.viewProvider.document }
 
     override fun buildDialog(project: Project, directory: PsiDirectory, builder: CreateFileFromTemplateDialog.Builder) {
         builder.setTitle(KotlinBundle.message("action.new.file.dialog.title"))
@@ -90,7 +101,7 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
                 "Kotlin Interface"
             )
 
-        if (project.getLanguageVersionSettings().supportsFeature(LanguageFeature.SealedInterfaces)) {
+        if (project.languageVersionSettings.supportsFeature(LanguageFeature.SealedInterfaces)) {
             builder.addKind(
                 KotlinBundle.message("action.new.file.dialog.sealed.interface.title"),
                 KotlinIcons.INTERFACE,
@@ -135,7 +146,10 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
             val ideView = LangDataKeys.IDE_VIEW.getData(dataContext)!!
             val project = PlatformDataKeys.PROJECT.getData(dataContext)!!
             val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
-            return ideView.directories.any { projectFileIndex.isInSourceContent(it.virtualFile) }
+            return ideView.directories.any {
+                projectFileIndex.isInSourceContent(it.virtualFile) ||
+                CreateTemplateInPackageAction.isInContentRoot(it.virtualFile, projectFileIndex)
+            }
         }
 
         return false
@@ -241,9 +255,9 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
             val (className, targetDir) = findOrCreateTarget(dir, name, directorySeparators)
 
             val service = DumbService.getInstance(dir.project)
-            service.isAlternativeResolveEnabled = true
-            try {
-                val psiFile = createFromTemplate(targetDir, className, template)
+            return service.computeWithAlternativeResolveEnabled<PsiFile?, Throwable> {
+                val adjustedDir = CreateTemplateInPackageAction.adjustDirectory(targetDir, JavaModuleSourceRootTypes.SOURCES)
+                val psiFile = createFromTemplate(adjustedDir, className, template)
                 if (psiFile is KtFile) {
                     val singleClass = psiFile.declarations.singleOrNull() as? KtClass
                     if (singleClass != null && !singleClass.isEnum() && !singleClass.isInterface() && name.contains("Abstract")) {
@@ -252,19 +266,18 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
                         }
                     }
                 }
-                return psiFile
-            } finally {
-                service.isAlternativeResolveEnabled = false
+                JavaCreateTemplateInPackageAction.setupJdk(adjustedDir, psiFile)
+                val module = ModuleUtil.findModuleForFile(psiFile)
+                val configurator = KotlinProjectConfigurator.EP_NAME.extensions.firstOrNull()
+                if (module != null && configurator != null) {
+                    DumbService.getInstance(module.project).runWhenSmart {
+                        if (configurator.getStatus(module.toModuleGroup()) == ConfigureKotlinStatus.CAN_BE_CONFIGURED) {
+                            configurator.configure(module.project, emptyList())
+                        }
+                    }
+                }
+                return@computeWithAlternativeResolveEnabled psiFile
             }
         }
     }
-}
-
-abstract class NewKotlinFileHook {
-    companion object {
-        val EP_NAME: ExtensionPointName<NewKotlinFileHook> =
-            ExtensionPointName.create<NewKotlinFileHook>("org.jetbrains.kotlin.newFileHook")
-    }
-
-    abstract fun postProcess(createdElement: KtFile, module: Module)
 }

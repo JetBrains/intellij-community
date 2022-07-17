@@ -39,7 +39,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   // dfa value id -> indices in myEqClasses list of the classes which contain the id
   protected final Int2IntMap myIdToEqClassesIndices;
   protected final Stack<DfaValue> myStack;
-  private final DistinctPairSet myDistinctClasses;
+  private DistinctPairSet myDistinctClasses;
   private final LinkedHashMap<DfaVariableValue,DfType> myVariableTypes;
   private boolean myEphemeral;
 
@@ -79,7 +79,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public @NotNull DfaMemoryStateImpl createClosureState() {
     DfaMemoryStateImpl copy = createCopy();
-    copy.flushFields();
+    copy.flushFields(new QualifierStatusMap(null, true));
     copy.emptyStack();
     for (DfaValue value : getFactory().getValues().toArray(new DfaValue[0])) {
       if (value instanceof DfaVariableValue) {
@@ -178,7 +178,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void push(@NotNull DfaValue value) {
-    assert value.getFactory() == myFactory;
+    assert value.getFactory() == myFactory : value;
     myCachedHash = null;
     myStack.push(value);
   }
@@ -1080,16 +1080,24 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     EqClass eqClass = getEqClass(value);
     if (eqClass == null) return true;
     if (type.fromRelation(RelationType.GT) == DfType.TOP && type.fromRelation(RelationType.LT) == DfType.TOP) return true;
-    for (DistinctPairSet.DistinctPair pair : getDistinctClassPairs().toArray(new DistinctPairSet.DistinctPair[0])) {
-      if (pair.isOrdered()) {
-        if (pair.getFirst() == eqClass) {
-          DfaVariableValue var = Objects.requireNonNull(pair.getSecond().getCanonicalVariable());
-          if (!meetDfType(var, getDfType(var).meetRelation(RelationType.GT, type))) return false;
-        } else if(pair.getSecond() == eqClass) {
-          DfaVariableValue var = Objects.requireNonNull(pair.getFirst().getCanonicalVariable());
-          if (!meetDfType(var, getDfType(var).meetRelation(RelationType.LT, type))) return false;
+    DistinctPairSet distinctPairs = myDistinctClasses;
+    myDistinctClasses = new DistinctPairSet(this);
+    try {
+      for (DistinctPairSet.DistinctPair pair : distinctPairs) {
+        if (pair.isOrdered()) {
+          if (pair.getFirst() == eqClass) {
+            DfaVariableValue var = Objects.requireNonNull(pair.getSecond().getCanonicalVariable());
+            if (!meetDfType(var, getDfType(var).meetRelation(RelationType.GT, type))) return false;
+          }
+          else if (pair.getSecond() == eqClass) {
+            DfaVariableValue var = Objects.requireNonNull(pair.getFirst().getCanonicalVariable());
+            if (!meetDfType(var, getDfType(var).meetRelation(RelationType.LT, type))) return false;
+          }
         }
       }
+    }
+    finally {
+      myDistinctClasses = distinctPairs;
     }
     return true;
   }
@@ -1207,6 +1215,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfType type = getRecordedType((DfaVariableValue)value);
       return type != null ? type : ((DfaVariableValue)value).getInherentType();
     }
+    if (value instanceof DfaWrappedValue) {
+      DfType wrappedValueType = getDfType(((DfaWrappedValue)value).getWrappedValue());
+      return ((DfaWrappedValue)value).getSpecialField().asDfType(value.getDfType(), wrappedValueType);
+    }
     return value.getDfType();
   }
 
@@ -1285,25 +1297,25 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void flushFieldsQualifiedBy(@NotNull Set<DfaValue> qualifiers) {
-    flushFields(new QualifierStatusMap(qualifiers));
+    flushFields(new QualifierStatusMap(qualifiers, false));
   }
 
   @Override
   public void flushFields() {
-    flushFields(new QualifierStatusMap(null));
+    flushFields(new QualifierStatusMap(null, false));
   }
 
   public void flushFields(@NotNull DfaMemoryStateImpl.QualifierStatusMap qualifierStatusMap) {
     Set<DfaVariableValue> vars = new LinkedHashSet<>();
     for (DfaVariableValue value : myVariableTypes.keySet()) {
-      if (value.isFlushableByCalls() && qualifierStatusMap.shouldFlush(value.getQualifier(), value.containsCalls())) {
+      if (qualifierStatusMap.shouldFlush(value)) {
         vars.add(value);
       }
     }
     for (EqClass aClass : myEqClasses) {
       if (aClass != null) {
         for (DfaVariableValue value : aClass) {
-          if (value.isFlushableByCalls() && qualifierStatusMap.shouldFlush(value.getQualifier(), value.containsCalls())) {
+          if (qualifierStatusMap.shouldFlush(value)) {
             vars.add(value);
           }
         }
@@ -1317,6 +1329,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (ContainerUtil.or(type.getDerivedVariables(), dv -> type.getDerivedValue(dv) != DfType.TOP &&
                                                              !dv.isStable() && qualifierStatusMap.shouldFlush(val, dv.isCall()))) {
         return myFactory.fromDfType(type.getBasicType());
+      }
+      if (val instanceof DfaVariableValue && qualifierStatusMap.shouldFlush((DfaVariableValue)val)) {
+        return myFactory.fromDfType(type);
       }
       return val;
     });
@@ -1364,11 +1379,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void flushQualifiedMethods(@NotNull DfaVariableValue variable) {
-    DfaVariableValue qualifier = variable.getQualifier();
-    if (qualifier != null) {
+    if (variable.isFlushableByCalls()) {
       // Flush method results on field write
-      List<DfaVariableValue> toFlush =
-        ContainerUtil.filter(qualifier.getDependentVariables(), DfaVariableValue::containsCalls);
+      List<DfaVariableValue> toFlush = StreamEx.of(myEqClasses).flatMap(cls -> cls == null ? null : StreamEx.of(cls.iterator()))
+        .append(myVariableTypes.keySet()).filter(DfaVariableValue::containsCalls).toList();
       toFlush.forEach(val -> doFlush(val, true));
     }
   }
@@ -1606,9 +1620,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private final class QualifierStatusMap {
     private final Int2ObjectMap<QualifierStatus> myMap = new Int2ObjectOpenHashMap<>();
     private final @Nullable Set<DfaValue> myQualifiersToFlush;
+    private final boolean myClosure;
 
-    private QualifierStatusMap(@Nullable Set<DfaValue> qualifiersToFlush) {
+    private QualifierStatusMap(@Nullable Set<DfaValue> qualifiersToFlush, boolean closure) {
       myQualifiersToFlush = qualifiersToFlush;
+      myClosure = closure;
+    }
+
+    boolean shouldFlush(DfaVariableValue value) {
+      return (myClosure ? value.canBeCapturedInClosure() : value.isFlushableByCalls()) &&
+             shouldFlush(value.getQualifier(), value.containsCalls());
     }
 
     boolean shouldFlush(@Nullable DfaValue qualifier, boolean hasCall) {
@@ -1618,7 +1639,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         status = calculate(qualifier);
         if (status != QualifierStatus.SHOULD_FLUSH_ALWAYS && qualifier instanceof DfaVariableValue) {
           DfaVariableValue qualifierVar = (DfaVariableValue)qualifier;
-          if (qualifierVar.isFlushableByCalls()) {
+          if (myClosure ? qualifierVar.canBeCapturedInClosure() : qualifierVar.isFlushableByCalls()) {
             DfaVariableValue qualifierQualifier = qualifierVar.getQualifier();
             if (shouldFlush(qualifierQualifier, qualifierVar.containsCalls())) {
               status = QualifierStatus.SHOULD_FLUSH_ALWAYS;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
@@ -29,8 +29,9 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,7 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreComboBoxItem>> implements PanelWithAnchor {
   private final JreComboboxEditor myComboboxEditor;
@@ -89,14 +91,9 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     buildModel(editable);
     myComboBoxModel.setSelectedItem(myDefaultJreItem);
 
-    ComboBox<JreComboBoxItem> comboBox = new ComboBox<>(myComboBoxModel);
+    ComboBox<JreComboBoxItem> comboBox = new ComboBox<>(myComboBoxModel, JBUI.scale(300));
     comboBox.setEditable(editable);
     comboBox.setRenderer(new ColoredListCellRenderer<>() {
-      {
-        setIpad(JBInsets.create(1, 0));
-        setMyBorder(null);
-      }
-
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends JreComboBoxItem> list,
                                            JreComboBoxItem value,
@@ -254,14 +251,20 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   }
 
   private void updateDefaultJrePresentation() {
+    updateDefaultJrePresentation((@Nls String description) -> {
+      StatusText text = myComboboxEditor.getEmptyText();
+      text.clear();
+      text.appendText(ExecutionBundle.message("default.jre.name"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      text.appendText(description, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    });
+  }
+
+  private void updateDefaultJrePresentation(@NotNull Consumer<? super @Nls String> uiUpdater) {
     ReadAction
-      .nonBlocking(() -> myDefaultJreSelector.getDescriptionString())
-      .finishOnUiThread(ModalityState.any(), result -> {
-        StatusText text = myComboboxEditor.getEmptyText();
-        text.clear();
-        text.appendText(ExecutionBundle.message("default.jre.name"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        text.appendText(result, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      })
+      .nonBlocking(myDefaultJreSelector::getDescriptionString)
+      .coalesceBy(this, uiUpdater)
+      .finishOnUiThread(ModalityState.stateForComponent(this), uiUpdater)
+      .expireWhen(() -> !myDefaultJreSelector.isValid())
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
@@ -281,7 +284,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     getComponent().addActionListener(listener);
   }
 
-  interface JreComboBoxItem {
+  public interface JreComboBoxItem {
     void render(SimpleColoredComponent component, boolean selected);
 
     String getPresentableText();
@@ -413,9 +416,10 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     @Override
     public void render(SimpleColoredComponent component, boolean selected) {
       component.append(ExecutionBundle.message("default.jre.name"));
+      component.setIcon(EmptyIcon.ICON_16);
       //may be null if JrePathEditor is added to a GUI Form where the default constructor is used and setDefaultJreSelector isn't called
       if (myDefaultJreSelector != null) {
-        component.append(myDefaultJreSelector.getDescriptionString(), SimpleTextAttributes.GRAY_ATTRIBUTES);
+        updateDefaultJrePresentation((@Nls String description) -> component.append(description, SimpleTextAttributes.GRAY_ATTRIBUTES));
       }
     }
 

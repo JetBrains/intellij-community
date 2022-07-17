@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmMultifileClass
 @file:JvmName("UastUtils")
 
@@ -27,7 +27,7 @@ fun <T : UElement> UElement.getParentOfType(parentClass: Class<out T>, strict: B
 }
 
 fun UElement.skipParentOfType(strict: Boolean, vararg parentClasses: Class<out UElement>): UElement? {
-  var element = (if (strict) uastParent else this)  ?: return null
+  var element = (if (strict) uastParent else this) ?: return null
   while (true) {
     if (!parentClasses.any { it.isInstance(element) }) {
       return element
@@ -75,14 +75,21 @@ fun <T : UElement> UElement.getParentOfType(
 }
 
 @JvmOverloads
-fun UElement?.getUCallExpression(searchLimit: Int = Int.MAX_VALUE): UCallExpression? =
-  this?.withContainingElements?.take(searchLimit)?.mapNotNull {
-    when (it) {
-      is UCallExpression -> it
-      is UQualifiedReferenceExpression -> it.selector as? UCallExpression
-      else -> null
+fun UElement?.getUCallExpression(searchLimit: Int = Int.MAX_VALUE): UCallExpression? {
+  if (this == null) return null
+  var u: UElement? = this;
+  for (i in 1..searchLimit) {
+    if (u == null) break
+    if (u is UCallExpression) return u
+
+    if (u is UQualifiedReferenceExpression) {
+      val selector = u.selector
+      if (selector is UCallExpression) return selector
     }
-  }?.firstOrNull()
+    u = u.uastParent
+  }
+  return null
+}
 
 fun UElement.getContainingUFile(): UFile? = getParentOfType(UFile::class.java, false)
 
@@ -143,11 +150,11 @@ fun UElement.tryResolveNamed(): PsiNamedElement? = (this as? UResolvable)?.resol
 fun UReferenceExpression?.getQualifiedName(): String? = (this?.resolve() as? PsiClass)?.qualifiedName
 
 /**
- * Returns the String expression value, or null if the value can't be calculated or if the calculated value is not a String.
+ * Returns the String expression value, or null if the value can't be calculated, or if the calculated value is not a String or an integral literal.
  */
-fun UExpression.evaluateString(): String? = evaluate() as? String
+fun UExpression.evaluateString(): String? = evaluate().takeIf { it is String || isIntegralLiteral() }?.toString()
 
-fun UExpression.skipParenthesizedExprDown(): UExpression? {
+fun UExpression.skipParenthesizedExprDown(): UExpression {
   var expression = this
   while (expression is UParenthesizedExpression) {
     expression = expression.expression
@@ -170,8 +177,8 @@ fun skipParenthesizedExprUp(elem: UElement?): UElement? {
 fun UFile.getIoFile(): File? = sourcePsi.virtualFile?.let { VfsUtilCore.virtualToIoFile(it) }
 
 @Deprecated("use UastFacade", ReplaceWith("UastFacade"))
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-@Suppress("Deprecation")
+@ApiStatus.ScheduledForRemoval
+@Suppress("DEPRECATION")
 tailrec fun UElement.getUastContext(): UastContext {
   val psi = this.sourcePsi
   if (psi != null) {
@@ -182,6 +189,7 @@ tailrec fun UElement.getUastContext(): UastContext {
 }
 
 @Deprecated("could unexpectedly throw exception", ReplaceWith("UastFacade.findPlugin"))
+@ApiStatus.ScheduledForRemoval
 tailrec fun UElement.getLanguagePlugin(): UastLanguagePlugin {
   val psi = this.sourcePsi
   if (psi != null) {
@@ -215,7 +223,6 @@ fun UCallExpression.getParameterForArgument(arg: UExpression): PsiParameter? {
   return parameters.withIndex().find { (i, p) ->
     val argumentForParameter = getArgumentForParameter(i) ?: return@find false
     if (wrapULiteral(argumentForParameter) == wrapULiteral(arg)) return@find true
-    if (arg is ULambdaExpression && arg.sourcePsi?.parent == argumentForParameter.sourcePsi) return@find true // workaround for KT-25297
     if (p.isVarArgs && argumentForParameter is UExpressionList) return@find argumentForParameter.expressions.contains(arg)
     return@find false
   }?.value
@@ -231,7 +238,7 @@ tailrec fun UElement.isLastElementInControlFlow(scopeElement: UElement? = null):
   }
 
 fun UNamedExpression.getAnnotationMethod(): PsiMethod? {
-  val annotation : UAnnotation? = getParentOfType(UAnnotation::class.java, true)
+  val annotation: UAnnotation? = getParentOfType(UAnnotation::class.java, true)
   val fqn = annotation?.qualifiedName ?: return null
   val annotationSrc = annotation.sourcePsi
   if (annotationSrc == null) return null

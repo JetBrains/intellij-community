@@ -2,14 +2,13 @@
 
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,11 +48,10 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 import static java.util.Arrays.asList;
 
 
-public class VcsDirectoryConfigurationPanel extends JPanel implements Configurable {
+public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable {
   private static final int POSTPONE_MAPPINGS_LOADING_PANEL = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
 
   private final Project myProject;
-  private final Disposable myDisposable = Disposer.newDisposable();
   private final @Nls String myProjectMessage;
   private final ProjectLevelVcsManager myVcsManager;
   private final TableView<MapInfo> myDirectoryMappingTable;
@@ -270,7 +268,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       }
     };
 
-  public VcsDirectoryConfigurationPanel(final Project project) {
+  public VcsDirectoryConfigurationPanel(@NotNull Project project) {
     myProject = project;
     myVcsConfiguration = getInstance(myProject);
     myProjectMessage = new HtmlBuilder()
@@ -322,6 +320,11 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     }
   }
 
+  @Override
+  public void dispose() {
+    myScopeFilterConfig.disposeUIResources();
+  }
+
   private void updateRootCheckers() {
     myCheckers.clear();
     for (VcsRootChecker checker : VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList()) {
@@ -363,6 +366,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   @NotNull
   private Collection<VcsRootError> findUnregisteredRoots() {
+    if (!TrustedProjects.isTrusted(myProject)) return Collections.emptyList();
     return ContainerUtil.filter(VcsRootErrorsFinder.getInstance(myProject).getOrFind(),
                                 error -> error.getType() == VcsRootError.Type.UNREGISTERED_ROOT);
   }
@@ -477,7 +481,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
     JComponent mappingsTable = createMappingsTable();
     // don't start loading automatically
-    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), myDisposable, POSTPONE_MAPPINGS_LOADING_PANEL * 2);
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this, POSTPONE_MAPPINGS_LOADING_PANEL * 2);
     myLoadingPanel.add(mappingsTable);
     panel.add(myLoadingPanel, gb.nextLine().next().fillCell().weighty(1.0));
 
@@ -552,12 +556,10 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     return label;
   }
 
-  @Override
   public void reset() {
     initializeModel();
   }
 
-  @Override
   public void apply() throws ConfigurationException {
     adjustIgnoredRootsSettings();
     myVcsManager.setDirectoryMappings(getModelMappings());
@@ -575,7 +577,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myVcsConfiguration.removeFromIgnoredUnregisteredRoots(map(newMappings, VcsDirectoryMapping::getDirectory));
   }
 
-  @Override
   public boolean isModified() {
     if (myScopeFilterConfig.isModified()) return true;
     return !getModelMappings().equals(myVcsManager.getDirectoryMappings());
@@ -595,22 +596,5 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       }
     }
     return vcses;
-  }
-
-  @Nls
-  @Override
-  public String getDisplayName() {
-    return VcsBundle.message("configurable.VcsDirectoryConfigurationPanel.display.name");
-  }
-
-  @Override
-  public JComponent createComponent() {
-    return this;
-  }
-
-  @Override
-  public void disposeUIResources() {
-    Disposer.dispose(myDisposable);
-    myScopeFilterConfig.disposeUIResources();
   }
 }

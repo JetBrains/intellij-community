@@ -1,74 +1,61 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.util
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.Graphics2DDelegate
-import com.intellij.util.ui.JBUI
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
-import org.jetbrains.plugins.github.GithubIcons
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.Graphics2DDelegate
+import com.intellij.util.ui.ExtendableHTMLViewFactory
+import com.intellij.util.ui.HTMLEditorKitBuilder
 import java.awt.*
 import java.awt.image.ImageObserver
 import javax.swing.text.Element
 import javax.swing.text.FlowView
-import javax.swing.text.ParagraphView
 import javax.swing.text.View
-import javax.swing.text.html.BlockView
+import javax.swing.text.html.HTML
 import javax.swing.text.html.ImageView
+import javax.swing.text.html.InlineView
 
-internal class HtmlEditorPane() : BaseHtmlEditorPane(GithubIcons::class.java) {
+internal class HtmlEditorPane() : BaseHtmlEditorPane() {
+
+  init {
+    editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP, GHExtensions()).build()
+  }
+
   constructor(@NlsSafe body: String) : this() {
     setBody(body)
   }
 
-  override fun createViewFactory(iconsClass: Class<*>) = GHViewFactory()
-
-  protected class GHViewFactory : BaseHtmlEditorPane.HtmlEditorViewFactory(GithubIcons::class.java) {
-    override fun create(elem: Element): View {
-      val view = super.create(elem)
+  private class GHExtensions : ExtendableHTMLViewFactory.Extension {
+    override fun invoke(elem: Element, view: View): View {
       if (view is ImageView) {
         return MyScalingImageView(elem)
       }
-      if (elem.name == "blockquote") {
-        return GHQuoteView(elem)
-      }
-      if (view is ParagraphView) {
-        return GHParagraphView(elem)
+      if (ICON_INLINE_ELEMENT_NAME == elem.name) {
+        val icon = elem.attributes.getAttribute(HTML.Attribute.SRC)?.let {
+          val path = it as String
+
+          IconLoader.findIcon(path, ExtendableHTMLViewFactory::class.java, true, false)
+        }
+
+        if (icon != null) {
+          return object : InlineView(elem) {
+
+            override fun getPreferredSpan(axis: Int): Float {
+              when (axis) {
+                X_AXIS -> return icon.iconWidth.toFloat() + super.getPreferredSpan(axis)
+                else -> return super.getPreferredSpan(axis)
+              }
+            }
+
+            override fun paint(g: Graphics, allocation: Shape) {
+              super.paint(g, allocation)
+              icon.paintIcon(null, g, allocation.bounds.x, allocation.bounds.y)
+            }
+          }
+        }
       }
       return view
-    }
-  }
-
-  private class GHQuoteView(element: Element) : BlockView(element, Y_AXIS) {
-
-    init {
-      val borderWidth = JBUI.scale(2)
-      val borderColor = ColorUtil.toHex(DarculaUIUtil.getOutlineColor(true, false))
-      val padding = JBUI.scale(10)
-      //language=CSS
-      styleSheet.addRule("""
-        html body blockquote p {
-          border-left: ${borderWidth}px solid ${borderColor};
-          padding-left: ${padding}px;
-        }
-      """.trimIndent())
-    }
-
-    override fun setPropertiesFromAttributes() {
-      super.setPropertiesFromAttributes()
-      setInsets(topInset, 0, bottomInset, rightInset)
-    }
-  }
-
-  private class GHParagraphView(elem: Element) : MyParagraphView(elem) {
-    init {
-      //language=CSS
-      styleSheet.addRule("""
-        p {
-          margin-bottom: ${JBUI.scale(10)}px;
-        }
-      """.trimIndent())
     }
   }
 
@@ -144,5 +131,9 @@ internal class HtmlEditorPane() : BaseHtmlEditorPane(GithubIcons::class.java) {
       }
       super.paint(scalingGraphics, a)
     }
+  }
+
+  companion object {
+    private const val ICON_INLINE_ELEMENT_NAME = "icon-inline" // NON-NLS
   }
 }

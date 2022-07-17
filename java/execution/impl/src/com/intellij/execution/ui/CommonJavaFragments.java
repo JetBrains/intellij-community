@@ -1,21 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.JavaRunConfigurationBase;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentConfigurations;
+import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,9 +117,7 @@ public final class CommonJavaFragments {
                                        s.setModule(s.getDefaultModule());
                                      }
                                    },
-                                   s -> s.getDefaultModule() != s.getConfigurationModule().getModule() &&
-                                        s.getConfigurationModule().getModule() != null ||
-                                        ModuleManager.getInstance(s.getProject()).getModules().length > 1);
+                                   s -> ModuleManager.getInstance(s.getProject()).getModules().length > 1);
     fragment.setHint(ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module.hint"));
     fragment.setActionHint(
       ExecutionBundle.message("the.module.whose.classpath.will.be.used.the.classpath.specified.in.the.vm.options.takes.precedence.over.this.one"));
@@ -190,9 +198,39 @@ public final class CommonJavaFragments {
                                      configuration.setAlternativeJrePath(editor.getJrePathOrName());
                                      configuration.setAlternativeJrePathEnabled(editor.isAlternativeJreSelected());
                                    },
-                                   configuration -> true);
+                                   Predicates.alwaysTrue());
     jrePath.setRemovable(false);
     jrePath.setHint(ExecutionBundle.message("run.configuration.jre.hint"));
+    jrePath.setValidation(configuration -> new SmartList<>(RuntimeConfigurationException.validate(comboBox, () -> {
+      if (!(configuration instanceof TargetEnvironmentAwareRunProfile) ||
+          TargetEnvironmentConfigurations.getEffectiveTargetName((TargetEnvironmentAwareRunProfile)configuration,
+                                                                 configuration.getProject()) == null) {
+        JavaParametersUtil.checkAlternativeJRE(configuration);
+      }
+    })));
     return jrePath;
+  }
+
+  @NotNull
+  public static <T extends JavaRunConfigurationBase> SettingsEditorFragment<T, RawCommandLineEditor> vmOptions(Computable<Boolean> hasModule) {
+    String group = ExecutionBundle.message("group.java.options");
+    RawCommandLineEditor vmOptions = new RawCommandLineEditor();
+    setMinimumWidth(vmOptions, 400);
+    CommonParameterFragments.setMonospaced(vmOptions.getTextField());
+    String message = ExecutionBundle.message("run.configuration.java.vm.parameters.empty.text");
+    vmOptions.getEditorField().getAccessibleContext().setAccessibleName(message);
+    vmOptions.getEditorField().getEmptyText().setText(message);
+    MacrosDialog.addMacroSupport(vmOptions.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
+    FragmentedSettingsUtil.setupPlaceholderVisibility(vmOptions.getEditorField());
+    SettingsEditorFragment<T, RawCommandLineEditor> vmParameters =
+      new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmOptions,
+                                   15,
+                                   (configuration, c) -> c.setText(configuration.getVMParameters()),
+                                   (configuration, c) -> configuration.setVMParameters(c.isVisible() ? c.getText() : null),
+                                   configuration -> StringUtil.isNotEmpty(configuration.getVMParameters()));
+    vmParameters.setHint(ExecutionBundle.message("run.configuration.java.vm.parameters.hint"));
+    vmParameters.setActionHint(ExecutionBundle.message("specify.vm.options.for.running.the.application"));
+    vmParameters.setEditorGetter(editor -> editor.getEditorField());
+    return vmParameters;
   }
 }

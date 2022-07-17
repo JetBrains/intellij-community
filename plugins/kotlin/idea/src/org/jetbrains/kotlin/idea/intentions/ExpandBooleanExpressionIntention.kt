@@ -5,8 +5,9 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi2ir.deparenthesize
@@ -23,7 +24,7 @@ class ExpandBooleanExpressionIntention : SelfTargetingRangeIntention<KtExpressio
         if (element.deparenthesize() is KtConstantExpression) return null
         val parent = element.parent
         if (parent is KtValueArgument || parent is KtParameter || parent is KtStringTemplateEntry) return null
-        val context = element.analyze(BodyResolveMode.PARTIAL)
+        val context = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
         if (context[BindingContext.EXPRESSION_TYPE_INFO, element]?.type?.isBoolean() != true) return null
         return element.textRange
     }

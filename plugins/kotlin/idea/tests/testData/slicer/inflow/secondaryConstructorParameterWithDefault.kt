@@ -1,5 +1,5 @@
 // FLOW: IN
-// WITH_RUNTIME
+// WITH_STDLIB
 
 open class A {
     @JvmOverloads constructor(n: Int, <caret>s: String = "???")

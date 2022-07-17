@@ -117,13 +117,6 @@ public class JavaParameters extends SimpleJavaParameters {
     configureByModule(module, classPathType, getValidJdkToRunModule(module, (classPathType & TESTS_ONLY) == 0));
   }
 
-  /** @deprecated use {@link #getValidJdkToRunModule(Module, boolean)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static Sdk getModuleJdk(final Module module) throws CantRunException {
-    return getValidJdkToRunModule(module, false);
-  }
-
   @NotNull
   public static Sdk getValidJdkToRunModule(final Module module, boolean productionOnly) throws CantRunException {
     Sdk jdk = getJdkToRunModule(module, productionOnly);

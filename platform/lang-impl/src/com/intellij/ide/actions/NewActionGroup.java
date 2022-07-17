@@ -24,20 +24,24 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
  * @author Dmitry Avdeev
  */
-public class NewActionGroup extends ActionGroup implements UpdateInBackground {
+public class NewActionGroup extends ActionGroup {
   @NonNls private static final String PROJECT_OR_MODULE_GROUP_ID = "NewProjectOrModuleGroup";
 
   @Override
-  public boolean isUpdateInBackground() {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
     AnAction g1 = ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW);
     AnAction g2 = ActionManager.getInstance().getAction(PROJECT_OR_MODULE_GROUP_ID);
-    return (g1 == null || UpdateInBackground.isUpdateInBackground(g1)) &&
-           (g2 == null || UpdateInBackground.isUpdateInBackground(g2));
+    ActionUpdateThread t1 = g1 == null ? null : g1.getActionUpdateThread();
+    ActionUpdateThread t2 = g2 == null ? null : g2.getActionUpdateThread();
+    if (t1 == null && t2 == null) return ActionUpdateThread.BGT;
+    if (t1 != null && t2 != null && t1 != t2) throw new AssertionError(t1 + "!=" + t2);
+    return Objects.requireNonNullElse(t1, t2);
   }
 
   @Override

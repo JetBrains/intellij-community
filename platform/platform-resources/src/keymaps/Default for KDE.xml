@@ -30,6 +30,9 @@
   <action id="FindWordAtCaret">
     <keyboard-shortcut first-keystroke="control 3"/>
   </action>
+  <action id="FindPrevWordAtCaret">
+    <keyboard-shortcut first-keystroke="shift control 3"/>
+  </action>
   <action id="GotoBookmark0"/>
   <action id="GotoBookmark1"/>
   <action id="GotoBookmark2"/>
@@ -60,9 +63,6 @@
   </action>
   <action id="IntroduceVariable">
     <keyboard-shortcut first-keystroke="shift alt V"/>
-  </action>
-  <action id="ProjectViewChangeView">
-    <keyboard-shortcut first-keystroke="shift alt 1"/>
   </action>
   <action id="ReformatCode">
     <keyboard-shortcut first-keystroke="shift alt L"/>

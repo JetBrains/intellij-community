@@ -136,13 +136,7 @@ final class NST {
                       platformWindow != null ? platformWindow.getClass() : "null");
           }
         }
-        catch (NoSuchMethodException e) {
-          LOG.debug(e);
-        }
-        catch (IllegalAccessException e) {
-          LOG.debug(e);
-        }
-        catch (InvocationTargetException e) {
+        catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
           LOG.debug(e);
         }
       }

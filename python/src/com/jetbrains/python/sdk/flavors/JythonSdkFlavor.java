@@ -49,12 +49,12 @@ public final class JythonSdkFlavor extends PythonSdkFlavor {
   }
 
   @Override
-  public String getVersionOption() {
+  public @NotNull String getVersionOption() {
     return "--version";
   }
 
   @Override
-  public void initPythonPath(GeneralCommandLine cmd, boolean passParentEnvs, Collection<String> path) {
+  public void initPythonPath(@NotNull GeneralCommandLine cmd, boolean passParentEnvs, @NotNull Collection<String> path) {
     initPythonPath(path, passParentEnvs, cmd.getEnvironment());
     ParamsGroup paramGroup = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
     assert paramGroup != null;
@@ -67,7 +67,7 @@ public final class JythonSdkFlavor extends PythonSdkFlavor {
   }
 
   @Override
-  public void initPythonPath(Collection<String> path, boolean passParentEnvs, Map<String, String> env) {
+  public void initPythonPath(@NotNull Collection<String> path, boolean passParentEnvs, @NotNull Map<String, String> env) {
     if (passParentEnvs) {
       path = PythonEnvUtil.appendSystemEnvPaths(path, JYTHONPATH);
     }
@@ -86,7 +86,7 @@ public final class JythonSdkFlavor extends PythonSdkFlavor {
   }
 
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return PythonIcons.Python.Jython;
   }
 }

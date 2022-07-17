@@ -53,7 +53,7 @@ public class TestCaseWithConstructorInspectionTest extends LightJavaInspectionTe
       "public class Parameterized extends Runner {\n" +
       "    @Retention(RetentionPolicy.RUNTIME)\n" +
       "    @Target(ElementType.METHOD)\n" +
-      "    public static @interface Parameters {\n" +
+      "    public @interface Parameters {\n" +
       "    }" +
       "}",
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -17,13 +17,8 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.highlighter.markers.TestableLineMarkerNavigator
 import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.TagsTestDataUtil
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.junit.Assert
 import java.io.File
@@ -48,25 +43,37 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
     }
 
     fun doTest(unused: String, additionalCheck: () -> Unit) {
-        val fileText = FileUtil.loadFile(testDataFile())
+        val fileText = FileUtil.loadFile(dataFile())
         try {
             ConfigLibraryUtil.configureLibrariesByDirective(myFixture.module, fileText)
             if (InTextDirectivesUtils.findStringWithPrefixes(fileText, "METHOD_SEPARATORS") != null) {
                 DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS = true
             }
 
+            val dependencySuffixes = listOf(".dependency.kt", ".dependency.java", ".dependency1.kt", ".dependency2.kt")
+            for (suffix in dependencySuffixes) {
+                val dependencyPath = fileName().replace(".kt", suffix)
+                if (File(testDataDirectory, dependencyPath).exists()) {
+                    val file = myFixture.configureByFile(dependencyPath)
+                    val text = file.text
+                    Unit
+                }
+            }
+
             myFixture.configureByFile(fileName())
             val project = myFixture.project
             val document = myFixture.editor.document
+
+            val ktFile = myFixture.file as KtFile
 
             val data = ExpectedHighlightingData(document, false, false, false)
             data.init()
 
             PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-            val markers = doAndCheckHighlighting(myFixture.file, document, data, testDataFile())
+            val markers = doAndCheckHighlighting(ktFile, document, data, dataFile())
 
-            assertNavigationElements(myFixture.project, myFixture.file as KtFile, markers)
+            assertNavigationElements(myFixture.project, ktFile, markers)
             additionalCheck()
         } catch (exc: Exception) {
             throw RuntimeException(exc)

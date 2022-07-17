@@ -1,18 +1,29 @@
 PyFile:PatternMatchingRecoveryNoSubjectAfterMatch.py
-  PyMatchStatement
-    PsiElement(Py:MATCH_KEYWORD)('match')
-    PsiErrorElement:Expression expected
-      <empty list>
-    PsiElement(Py:COLON)(':')
-    PsiWhiteSpace('\n    ')
-    PyCaseClause
-      PsiElement(Py:CASE_KEYWORD)('case')
-      PsiWhiteSpace(' ')
-      PyLiteralPattern
-        PyNumericLiteralExpression
-          PsiElement(Py:INTEGER_LITERAL)('1')
+  PyTypeDeclarationStatement
+    PyTargetExpression: match
+      PsiElement(Py:IDENTIFIER)('match')
+    PyAnnotation
       PsiElement(Py:COLON)(':')
-      PsiWhiteSpace('\n        ')
-      PyStatementList
-        PyPassStatement
-          PsiElement(Py:PASS_KEYWORD)('pass')
+      PsiErrorElement:Expression expected
+        <empty list>
+  PsiWhiteSpace('\n    ')
+  PsiErrorElement:Unexpected indent
+    <empty list>
+  PyExpressionStatement
+    PyReferenceExpression: case
+      PsiElement(Py:IDENTIFIER)('case')
+    PsiErrorElement:End of statement expected
+      <empty list>
+  PsiWhiteSpace(' ')
+  PyTypeDeclarationStatement
+    PyNumericLiteralExpression
+      PsiElement(Py:INTEGER_LITERAL)('1')
+    PyAnnotation
+      PsiElement(Py:COLON)(':')
+      PsiErrorElement:Expression expected
+        <empty list>
+  PsiWhiteSpace('\n        ')
+  PsiErrorElement:Unexpected indent
+    <empty list>
+  PyPassStatement
+    PsiElement(Py:PASS_KEYWORD)('pass')

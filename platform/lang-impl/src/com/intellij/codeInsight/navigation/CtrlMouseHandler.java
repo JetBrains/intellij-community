@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -17,7 +18,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
@@ -37,6 +41,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -73,6 +78,10 @@ import java.util.concurrent.Future;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_GOTO_DECLARATION;
 
+/**
+ * @deprecated Unused in v2 implementation.
+ */
+@Deprecated
 @ApiStatus.Internal
 public final class CtrlMouseHandler {
   static final Logger LOG = Logger.getInstance(CtrlMouseHandler.class);
@@ -170,6 +179,9 @@ public final class CtrlMouseHandler {
 
   public CtrlMouseHandler(@NotNull Project project) {
     myProject = project;
+    if (Registry.is("documentation.v2.ctrl.mouse")) {
+      return;
+    }
     StartupManager.getInstance(project).runAfterOpened(() -> {
       EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
       eventMulticaster.addEditorMouseListener(myEditorMouseAdapter, project);
@@ -446,6 +458,8 @@ public final class CtrlMouseHandler {
       myHighlighter = installHighlighterSet(info, editor, highlighterOnly);
 
       if (highlighterOnly || docInfo.text == null) return;
+
+      UIEventLogger.QuickNavigateInfoPopupShown.log(myProject, docInfo.context == null ? null : docInfo.context.getLanguage());
 
       HyperlinkListener hyperlinkListener = docInfo.docProvider == null || docInfo.context == null
                                    ? null

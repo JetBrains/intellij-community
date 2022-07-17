@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.spock;
 
+import com.intellij.codeInsight.daemon.impl.GlobalUsageHelper;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -95,5 +96,10 @@ public final class SpockUtils {
       if (SpockConstants.FEATURE_METHOD_LABELS.contains(label)) return true;
     }
     return false;
+  }
+
+  public static boolean isUnusedInSpock(@NotNull GrMethod method, @NotNull GlobalUsageHelper helper) {
+    PsiClass containingClass = method.getContainingClass();
+    return isSpecification(containingClass) && !isTestMethod(method) && !isFixtureMethod(method) && !helper.isLocallyUsed(method);
   }
 }

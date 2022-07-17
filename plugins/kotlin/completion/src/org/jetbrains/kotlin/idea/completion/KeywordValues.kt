@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComme
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.types.KotlinTypeFactory
+import org.jetbrains.kotlin.types.TypeAttributes
 import org.jetbrains.kotlin.types.TypeProjectionImpl
 import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.types.typeUtil.isBooleanOrNullableBoolean
@@ -61,8 +62,7 @@ object KeywordValues {
         if (callTypeAndReceiver is CallTypeAndReceiver.DEFAULT) {
             val booleanInfoMatcher = matcher@{ info: ExpectedInfo ->
                 // no sense in true or false as if-condition or when entry for when with no subject
-                val additionalData = info.additionalData
-                val skipTrueFalse = when (additionalData) {
+                val skipTrueFalse = when (val additionalData = info.additionalData) {
                     is IfConditionAdditionalData -> true
                     is WhenEntryAdditionalData -> !additionalData.whenWithSubject
                     else -> false
@@ -71,7 +71,7 @@ object KeywordValues {
                     return@matcher ExpectedInfoMatch.noMatch
                 }
 
-                if (info.fuzzyType?.type?.isBooleanOrNullableBoolean() ?: false)
+                if (info.fuzzyType?.type?.isBooleanOrNullableBoolean() == true)
                     ExpectedInfoMatch.match(TypeSubstitutor.EMPTY)
                 else
                     ExpectedInfoMatch.noMatch
@@ -114,7 +114,7 @@ object KeywordValues {
                 @OptIn(FrontendInternals::class)
                 val kClassDescriptor = resolutionFacade.getFrontendService(ReflectionTypes::class.java).kClass
                 val classLiteralType =
-                    KotlinTypeFactory.simpleNotNullType(Annotations.EMPTY, kClassDescriptor, listOf(TypeProjectionImpl(qualifierType)))
+                    KotlinTypeFactory.simpleNotNullType(TypeAttributes.Empty, kClassDescriptor, listOf(TypeProjectionImpl(qualifierType)))
                 val kClassTypes = listOf(classLiteralType.toFuzzyType(emptyList()))
                 val kClassMatcher = { info: ExpectedInfo -> kClassTypes.matchExpectedInfo(info) }
                 consumer.consume("class", kClassMatcher, priority =  SmartCompletionItemPriority.CLASS_LITERAL) {
@@ -127,7 +127,7 @@ object KeywordValues {
 
                     if (javaLangClassDescriptor != null) {
                         val javaLangClassType = KotlinTypeFactory.simpleNotNullType(
-                            Annotations.EMPTY,
+                            TypeAttributes.Empty,
                             javaLangClassDescriptor,
                             listOf(TypeProjectionImpl(qualifierType))
                         )

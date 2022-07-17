@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CommonActionsManager;
@@ -16,6 +16,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -29,11 +30,12 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcs.commit.CommitSessionCollector;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.*;
@@ -56,13 +58,11 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTO
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
-import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.ar;
-import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.ThreeStateCheckBox.State;
-import static java.util.stream.Collectors.toList;
 
 public abstract class ChangesTree extends Tree implements DataProvider {
+  @ApiStatus.Internal @NonNls public static final String LOG_COMMIT_SESSION_EVENTS = "LogCommitSessionEvents";
+
   @NotNull protected final Project myProject;
   private boolean myShowCheckboxes;
   @Nullable private ClickListener myCheckBoxClickHandler;
@@ -84,7 +84,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @Deprecated @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
   @NonNls protected static final String GROUPING_KEYS = "ChangesTree.GroupingKeys";
 
-  public static final String[] DEFAULT_GROUPING_KEYS = ar(DIRECTORY_GROUPING, MODULE_GROUPING);
+  public static final List<String> DEFAULT_GROUPING_KEYS = List.of(DIRECTORY_GROUPING, MODULE_GROUPING);
 
   @NonNls public static final String GROUP_BY_ACTION_GROUP = "ChangesView.GroupBy";
 
@@ -92,12 +92,13 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull private TreeExpander myTreeExpander = new MyTreeExpander();
 
   private boolean myModelUpdateInProgress;
+  private AWTEvent myEventProcessingInProgress;
 
   public ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
-    this(project, showCheckboxes, highlightProblems, false);
+    this(project, showCheckboxes, highlightProblems, true);
   }
 
-  protected ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems, boolean expandInSpeedSearch) {
+  protected ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems, boolean withSpeedSearch) {
     super(ChangesBrowserNode.createRoot());
     myProject = project;
     myShowCheckboxes = showCheckboxes;
@@ -108,7 +109,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setRootVisible(false);
     setShowsRootHandles(true);
     setOpaque(false);
-    new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, expandInSpeedSearch);
+    if (withSpeedSearch) {
+      new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, false);
+    }
 
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
     setCellRenderer(new ChangesTreeCellRenderer(nodeRenderer));
@@ -124,13 +127,23 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setEmptyText(DiffBundle.message("diff.count.differences.status.text", 0));
 
     myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(this);
+
+    installCommitSessionEventsListeners();
+
+    if (Registry.is("vcs.changes.tree.use.fixed.height.renderer")) {
+      putClientProperty(DefaultTreeUI.LARGE_MODEL_ALLOWED, true);
+      ChangesBrowserFilePathNode sampleNode = new ChangesBrowserFilePathNode(VcsUtil.getFilePath("ChangesTreeDummy.java"), null);
+      Component component = nodeRenderer.getTreeCellRendererComponent(this, sampleNode, true, true, true, 0, true);
+      setRowHeight(component.getPreferredSize().height);
+      setLargeModel(true);
+    }
   }
 
   /**
    * There is special logic for {@link DnDAware} components in
    * {@link IdeGlassPaneImpl#dispatch(AWTEvent)} that doesn't call
    * {@link Component#processMouseEvent(MouseEvent)} in case of mouse clicks over selection.
-   *
+   * <p>
    * So we add "checkbox mouse clicks" handling as a listener.
    */
   private ClickListener installCheckBoxClickHandler() {
@@ -140,7 +153,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         TreePath path = getPathIfCheckBoxClicked(event.getPoint());
         if (path != null) {
           setSelectionPath(path);
-          toggleChanges(getIncludableUserObjects(selected(ChangesTree.this)));
+          List<Object> selected = getIncludableUserObjects(selected(ChangesTree.this));
+          boolean exclude = toggleChanges(selected);
+          logInclusionToggleEvents(exclude, event);
         }
         return false;
       }
@@ -198,13 +213,15 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return result;
   }
 
-  protected static void installGroupingSupport(@NotNull ChangesTree tree, @NotNull ChangesGroupingSupport groupingSupport,
-                                               @NotNull @NonNls String propertyName, @NonNls String... defaultGroupingKeys) {
-    groupingSupport.setGroupingKeysOrSkip(set(notNull(PropertiesComponent.getInstance(tree.getProject()).getValues(propertyName),
-                                                      defaultGroupingKeys)));
+  protected static void installGroupingSupport(@NotNull ChangesTree tree,
+                                               @NotNull ChangesGroupingSupport groupingSupport,
+                                               @NotNull @NonNls String propertyName,
+                                               @NonNls List<String> defaultGroupingKeys) {
+    groupingSupport.setGroupingKeysOrSkip(
+      Set.copyOf(Objects.requireNonNullElse(PropertiesComponent.getInstance(tree.getProject()).getList(propertyName),
+                                            defaultGroupingKeys)));
     groupingSupport.addPropertyChangeListener(e -> {
-      PropertiesComponent.getInstance(tree.getProject()).setValues(propertyName,
-                                                                   ArrayUtilRt.toStringArray(groupingSupport.getGroupingKeys()));
+      PropertiesComponent.getInstance(tree.getProject()).setList(propertyName, groupingSupport.getGroupingKeys());
 
       List<Object> oldSelection = selected(tree).userObjects();
       tree.rebuildTree();
@@ -216,8 +233,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     PropertiesComponent properties = PropertiesComponent.getInstance(myProject);
 
     if (properties.isValueSet(FLATTEN_OPTION_KEY)) {
-      properties.setValues(GROUPING_KEYS, properties.isTrueValue(FLATTEN_OPTION_KEY) ? ArrayUtilRt.EMPTY_STRING_ARRAY
-                                                                                     : DEFAULT_GROUPING_KEYS);
+      properties.setList(GROUPING_KEYS, properties.isTrueValue(FLATTEN_OPTION_KEY) ? Collections.emptyList() : DEFAULT_GROUPING_KEYS);
       properties.unsetValue(FLATTEN_OPTION_KEY);
     }
   }
@@ -240,15 +256,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     addTreeSelectionListener(listener);
     if (parent != null) Disposer.register(parent, () -> removeTreeSelectionListener(listener));
-  }
-
-  /**
-   * @deprecated Use {@link #setDoubleClickAndEnterKeyHandler(Runnable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void setDoubleClickHandler(@NotNull Runnable doubleClickHandler) {
-    setDoubleClickAndEnterKeyHandler(doubleClickHandler);
   }
 
   public void setDoubleClickAndEnterKeyHandler(@NotNull Runnable handler) {
@@ -344,7 +351,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     Enumeration enumeration = getRoot().depthFirstEnumeration();
 
     while (isFlat && enumeration.hasMoreElements()) {
-      isFlat = ((ChangesBrowserNode)enumeration.nextElement()).getLevel() <= 1;
+      isFlat = ((ChangesBrowserNode<?>)enumeration.nextElement()).getLevel() <= 1;
     }
 
     return isFlat;
@@ -510,7 +517,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     getInclusionModel().removeInclusion(changes);
   }
 
-  protected void toggleChanges(@NotNull Collection<?> changes) {
+  protected boolean toggleChanges(@NotNull Collection<?> changes) {
     boolean hasExcluded = false;
     for (Object item : changes) {
       if (getInclusionModel().getInclusionState(item) != State.SELECTED) {
@@ -521,9 +528,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     if (hasExcluded) {
       includeChanges(changes);
+      return false;
     }
     else {
       excludeChanges(changes);
+      return true;
     }
   }
 
@@ -541,6 +550,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   public void expandDefaults() {
+    // expanding lots of nodes is a slow operation (and result is not very useful)
+    if (TreeUtil.hasManyNodes(this, 30000)) {
+      return;
+    }
     TreeUtil.promiseExpand(this, path -> {
       Object node = path.getLastPathComponent();
       if (node instanceof ChangesBrowserNode && !((ChangesBrowserNode<?>)node).shouldExpandByDefault()) {
@@ -562,8 +575,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   /**
    * @deprecated See {@link ChangesTree#GROUP_BY_ACTION_GROUP}, {@link TreeActionsToolbarPanel}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public AnAction[] getTreeActions() {
     return new AnAction[]{
       ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP),
@@ -659,10 +671,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull
   protected List<Object> getIncludableUserObjects(@NotNull VcsTreeModelData treeModelData) {
     return treeModelData
-      .nodesStream()
+      .iterateNodes()
       .filter(node -> isIncludable(node))
-      .map(node -> node.getUserObject())
-      .collect(toList());
+      .map(node -> (Object)node.getUserObject())
+      .toList();
   }
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {
@@ -674,7 +686,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       List<Object> changes = getIncludableUserObjects(!isSelectionEmpty() ? selected(ChangesTree.this) : all(ChangesTree.this));
-      if (!changes.isEmpty()) toggleChanges(changes);
+      if (changes.isEmpty()) return;
+      boolean exclude = toggleChanges(changes);
+      logInclusionToggleEvents(exclude, e);
     }
   }
 
@@ -732,7 +746,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   public Color getFileColorForPath(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
     if (component instanceof ChangesBrowserNode<?>) {
-      return ((ChangesBrowserNode)component).getBackgroundColor(myProject);
+      return ((ChangesBrowserNode<?>)component).getBackgroundColor(myProject);
     }
     return null;
   }
@@ -740,5 +754,42 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @Override
   public int getToggleClickCount() {
     return -1;
+  }
+
+  @Override
+  protected void processEvent(AWTEvent e) {
+    myEventProcessingInProgress = e;
+    try {
+      super.processEvent(e);
+    }
+    finally {
+      myEventProcessingInProgress = null;
+    }
+  }
+
+  private void installCommitSessionEventsListeners() {
+    addSelectionListener(() -> {
+      if (myEventProcessingInProgress instanceof MouseEvent && shouldLogCommitSessionEvents()) {
+        CommitSessionCollector.getInstance(myProject).logFileSelected((MouseEvent)myEventProcessingInProgress);
+      }
+    });
+  }
+
+  @ApiStatus.Internal
+  public void logInclusionToggleEvents(boolean exclude, @NonNls MouseEvent event) {
+    if (shouldLogCommitSessionEvents()) {
+      CommitSessionCollector.getInstance(myProject).logInclusionToggle(exclude, event);
+    }
+  }
+
+  @ApiStatus.Internal
+  public void logInclusionToggleEvents(boolean exclude, @NotNull AnActionEvent event) {
+    if (shouldLogCommitSessionEvents()) {
+      CommitSessionCollector.getInstance(myProject).logInclusionToggle(exclude, event);
+    }
+  }
+
+  private boolean shouldLogCommitSessionEvents() {
+    return Boolean.TRUE.equals(getClientProperty(LOG_COMMIT_SESSION_EVENTS));
   }
 }

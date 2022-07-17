@@ -1,23 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.ToolbarSettings;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
@@ -25,8 +22,10 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnActionButton;
+import com.intellij.ui.BadgeIconSupplier;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,21 +36,25 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Alexander Lobas
  */
 public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider {
-  private boolean myShowPopup = true;
+  private static final BadgeIconSupplier GEAR_ICON = new BadgeIconSupplier(AllIcons.General.GearPlain);
+  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
+
+  public SettingsEntryPointAction() {
+    super(IdeBundle.messagePointer("settings.entry.point.tooltip"));
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     resetActionIcon();
 
-    if (myShowPopup) {
-      myShowPopup = false;
-      ListPopup popup = createMainPopup(e.getDataContext(), () -> myShowPopup = true);
+    if (myPopupState.isHidden() && !myPopupState.isRecentlyHidden()) {
+      ListPopup popup = createMainPopup(e.getDataContext());
+      myPopupState.prepareToShow(popup);
       PopupUtil.showForActionButtonEvent(popup, e);
     }
   }
@@ -59,9 +62,14 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setText("");
+    if (e.isFromActionToolbar()) presentation.setText("");
     presentation.setDescription(getActionTooltip());
     presentation.setIcon(getActionIcon());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static AnAction @NotNull [] getTemplateActions() {
@@ -70,7 +78,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   @NotNull
-  private static ListPopup createMainPopup(@NotNull DataContext context, @NotNull Runnable disposeCallback) {
+  private static ListPopup createMainPopup(@NotNull DataContext context) {
     List<AnAction> appActions = new ArrayList<>();
     List<AnAction> pluginActions = new ArrayList<>();
 
@@ -105,12 +113,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       }
       else {
         String text = child.getTemplateText();
-        if (text != null && !text.endsWith("...")) {
+        if (text != null && !(text.endsWith("...") || text.endsWith("…") )) {
           AnActionButton button = new AnActionButton.AnActionButtonWrapper(child.getTemplatePresentation(), child) {
             @Override
             public void updateButton(@NotNull AnActionEvent e) {
               getDelegate().update(e);
-              e.getPresentation().setText(e.getPresentation().getText() + "...");
+              e.getPresentation().setText(e.getPresentation().getText() + "…");
             }
 
             @Override
@@ -129,10 +137,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     return JBPopupFactory.getInstance()
-      .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true, () -> {
-        AppExecutorUtil.getAppScheduledExecutorService().schedule(
-          () -> ApplicationManager.getApplication().invokeLater(disposeCallback, ModalityState.any()), 250, TimeUnit.MILLISECONDS);
-      }, -1);
+      .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
   }
 
   private static boolean ourShowPlatformUpdateIcon;
@@ -182,12 +187,16 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
   private static @NotNull Icon getActionIcon() {
     if (ourShowPlatformUpdateIcon) {
-      return AllIcons.Ide.Notification.IdeUpdate;
+      return ExperimentalUI.isNewUI()
+             ? GEAR_ICON.getWarningIcon()
+             : AllIcons.Ide.Notification.IdeUpdate;
     }
     if (ourShowPluginsUpdateIcon) {
-      return AllIcons.Ide.Notification.PluginUpdate;
+      return ExperimentalUI.isNewUI()
+             ? GEAR_ICON.getInfoIcon()
+             : AllIcons.Ide.Notification.PluginUpdate;
     }
-    return AllIcons.General.GearPlain;
+    return GEAR_ICON.getOriginalIcon();
   }
 
   private static UISettingsListener mySettingsListener;
@@ -214,7 +223,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
   private static boolean isAvailableInStatusBar() {
     initUISettingsListener();
-    return ToolbarSettings.Companion.getInstance().showSettingsEntryPointInStatusBar();
+    UISettings uiSettings = UISettings.getInstance();
+    ToolbarSettings toolbarSettings = ToolbarSettings.getInstance();
+    return !uiSettings.getShowMainToolbar() &&
+           !uiSettings.getShowNavigationBar() &&
+           !ExperimentalUI.isNewUI() &&
+           !(toolbarSettings.isEnabled() && toolbarSettings.isVisible());
   }
 
   private static final String WIDGET_ID = "settingsEntryPointWidget";
@@ -252,8 +266,8 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   private static class MyStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
+    private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
     private StatusBar myStatusBar;
-    private boolean myShowPopup = true;
 
     @Override
     public @NotNull String ID() {
@@ -281,13 +295,13 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
         resetActionIcon();
         myStatusBar.updateWidget(WIDGET_ID);
 
-        if (!myShowPopup) {
+        if (!myPopupState.isHidden() || myPopupState.isRecentlyHidden()) {
           return;
         }
-        myShowPopup = false;
 
         Component component = event.getComponent();
-        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component), () -> myShowPopup = true);
+        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component));
+        myPopupState.prepareToShow(popup);
         popup.addListener(new JBPopupListener() {
           @Override
           public void beforeShown(@NotNull LightweightWindowEvent event) {
@@ -326,6 +340,10 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     public boolean isIdeUpdate() {
+      return false;
+    }
+
+    public boolean isRestartRequired() {
       return false;
     }
 

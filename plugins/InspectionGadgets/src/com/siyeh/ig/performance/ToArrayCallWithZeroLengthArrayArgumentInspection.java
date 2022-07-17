@@ -106,7 +106,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   public BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!COLLECTION_TO_ARRAY.test(call)) return;
         final PsiExpression argument = call.getArgumentList().getExpressions()[0];
         final PsiType type = argument.getType();

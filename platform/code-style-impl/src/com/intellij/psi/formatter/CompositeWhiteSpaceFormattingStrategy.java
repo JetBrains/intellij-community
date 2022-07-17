@@ -21,7 +21,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -34,15 +33,17 @@ import java.util.List;
  */
 public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormattingStrategy {
 
-  private final List<WhiteSpaceFormattingStrategy> myStrategies = new ArrayList<>();
-  private boolean myReplaceDefaultStrategy;
+  private final List<WhiteSpaceFormattingStrategy> myStrategies;
+  private final boolean myReplaceDefaultStrategy;
 
-  public CompositeWhiteSpaceFormattingStrategy(@NotNull Collection<? extends WhiteSpaceFormattingStrategy> strategies)
-    throws IllegalArgumentException
-  {
-    for (WhiteSpaceFormattingStrategy strategy : strategies) {
-      addStrategy(strategy);
-    }
+  public CompositeWhiteSpaceFormattingStrategy(boolean replaceDefaultStrategy,
+                                               @NotNull Collection<? extends WhiteSpaceFormattingStrategy> strategies) {
+    myStrategies = List.copyOf(strategies);
+    myReplaceDefaultStrategy = replaceDefaultStrategy;
+  }
+
+  public CompositeWhiteSpaceFormattingStrategy(@NotNull Collection<? extends WhiteSpaceFormattingStrategy> strategies) {
+    this(false, strategies);
   }
 
   @Override
@@ -57,7 +58,7 @@ public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormatti
         }
       }
       if (offset == oldOffset) {
-        return start;
+        return offset;
       }
     }
     return offset;
@@ -66,17 +67,6 @@ public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormatti
   @Override
   public boolean replaceDefaultStrategy() {
     return myReplaceDefaultStrategy;
-  }
-
-  public void addStrategy(@NotNull WhiteSpaceFormattingStrategy strategy) throws IllegalArgumentException {
-    if (myReplaceDefaultStrategy && strategy.replaceDefaultStrategy()) {
-      throw new IllegalArgumentException(String.format(
-        "Can't combine strategy '%s' with already registered strategies (%s). Reason: given strategy is marked to replace "
-        + "all existing strategies but strategy with such characteristics is already registered", strategy, myStrategies
-      ));
-    }
-    myStrategies.add(strategy);
-    myReplaceDefaultStrategy |= strategy.replaceDefaultStrategy();
   }
 
   @NotNull

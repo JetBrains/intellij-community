@@ -8,17 +8,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="library" name="pty4j" level="project" />
-    <orderEntry type="library" name="winp" level="project" />
-    <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="library" name="netty-buffer" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util.strings" />
-    <orderEntry type="library" name="proxy-vole" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" />
   </component>
 </module>

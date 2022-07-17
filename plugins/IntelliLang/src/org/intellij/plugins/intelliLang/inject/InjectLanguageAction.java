@@ -26,14 +26,16 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.injection.Injectable;
@@ -59,6 +61,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.util.InjectActionsUtils.ENABLED_FOR_HOST;
 
 public class InjectLanguageAction implements IntentionAction, LowPriorityAction {
   public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
@@ -104,6 +108,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
   public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     if (host == null) return false;
+    if (Boolean.FALSE.equals(host.getUserData(ENABLED_FOR_HOST))) return false;
     List<Pair<PsiElement, TextRange>> injectedPsi = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host);
     if (injectedPsi == null || injectedPsi.isEmpty()) {
       return !InjectedReferencesContributor.isInjected(file.findReferenceAt(editor.getCaretModel().getOffset()));
@@ -130,14 +135,8 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
   public void invoke(@NotNull Project project,
                      @NotNull Editor editor,
                      @NotNull PsiFile file) throws IncorrectOperationException {
-    SmartPsiElementPointer<PsiFile> filePointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(file);
     doChooseLanguageToInject(editor, injectable -> {
-      ReadAction.run(() -> {
-        if (project.isDisposed()) return;
-        PsiFile psiFile = filePointer.getElement();
-        if (psiFile == null || editor.isDisposed()) return;
-        invokeImpl(project, editor, psiFile, injectable);
-      });
+      invokeImpl(project, editor, file, injectable);
       return false;
     });
   }
@@ -274,7 +273,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
                  @NotNull TextRange range,
                  @NotNull SmartPsiElementPointer<PsiLanguageInjectionHost> pointer,
                  @NotNull @Nls String text,
-                 @NotNull Processor<PsiLanguageInjectionHost> data);
+                 @NotNull Processor<? super PsiLanguageInjectionHost> data);
   }
 
 

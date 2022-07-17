@@ -352,7 +352,7 @@ public final class PushController implements Disposable {
   }
 
   private void updateLoadingPanel() {
-    myPushLog.getTree().setPaintBusy(hasLoadingNodes(myView2Model.keySet()));
+    myPushLog.setBusyLoading(hasLoadingNodes(myView2Model.keySet()));
   }
 
   private boolean shouldSelectNodeAfterLoad(@NotNull MyRepoModel<?, ?, ?> model) {
@@ -551,6 +551,7 @@ public final class PushController implements Disposable {
 
   @Override
   public void dispose() {
+    Disposer.dispose(myPushLog);
     myExecutorService.shutdownNow();
   }
 

@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.icons.AllIcons.Toolwindows
 import com.intellij.ide.PowerSaveMode
 import com.intellij.ide.TreeExpander
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.application.ApplicationManager.getApplication
@@ -17,16 +15,20 @@ import com.intellij.openapi.editor.markup.AnalyzingType
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
-import javax.swing.Icon
 
-open class HighlightingPanel(project: Project, state: ProblemsViewState)
-  : ProblemsViewPanel(project, state, ProblemsViewBundle.messagePointer("problems.view.highlighting")),
+class HighlightingPanel(project: Project, state: ProblemsViewState)
+  : ProblemsViewPanel(project, ID, state, ProblemsViewBundle.messagePointer("problems.view.highlighting")),
     FileEditorManagerListener, PowerSaveMode.Listener {
 
-  private val statusUpdateAlarm = SingleAlarm(Runnable(this::updateStatus), 200, stateForComponent(this), this)
+  companion object {
+    const val ID = "CurrentFile"
+  }
+
+  private val statusUpdateAlarm = SingleAlarm(Runnable(this::updateStatus), 200, this, ThreadToUse.SWING_THREAD, stateForComponent(this))
   private var previousStatus: Status? = null
 
   init {
@@ -44,16 +46,6 @@ open class HighlightingPanel(project: Project, state: ProblemsViewState)
   override fun getData(dataId: String): Any? {
     if (CommonDataKeys.VIRTUAL_FILE.`is`(dataId)) return currentFile
     return super.getData(dataId)
-  }
-
-  override fun getToolWindowIcon(count: Int): Icon? {
-    if (ProblemsView.isProjectErrorsEnabled()) return null
-    val root = currentRoot ?: return Toolwindows.ToolWindowProblemsEmpty
-    val problem = root.getChildren(root.file).any {
-      val severity = (it as? ProblemNode)?.severity
-      severity != null && severity >= HighlightSeverity.ERROR.myVal
-    }
-    return if (problem) Toolwindows.ToolWindowProblems else Toolwindows.ToolWindowProblemsEmpty
   }
 
   override fun selectionChangedTo(selected: Boolean) {
@@ -84,7 +76,7 @@ open class HighlightingPanel(project: Project, state: ProblemsViewState)
     currentFile = ClientId.withClientId(myClientId) { findCurrentFile() }
   }
 
-  val currentRoot
+  internal val currentRoot
     get() = treeModel.root as? HighlightingFileRoot
 
   var currentFile
@@ -102,7 +94,7 @@ open class HighlightingPanel(project: Project, state: ProblemsViewState)
       powerSaveStateChanged()
     }
 
-  protected open fun getRoot(file: VirtualFile): HighlightingFileRoot = HighlightingFileRoot(this, file)
+  internal fun getRoot(file: VirtualFile): HighlightingFileRoot = HighlightingFileRoot(this, file)
 
   fun selectHighlighter(highlighter: RangeHighlighterEx) {
     val problem = currentRoot?.findProblem(highlighter) ?: return

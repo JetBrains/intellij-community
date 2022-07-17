@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.configurationStore.OLD_NAME_CONVERTER
@@ -93,7 +93,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
   }
 
   private fun getDirectoryVcsIgnoredStatus(project: Project, dirPathString: String): IgnoredCheckResult {
-    val dirPath = VcsContextFactory.SERVICE.getInstance().createFilePath(dirPathString, true)
+    val dirPath = VcsContextFactory.getInstance().createFilePath(dirPathString, true)
     val vcsRoot = VcsUtil.getVcsRootFor(project, dirPath) ?: return NotIgnored
     return getCheckerForFile(project, dirPath)?.isFilePatternIgnored(vcsRoot, dirPathString) ?: NotIgnored
   }
@@ -174,7 +174,7 @@ private fun checkConfigurationVcsIgnored(project: Project, configurationFileName
   val stateStore = project.stateStore
   val dotIdea = stateStore.directoryStorePath
   if (dotIdea != null) {
-    val dotIdeaVcsPath = VcsContextFactory.SERVICE.getInstance().createFilePath(dotIdea, true)
+    val dotIdeaVcsPath = VcsContextFactory.getInstance().createFilePath(dotIdea, true)
     val vcsRootForIgnore = VcsUtil.getVcsRootFor(project, dotIdeaVcsPath) ?: return NotIgnored
     val filePattern = "${dotIdea.systemIndependentPath}/$RUN_CONFIGURATIONS_DIRECTORY/$configurationFileName*.xml" // NON-NLS
     return getCheckerForFile(project, dotIdeaVcsPath)
@@ -182,7 +182,7 @@ private fun checkConfigurationVcsIgnored(project: Project, configurationFileName
   }
   else {
     val projectFile = stateStore.projectFilePath
-    val projectFileVcsPath = VcsContextFactory.SERVICE.getInstance().createFilePath(projectFile, false)
+    val projectFileVcsPath = VcsContextFactory.getInstance().createFilePath(projectFile, false)
     val vcsRootForIgnore = VcsUtil.getVcsRootFor(project, projectFileVcsPath) ?: return NotIgnored
     return getCheckerForFile(project, projectFileVcsPath)
              ?.isIgnored(vcsRootForIgnore, projectFile) ?: NotIgnored

@@ -13,19 +13,19 @@ of a class, it can almost always be <code>static</code>.
 <p>Making the updater <code>final</code> allows the JVM to optimize access for improved performance.</p>
 
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class Main {
     private volatile int id;
     private AtomicIntegerFieldUpdater&lt;Main&gt; idFieldUpdater = AtomicIntegerFieldUpdater.newUpdater(Main.class, "id");
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   class Main {
     private volatile int id;
     private static final AtomicIntegerFieldUpdater&lt;Main&gt; idFieldUpdater = AtomicIntegerFieldUpdater.newUpdater(Main.class, "id");
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

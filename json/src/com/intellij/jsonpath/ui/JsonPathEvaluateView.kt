@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jsonpath.ui
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
@@ -8,7 +8,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.json.JsonBundle
-import com.intellij.json.json5.Json5FileType
+import com.intellij.json.JsonFileType
 import com.intellij.json.psi.JsonFile
 import com.intellij.jsonpath.JsonPathFileType
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_EXPRESSION_KEY
@@ -42,6 +42,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.popup.PopupState
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jayway.jsonpath.Configuration
@@ -191,7 +192,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
         panel.add(JLabel(JsonBundle.message("jsonpath.evaluate.output.option")),
                   GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insetsLeft(5), 0, 0))
         panel.add(super.createCustomComponent(presentation, place),
-                  GridBagConstraints(1, 0, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0))
+                  GridBagConstraints(1, 0, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBInsets.emptyInsets(), 0, 0))
         return panel
       }
     }
@@ -209,7 +210,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
   }
 
   protected fun initJsonEditor(fileName: String, isViewer: Boolean, kind: EditorKind): Editor {
-    val sourceVirtualFile = LightVirtualFile(fileName, Json5FileType.INSTANCE, "")
+    val sourceVirtualFile = LightVirtualFile(fileName, JsonFileType.INSTANCE, "") // require strict JSON with quotes
     val sourceFile = PsiManager.getInstance(project).findFile(sourceVirtualFile)!!
     val document = PsiDocumentManager.getInstance(project).getDocument(sourceFile)!!
 
@@ -266,6 +267,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
       is IncorrectDocument -> setError(result.message)
       is ResultNotFound -> setError(result.message)
       is ResultString -> setResult(result.value)
+      else -> {}
     }
 
     if (result != null && result !is IncorrectExpression) {

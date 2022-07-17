@@ -1,6 +1,7 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'firstOrNull{}'"
 // IS_APPLICABLE_2: false
+// AFTER-WARNING: Variable 'result' is never used
 fun foo(list: List<String>) {
     // string should be non-empty
     // save it into result

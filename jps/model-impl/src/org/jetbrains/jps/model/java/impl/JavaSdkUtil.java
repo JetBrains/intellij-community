@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,7 +19,7 @@ import java.util.Set;
 
 public final class JavaSdkUtil {
   /** @deprecated use {@link #getJdkClassesRoots(Path, boolean)} instead */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @NotNull List<File> getJdkClassesRoots(@NotNull File home, boolean isJre) {
     return ContainerUtil.map(getJdkClassesRoots(home.toPath(), isJre), Path::toFile);
@@ -28,22 +27,13 @@ public final class JavaSdkUtil {
 
   public static @NotNull List<Path> getJdkClassesRoots(@NotNull Path home, boolean isJre) {
     Path[] jarDirs;
-    if (SystemInfo.isMac && !home.getFileName().startsWith("mockJDK")) {
-      Path openJdkRtJar = home.resolve("jre/lib/rt.jar");
-      if (Files.isReadable(openJdkRtJar)) {
-        Path libDir = home.resolve("lib");
-        Path classesDir = openJdkRtJar.getParent();
-        Path libExtDir = openJdkRtJar.resolveSibling("ext");
-        Path libEndorsedDir = libDir.resolve("endorsed");
-        jarDirs = new Path[]{libEndorsedDir, libDir, classesDir, libExtDir};
-      }
-      else {
-        Path libDir = home.resolve("lib");
-        Path classesDir = home.resolveSibling("Classes");
-        Path libExtDir = libDir.resolve("ext");
-        Path libEndorsedDir = libDir.resolve("endorsed");
-        jarDirs = new Path[]{libEndorsedDir, libDir, classesDir, libExtDir};
-      }
+    Path fileName = home.getFileName();
+    if (fileName != null && "Home".equals(fileName.toString()) && Files.exists(home.resolve("../Classes/classes.jar"))) {
+      Path libDir = home.resolve("lib");
+      Path classesDir = home.resolveSibling("Classes");
+      Path libExtDir = libDir.resolve("ext");
+      Path libEndorsedDir = libDir.resolve("endorsed");
+      jarDirs = new Path[]{libEndorsedDir, libDir, classesDir, libExtDir};
     }
     else if (Files.exists(home.resolve("lib/jrt-fs.jar"))) {
       jarDirs = new Path[0];

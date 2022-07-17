@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -34,7 +35,7 @@ public final class MavenArtifactSearchDialog extends DialogWrapper {
 
   @NotNull
   public static List<MavenId> searchForClass(Project project, String className) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (MavenUtil.isMavenUnitTestModeEnabled()) {
       assert ourResultForTest != null;
 
       List<MavenId> res = ourResultForTest;
@@ -52,7 +53,7 @@ public final class MavenArtifactSearchDialog extends DialogWrapper {
 
   @NotNull
   public static List<MavenId> searchForArtifact(Project project, Collection<MavenDomDependency> managedDependencies) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (MavenUtil.isMavenUnitTestModeEnabled()) {
       assert ourResultForTest != null;
 
       List<MavenId> res = ourResultForTest;

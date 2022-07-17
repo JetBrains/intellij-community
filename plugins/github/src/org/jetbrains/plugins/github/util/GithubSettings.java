@@ -3,14 +3,15 @@ package org.jetbrains.plugins.github.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.NotNull;
 
 @State(name = "GithubSettings", storages = {
   @Storage(value = "github.xml"),
-  @Storage(value = "github_settings.xml", deprecated = true)
-})
+  @Storage(value = "github_settings.xml", deprecated = true),
+}, category = SettingsCategory.TOOLS)
 public class GithubSettings implements PersistentStateComponent<GithubSettings.State> {
   private State myState = new State();
 

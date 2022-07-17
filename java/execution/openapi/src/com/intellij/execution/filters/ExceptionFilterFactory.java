@@ -20,12 +20,26 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A factory for console filters that allow highlight exception stacktraces with links to the corresponding code.
+ */
 public interface ExceptionFilterFactory {
   ExtensionPointName<ExceptionFilterFactory> EP_NAME = ExtensionPointName.create("com.intellij.exceptionFilter");
 
+  /**
+   * @param searchScope context-specific search scope (e.g., to search classes mentioned in the exception stack trace)
+   * @return a {@link Filter} instance that produces highlighting information.
+   */
   @NotNull
   Filter create(@NotNull GlobalSearchScope searchScope);
-  
+
+  /**
+   * @param project current project
+   * @param searchScope context-specific search scope (e.g., to search classes mentioned in the exception stack trace)
+   * @return a {@link Filter} instance that produces highlighting information.
+   * Override this method if the project is important. In this case, {@link #create(GlobalSearchScope)} implementation
+   * may delegate to this method with {@code Objects.requireNonNull(searchScope.getProject()), searchScope} parameters.
+   */
   default Filter create(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     return create(searchScope);
   }

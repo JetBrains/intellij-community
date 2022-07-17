@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.actions.MethodSmartStepTarget
+import com.intellij.debugger.actions.SmartStepTarget
 import com.intellij.debugger.engine.BasicStepMethodFilter
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.MethodFilter
@@ -20,24 +21,34 @@ import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
+import com.intellij.psi.PsiElement
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.frame.XStackFrame
-import com.sun.jdi.request.StepRequest
+import junit.framework.AssertionFailedError
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.stepping.KotlinSteppingCommandProvider
-import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.*
+import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler
+import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepTarget
+import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstructionKind
 import org.jetbrains.kotlin.idea.debugger.test.util.render
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.isIgnoredTarget
+import org.jetbrains.kotlin.idea.test.KotlinBaseTest
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinBaseTest
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
+import java.nio.charset.StandardCharsets
 
 abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase() {
     companion object {
@@ -62,27 +73,28 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     private val classPath = mutableListOf<String>()
 
+    private val thrownExceptions = mutableListOf<Throwable>()
+
     private fun initContexts(suspendContext: SuspendContextImpl) {
         myEvaluationContext = createEvaluationContext(suspendContext)
         myDebuggerContext = createDebuggerContext(suspendContext)
         myCommandProvider = JvmSteppingCommandProvider.EP_NAME.extensions.firstIsInstance<KotlinSteppingCommandProvider>()
     }
 
-    private fun SuspendContextImpl.getKotlinStackFrame(): KotlinStackFrame? {
-        val proxy = frameProxy ?: return null
+    private fun SuspendContextImpl.getKotlinStackFrames(): List<KotlinStackFrame> {
+        val proxy = frameProxy ?: return emptyList()
         if (myInProgress) {
             val positionManager = KotlinPositionManager(debugProcess)
-            val stackFrame = positionManager.createStackFrame(
+            return positionManager.createStackFrames(
                 proxy, debugProcess, proxy.location()
-            )
-            return stackFrame as? KotlinStackFrame
+            ).filterIsInstance<KotlinStackFrame>()
         }
-        return null
+        return emptyList()
     }
 
     override fun createEvaluationContext(suspendContext: SuspendContextImpl): EvaluationContextImpl? {
         return try {
-            val proxy = suspendContext.getKotlinStackFrame()?.stackFrameProxy ?: suspendContext.frameProxy
+            val proxy = suspendContext.getKotlinStackFrames().firstOrNull()?.stackFrameProxy ?: suspendContext.frameProxy
             assertNotNull(proxy)
             EvaluationContextImpl(suspendContext, proxy, proxy?.thisObject())
         } catch (e: EvaluateException) {
@@ -90,7 +102,6 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             null
         }
     }
-
 
     internal fun process(instructions: List<SteppingInstruction>) {
         instructions.forEach(this::process)
@@ -119,7 +130,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     private fun SuspendContextImpl.doStepInto(ignoreFilters: Boolean, smartStepFilter: MethodFilter?) {
         val stepIntoCommand =
-            runReadAction { commandProvider.getStepIntoCommand(this, ignoreFilters, smartStepFilter, StepRequest.STEP_LINE) }
+            runReadAction { commandProvider.getStepIntoCommand(this, ignoreFilters, smartStepFilter) }
                 ?: dp.createStepIntoCommand(this, ignoreFilters, smartStepFilter)
 
         dp.managerThread.schedule(stepIntoCommand)
@@ -133,8 +144,13 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     }
 
     override fun tearDown() {
-        super.tearDown()
-        classPath.clear()
+        try {
+            classPath.clear()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
     }
 
     private fun SuspendContextImpl.doStepOver(ignoreBreakpoints: Boolean = false) {
@@ -161,11 +177,56 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             SteppingInstructionKind.SmartStepInto -> loop(instruction.arg) { doSmartStepInto() }
             SteppingInstructionKind.SmartStepIntoByIndex -> doOnBreakpoint { doSmartStepInto(instruction.arg) }
             SteppingInstructionKind.Resume -> loop(instruction.arg) { resume(this) }
+            SteppingInstructionKind.SmartStepTargetsExpectedNumber ->
+                doOnBreakpoint {
+                    checkNumberOfSmartStepTargets(instruction.arg)
+                    resume(this)
+                }
+        }
+    }
+
+    private fun checkNumberOfSmartStepTargets(expectedNumber: Int) {
+        val smartStepFilters = createSmartStepIntoFilters()
+        try {
+            assertEquals(
+                "Actual and expected numbers of smart step targets do not match",
+                expectedNumber,
+                smartStepFilters.size
+            )
+        } catch (ex: AssertionFailedError) {
+            thrownExceptions.add(ex)
         }
     }
 
     private fun SuspendContextImpl.doSmartStepInto(chooseFromList: Int = 0) {
         this.doSmartStepInto(chooseFromList, false)
+    }
+
+    override fun throwExceptionsIfAny() {
+        if (thrownExceptions.isNotEmpty()) {
+            if (!isTestIgnored()) {
+                throw AssertionError(
+                    "Test failed with exceptions:\n${thrownExceptions.renderStackTraces()}"
+                )
+            } else {
+                (checker as? KotlinOutputChecker)?.threwException = true
+            }
+        }
+    }
+
+    private fun List<Throwable>.renderStackTraces(): String {
+        val outputStream = ByteArrayOutputStream()
+        PrintStream(outputStream, true, StandardCharsets.UTF_8).use {
+            for (throwable in this) {
+                throwable.printStackTrace(it)
+            }
+        }
+        return outputStream.toString(StandardCharsets.UTF_8)
+    }
+
+    protected fun isTestIgnored(): Boolean {
+        val outputFile = getExpectedOutputFile()
+        return outputFile.exists() && isIgnoredTarget(targetBackend(), outputFile)
     }
 
     private fun SuspendContextImpl.printContext() {
@@ -183,11 +244,11 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         val filters = createSmartStepIntoFilters()
         if (chooseFromList == 0) {
             filters.forEach {
-                dp.managerThread.schedule(dp.createStepIntoCommand(this, ignoreFilters, it))
+                doStepInto(ignoreFilters, it)
             }
         } else {
             try {
-                dp.managerThread.schedule(dp.createStepIntoCommand(this, ignoreFilters, filters[chooseFromList - 1]))
+                doStepInto(ignoreFilters, filters[chooseFromList - 1])
             } catch (e: IndexOutOfBoundsException) {
                 val elementText = runReadAction { debuggerContext.sourcePosition.elementAt.getElementTextWithContext() }
                 throw AssertionError("Couldn't find smart step into command at: \n$elementText", e)
@@ -195,18 +256,51 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         }
     }
 
-    private fun createSmartStepIntoFilters() = runReadAction {
+    private fun createSmartStepIntoFilters(): List<MethodFilter> {
         val position = debuggerContext.sourcePosition
-
-        val stepTargets = KotlinSmartStepIntoHandler().findSmartStepTargets(position)
-        stepTargets.mapNotNull { stepTarget ->
-            when (stepTarget) {
-                is KotlinLambdaSmartStepTarget -> KotlinLambdaMethodFilter(stepTarget)
-                is KotlinMethodSmartStepTarget -> KotlinOrdinaryMethodFilter(stepTarget)
-                is MethodSmartStepTarget -> BasicStepMethodFilter(stepTarget.method, stepTarget.getCallingExpressionLines())
-                else -> null
+        val stepTargets = KotlinSmartStepIntoHandler()
+            .findStepIntoTargets(position, debuggerSession)
+            .blockingGet(XDebuggerTestUtil.TIMEOUT_MS)
+            ?: error("Couldn't calculate smart step targets")
+        return runReadAction {
+            stepTargets.sortedByPositionInTree().mapNotNull { stepTarget ->
+                when (stepTarget) {
+                    is KotlinSmartStepTarget -> stepTarget.createMethodFilter()
+                    is MethodSmartStepTarget -> BasicStepMethodFilter(stepTarget.method, stepTarget.getCallingExpressionLines())
+                    else -> null
+                }
             }
         }
+    }
+
+    private fun List<SmartStepTarget>.sortedByPositionInTree(): List<SmartStepTarget> {
+        if (isEmpty()) return emptyList()
+        val sortedTargets = MutableList(size) { first() }
+        for ((i, indexInTree) in getIndicesInTree().withIndex()) {
+            sortedTargets[indexInTree] = get(i)
+        }
+        return sortedTargets
+    }
+
+    private fun List<SmartStepTarget>.getIndicesInTree(): List<Int> {
+        val targetsIndicesInTree = MutableList(size) { 0 }
+        runReadAction {
+            val elementAt = debuggerContext.sourcePosition.elementAt
+            val topmostElement = getTopmostElementAtOffset(elementAt, elementAt.textRange.startOffset)
+            topmostElement.accept(object : KtTreeVisitorVoid() {
+                private var elementIndex = 0
+                override fun visitElement(element: PsiElement) {
+                    for ((i, target) in withIndex()) {
+                        if (element === target.highlightElement) {
+                            targetsIndicesInTree[i] = elementIndex++
+                            break
+                        }
+                    }
+                    super.visitElement(element)
+                }
+            })
+        }
+        return targetsIndicesInTree
     }
 
     protected fun SuspendContextImpl.runActionInSuspendCommand(action: SuspendContextImpl.() -> Unit) {
@@ -224,15 +318,18 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         }
     }
 
-    protected fun processStackFrameOnPooledThread(callback: XStackFrame.() -> Unit) {
+    protected fun processStackFramesOnPooledThread(callback: List<XStackFrame>.() -> Unit) {
         val frameProxy = debuggerContext.frameProxy ?: error("Frame proxy is absent")
         val debugProcess = debuggerContext.debugProcess ?: error("Debug process is absent")
         val nodeManager = debugProcess.xdebugProcess!!.nodeManager
         val descriptor = nodeManager.getStackFrameDescriptor(null, frameProxy)
-        val stackFrame = debugProcess.positionManager.createStackFrame(descriptor) ?: error("Can't create stack frame for $descriptor")
+        val stackFrames = debugProcess.positionManager.createStackFrames(descriptor)
+        if (stackFrames.isEmpty()) {
+            error("Can't create stack frame for $descriptor")
+        }
 
         ApplicationManager.getApplication().executeOnPooledThread {
-            stackFrame.callback()
+            stackFrames.callback()
         }
     }
 

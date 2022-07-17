@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.PsiDeclaredTarget;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
@@ -24,7 +26,7 @@ import org.jetbrains.yaml.psi.*;
 
 import javax.swing.*;
 
-public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue {
+public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue, PsiDeclaredTarget {
   public static final Icon YAML_KEY_ICON = PlatformIcons.PROPERTY_ICON;
 
   public YAMLKeyValueImpl(@NotNull final ASTNode node) {
@@ -222,5 +224,11 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     else {
       super.accept(visitor);
     }
+  }
+
+  @Override
+  public @Nullable TextRange getNameIdentifierRange() {
+    PsiElement key = getKey();
+    return key == null ? null : key.getTextRangeInParent();
   }
 }

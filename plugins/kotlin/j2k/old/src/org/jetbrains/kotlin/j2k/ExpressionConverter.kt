@@ -182,9 +182,8 @@ class DefaultExpressionConverter : JavaElementVisitor(), ExpressionConverter {
     }
 
     private fun canKeepEqEq(left: PsiExpression, right: PsiExpression?): Boolean {
-        if (left.isNullLiteral() || (right?.isNullLiteral() ?: false)) return true
-        val type = left.type
-        when (type) {
+        if (left.isNullLiteral() || (right?.isNullLiteral() == true)) return true
+        when (val type = left.type) {
             is PsiPrimitiveType, is PsiArrayType -> return true
 
             is PsiClassType -> {
@@ -670,8 +669,7 @@ class DefaultExpressionConverter : JavaElementVisitor(), ExpressionConverter {
     }
 
     private fun PsiExpression.isQualifier(): Boolean {
-        val parent = parent
-        return when (parent) {
+        return when (val parent = parent) {
             is PsiParenthesizedExpression -> parent.isQualifier()
             is PsiReferenceExpression -> this == parent.qualifierExpression
             else -> false
@@ -752,8 +750,7 @@ class DefaultExpressionConverter : JavaElementVisitor(), ExpressionConverter {
             LambdaParameter(paramName, paramType).assignPrototype(it)
         }, lPar = null, rPar = null).assignPrototype(parameters)
 
-        val body = expression.body
-        when (body) {
+        when (val body = expression.body) {
             is PsiExpression -> {
                 val convertedBody = codeConverter.convertExpression(body).assignPrototype(body)
                 result = LambdaExpression(convertedParameters, Block.of(convertedBody).assignNoPrototype())

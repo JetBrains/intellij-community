@@ -6,9 +6,10 @@ import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.ListChooseByNameModel;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
@@ -35,7 +36,7 @@ public class SetupTaskChooserAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Module module = e.getData(LangDataKeys.MODULE);
+    final Module module = e.getData(PlatformCoreDataKeys.MODULE);
     if (module == null) return;
     final Project project = module.getProject();
     final ListChooseByNameModel<SetupTask> model = new ListChooseByNameModel<>(project,
@@ -46,9 +47,6 @@ public class SetupTaskChooserAction extends AnAction {
     popup.setShowListForEmptyPattern(true);
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
-      @Override
-      public void onClose() {
-      }
 
       @Override
       public void elementChosen(Object element) {
@@ -62,8 +60,13 @@ public class SetupTaskChooserAction extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
-    final Module module = e.getData(LangDataKeys.MODULE);
+    final Module module = e.getData(PlatformCoreDataKeys.MODULE);
     e.getPresentation().setEnabled(module != null && PyPackageUtil.hasSetupPy(module) && PythonSdkUtil.findPythonSdk(module) != null);
   }
 

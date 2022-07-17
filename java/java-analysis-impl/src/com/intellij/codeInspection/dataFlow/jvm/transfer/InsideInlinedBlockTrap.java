@@ -14,9 +14,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class InsideInlinedBlockTrap implements DfaControlTransferValue.Trap {
-  private final @NotNull PsiCodeBlock myInlinedBlock;
+  private final @NotNull PsiElement myInlinedBlock;
 
-  public InsideInlinedBlockTrap(@NotNull PsiCodeBlock block) {
+  public InsideInlinedBlockTrap(@NotNull PsiElement block) {
     myInlinedBlock = block; 
   }
 
@@ -36,5 +36,10 @@ public class InsideInlinedBlockTrap implements DfaControlTransferValue.Trap {
   @Override
   public @NotNull PsiElement getAnchor() {
     return myInlinedBlock;
+  }
+
+  @Override
+  public String toString() {
+    return "InlinedBlock";
   }
 }

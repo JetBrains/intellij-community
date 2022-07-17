@@ -3,7 +3,6 @@ package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,12 +30,6 @@ public class DfLongConstantType extends DfConstantType<Long> implements DfLongTy
   @Override
   public @NotNull DfType meet(@NotNull DfType other) {
     return DfLongType.super.meet(other);
-  }
-
-  @NotNull
-  @Override
-  public PsiPrimitiveType getPsiType() {
-    return DfLongType.super.getPsiType();
   }
 
   @NotNull

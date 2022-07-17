@@ -1,14 +1,14 @@
 {
   "name": "javascript",
-  "displayName": "%displayName%",
-  "description": "%description%",
   "version": "1.0.0",
-  "publisher": "vscode",
+  "description": "%description%",
   "license": "MIT",
-  "engines": {
-    "vscode": "0.10.x"
-  },
   "contributes": {
+    "configurationDefaults": {
+      "[javascript]": {
+        "editor.maxTokenizationLineLength": 2500
+      }
+    },
     "languages": [
       {
         "id": "javascriptreact",
@@ -62,6 +62,9 @@
           "meta.embedded.expression.js": "javascriptreact"
         },
         "tokenTypes": {
+          "meta.template.expression": "other",
+          "meta.template.expression string": "string",
+          "meta.template.expression comment": "comment",
           "entity.name.type.instance.jsdoc": "other",
           "entity.name.function.tagged-template": "other",
           "meta.import string.quoted": "other",
@@ -79,6 +82,9 @@
           "meta.embedded.expression.js": "javascript"
         },
         "tokenTypes": {
+          "meta.template.expression": "other",
+          "meta.template.expression string": "string",
+          "meta.template.expression comment": "comment",
           "entity.name.type.instance.jsdoc": "other",
           "entity.name.function.tagged-template": "other",
           "meta.import string.quoted": "other",
@@ -160,9 +166,5 @@
         "path": "./snippets/javascript.code-snippets"
       }
     ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/vscode.git"
   }
 }

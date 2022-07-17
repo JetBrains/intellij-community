@@ -6,6 +6,7 @@
         <extensionPoint name="foo.bar" interface="java.util.List"/>
         <extensionPoint name="ext" interface="java.lang.Runnable"/>
         <extensionPoint name="deprecatedEP" interface="foo.MyDeprecatedEP"/>
+        <extensionPoint name="deprecatedForRemovalEP" interface="foo.MyDeprecatedForRemovalEP"/>
         <extensionPoint name="deprecatedBeanClassEP" beanClass="foo.MyDeprecatedEP"/>
         <extensionPoint name="classLevelPropertyEP" beanClass="foo.ClassLevelProperty"/>
 
@@ -55,6 +56,8 @@
 
         <!-- no replacement EP to suggest -->
         <<error descr="Deprecated extension point 'com.intellij.exportable'">exportable</error> implementation="foo.MyRunnable"/>
+
+        <<error descr="Marked for removal extension point 'com.intellij.myPlugin.deprecatedForRemovalEP'">myPlugin.deprecatedForRemovalEP</error> implementation="foo.MyDeprecatedForRemovalEPImpl"/>
 
         <<error descr="Marked for removal extension point 'com.intellij.myPlugin.scheduledForRemovalApiEP' in version 'removeVersion'">myPlugin.scheduledForRemovalApiEP</error> implementation="foo.MyScheduledForRemovalEP"/>
 

@@ -42,7 +42,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
   private static class PlaceholderCountMatchesArgumentCountVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String name = methodExpression.getReferenceName();

@@ -6,10 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchRequestCollector;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.Processor;
@@ -34,7 +31,7 @@ public class SimpleAccessorReferenceSearcher extends QueryExecutorBase<PsiRefere
   static void addPropertyAccessUsages(@NotNull PsiMethod method, @NotNull SearchScope scope, @NotNull SearchRequestCollector collector) {
     final String propertyName = PropertyUtilBase.getPropertyName(method);
     if (StringUtil.isNotEmpty(propertyName)) {
-      SearchScope additional = GlobalSearchScope.EMPTY_SCOPE;
+      SearchScope additional = LocalSearchScope.EMPTY;
       for (CustomPropertyScopeProvider provider : CustomPropertyScopeProvider.EP_NAME.getExtensionList()) {
         additional = additional.union(provider.getScope(method.getProject()));
       }

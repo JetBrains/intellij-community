@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  *
  * @author Ilya.Kazakevich
  */
-public final class PyTracebackParser extends TraceBackParserAdapter {
+public class PyTracebackParser extends TraceBackParserAdapter {
 
 
   public PyTracebackParser() {

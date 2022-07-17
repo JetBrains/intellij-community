@@ -6,8 +6,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -21,6 +23,8 @@ import java.awt.*;
  * Use {@link AnActionEvent#getData(DataKey)} in {@link com.intellij.openapi.actionSystem.AnAction AnAction}.
  */
 public abstract class DataManager {
+  private static final Logger LOG = Logger.getInstance(DataManager.class);
+
   public static DataManager getInstance() {
     return ApplicationManager.getApplication().getService(DataManager.class);
   }
@@ -29,22 +33,20 @@ public abstract class DataManager {
     return ApplicationManager.getApplication().getServiceIfCreated(DataManager.class);
   }
 
-  public static final String CLIENT_PROPERTY_DATA_PROVIDER = "DataProvider";
+  private static final String CLIENT_PROPERTY_DATA_PROVIDER = "DataProvider";
 
   /**
    * @return {@link DataContext} constructed by the currently focused component
    * @deprecated use either {@link #getDataContext(Component)} or {@link #getDataContextFromFocus()}
    */
   @Deprecated
-  @NotNull
-  public abstract DataContext getDataContext();
+  public abstract @NotNull DataContext getDataContext();
 
   /**
    * @deprecated Use {@link #getDataContextFromFocusAsync()}
    */
-  @NotNull
   @Deprecated
-  public final AsyncResult<DataContext> getDataContextFromFocus() {
+  public final @NotNull AsyncResult<DataContext> getDataContextFromFocus() {
     AsyncResult<DataContext> result = new AsyncResult<>();
     getDataContextFromFocusAsync()
       .onSuccess(context -> result.setDone(context))
@@ -55,14 +57,12 @@ public abstract class DataManager {
   /**
    * @return {@link DataContext} constructed by the currently focused component.
    */
-  @NotNull
-  public abstract Promise<DataContext> getDataContextFromFocusAsync();
+  public abstract @NotNull Promise<DataContext> getDataContextFromFocusAsync();
 
   /**
    * @return {@link DataContext} constructed by the specified {@code component}
    */
-  @NotNull
-  public abstract DataContext getDataContext(Component component);
+  public abstract @NotNull DataContext getDataContext(Component component);
 
   /**
    * @return {@link DataContext} constructed be the specified {@code component}
@@ -70,12 +70,17 @@ public abstract class DataManager {
    * component.
    * @throws IllegalArgumentException if point {@code (x, y)} is not inside component's bounds
    */
-  @NotNull
-  public abstract DataContext getDataContext(@NotNull Component component, int x, int y);
+  public abstract @NotNull DataContext getDataContext(@NotNull Component component, int x, int y);
+
+  /**
+   * Returns data from the provided data context customized with the provided data provider.
+   */
+  @ApiStatus.Experimental
+  public abstract @Nullable Object getCustomizedData(@NotNull String dataId, @NotNull DataContext dataContext, @NotNull DataProvider provider);
 
   /**
    * Save doesn't work during fast action update to prevent caching of yet invalid data
-   * 
+   *
    * @param dataContext should be instance of {@link com.intellij.openapi.util.UserDataHolder}
    * @param dataKey     key to store value
    * @param data        value to store
@@ -87,15 +92,22 @@ public abstract class DataManager {
    * @param dataKey     key to find value by
    * @return value stored by {@link #saveInDataContext(DataContext, Key, Object)}
    */
-  @Nullable
-  public abstract <T> T loadFromDataContext(@NotNull DataContext dataContext, @NotNull Key<T> dataKey);
+  public abstract @Nullable <T> T loadFromDataContext(@NotNull DataContext dataContext, @NotNull Key<T> dataKey);
 
   public static void registerDataProvider(@NotNull JComponent component, @NotNull DataProvider provider) {
+    if (component instanceof DataProvider) {
+      LOG.warn(String.format("Registering CLIENT_PROPERTY_DATA_PROVIDER on component implementing DataProvider. " +
+                             "The key will be ignored. Component: %s", component), new Throwable());
+    }
+    Object oldProvider = component.getClientProperty(CLIENT_PROPERTY_DATA_PROVIDER);
+    if (oldProvider != null) {
+      LOG.warn(String.format("Overwriting an existing CLIENT_PROPERTY_DATA_PROVIDER. " +
+                             "Component: %s, old provider: %s, new provider: %s", component, oldProvider, provider), new Throwable());
+    }
     component.putClientProperty(CLIENT_PROPERTY_DATA_PROVIDER, provider);
   }
 
-  @Nullable
-  public static DataProvider getDataProvider(@NotNull JComponent component) {
+  public static @Nullable DataProvider getDataProvider(@NotNull JComponent component) {
     return (DataProvider)component.getClientProperty(CLIENT_PROPERTY_DATA_PROVIDER);
   }
 

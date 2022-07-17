@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.JavaTestUtil;
@@ -188,9 +188,9 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
   }
 
   private static void gcPointerCache(SmartPsiElementPointer<?>... pointers) {
-    GCWatcher.tracking(ContainerUtil.map(pointers, p -> ((SmartPointerEx) p).getCachedElement())).ensureCollected();
+    GCWatcher.tracking(ContainerUtil.map(pointers, p -> ((SmartPointerEx<?>) p).getCachedElement())).ensureCollected();
     for (SmartPsiElementPointer<?> pointer : pointers) {
-      assertNull(((SmartPointerEx)pointer).getCachedElement());
+      assertNull(((SmartPointerEx<?>)pointer).getCachedElement());
     }
   }
 
@@ -307,9 +307,8 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
   }
 
   public void testCreatePointerWhenNoPsiFile() {
-    myPsiManager.startBatchFilesProcessingMode(); // to use weak refs
-
-    try {
+    // to use weak refs
+    myPsiManager.runInBatchFilesMode(() -> {
       final PsiClass aClass = myJavaFacade.findClass("AClass",GlobalSearchScope.allScope(getProject()));
       assertNotNull(aClass);
 
@@ -321,10 +320,10 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
       final SmartPsiElementPointer pointer = createPointer(aClass);
 
       System.gc();
-      /*
-      PsiFile psiFile = myPsiManager.getFileManager().getCachedPsiFile(vFile);
-      assertNull(psiFile);
-      */
+        /*
+        PsiFile psiFile = myPsiManager.getFileManager().getCachedPsiFile(vFile);
+        assertNull(psiFile);
+        */
 
       insertString(document, 0, "class Foo{}\n");
 
@@ -342,10 +341,8 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
       assertNotNull(element);
       assertTrue(element instanceof PsiClass);
       assertTrue(element.isValid());
-    }
-    finally {
-      myPsiManager.finishBatchFilesProcessingMode(); // to use weak refs
-    }
+      return null;
+    });
   }
 
   public void testReplaceFile() {
@@ -1154,7 +1151,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     PsiWhiteSpace whiteSpace = assertInstanceOf(file.findElementAt(text.indexOf('{') + 1), PsiWhiteSpace.class);
     SmartPointerEx<PsiWhiteSpace> pointer = createPointer(whiteSpace);
 
-    whiteSpace.replace(PsiParserFacade.SERVICE.getInstance(myProject).createWhiteSpaceFromText("   "));
+    whiteSpace.replace(PsiParserFacade.getInstance(myProject).createWhiteSpaceFromText("   "));
     assertFalse(whiteSpace.isValid());
     assertSame(file.findElementAt(text.indexOf('{') + 1), pointer.getElement());
 

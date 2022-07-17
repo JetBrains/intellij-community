@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -288,7 +288,7 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
                           "}");
     SelectionModel model = getEditor().getSelectionModel();
     PsiExpression expr =
-      IntroduceVariableBase.getSelectedExpression(getFile().getProject(), getFile(), model.getSelectionStart(), model.getSelectionEnd());
+      IntroduceVariableUtil.getSelectedExpression(getFile().getProject(), getFile(), model.getSelectionStart(), model.getSelectionEnd());
     assertNotNull(expr);
     assertFalse(new JavaWithParenthesesSurrounder().isApplicable(expr));
     assertFalse(new JavaWithCastSurrounder().isApplicable(expr));

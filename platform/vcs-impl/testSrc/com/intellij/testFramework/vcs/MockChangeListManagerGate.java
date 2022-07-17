@@ -36,7 +36,7 @@ public class MockChangeListManagerGate implements ChangeListManagerGate {
   @NotNull
   @Override
   public List<LocalChangeList> getListsCopy() {
-    return myManager.getChangeListsCopy();
+    return myManager.getChangeLists();
   }
 
   @Override

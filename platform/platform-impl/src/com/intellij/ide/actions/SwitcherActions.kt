@@ -5,11 +5,13 @@ import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.Switcher.SwitcherPanel
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.util.BitUtil.isSet
+import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.event.*
 import java.util.function.Consumer
 import javax.swing.AbstractAction
@@ -22,10 +24,15 @@ private fun forward(event: AnActionEvent) = true != event.inputEvent?.isShiftDow
 internal class ShowSwitcherForwardAction : BaseSwitcherAction(true)
 internal class ShowSwitcherBackwardAction : BaseSwitcherAction(false)
 internal abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
+  private fun isControlTab(event: KeyEvent?) = event?.run { isControlDown && keyCode == KeyEvent.VK_TAB } ?: false
+  private fun isControlTabDisabled(event: AnActionEvent) = ScreenReader.isActive() && isControlTab(event.inputEvent as? KeyEvent)
+
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabled = event.project != null
+    event.presentation.isEnabled = event.project != null && !isControlTabDisabled(event)
     event.presentation.isVisible = forward == null
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
@@ -48,6 +55,10 @@ internal abstract class BaseRecentFilesAction(val onlyEditedFiles: Boolean) : Du
     event.presentation.isEnabledAndVisible = event.project != null
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
     Switcher.SWITCHER_KEY.get(project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected } ?: run {
@@ -63,6 +74,10 @@ internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
     event.presentation.isEnabledAndVisible = Switcher.SWITCHER_KEY.get(event.project) != null
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(event: AnActionEvent) {
     Switcher.SWITCHER_KEY.get(event.project)?.go(forward(event))
   }
@@ -75,6 +90,10 @@ internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction() {
 
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = getCheckBox(event) != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun isSelected(event: AnActionEvent) = getCheckBox(event)?.isSelected ?: false
@@ -111,6 +130,10 @@ internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareA
 
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = getFileList(event) != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun actionPerformed(event: AnActionEvent) {

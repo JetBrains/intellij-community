@@ -21,6 +21,7 @@ public class EditorConfigHeaderImpl extends EditorConfigHeaderBase implements Ed
     visitor.visitHeader(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof EditorConfigVisitor) accept((EditorConfigVisitor)visitor);
     else super.accept(visitor);

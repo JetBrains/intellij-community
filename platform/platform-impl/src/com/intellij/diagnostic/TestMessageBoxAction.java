@@ -15,6 +15,7 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.Messages;
@@ -46,5 +47,10 @@ public class TestMessageBoxAction extends AnAction {
 
   private static String wrap(String s, int r) {
     return r % 2 == 0 ? s : "<html><body><i>" + StringUtil.repeat(s + "<br>", 10) + "</i></body></html>";
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

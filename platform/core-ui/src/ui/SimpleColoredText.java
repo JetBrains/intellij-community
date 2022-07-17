@@ -77,4 +77,19 @@ public class SimpleColoredText implements ColoredTextContainer {
     }
     return result;
   }
+
+  public @NotNull ColoredText toColoredText() {
+    if (myTexts.isEmpty()) {
+      return ColoredText.empty();
+    }
+    if (myTexts.size() == 1) {
+      return ColoredText.singleFragment(myTexts.get(0), myAttributes.get(0));
+    }
+
+    ColoredText.Builder builder = ColoredText.builder();
+    for (int i = 0; i < myTexts.size(); i++) {
+      builder.append(myTexts.get(i), myAttributes.get(i));
+    }
+    return builder.build();
+  }
 }

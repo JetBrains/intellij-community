@@ -1,47 +1,48 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
-internal data class ModulesTreeData(
-    val treeModel: TreeModel,
-    val selectedPath: TreePath
-)
-
 internal fun computeModuleTreeModel(
-    modules: List<ModuleModel>,
-    currentTargetModules: TargetModules,
-    traceInfo: TraceInfo?
-): ModulesTreeData {
+    modules: List<ModuleModel>
+): TreeModel {
     if (modules.isEmpty()) {
-        logDebug(traceInfo, "computeModuleTreeModel()") { "No modules to display, setting target to None" }
         val rootNode = DefaultMutableTreeNode(TargetModules.None)
-        return ModulesTreeData(treeModel = DefaultTreeModel(rootNode), selectedPath = TreePath(rootNode))
+        return DefaultTreeModel(rootNode)
     }
 
-    logDebug(traceInfo, "computeModuleTreeModel()") { "Calculating tree" }
     val sortedModules = modules.sortedBy { it.projectModule.name }
         .toMutableList()
 
     val rootTargetModules = TargetModules.all(modules)
     val rootNode = DefaultMutableTreeNode(rootTargetModules)
-        .appendChildren(sortedModules, currentTargetModules)
+        .appendChildren(sortedModules)
 
-    logDebug(traceInfo, "computeModuleTreeModel()") { "Calculating selection path" }
-    val selectionPath = rootNode.findPathWithData(currentTargetModules) ?: TreePath(rootNode)
-
-    return ModulesTreeData(DefaultTreeModel(rootNode), selectionPath)
+    return DefaultTreeModel(rootNode)
 }
 
 private fun DefaultMutableTreeNode.appendChildren(
-    sortedModules: List<ModuleModel>,
-    currentTargetModules: TargetModules
+    sortedModules: List<ModuleModel>
 ): DefaultMutableTreeNode {
     val childModules = when (val nodeTargetModules = userObject as TargetModules) {
         is TargetModules.None -> emptyList()
@@ -58,14 +59,14 @@ private fun DefaultMutableTreeNode.appendChildren(
         val childNode = DefaultMutableTreeNode(nodeTargetModules)
         add(childNode)
 
-        childNode.appendChildren(sortedModules, currentTargetModules)
+        childNode.appendChildren(sortedModules)
     }
 
     return this
 }
 
-private fun DefaultMutableTreeNode.findPathWithData(currentTargetModules: TargetModules): TreePath? {
-    if (targetModulesOrNull() == currentTargetModules) {
+internal fun DefaultMutableTreeNode.findPathWithData(currentTargetModules: TargetModules): TreePath? {
+    if (targetModulesOrNull()?.id == currentTargetModules.id) {
         return TreePath(path)
     }
 

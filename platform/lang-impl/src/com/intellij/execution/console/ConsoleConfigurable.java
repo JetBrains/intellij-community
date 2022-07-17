@@ -107,7 +107,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
         new MyAddDeleteListPanel(ApplicationBundle.message("console.fold.console.lines"),
                                  ApplicationBundle.message("console.enter.substring.folded"));
       myNegativePanel = new MyAddDeleteListPanel(ApplicationBundle.message("console.fold.exceptions"),
-                                                 ApplicationBundle.message("console.enter.substring.dont.fold:"));
+                                                 ApplicationBundle.message("console.enter.substring.dont.fold"));
       splitter.setFirstComponent(myPositivePanel);
       splitter.setSecondComponent(myNegativePanel);
 

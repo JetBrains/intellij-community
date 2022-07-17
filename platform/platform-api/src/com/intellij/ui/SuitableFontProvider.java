@@ -10,5 +10,5 @@ import java.awt.*;
 interface SuitableFontProvider {
   ExtensionPointName<SuitableFontProvider> EP_NAME = ExtensionPointName.create("com.intellij.ui.suitableFontProvider");
 
-  Font getFontAbleToDisplay(char c, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily);
+  Font getFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily);
 }

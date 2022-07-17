@@ -3,10 +3,10 @@ package com.intellij.openapi.externalSystem.autoimport.changes
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
+import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 import com.intellij.openapi.externalSystem.util.PathPrefixTreeMap
-import com.intellij.openapi.vfs.VirtualFileManager
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -25,7 +25,7 @@ class AsyncFilesChangesListener(
     updatedFiles.clear()
   }
 
-  override fun onFileChange(path: String, modificationStamp: Long, modificationType: ModificationType) {
+  override fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
     updatedFiles[path] = ModificationData(modificationStamp, modificationType)
   }
 
@@ -50,7 +50,7 @@ class AsyncFilesChangesListener(
       }, parentDisposable)
   }
 
-  private data class ModificationData(val modificationStamp: Long, val modificationType: ModificationType)
+  private data class ModificationData(val modificationStamp: Long, val modificationType: ExternalSystemModificationType)
 
   companion object {
     @JvmStatic
@@ -71,8 +71,7 @@ class AsyncFilesChangesListener(
       parentDisposable: Disposable
     ) {
       val changesProvider = VirtualFilesChangesProvider(isIgnoreInternalChanges)
-      val fileManager = VirtualFileManager.getInstance()
-      fileManager.addAsyncFileListener(changesProvider, parentDisposable)
+      installAsyncVirtualFileListener(changesProvider, parentDisposable)
       val asyncListener = AsyncFilesChangesListener(filesProvider, listener, parentDisposable)
       changesProvider.subscribe(asyncListener, parentDisposable)
     }

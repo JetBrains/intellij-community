@@ -15,12 +15,10 @@
  */
 package com.intellij.openapi.vcs.history.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.ExtendableAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAware;
-import org.jetbrains.annotations.NotNull;
 
 public class ShowDiffBeforeWithLocalAction extends ExtendableAction implements DumbAware {
   private static final ExtensionPointName<AnActionExtensionProvider> EP_NAME =
@@ -28,14 +26,5 @@ public class ShowDiffBeforeWithLocalAction extends ExtendableAction implements D
 
   public ShowDiffBeforeWithLocalAction() {
     super(EP_NAME);
-  }
-
-  @Override
-  public void defaultActionPerformed(@NotNull AnActionEvent e) {
-  }
-
-  @Override
-  public void defaultUpdate(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(false);
   }
 }

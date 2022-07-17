@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -15,7 +15,7 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author ven
@@ -103,7 +104,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
       //     declared to the left of Cj for the same try statement, T is not assignable to Ei ...
       final PsiParameter[] parameters = statement.getCatchBlockParameters();
       final int currentIdx = ArrayUtil.find(parameters, parameter);
-      List<PsiType> uncaughtTypes = ContainerUtil.mapNotNull(thrownTypes, (NullableFunction<PsiClassType, PsiType>)thrownType -> {
+      List<PsiType> uncaughtTypes = ContainerUtil.mapNotNull(thrownTypes, thrownType -> {
         for (int i = 0; i < currentIdx; i++) {
           final PsiType catchType = parameters[i].getType();
           if (catchType.isAssignableFrom(thrownType)) return null;
@@ -112,23 +113,38 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
       });
       if (uncaughtTypes.isEmpty()) return Collections.emptyList();  // unreachable catch section
       // ... and T is assignable to Ej ...
-      List<PsiType> types = new ArrayList<>();
-      for (PsiType type : uncaughtTypes) {
-        if (declaredType.isAssignableFrom(type) ||
-            // JLS 11.2.3 "Exception Checking":
-            // "It is a compile-time error if a catch clause can catch checked exception class E1 and it is not the case
-            // that the try block corresponding to the catch clause can throw a checked exception class that is
-            // a subclass or superclass of E1, unless E1 is Exception or a superclass of Exception."
-            // So here unchecked exception can sneak through Exception or Throwable catch type only.
-            ExceptionUtil.isGeneralExceptionType(declaredType) && type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type)) {
-          types.add(type);
-        }
+      if (declaredType instanceof PsiDisjunctionType) {
+        return Collections.unmodifiableList(((PsiDisjunctionType)declaredType).getDisjunctions()
+                                              .stream()
+                                              .flatMap(disjunction -> computePreciseCatchTypes(disjunction, uncaughtTypes).stream())
+                                              .collect(Collectors.toCollection(() -> new ArrayList<>())));
       }
-      // ... the throw statement throws precisely the set of exception types T.
-      if (!types.isEmpty()) return types;
+      else {
+        return computePreciseCatchTypes(declaredType, uncaughtTypes);
+      }
     }
 
     return Collections.singletonList(declaredType);
+  }
+
+  private static List<PsiType> computePreciseCatchTypes(PsiType declaredType, List<PsiType> uncaughtTypes) {
+    List<PsiType> types = new SmartList<>();
+    for (PsiType type : uncaughtTypes) {
+      if (type.isAssignableFrom(declaredType)) {
+        types.add(declaredType);
+      }
+      else if (declaredType.isAssignableFrom(type) ||
+          // JLS 11.2.3 "Exception Checking":
+          // "It is a compile-time error if a catch clause can catch checked exception class E1 and it is not the case
+          // that the try block corresponding to the catch clause can throw a checked exception class that is
+          // a subclass or superclass of E1, unless E1 is Exception or a superclass of Exception."
+          // So here unchecked exception can sneak through Exception or Throwable catch type only.
+          ExceptionUtil.isGeneralExceptionType(declaredType) && type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type)) {
+        types.add(type);
+      }
+    }
+    // ... the throw statement throws precisely the set of exception types T.
+    return types;
   }
 
   private static Collection<PsiClassType> getThrownTypes(@NotNull PsiTryStatement statement) {
@@ -150,7 +166,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     if (catchBlock != null) {
       catchBlock.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);
           if (expression.resolve() == parameter && PsiUtil.isAccessedForWriting(expression)) {
             result[0] = false;

@@ -25,14 +25,12 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Contains settings for non-language options, for example, text files.
- *
- * @author Rustam Vishnyakov
  */
 public class OtherFileTypesCodeStyleOptionsProvider extends CodeStyleSettingsProvider {
 
   @NotNull
   @Override
-  public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings clonedSettings) {
+  public Configurable createSettingsPage(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings clonedSettings) {
     return new OtherFileTypesCodeStyleConfigurable(settings, clonedSettings);
   }
 

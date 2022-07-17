@@ -21,6 +21,7 @@ public class EditorConfigCharClassImpl extends EditorConfigHeaderElementBase imp
     visitor.visitCharClass(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof EditorConfigVisitor) accept((EditorConfigVisitor)visitor);
     else super.accept(visitor);

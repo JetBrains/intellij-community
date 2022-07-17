@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
 import com.intellij.configurationStore.StateStorageManager
@@ -36,6 +36,9 @@ private class TestComponentStore : IComponentStore {
   override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
   }
 
+  override fun unloadComponent(component: Any) {
+  }
+
   override fun initPersistencePlainComponent(component: Any, key: String) {
   }
 
@@ -54,5 +57,11 @@ private class TestComponentStore : IComponentStore {
   }
 
   override fun removeComponent(name: String) {
+  }
+
+  override fun clearCaches() {
+  }
+
+  override fun release() {
   }
 }

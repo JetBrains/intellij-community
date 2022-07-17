@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.project;
 
 import com.intellij.ide.lightEdit.*;
@@ -7,9 +7,9 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerExImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -20,8 +20,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl {
+import java.util.List;
 
+public final class LightEditFileEditorManagerImpl extends FileEditorManagerExImpl {
   LightEditFileEditorManagerImpl(@NotNull Project project) {
     super(project);
   }
@@ -37,23 +38,11 @@ public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl 
   }
 
   @Override
-  public boolean isProblem(@NotNull VirtualFile file) {
-    return false;
-  }
-
-  @Override
-  public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
-                                                                         @NotNull VirtualFile file,
-                                                                         boolean focusEditor) {
-    LightEditService.getInstance().openFile(file);
-    return getEditorsWithProviders(file);
-  }
-
-  @Override
   public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
                                                                          @NotNull VirtualFile file,
                                                                          @NotNull FileEditorOpenOptions options) {
-    return openFileImpl2(window, file, true);
+    LightEditService.getInstance().openFile(file);
+    return getEditorsWithProviders(file);
   }
 
   @Override
@@ -61,7 +50,7 @@ public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl 
     FileEditorWithProvider data = getSelectedEditorWithProvider(file);
     return data != null
            ? Pair.create(new FileEditor[]{data.getFileEditor()}, new FileEditorProvider[]{data.getProvider()})
-           : Pair.create(FileEditor.EMPTY_ARRAY, new FileEditorProvider[0]);
+           : Pair.create(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
   }
 
   @Override
@@ -135,26 +124,21 @@ public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl 
     return !LightEditService.getInstance().getEditorManager().getOpenFiles().isEmpty();
   }
 
-  @NotNull
-  public EditorWithProviderComposite createEditorComposite(@NotNull LightEditorInfo editorInfo) {
+  public @NotNull EditorComposite createEditorComposite(@NotNull LightEditorInfo editorInfo) {
     editorInfo.getFileEditor().putUserData(DUMB_AWARE, true); // Needed for composite not to postpone loading via DumbService.wrapGently()
-    EditorWithProviderComposite composite = createComposite(
-      editorInfo.getFile(),
-      new FileEditor[]{editorInfo.getFileEditor()},
-      new FileEditorProvider[]{((LightEditorInfoImpl)editorInfo).getProvider()});
-    assert composite != null;
-    return composite;
+    FileEditorProvider editorProvider = ((LightEditorInfoImpl)editorInfo).getProvider();
+    FileEditorWithProvider editorWithProvider = new FileEditorWithProvider(editorInfo.getFileEditor(), editorProvider);
+    return createCompositeInstance(editorInfo.getFile(), List.of(editorWithProvider));
   }
 
   @Override
-  protected @Nullable EditorWithProviderComposite getEditorComposite(@NotNull FileEditor editor) {
+  public @Nullable EditorComposite getComposite(@NotNull FileEditor editor) {
     return LightEditUtil.findEditorComposite(editor);
   }
 
   @Override
   public FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file) {
-    return ContainerUtil.map(LightEditService.getInstance().getEditorManager()
-                                             .getEditors(file), editorInfo -> editorInfo.getFileEditor())
-                        .toArray(FileEditor.EMPTY_ARRAY);
+    return ContainerUtil.map(LightEditService.getInstance().getEditorManager().getEditors(file), LightEditorInfo::getFileEditor)
+      .toArray(FileEditor.EMPTY_ARRAY);
   }
 }

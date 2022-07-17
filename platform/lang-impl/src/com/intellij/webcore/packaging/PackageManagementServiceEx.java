@@ -19,7 +19,7 @@ public abstract class PackageManagementServiceEx extends PackageManagementServic
     return true;
   }
 
-  public abstract void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull final CatchingConsumer<String, Exception> consumer);
+  public abstract void fetchLatestVersion(@NotNull InstalledPackage pkg, final @NotNull CatchingConsumer<? super String, ? super Exception> consumer);
 
   public void installPackage(final RepoPackage repoPackage,
                              @Nullable final String version,

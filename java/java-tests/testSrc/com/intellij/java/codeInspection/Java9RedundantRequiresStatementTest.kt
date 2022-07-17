@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
 import com.intellij.analysis.AnalysisScope
@@ -28,6 +28,12 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     add("org.example.m4", "C4", ModuleDescriptor.M4, "public void bar() {}")
     add("org.example.m6", "C6", ModuleDescriptor.M6, "public C7 getC7() { return new C7(); }", "org.example.m7.C7")
     add("org.example.m7", "C7", ModuleDescriptor.M7)
+  }
+  
+  fun testTestClassAndSrc() {
+    addFile("CT.java", "class CT extends org.example.m2.C2 {}", ModuleDescriptor.M_TEST)
+    addTestFile("MyTest.java", "class MyTest {}", ModuleDescriptor.M_TEST )
+    mainModule("module m.src {requires M2; requires java.base;}", ModuleDescriptor.M_TEST)
   }
 
   fun testNoSourcesAtAll() {
@@ -74,6 +80,11 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     mainModule("module MAIN { requires M6; }")
   }
 
+  fun testReexportedPackageImportedTransitive() {
+    mainClass("org.example.m7.*")
+    mainModule("module MAIN { requires transitive M6; }")
+  }
+
   fun testNonexistentMethodImported() {
     mainClass(staticImports = listOf("org.example.m2.C2.<error descr=\"Cannot resolve symbol 'nonexistent'\">nonexistent</error>"))
     mainModule("module MAIN { requires M2; }")
@@ -94,8 +105,9 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     mainModule("@SuppressWarnings(\"Java9RedundantRequiresStatement\") module M { requires M2; }")
   }
 
-  private fun mainModule(@Language("JAVA") text: String) {
-    addFile("module-info.java", text, ModuleDescriptor.MAIN)
+  private fun mainModule(@Language("JAVA") text: String,
+                         moduleDescriptor: ModuleDescriptor = ModuleDescriptor.MAIN) {
+    addFile("module-info.java", text, moduleDescriptor)
 
     val mainFile = myMainFile
     if (mainFile != null) {

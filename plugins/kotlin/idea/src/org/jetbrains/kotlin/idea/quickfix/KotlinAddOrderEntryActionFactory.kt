@@ -10,11 +10,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceBase
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.util.runWhenSmart
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.runWhenSmart
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
@@ -23,7 +24,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 object KotlinAddOrderEntryActionFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val simpleExpression = diagnostic.psiElement as? KtSimpleNameExpression ?: return emptyList()
-        if (!ProjectRootsUtil.isInProjectSource(simpleExpression, includeScriptsOutsideSourceRoots = false)) return emptyList()
+        if (!RootKindFilter.projectSources.matches(simpleExpression)) return emptyList()
 
         val refElement = simpleExpression.getQualifiedElement()
 

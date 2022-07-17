@@ -15,9 +15,7 @@
  */
 package org.intellij.images.editor.impl;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
@@ -117,14 +115,6 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
   }
 
   @Override
-  public void selectNotify() {
-  }
-
-  @Override
-  public void deselectNotify() {
-  }
-
-  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myDispatcher.addListener(listener);
   }
@@ -138,16 +128,6 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
   public void propertyChange(@NotNull PropertyChangeEvent event) {
     PropertyChangeEvent editorEvent = new PropertyChangeEvent(this, event.getPropertyName(), event.getOldValue(), event.getNewValue());
     myDispatcher.getMulticaster().propertyChange(editorEvent);
-  }
-
-  @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
-  }
-
-  @Override
-  public FileEditorLocation getCurrentLocation() {
-    return null;
   }
 
   @Override

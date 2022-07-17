@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -42,12 +42,11 @@ public class JvmSmartStepIntoActionHandler extends XSmartStepIntoHandler<JvmSmar
 
   private Promise<List<JvmSmartStepIntoVariant>> findVariants(@NotNull XSourcePosition xPosition, boolean smart) {
     SourcePosition position = DebuggerUtilsEx.toSourcePosition(xPosition, mySession.getProject());
-    for (JvmSmartStepIntoHandler handler : JvmSmartStepIntoHandler.EP_NAME.getExtensionList()) {
-      if (handler.isAvailable(position)) {
-        Promise<List<SmartStepTarget>> targets =
-          smart ? handler.findSmartStepTargetsAsync(position, mySession) : handler.findStepIntoTargets(position, mySession);
-        return targets.then(results -> ContainerUtil.map(results, target -> new JvmSmartStepIntoVariant(target, handler)));
-      }
+    JvmSmartStepIntoHandler handler = JvmSmartStepIntoHandler.EP_NAME.findFirstSafe(h -> h.isAvailable(position));
+    if (handler != null) {
+      Promise<List<SmartStepTarget>> targets =
+        smart ? handler.findSmartStepTargetsAsync(position, mySession) : handler.findStepIntoTargets(position, mySession);
+      return targets.then(results -> ContainerUtil.map(results, target -> new JvmSmartStepIntoVariant(target, handler)));
     }
     return Promises.rejectedPromise();
   }

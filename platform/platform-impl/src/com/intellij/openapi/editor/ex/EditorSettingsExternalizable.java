@@ -1,9 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.ide.ui.UINumericRange;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.actions.CaretStopOptions;
@@ -13,9 +16,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-@State(name = "EditorSettings", storages = @Storage("editor.xml"), category = ComponentCategory.CODE)
+@State(name = "EditorSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
   @NonNls
   public static final String PROP_VIRTUAL_SPACE = "VirtualSpace";
@@ -47,7 +48,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public String LINE_SEPARATOR;
     public String USE_SOFT_WRAPS;
     public String SOFT_WRAP_FILE_MASKS;
-    public boolean USE_CUSTOM_SOFT_WRAP_INDENT = false;
+    public boolean USE_CUSTOM_SOFT_WRAP_INDENT = true;
     public int CUSTOM_SOFT_WRAP_INDENT = 0;
     public boolean IS_VIRTUAL_SPACE = false;
     public boolean IS_CARET_INSIDE_TABS;
@@ -67,6 +68,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean SHOW_BREADCRUMBS_ABOVE = false;
     public boolean SHOW_BREADCRUMBS = true;
     public boolean ENABLE_RENDERED_DOC = false;
+    public boolean SHOW_INTENTION_PREVIEW = true;
+    public boolean USE_EDITOR_FONT_IN_INLAYS = false;
 
     public boolean SMART_HOME = true;
 
@@ -103,10 +106,22 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean KEEP_TRAILING_SPACE_ON_CARET_LINE = true;
 
+    public boolean INSERT_PARENTHESES_AUTOMATICALLY = true;
+
     private final Map<String, Boolean> mapLanguageBreadcrumbs = new HashMap<>();
 
     public Map<String, Boolean> getLanguageBreadcrumbsMap() {
       return mapLanguageBreadcrumbs;
+    }
+
+    public OptionSet() {
+      Application application = ApplicationManager.getApplication();
+      if (application != null) {
+        PropertiesComponent properties = application.getService(PropertiesComponent.class);
+        if (properties != null) {
+          INSERT_PARENTHESES_AUTOMATICALLY = properties.getBoolean("js.insert.parentheses.on.completion", true);
+        }
+      }
     }
 
     @SuppressWarnings("unused")
@@ -118,15 +133,23 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     }
   }
 
-  @State(name = "OsSpecificEditorSettings", storages = @Storage(value = "editor.os-specific.xml", roamingType = RoamingType.PER_OS))
+  @State(
+    name = "OsSpecificEditorSettings",
+    storages = @Storage(value = "editor.os-specific.xml", roamingType = RoamingType.PER_OS),
+    category = SettingsCategory.CODE
+  )
   public static final class OsSpecificState implements PersistentStateComponent<OsSpecificState> {
     public CaretStopOptions CARET_STOP_OPTIONS = new CaretStopOptions();
 
     @Override
-    public OsSpecificState getState() { return this; }
+    public OsSpecificState getState() {
+      return this;
+    }
 
     @Override
-    public void loadState(@NotNull OsSpecificState state) { XmlSerializerUtil.copyBean(state, this); }
+    public void loadState(@NotNull OsSpecificState state) {
+      CARET_STOP_OPTIONS = state.CARET_STOP_OPTIONS;
+    }
   }
 
   private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";
@@ -157,12 +180,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public static EditorSettingsExternalizable getInstance() {
-    if (ApplicationManager.getApplication().isDisposed()) {
-      return new EditorSettingsExternalizable(new OsSpecificState());
-    }
-    else {
-      return ApplicationManager.getApplication().getService(EditorSettingsExternalizable.class);
-    }
+    return ApplicationManager.getApplication().getService(EditorSettingsExternalizable.class);
   }
 
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable disposable) {
@@ -475,7 +493,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public boolean isShowQuickDocOnMouseOverElement() {
-    return myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT;
+    return myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT && !AccessibilityUtils.isScreenReaderDetected();
   }
 
   public void setShowQuickDocOnMouseOverElement(boolean show) {
@@ -683,11 +701,18 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.BIDI_TEXT_DIRECTION = direction;
   }
 
+  public boolean isShowIntentionPreview() {
+    return myOptions.SHOW_INTENTION_PREVIEW;
+  }
+
+  public void setShowIntentionPreview(boolean show) {
+    myOptions.SHOW_INTENTION_PREVIEW = show;
+  }
+
   /**
    * @deprecated use {@link com.intellij.codeInsight.hints.HintUtilsKt#isParameterHintsEnabledForLanguage(Language)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean isShowParameterNameHints() {
     return myOptions.SHOW_PARAMETER_NAME_HINTS;
   }
@@ -695,8 +720,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   /**
    * @deprecated use {@link com.intellij.codeInsight.hints.HintUtilsKt#setShowParameterHintsForLanguage(boolean, Language)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setShowParameterNameHints(boolean value) {
     myOptions.SHOW_PARAMETER_NAME_HINTS = value;
   }
@@ -729,5 +753,21 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setCaretStopOptions(@NotNull CaretStopOptions options) {
     myOsSpecificState.CARET_STOP_OPTIONS = options;
+  }
+
+  public boolean isUseEditorFontInInlays() {
+    return myOptions.USE_EDITOR_FONT_IN_INLAYS;
+  }
+
+  public void setUseEditorFontInInlays(boolean value) {
+    myOptions.USE_EDITOR_FONT_IN_INLAYS = value;
+  }
+
+  public boolean isInsertParenthesesAutomatically() {
+    return myOptions.INSERT_PARENTHESES_AUTOMATICALLY;
+  }
+
+  public void setInsertParenthesesAutomatically(boolean value) {
+    myOptions.INSERT_PARENTHESES_AUTOMATICALLY = value;
   }
 }

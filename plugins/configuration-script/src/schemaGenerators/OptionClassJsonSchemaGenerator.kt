@@ -112,7 +112,6 @@ internal fun buildJsonSchema(state: BaseState,
             }
             else -> {
               map("items") {
-                @Suppress("UNCHECKED_CAST")
                 definitionReference(subObjectSchemaGenerator.definitionPointerPrefix,
                                     subObjectSchemaGenerator.addClass(listType))
               }

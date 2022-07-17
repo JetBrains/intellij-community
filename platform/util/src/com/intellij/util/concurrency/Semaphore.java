@@ -6,6 +6,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
+/**
+ * A semaphore implementation throwing {@link ProcessCanceledException} instead of {@link InterruptedException}
+ * Use {@link Semaphore#down} to remove a permit from the semaphore
+ * Use {@link Semaphore#up} to return a permit to the semaphore
+ * Use {@link Semaphore#waitFor} to request for a vacant permit. If there is no vacant permit, waitFor will be blocked until there is one.
+ */
 public class Semaphore {
   /**
    * Creates Semaphore in an up state
@@ -81,7 +87,9 @@ public class Semaphore {
     sync.acquireSharedInterruptibly(1);
   }
 
-  // true if semaphore became free
+  /**
+   * @return true if semaphore became free
+   */
   public boolean waitFor(final long msTimeout) {
     try {
       return waitForUnsafe(msTimeout);
@@ -91,7 +99,9 @@ public class Semaphore {
     }
   }
 
-  // true if semaphore became free
+  /**
+   * @return true if semaphore became free
+   */
   public boolean waitForUnsafe(long msTimeout) throws InterruptedException {
     if (sync.tryAcquireShared(1) >= 0) return true;
     return sync.tryAcquireSharedNanos(1, TimeUnit.MILLISECONDS.toNanos(msTimeout));

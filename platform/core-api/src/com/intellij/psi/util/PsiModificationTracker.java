@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.lang.Language;
@@ -27,20 +27,26 @@ import java.util.function.Predicate;
  * </ol>
  */
 public interface PsiModificationTracker extends ModificationTracker {
+
   /**
-   * Provides a way to get the instance of {@link PsiModificationTracker} corresponding to a given project.
-   * @see #getInstance(Project)
+   * @deprecated use {@link PsiModificationTracker#getInstance(Project)} instead
    */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   final class SERVICE {
     private SERVICE() {
     }
 
-    /**
-     * @return The instance of {@link PsiModificationTracker} corresponding to the given project.
-     */
     public static PsiModificationTracker getInstance(Project project) {
-      return project.getService(PsiModificationTracker.class);
+      return PsiModificationTracker.getInstance(project);
     }
+  }
+
+  /**
+   * @return The instance of {@link PsiModificationTracker} corresponding to the given project.
+   */
+  static PsiModificationTracker getInstance(Project project) {
+    return project.getService(PsiModificationTracker.class);
   }
 
   /**
@@ -57,7 +63,7 @@ public interface PsiModificationTracker extends ModificationTracker {
    * @deprecated rarely supported by language plugins; also a wrong way for optimisations
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @ApiStatus.ScheduledForRemoval
   Key OUT_OF_CODE_BLOCK_MODIFICATION_COUNT = MODIFICATION_COUNT;
 
   /**
@@ -66,7 +72,7 @@ public interface PsiModificationTracker extends ModificationTracker {
    * @deprecated rarely supported by JVM language plugins; also a wrong way for optimisations
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @ApiStatus.ScheduledForRemoval
   Key JAVA_STRUCTURE_MODIFICATION_COUNT = MODIFICATION_COUNT;
 
   /**
@@ -74,7 +80,7 @@ public interface PsiModificationTracker extends ModificationTracker {
    * @see com.intellij.util.messages.MessageBus
    */
   @Topic.ProjectLevel
-  Topic<Listener> TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.TO_PARENT);
+  Topic<Listener> TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.TO_PARENT, true);
 
   /**
    * Tracks any PSI modification.
@@ -88,7 +94,7 @@ public interface PsiModificationTracker extends ModificationTracker {
    * @deprecated rarely supported by JVM language plugins; also a wrong way for optimisations
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   ModificationTracker getJavaStructureModificationTracker();
 

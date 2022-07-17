@@ -14,7 +14,7 @@ import java.util.List;
  * Lightweight alternative to {@link DefaultActionGroup}.
  * Does not use `createLockFreeCopyOnWriteList` and action order constraints, making it suitable for use cases with many (10k+) children actions.
  */
-public class LightActionGroup extends ActionGroup implements AlwaysVisibleActionGroup, UpdateInBackground.Recursive {
+public class LightActionGroup extends ActionGroup implements AlwaysVisibleActionGroup, ActionUpdateThreadAware.Recursive {
   private final List<AnAction> myChildren = new ArrayList<>();
 
   public LightActionGroup() {

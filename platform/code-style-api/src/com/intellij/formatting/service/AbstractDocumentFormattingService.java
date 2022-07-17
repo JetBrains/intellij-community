@@ -5,7 +5,9 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingMode;
 import com.intellij.formatting.FormattingRangesInfo;
+import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -16,12 +18,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Base class for synchronous document formatting services.
  */
-@ApiStatus.Experimental
 public abstract class AbstractDocumentFormattingService implements FormattingService {
+  private final static Key<Document> DOCUMENT_KEY = Key.create("formatting.service.document");
 
   @Override
   public final @NotNull PsiElement formatElement(@NotNull PsiElement element, boolean canChangeWhiteSpaceOnly) {
@@ -36,6 +39,9 @@ public abstract class AbstractDocumentFormattingService implements FormattingSer
     FormattingContext formattingContext = FormattingContext.create(file, range, CodeStyle.getSettings(file), FormattingMode.REFORMAT);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
     Document document = documentManager.getDocument(file);
+    if (document == null) {
+      document = file.getUserData(DOCUMENT_KEY);
+    }
     if (document != null) {
       int offset = element.getTextOffset();
       formatDocument(document, Collections.singletonList(range), formattingContext, canChangeWhiteSpaceOnly, false);
@@ -64,10 +70,29 @@ public abstract class AbstractDocumentFormattingService implements FormattingSer
   }
 
 
+  /**
+   * Formats the document within the specified ranges.
+   *
+   * @param document                The document to format.
+   * @param formattingRanges        Ranges in which the document should be formatted.
+   * @param formattingContext       Formatting information, see {@link FormattingContext}
+   * @param canChangeWhiteSpaceOnly True if only whitespace can be changed (indents, spacing)
+   * @param quickFormat             True if only quick adjustments are allowed, e.g. after a quick fix or refactoring.
+   */
   public abstract void formatDocument(@NotNull Document document,
                                       @NotNull List<TextRange> formattingRanges,
                                       @NotNull FormattingContext formattingContext,
                                       boolean canChangeWhiteSpaceOnly,
                                       boolean quickFormat);
 
+
+  @ApiStatus.Internal
+  public static void setDocument(@NotNull PsiFile file, @NotNull Document document) {
+    file.putUserData(DOCUMENT_KEY, document);
+  }
+
+  @Override
+  public @NotNull Set<ImportOptimizer> getImportOptimizers(@NotNull PsiFile file) {
+    return Collections.emptySet();
+  }
 }

@@ -76,7 +76,7 @@ public class SuppressLocalInspectionTest extends LightQuickFixParameterizedTestC
     public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
       return new JavaElementVisitor() {
         @Override
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
           if (MethodCallUtils.isCallToMethod(expression, CommonClassNames.JAVA_LANG_STRING, null, "format", (PsiType[]) null)) {
             holder.registerProblem(expression, "I am a dummy problem with unavailable fix", new DummyUnavailableQuickFix());
           }

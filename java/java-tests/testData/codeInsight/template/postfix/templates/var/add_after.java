@@ -1,5 +1,5 @@
 public class Foo {
     void m(Object o) {
-        int <caret>foo = 1;
+        int <caret>i = 1;
     }
 }

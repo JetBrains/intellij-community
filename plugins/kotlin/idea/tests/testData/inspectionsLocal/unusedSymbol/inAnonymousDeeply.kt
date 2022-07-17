@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo() {
     val xs = listOf(1, 2, 3).flatMap { x ->

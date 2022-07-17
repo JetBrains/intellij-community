@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.resolvedPromise
 
 @Deprecated(message = "Do not use and do not extend. Use ProgramRunner instead.", level = DeprecationLevel.ERROR)
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 abstract class BasicProgramRunner : ProgramRunner<RunnerSettings> {
   @Throws(ExecutionException::class)
   override fun execute(environment: ExecutionEnvironment) {

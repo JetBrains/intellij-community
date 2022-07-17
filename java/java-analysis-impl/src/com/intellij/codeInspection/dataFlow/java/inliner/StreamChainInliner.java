@@ -28,6 +28,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -65,8 +66,12 @@ public class StreamChainInliner implements CallInliner {
           instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "reduce").parameterCount(1),
           instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "findFirst", "findAny").parameterCount(0));
   private static final CallMatcher MIN_MAX_TERMINAL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "min", "max").parameterCount(1);
+  private static final CallMatcher TWO_ARG_REDUCE =
+    instanceCall(JAVA_UTIL_STREAM_STREAM, "reduce").parameterTypes("T", "java.util.function.BinaryOperator");
   private static final CallMatcher COLLECT_TERMINAL =
     instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
+  private static final CallMatcher TO_LIST_TERMINAL = instanceCall(JAVA_UTIL_STREAM_STREAM, "toList")
+    .withLanguageLevelAtLeast(LanguageLevel.JDK_16);
   private static final CallMatcher COLLECT3_TERMINAL =
     instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.function.Supplier",
                                                                     "java.util.function.BiConsumer", "java.util.function.BiConsumer");
@@ -139,7 +144,9 @@ public class StreamChainInliner implements CallInliner {
     .register(OPTIONAL_TERMINAL, call -> new OptionalTerminalStep(call))
     .register(TO_ARRAY_TERMINAL, call -> new ToArrayStep(call))
     .register(COLLECT3_TERMINAL, call -> new Collect3TerminalStep(call))
-    .register(COLLECT_TERMINAL, call -> createTerminalFromCollector(call));
+    .register(COLLECT_TERMINAL, call -> createTerminalFromCollector(call))
+    .register(TO_LIST_TERMINAL, call -> new ToCollectionStep(call, null, true))
+    .register(TWO_ARG_REDUCE, call -> new TwoArgReduceStep(call));
 
   private static final Step NULL_TERMINAL_STEP = new Step(null, null, null) {
     @Override
@@ -325,6 +332,27 @@ public class StreamChainInliner implements CallInliner {
     }
   }
 
+  static class TwoArgReduceStep extends TerminalStep {
+    private final PsiExpression myInitialValue;
+
+    TwoArgReduceStep(@NotNull PsiMethodCallExpression call) {
+      super(call, call.getArgumentList().getExpressions()[1]);
+      myInitialValue = call.getArgumentList().getExpressions()[0];
+    }
+
+    @Override
+    void iteration(CFGBuilder builder) {
+      builder.push(myResult).swap().invokeFunction(2, myFunction)
+        .assignTo(myResult).pop();
+    }
+
+    @Override
+    protected void pushInitialValue(CFGBuilder builder) {
+      builder.pushExpression(myInitialValue)
+        .boxUnbox(myInitialValue, myCall.getType());
+    }
+  }
+
   static class Collect3TerminalStep extends TerminalStep {
     private final @NotNull PsiExpression mySupplier;
     private final @NotNull PsiExpression myAccumulator;
@@ -354,8 +382,14 @@ public class StreamChainInliner implements CallInliner {
   }
 
   static class OptionalTerminalStep extends TerminalStep {
+    private final boolean myExpectNotNull;
+
     OptionalTerminalStep(@NotNull PsiMethodCallExpression call) {
       super(call, ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()));
+      String methodName = call.getMethodExpression().getReferenceName();
+      // While findFirst/findAny will work if the found element is definitely not-null,
+      // it's highly suspicious to supply a nullable element there
+      myExpectNotNull = "findFirst".equals(methodName) || "findAny".equals(methodName);
     }
 
     @Override
@@ -376,6 +410,11 @@ public class StreamChainInliner implements CallInliner {
       }
       DfType source = DfaOptionalSupport.getOptionalValue(true);
       builder.pushForWrite(myResult).push(source).assign().splice(2);
+    }
+
+    @Override
+    boolean expectNotNull() {
+      return myExpectNotNull;
     }
   }
 

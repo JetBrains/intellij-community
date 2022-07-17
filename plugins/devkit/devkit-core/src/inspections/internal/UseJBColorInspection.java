@@ -28,7 +28,7 @@ public class UseJBColorInspection extends DevKitInspectionBase {
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         final ProblemDescriptor descriptor = checkNewExpression(expression, holder.getManager(), isOnTheFly);
         if (descriptor != null) {
           holder.registerProblem(descriptor);
@@ -37,7 +37,7 @@ public class UseJBColorInspection extends DevKitInspectionBase {
       }
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement parent = expression.getParent();
         if (parent instanceof PsiMethodCallExpression) {

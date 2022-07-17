@@ -1,12 +1,15 @@
 <html>
 <body>
-<p>Reports classes, methods, or fields in the specified inspection scope that are not used or unreachable from entry points.</p>
+Reports classes, methods, or fields in the specified inspection scope that are not used or unreachable from entry points.
 <p> An entry point can be the main method, tests, classes mentioned outside the specified scope, classes accessible from
   <code>module-info.java</code>, and so on. You can also configure custom entry points by using name patterns or annotations.
+</p>
 <p><b>Example:</b></p>
-<pre><code>public class Department {
-   private Organization myOrganization;
-}</code></pre>
+<pre><code>
+  public class Department {
+    private Organization myOrganization;
+  }
+</code></pre>
 <p>In this example, <code>Department</code> explicitly references <code>Organization</code> but if <code>Department</code> class itself is unused, then inspection will report both classes. </p>
 <p>
   The inspection also reports parameters that are not used by their methods and all method implementations and overriders, as well as local
@@ -15,7 +18,7 @@
 <p>
   <b>Note:</b> Some unused members may not be reported during in-editor code highlighting. For performance reasons, a non-private member is
   checked only when its name rarely occurs in the project.
-  To see all results, run the inspection by selecting <b> Analyze | Inspect Code...</b> or <b>Analyze | Run Inspection by Name...</b> from the main menu.
+  To see all results, run the inspection by selecting <b>Code | Inspect Code</b> or <b>Code | Analyze Code | Run Inspection by Name</b> from the main menu.
 </p>
 
 <!-- tooltip end -->

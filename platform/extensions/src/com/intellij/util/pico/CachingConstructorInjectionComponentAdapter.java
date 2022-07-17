@@ -2,6 +2,7 @@
 package com.intellij.util.pico;
 
 import com.intellij.util.ExceptionUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.ComponentAdapter;
@@ -20,6 +21,7 @@ import java.util.*;
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public final class CachingConstructorInjectionComponentAdapter implements ComponentAdapter {
   private static final ThreadLocal<Set<Class<?>>> ourGuard = new ThreadLocal<>();
   private Object myInstance;

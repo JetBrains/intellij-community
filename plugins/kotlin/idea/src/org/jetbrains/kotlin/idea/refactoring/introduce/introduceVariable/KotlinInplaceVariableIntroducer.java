@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable;
 
@@ -8,9 +8,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
@@ -20,15 +18,17 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PositionTracker;
 import kotlin.collections.ArraysKt;
 import kotlin.collections.CollectionsKt;
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.KotlinBundle;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention;
 import org.jetbrains.kotlin.idea.references.ReferenceUtilsKt;
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers;
@@ -44,6 +44,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+
+import static com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction;
 
 public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> extends InplaceVariableIntroducer<KtExpression> {
     private static final Key<KotlinInplaceVariableIntroducer> ACTIVE_INTRODUCER = Key.create("ACTIVE_INTRODUCER");
@@ -114,7 +116,7 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
 
     public KotlinInplaceVariableIntroducer(
             PsiNamedElement elementToRename, Editor editor, Project project,
-            String title, KtExpression[] occurrences,
+            @Nls String title, KtExpression[] occurrences,
             @Nullable KtExpression expr, boolean replaceOccurrence,
             D declaration, boolean isVar, boolean doNotChangeVar,
             @Nullable KotlinType exprType, boolean noTypeInference
@@ -177,9 +179,9 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
                                                                           JBUI.insets(0, 5), 0, 0));
             ++count;
         }
-        panel.add(Box.createVerticalBox(), new GridBagConstraints(0, count, 1, 1, 1, 1, GridBagConstraints.NORTHWEST,
-                                                                  GridBagConstraints.BOTH,
-                                                                  JBUI.emptyInsets(), 0, 0));
+      panel.add(Box.createVerticalBox(), new GridBagConstraints(0, count, 1, 1, 1, 1, GridBagConstraints.NORTHWEST,
+                                                                GridBagConstraints.BOTH,
+                                                                JBInsets.emptyInsets(), 0, 0));
     }
 
     @NotNull
@@ -237,21 +239,18 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
                 varCheckbox.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(@NotNull ActionEvent e) {
-                        new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
-                            @Override
-                            protected void run(@NotNull Result result) {
-                                PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+                        runWriteCommandAction(myProject, getCommandName(), getCommandName(), () -> {
+                            PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
 
-                                KtPsiFactory psiFactory = new KtPsiFactory(myProject);
-                                PsiElement keyword =
-                                        varCheckbox.isSelected() ? psiFactory.createVarKeyword() : psiFactory.createValKeyword();
+                            KtPsiFactory psiFactory = new KtPsiFactory(myProject);
+                            PsiElement keyword =
+                                    varCheckbox.isSelected() ? psiFactory.createVarKeyword() : psiFactory.createValKeyword();
 
-                                PsiElement valOrVar = myDeclaration instanceof KtProperty
-                                                      ? ((KtProperty) myDeclaration).getValOrVarKeyword()
-                                                      : ((KtParameter) myDeclaration).getValOrVarKeyword();
-                                valOrVar.replace(keyword);
-                            }
-                        }.execute();
+                            PsiElement valOrVar = myDeclaration instanceof KtProperty
+                                                  ? ((KtProperty) myDeclaration).getValOrVarKeyword()
+                                                  : ((KtParameter) myDeclaration).getValOrVarKeyword();
+                            valOrVar.replace(keyword);
+                        });
                     }
                 });
 
@@ -262,35 +261,32 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
 
     protected final void runWriteActionAndRestartRefactoring(final Runnable runnable) {
         final Ref<Boolean> greedyToRight = new Ref<>();
-        new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
-            @Override
-            protected void run(@NotNull Result result) {
-                PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+        runWriteCommandAction(myProject, getCommandName(), getCommandName(), () -> {
+            PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
 
-                ASTNode identifier = myDeclaration.getNode().findChildByType(KtTokens.IDENTIFIER);
-                if (identifier != null) {
-                    TextRange range = identifier.getTextRange();
-                    RangeHighlighter[] highlighters = myEditor.getMarkupModel().getAllHighlighters();
-                    for (RangeHighlighter highlighter : highlighters) {
-                        if (highlighter.getStartOffset() == range.getStartOffset()) {
-                            if (highlighter.getEndOffset() == range.getEndOffset()) {
-                                greedyToRight.set(highlighter.isGreedyToRight());
-                                highlighter.setGreedyToRight(false);
-                            }
+            ASTNode identifier = myDeclaration.getNode().findChildByType(KtTokens.IDENTIFIER);
+            if (identifier != null) {
+                TextRange range = identifier.getTextRange();
+                RangeHighlighter[] highlighters = myEditor.getMarkupModel().getAllHighlighters();
+                for (RangeHighlighter highlighter : highlighters) {
+                    if (highlighter.getStartOffset() == range.getStartOffset()) {
+                        if (highlighter.getEndOffset() == range.getEndOffset()) {
+                            greedyToRight.set(highlighter.isGreedyToRight());
+                            highlighter.setGreedyToRight(false);
                         }
                     }
                 }
-
-                runnable.run();
-
-                TemplateState templateState =
-                        TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
-                if (templateState != null) {
-                    myEditor.putUserData(INTRODUCE_RESTART, true);
-                    templateState.gotoEnd(true);
-                }
             }
-        }.execute();
+
+            runnable.run();
+
+            TemplateState templateState =
+                    TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
+            if (templateState != null) {
+                myEditor.putUserData(INTRODUCE_RESTART, true);
+                templateState.gotoEnd(true);
+            }
+        });
         ApplicationManager.getApplication().runReadAction(() -> {
             ASTNode identifier = myDeclaration.getNode().findChildByType(KtTokens.IDENTIFIER);
             if (identifier != null) {

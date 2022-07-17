@@ -3,10 +3,10 @@ plugins {
     id("com.android.library")
 }
 android {
-    compileSdkVersion(26)
+    compileSdkVersion({{compile_sdk_version}})
 }
 kotlin {
-    js()
+    js { browser() }
     jvm()
     android()
     sourceSets {

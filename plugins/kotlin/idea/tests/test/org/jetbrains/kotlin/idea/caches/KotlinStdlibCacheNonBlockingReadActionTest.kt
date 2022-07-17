@@ -4,10 +4,11 @@ package org.jetbrains.kotlin.idea.caches
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.ExceptionUtil
-import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.KotlinStdlibCache
-import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.KotlinStdlibCache
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.getIdeaModelInfosCache
+import org.jetbrains.kotlin.idea.core.util.runInReadActionWithWriteActionPriority
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -29,7 +30,9 @@ class KotlinStdlibCacheNonBlockingReadActionTest : AbstractMultiModuleTest() {
 
     fun testStdlibCacheReadActionIsCancellableByWriteActions() {
         val secondaryThread = thread(start = true, name = "Cache-using thread") {
-            searchForStdlibUntilInterrupted()
+            runInReadActionWithWriteActionPriority {
+                searchForStdlibUntilInterrupted()
+            }
         }
 
         runWriteActionsLoop()
@@ -51,7 +54,7 @@ class KotlinStdlibCacheNonBlockingReadActionTest : AbstractMultiModuleTest() {
 
     private val moduleInfo: IdeaModuleInfo
         get() {
-            return getIdeaModelInfosCache(project).forPlatform(JvmPlatforms.jvm18).filterIsInstance<ModuleSourceInfo>().singleOrNull()
+            return getIdeaModelInfosCache(project).forPlatform(JvmPlatforms.jvm17).filterIsInstance<ModuleSourceInfo>().singleOrNull()
                 ?: throw AssertionError("Expected to find a single JVM module in the project")
         }
 

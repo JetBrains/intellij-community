@@ -1,52 +1,79 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentsOfType
+import com.intellij.util.containers.OrderedSet
+import com.siyeh.InspectionGadgetsBundle
+import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
+import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.intentions.receiverType
-import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.getThisReceiverOwner
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import javax.swing.JPanel
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
+    @Suppress("MemberVisibilityCanBePrivate")
+    var ignorableAnnotations = OrderedSet(listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED))
+
+    override fun createOptionsPanel(): JPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+        ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by")
+    )
+
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = classVisitor(fun(targetClass) {
         val innerModifier = targetClass.modifierList?.getModifier(KtTokens.INNER_KEYWORD) ?: return
         if (targetClass.containingClassOrObject.safeAs<KtObjectDeclaration>()?.isObjectLiteral() == true) return
         val outerClasses = targetClass.parentsOfType<KtClass>().dropWhile { it == targetClass }.toSet()
         if (outerClasses.isEmpty() || outerClasses.any { it.isLocal || it.isInner() }) return
-        if (targetClass.hasOuterClassMemberReference(outerClasses)) return
+        if (targetClass.hasIgnorableAnnotations() || targetClass.hasOuterClassMemberReference(outerClasses)) {
+            return
+        }
         holder.registerProblem(
             innerModifier,
             KotlinBundle.message("inspection.redundant.inner.class.modifier.descriptor"),
-            ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-            IntentionWrapper(
-                RemoveModifierFix(targetClass, KtTokens.INNER_KEYWORD, isRedundant = true),
-                targetClass.containingFile
-            )
+            RemoveInnerModifierFix()
         )
     })
+
+    private fun KtClass.hasIgnorableAnnotations(): Boolean {
+        if (ignorableAnnotations.isEmpty()) return false
+        val ignorableAnnotationFqNames = ignorableAnnotations.associate {
+            val fqName = FqName(it)
+            fqName.shortName().asString() to fqName
+        }
+        return annotationEntries.any {
+            val shortName = it.text.removePrefix("@").split(".").last()
+            val annotationFqNameToDisable = ignorableAnnotationFqNames[shortName] ?: return@any false
+            it.analyze(BodyResolveMode.PARTIAL)[BindingContext.ANNOTATION, it]?.fqName == annotationFqNameToDisable
+        }
+    }
 
     private fun KtClass.hasOuterClassMemberReference(outerClasses: Set<KtClass>): Boolean {
         val targetClass = this
@@ -114,5 +141,43 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
 
     private fun PsiElement.receiverTypeReference(): KtTypeReference? {
         return safeAs<KtNamedFunction>()?.receiverTypeReference ?: safeAs<KtProperty>()?.receiverTypeReference
+    }
+
+    private class RemoveInnerModifierFix : LocalQuickFix {
+        override fun getName() = KotlinBundle.message("remove.redundant.0.modifier", KtTokens.INNER_KEYWORD.value)
+
+        override fun getFamilyName() = name
+
+        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+            val targetClass = descriptor.psiElement.getStrictParentOfType<KtClass>() ?: return
+            val fixedElements = fixReceiverOnCallSite(targetClass)
+            targetClass.removeModifier(KtTokens.INNER_KEYWORD)
+            fixedElements.filterIsInstance<KtQualifiedExpression>().forEach { ShortenReferences.DEFAULT.process(it) }
+        }
+
+        private fun fixReceiverOnCallSite(targetClass: KtClass): List<PsiElement> {
+            val containingClass = targetClass.getStrictParentOfType<KtClass>() ?: return emptyList()
+            val bindingContext = containingClass.analyze(BodyResolveMode.PARTIAL)
+            val fqName =
+                bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, containingClass]?.fqNameOrNull()?.asString() ?: return emptyList()
+            val psiFactory = KtPsiFactory(targetClass)
+            val newReceiver = psiFactory.createExpression(fqName)
+            return ReferencesSearch.search(targetClass, targetClass.useScope).mapNotNull {
+                val callExpression = it.element.parent as? KtCallExpression ?: return@mapNotNull null
+                val qualifiedExpression = callExpression.getQualifiedExpressionForSelector()
+                val parentClass = callExpression.getStrictParentOfType<KtClass>()
+                when {
+                    // Explicit receiver
+                    qualifiedExpression != null ->
+                        if (parentClass == containingClass) {
+                            qualifiedExpression.replace(callExpression)
+                        } else {
+                            qualifiedExpression.receiverExpression.replace(newReceiver)
+                        }
+                    // Implicit receiver
+                    else -> callExpression.replace(psiFactory.createExpressionByPattern("$0.$1", newReceiver, callExpression))
+                }
+            }
+        }
     }
 }

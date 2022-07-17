@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
@@ -10,7 +10,6 @@ import com.intellij.debugger.engine.evaluation.TextWithImports
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -24,14 +23,17 @@ import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.InvalidStackFrameException
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.util.getKotlinJvmRuntimeMarkerClass
+import org.jetbrains.kotlin.idea.base.projectStructure.hasKotlinJvmRuntime
+import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
+import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
 import org.jetbrains.kotlin.idea.debugger.getContextElement
-import org.jetbrains.kotlin.idea.debugger.hopelessAware
+import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
 import org.jetbrains.kotlin.idea.j2k.J2kPostProcessor
 import org.jetbrains.kotlin.idea.j2k.convertToKotlin
 import org.jetbrains.kotlin.idea.j2k.j2kText
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.j2k.AfterConversionPass
 import org.jetbrains.kotlin.psi.*
@@ -47,7 +49,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
 
         supplyDebugInformation(item, codeFragment, context)
 
-        codeFragment.putCopyableUserData(KtCodeFragment.RUNTIME_TYPE_EVALUATOR) { expression: KtExpression ->
+        codeFragment.putCopyableUserData(CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR) { expression: KtExpression ->
             val debuggerContext = DebuggerManagerEx.getInstanceEx(project).context
             val debuggerSession = debuggerContext.debuggerSession
             if (debuggerSession == null || debuggerContext.suspendContext == null) {
@@ -83,7 +85,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
                 val debuggerContext = DebuggerManagerEx.getInstanceEx(project).context
                 val debuggerSession = debuggerContext.debuggerSession
                 if ((debuggerSession == null || debuggerContext.suspendContext == null) &&
-                    !ApplicationManager.getApplication().isUnitTestMode
+                    !isUnitTestMode()
                 ) {
                     LOG.warn("Couldn't create fake context element for java file, debugger isn't paused on breakpoint")
                     return@putCopyableUserData emptyFile
@@ -137,10 +139,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
 
         DebugLabelPropertyDescriptorProvider(codeFragment, debugProcess).supplyDebugLabels()
 
-        @Suppress("MoveVariableDeclarationIntoWhen")
-        val evaluator = debugProcess.session.xDebugSession?.currentStackFrame?.evaluator
-
-        val evaluationType = when (evaluator) {
+        val evaluationType = when (val evaluator = debugProcess.session.xDebugSession?.currentStackFrame?.evaluator) {
             is KotlinDebuggerEvaluator -> evaluator.getType(item)
             is JavaDebuggerEvaluator -> KotlinDebuggerEvaluator.EvaluationType.FROM_JAVA
             else -> KotlinDebuggerEvaluator.EvaluationType.UNKNOWN
@@ -150,7 +149,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
     }
 
     private fun getDebugProcess(project: Project, context: PsiElement?): DebugProcessImpl? {
-        return if (ApplicationManager.getApplication().isUnitTestMode) {
+        return if (isUnitTestMode()) {
             context?.getCopyableUserData(DEBUG_CONTEXT_FOR_TESTS)?.debugProcess
         } else {
             DebuggerManagerEx.getInstanceEx(project).context.debugProcess
@@ -167,7 +166,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
             override fun action() {
                 try {
                     val frameProxy = hopelessAware {
-                        if (ApplicationManager.getApplication().isUnitTestMode) {
+                        if (isUnitTestMode()) {
                             contextElement?.getCopyableUserData(DEBUG_CONTEXT_FOR_TESTS)?.frameProxy
                         } else {
                             debuggerContext.frameProxy
@@ -195,7 +194,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
     }
 
     private fun initImports(imports: String?): String? {
-        if (imports != null && imports.isNotEmpty()) {
+        if (!imports.isNullOrEmpty()) {
             return imports.split(KtCodeFragment.IMPORT_SEPARATOR)
                 .mapNotNull { fixImportIfNeeded(it) }
                 .joinToString(KtCodeFragment.IMPORT_SEPARATOR)
@@ -277,7 +276,9 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
             contextElement == null -> false
             contextElement.language == KotlinFileType.INSTANCE.language -> true
             contextElement.language == JavaFileType.INSTANCE.language -> {
-                getKotlinJvmRuntimeMarkerClass(contextElement.project, contextElement.resolveScope) != null
+                val project = contextElement.project
+                val scope = contextElement.resolveScope
+                syncNonBlockingReadAction(project) { scope.hasKotlinJvmRuntime(project) }
             }
             else -> false
         }

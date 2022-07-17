@@ -4,30 +4,31 @@ package org.jetbrains.kotlin.idea.quickfix.expectactual
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.ide.util.MemberChooser
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showOkNoDialog
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.project.implementedModules
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.facet.implementedModules
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.DescriptorMemberChooserObject
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.overrideImplement.makeActual
 import org.jetbrains.kotlin.idea.core.overrideImplement.makeNotActual
 import org.jetbrains.kotlin.idea.core.toDescriptor
-import org.jetbrains.kotlin.idea.core.util.DescriptorMemberChooserObject
 import org.jetbrains.kotlin.idea.quickfix.KotlinIntentionActionsFactory
 import org.jetbrains.kotlin.idea.quickfix.TypeAccessibilityChecker
 import org.jetbrains.kotlin.idea.refactoring.getExpressionShortText
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.liftToExpected
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -127,7 +128,7 @@ class CreateExpectedClassFix(
 
     val selectedElements = when {
         membersForSelection.all(KtDeclaration::hasActualModifier) -> membersForSelection
-        ApplicationManager.getApplication().isUnitTestMode -> membersForSelection.filter(KtDeclaration::hasActualModifier)
+        isUnitTestMode() -> membersForSelection.filter(KtDeclaration::hasActualModifier)
         else -> {
             val prefix = klass.fqName?.asString()?.plus(".") ?: ""
             chooseMembers(project, membersForSelection, prefix) ?: return@block null
@@ -158,6 +159,7 @@ private fun showUnknownTypeInDeclarationDialog(
     declarationsWithNonExistentClasses: Collection<KtNamedDeclaration>
 ): Boolean {
     if (declarationsWithNonExistentClasses.isEmpty()) return true
+    @NlsSafe
     val message = escapeXml(
         declarationsWithNonExistentClasses.joinToString(
             prefix = "${KotlinBundle.message("these.declarations.cannot.be.transformed")}\n",
@@ -167,8 +169,8 @@ private fun showUnknownTypeInDeclarationDialog(
     )
 
     TypeAccessibilityChecker.testLog?.append("$message\n")
-    return ApplicationManager.getApplication().isUnitTestMode || showOkNoDialog(
-        KotlinBundle.message("unknown.types"),
+    return isUnitTestMode() || showOkNoDialog(
+        KotlinBundle.message("unknown.types.title"),
         message,
         project
     )
@@ -198,7 +200,7 @@ private fun chooseMembers(project: Project, collection: Collection<KtNamedDeclar
         true,
         project
     ).run {
-        title = KotlinBundle.message("choose.actual.members")
+        title = KotlinBundle.message("choose.actual.members.title")
         setCopyJavadocVisible(false)
         selectElements(classMembers.filter { filter((it.element as KtNamedDeclaration)) }.toTypedArray())
         show()
@@ -210,8 +212,13 @@ private class Member(val prefix: String, element: KtElement, descriptor: Declara
     DescriptorMemberChooserObject(element, descriptor) {
     override fun getText(): String {
         val text = super.getText()
-        return if (descriptor is ClassDescriptor) text.removePrefix(prefix)
-        else text
+        return if (descriptor is ClassDescriptor) {
+            @NlsSafe
+            val p = prefix
+            text.removePrefix(p)
+        } else {
+            text
+        }
     }
 }
 

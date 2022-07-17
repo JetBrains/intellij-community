@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ui.render.RenderingUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -19,9 +20,14 @@ public class TableCellState {
     clear();
     mySelected = isSelected;
     myFont = table.getFont();
-    myForeground = RenderingUtil.getForeground(table, isSelected);
+    myForeground = getSelectionForeground(table, isSelected);
     myBackground = RenderingUtil.getBackground(table, isSelected);
     myCellBorder = getBorder(isSelected, hasFocus);
+  }
+
+  @NotNull
+  protected Color getSelectionForeground(JTable table, boolean isSelected) {
+    return RenderingUtil.getForeground(table, isSelected);
   }
 
   @Nullable

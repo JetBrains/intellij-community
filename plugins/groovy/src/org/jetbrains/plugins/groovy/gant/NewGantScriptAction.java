@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.psi.PsiDirectory;
@@ -25,8 +25,8 @@ import java.util.Objects;
 public class NewGantScriptAction extends NewGroovyActionBase {
 
   @Override
-  protected String getActionName(PsiDirectory directory, String newName) {
-    return null;
+  protected @NotNull String getActionName(@NotNull PsiDirectory directory, @NotNull String newName) {
+    return GroovyBundle.message("new.gant.script.dialog.title");
   }
 
   @Override
@@ -42,7 +42,7 @@ public class NewGantScriptAction extends NewGroovyActionBase {
   @Override
   protected boolean isAvailable(DataContext dataContext) {
     return super.isAvailable(dataContext) &&
-           GantUtils.isSDKConfiguredToRun(Objects.requireNonNull(LangDataKeys.MODULE.getData(dataContext)));
+           GantUtils.isSDKConfiguredToRun(Objects.requireNonNull(PlatformCoreDataKeys.MODULE.getData(dataContext)));
   }
 
   @Override

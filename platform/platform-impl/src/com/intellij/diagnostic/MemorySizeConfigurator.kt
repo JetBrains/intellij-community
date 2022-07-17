@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.util.PropertiesComponent
@@ -6,14 +6,16 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.sun.management.OperatingSystemMXBean
 import java.lang.management.ManagementFactory
 import kotlin.math.max
 
-private class MemorySizeConfigurator : StartupActivity.Background {
-  override fun runActivity(project: Project) {
-    if (ApplicationManager.getApplication().isUnitTestMode) return
+private class MemorySizeConfigurator : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
 
     val memoryAdjusted = PropertiesComponent.getInstance().isTrueValue("ide.memory.adjusted")
     if (memoryAdjusted) return
@@ -42,8 +44,13 @@ private class MemorySizeConfigurator : StartupActivity.Background {
       LOG.info("Memory size configurator skipped: avoiding invalid configuration with -Xmx ${currentXms} and -Xmx ${newXmx}")
     }
     else {
-      VMOptions.writeOption(VMOptions.MemoryKind.HEAP, newXmx)
-      LOG.info("Physical memory ${totalPhysicalMemory}M, minimum memory size ${currentXms}M, -Xmx adjusted from ${currentXmx}M to ${newXmx}M")
+      try {
+        VMOptions.setOption(VMOptions.MemoryKind.HEAP, newXmx)
+        LOG.info("Physical memory ${totalPhysicalMemory}M, minimum memory size ${currentXms}M, -Xmx adjusted from ${currentXmx}M to ${newXmx}M")
+      }
+      catch (e: Exception) {
+        LOG.warn(e)
+      }
     }
     PropertiesComponent.getInstance().setValue("ide.memory.adjusted", true)
   }

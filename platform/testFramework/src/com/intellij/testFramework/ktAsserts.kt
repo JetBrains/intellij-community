@@ -1,0 +1,9 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.testFramework
+
+inline fun <reified T> assertInstanceOf(o: Any?): T = UsefulTestCase.assertInstanceOf(o, T::class.java)
+
+inline fun <reified T> Any?.requireIs(): T {
+  assertInstanceOf<T>(this)
+  return this as T
+}

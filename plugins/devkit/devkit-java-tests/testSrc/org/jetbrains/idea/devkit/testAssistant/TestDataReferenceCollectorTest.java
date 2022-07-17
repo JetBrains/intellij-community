@@ -10,8 +10,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @TestDataPath("$CONTENT_ROOT/testData/")
 public class TestDataReferenceCollectorTest extends LightJavaCodeInsightFixtureTestCase {
@@ -42,9 +41,17 @@ public class TestDataReferenceCollectorTest extends LightJavaCodeInsightFixtureT
 
   public void testTestMetadataData() {
     final List<String> references = doTest();
-    assertEquals(2, references.size());
+    assertEquals(3, references.size());
     assertEquals("/src/testData/refactoring/introduceVariable/SomeType.kt", references.get(0));
     assertEquals("/src/testData/refactoring/introduceVariable/AnonymousType.kt", references.get(1));
+    assertEquals("/src/testData/refactoring/introduceVariable/extra/AnonymousType.kt", references.get(2));
+  }
+
+  public void testTestMetadataDataNoTopLevel() {
+    final List<String> references = doTest();
+    assertEquals(2, references.size());
+    assertEquals("/src/testData/refactoring/introduceVariable/AnonymousType.kt", references.get(0));
+    assertEquals("/src/testData/refactoring/introduceVariable/extra/AnonymousType.kt", references.get(1));
   }
 
   public void testAbstractMethod() {
@@ -57,9 +64,12 @@ public class TestDataReferenceCollectorTest extends LightJavaCodeInsightFixtureT
     myFixture.configureByFile("referenceCollector/" + getTestName(false) + ".java");
     for (PsiClass aClass : ((PsiJavaFile)myFixture.getFile()).getClasses()) {
       if (aClass.getName().equals("ATest")) {
-        List<PsiClass> classes = new ArrayList<>();
+        Set<PsiClass> classes = new LinkedHashSet<>();
         classes.add(aClass);
-        classes.addAll(List.of(aClass.getAllInnerClasses()));
+        for (PsiClass innerClass : aClass.getAllInnerClasses()) {
+          classes.add(innerClass);
+          classes.addAll(Arrays.asList(innerClass.getAllInnerClasses()));
+        }
         List<TestDataFile> testDataFiles = new ArrayList<>();
         for (PsiClass psiClass : classes) {
           String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(psiClass);

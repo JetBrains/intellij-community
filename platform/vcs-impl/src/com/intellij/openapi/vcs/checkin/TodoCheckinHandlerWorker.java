@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.diff.comparison.ComparisonManager;
@@ -185,7 +185,7 @@ public class TodoCheckinHandlerWorker {
   @NotNull
   private List<TodoItem> collectTodoItems(@NotNull PsiFile psiFile, boolean isLight) {
     if (!isLight) ApplicationManager.getApplication().assertReadAccessAllowed();
-    PsiTodoSearchHelper searchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
+    PsiTodoSearchHelper searchHelper = PsiTodoSearchHelper.getInstance(myProject);
     TodoItem[] todoItems = isLight ? searchHelper.findTodoItemsLight(psiFile)
                                    : searchHelper.findTodoItems(psiFile);
     return applyFilterAndRemoveDuplicatesAndSort(todoItems, myTodoFilter);

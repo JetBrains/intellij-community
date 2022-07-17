@@ -86,7 +86,7 @@ final class GroovyHotSwapper extends JavaProgramPatcher {
     }
 
     if (configuration instanceof ModuleBasedConfiguration) {
-      final Module module = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
+      final Module module = ((ModuleBasedConfiguration<?, ?>)configuration).getConfigurationModule().getModule();
       if (module != null) {
         final LanguageLevel level = LanguageLevelUtil.getEffectiveLanguageLevel(module);
         if (!level.isAtLeast(LanguageLevel.JDK_1_5)) {

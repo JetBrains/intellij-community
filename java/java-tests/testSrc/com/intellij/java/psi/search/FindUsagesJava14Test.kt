@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.search
 
 import com.intellij.JavaTestUtil
@@ -17,7 +17,7 @@ import java.lang.Integer.max
 class FindUsagesJava14Test : JavaPsiTestCase() {
   override fun setUp() {
     super.setUp()
-    LanguageLevelProjectExtension.getInstance(myJavaFacade.project).languageLevel = LanguageLevel.JDK_15_PREVIEW
+    LanguageLevelProjectExtension.getInstance(myJavaFacade.project).languageLevel = LanguageLevel.HIGHEST
     val root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/findUsages14/" + getTestName(true)
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17())
     createTestProjectStructure(root)
@@ -53,10 +53,22 @@ class FindUsagesJava14Test : JavaPsiTestCase() {
     """.trimIndent())
   }
 
+  fun testSeparateFiles() {
+    val record = myJavaFacade.findClass("pack1.MyRecord", GlobalSearchScope.moduleScope(myModule))!!
+    TestCase.assertTrue(record.isRecord)
+    testReferences(record.recordComponents[0], """
+5     String s = s();
+                 ^
+
+8     asd.s();
+      ^^^^^
+    """.trimIndent())
+  }
+
   private fun testReferences(elementToSearch: PsiElement, expectedText: String): Array<out PsiElement> {
     val elements = ReferencesSearch.search(elementToSearch, GlobalSearchScope.moduleScope(myModule), false)
       .mapping { reference: PsiReference -> reference.element }
-      .toArray(PsiElement.EMPTY_ARRAY);
+      .toArray(PsiElement.EMPTY_ARRAY)
     val actualText = elements.sortedBy { it.textRange.startOffset }.joinToString("\n\n") { createSnippet(it) }
     assertEquals(expectedText, actualText)
     return elements

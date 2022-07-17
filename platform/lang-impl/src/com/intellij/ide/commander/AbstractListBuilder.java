@@ -8,6 +8,7 @@ import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -286,7 +287,7 @@ public abstract class AbstractListBuilder implements Disposable {
 
     for (Object aChildren : children) {
       AbstractTreeNode child = (AbstractTreeNode)aChildren;
-      child.update();
+      ReadAction.run(() -> child.update());
     }
     if (myComparator != null) {
       Arrays.sort(children, myComparator);
@@ -372,7 +373,7 @@ public abstract class AbstractListBuilder implements Disposable {
     }
 
     if (shouldAddTopElement()) {
-      final List elems = new ArrayList();
+      final List<NodeDescriptor<?>> elems = new ArrayList<>();
       Object value = parentDescriptor.getValue();
       if (value != null) {
         elems.add(new TopLevelNode(myProject, value));

@@ -43,7 +43,7 @@ public class MavenBuild extends MavenBuildBase implements Serializable {
   }
 
   public List<String> getSources() {
-    return mySources == null ? Collections.<String>emptyList() : mySources;
+    return mySources == null ? Collections.emptyList() : mySources;
   }
 
   public void setSources(List<String> sources) {
@@ -56,7 +56,7 @@ public class MavenBuild extends MavenBuildBase implements Serializable {
   }
 
   public List<String> getTestSources() {
-    return myTestSources == null ? Collections.<String>emptyList() : myTestSources;
+    return myTestSources == null ? Collections.emptyList() : myTestSources;
   }
 
   public void setTestSources(List<String> testSources) {

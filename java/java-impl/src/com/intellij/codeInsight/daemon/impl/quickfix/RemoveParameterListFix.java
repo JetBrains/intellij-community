@@ -16,14 +16,17 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RemoveParameterListFix implements IntentionAction {
 
@@ -31,6 +34,11 @@ public class RemoveParameterListFix implements IntentionAction {
 
   public RemoveParameterListFix(@NotNull PsiMethod method) {
     myMethod = method;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new RemoveParameterListFix(PsiTreeUtil.findSameElementInCopy(myMethod, target));
   }
 
   @Override

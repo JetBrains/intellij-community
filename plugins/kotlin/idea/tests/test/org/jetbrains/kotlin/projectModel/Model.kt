@@ -2,12 +2,12 @@
 
 package org.jetbrains.kotlin.projectModel
 
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
@@ -112,24 +112,24 @@ sealed class Stdlib(
 ) : ResolveLibrary(name, root, platform, kind) {
 
     object CommonStdlib : Stdlib(
-      "stdlib-common",
-      AdditionalKotlinArtifacts.kotlinStdlibCommon,
-      CommonPlatforms.defaultCommonPlatform,
-      CommonLibraryKind
+        "stdlib-common",
+        TestKotlinArtifacts.kotlinStdlibCommon,
+        CommonPlatforms.defaultCommonPlatform,
+        KotlinCommonLibraryKind
     )
 
     object JvmStdlib : Stdlib(
         "stdlib-jvm",
-        KotlinArtifacts.instance.kotlinStdlib,
+        KotlinArtifacts.kotlinStdlib,
         JvmPlatforms.defaultJvmPlatform,
         null
     )
 
     object JsStdlib : Stdlib(
         "stdlib-js",
-        KotlinArtifacts.instance.kotlinStdlibJs,
+        KotlinArtifacts.kotlinStdlibJs,
         JsPlatforms.defaultJsPlatform,
-        JSLibraryKind
+        KotlinJavaScriptLibraryKind
     )
 }
 
@@ -142,47 +142,55 @@ sealed class KotlinTest(
 
     object JsKotlinTest : KotlinTest(
         "kotlin-test-js",
-        KotlinArtifacts.instance.kotlinTestJs,
+        KotlinArtifacts.kotlinTestJs,
         JsPlatforms.defaultJsPlatform,
-        JSLibraryKind
+        KotlinJavaScriptLibraryKind
     )
 
     object JvmKotlinTest : KotlinTest(
         "kotlin-test-jvm",
-        KotlinArtifacts.instance.kotlinTestJunit,
+        KotlinArtifacts.kotlinTestJunit,
         JvmPlatforms.defaultJvmPlatform,
         null
     )
 
     object JustKotlinTest : KotlinTest(
         "kotlin-test",
-        KotlinArtifacts.instance.kotlinTest,
+        KotlinArtifacts.kotlinTest,
         JvmPlatforms.defaultJvmPlatform,
         null
     )
 
     object Junit : KotlinTest(
         "junit",
-        File("${PathManager.getHomePath().replace(File.separatorChar, '/')}/lib/junit-4.12.jar"),
+        File("$IDEA_TEST_DATA_DIR/lib/junit-4.12.jar"),
         JvmPlatforms.defaultJvmPlatform,
         null
     )
 }
 
+interface ResolveSdk
 
 object FullJdk : ResolveLibrary(
     "full-jdk",
     File("fake file for full jdk"),
     JvmPlatforms.defaultJvmPlatform,
     null
-)
+), ResolveSdk
 
 object MockJdk : ResolveLibrary(
     "mock-jdk",
     File("fake file for mock jdk"),
     JvmPlatforms.defaultJvmPlatform,
     null
-)
+), ResolveSdk
+
+object KotlinSdk : ResolveLibrary(
+    "kotlin-sdk",
+    File("fake file for kotlin sdk"),
+    CommonPlatforms.defaultCommonPlatform,
+    null,
+), ResolveSdk
 
 open class ResolveDependency(val to: ResolveModule, val kind: Kind) {
     open class Builder {

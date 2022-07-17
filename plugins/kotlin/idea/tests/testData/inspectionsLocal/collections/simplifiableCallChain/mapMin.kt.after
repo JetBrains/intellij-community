@@ -1,5 +1,5 @@
 // API_VERSION: 1.4
-// WITH_RUNTIME
+// WITH_STDLIB
 
 data class OrderItem(val name: String, val price: Double, val count: Int)
 

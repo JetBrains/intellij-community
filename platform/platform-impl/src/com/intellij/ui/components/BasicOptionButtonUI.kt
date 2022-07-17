@@ -245,6 +245,8 @@ open class BasicOptionButtonUI : OptionButtonUI() {
               point.translate(0, -popup.size.height)
               popup.setLocation(point)
             }
+
+            optionButton.popupHandler?.invoke(popup)
           }
 
           override fun onClosed(event: LightweightWindowEvent) {
@@ -273,8 +275,10 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   }
 
   protected open val showPopupXOffset: Int get() = 0
-  protected open val showPopupBelowLocation: RelativePoint get() = RelativePoint(optionButton, Point(showPopupXOffset, optionButton.height + scale(6)))
-  protected open val showPopupAboveLocation: RelativePoint get() = RelativePoint(optionButton, Point(showPopupXOffset, -scale(6)))
+  protected open val showPopupBelowLocation: RelativePoint
+    get() = RelativePoint(optionButton, Point(showPopupXOffset, optionButton.height + scale(optionButton.showPopupYOffset)))
+  protected open val showPopupAboveLocation: RelativePoint
+    get() = RelativePoint(optionButton, Point(showPopupXOffset, -scale(optionButton.showPopupYOffset)))
 
   protected open fun createPopup(toSelect: Action?, ensureSelection: Boolean): ListPopup {
     val (actionGroup, mapping) = createActionMapping()
@@ -291,7 +295,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     val mapping = optionButton.options?.associateBy(this@BasicOptionButtonUI::createAnAction) ?: emptyMap()
     val actionGroup = DefaultActionGroup().apply {
       mapping.keys.forEachIndexed { index, it ->
-        if (index > 0) addSeparator()
+        if (index > 0 && optionButton.addSeparator) addSeparator()
         add(it)
       }
     }
@@ -352,7 +356,16 @@ open class BasicOptionButtonUI : OptionButtonUI() {
       if (ensureSelection) super.afterShow()
     }
 
-    protected val background: Color? get() = mainButton.background
+    override fun afterShowSync() {
+      if (optionButton.selectFirstItem) {
+        super.afterShowSync()
+      }
+      else {
+        list.clearSelection()
+      }
+    }
+
+    protected val background: Color? get() = optionButton.popupBackgroundColor ?: mainButton.background
 
     override fun createContent(): JComponent = super.createContent().also {
       list.clearSelection() // prevents first action selection if all actions are disabled
@@ -397,8 +410,10 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     fun createUI(c: JComponent): BasicOptionButtonUI = BasicOptionButtonUI()
 
     fun paintBackground(g: Graphics, c: JComponent) {
-      g.color = c.background
-      g.fillRect(0, 0, c.width, c.height)
+      if (c.isOpaque) {
+        g.color = c.background
+        g.fillRect(0, 0, c.width, c.height)
+      }
     }
 
     fun cloneAndPaint(g: Graphics, block: (Graphics2D) -> Unit) {

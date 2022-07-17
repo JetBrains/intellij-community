@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.IdeBundle;
@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
+import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
@@ -333,18 +334,40 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   protected void paintFileColorGutter(Graphics g) {
     GraphicsConfig config = new GraphicsConfig(g);
+    config.setupAAPainting();
     Rectangle rect = getVisibleRect();
     int firstVisibleRow = getClosestRowForLocation(rect.x, rect.y);
     int lastVisibleRow = getClosestRowForLocation(rect.x, rect.y + rect.height);
 
+    Color prevColor = firstVisibleRow == 0 ? null : getFileColorForRow(firstVisibleRow - 1);
+    Color curColor = getFileColorForRow(firstVisibleRow);
+    Color nextColor = firstVisibleRow + 1 < getRowCount() ? getFileColorForRow(firstVisibleRow + 1) : null;
     for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
-      TreePath path = getPathForRow(row);
-      Color color = path == null ? null : getFileColorForPath(path);
-      if (color != null) {
+      nextColor = row + 1 < getRowCount() ? getFileColorForRow(row + 1) : null;
+      if (curColor != null) {
         Rectangle bounds = getRowBounds(row);
-        g.setColor(color);
-        g.fillRect(0, bounds.y, getWidth(), bounds.height);
+        double x = JBUI.scale(4);
+        double y = bounds.y;
+        double w = JBUI.scale(4);
+        double h = bounds.height;
+        if (Registry.is("ide.file.colors.at.left")) {
+          g.setColor(curColor);
+          if (curColor.equals(prevColor) && curColor.equals(nextColor)) {
+            RectanglePainter2D.FILL.paint((Graphics2D)g, x, y, w, h);
+          } else if (!curColor.equals(prevColor) && !curColor.equals(nextColor)) {
+            RectanglePainter2D.FILL.paint((Graphics2D)g, x, y + 2, w, h - 4, w);
+          } else if (curColor.equals(prevColor)) {
+            RectanglePainter2D.FILL.paint((Graphics2D)g, x, y - w, w, h + w - 2, w);
+          } else {
+            RectanglePainter2D.FILL.paint((Graphics2D)g, x, y + 2, w, h + w, w);
+          }
+        } else {
+          g.setColor(curColor);
+          g.fillRect(0, bounds.y, getWidth(), bounds.height);
+        }
       }
+      prevColor = curColor;
+      curColor = nextColor;
     }
     config.restore();
   }
@@ -352,9 +375,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   @Nullable
   public Color getPathBackground(@NotNull TreePath path, int row) {
-    return isFileColorsEnabled() ? getFileColorForPath(path) : null;
+    return isFileColorsEnabled() && !Registry.is("ide.file.colors.at.left") ? getFileColorForPath(path) : null;
   }
 
+  @Nullable
+  public Color getFileColorForRow(int row) {
+    TreePath path = getPathForRow(row);
+    return path != null ? getFileColorForPath(path) : null;
+  }
   @Nullable
   public Color getFileColorForPath(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
@@ -433,7 +461,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     for (int eachRow = 0; eachRow < getRowCount(); eachRow++) {
       TreePath path = getPathForRow(eachRow);
-      PresentableNodeDescriptor node = toPresentableNode(path.getLastPathComponent());
+      PresentableNodeDescriptor<?> node = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, path);
       if (node == null) continue;
 
       if (!node.isContentHighlighted()) continue;
@@ -497,7 +525,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
             if (child instanceof PresentableNodeDescriptor) {
               PresentableNodeDescriptor nextKid = (PresentableNodeDescriptor)child;
               int nextRow = getRowForPath(getPath(nextKid));
-              last = toPresentableNode(getPathForRow(nextRow - 1).getLastPathComponent());
+              last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(nextRow - 1));
             }
           }
           else {
@@ -510,7 +538,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
                 int nextRow = getRowForPath(getPath(nextChild));
                 TreePath prevPath = getPathForRow(nextRow - 1);
                 if (prevPath != null) {
-                  last = toPresentableNode(prevPath.getLastPathComponent());
+                  last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, prevPath);
                 }
               }
               else {
@@ -518,7 +546,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
                 PresentableNodeDescriptor lastParent = last;
                 boolean lastWasFound = false;
                 for (int i = lastRow + 1; i < getRowCount(); i++) {
-                  PresentableNodeDescriptor eachNode = toPresentableNode(getPathForRow(i).getLastPathComponent());
+                  PresentableNodeDescriptor<?> eachNode = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(i));
                   if (!node.isParentOf(eachNode)) {
                     last = lastParent;
                     lastWasFound = true;
@@ -527,7 +555,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
                   lastParent = eachNode;
                 }
                 if (!lastWasFound) {
-                  last = toPresentableNode(getPathForRow(getRowCount() - 1).getLastPathComponent());
+                  last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(getRowCount() - 1));
                 }
               }
             }
@@ -578,14 +606,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     return new int[]{y, x};
-  }
-
-  @Nullable
-  private static PresentableNodeDescriptor toPresentableNode(Object pathComponent) {
-    if (!(pathComponent instanceof DefaultMutableTreeNode)) return null;
-    Object userObject = ((DefaultMutableTreeNode)pathComponent).getUserObject();
-    if (!(userObject instanceof PresentableNodeDescriptor)) return null;
-    return (PresentableNodeDescriptor)userObject;
   }
 
   public TreePath getPath(@NotNull PresentableNodeDescriptor node) {

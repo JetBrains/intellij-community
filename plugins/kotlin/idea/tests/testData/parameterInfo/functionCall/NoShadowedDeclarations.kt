@@ -1,4 +1,5 @@
-// WITH_RUNTIME
+// IGNORE_FIR
+// WITH_STDLIB
 
 class A
 

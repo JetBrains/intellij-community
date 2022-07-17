@@ -4,21 +4,23 @@ package org.jetbrains.kotlin.idea.multiplatform
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.roots.CompilerModuleExtension
-import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.kotlin.checkers.utils.clearFileFromDiagnosticMarkup
-import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM1
 import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -30,7 +32,6 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.projectModel.*
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.types.typeUtil.closure
 import java.io.File
@@ -91,19 +92,21 @@ fun AbstractMultiModuleTest.doSetup(projectModel: ProjectResolveModel) {
     }.toMap()
 
     for ((resolveModule, ideaModule) in resolveModulesToIdeaModules.entries) {
+        val directDependencies: Set<ResolveModule> = resolveModule.dependencies.mapTo(mutableSetOf()) { it.to }
+
         resolveModule.dependencies.closure(preserveOrder = true) { it.to.dependencies }.forEach {
-            when (val to = it.to) {
-                FullJdk -> ConfigLibraryUtil.configureSdk(ideaModule, PluginTestCaseBase.addJdk(testRootDisposable) {
-                    PluginTestCaseBase.jdk(TestJdkKind.FULL_JDK)
-                })
+            when (val dependency = it.to) {
+                is ResolveSdk -> {
+                    // Only set module SDK if it is specified in module's dependencies explicitly.
+                    // Otherwise the last transitive SDK dependency will be written as Module's SDK, which doesn't happen in the real IDE
+                    // This check is not lifted to capture an SDK dependency and avoid configuring it as a library or module one
+                    if (dependency in directDependencies)
+                        setUpSdkForModule(ideaModule, dependency)
+                }
 
-                MockJdk -> ConfigLibraryUtil.configureSdk(ideaModule, PluginTestCaseBase.addJdk(testRootDisposable) {
-                    PluginTestCaseBase.jdk(TestJdkKind.MOCK_JDK)
-                })
+                is ResolveLibrary -> ideaModule.addLibrary(dependency.root, dependency.name, dependency.kind)
 
-                is ResolveLibrary -> ideaModule.addLibrary(to.root, to.name, to.kind)
-
-                else -> ideaModule.addDependency(resolveModulesToIdeaModules[to]!!)
+                else -> ideaModule.addDependency(resolveModulesToIdeaModules[dependency]!!)
             }
         }
     }
@@ -118,6 +121,29 @@ fun AbstractMultiModuleTest.doSetup(projectModel: ProjectResolveModel) {
         )
         // New inference is enabled here as these tests are using type refinement feature that is working only along with NI
         ideaModule.enableMultiPlatform(additionalCompilerArguments = "-Xnew-inference " + (resolveModule.additionalCompilerArgs ?: ""))
+    }
+}
+
+private fun AbstractMultiModuleTest.setUpSdkForModule(ideaModule: Module, sdk: ResolveSdk) {
+    when (sdk) {
+        FullJdk -> ConfigLibraryUtil.configureSdk(ideaModule, PluginTestCaseBase.addJdk(testRootDisposable) {
+            PluginTestCaseBase.jdk(TestJdkKind.FULL_JDK)
+        })
+
+        MockJdk -> ConfigLibraryUtil.configureSdk(ideaModule, PluginTestCaseBase.addJdk(testRootDisposable) {
+            PluginTestCaseBase.jdk(TestJdkKind.MOCK_JDK)
+        })
+
+        KotlinSdk -> {
+            KotlinSdkType.setUpIfNeeded(testRootDisposable)
+            ConfigLibraryUtil.configureSdk(
+                ideaModule,
+                runReadAction { ProjectJdkTable.getInstance() }.findMostRecentSdkOfType(KotlinSdkType.INSTANCE)
+                    ?: error("Kotlin SDK wasn't created")
+            )
+        }
+
+        else -> error("Don't know how to set up SDK of type: ${sdk::class}")
     }
 }
 
@@ -137,9 +163,9 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                 is ModuleDependency -> module.addDependency(modulesById[it.moduleId]!!)
                 is StdlibDependency -> {
                     when {
-                        platform.isCommon() -> module.addLibrary(AdditionalKotlinArtifacts.kotlinStdlibCommon, kind = CommonLibraryKind)
-                        platform.isJvm() -> module.addLibrary(KotlinArtifacts.instance.kotlinStdlib)
-                        platform.isJs() -> module.addLibrary(KotlinArtifacts.instance.kotlinStdlibJs, kind = JSLibraryKind)
+                        platform.isCommon() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibCommon, kind = KotlinCommonLibraryKind)
+                        platform.isJvm() -> module.addLibrary(KotlinArtifacts.kotlinStdlib)
+                        platform.isJs() -> module.addLibrary(KotlinArtifacts.kotlinStdlibJs, kind = KotlinJavaScriptLibraryKind)
                         else -> error("Unknown platform $this")
                     }
                 }
@@ -150,8 +176,8 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                 }
                 is CoroutinesDependency -> module.enableCoroutines()
                 is KotlinTestDependency -> when {
-                    platform.isJvm() -> module.addLibrary(KotlinArtifacts.instance.kotlinTestJunit)
-                    platform.isJs() -> module.addLibrary(KotlinArtifacts.instance.kotlinTestJs, kind = JSLibraryKind)
+                    platform.isJvm() -> module.addLibrary(KotlinArtifacts.kotlinTestJunit)
+                    platform.isJs() -> module.addLibrary(KotlinArtifacts.kotlinTestJs, kind = KotlinJavaScriptLibraryKind)
                 }
             }
         }
@@ -216,8 +242,8 @@ private val testSuffixes = setOf("test", "tests")
 private val platformNames = mapOf(
     listOf("header", "common", "expect") to CommonPlatforms.defaultCommonPlatform,
     listOf("java", "jvm") to JvmPlatforms.defaultJvmPlatform,
-    listOf("java8", "jvm8") to JvmPlatforms.jvm18,
-    listOf("java6", "jvm6") to JvmPlatforms.jvm16,
+    listOf("java8", "jvm8") to JvmPlatforms.jvm8,
+    listOf("java6", "jvm6") to JvmPlatforms.jvm6,
     listOf("js", "javascript") to JsPlatforms.defaultJsPlatform,
     listOf("native") to NativePlatforms.unspecifiedNativePlatform
 )

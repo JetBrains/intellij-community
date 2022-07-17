@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.actions
 
 import com.intellij.execution.ExecutionException
@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
@@ -35,10 +36,10 @@ internal class EditExternallyAction : DumbAwareAction() {
     if (!StringUtil.isEmpty(executablePath)) {
       EnvironmentUtil.getEnvironmentMap().forEach { (varName, varValue) ->
         executablePath = if (SystemInfo.isWindows) StringUtil.replace(executablePath, "%$varName%", varValue, true)
-                         else StringUtil.replace(executablePath, "\${$varName}", varValue, false);
+                         else StringUtil.replace(executablePath, "\${$varName}", varValue, false)
         }
 
-      executablePath = FileUtil.toSystemDependentName(executablePath);
+      executablePath = FileUtil.toSystemDependentName(executablePath)
       val executable = File(executablePath)
       val commandLine = GeneralCommandLine()
       val path = if(executable.exists()) executable.absolutePath else executablePath
@@ -62,7 +63,7 @@ internal class EditExternallyAction : DumbAwareAction() {
         commandLine.createProcess()
       }
       catch (ex: ExecutionException) {
-        Messages.showErrorDialog(e.project, ex.localizedMessage, ImagesBundle.message("error.title.launching.external.editor"));
+        Messages.showErrorDialog(e.project, ex.localizedMessage, ImagesBundle.message("error.title.launching.external.editor"))
         ImagesConfigurable.show(e.project)
       }
     }
@@ -78,10 +79,14 @@ internal class EditExternallyAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
     val enabled = file != null && ImageFileTypeManager.getInstance().isImage(file)
-    if (e.place == ActionPlaces.PROJECT_VIEW_POPUP) {
+    if (ActionPlaces.isPopupPlace(e.place)) {
       e.presentation.isVisible = enabled
     }
 
     e.presentation.isEnabled = enabled
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

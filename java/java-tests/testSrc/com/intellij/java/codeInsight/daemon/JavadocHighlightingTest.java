@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
+import com.intellij.codeInspection.javaDoc.MissingJavadocInspection;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.paths.UrlReference;
 import com.intellij.openapi.paths.WebReference;
@@ -24,16 +25,24 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
-  private JavaDocLocalInspection myInspection;
+  private JavadocDeclarationInspection myDeclarationJavadocInspection;
+  private MissingJavadocInspection myMissingJavadocInspection;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myInspection = new JavaDocLocalInspection();
-    myInspection.setIgnoreDuplicatedThrows(false);
-    myInspection.IGNORE_DEPRECATED = true;
-    myInspection.setPackageOption("public", "@author");
-    enableInspectionTools(myInspection, new JavaDocReferenceInspection());
+    myDeclarationJavadocInspection = new JavadocDeclarationInspection();
+    myDeclarationJavadocInspection.IGNORE_THROWS_DUPLICATE = false;
+    myDeclarationJavadocInspection.IGNORE_DEPRECATED_ELEMENTS = true;
+
+    myMissingJavadocInspection = new MissingJavadocInspection();
+    myMissingJavadocInspection.IGNORE_DEPRECATED_ELEMENTS = true;
+    myMissingJavadocInspection.PACKAGE_SETTINGS.MINIMAL_VISIBILITY = "public";
+    myMissingJavadocInspection.PACKAGE_SETTINGS.setTagRequired("@author", true);
+    myMissingJavadocInspection.FIELD_SETTINGS.ENABLED = false;
+    myMissingJavadocInspection.TOP_LEVEL_CLASS_SETTINGS.ENABLED = false;
+    myMissingJavadocInspection.INNER_CLASS_SETTINGS.ENABLED = false;
+    enableInspectionTools(myDeclarationJavadocInspection, myMissingJavadocInspection, new JavaDocReferenceInspection());
   }
 
   @Override
@@ -47,19 +56,19 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/javaDoc/";
   }
 
-  public void testJavadocPeriod() { myInspection.IGNORE_JAVADOC_PERIOD = false; doTest(); }
-  public void testJavadocPeriod1() { myInspection.IGNORE_JAVADOC_PERIOD = false; doTest(); }
-  public void testJavadocPeriod2() { myInspection.IGNORE_JAVADOC_PERIOD = false; doTest(); }
+  public void testJavadocPeriod() { myDeclarationJavadocInspection.IGNORE_PERIOD_PROBLEM = false; doTest(); }
+  public void testJavadocPeriod1() { myDeclarationJavadocInspection.IGNORE_PERIOD_PROBLEM = false; doTest(); }
+  public void testJavadocPeriod2() { myDeclarationJavadocInspection.IGNORE_PERIOD_PROBLEM = false; doTest(); }
   public void testInlineTagAsDescription() { doTest(); }
   public void testParam0() { doTest(); }
   public void testParam1() { doTest(); }
   public void testParam2() { doTest(); }
   public void testParam3() { doTest(); }
   public void testParam4() { doTest(); }
-  public void testRecordParamJava15Preview() { doTest(); }
+  public void testRecordParamJava16() { doTest(); }
   public void testTypeParam() {
-    myInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "private";
-    myInspection.METHOD_OPTIONS.REQUIRED_TAGS = "@param";
+    myMissingJavadocInspection.METHOD_SETTINGS.MINIMAL_VISIBILITY = "private";
+    myMissingJavadocInspection.METHOD_SETTINGS.setTagRequired("@param", true);
     doTest();
   }
   public void testSee0() { doTest(); }
@@ -71,6 +80,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testSee6() { doTest(); }
   public void testLinkToItself() { doTest(); }
   public void testLinkToMethodNoParams() { doTest(); }
+  public void testLinkToObjectMethods() { doTest(); }
   public void testSeeConstants() { doTest(); }
   public void testSeeNonRefs() { doTest(); }
   public void testReturn0() { doTest(); }
@@ -79,7 +89,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testException1() { doTest(); }
   public void testException2() { doTest(); }
   public void testException3() { doTest(); }
-  public void testException4() { myInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package"; doTest(); }
+  public void testException4() { myMissingJavadocInspection.METHOD_SETTINGS.MINIMAL_VISIBILITY = "package"; doTest(); }
   public void testInheritJavaDoc() { setLanguageLevel(LanguageLevel.JDK_1_3); doTest(); }
   public void testLink0() { doTest(); }
   public void testLinkFromInnerClassToSelfMethod() { doTest(); }
@@ -112,19 +122,27 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDuplicateParam1() { doTest(); }
   public void testDuplicateParam2() { doTest(); }
   public void testDuplicateReturn() { doTest(); }
-  public void testDuplicateDeprecated() { myInspection.IGNORE_DEPRECATED = false; doTest(); }
+  public void testDuplicateDeprecated() { myDeclarationJavadocInspection.IGNORE_DEPRECATED_ELEMENTS = false; doTest(); }
   public void testDuplicateSerial() { doTest(); }
   public void testDuplicateThrows() { doTest(); }
   public void testMissedTags() { doTest(); }
   public void testDoubleMissedTags() { doTest(); }
-  public void testMissedThrowsTag() { myInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package"; doTest(); }
+  public void testMissedThrowsTag() { myMissingJavadocInspection.METHOD_SETTINGS.MINIMAL_VISIBILITY = "package"; doTest(); }
   public void testMisplacedThrowsTag() { doTest(); }
   public void testGenericsParams() { doTest(); }
-  public void testEnumConstructor() { myInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package"; doTest(); }
-  public void testIgnoreDuplicateThrows() { myInspection.setIgnoreDuplicatedThrows(true); doTest(); }
-  public void testIgnoreAccessors() { myInspection.setIgnoreSimpleAccessors(true); doTest(); }
+  public void testEnumConstructor() { myMissingJavadocInspection.METHOD_SETTINGS.MINIMAL_VISIBILITY = "package"; doTest(); }
+  public void testIgnoreDuplicateThrows() { myDeclarationJavadocInspection.IGNORE_THROWS_DUPLICATE = true; doTest(); }
+  public void testIgnoreAccessors() { myMissingJavadocInspection.IGNORE_ACCESSORS = true; doTest(); }
   public void testAuthoredMethod() { doTest(); }
   public void testThrowsInheritDoc() { doTest(); }
+  public void testSnippetInlineTag() {  doTest(); }
+  public void testSnippet() { doTest(); }
+  public void testSnippetMethod() { doTest(); }
+  public void testSnippetInstructions() { doTest(); }
+  public void testEmptySnippet() { doTest(); }
+  public void testOnlyEmptyLinesInSnippet() { doTest(); }
+  public void testSnippetInstructionsWithUnhandledThrowable() { doTest(); }
+  public void testUnalignedLeadingAsterisks() { doTest(); }
 
   public void testIssueLinksInJavaDoc() {
     IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());
@@ -141,7 +159,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
       }
       else {
         List<WebReference> refs = PlatformTestUtil.collectWebReferences(getFile());
-        assertTrue(refs.stream().allMatch(PsiReferenceBase::isSoft));
+        assertTrue(ContainerUtil.and(refs, PsiReferenceBase::isSoft));
         assertEquals(expected, ContainerUtil.map(refs, WebReference::getUrl));
       }
     }
@@ -163,7 +181,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
     }
     else {
       List<WebReference> refs = PlatformTestUtil.collectWebReferences(getFile());
-      assertTrue(refs.stream().allMatch(PsiReferenceBase::isSoft));
+      assertTrue(ContainerUtil.and(refs, PsiReferenceBase::isSoft));
       assertEquals(expected, refs.stream().map(PsiReferenceBase::getCanonicalText).collect(Collectors.toSet()));
     }
   }

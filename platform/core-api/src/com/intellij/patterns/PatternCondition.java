@@ -48,7 +48,7 @@ public abstract class PatternCondition<T> {
     } else if (obj instanceof Object[]) {
       appendArray(builder, indent, (Object[])obj);
     } else if (obj instanceof Collection) {
-      appendArray(builder, indent, ((Collection) obj).toArray());
+      appendArray(builder, indent, ((Collection<?>) obj).toArray());
     }
     else if (obj instanceof String) {
       builder.append('\"').append(obj).append('\"');

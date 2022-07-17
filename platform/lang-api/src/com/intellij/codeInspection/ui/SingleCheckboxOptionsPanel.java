@@ -25,6 +25,7 @@ public class SingleCheckboxOptionsPanel extends InspectionOptionsPanel {
     public SingleCheckboxOptionsPanel(@NotNull @NlsContexts.Checkbox String label,
                                       @NotNull InspectionProfileEntry owner,
                                       @NonNls String property) {
-        super(owner, label, property);
+        super(owner);
+        addCheckbox(label, property);
     }
 }

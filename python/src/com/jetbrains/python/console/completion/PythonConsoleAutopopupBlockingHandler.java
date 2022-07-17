@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author oleg
- * @date 10/26/10
  */
 public class PythonConsoleAutopopupBlockingHandler extends TypedHandlerDelegate {
 

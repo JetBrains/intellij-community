@@ -3,26 +3,34 @@ package org.jetbrains.yaml.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.FactoryMap;
+import kotlin.text.StringsKt;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.YAMLElementTypes;
-import org.jetbrains.yaml.YAMLFileType;
-import org.jetbrains.yaml.YAMLLanguage;
-import org.jetbrains.yaml.YAMLTokenTypes;
+import org.jetbrains.yaml.*;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLSequence;
 import org.jetbrains.yaml.psi.YAMLSequenceItem;
 import org.jetbrains.yaml.psi.YAMLValue;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 class YAMLFormattingContext {
@@ -60,6 +68,7 @@ class YAMLFormattingContext {
     mySpaceBuilder = new SpacingBuilder(mySettings, YAMLLanguage.INSTANCE)
       .between(YAMLTokenTypes.COLON, YAMLElementTypes.KEY_VALUE_PAIR).lineBreakInCode()
       .between(YAMLTokenTypes.COLON, YAMLElementTypes.SEQUENCE_ITEM).lineBreakInCode()
+      .between(YAMLElementTypes.ALIAS_NODE, YAMLTokenTypes.COLON).spaces(1)
       .before(YAMLTokenTypes.COLON).spaceIf(custom.SPACE_BEFORE_COLON)
       .after(YAMLTokenTypes.COLON).spaces(1)
       .after(YAMLTokenTypes.LBRACKET).spaceIf(common.SPACE_WITHIN_BRACKETS)
@@ -73,13 +82,58 @@ class YAMLFormattingContext {
     getValueAlignment = custom.ALIGN_VALUES_PROPERTIES;
   }
 
+  private static final TokenSet NON_SIGNIFICANT_TOKENS_BEFORE_TEMPLATE =
+    TokenSet.create(TokenType.WHITE_SPACE, YAMLTokenTypes.SEQUENCE_MARKER);
+
+  private static boolean isAfterKey(ASTNode node) {
+    List<ASTNode> nodes = StreamEx.iterate(node, Objects::nonNull, TreeUtil::prevLeaf).skip(1)
+      .dropWhile(n -> NON_SIGNIFICANT_TOKENS_BEFORE_TEMPLATE.contains(n.getElementType())).limit(2).toList();
+    if (nodes.size() != 2) return false;
+    return YAMLTokenTypes.COLON.equals(nodes.get(0).getElementType()) && YAMLTokenTypes.SCALAR_KEY.equals(nodes.get(1).getElementType());
+  }
+
+  private static boolean isAfterSequenceMarker(ASTNode node) {
+    List<ASTNode> nodes = StreamEx.iterate(node, Objects::nonNull, n -> n.getTreePrev()).skip(1)
+      .filter(n -> !YAMLElementTypes.SPACE_ELEMENTS.contains(n.getElementType()))
+      .takeWhile(n -> !YAMLTokenTypes.EOL.equals(n.getElementType())).limit(2).toList();
+    if (nodes.size() != 1) return false;
+    return YAMLTokenTypes.SEQUENCE_MARKER.equals(nodes.get(0).getElementType());
+  }
+
+  private static boolean isAdjectiveToMinus(ASTNode node) {
+    ASTNode prevLeaf = TreeUtil.prevLeaf(node);
+    // we don't consider`-` before template as a seq marker if there is no space before it, because it could be a `-1` value for instance
+    return prevLeaf != null && YAMLTokenTypes.SEQUENCE_MARKER.equals(prevLeaf.getElementType());
+  }
+
   @Nullable
   Spacing computeSpacing(@NotNull Block parent, @Nullable Block child1, @NotNull Block child2) {
+    if (child1 instanceof ASTBlock && endsWithTemplate(((ASTBlock)child1).getNode())) {
+      return null;
+    }
+
+    if (child2 instanceof ASTBlock && startsWithTemplate(((ASTBlock)child2).getNode())) {
+      ASTNode astNode = ((ASTBlock)child2).getNode();
+      if (!isAdjectiveToMinus(astNode)) {
+        if (isAfterKey(astNode)) {
+          return mySpaceBuilder.getSpacing(parent, getNodeElementType(parent), YAMLTokenTypes.COLON, YAMLTokenTypes.SCALAR_TEXT);
+        }
+        if (isAfterSequenceMarker(astNode)) {
+          return getSpacingAfterSequenceMarker(child1, child2);
+        }
+      }
+      return null;
+    }
+
     Spacing simpleSpacing = mySpaceBuilder.getSpacing(parent, child1, child2);
     if (simpleSpacing != null) {
       return simpleSpacing;
     }
 
+    return getSpacingAfterSequenceMarker(child1, child2);
+  }
+
+  private Spacing getSpacingAfterSequenceMarker(Block child1, Block child2) {
     if (!(child1 instanceof ASTBlock && child2 instanceof ASTBlock)) {
       return null;
     }
@@ -121,6 +175,36 @@ class YAMLFormattingContext {
     return Spacing.createSpacing(spaces, spaces, minLineFeeds, false, 0);
   }
 
+  private static @Nullable IElementType getNodeElementType(Block parent) {
+    if (parent == null) return null;
+    ASTBlock it = ObjectUtils.tryCast(parent, ASTBlock.class);
+    if (it == null) return null;
+    ASTNode node = it.getNode();
+    if (node == null) return null;
+    return node.getElementType();
+  }
+
+  private static boolean startsWithTemplate(@Nullable ASTNode astNode) {
+    while (astNode != null) {
+      if (astNode instanceof OuterLanguageElement) return true;
+      if (NON_SIGNIFICANT_TOKENS_BEFORE_TEMPLATE.contains(astNode.getElementType())) {
+        astNode = astNode.getTreeNext();
+      }
+      else {
+        astNode = astNode.getFirstChildNode();
+      }
+    }
+    return false;
+  }
+  
+  private static boolean endsWithTemplate(@Nullable ASTNode astNode) {
+    while (astNode != null) {
+      if (astNode instanceof OuterLanguageElement) return true;
+      astNode = astNode.getLastChildNode();
+    }
+    return false;
+  }
+
   @Nullable
   Alignment computeAlignment(@NotNull ASTNode node) {
     IElementType type = PsiUtilCore.getElementType(node);
@@ -157,15 +241,21 @@ class YAMLFormattingContext {
     return null;
   }
 
+
   @Nullable
   Indent computeBlockIndent(@NotNull ASTNode node) {
+    if (node instanceof OuterLanguageElement) {
+      Indent templateIndent = computeTemplateIndent(((OuterLanguageElement)node).getTextRange());
+      if (templateIndent != null) return templateIndent;
+    }
     IElementType nodeType = PsiUtilCore.getElementType(node);
     IElementType parentType = PsiUtilCore.getElementType(node.getTreeParent());
     IElementType grandParentType = parentType == null ? null : PsiUtilCore.getElementType(node.getTreeParent().getTreeParent());
-    boolean grandParentIsDocument = grandParentType == YAMLElementTypes.DOCUMENT;
+    IElementType grand2ParentType = grandParentType == null ? null :
+                                    PsiUtilCore.getElementType(node.getTreeParent().getTreeParent().getTreeParent());
 
     assert nodeType != YAMLElementTypes.SEQUENCE : "Sequence should be inlined!";
-    assert nodeType != YAMLElementTypes.MAPPING  : "Mapping should be inlined!";
+    assert nodeType != YAMLElementTypes.MAPPING : "Mapping should be inlined!";
     assert nodeType != YAMLElementTypes.DOCUMENT : "Document should be inlined!";
 
     if (YAMLElementTypes.DOCUMENT_BRACKETS.contains(nodeType)) {
@@ -174,10 +264,16 @@ class YAMLFormattingContext {
     else if (YAMLElementTypes.BRACKETS.contains(nodeType)) {
       return SAME_AS_INDENTED_ANCESTOR_INDENT;
     }
-    else if (nodeType == YAMLTokenTypes.TEXT) {
-      return grandParentIsDocument ? SAME_AS_PARENT_INDENT : DIRECT_NORMAL_INDENT;
+    else if (YAMLElementTypes.TEXT_SCALAR_ITEMS.contains(nodeType)) {
+      if (grandParentType == YAMLElementTypes.DOCUMENT) {
+        return SAME_AS_PARENT_INDENT;
+      }
+      if (grand2ParentType == YAMLElementTypes.ARRAY || grand2ParentType == YAMLElementTypes.HASH) {
+        return Indent.getContinuationWithoutFirstIndent();
+      }
+      return DIRECT_NORMAL_INDENT;
     }
-    else if (nodeType == YAMLElementTypes.FILE) {
+    else if (nodeType == YAMLParserDefinition.FILE) {
       return SAME_AS_PARENT_INDENT;
     }
     else if (YAMLElementTypes.SCALAR_VALUES.contains(nodeType)) {
@@ -200,6 +296,18 @@ class YAMLFormattingContext {
       }
       return YAMLElementTypes.TOP_LEVEL.contains(parentType) ? SAME_AS_PARENT_INDENT : null;
     }
+  }
+
+  @Nullable
+  private Indent computeTemplateIndent(TextRange nodeTextRange) {
+    Document document = PsiDocumentManager.getInstance(myFile.getProject()).getDocument(myFile);
+    if (document == null) return null;
+    int lineNumber = document.getLineNumber(nodeTextRange.getStartOffset());
+    int lineStartOffset = document.getLineStartOffset(lineNumber);
+
+    if (!StringsKt.isBlank(document.getCharsSequence().subSequence(lineStartOffset, nodeTextRange.getStartOffset()))) return null;
+
+    return new IndentImpl(Indent.Type.SPACES, true, nodeTextRange.getStartOffset() - lineStartOffset, false, false);
   }
 
   @Nullable
@@ -257,7 +365,7 @@ class YAMLFormattingContext {
       //   a: x,
       //   b: y
       // ]
-      return Indent.getNormalIndent();
+      return Indent.getNoneIndent();
     } else {
       // - - a: x
       //     b: y

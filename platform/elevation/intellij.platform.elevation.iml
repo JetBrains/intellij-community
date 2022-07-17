@@ -17,6 +17,5 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="library" name="Log4J" level="project" />
   </component>
 </module>

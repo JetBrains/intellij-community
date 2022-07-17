@@ -5,6 +5,9 @@ class ForMultiLanguageSupport {
     // das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
     // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <warning descr="MANNSTUNDE">Mannstunden</warning>.
 
+  // Cover following cases
+  // a) initially missing
+  // b) initially missing
 
     // My
     // <warning descr="COMMA_WHICH">name</warning>
@@ -25,6 +28,8 @@ class ForMultiLanguageSupport {
   /** An int list where most values are in the range 0..2^16 */
 
   // contains only letters, digits, numbers, underscores ("_")
+
+  // The index is in the range [start, end). Tries to find a group of non-conflicting events in range [`startIndex`..`inEvents.size()`).
 
   // An iterable of bundle instances
 
@@ -53,4 +58,14 @@ class ForMultiLanguageSupport {
   // value between hours and minutes (":" is used by default)
 
   // Copyright refers to <warning descr="EN_A_VS_AN">an</warning> legal right bla-bla-bla, and we check for errors here.
+
+  // Avoid false positives when chunking is disabled.
+  //     Elements are converted to strings as the time goes by.
+  //     Get an instance of the Guzzle HTTP client.
+  //     This key is used by the Illuminate encryptor service and should be set to a random, 32 character string, otherwise these encrypted strings will not be safe.
+
+  // Returns details about the current user
+  int foo() {
+    return 1;
+  }
 }

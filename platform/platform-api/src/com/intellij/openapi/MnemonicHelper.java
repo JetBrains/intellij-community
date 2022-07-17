@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi;
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
@@ -37,6 +37,7 @@ import java.util.function.IntPredicate;
 public final class MnemonicHelper extends ComponentTreeWatcher {
   private static final Logger LOG = Logger.getInstance(MnemonicHelper.class);
 
+  public static final Key<Boolean> DISABLE_MNEMONIC_PROCESSING = Key.create("Disable mnemonic processing in the button or the label");
   public static final Key<IntPredicate> MNEMONIC_CHECKER = Key.create("MNEMONIC_CHECKER");
 
   private static final String TEXT_CHANGED_PROPERTY = "text";
@@ -65,7 +66,7 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
    * @see #init(Component)
    * @deprecated do not use this object as a tree watcher
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public MnemonicHelper() {
     super(ArrayUtil.EMPTY_CLASS_ARRAY);
   }

@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -12,18 +13,17 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiConflictResolver;
+import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 public class PsiResolveHelperImpl implements PsiResolveHelper {
   private static final Logger LOG = Logger.getInstance(PsiResolveHelperImpl.class);
@@ -37,7 +37,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
    * @deprecated Use {@link #PsiResolveHelperImpl(Project)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public PsiResolveHelperImpl(@NotNull PsiManager manager) {
     myManager = manager;
   }
@@ -138,8 +138,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return isAccessible(moduleSystem -> moduleSystem.isAccessible(pkg.getQualifiedName(), null, place));
   }
 
-  private static boolean isAccessible(Predicate<? super JavaModuleSystem> predicate) {
-    return Stream.of(JavaModuleSystem.EP_NAME.getExtensions()).allMatch(predicate);
+  private static boolean isAccessible(Condition<? super JavaModuleSystem> predicate) {
+    return ContainerUtil.and(JavaModuleSystem.EP_NAME.getExtensions(), predicate);
   }
 
   @Override
@@ -147,7 +147,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                                  boolean dummyImplicitConstructor,
                                                                  final boolean checkVarargs) {
     PsiFile containingFile = expr.getContainingFile();
-    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr, containingFile) {
+    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr, containingFile, new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE}, new SmartList<>()) {
       @Override
       protected boolean acceptVarargs() {
         return checkVarargs;

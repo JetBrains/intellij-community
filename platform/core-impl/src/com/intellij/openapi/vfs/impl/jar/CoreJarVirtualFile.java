@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.jar;
 
-import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-
 final class CoreJarVirtualFile extends VirtualFile {
   private final CoreJarHandler myHandler;
   private final CharSequence myName;
@@ -22,11 +21,7 @@ final class CoreJarVirtualFile extends VirtualFile {
   private final VirtualFile myParent;
   private VirtualFile[] myChildren = VirtualFile.EMPTY_ARRAY;
 
-  CoreJarVirtualFile(@NotNull CoreJarHandler handler,
-                     @NotNull CharSequence name,
-                     long length,
-                     long timestamp,
-                     @Nullable CoreJarVirtualFile parent) {
+  CoreJarVirtualFile(@NotNull CoreJarHandler handler, @NotNull CharSequence name, long length, long timestamp, @Nullable CoreJarVirtualFile parent) {
     myHandler = handler;
     myName = name;
     myLength = length;
@@ -38,27 +33,23 @@ final class CoreJarVirtualFile extends VirtualFile {
     myChildren = children;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName.toString();
   }
 
-  @NotNull
   @Override
-  public CharSequence getNameSequence() {
+  public @NotNull CharSequence getNameSequence() {
     return myName;
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myHandler.getFileSystem();
   }
 
   @Override
-  @NotNull
-  public String getPath() {
+  public @NotNull String getPath() {
     if (myParent == null) {
       return FileUtil.toSystemIndependentName(myHandler.getFile().getPath()) + "!/";
     }
@@ -99,15 +90,14 @@ final class CoreJarVirtualFile extends VirtualFile {
     return myChildren;
   }
 
-  @NotNull
   @Override
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     throw new UnsupportedOperationException("JarFileSystem is read-only");
   }
 
   @Override
   public byte @NotNull [] contentsToByteArray() throws IOException {
-    Couple<String> pair = CoreJarFileSystem.splitPath(getPath());
+    Pair<String, String> pair = CoreJarFileSystem.splitPath(getPath());
     return myHandler.contentsToByteArray(pair.second);
   }
 

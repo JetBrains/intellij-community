@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.copy
 
 import com.intellij.ide.util.DirectoryChooser
@@ -22,8 +22,9 @@ import com.intellij.usageView.UsageViewUtil
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.refactoring.Pass
 import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
@@ -116,12 +117,13 @@ class CopyKotlinDeclarationDialog(
     private val qualifiedName: String
         get() = defaultTargetDirectory?.getPackage()?.qualifiedName ?: ""
 
-    val newName: String?
+    val newName: String
         get() = classNameField.text
 
     val openInEditor: Boolean
         get() = openInEditorCheckBox.isSelected
 
+    @Nls
     private fun checkForErrors(): String? {
         val packageName = packageNameField.text
         val newName = newName
@@ -132,7 +134,7 @@ class CopyKotlinDeclarationDialog(
             return JavaRefactoringBundle.message("invalid.target.package.name.specified")
         }
 
-        if (newName.isNullOrEmpty()) {
+        if (newName.isEmpty()) {
             return JavaRefactoringBundle.message("no.class.name.specified")
         }
 
@@ -155,8 +157,7 @@ class CopyKotlinDeclarationDialog(
     override fun doOKAction() {
         val packageName = packageNameField.text
 
-        val errorString = checkForErrors()
-        if (errorString != null) {
+        checkForErrors()?.let { errorString ->
             if (errorString.isNotEmpty()) {
                 Messages.showMessageDialog(project, errorString, RefactoringBundle.message("error.title"), Messages.getErrorIcon())
             }

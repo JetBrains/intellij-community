@@ -1,5 +1,5 @@
 // PROBLEM: Variable 'city' is assigned to itself
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Remove self assignment
 
 // Minimized from KT-20714 itself

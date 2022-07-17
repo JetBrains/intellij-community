@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
@@ -9,9 +9,11 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -112,7 +114,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     JTextComponent c = getComponent();
     Insets margin = ComponentUtil.getParentOfType((Class<? extends JComboBox>)JComboBox.class, (Component)c) != null ||
                     ComponentUtil.getParentOfType((Class<? extends JSpinner>)JSpinner.class, (Component)c) != null ||
-                    UIUtil.isClientPropertyTrue(c, "TextFieldWithoutMargins") ? JBUI.emptyInsets() : getDefaultMargins();
+                    UIUtil.isClientPropertyTrue(c, "TextFieldWithoutMargins") ? JBInsets.emptyInsets() : getDefaultMargins();
 
     JBInsets.removeFrom(bounds, c.getInsets());
     JBInsets.removeFrom(bounds, margin);
@@ -426,7 +428,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   protected Insets getDefaultMargins() {
-    return JBUI.emptyInsets();
+    return JBInsets.emptyInsets();
   }
 
   @Override
@@ -453,7 +455,14 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       g.setClip(clip);
       for (IconHolder holder : icons.values()) {
         if (holder.icon != null) {
-          holder.icon.paintIcon(component, g, holder.bounds.x, holder.bounds.y);
+          if (ExperimentalUI.isNewUI() && holder.hovered) {
+            GraphicsUtil.setupAAPainting(g);
+            int arc = DarculaUIUtil.BUTTON_ARC.get();
+            g.setColor(JBUI.CurrentTheme.ActionButton.hoverBackground());
+            g.fillRoundRect(holder.bounds.x, holder.bounds.y, holder.bounds.width, holder.bounds.height, arc, arc);
+          }
+          holder.icon.paintIcon(component, g, holder.bounds.x + (holder.bounds.width - holder.icon.getIconWidth()) / 2,
+                                holder.bounds.y + (holder.bounds.height - holder.icon.getIconHeight()) / 2);
         }
       }
     }
@@ -488,7 +497,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     JTextComponent component = getComponent();
     if (component != null) {
       IconHolder result = getIconHolder(component, event.getX(), event.getY());
-      Runnable action = result == null ? null : result.extension.getActionOnClick();
+      Runnable action = result == null ? null : result.extension.getActionOnClick(event);
       if (action == null) {
         setCursor(Cursor.TEXT_CURSOR);
       }
@@ -496,6 +505,8 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         setCursor(Cursor.HAND_CURSOR);
         if (run) {
           action.run();
+          //update icon after action is performed
+          getIconHolder(component, event.getX(), event.getY());
           event.consume();
         }
       }
@@ -508,7 +519,11 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     boolean repaint = false;
     IconHolder result = null;
     for (IconHolder holder : icons.values()) {
-      holder.hovered = component.isEnabled() && holder.bounds.contains(x, y);
+      boolean hovered = component.isEnabled() && holder.bounds.contains(x, y);
+      if (ExperimentalUI.isNewUI()) {
+        repaint |= hovered != holder.hovered;
+      }
+      holder.hovered = hovered;
       if (holder.hovered) result = holder;
       Icon icon = holder.extension.getIcon(holder.hovered);
       if (holder.icon != icon) {
@@ -592,8 +607,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
     private boolean setIcon(Icon icon) {
       this.icon = icon;
-      int width = icon == null ? 0 : icon.getIconWidth();
-      int height = icon == null ? 0 : icon.getIconHeight();
+      int doubleIconInset = ExperimentalUI.isNewUI() ? JBUI.scale(1) * 2 : 0;
+      int width = icon == null ? 0 : icon.getIconWidth() + doubleIconInset;
+      int height = icon == null ? 0 : icon.getIconHeight() + doubleIconInset;
       if (bounds.width == width && bounds.height == height) return false;
       bounds.width = width;
       bounds.height = height;
@@ -627,11 +643,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public boolean isIconBeforeText() {
       return true;
-    }
-
-    @Override
-    public Runnable getActionOnClick() {
-      return null;
     }
 
     @Override

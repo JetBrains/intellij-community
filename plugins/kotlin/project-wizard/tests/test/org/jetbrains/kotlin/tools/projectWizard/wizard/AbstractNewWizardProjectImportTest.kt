@@ -4,23 +4,25 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
-import org.jetbrains.kotlin.idea.gradle.scripting.getGradleProjectSettings
+import org.jetbrains.kotlin.idea.gradleJava.scripting.getGradleProjectSettings
 import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.util.application.getService
+import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.cli.*
 import org.jetbrains.kotlin.tools.projectWizard.core.service.Services
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ServicesManager
@@ -67,7 +69,17 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
     }
 
     fun doTestGradleKts(directoryPath: String) {
+        if (Versions.GRADLE.text.startsWith("6.") && Runtime.version().feature() >= 17) {
+            System.err.println("Test cannot be launched under JVM of ver >=17 due to Gradle 6 usage")
+            return
+        }
+
         doTest(directoryPath, BuildSystem.GRADLE_KOTLIN_DSL)
+
+        // we need code inside invokeLater in org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsUpdater.notifyRootsChanged
+        // to be executed
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
         checkScriptConfigurationsIfAny()
     }
 
@@ -112,7 +124,7 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
         directory: Path,
         distributionTypeSettings: DistributionType = DistributionType.WRAPPED
     ) {
-        project.getService<GradleSettings>()?.apply {
+        project.serviceOrNull<GradleSettings>()?.apply {
             isOfflineWork = GradleEnvironment.Headless.GRADLE_OFFLINE?.toBoolean() ?: isOfflineWork
             serviceDirectoryPath = GradleEnvironment.Headless.GRADLE_SERVICE_DIRECTORY ?: serviceDirectoryPath
         }

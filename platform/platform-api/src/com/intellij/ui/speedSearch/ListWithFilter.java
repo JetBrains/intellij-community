@@ -2,16 +2,15 @@
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.LightColors;
-import com.intellij.ui.SearchTextField;
-import com.intellij.ui.UIBundle;
+import com.intellij.ui.*;
 import com.intellij.util.Function;
 import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 
 public final class ListWithFilter<T> extends JPanel implements DataProvider {
@@ -28,7 +29,9 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
   private final NameFilteringListModel<T> myModel;
   private final JScrollPane myScrollPane;
   private final MySpeedSearch mySpeedSearch;
+  private final boolean mySearchFieldWithoutBorder;
   private boolean myAutoPackHeight = true;
+  private final boolean mySearchAlwaysVisible;
 
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
@@ -39,20 +42,36 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
   }
 
   @NotNull
-  public static <T> JComponent wrap(@NotNull JList<? extends T> list, @NotNull JScrollPane scrollPane, @Nullable Function<? super T, String> namer) {
+  public static <T> JComponent wrap(@NotNull JList<? extends T> list,
+                                    @NotNull JScrollPane scrollPane,
+                                    @Nullable Function<? super T, String> namer) {
     return wrap(list, scrollPane, namer, false);
   }
 
   @NotNull
-  public static <T> JComponent wrap(@NotNull JList<? extends T> list, @NotNull JScrollPane scrollPane, @Nullable Function<? super T, String> namer,
+  public static <T> JComponent wrap(@NotNull JList<? extends T> list,
+                                    @NotNull JScrollPane scrollPane,
+                                    @Nullable Function<? super T, String> namer,
                                     boolean highlightAllOccurrences) {
-    return new ListWithFilter<>(list, scrollPane, namer, highlightAllOccurrences);
+    return new ListWithFilter<>(list, scrollPane, namer, highlightAllOccurrences, false, false);
+  }
+
+  @NotNull
+  public static <T> JComponent wrap(@NotNull JList<? extends T> list,
+                                    @NotNull JScrollPane scrollPane,
+                                    @Nullable Function<? super T, String> namer,
+                                    boolean highlightAllOccurrences,
+                                    boolean searchFieldAlwaysVisible,
+                                    boolean searchFieldWithoutBorder) {
+    return new ListWithFilter<>(list, scrollPane, namer, highlightAllOccurrences, searchFieldAlwaysVisible, searchFieldWithoutBorder);
   }
 
   private ListWithFilter(@NotNull JList<T> list,
                          @NotNull JScrollPane scrollPane,
                          @Nullable Function<? super T, String> namer,
-                         boolean highlightAllOccurrences) {
+                         boolean highlightAllOccurrences,
+                         boolean searchAlwaysVisible,
+                         boolean searchFieldWithoutBorder) {
     super(new BorderLayout());
 
     if (list instanceof ComponentWithEmptyText) {
@@ -62,8 +81,18 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
     myList = list;
     myScrollPane = scrollPane;
 
+    mySearchAlwaysVisible = searchAlwaysVisible;
+    mySearchFieldWithoutBorder = searchFieldWithoutBorder;
+
     mySearchField.getTextEditor().setFocusable(false);
-    mySearchField.setVisible(false);
+    mySearchField.setVisible(mySearchAlwaysVisible);
+
+    if (mySearchFieldWithoutBorder) {
+      mySearchField.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
+      mySearchField.getTextEditor().setBorder(JBUI.Borders.empty());
+      UIUtil.setBackgroundRecursively(mySearchField, list.getBackground());
+    }
+
 
     add(mySearchField, BorderLayout.NORTH);
     add(myScrollPane, BorderLayout.CENTER);
@@ -81,6 +110,13 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
     if (myModel.getSize() == modelSize) {
       myList.setSelectedIndex(selectedIndex);
     }
+    myList.getActionMap().put(TransferHandler.getPasteAction().getValue(Action.NAME), new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        mySpeedSearch.type(CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor));
+        mySpeedSearch.update();
+      }
+    });
 
     setBackground(list.getBackground());
     //setFocusable(true);
@@ -107,7 +143,7 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
   }
 
   private final class MySpeedSearch extends SpeedSearch {
-    boolean searchFieldShown;
+    boolean searchFieldShown = mySearchAlwaysVisible;
     boolean myInUpdate;
 
     private MySpeedSearch(boolean highlightAllOccurrences) {
@@ -128,16 +164,20 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
     @Override
     public void update() {
       myInUpdate = true;
-      mySearchField.getTextEditor().setBackground(UIUtil.getTextFieldBackground());
+
+      Color searchBg = mySearchFieldWithoutBorder ? myList.getBackground() : UIUtil.getTextFieldBackground();
+      mySearchField.getTextEditor().setBackground(searchBg);
       onSpeedSearchPatternChanged();
       mySearchField.setText(getFilter());
-      if (isHoldingFilter() && !searchFieldShown) {
-        mySearchField.setVisible(true);
-        searchFieldShown = true;
-      }
-      else if (!isHoldingFilter() && searchFieldShown) {
-        mySearchField.setVisible(false);
-        searchFieldShown = false;
+      if (!mySearchAlwaysVisible) {
+        if (isHoldingFilter() && !searchFieldShown) {
+          mySearchField.setVisible(true);
+          searchFieldShown = true;
+        }
+        else if (!isHoldingFilter() && searchFieldShown) {
+          mySearchField.setVisible(false);
+          searchFieldShown = false;
+        }
       }
 
       myInUpdate = false;

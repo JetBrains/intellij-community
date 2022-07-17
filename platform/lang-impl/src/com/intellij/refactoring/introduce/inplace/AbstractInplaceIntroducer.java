@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -369,9 +370,10 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   protected void addReferenceAtCaret(Collection<PsiReference> refs) {
-    final V variable = getLocalVariable();
+    final V variable = ApplicationManager.getApplication().runReadAction((Computable<V>)() -> getLocalVariable());
     if (variable != null) {
       for (PsiReference reference : ReferencesSearch.search(variable)) {
+        ProgressManager.checkCanceled();
         refs.add(reference);
       }
     } else {

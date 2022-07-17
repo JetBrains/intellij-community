@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -7,9 +7,10 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
+import com.intellij.refactoring.extractMethod.newImpl.inplace.DuplicatesMethodExtractor
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
@@ -21,14 +22,6 @@ import org.jetbrains.annotations.NonNls
 class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
 
   private val BASE_PATH: @NonNls String = "/refactoring/extractMethodAndDuplicatesInplace"
-
-  override fun setUp() {
-    super.setUp()
-    val featureRegistry = Registry.get("java.refactoring.extractMethod.newDuplicatesExtractor")
-    val previousValue = featureRegistry.asBoolean()
-    Disposer.register(testRootDisposable) { featureRegistry.setValue(previousValue) }
-    featureRegistry.setValue(true)
-  }
 
   fun testStatement(){
     doTest()
@@ -115,6 +108,120 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testExpressionDuplicates(){
+    doTest()
+  }
+
+  fun testArrayFoldingWithDuplicate(){
+    doTest()
+  }
+
+  fun testFoldReturnExpression(){
+    doTest()
+  }
+
+  fun testOverlappingRanges(){
+    doTest()
+  }
+
+  fun testConditionalYield(){
+    doTest()
+  }
+
+  fun testYieldWithDuplicate(){
+    doTest()
+  }
+
+  fun testDisabledOnSwitchRules(){
+    assertThrows(RefactoringErrorHintException::class.java, RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression")) {
+      doTest()
+    }
+  }
+
+  fun testNormalizedOnSwitchRule(){
+    doTest()
+  }
+
+  fun testExpressionStatementInSwitchExpression(){
+    doTest()
+  }
+
+  fun testExpressionStatementInSwitchStatement(){
+    doTest()
+  }
+
+  fun testIDEA278872(){
+    doTest()
+  }
+
+  fun testLocalAssignmentDuplicates(){
+    doTest()
+  }
+
+  fun testWrongLocalAssignmentDuplicates(){
+    doTest()
+  }
+
+  fun testDuplicateWithLocalMethodReference(){
+    doTest()
+  }
+
+  fun testDuplicateWithAnonymousMethodReference(){
+    doTest()
+  }
+
+  fun testDuplicateWithAnonymousFieldReference(){
+    doTest()
+  }
+
+  fun testDuplicateWithLocalReferenceInLambda(){
+    doTest()
+  }
+
+  fun testAvoidChangeSignatureForLocalRefsInPattern(){
+    doTest()
+  }
+
+  fun testAvoidChangeSignatureForLocalRefsInCandidate(){
+    doTest()
+  }
+
+  fun testDiamondTypesConsideredAsEqual(){
+    doTest()
+  }
+
+  fun testDuplicatedExpressionAndChangeSignature(){
+    doTest()
+  }
+
+  fun testChangedVariableDeclaredOnce(){
+    doTest()
+  }
+
+  fun testDuplicatedWithDeclinedChangeSignature(){
+    val default = DuplicatesMethodExtractor.changeSignatureDefault
+    try {
+      DuplicatesMethodExtractor.changeSignatureDefault = false
+      doTest()
+    } finally {
+      DuplicatesMethodExtractor.changeSignatureDefault = default
+    }
+  }
+
+  fun testDuplicatedButDeclined(){
+    val default = DuplicatesMethodExtractor.replaceDuplicatesDefault
+    try {
+      DuplicatesMethodExtractor.replaceDuplicatesDefault = false
+      doTest()
+    } finally {
+      DuplicatesMethodExtractor.replaceDuplicatesDefault = default
+    }
+  }
+
+  fun testTemplateRenamesInsertedCallOnly(){
+    doTest(changedName = "renamed")
+  }
+
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")
@@ -190,9 +297,15 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   override fun tearDown() {
-    val template = getActiveTemplate()
-    if (template != null) Disposer.dispose(template)
-    super.tearDown()
+    try {
+      val template = getActiveTemplate()
+      if (template != null) Disposer.dispose(template)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
-
 }

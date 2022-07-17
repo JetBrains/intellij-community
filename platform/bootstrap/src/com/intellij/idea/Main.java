@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.BootstrapClassLoaderUtil;
 import com.intellij.ide.WindowsCommandLineProcessor;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.lang.PathClassLoader;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -31,12 +31,12 @@ public final class Main {
   public static final int NO_GRAPHICS = 1;
   public static final int RESTART_FAILED = 2;
   public static final int STARTUP_EXCEPTION = 3;
-  public static final int JDK_CHECK_FAILED = 4;
+  // reserved: public static final int JDK_CHECK_FAILED = 4;
   public static final int DIR_CHECK_FAILED = 5;
   public static final int INSTANCE_CHECK_FAILED = 6;
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
-  public static final int UNKNOWN_COMMAND = 9;
+  // reserved (doesn't seem to ever be used): public static final int OUT_OF_MEMORY = 9;
   // reserved (permanently if launchers will perform the check): public static final int UNSUPPORTED_JAVA_VERSION = 10;
   public static final int PRIVACY_POLICY_REJECTION = 11;
   public static final int INSTALLATION_CORRUPTED = 12;
@@ -46,20 +46,28 @@ public final class Main {
   public static final int ACTIVATE_DISPOSING = 16;
 
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
-  public static final String CWM_HOST_COMMAND_PREFIX = "cwmHost";
+  public static final String CWM_HOST_COMMAND = "cwmHost";
+  public static final String CWM_HOST_NO_LOBBY_COMMAND = "cwmHostNoLobby";
+
+  @SuppressWarnings("StaticNonFinalField")
+  public volatile static CoroutineScope mainScope;
 
   private static final String MAIN_RUNNER_CLASS_NAME = "com.intellij.idea.StartupUtil";
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
+  @SuppressWarnings("SpellCheckingInspection")
   private static final List<String> HEADLESS_COMMANDS = List.of(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
-    "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup");
+    "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup", "buildEventsScheme",
+    "inspectopedia-generator", "remoteDevShowHelp", "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler",
+    "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit");
   private static final List<String> GUI_COMMANDS = List.of("diff", "merge");
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
   private static boolean hasGraphics = true;
   private static boolean isLightEdit;
+  private static boolean isRemoteDevHost;
 
   private Main() { }
 
@@ -68,12 +76,6 @@ public final class Main {
     startupTimings.put("startup begin", System.nanoTime());
 
     if (args.length == 1 && "%f".equals(args[0])) {
-      //noinspection SSBasedInspection
-      args = new String[0];
-    }
-
-    if (args.length == 1 && args[0].startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
-      JetBrainsProtocolHandler.processJetBrainsLauncherParameters(args[0]);
       //noinspection SSBasedInspection
       args = new String[0];
     }
@@ -103,30 +105,35 @@ public final class Main {
     }
 
     startupTimings.put("classloader init", System.nanoTime());
-    PathClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
+    PathClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader(isRemoteDevHost);
     Thread.currentThread().setContextClassLoader(newClassLoader);
-    if (args.length > 0 && args[0].startsWith(CWM_HOST_COMMAND_PREFIX)) {
-      // AWT can only use builtin and system class loaders to load classes, so set the system loader to something that can find projector libs
-      Class<ClassLoader> aClass = ClassLoader.class;
-      MethodHandles.privateLookupIn(aClass, MethodHandles.lookup()).findStaticSetter(aClass, "scl", aClass).invoke(newClassLoader);
-    }
 
     startupTimings.put("MainRunner search", System.nanoTime());
-    Class<?> mainClass = newClassLoader.loadClassInsideSelf(MAIN_RUNNER_CLASS_NAME, true);
+
+    Class<?> mainClass = newClassLoader.loadClassInsideSelf(MAIN_RUNNER_CLASS_NAME, "com/intellij/idea/StartupUtil.class",
+                                                            -635775336887217634L, true);
     if (mainClass == null) {
       throw new ClassNotFoundException(MAIN_RUNNER_CLASS_NAME);
     }
 
     WindowsCommandLineProcessor.ourMainRunnerClass = mainClass;
     MethodHandles.lookup()
-      .findStatic(mainClass, "start", MethodType.methodType(void.class, String.class, String[].class, LinkedHashMap.class))
-      .invokeExact(Main.class.getName() + "Impl", args, startupTimings);
+      .findStatic(mainClass, "start", MethodType.methodType(void.class, String.class,
+                                                            boolean.class, boolean.class,
+                                                            String[].class, LinkedHashMap.class))
+      .invokeExact(Main.class.getName() + "Impl", isHeadless, newClassLoader != Main.class.getClassLoader(), args, startupTimings);
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
   private static void installPluginUpdates() {
     try {
-      StartupActionScriptManager.executeActionScript();
+      // referencing `StartupActionScriptManager` is ok - a string constant will be inlined
+      Path scriptFile = Path.of(PathManager.getPluginTempPath(), StartupActionScriptManager.ACTION_SCRIPT_FILE);
+      if (Files.isRegularFile(scriptFile)) {
+        // load StartupActionScriptManager and all others related class (ObjectInputStream and so on loaded as part of class define)
+        // only if there is an action script to execute
+        StartupActionScriptManager.executeActionScript();
+      }
     }
     catch (IOException e) {
       showMessage("Plugin Installation Error",
@@ -152,10 +159,11 @@ public final class Main {
   public static void setFlags(String @NotNull [] args) {
     isHeadless = isHeadless(args);
     isCommandLine = isHeadless || (args.length > 0 && GUI_COMMANDS.contains(args[0]));
+    isRemoteDevHost = args.length > 0 && (CWM_HOST_COMMAND.equals(args[0]) || CWM_HOST_NO_LOBBY_COMMAND.equals(args[0]));
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
-    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || !isCommandLine && isFileAfterOptions(args);
+    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || (!isCommandLine && isFileAfterOptions(args));
   }
 
   private static boolean isFileAfterOptions(String @NotNull [] args) {
@@ -183,7 +191,7 @@ public final class Main {
     isLightEdit = false;
   }
 
-  public static boolean isHeadless(String @NotNull [] args) {
+  private static boolean isHeadless(String[] args) {
     if (Boolean.getBoolean(AWT_HEADLESS)) {
       return true;
     }
@@ -251,7 +259,7 @@ public final class Main {
     stream.println(title);
     stream.println(message);
 
-    boolean headless = !hasGraphics || isCommandLine() || GraphicsEnvironment.isHeadless();
+    boolean headless = !hasGraphics || isCommandLine() || GraphicsEnvironment.isHeadless() || isRemoteDevHost;
     if (headless) return;
 
     try {

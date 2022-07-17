@@ -29,6 +29,11 @@ public class FindUsagesAction extends AnAction {
     setInjectedContext(true);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   protected boolean toShowDialog() {
     return false;
   }

@@ -28,6 +28,7 @@ import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -55,8 +56,8 @@ public class ExtractedDirectoryElementType extends PackagingElementType<Extracte
                                                                    @NotNull CompositePackagingElement<?> parent) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, true, false, true, true) {
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        if (file.isInLocalFileSystem() && file.isDirectory()) return false;
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        if (file == null || (file.isInLocalFileSystem() && file.isDirectory())) return false;
         return super.isFileSelectable(file);
       }
     };

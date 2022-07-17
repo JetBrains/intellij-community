@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,14 +66,18 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
     return group;
   }
 
-  public static List<HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar) {
+  @NotNull
+  public static List<@NotNull HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar) {
     return getSeverities(severityRegistrar, true);
   }
 
-  public static List<HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar, boolean includeDoNotShow) {
+  @NotNull
+  public static List<@NotNull HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar, boolean includeDoNotShow) {
     final List<HighlightSeverity> severities = new ArrayList<>();
     for (final SeverityRegistrar.SeverityBasedTextAttributes type : SeverityUtil.getRegisteredHighlightingInfoTypes(severityRegistrar)) {
-      severities.add(type.getSeverity());
+      if (type.getType().isApplicableToInspections()) {
+        severities.add(type.getSeverity());
+      }
     }
     if (includeDoNotShow) {
       severities.add(HighlightSeverity.INFORMATION);
@@ -80,9 +85,9 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
     return severities;
   }
 
-  protected abstract void onChosen(final HighlightSeverity severity);
+  protected abstract void onChosen(@NotNull HighlightSeverity severity);
 
-  public void setChosen(final HighlightSeverity severity) {
+  public void setChosen(@NotNull HighlightSeverity severity) {
     myChosen = severity;
     final Presentation templatePresentation = getTemplatePresentation();
     templatePresentation.setText(SingleInspectionProfilePanel.renderSeverity(severity));
@@ -90,13 +95,15 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
   }
 
   private final class HighlightSeverityAction extends DumbAwareAction {
+    @NotNull
     private final HighlightSeverity mySeverity;
 
-    public HighlightSeverity getSeverity() {
+    @NotNull
+    HighlightSeverity getSeverity() {
       return mySeverity;
     }
 
-    private HighlightSeverityAction(final HighlightSeverity severity) {
+    private HighlightSeverityAction(@NotNull HighlightSeverity severity) {
       mySeverity = severity;
       final Presentation presentation = getTemplatePresentation();
       presentation.setText(SingleInspectionProfilePanel.renderSeverity(severity));
@@ -109,5 +116,12 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
       setChosen(severity);
       onChosen(severity);
     }
+  }
+
+  @Override
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+    final ComboBoxButton button = createComboBoxButton(presentation);
+    button.setMinimumSize(new Dimension(100, 0));
+    return button;
   }
 }

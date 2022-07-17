@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -40,6 +40,8 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
 @ApiStatus.Experimental
 public abstract class XmlTagDelegate {
@@ -316,7 +318,7 @@ public abstract class XmlTagDelegate {
     }
 
     // We put cached value in any case to cause its value update on e.g. mapping change
-    map.put(namespace, NullableLazyValue.createValue(() -> {
+    map.put(namespace, lazyNullable(() -> {
       List<XmlNSDescriptor> descriptors =
       ContainerUtil.mapNotNull(fileLocations, s->getDescriptor(tag, retrieveFile(tag, s, version, namespace, nsDecl), s, namespace));
 

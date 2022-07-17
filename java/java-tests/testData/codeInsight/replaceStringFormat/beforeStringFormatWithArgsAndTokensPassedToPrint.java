@@ -12,7 +12,7 @@ class Main {
       /* first arg start */ "Hello"/* first arg end */,
       /* second arg start */ "World" /* second arg end */));
     System.out.print(String.format(/* one */ Locale.US, /* two */ "%s, %s!" /* three */, /* four */ "Hello" /* five */, /* six */ "World" /* seven */));
-    System.out.print("hello" + String.format("%n"))
+    System.out.print("hello" + String.format("%n"));
   }
 
   Main() {

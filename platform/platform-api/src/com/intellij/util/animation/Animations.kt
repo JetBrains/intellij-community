@@ -12,16 +12,9 @@ import java.util.function.Consumer
 import java.util.function.DoubleConsumer
 import java.util.function.DoubleFunction
 import java.util.function.IntConsumer
-import javax.swing.Icon
+import java.util.function.LongConsumer
 import kotlin.math.roundToInt
-
-/**
- * Create animator and run some animations.
- */
-fun animate(block: JBAnimator.() -> Collection<Animation>) {
-  val animator = JBAnimator()
-  animator.animate(block(animator))
-}
+import kotlin.math.roundToLong
 
 /**
  * Update [animations] delay time in such a way that
@@ -41,7 +34,7 @@ fun makeSequent(vararg animations: Animation): Collection<Animation> {
  *
  * May be used as an anchor frame for any of [Animation.runWhenScheduled], [Animation.runWhenUpdated] or [Animation.runWhenExpired] methods.
  */
-fun animation(): Animation = animation {}
+fun animation(): Animation = Animation {}
 
 /**
  * Very common animation.
@@ -51,6 +44,25 @@ fun animation(consumer: DoubleConsumer) = Animation(consumer)
 fun animation(from: Int, to: Int, consumer: IntConsumer): Animation {
   return Animation(DoubleConsumer { value ->
     consumer.accept((from + value * (to - from)).roundToInt())
+  })
+}
+
+fun <T> animation(context: AnimationContext<T>, function: DoubleFunction<T>): Animation {
+  return Animation.withContext(context, function)
+}
+
+fun animation(from: Long, to: Long, consumer: LongConsumer): Animation {
+  return Animation(DoubleConsumer { value ->
+    consumer.accept((from + value * (to - from)).roundToLong())
+  })
+}
+
+fun animation(from: Float, to: Float, consumer: FloatConsumer): Animation {
+  // To prevent precision lost, convert values into double.
+  // Example of precision lost is:
+  // 0.9f + (1.0f * (0.1f - 0.9f)) == 0.100000024
+  return animation(from.toDouble(), to.toDouble(), DoubleConsumer {
+    consumer.accept(it.toFloat())
   })
 }
 
@@ -68,8 +80,8 @@ fun animation(from: Rectangle, to: Rectangle, consumer: Consumer<Rectangle>): An
   return Animation(DoubleRectangleFunction(from, to), consumer)
 }
 
-fun animation(icons: Array<Icon>, consumer: Consumer<Icon>): Animation {
-  return Animation(DoubleArrayFunction(icons), consumer)
+fun <T> animation(values: Array<T>, consumer: Consumer<T>): Animation {
+  return Animation(DoubleArrayFunction(values), consumer)
 }
 
 fun animation(from: Dimension, to: Dimension, consumer: Consumer<Dimension>): Animation {
@@ -194,6 +206,10 @@ class DoubleArrayFunction<T>(
   val array: Array<T>
 ) : DoubleFunction<T> {
   override fun apply(value: Double): T {
-    return array[((array.size - 1) * value).roundToInt().coerceIn(0, (array.size - 1))]
+    return array[(array.size * value).roundToInt().coerceIn(0, (array.size - 1))]
   }
+}
+
+fun interface FloatConsumer {
+  fun accept(value: Float)
 }

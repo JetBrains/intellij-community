@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.generate
 
 import com.intellij.lang.Language
@@ -11,6 +11,11 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import kotlin.streams.asSequence
 
+/**
+ * Extensions which provides code generation support for generating UAST expressions.
+ *
+ * @see org.jetbrains.uast.UastLanguagePlugin
+ */
 @ApiStatus.Experimental
 interface UastCodeGenerationPlugin {
   companion object {
@@ -20,13 +25,77 @@ interface UastCodeGenerationPlugin {
     fun byLanguage(language: Language) = extensionPointName.extensions().asSequence().firstOrNull { it.language == language }
   }
 
+  /**
+   * @return An element factory that allows generating various UAST expressions.
+   */
   fun getElementFactory(project: Project): UastElementFactory
 
+  /**
+   * The underlying programming language.
+   */
   val language: Language
 
+  /**
+   * Replaces a [UElement] by another [UElement] and automatically shortens the reference, if any.
+   */
   fun <T : UElement> replace(oldElement: UElement, newElement: T, elementType: Class<T>): T?
+
+  /**
+   * Changes the reference so that it starts to point to the specified element. This is called,
+   * for example, by the "Create Class from New" quickfix, to bind the (invalid) reference on
+   * which the quickfix was called to the newly created class.
+   *
+   * @param reference the reference to rebind
+   * @param element the element which should become the target of the reference.
+   * @return the new underlying element of the reference.
+   */
+  fun bindToElement(reference: UReferenceExpression, element: PsiElement): PsiElement?
+
+  /**
+   * Replaces fully-qualified class names in the contents of the specified element with
+   * non-qualified names and adds import statements as necessary.
+   *
+   * Example:
+   * ```
+   * com.jetbrains.uast.generate.UastCodeGenerationPlugin.byLanguage(...)
+   * ```
+   * Becomes:
+   * ```
+   * import com.jetbrains.uast.generate.UastCodeGenerationPlugin
+   *
+   * UastCodeGenerationPlugin.byLanguage(...)
+   * ```
+   *
+   * @param reference the element to shorten references in.
+   * @return the element after the shorten references operation corresponding to the original element.
+   */
+  fun shortenReference(reference: UReferenceExpression): UReferenceExpression?
+
+  /**
+   * Import the qualifier of the specified element as an on demand import (star import).
+   *
+   * Example:
+   * ```
+   * UastCodeGenerationPlugin.byLanguage(...)
+   * ```
+   * Becomes:
+   * ```
+   * import com.jetbrains.uast.generate.UastCodeGenerationPlugin.*
+   *
+   * byLanguage(...)
+   * ```
+   *
+   * @param reference the qualified element to import
+   * @return the selector part of the qualified reference after importing
+   */
+  fun importMemberOnDemand(reference: UQualifiedReferenceExpression): UExpression?
 }
 
+/**
+ * UAST element factory for UAST expressions.
+ *
+ * @see com.intellij.lang.jvm.actions.JvmElementActionsFactory for more complex JVM based code generation.
+ */
 @ApiStatus.Experimental
 interface UastElementFactory {
   fun createBinaryExpression(leftOperand: UExpression, rightOperand: UExpression, operator: UastBinaryOperator,
@@ -69,7 +138,9 @@ interface UastElementFactory {
   fun createDeclarationExpression(declarations: List<UDeclaration>, context: PsiElement?): UDeclarationsExpression?
 
   /**
-   * For providing additional information pass it via [context] only, otherwise it can be lost
+   * For providing additional information pass it via [context] only, otherwise it can be lost.
+   * It is not guaranteed, that [receiver] will be part of returned [UCallExpression].
+   * If its necessary, use [getQualifiedParentOrThis].
    */
   fun createCallExpression(receiver: UExpression?,
                            methodName: String,
@@ -83,6 +154,8 @@ interface UastElementFactory {
   fun createIfExpression(condition: UExpression, thenBranch: UExpression, elseBranch: UExpression?, context: PsiElement?): UIfExpression?
 
   fun createStringLiteralExpression(text: String, context: PsiElement?): ULiteralExpression?
+
+  fun createLongConstantExpression(long: Long, context: PsiElement?): UExpression?
 
   fun createNullLiteral(context: PsiElement?): ULiteralExpression?
 }
@@ -102,10 +175,19 @@ inline fun <reified T : UElement> UElement.replace(newElement: T): T? =
       }
     }
 
+fun UReferenceExpression.bindToElement(element: PsiElement): PsiElement? =
+  UastCodeGenerationPlugin.byLanguage(this.lang)?.bindToElement(this, element)
+
+fun UReferenceExpression.shortenReference(): UReferenceExpression? =
+  UastCodeGenerationPlugin.byLanguage(this.lang)?.shortenReference(this)
+
+fun UQualifiedReferenceExpression.importMemberOnDemand(): UExpression? =
+  UastCodeGenerationPlugin.byLanguage(this.lang)?.importMemberOnDemand(this)
+
 @ApiStatus.Experimental
 inline fun <reified T : UElement> T.refreshed() = sourcePsi?.also {
   logger<UastCodeGenerationPlugin>().assertTrue(it.isValid,
-                                                "psi $it of class ${it.javaClass} should be valid, containing file = ${it.containingFile}")
+    "psi $it of class ${it.javaClass} should be valid, containing file = ${it.containingFile}")
 }?.toUElementOfType<T>()
 
 val UElement.generationPlugin: UastCodeGenerationPlugin?

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeClassSignature;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ChangeClassSignatureFromUsageFix;
@@ -22,8 +8,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
 import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
@@ -32,6 +18,7 @@ import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
@@ -81,7 +68,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     final List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> result =
       new ArrayList<>();
     for (int i = 0; i < length; i++) {
-      result.add(new ChangeClassSignatureFromUsageFix.TypeParameterInfoView(new TypeParameterInfo.Existing(i), null, null));
+      result.add(new ChangeClassSignatureFromUsageFix.TypeParameterInfoView(new Existing(i), null, null));
     }
     return result;
   }
@@ -179,10 +166,8 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       CommonRefactoringUtil.showErrorMessage(JavaRefactoringBundle.message("error.incorrect.data"), message, HelpID.CHANGE_CLASS_SIGNATURE, myClass.getProject());
       return;
     }
-    ChangeClassSignatureProcessor processor =
-      new ChangeClassSignatureProcessor(myClass.getProject(), myClass,
-                                        myTypeParameterInfos.toArray(new TypeParameterInfo[0]));
-    invokeRefactoring(processor);
+    invokeRefactoring(JavaRefactoringFactory.getInstance(myProject)
+      .createChangeClassSignatureProcessor(myClass.getProject(), myClass, myTypeParameterInfos.toArray(new TypeParameterInfo[0])));
   }
 
   @NlsContexts.DialogMessage
@@ -190,7 +175,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
     final Map<String, TypeParameterInfo> infos = new HashMap<>();
     for (final TypeParameterInfo info : myTypeParameterInfos) {
-      if (info instanceof TypeParameterInfo.New &&
+      if (info instanceof New &&
           !PsiNameHelper.getInstance(myClass.getProject()).isIdentifier(info.getName(parameters))) {
         return JavaRefactoringBundle.message("error.wrong.name.input", info.getName(parameters));
       }
@@ -205,17 +190,17 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     LOG.assertTrue(myBoundValueTypeCodeFragments.size() == myTypeParameterInfos.size());
     for (int i = 0; i < myDefaultValueTypeCodeFragments.size(); i++) {
       TypeParameterInfo info = myTypeParameterInfos.get(i);
-      if (info instanceof TypeParameterInfo.Existing) continue;
-      String message = updateInfo(myDefaultValueTypeCodeFragments.get(i), (TypeParameterInfo.New)info, InfoUpdater.DEFAULT_VALUE);
+      if (info instanceof Existing) continue;
+      String message = updateInfo(myDefaultValueTypeCodeFragments.get(i), (New)info, InfoUpdater.DEFAULT_VALUE);
       if (message != null) return message;
-      message = updateInfo(myBoundValueTypeCodeFragments.get(i), (TypeParameterInfo.New)info, InfoUpdater.BOUND_VALUE);
+      message = updateInfo(myBoundValueTypeCodeFragments.get(i), (New)info, InfoUpdater.BOUND_VALUE);
       if (message != null) return message;
     }
     return null;
   }
 
   @NlsContexts.DialogMessage
-  private static String updateInfo(PsiTypeCodeFragment source, TypeParameterInfo.New info, InfoUpdater updater) {
+  private static String updateInfo(PsiTypeCodeFragment source, New info, InfoUpdater updater) {
     PsiType valueType;
     try {
       valueType = source.getType();
@@ -234,16 +219,6 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     }
     updater.updateInfo(info, valueType);
     return null;
-  }
-
-  public static PsiTypeCodeFragment createTableCodeFragment(@Nullable PsiClassType type,
-                                                            @NotNull PsiElement context,
-                                                            @NotNull JavaCodeFragmentFactory factory,
-                                                            boolean allowConjunctions) {
-    return factory.createTypeCodeFragment(type == null ? "" : type.getCanonicalText(),
-                                          context,
-                                          true,
-                                          (allowConjunctions && PsiUtil.isLanguageLevel8OrHigher(context)) ? JavaCodeFragmentFactory.ALLOW_INTERSECTION : 0);
   }
 
   private class MyTableModel extends AbstractTableModel implements EditableModel {
@@ -279,7 +254,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return myTypeParameterInfos.get(rowIndex) instanceof TypeParameterInfo.New;
+      return myTypeParameterInfos.get(rowIndex) instanceof New;
     }
 
     @Override
@@ -301,7 +276,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case NAME_COLUMN:
-          ((TypeParameterInfo.New)myTypeParameterInfos.get(rowIndex)).setNewName((String)aValue);
+          ((New)myTypeParameterInfos.get(rowIndex)).setNewName((String)aValue);
           break;
         case BOUND_VALUE_COLUMN:
         case DEFAULT_VALUE_COLUMN:
@@ -314,11 +289,11 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     @Override
     public void addRow() {
       TableUtil.stopEditing(myTable);
-      myTypeParameterInfos.add(new TypeParameterInfo.New("", null, null));
+      myTypeParameterInfos.add(new New("", null, null));
       JavaCodeFragmentFactory codeFragmentFactory = JavaCodeFragmentFactory.getInstance(myProject);
       PsiElement context = myClass.getLBrace() != null ? myClass.getLBrace() : myClass;
-      myBoundValueTypeCodeFragments.add(createTableCodeFragment(null, context, codeFragmentFactory, true));
-      myDefaultValueTypeCodeFragments.add(createTableCodeFragment(null, context, codeFragmentFactory, false));
+      myBoundValueTypeCodeFragments.add(CommonJavaRefactoringUtil.createTableCodeFragment(null, context, codeFragmentFactory, true));
+      myDefaultValueTypeCodeFragments.add(CommonJavaRefactoringUtil.createTableCodeFragment(null, context, codeFragmentFactory, false));
       final int row = myDefaultValueTypeCodeFragments.size() - 1;
       fireTableRowsInserted(row, row);
     }
@@ -360,13 +335,13 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   }
 
   private interface InfoUpdater {
-    void updateInfo(TypeParameterInfo.New info, PsiType type);
+    void updateInfo(New info, PsiType type);
 
     String getValueName();
 
     InfoUpdater DEFAULT_VALUE = new InfoUpdater() {
       @Override
-      public void updateInfo(TypeParameterInfo.New info, PsiType type) {
+      public void updateInfo(New info, PsiType type) {
         info.setDefaultValue(type);
       }
 
@@ -378,7 +353,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
     InfoUpdater BOUND_VALUE = new InfoUpdater() {
       @Override
-      public void updateInfo(TypeParameterInfo.New info, PsiType type) {
+      public void updateInfo(New info, PsiType type) {
         info.setBoundValue(type);
       }
 

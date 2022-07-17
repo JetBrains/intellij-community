@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.lang.jvm.JvmParameter
@@ -80,7 +80,7 @@ fun GroovyPsiElementFactory.createProperTypeParameter(name: String, superType: P
     superType != null -> listOf(superType)
     else -> emptyList()
   }
-  val filteredSupertypes = extendsTypes.filter { !it.equalsToText(JAVA_LANG_OBJECT) && !it.equalsToText(GROOVY_OBJECT) }
+  val filteredSupertypes = extendsTypes.filter { !it.equalsToText(JAVA_LANG_OBJECT) && !it.equalsToText(GROOVY_OBJECT) && !it.canonicalText.contains('-') }
 
   val extendsBound =
     if (filteredSupertypes.isNotEmpty()) {
@@ -235,7 +235,6 @@ private fun buildVirtualEnvironmentForMethod(method: GrMethod, newTypeParameterL
   return header + resultMethodText + footer to (header.length)
 }
 
-@Suppress("UnnecessaryVariable")
 private fun insertTypeParameterList(method: GrMethod, methodText: String, newTypeParameterListText: String?): String {
   val methodStartOffset: Int = method.startOffset
   val typeParameterList: TextRange? = method.typeParameterList?.textRange?.takeIf { !it.isEmpty }
@@ -392,7 +391,6 @@ private fun locateMethod(file: GroovyFileBase, method: GrMethod): GrMethod? {
   }
 }
 
-@Suppress("RemoveExplicitTypeArguments")
 internal fun getOriginalMethod(method: GrMethod): GrMethod {
   return when (val originalFile = method.containingFile?.originalFile) {
     null -> method

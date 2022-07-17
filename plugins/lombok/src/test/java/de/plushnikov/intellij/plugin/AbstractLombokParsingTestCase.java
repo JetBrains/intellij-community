@@ -1,13 +1,13 @@
 package de.plushnikov.intellij.plugin;
 
 import com.google.common.base.Objects;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomNamedTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
-import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -20,7 +20,7 @@ import java.util.stream.Stream;
  */
 public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightCodeInsightTestCase {
 
-  private static final Logger LOG = Logger.getLogger(AbstractLombokParsingTestCase.class);
+  private static final Logger LOG = Logger.getInstance(AbstractLombokParsingTestCase.class);
 
   protected boolean shouldCompareAnnotations() {
     return !".*".equals(annotationToComparePattern());
@@ -156,12 +156,22 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
 
     for (String modifier : PsiModifier.MODIFIERS) {
       boolean haveSameModifiers = afterModifierList.hasModifierProperty(modifier) == beforeModifierList.hasModifierProperty(modifier);
-      final PsiMethod afterModifierListParentMethod = PsiTreeUtil.getParentOfType(afterModifierList, PsiMethod.class);
-      final PsiClass afterModifierListParentClass = PsiTreeUtil.getParentOfType(afterModifierList, PsiClass.class);
-      assertTrue(modifier +
-                 " Modifier is not equal for " +
-                 (null == afterModifierListParentMethod ? afterModifierListParentClass.getName() : afterModifierListParentMethod.getText()),
-                 haveSameModifiers);
+      if (!haveSameModifiers) {
+        final PsiMethod afterModifierListParentMethod = PsiTreeUtil.getContextOfType(afterModifierList, PsiMethod.class);
+        final PsiMethod afterModifierListParentField = PsiTreeUtil.getContextOfType(afterModifierList, PsiMethod.class);
+        final PsiClass afterModifierListParentClass = PsiTreeUtil.getContextOfType(afterModifierList, PsiClass.class);
+        final String target;
+        if (afterModifierListParentMethod != null) {
+          target = afterModifierListParentMethod.getText();
+        }
+        else if (afterModifierListParentField != null) {
+          target = afterModifierListParentField.getName();
+        }
+        else {
+          target = afterModifierListParentClass.getName();
+        }
+        fail(modifier + " Modifier is not equal for " + target);
+      }
     }
 
     compareAnnotations(beforeModifierList, afterModifierList);

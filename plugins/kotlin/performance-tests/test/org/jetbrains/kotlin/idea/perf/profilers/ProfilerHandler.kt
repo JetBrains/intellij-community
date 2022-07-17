@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.perf.profilers
 
 import org.jetbrains.kotlin.idea.perf.profilers.async.AsyncProfilerHandler
 import org.jetbrains.kotlin.idea.perf.profilers.yk.YKProfilerHandler
-import org.jetbrains.kotlin.idea.perf.util.logMessage
+import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import java.nio.file.Path
 
 interface ProfilerHandler {

@@ -113,6 +113,15 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
   override fun initValue(): Boolean = parameters.initValue
   override fun kwOnly(): Boolean = parameters.kwOnly
 
+  override fun toString(): String {
+    return "PyDataclassFieldStubType(callee=$calleeName" +
+           ", hasDefault=${parameters.hasDefault}" +
+           ", hasDefaultFactory=${parameters.hasDefaultFactory}" +
+           ", initValue=${parameters.initValue}" +
+           ", kwOnly=${parameters.kwOnly}" +
+           ")"
+  }
+
   private data class FieldParameters(val hasDefault: Boolean,
                                      val hasDefaultFactory: Boolean,
                                      val initValue: Boolean,

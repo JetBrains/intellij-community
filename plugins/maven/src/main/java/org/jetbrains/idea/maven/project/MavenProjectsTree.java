@@ -76,6 +76,7 @@ public final class MavenProjectsTree {
   private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
   private final Project myProject;
 
+
   private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
     @Override
     public VirtualFile findProjectFile(MavenId coordinates) {
@@ -231,7 +232,7 @@ public final class MavenProjectsTree {
   public List<VirtualFile> getExistingManagedFiles() {
     List<VirtualFile> result = new ArrayList<>();
     for (String path : getManagedFilesPaths()) {
-      VirtualFile f = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+      VirtualFile f = LocalFileSystem.getInstance().findFileByPath(path);
       if (f != null && f.exists()) result.add(f);
     }
     return result;
@@ -1273,17 +1274,13 @@ public final class MavenProjectsTree {
     myStructureReadLock.unlock();
   }
 
-  /**
-   * @deprecated use #addListener(Listener, Disposable)
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  public void addListener(Listener l) {
-    myListeners.add(l);
-  }
-
   public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {
     myListeners.add(l, disposable);
+  }
+
+  @ApiStatus.Internal
+  void addListenersFrom(MavenProjectsTree other){
+    myListeners.addAll(other.myListeners);
   }
 
   void fireProfilesChanged() {
@@ -1335,7 +1332,7 @@ public final class MavenProjectsTree {
 
     public void update(MavenProject project, MavenProjectChanges changes) {
       deletedProjects.remove(project);
-      updatedProjectsWithChanges.put(project, changes.mergedWith(updatedProjectsWithChanges.get(project)));
+      updatedProjectsWithChanges.put(project, changes.mergedWith(updatedProjectsWithChanges.get(project)));//
     }
 
     public void deleted(MavenProject project) {
@@ -1351,7 +1348,6 @@ public final class MavenProjectsTree {
 
     public void fireUpdatedIfNecessary() {
       if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) {
-        //MavenProjectsManager.getInstance(myProject).getSyncConsole().finishImport();
         return;
       }
       List<MavenProject> mavenProjects = deletedProjects.isEmpty()
@@ -1359,8 +1355,18 @@ public final class MavenProjectsTree {
                                          : new ArrayList<>(deletedProjects);
       List<Pair<MavenProject, MavenProjectChanges>> updated = updatedProjectsWithChanges.isEmpty()
                                                               ? Collections.emptyList()
-                                                              : MavenUtil.mapToList(updatedProjectsWithChanges);
+                                                              : mapToListWithPairs();
       fireProjectsUpdated(updated, mavenProjects);
+    }
+
+    @NotNull
+    private List<Pair<MavenProject, MavenProjectChanges>> mapToListWithPairs() {
+      ArrayList<Pair<MavenProject, MavenProjectChanges>> result = new ArrayList<>(updatedProjectsWithChanges.size());
+      for (Map.Entry<MavenProject, MavenProjectChanges> entry : updatedProjectsWithChanges.entrySet()) {
+        entry.getKey().getProblems(); // need for fill problem cache
+        result.add(Pair.create(entry.getKey(), entry.getValue()));
+      }
+      return result;
     }
   }
 
@@ -1533,5 +1539,23 @@ public final class MavenProjectsTree {
              && Objects.equals(o1.getVersion(), o2.getVersion())
              && Objects.equals(o1.getGroupId(), o2.getGroupId());
     }
+  }
+
+  public MavenProjectsTree getCopyForReimport(){
+    MavenProjectsTree result = new MavenProjectsTree(myProject);
+
+    result.myExplicitProfiles = myExplicitProfiles;
+    result.myRootProjects.addAll(myRootProjects);
+    result.myIgnoredFilesPaths.addAll(myIgnoredFilesPaths);
+    result.myIgnoredFilesPatterns.addAll(myIgnoredFilesPatterns);
+    result.myAggregatorToModuleMapping.putAll(myAggregatorToModuleMapping);
+    result.myIgnoredFilesPatternsCache = myIgnoredFilesPatternsCache;
+    result.myManagedFilesPaths.addAll(myManagedFilesPaths);
+    result.myMavenIdToProjectMapping.putAll(myMavenIdToProjectMapping);
+    result.myModuleToAggregatorMapping.putAll(myModuleToAggregatorMapping);
+    result.myVirtualFileToProjectMapping.putAll(myVirtualFileToProjectMapping);
+    result.myTimestamps.putAll(myTimestamps);
+    myWorkspaceMap.copyInto(result.myWorkspaceMap);
+    return result;
   }
 }

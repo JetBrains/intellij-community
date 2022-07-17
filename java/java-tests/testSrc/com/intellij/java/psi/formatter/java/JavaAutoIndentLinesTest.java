@@ -15,16 +15,16 @@
  */
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
-import com.intellij.testFramework.TestFileType;
 
 public class JavaAutoIndentLinesTest extends AbstractEditorTest {
   public void testSelection() {
     init("class C {\n" +
          "int <selection>a<caret></selection> = 1;\n" +
          "}",
-         TestFileType.JAVA);
+         JavaFileType.INSTANCE);
     executeAction(IdeActions.ACTION_EDITOR_AUTO_INDENT_LINES);
     checkResultByText("class C {\n" +
                       "    int <selection>a<caret></selection> = 1;\n" +

@@ -25,7 +25,7 @@ public class ax {
    }
 
    public String a(boolean var1) {
-      String var2 = String.valueOf(((double)System.nanoTime() - (double)this.a) / 1000.0D);
+      String var2 = String.valueOf(((double)System.nanoTime() - (double)this.a) / 1000.0);
 
       try {
          if (var1) {
@@ -78,21 +78,21 @@ public class ax {
 
          while(true) {
             var10007 = var4[var10006];
-            switch(var1 % 5) {
-            case 0:
-               var10008 = 16;
-               break;
-            case 1:
-               var10008 = 15;
-               break;
-            case 2:
-               var10008 = 44;
-               break;
-            case 3:
-               var10008 = 84;
-               break;
-            default:
-               var10008 = 86;
+            switch (var1 % 5) {
+               case 0:
+                  var10008 = 16;
+                  break;
+               case 1:
+                  var10008 = 15;
+                  break;
+               case 2:
+                  var10008 = 44;
+                  break;
+               case 3:
+                  var10008 = 84;
+                  break;
+               default:
+                  var10008 = 86;
             }
 
             var4[var10006] = (char)(var10007 ^ var10008);
@@ -135,21 +135,21 @@ public class ax {
 
       while(true) {
          var10007 = var4[var10006];
-         switch(var1 % 5) {
-         case 0:
-            var10008 = 16;
-            break;
-         case 1:
-            var10008 = 15;
-            break;
-         case 2:
-            var10008 = 44;
-            break;
-         case 3:
-            var10008 = 84;
-            break;
-         default:
-            var10008 = 86;
+         switch (var1 % 5) {
+            case 0:
+               var10008 = 16;
+               break;
+            case 1:
+               var10008 = 15;
+               break;
+            case 2:
+               var10008 = 44;
+               break;
+            case 3:
+               var10008 = 84;
+               break;
+            default:
+               var10008 = 86;
          }
 
          var4[var10006] = (char)(var10007 ^ var10008);

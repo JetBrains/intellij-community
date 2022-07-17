@@ -1,6 +1,10 @@
 import java.util.*;
 
 public class FloatingPointRanges {
+  public static boolean isSpecial(double value) {
+    return value == 1.0 || value == -1.0 || value == 0.0;
+  }
+
   void testSimple(double d) {
     if (<warning descr="Condition 'd > Double.POSITIVE_INFINITY' is always 'false'">d > Double.POSITIVE_INFINITY</warning>) {}
     if (<warning descr="Condition 'd < Double.NEGATIVE_INFINITY' is always 'false'">d < Double.NEGATIVE_INFINITY</warning>) {}

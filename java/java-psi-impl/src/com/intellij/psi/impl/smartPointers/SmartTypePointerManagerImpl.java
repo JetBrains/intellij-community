@@ -6,7 +6,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,8 +141,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
 
     @Override
     protected PsiDisjunctionType calcType() {
-      final List<PsiType> types = ContainerUtil.map(myPointers,
-                                                    (NullableFunction<SmartTypePointer, PsiType>)SmartTypePointer::getType);
+      final List<PsiType> types = ContainerUtil.map(myPointers, SmartTypePointer::getType);
       return new PsiDisjunctionType(types, PsiManager.getInstance(myProject));
     }
   }

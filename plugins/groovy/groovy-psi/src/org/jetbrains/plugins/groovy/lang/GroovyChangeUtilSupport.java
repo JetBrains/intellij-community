@@ -61,7 +61,7 @@ public class GroovyChangeUtilSupport implements TreeCopyHandler {
         PsiElement psi = original.getPsi();
         Project project = psi.getProject();
         if (!PsiUtil.isThisOrSuperRef(psi) && project.isInitialized() && !DumbService.isDumb(project)) {
-          final GroovyResolveResult result = ((GrReferenceElement)psi).advancedResolve();
+          final GroovyResolveResult result = ((GrReferenceElement<?>)psi).advancedResolve();
           if (result != null) {
             final PsiElement target = result.getElement();
 

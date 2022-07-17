@@ -1,14 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.help.impl;
 
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowProductVersion implements ApplicationStarter {
+final class ShowProductVersion implements ApplicationStarter {
   @Override
   public String getCommandName() {
     return "-version";
@@ -16,7 +18,7 @@ public class ShowProductVersion implements ApplicationStarter {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   @Override
-  public void main(String @NotNull [] args) {
+  public void main(@NotNull List<String> args) {
     System.out.println(ApplicationInfoEx.getInstanceEx().getFullVersion());
     System.exit(0);
   }

@@ -64,7 +64,7 @@ public class ThreadStartInConstructionInspection extends BaseInspection {
 
     private class ThreadStartVisitor extends JavaRecursiveElementWalkingVisitor {
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         // Do not recurse into.
       }
 

@@ -15,7 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.PopupHandler
 import com.intellij.usageView.UsageViewLongNameLocation
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
 import javax.swing.JPanel
@@ -33,7 +33,7 @@ class KotlinOverrideHierarchyBrowser(
 
         BaseOnThisMethodAction().registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_METHOD_HIERARCHY).shortcutSet, tree)
 
-        trees[METHOD_TYPE] = tree
+        trees[getMethodType()] = tree
     }
 
     override fun createLegendPanel(): JPanel? =
@@ -49,7 +49,7 @@ class KotlinOverrideHierarchyBrowser(
         psiElement.isOverrideHierarchyElement()
 
     override fun createHierarchyTreeStructure(typeName: String, psiElement: PsiElement): HierarchyTreeStructure? =
-        if (typeName == METHOD_TYPE) KotlinOverrideTreeStructure(myProject, psiElement as KtCallableDeclaration) else null
+        if (typeName == getMethodType()) KotlinOverrideTreeStructure(myProject, psiElement as KtCallableDeclaration) else null
 
     override fun getComparator() = JavaHierarchyUtil.getComparator(myProject)
 

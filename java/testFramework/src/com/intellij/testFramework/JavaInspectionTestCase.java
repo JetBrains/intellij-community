@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.analysis.AnalysisScope;
@@ -113,8 +113,11 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
   protected GlobalInspectionContextImpl runTool(@NotNull final String testName,
                                                 @NotNull InspectionToolWrapper<?,?> toolWrapper,
                                                 List<? extends InspectionToolWrapper<?, ?>> tools) {
-    VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(getTestDataPath(), testName));
-    assertNotNull(projectDir);
+    File file = new File(getTestDataPath(), testName);
+    VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    if (projectDir == null) {
+      fail("projectDir not found: " + file.getAbsolutePath());
+    }
 
     VirtualFile srcDir;
     if (projectDir.findChild("src") != null) {

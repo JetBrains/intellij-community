@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
@@ -11,17 +11,17 @@ import java.awt.*;
 
 public final class MessageType {
 
-  public static final MessageType ERROR = new MessageType(AllIcons.General.NotificationError,
+  public static final MessageType ERROR = new MessageType(AllIcons.General.BalloonError,
                                                           JBUI.CurrentTheme.NotificationError.backgroundColor(),
                                                           JBUI.CurrentTheme.NotificationError.foregroundColor(),
                                                           JBUI.CurrentTheme.NotificationError.borderColor());
 
-  public static final MessageType INFO = new MessageType(AllIcons.General.NotificationInfo,
+  public static final MessageType INFO = new MessageType(AllIcons.General.BalloonInformation,
                                                          JBUI.CurrentTheme.NotificationInfo.backgroundColor(),
                                                          JBUI.CurrentTheme.NotificationInfo.foregroundColor(),
                                                          JBUI.CurrentTheme.NotificationInfo.borderColor());
 
-  public static final MessageType WARNING = new MessageType(AllIcons.General.NotificationWarning,
+  public static final MessageType WARNING = new MessageType(AllIcons.General.BalloonWarning,
                                                             JBUI.CurrentTheme.NotificationWarning.backgroundColor(),
                                                             JBUI.CurrentTheme.NotificationWarning.foregroundColor(),
                                                             JBUI.CurrentTheme.NotificationWarning.borderColor());

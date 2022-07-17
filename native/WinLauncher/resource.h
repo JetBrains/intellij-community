@@ -20,8 +20,10 @@
 #define IDS_ERROR_LAUNCHING_APP         114
 #define IDS_VM_OPTION_ERRORFILE         115
 #define IDS_VM_OPTION_HEAPDUMPPATH      116
+#define IDS_INSTANCE_ACTIVATION         117
 #define IDR_MAINFRAME                   128
 #define IDS_VM_OPTIONS                  129
 #define IDB_BITMAP1                     130
 #define IDB_SPLASH                      130
+#define IDS_BOOTCLASSPATH_LIBS          131
 #define IDC_STATIC                      -1

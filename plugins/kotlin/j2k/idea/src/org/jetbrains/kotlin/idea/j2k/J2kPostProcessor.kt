@@ -4,17 +4,20 @@ package org.jetbrains.kotlin.idea.j2k
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.refactoring.suggested.range
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.util.EDT
-import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
@@ -55,11 +58,23 @@ class J2kPostProcessor(private val formatCode: Boolean) : PostProcessor {
             is JKMultipleFilesPostProcessingTarget -> target.files.single() to null
         }
 
+        val disposable = KotlinPluginDisposable.getInstance(file.project)
+
         runBlocking(EDT.ModalityStateElement(ModalityState.defaultModalityState())) {
             do {
                 var modificationStamp: Long? = file.modificationStamp
-                val elementToActions = runReadAction {
-                    collectAvailableActions(file, rangeMarker)
+                val elementToActions: List<ActionData> = run {
+                    while (!Disposer.isDisposed(disposable)) {
+                        try {
+                            return@run runReadAction {
+                                collectAvailableActions(file, rangeMarker)
+                            }
+                        } catch (e: Exception) {
+                            if (e is ControlFlowException) continue
+                            throw e
+                        }
+                    }
+                    emptyList()
                 }
 
                 withContext(EDT) {

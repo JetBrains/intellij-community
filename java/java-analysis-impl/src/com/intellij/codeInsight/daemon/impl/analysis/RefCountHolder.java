@@ -71,9 +71,7 @@ final class RefCountHolder {
   }
 
   @NotNull
-  GlobalUsageHelper getGlobalUsageHelper(@NotNull PsiFile file,
-                                         @Nullable final UnusedDeclarationInspectionBase deadCodeInspection,
-                                         boolean isUnusedToolEnabled) {
+  GlobalUsageHelper getGlobalUsageHelper(@NotNull PsiFile file, @Nullable UnusedDeclarationInspectionBase deadCodeInspection) {
     FileViewProvider viewProvider = file.getViewProvider();
     Project project = file.getProject();
 
@@ -81,7 +79,7 @@ final class RefCountHolder {
     VirtualFile virtualFile = viewProvider.getVirtualFile();
     boolean inLibrary = fileIndex.isInLibrary(virtualFile);
 
-    boolean isDeadCodeEnabled = deadCodeInspection != null && isUnusedToolEnabled && deadCodeInspection.isGlobalEnabledInEditor();
+    boolean isDeadCodeEnabled = deadCodeInspection != null && deadCodeInspection.isGlobalEnabledInEditor();
     if (isDeadCodeEnabled && !inLibrary) {
       return new GlobalUsageHelperBase() {
         final Map<PsiMember, Boolean> myEntryPointCache = FactoryMap.create((PsiMember member) -> {
@@ -271,7 +269,7 @@ final class RefCountHolder {
       PsiElement resolved = ref.resolve();
       if (resolved != null) {
         ReadWriteAccessDetector.Access access = getAccess(ref, resolved);
-        if (access == ReadWriteAccessDetector.Access.Read || access == ReadWriteAccessDetector.Access.ReadWrite) {
+        if (access != null && access.isReferencedForRead()) {
           if (isJustIncremented(access, refElement)) continue;
           return true;
         }
@@ -305,7 +303,7 @@ final class RefCountHolder {
       PsiElement resolved = ref.resolve();
       if (resolved != null) {
         ReadWriteAccessDetector.Access access = getAccess(ref, resolved);
-        if (access == ReadWriteAccessDetector.Access.Write || access == ReadWriteAccessDetector.Access.ReadWrite) {
+        if (access != null && access.isReferencedForWrite()) {
           return true;
         }
       }

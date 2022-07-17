@@ -1,3 +1,4 @@
+// AFTER-WARNING: Variable 't' is never used
 class A(val n: Int) {
     fun <caret>foo() = n > 1
 }

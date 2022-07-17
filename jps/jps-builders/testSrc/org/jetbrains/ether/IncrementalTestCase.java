@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ether;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -26,7 +26,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Callable;
 
 /**
  * @author db
@@ -122,22 +121,6 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       path = "src" + File.separator + path;
     }
     return new File(workDir, StringUtil.trimEnd(path, suffix));
-  }
-
-  public <T> T executeWithSystemProperty(String propName, String propValue, Callable<T> action) throws Exception {
-    final String oldValue = System.getProperty(propName);
-    try {
-      System.setProperty(propName, propValue);
-      return action.call();
-    }
-    finally {
-      if (oldValue != null) {
-        System.setProperty(propName, oldValue);
-      }
-      else {
-        System.clearProperty(propName);
-      }
-    }
   }
 
   public BuildResult doTest() {

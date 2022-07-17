@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.impl.TrustStateListener;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -251,6 +252,11 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
+  public boolean areVcsesActivated() {
+    return myMappings.isActivated();
+  }
+
+  @Override
   public boolean hasAnyMappings() {
     return !myMappings.isEmpty();
   }
@@ -387,7 +393,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     myMappings.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
   }
 
-  public void setAutoDirectoryMappings(@NotNull List<? extends VcsDirectoryMapping> mappings) {
+  public void setAutoDirectoryMappings(@NotNull List<VcsDirectoryMapping> mappings) {
     myMappings.setDirectoryMappings(mappings);
     myMappings.cleanupMappings();
   }
@@ -409,10 +415,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   public void updateMappedVcsesImmediately() {
     myMappings.updateMappedVcsesImmediately();
-  }
-
-  private void activateActiveVcses() {
-    myMappings.activateActiveVcses();
   }
 
   @Override
@@ -665,7 +667,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public void fireDirectoryMappingsChanged() {
     if (myProject.isOpen() && !myProject.isDisposed()) {
-      myMappings.mappingsChanged();
+      myMappings.notifyMappingsChanged();
     }
   }
 
@@ -675,16 +677,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public @Nullable String haveDefaultMapping() {
     return myMappings.haveDefaultMapping();
-  }
-
-  /**
-   * @deprecated use {@link BackgroundableActionLock}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public BackgroundableActionEnabledHandler getBackgroundableActionHandler(final VcsBackgroundableActions action) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return new BackgroundableActionEnabledHandler(myProject, action);
   }
 
   @CalledInAny
@@ -945,12 +937,20 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   static final class ActivateVcsesStartupActivity implements VcsStartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      getInstanceImpl(project).activateActiveVcses();
+      project.getService(VcsDirectoryMappingStorage.class); // read vcs.xml
+      getInstanceImpl(project).myMappings.activateActiveVcses();
     }
 
     @Override
     public int getOrder() {
       return VcsInitObject.MAPPINGS.getOrder();
+    }
+  }
+
+  static final class TrustListener implements TrustStateListener {
+    @Override
+    public void onProjectTrusted(@NotNull Project project) {
+      getInstanceImpl(project).updateMappedVcsesImmediately();
     }
   }
 }

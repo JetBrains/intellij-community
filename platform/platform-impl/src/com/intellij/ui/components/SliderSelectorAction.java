@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.ide.IdeBundle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -141,11 +142,11 @@ public class SliderSelectorAction extends DumbAwareAction {
     private final int myMin;
     private final int myMax;
     @NotNull
-    private final Consumer<Integer> myResultConsumer;
+    private final Consumer<? super Integer> myResultConsumer;
     private boolean showOk = false;
 
     public Configuration(int selected, @NotNull Dictionary<Integer, @Nls String> dictionary, 
-                         @NotNull @Nls String selectText, @NotNull Consumer<Integer> consumer) {
+                         @NotNull @Nls String selectText, @NotNull Consumer<? super Integer> consumer) {
       mySelected = selected;
       myDictionary = new HashMap<>();
       mySelectText = selectText;
@@ -167,7 +168,7 @@ public class SliderSelectorAction extends DumbAwareAction {
 
     private static JLabel markLabel(final @Nls String text) {
       JLabel label = new JLabel(text);
-      label.setFont(UIUtil.getLabelFont());
+      label.setFont(StartupUiUtil.getLabelFont());
       return label;
     }
 
@@ -182,7 +183,7 @@ public class SliderSelectorAction extends DumbAwareAction {
     }
 
     @NotNull
-    public Consumer<Integer> getResultConsumer() {
+    public Consumer<? super Integer> getResultConsumer() {
       return myResultConsumer;
     }
 

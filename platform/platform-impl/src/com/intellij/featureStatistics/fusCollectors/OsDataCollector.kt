@@ -1,21 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors
 
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.String
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByRegexp
 import com.intellij.internal.statistic.eventLog.events.EventFields.Version
+import com.intellij.internal.statistic.service.fus.collectors.AllowedDuringStartupCollector
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.util.SystemInfo
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.OffsetDateTime
 import java.util.*
+import kotlin.io.path.name
 import kotlin.streams.asSequence
 
-internal class OsDataCollector : ApplicationUsagesCollector() {
+internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStartupCollector {
   private val OS_NAMES = listOf("Windows", "Mac", "Linux", "FreeBSD", "Solaris", "Other")
 
   private val LOCALES = listOf(
@@ -24,30 +28,43 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     "te", "th", "tr", "uk", "ur", "uz", "vi", "yo", "zh", "zu")
 
   @Suppress("SpellCheckingInspection")
-  private val DISTROS = listOf(
-    "almalinux", "alpine", "amzn", "arch", "bunsenlabs", "centos", "chromeos", "debian", "deepin", "devuan", "elementary", "fedora",
-    "galliumos", "garuda", "gentoo", "kali", "linuxmint", "mageia", "manjaro", "neon", "nixos", "ol", "opensuse-leap", "opensuse-tumbleweed",
-    "parrot", "pop", "pureos", "raspbian", "rhel", "rocky", "rosa", "sabayon", "slackware", "solus", "ubuntu", "void", "zorin",
-    "other", "unknown")
+  private val SHELLS = listOf("sh", "ash", "bash", "csh", "dash", "fish", "ksh", "tcsh", "xonsh", "zsh", "nu", "other", "unknown")
 
-  private val GROUP = EventLogGroup("system.os", 12)
+  @Suppress("SpellCheckingInspection")
+  private val DISTROS = listOf(
+    "almalinux", "alpine", "amzn", "arch", "bunsenlabs", "centos", "chromeos", "debian", "deepin", "devuan", "elementary",
+    "endeavouros", "fedora", "galliumos", "garuda", "gentoo", "kali", "linuxmint", "mageia", "manjaro", "neon", "nixos", "ol",
+    "opensuse-leap", "opensuse-tumbleweed", "parrot", "pop", "pureos", "raspbian", "rhel", "rocky", "rosa", "sabayon",
+    "slackware", "solus", "ubuntu", "void", "zorin", "other", "unknown")
+
+  private val GROUP = EventLogGroup("system.os", 16)
   private val OS_NAME = String("name", OS_NAMES)
   private val OS_LANG = String("locale", LOCALES)
   private val OS_TZ = StringValidatedByRegexp("time_zone", "time_zone")
-  private val OS = GROUP.registerVarargEvent("os.name", OS_NAME, Version, OS_LANG, OS_TZ)
-  private val TIMEZONE = GROUP.registerEvent("os.timezone", StringValidatedByRegexp("value", "time_zone"))  // for backward compatibility, keep until 2024.1
-  private val LINUX = GROUP.registerEvent("linux", String("distro", DISTROS), StringValidatedByRegexp("release", "version"))
+  private val OS_SHELL = String("shell", SHELLS)
+  private val OS = GROUP.registerVarargEvent("os.name", OS_NAME, Version, OS_LANG, OS_TZ, OS_SHELL)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2024.1")
+  @Suppress("MissingDeprecatedAnnotationOnScheduledForRemovalApi", "ScheduledForRemovalWithVersion")
+  private val TIMEZONE = GROUP.registerEvent("os.timezone", StringValidatedByRegexp("value", "time_zone"))  // backward compatibility
+  private val LINUX = GROUP.registerEvent("linux", String("distro", DISTROS), StringValidatedByRegexp("release", "version"), EventFields.Boolean("wsl"))
+  private val WINDOWS = GROUP.registerEvent("windows", EventFields.Long("build"))
 
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(): Set<MetricEvent> {
     val tz = getTimeZone()
     val metrics = mutableSetOf(
-      OS.metric(OS_NAME.with(getOSName()), Version.with(SystemInfo.OS_VERSION), OS_LANG.with(getLanguage()), OS_TZ.with(tz)),
+      OS.metric(OS_NAME.with(getOSName()), Version.with(SystemInfo.OS_VERSION), OS_LANG.with(getLanguage()), OS_TZ.with(tz), OS_SHELL.with(getShell())),
       TIMEZONE.metric(tz))
-    if (SystemInfo.isLinux) {
-      val (distro, release) = getReleaseData()
-      metrics += LINUX.metric(distro, release)
+    when {
+      SystemInfo.isLinux -> {
+        val (distro, release) = getReleaseData()
+        val isUnderWsl = detectIsUnderWsl()
+        metrics += LINUX.metric(distro, release, isUnderWsl)
+      }
+      SystemInfo.isWin10OrNewer -> {
+        metrics += WINDOWS.metric(SystemInfo.getWinBuildNumber() ?: -1)  // `-1` is unknown
+      }
     }
     return metrics
   }
@@ -66,6 +83,10 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
 
   private fun getTimeZone(): String = OffsetDateTime.now().offset.toString()
 
+  private fun getShell(): String? =
+    if (SystemInfo.isWindows) null
+    else SHELLS.coerce(runCatching { System.getenv("SHELL")?.let { Path.of(it).name } }.getOrNull())
+
   // https://www.freedesktop.org/software/systemd/man/os-release.html
   private fun getReleaseData(): Pair<String, String?> =
     try {
@@ -75,15 +96,27 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
           .map { it.split('=') }
           .filter { it.size == 2 && it[0] in fields }
           .associate { it[0] to it[1].trim('"') }
-        val distro = when (val id = values["ID"]) {
-          null -> "unknown"
-          in DISTROS -> id
-          else -> "other"
-        }
+        val distro = DISTROS.coerce(values["ID"])
         distro to values["VERSION_ID"]
       }
     }
     catch (ignored: IOException) {
       "unknown" to null
+    }
+
+  private fun detectIsUnderWsl(): Boolean =
+    try {
+      @Suppress("SpellCheckingInspection") val kernel = Files.readString(Path.of("/proc/sys/kernel/osrelease"))
+      kernel.contains("-microsoft-")
+    }
+    catch(e: IOException) {
+      false
+    }
+
+  private fun List<String>.coerce(value: String?): String =
+    when (value) {
+      null -> "unknown"
+      in this -> value
+      else -> "other"
     }
 }

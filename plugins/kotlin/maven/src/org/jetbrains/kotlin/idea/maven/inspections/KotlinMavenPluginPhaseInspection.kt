@@ -22,14 +22,14 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
+import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.maven.KotlinMavenBundle
 import org.jetbrains.kotlin.idea.maven.PomFile
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
-import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.versions.MAVEN_JS_STDLIB_ID
-import org.jetbrains.kotlin.idea.versions.MAVEN_STDLIB_ID
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
+import org.jetbrains.kotlin.utils.PathUtil
 import java.util.*
 
 class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java) {
@@ -119,13 +119,15 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
                 }
 
                 if (hasJvmExecution && pom.findDependencies(JVM_STDLIB_IDS).isEmpty()) {
-                    val stdlibDependencies = mavenProject.findDependencies(KotlinMavenConfigurator.GROUP_ID, MAVEN_STDLIB_ID)
+                    val stdlibDependencies = mavenProject
+                        .findDependencies(KotlinMavenConfigurator.GROUP_ID, PathUtil.KOTLIN_JAVA_STDLIB_NAME)
+
                     if (stdlibDependencies.isEmpty()) {
                         holder.createProblem(
-                            kotlinPlugin.artifactId.createStableCopy(),
-                            HighlightSeverity.WARNING,
-                            KotlinMavenBundle.message("inspection.jvm.no.stdlib.dependency", MAVEN_STDLIB_ID),
-                            FixAddStdlibLocalFix(domFileElement.file, MAVEN_STDLIB_ID, kotlinPlugin.version.rawText)
+                          kotlinPlugin.artifactId.createStableCopy(),
+                          HighlightSeverity.WARNING,
+                          KotlinMavenBundle.message("inspection.jvm.no.stdlib.dependency", PathUtil.KOTLIN_JAVA_STDLIB_NAME),
+                          FixAddStdlibLocalFix(domFileElement.file, PathUtil.KOTLIN_JAVA_STDLIB_NAME, kotlinPlugin.version.rawText)
                         )
                     }
                 }

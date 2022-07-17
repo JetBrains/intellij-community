@@ -8,20 +8,23 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.dialog.DialogUtils
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsComboBoxModel
-import org.jetbrains.plugins.github.authentication.ui.GHAccountsComboBoxModel.Companion.accountSelector
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsHost
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.RecordUniqueValidator
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
 import java.awt.Component
 import java.util.regex.Pattern
-import javax.swing.JTextArea
 
 
 class GithubShareDialog(project: Project,
@@ -39,7 +42,7 @@ class GithubShareDialog(project: Project,
   @NlsSafe
   private val remoteName = if (existingRemotes.isEmpty()) "origin" else "github"
   private val remoteTextField = JBTextField(remoteName)
-  private val descriptionTextArea = JTextArea()
+  private val descriptionTextArea = JBTextArea().apply { lineWrap = true }
   private val existingRepoValidator = RecordUniqueValidator(repositoryTextField,
                                                             message("share.error.repo.with.selected.name.exists"))
   private val existingRemoteValidator = RecordUniqueValidator(remoteTextField,
@@ -82,22 +85,40 @@ class GithubShareDialog(project: Project,
 
   override fun createCenterPanel() = panel {
     row(message("share.dialog.repo.name")) {
-      cell {
-        repositoryTextField(growX, pushX).withValidationOnApply { validateRepository() }
-        privateCheckBox()
-      }
+      cell(repositoryTextField)
+        .horizontalAlign(HorizontalAlign.FILL)
+        .validationOnApply { validateRepository() }
+        .resizableColumn()
+      cell(privateCheckBox)
     }
     row(message("share.dialog.remote")) {
-      remoteTextField(growX, pushX).withValidationOnApply { validateRemote() }
+      cell(remoteTextField)
+        .horizontalAlign(HorizontalAlign.FILL)
+        .validationOnApply { validateRemote() }
     }
-    row(message("share.dialog.description")) {
-      scrollPane(descriptionTextArea)
-    }
+    row {
+      label(message("share.dialog.description"))
+        .verticalAlign(VerticalAlign.TOP)
+      scrollCell(descriptionTextArea)
+        .horizontalAlign(HorizontalAlign.FILL)
+        .verticalAlign(VerticalAlign.FILL)
+    }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
+
     if (accountsModel.size != 1) {
       row(message("share.dialog.share.by")) {
-        accountSelector(accountsModel) { switchAccount(getAccount()) }
+        comboBox(accountsModel)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .validationOnApply { if (accountsModel.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
+          .applyToComponent { addActionListener { switchAccount(getAccount()) } }
+          .resizableColumn()
+
+        if (accountsModel.size == 0) {
+          cell(GHAccountsHost.createAddAccountLink())
+        }
       }
     }
+  }.apply {
+    preferredSize = JBUI.size(500, 250)
   }
 
   override fun doValidateAll(): List<ValidationInfo> {

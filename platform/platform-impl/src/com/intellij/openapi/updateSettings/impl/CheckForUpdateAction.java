@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -21,6 +22,11 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
     if (ExternalUpdateManager.ACTUAL != null) {
       e.getPresentation().setDescription(ActionsBundle.message("action.CheckForUpdate.description.plugins"));
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

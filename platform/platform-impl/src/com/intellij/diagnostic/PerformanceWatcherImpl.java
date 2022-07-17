@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.application.options.RegistryManager;
@@ -84,7 +84,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
   private PerformanceWatcherImpl() {
     Application application = ApplicationManager.getApplication();
     if (application == null) {
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     }
 
     RegistryManager registryManager = application.getService(RegistryManager.class);
@@ -118,19 +118,18 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
       }
     };
 
-    for (RegistryValue value : List.of(mySamplingInterval,
-                                       myMaxAttemptsCount,
-                                       myUnresponsiveInterval)) {
+    for (RegistryValue value : List.of(mySamplingInterval, myMaxAttemptsCount, myUnresponsiveInterval)) {
       value.addListener(cancelingListener, this);
     }
 
-    RegistryValue ourReasonableThreadPoolSize = registryManager.get("core.pooled.threads");
+    RegistryValue ourReasonableThreadPoolSize = registryManager.get("reasonable.application.thread.pool.size");
     AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
     service.setNewThreadListener((thread, runnable) -> {
       if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize.asInteger() &&
           ApplicationInfoImpl.getShadowInstance().isEAP()) {
-        File file = dumpThreads("newPooledThread/", true);
-        LOG.info("Not enough pooled threads" + (file != null ? "; dumped threads into file '" + file.getPath() + "'" : ""));
+        String message = "Too many pooled threads created (" + service.getBackendPoolExecutorSize() + " > " + ourReasonableThreadPoolSize + ")";
+        File file = doDumpThreads("newPooledThread/", true, message);
+        LOG.info(message + (file == null ? "" : "; thread dump is saved to '" + file.getPath() + "'"));
       }
     });
 
@@ -185,7 +184,12 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
               // look for extended crash logs
               File extraLog = findExtraLogFile(pid, appInfoFileLastModified);
               if (extraLog != null) {
-                Attachment extraAttachment = new Attachment("jbr_err.txt", FileUtil.loadFile(extraLog));
+                String jbrErrContent = FileUtil.loadFile(extraLog);
+                // Detect crashes caused by OOME
+                if (jbrErrContent.contains("java.lang.OutOfMemoryError: Java heap space")) {
+                  LowMemoryNotifier.showNotification(VMOptions.MemoryKind.HEAP, true);
+                }
+                Attachment extraAttachment = new Attachment("jbr_err.txt", jbrErrContent);
                 extraAttachment.setIncluded(true);
                 attachments = ArrayUtil.append(attachments, extraAttachment);
               }
@@ -367,17 +371,19 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
   }
 
   @Override
-  public @Nullable File dumpThreads(@NotNull String pathPrefix, boolean millis) {
-    return myThread != null ?
-           dumpThreads(pathPrefix,
-                       millis,
-                       ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos()).getRawDump()) :
-           null;
+  public @Nullable File dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName) {
+    return doDumpThreads(pathPrefix, appendMillisecondsToFileName, "");
   }
 
-  private @Nullable File dumpThreads(@NotNull String pathPrefix,
-                                     boolean millis,
-                                     @NotNull String rawDump) {
+  @Nullable
+  private File doDumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName, @NotNull String contentsPrefix) {
+    return myThread == null
+           ? null
+           : dumpThreads(pathPrefix, appendMillisecondsToFileName,
+                         contentsPrefix + ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos()).getRawDump());
+  }
+
+  private @Nullable File dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName, @NotNull String rawDump) {
     if (!pathPrefix.contains("/")) {
       pathPrefix = THREAD_DUMPS_PREFIX + pathPrefix + "-" + formatTime(ourIdeStart) + "-" + buildName() + "/";
     }
@@ -386,7 +392,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
     }
 
     long now = System.currentTimeMillis();
-    String suffix = millis ? "-" + now : "";
+    String suffix = appendMillisecondsToFileName ? "-" + now : "";
     File file = new File(myLogDir, pathPrefix + DUMP_PREFIX + formatTime(now) + suffix + ".txt");
 
     File dir = file.getParentFile();
@@ -526,11 +532,14 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
           myExecutor.submit(() -> {
             stopDumping();
 
+            long durationMs = getDuration(taskStop, TimeUnit.MILLISECONDS);
             IdePerformanceListener publisher = getPublisher();
             if (publisher != null) {
-              long durationMs = getDuration(taskStop, TimeUnit.MILLISECONDS);
-              publisher.uiFreezeFinished(durationMs,
-                                         findReportDirectory(durationMs));
+              publisher.uiFreezeFinished(durationMs, new File(myLogDir, myFreezeFolder));
+            }
+            File reportDir = postProcessReportFolder(durationMs);
+            if (publisher != null) {
+              publisher.uiFreezeRecorded(durationMs, reportDir);
             }
           }).get();
         }
@@ -584,7 +593,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
       }
     }
 
-    private @Nullable File findReportDirectory(long durationMs) {
+    private @Nullable File postProcessReportFolder(long durationMs) {
       File dir = new File(myLogDir, myFreezeFolder);
       File reportDir = null;
       if (dir.exists()) {

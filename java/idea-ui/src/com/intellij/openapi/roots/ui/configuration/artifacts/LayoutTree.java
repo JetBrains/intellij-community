@@ -116,7 +116,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     myTreeModel.invalidate(elementNode, true);
   }
 
-  public TreeVisitor createVisitorCompositeNodeChild(String parentPath, Predicate<PackagingElementNode<?>> childFilter) {
+  public TreeVisitor createVisitorCompositeNodeChild(String parentPath, Predicate<? super PackagingElementNode<?>> childFilter) {
     List<Predicate<PackagingElementNode<?>>> parentElementFilters = ContainerUtil.map(StringUtil.split(parentPath, "/"),
                                                                                       LayoutTree::createCompositeNodeByNameFilter);
     TreePath predicatesPath = TreePathUtil.convertCollectionToTreePath(ContainerUtil.append(parentElementFilters, childFilter));
@@ -144,7 +144,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
       final JTextField field = (JTextField)super.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row);
       final Object node = ((DefaultMutableTreeNode)value).getUserObject();
-      final PackagingElement<?> element = ((PackagingElementNode)node).getElementIfSingle();
+      final PackagingElement<?> element = ((PackagingElementNode<?>)node).getElementIfSingle();
       LOG.assertTrue(element != null);
       final String name = ((RenameablePackagingElement)element).getName();
       field.setText(name);
@@ -161,7 +161,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       final Object node = getNodeFor(path);
       RenameablePackagingElement currentElement = null;
       if (node instanceof PackagingElementNode) {
-        final PackagingElement<?> element = ((PackagingElementNode)node).getElementIfSingle();
+        final PackagingElement<?> element = ((PackagingElementNode<?>)node).getElementIfSingle();
         if (element instanceof RenameablePackagingElement) {
           currentElement = (RenameablePackagingElement)element;
         }

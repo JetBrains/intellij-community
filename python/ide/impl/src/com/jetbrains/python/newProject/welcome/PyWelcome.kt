@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProject.welcome
 
 import com.intellij.execution.RunManager
@@ -55,7 +55,8 @@ import java.util.concurrent.Callable
 import javax.swing.JPanel
 
 internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
-  override fun isEdtRequired() = false
+  override val isEdtRequired: Boolean
+    get() = false
 
   override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean) {
     if (isProjectCreatedWithWizard || isInsideTempDirectory(baseDir)) {

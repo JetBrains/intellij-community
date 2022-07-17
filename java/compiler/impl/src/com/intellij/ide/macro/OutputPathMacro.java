@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public final class OutputPathMacro extends Macro {
+public final class OutputPathMacro extends Macro implements PathMacro {
   @NotNull
   @Override
   public String getName() {

@@ -17,7 +17,6 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -137,7 +136,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
   private static class SimplifiableAnnotationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       final PsiAnnotationParameterList parameterList = annotation.getParameterList();
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
@@ -151,7 +150,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
       }
       if (attributes.length == 0) {
         if (parameterList.getChildren().length > 0 && !containsError(annotation)) {
-          registerError(parameterList, ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
+          registerError(parameterList, Boolean.FALSE);
         }
       }
       else if (attributes.length == 1) {
@@ -161,7 +160,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
         if (identifier != null && attributeValue != null) {
           @NonNls final String name = attribute.getName();
           if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name) && !containsError(annotation)) {
-            registerErrorAtOffset(attribute, 0, attributeValue.getStartOffsetInParent(), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+            registerErrorAtOffset(attribute, 0, attributeValue.getStartOffsetInParent(),
                                   Boolean.FALSE);
           }
         }
@@ -174,8 +173,8 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
           return;
         }
         if (!containsError(annotation)) {
-          registerError(arrayValue.getFirstChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
-          registerError(arrayValue.getLastChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
+          registerError(arrayValue.getFirstChild(), Boolean.FALSE);
+          registerError(arrayValue.getLastChild(), Boolean.FALSE);
         }
       }
       else {
@@ -190,8 +189,8 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
             continue;
           }
           if (!containsError(annotation)) {
-            registerError(arrayValue.getFirstChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
-            registerError(arrayValue.getLastChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
+            registerError(arrayValue.getFirstChild(), Boolean.FALSE);
+            registerError(arrayValue.getLastChild(), Boolean.FALSE);
           }
         }
       }

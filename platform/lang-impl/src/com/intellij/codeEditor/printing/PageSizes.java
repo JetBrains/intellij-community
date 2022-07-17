@@ -113,12 +113,12 @@ final class PageSizes {
     int slashPos = sizeStr.indexOf('/');
     if (slashPos >= 0) {
       int spacePos = sizeStr.indexOf(' ');
-      int intPart = Integer.valueOf(sizeStr.substring(0, spacePos));
-      double numerator = Double.valueOf(sizeStr.substring(spacePos+1, slashPos));
-      double denominator = Double.valueOf(sizeStr.substring(slashPos+1));
+      int intPart = Integer.parseInt(sizeStr.substring(0, spacePos));
+      double numerator = Double.parseDouble(sizeStr.substring(spacePos + 1, slashPos));
+      double denominator = Double.parseDouble(sizeStr.substring(slashPos + 1));
       return intPart + numerator / denominator;
     }
-    return Integer.valueOf(sizeStr);
+    return Integer.parseInt(sizeStr);
   }
 
   private static class PageSize {

@@ -1,26 +1,8 @@
 <html>
-<head>
-  <style type="text/css">
-    body, table {
-      font-family: Verdana, sans-serif;
-      font-size: 100%;
-      padding-left: 2mm;
-    }
-
-    #footer {
-      font-size: 95%;
-      padding-top: 10px;
-    }
-  </style>
-</head>
-
 <body>
-<p>
-  Reports a type conversion with a <code>string()</code>, <code>number()</code>, or
-  <code>boolean()</code> function where the type of the argument is the same as the function's return type or if
-  the expected expression type is <code>any</code>. Suggests removing the unnecessary conversion.
-</p>
-
-<p id="footer">Powered by XPathView + XSLT-Support</p>
+Reports unnecessary type conversions.
+Type conversions are unnecessary when the argument type of a <code>string()</code>, <code>number()</code>, or
+<code>boolean()</code> function is already the same as the function's return type or if
+the expected expression type is <code>any</code>. Suggests removing the unnecessary conversion.
 </body>
 </html>

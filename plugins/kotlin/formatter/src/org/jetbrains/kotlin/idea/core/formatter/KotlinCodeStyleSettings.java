@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.formatter;
 
@@ -35,6 +35,7 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
     public boolean SPACE_AFTER_EXTEND_COLON = true;
     public boolean INSERT_WHITESPACES_IN_SIMPLE_ONE_LINE_METHOD = true;
     public boolean ALIGN_IN_COLUMNS_CASE_BRANCH = false;
+    public boolean LINE_BREAK_AFTER_MULTILINE_WHEN_ENTRY = true;
     public boolean SPACE_AROUND_FUNCTION_TYPE_ARROW = true;
     public boolean SPACE_AROUND_WHEN_ARROW = true;
     public boolean SPACE_BEFORE_LAMBDA_ARROW = true;
@@ -67,7 +68,7 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
         this(container, false);
     }
 
-    private KotlinCodeStyleSettings(CodeStyleSettings container, boolean isTempForDeserialize) {
+    private KotlinCodeStyleSettings(@NotNull CodeStyleSettings container, boolean isTempForDeserialize) {
         super("JetCodeStyleSettings", container);
 
         this.isTempForDeserialize = isTempForDeserialize;
@@ -144,7 +145,7 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
 
     private static KotlinCodeStyleSettings readExternalToTemp(Element parentElement) {
         // Read to temp
-        KotlinCodeStyleSettings tempSettings = new KotlinCodeStyleSettings(null, true);
+        KotlinCodeStyleSettings tempSettings = new KotlinCodeStyleSettings(CodeStyleSettings.getDefaults(), true);
         tempSettings.readExternal(parentElement);
 
         return tempSettings;

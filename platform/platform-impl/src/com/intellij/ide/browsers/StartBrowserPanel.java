@@ -133,7 +133,8 @@ public class StartBrowserPanel {
   public static void setupUrlField(@NotNull TextFieldWithBrowseButton field, @NotNull final Project project) {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        if (file == null) return false;
         return WebBrowserXmlService.getInstance().isHtmlFile(file) || virtualFileToUrl(file, project) != null;
       }
     };

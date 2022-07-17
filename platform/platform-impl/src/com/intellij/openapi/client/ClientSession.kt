@@ -12,7 +12,8 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * An object associated with each participant working inside an IDE.
  * There's always a session of a local owner of the IDE that lives as long as [Application]/[Project] itself,
- * in case of Code With Me there also can be other client sessions corresponding to the joined guests.
+ * in case of Code With Me there also can be other client sessions corresponding to the joined guests,
+ * in case of Gateway there also can be the client working with the IDE remotely.
  *
  * Manage services registered with <applicationService client="..."/> and <projectService client="..."/>.
  *

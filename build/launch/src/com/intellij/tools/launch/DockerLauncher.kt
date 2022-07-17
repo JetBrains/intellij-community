@@ -3,45 +3,18 @@ package com.intellij.tools.launch
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.launch.Launcher.affixIO
 import com.sun.security.auth.module.UnixSystem
-import org.apache.log4j.Logger
 import java.io.File
 import java.nio.file.Files
-import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.logging.Logger
 import kotlin.math.pow
 
 class DockerLauncher(private val paths: PathsProvider, private val options: DockerLauncherOptions) {
   companion object {
-    private val logger = Logger.getLogger(DockerLauncher::class.java)
-    private val random = Random()
-  }
-
-  private val UBUNTU_18_04_WITH_USER_TEMPLATE = "ubuntu-18-04-docker-launcher"
-
-  fun assertCanRun() = dockerInfo()
-
-  fun runInContainer(cmd: List<String>): Process {
-    // we try to make everything the same as on the host folder, e.g. UID, paths
-    val username = System.getProperty("user.name")
-    val uid = UnixSystem().uid.toString()
-    val userHomePath = File(System.getProperty("user.home"))
+    private val logger = Logger.getLogger(DockerLauncher::class.java.name)
 
     // e.g. ~/.m2/ will be /mnt/cache/.m2 on TC
-    fun File.pathNotResolvingSymlinks() = this.absoluteFile.normalize().path
-
-    if (!userHomePath.exists()) error("Home directory ${userHomePath.pathNotResolvingSymlinks()} of user=$username, uid=$uid does not exist")
-
-    val imageName = "$UBUNTU_18_04_WITH_USER_TEMPLATE-user-$username-uid-$uid"
-
-    val buildArgs = mapOf(
-      "USER_NAME" to username,
-      "USER_ID" to UnixSystem().uid.toString(),
-      "USER_HOME" to userHomePath.pathNotResolvingSymlinks()
-    )
-
-    dockerBuild(imageName, buildArgs)
-
-    val containerIdFile = File.createTempFile("cwm.docker.cid", "")
+    fun File.pathNotResolvingSymlinks(): String = this.absoluteFile.normalize().path
 
     fun MutableList<String>.addVolume(volume: File, isWritable: Boolean) {
       fun volumeParameter(volume: String, isWritable: Boolean) = "--volume=$volume:$volume:${if (isWritable) "rw" else "ro"}"
@@ -57,6 +30,36 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
     fun MutableList<String>.addReadonly(volume: File) = addVolume(volume, false)
     fun MutableList<String>.addWriteable(volume: File) = addVolume(volume, true)
+
+  }
+
+  private val UBUNTU_18_04_WITH_USER_TEMPLATE = "ubuntu-18-04-docker-launcher"
+
+  fun assertCanRun() = dockerInfo()
+
+  fun runInContainer(cmd: List<String>): Process {
+    // we try to make everything the same as on the host folder, e.g. UID, paths
+    val username = System.getProperty("user.name")
+    // docker doesn't like dots and uppercase letters
+    val usernameForDockerBuild = username.replace(".", "-").lowercase()
+    val uid = UnixSystem().uid.toString()
+    val userHomePath = File(System.getProperty("user.home"))
+
+
+
+    if (!userHomePath.exists()) error("Home directory ${userHomePath.pathNotResolvingSymlinks()} of user=$username, uid=$uid does not exist")
+
+    val imageName = "$UBUNTU_18_04_WITH_USER_TEMPLATE-user-$usernameForDockerBuild-uid-$uid"
+
+    val buildArgs = mapOf(
+      "USER_NAME" to username,
+      "USER_ID" to UnixSystem().uid.toString(),
+      "USER_HOME" to userHomePath.pathNotResolvingSymlinks()
+    )
+
+    dockerBuild(imageName, buildArgs)
+
+    val containerIdFile = File.createTempFile("cwm.docker.cid", "")
 
     val dockerCmd = mutableListOf(
       "docker",
@@ -84,7 +87,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
                            paths.configFolder,
                            paths.systemFolder,
                            paths.outputRootFolder, // classpath index making a lot of noise
-                           paths.ultimateRootFolder.resolve("platform/cwm-tests/general/data"), // classpath index making a lot of noise in stderr
+                           paths.sourcesRootFolder.resolve("remote-dev/cwm-tests/general/data"), // classpath index making a lot of noise in stderr
                            paths.communityRootFolder.resolve("build/download")) // quiche lib
 
     // docker can create these under root, so we create them ourselves
@@ -99,9 +102,9 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     // jars
     dockerCmd.addReadonly(paths.communityBinFolder)
     dockerCmd.addReadonly(paths.communityRootFolder.resolve("lib"))
-    dockerCmd.addReadonly(paths.ultimateRootFolder.resolve("lib"))
-    dockerCmd.addReadonly(paths.ultimateRootFolder.resolve("plugins"))
-    dockerCmd.addReadonly(paths.ultimateRootFolder.resolve("contrib"))
+    dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("lib"))
+    dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("plugins"))
+    dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("contrib"))
 
     // a lot of jars in classpaths, /plugins, /xml, so we'll just mount the whole root
     dockerCmd.addReadonly(paths.communityRootFolder)
@@ -113,7 +116,10 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     dockerCmd.addReadonly(paths.mavenRepositoryFolder)
     
     // quiche
-    dockerCmd.addReadonly(paths.ultimateRootFolder.resolve(".idea"))
+    dockerCmd.addReadonly(paths.sourcesRootFolder.resolve(".idea"))
+
+    // kotlin
+    dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("out").resolve("kotlinc-dist"))
 
     // user-provided volumes
     paths.dockerVolumesToWritable.forEach { (volume, isWriteable) -> dockerCmd.addVolume(volume, isWriteable) }
@@ -179,7 +185,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
       if (containerIdFile.exists() && containerIdFile.length() > 0) {
           logger.info("Container ID file with non-zero length detected at ${containerIdPath}")
-          break;
+          break
       }
 
       val sleepMillis = 100L * 2.0.pow(i).toLong()
@@ -199,7 +205,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
         if (isInDockerPs()) {
           logger.info("Container with name $containerName detected in docker ps output")
-          break;
+          break
         }
 
         val sleepMillis = 100L * 2.0.pow(i).toLong()
@@ -223,16 +229,18 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
     dockerBuildCmd.add(".")
 
-    runCmd(10,
+    val res = runCmd(10,
            TimeUnit.MINUTES,
            true,
            paths.communityRootFolder.resolve("build/launch/src/com/intellij/tools/launch"),
-           false,
+           true,
            *dockerBuildCmd.toTypedArray())
+
+    logger.info(res.toString())
   }
 
 
-  private fun runCmd(timeout: Long, unit: TimeUnit, assertSuccess: Boolean, workDir: File, captureStdout: Boolean = false, vararg cmd: String): List<String> {
+  private fun runCmd(timeout: Long, unit: TimeUnit, assertSuccess: Boolean, workDir: File, captureOutput: Boolean = false, vararg cmd: String): List<String> {
     if (!SystemInfo.isLinux)
       error("We are heavily relaying on paths being the same everywhere and may use networks, so only Linux can be used as a host system.")
 
@@ -243,10 +251,12 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     @Suppress("SSBasedInspection")
     stdoutFile.deleteOnExit()
 
-    if (!captureStdout)
+    if (!captureOutput)
       processBuilder.affixIO(options.redirectOutputIntoParentProcess, paths.logFolder)
-    else
+    else {
       processBuilder.redirectOutput(stdoutFile)
+      processBuilder.redirectError(stdoutFile)
+    }
 
     val readableCmd = cmd.joinToString(" ", prefix = "'", postfix = "'")
     logger.info(readableCmd)

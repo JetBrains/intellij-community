@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 package org.slf4j
 
 class Foo {

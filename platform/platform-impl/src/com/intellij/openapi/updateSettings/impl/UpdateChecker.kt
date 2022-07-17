@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -11,7 +11,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.notification.*
 import com.intellij.notification.impl.NotificationsConfigurationImpl
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
@@ -33,7 +33,7 @@ import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.concurrency.annotations.RequiresNoReadLock
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
@@ -77,10 +77,9 @@ object UpdateChecker {
   private var machineIdInitialized = false
 
   /**
-   * Adding a plugin ID to this collection allows to exclude a plugin from a regular update check.
+   * Adding a plugin ID to this collection allows excluding a plugin from a regular update check.
    * Has no effect on non-bundled plugins.
    */
-  @Suppress("MemberVisibilityCanBePrivate")
   val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf()
 
   init {
@@ -101,8 +100,12 @@ object UpdateChecker {
     NotificationGroupManager.getInstance().getNotificationGroup("IDE and Plugin Updates")
 
   @JvmStatic
-  fun getNotificationGroupForUpdateResults(): NotificationGroup =
+  fun getNotificationGroupForPluginUpdateResults(): NotificationGroup =
     NotificationGroupManager.getInstance().getNotificationGroup("Plugin Update Results")
+
+  @JvmStatic
+  fun getNotificationGroupForIdeUpdateResults(): NotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("IDE Update Results")
 
   /**
    * For scheduled update checks.
@@ -248,7 +251,7 @@ object UpdateChecker {
     try {
       indicator?.text = IdeBundle.message("updates.checking.platform")
       val productData = loadProductData(indicator)
-      if (ExternalUpdateManager.ACTUAL != null || productData == null) {
+      if (productData == null || !settings.isCheckNeeded || ExternalUpdateManager.ACTUAL != null) {
         PlatformUpdates.Empty
       }
       else {
@@ -258,7 +261,7 @@ object UpdateChecker {
     catch (e: Exception) {
       LOG.infoWithDebug(e)
       when (e) {
-        is JDOMException -> PlatformUpdates.Empty  // corrupted content, don't bother telling user
+        is JDOMException -> PlatformUpdates.Empty  // corrupted content, don't bother telling users
         else -> PlatformUpdates.ConnectionError(e)
       }
     }
@@ -293,7 +296,7 @@ object UpdateChecker {
     }
 
   private fun clearProductDataCache() {
-    if (productDataLock.tryLock(1, TimeUnit.MILLISECONDS)) {  // longer means loading now, no much sense in clearing
+    if (productDataLock.tryLock(1, TimeUnit.MILLISECONDS)) {  // a longer time means loading now, no much sense in clearing
       productDataCache = null
       productDataLock.unlock()
     }
@@ -317,7 +320,7 @@ object UpdateChecker {
    * otherwise, returns versions compatible with the specified build.
    */
   @RequiresBackgroundThread
-  @RequiresNoReadLock
+  @RequiresReadLockAbsence
   @JvmOverloads
   @JvmStatic
   fun getInternalPluginUpdates(
@@ -325,8 +328,8 @@ object UpdateChecker {
     indicator: ProgressIndicator? = null,
   ): InternalPluginResults {
     indicator?.text = IdeBundle.message("updates.checking.plugins")
-    if (System.getProperty("idea.ignore.disabled.plugins") == null) {
-      val brokenPlugins = MarketplaceRequests.Instance.getBrokenPlugins(ApplicationInfo.getInstance().build)
+    if (!PluginEnabler.HEADLESS.isIgnoredDisabledPlugins) {
+      val brokenPlugins = MarketplaceRequests.getInstance().getBrokenPlugins(ApplicationInfo.getInstance().build)
       if (brokenPlugins.isNotEmpty()) {
         PluginManagerCore.updateBrokenPlugins(brokenPlugins)
       }
@@ -407,7 +410,7 @@ object UpdateChecker {
       onceInstalled.toFile().deleteOnExit()
     }
 
-    // excluding plugins that take care about their own updates
+    // excluding plugins that take care of their own updates
     if (excludedFromUpdateCheckPlugins.isNotEmpty() && !ApplicationManager.getApplication().isInternal) {
       excludedFromUpdateCheckPlugins.forEach {
         val id = PluginId.getId(it)
@@ -422,14 +425,14 @@ object UpdateChecker {
   }
 
   @RequiresBackgroundThread
-  @RequiresNoReadLock
+  @RequiresReadLockAbsence
   private fun findUpdatesInJetBrainsRepository(updateable: MutableMap<PluginId, IdeaPluginDescriptor?>,
                                                toUpdate: MutableMap<PluginId, PluginDownloader>,
                                                toUpdateDisabled: MutableMap<PluginId, PluginDownloader>,
                                                buildNumber: BuildNumber?,
                                                state: InstalledPluginsState,
                                                indicator: ProgressIndicator?) {
-    val marketplacePluginIds = MarketplaceRequests.Instance.getMarketplacePlugins(indicator)
+    val marketplacePluginIds = MarketplaceRequests.getInstance().getMarketplacePlugins(indicator)
     val idsToUpdate = updateable.keys.filter { it in marketplacePluginIds }.toSet()
     val updates = MarketplaceRequests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     updateable.forEach { (id, descriptor) ->
@@ -570,7 +573,7 @@ object UpdateChecker {
             title,
             message,
             NotificationAction.createExpiring(IdeBundle.message("updates.all.plugins.action", updatedPlugins.size)) { e, _ ->
-              PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
+              PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
             },
             NotificationAction.createSimpleExpiring(IdeBundle.message("updates.plugins.dialog.action"), runnable),
             NotificationAction.createSimpleExpiring(IdeBundle.message("updates.ignore.updates.link", updatedPlugins.size)) {
@@ -637,7 +640,7 @@ object UpdateChecker {
       UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatedPlugins, incompatiblePlugins)
 
       if (showNotification) {
-        IdeUpdateUsageTriggerCollector.trigger("notification.shown")
+        IdeUpdateUsageTriggerCollector.NOTIFICATION_SHOWN.log(project)
         val message = IdeBundle.message(
           "updates.new.build.notification.title",
           ApplicationNamesInfo.getInstance().fullProductName,
@@ -650,7 +653,7 @@ object UpdateChecker {
           "",
           message,
           NotificationAction.createSimpleExpiring(IdeBundle.message("updates.notification.update.action")) {
-            IdeUpdateUsageTriggerCollector.trigger("notification.clicked")
+            IdeUpdateUsageTriggerCollector.NOTIFICATION_CLICKED.log(project)
             runnable()
           })
       }
@@ -682,8 +685,14 @@ object UpdateChecker {
 
   @JvmStatic
   fun saveDisabledToUpdatePlugins() {
-    runCatching { DisabledPluginsState.savePluginsList(disabledToUpdate, Path.of(PathManager.getConfigPath(), DISABLED_UPDATE)) }
-      .onFailure { LOG.error(it) }
+    runCatching {
+      PluginManagerCore.writePluginIdsToFile(
+        /* path = */ PathManager.getConfigDir().resolve(DISABLED_UPDATE),
+        /* pluginIds = */ disabledToUpdate,
+      )
+    }.onFailure {
+      LOG.error(it)
+    }
   }
 
   @JvmStatic
@@ -776,21 +785,21 @@ object UpdateChecker {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("getNotificationGroup()"), message = "Use getNotificationGroup()")
-  @Suppress("DEPRECATION")
+  @Suppress("DEPRECATION", "unused")
   @JvmField
-  val NOTIFICATIONS =
-    NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
+  val NOTIFICATIONS = NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
 
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated(message = "Use disabledToUpdate", replaceWith = ReplaceWith("disabledToUpdate"))
   @Deprecated(message = "Use disabledToUpdate", replaceWith = ReplaceWith("disabledToUpdate"))
+  @Suppress("unused")
   @JvmStatic
   val disabledToUpdatePlugins: Set<String>
     get() = disabledToUpdate.mapTo(TreeSet()) { it.idString }
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Use checkForPluginUpdates", replaceWith = ReplaceWith(""))
   @JvmStatic
   fun getPluginUpdates(): Collection<PluginDownloader>? =

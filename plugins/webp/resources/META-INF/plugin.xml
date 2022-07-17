@@ -8,6 +8,6 @@
     ]]></description>
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Image" extensions="webp"/>
-    <projectService serviceImplementation="com.android.tools.adtui.webp.WebpMetadata$WebpMetadataRegistrar" preload="await"/>
+    <applicationService serviceImplementation="com.android.tools.adtui.webp.WebpMetadata$WebpMetadataRegistrar" preload="true"/>
   </extensions>
 </idea-plugin>

@@ -3092,10 +3092,10 @@ SHELL_SCRIPT
           PsiComment(Comment)('# Link to system certificates')
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          PsiComment(Comment)('# https://openjdk.java.net/jeps/319')
+          PsiComment(Comment)('# https://openjdk.org/jeps/319')
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          PsiComment(Comment)('# https://bugs.openjdk.java.net/browse/JDK-8196141')
+          PsiComment(Comment)('# https://bugs.openjdk.org/browse/JDK-8196141')
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
           IF_COMMAND

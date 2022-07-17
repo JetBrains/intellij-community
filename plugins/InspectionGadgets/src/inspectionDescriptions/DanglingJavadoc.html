@@ -1,32 +1,33 @@
 <html>
 <body>
 Reports Javadoc comments that don't belong to any class, method or field.
-<p>The Javadoc tool ignores dangling Javadoc comments and doesn't include them in the generated HTML documentation.</p>
+The Javadoc tool ignores dangling Javadoc comments and doesn't include them in the HTML documentation it generates.
 <p><b>Example:</b></p>
 <pre><code>
   class A {
     /**
      * Dangling comment
      */
-     /**
-      * Method javadoc
-      */
-      public void m(){}
+    /**
+     * Method javadoc
+     */
+     public void m(){}
   }
 </code></pre>
 <p>A quick-fix is available to delete such comments completely or convert them into a block comment. After the quick-fix is applied:</p>
 <pre><code>
   class A {
-  /*
-    Dangling comment
-   */
-  /**
-   * Method javadoc
-   */
-  public void m(){}
-}
+    /*
+      Dangling comment
+    */
+    /**
+     * Method javadoc
+     */
+    public void m(){}
+  }
 </code></pre>
 <!-- tooltip end -->
-<p>
+<p>Use the <b>Ignore file header comment in JavaDoc format</b> option to ignore comments at the beginning of Java files.
+These are usually copyright messages.
 </body>
 </html>

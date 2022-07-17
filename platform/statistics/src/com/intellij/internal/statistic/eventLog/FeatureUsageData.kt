@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.codeWithMe.ClientId
@@ -54,7 +54,7 @@ class FeatureUsageData(private val recorderId: String) {
   }
 
   companion object {
-    // don't list "version" as "platformDataKeys" because it format depends a lot on the tool
+    // don't list "version" as "platformDataKeys" because it's format depends a lot on the tool
     val platformDataKeys: List<String> = listOf("plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place",
                                                 "file_path", "anonymous_id", "client_id")
   }
@@ -275,8 +275,12 @@ class FeatureUsageData(private val recorderId: String) {
    *
    * @param key key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
    */
-  internal fun addListLongData(@NonNls key: String, value: List<Long>): FeatureUsageData {
+  internal fun addListNumberData(@NonNls key: String, value: List<Number>): FeatureUsageData {
     return addDataInternal(key, value)
+  }
+
+  internal fun addListLongData(@NonNls key: String, value: List<Long>): FeatureUsageData {
+    return addListNumberData(key, value)
   }
 
   internal fun addObjectData(@NonNls key: String, value: Map<String, Any>): FeatureUsageData {

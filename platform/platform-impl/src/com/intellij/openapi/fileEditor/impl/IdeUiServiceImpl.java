@@ -1,35 +1,34 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.ui.IdeUiService;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.internal.statistic.utils.PluginInfo;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.EdtDataContext;
+import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.ui.SystemNotifications;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.SwingHelper;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.net.ssl.SSLContext;
@@ -37,16 +36,16 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Path;
 import java.util.List;
 
-public class IdeUiServiceImpl extends IdeUiService {
+public final class IdeUiServiceImpl extends IdeUiService {
   @Override
-  public void revealFile(File file) {
+  public void revealFile(Path file) {
     RevealFileAction.openFile(file);
   }
 
@@ -64,21 +63,28 @@ public class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
-  public void logUsageEvent(Class<?> clazz, String groupId, String eventId) {
-    PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(clazz);
-    String factoryClass = pluginInfo.isSafeToReport() ? clazz.getName() : "third.party";
-    FeatureUsageData data = new FeatureUsageData().addData("factory", factoryClass).addPluginInfo(pluginInfo);
-    FUCounterUsageLogger.getInstance().logEvent(groupId, eventId, data);
+  public void logIdeScriptUsageEvent(Class<?> clazz) {
+    IdeScriptEngineUsageCollector.logUsageEvent(clazz);
   }
 
   @Override
-  public void systemNotify(String title, String text) {
+  public void systemNotify(@NlsContexts.SystemNotificationTitle String title, @NlsContexts.SystemNotificationText String text) {
     SystemNotifications.getInstance().notify("SessionLogger", title, StringUtil.stripHtml(text, true));
   }
 
   @Override
-  public DataContext createUiDataContext(Component component) {
+  public @NotNull DataContext createUiDataContext(Component component) {
     return new EdtDataContext(component);
+  }
+
+  @Override
+  public @NotNull DataContext createAsyncDataContext(@NotNull DataContext dataContext) {
+    return Utils.wrapToAsyncDataContext(dataContext);
+  }
+
+  @Override
+  public @NotNull DataContext createCustomizedDataContext(@NotNull DataContext dataContext, @NotNull DataProvider dataProvider) {
+    return CustomizedDataContext.create(dataContext, dataProvider);
   }
 
   @Override
@@ -105,18 +111,20 @@ public class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
-  public void notifyByBalloon(Project project,
-                              String toolWindowId,
-                              MessageType messageType,
-                              String title, String fullMessage, String description,
-                              Icon icon, HyperlinkListener listener) {
+  public boolean notifyByBalloon(Project project,
+                                 String toolWindowId,
+                                 MessageType messageType,
+                                 @Nls String fullMessage,
+                                 Icon icon,
+                                 HyperlinkListener listener) {
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     if (toolWindowManager.canShowNotification(toolWindowId)) {
       //noinspection SSBasedInspection
-      toolWindowManager.notifyByBalloon(toolWindowId, MessageType.ERROR, fullMessage, icon, listener);
+      toolWindowManager.notifyByBalloon(toolWindowId, messageType, fullMessage, icon, listener);
+      return true;
     }
     else {
-      Messages.showErrorDialog(project, UIUtil.toHtml(description), title);
+      return false;
     }
   }
 
@@ -142,6 +150,14 @@ public class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
+  public VirtualFile chooseFile(FileChooserDescriptor descriptor,
+                                JComponent component,
+                                Project project,
+                                VirtualFile dir) {
+    return FileChooser.chooseFile(descriptor, component, project, dir);
+  }
+
+  @Override
   public SSLContext getSslContext() {
     return CertificateManager.getInstance().getSslContext();
   }
@@ -164,5 +180,31 @@ public class IdeUiServiceImpl extends IdeUiService {
   @Override
   public List<Proxy> getProxyList(URL url) {
     return CommonProxy.getInstance().select(url);
+  }
+
+  @Override
+  public void prepareURL(String url) throws IOException {
+    HttpConfigurable.getInstance().prepareURL(url);
+  }
+
+  @Override
+  public boolean showErrorDialog(@NlsContexts.DialogTitle String title, @NlsContexts.DetailedDescription String message) {
+    return IOExceptionDialog.showErrorDialog(title, message);
+  }
+
+  @Override
+  public void showRefactoringMessageDialog(String title,
+                                           String message,
+                                           String helpTopic,
+                                           String iconId,
+                                           boolean showCancelButton,
+                                           Project project) {
+    RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpTopic, iconId, showCancelButton, project);
+    dialog.show();
+  }
+
+  @Override
+  public void showErrorHint(Editor editor, String message) {
+    HintManager.getInstance().showErrorHint(editor, message);
   }
 }

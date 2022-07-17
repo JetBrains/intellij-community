@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSExpressionWithLabelTest : KotlinSSResourceInspectionTest() {
+class KotlinSSExpressionWithLabelTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "expressionWithLabel"
 
     fun testBreak() { doTest("break") }

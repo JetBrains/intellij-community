@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -23,9 +23,9 @@ import java.util.function.Supplier;
 public final class ContentUtilEx extends ContentsUtil {
   /**
    * @deprecated use {@link ContentUtilEx#addTabbedContent(ContentManager, JComponent, String, Supplier, Supplier, boolean, Disposable)}
-   * as it allows to set tab group id separately from display name.
+   * as it allows setting tab group id separately from display name.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void addTabbedContent(@NotNull ContentManager manager,
                                       @NotNull JComponent contentComponent,
                                       @NotNull @NonNls String groupPrefix,
@@ -61,7 +61,7 @@ public final class ContentUtilEx extends ContentsUtil {
                                            @NotNull TabGroupId tabGroupId,
                                            @NotNull TabDescriptor tab,
                                            boolean select) {
-    Content content = ContentFactory.SERVICE.getInstance().createContent(tab.getComponent(), tabGroupId.getDisplayName(tab),
+    Content content = ContentFactory.getInstance().createContent(tab.getComponent(), tabGroupId.getDisplayName(tab),
                                                                          true);
     content.setTabName(tabGroupId.getDisplayName(tab));
     content.putUserData(Content.TABBED_CONTENT_KEY, Boolean.TRUE);

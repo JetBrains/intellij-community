@@ -28,11 +28,9 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitDisposable;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
-import git4idea.commands.Git;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -117,15 +115,6 @@ public class GitConflictResolver {
       myMergeDialogCustomizer = mergeDialogCustomizer;
       return this;
     }
-  }
-
-  /**
-   * @deprecated use {@link #GitConflictResolver(Project, Collection, Params)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull Collection<? extends VirtualFile> roots, @NotNull Params params) {
-    this(project, roots, params);
   }
 
   public GitConflictResolver(@NotNull Project project, @NotNull Collection<? extends VirtualFile> roots, @NotNull Params params) {

@@ -121,8 +121,8 @@ class DfDoubleRangeType implements DfDoubleType {
     if (Double.compare(from, to) > 0) return this;
     if (myInvert) {
       if (Double.compare(to, myFrom) < 0 || Double.compare(from, myTo) > 0) return this;
-      double fromCmp = Double.compare(myFrom, from);
-      double toCmp = Double.compare(to, myTo);
+      int fromCmp = Double.compare(myFrom, from);
+      int toCmp = Double.compare(to, myTo);
       if (fromCmp >= 0 && toCmp >= 0 || fromCmp < 0 && toCmp < 0) {
         return exact ? null : (DfDoubleRangeType)create(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, false, myNaN);
       }
@@ -154,8 +154,8 @@ class DfDoubleRangeType implements DfDoubleType {
         double to = Math.min(myTo, range.myTo);
         return create(from, to, false, nan); 
       } else {
-        double fromCmp = Double.compare(myFrom, range.myFrom);
-        double toCmp = Double.compare(range.myTo, myTo);
+        int fromCmp = Double.compare(myFrom, range.myFrom);
+        int toCmp = Double.compare(range.myTo, myTo);
         if (fromCmp >= 0) {
           return create(Math.max(myFrom, nextUp(range.myTo)), myTo, false, nan);
         }
@@ -172,20 +172,29 @@ class DfDoubleRangeType implements DfDoubleType {
       if (!range.myInvert) {
         return range.meet(this);
       } else {
-        double from = Math.min(myFrom, range.myFrom);
-        double to = Math.max(myTo, range.myTo);
-        return create(from, to, true, nan);
+        // both inverted
+        if (myTo >= Math.nextDown(range.myFrom) && range.myTo >= Math.nextDown(myFrom)) {
+          // excluded ranges intersect or touch each other: we can exclude their union
+          double from = Math.min(myFrom, range.myFrom);
+          double to = Math.max(myTo, range.myTo);
+          return create(from, to, true, nan);
+        }
+        // excluded ranges don't intersect: we cannot encode this case
+        // just keep one of the ranges (with lesser from, for stability)
+        if (myFrom < range.myFrom) {
+          return create(myFrom, myTo, true, nan);
+        }
+        return create(range.myFrom, range.myTo, true, nan);
       }
     }
   }
 
   @Override
   public @NotNull DfType fromRelation(@NotNull RelationType relationType) {
-    if (myInvert && relationType == RelationType.EQ) {
-      double from = myFrom, to = myTo;
-      if (from == 0.0) from = -0.0;
-      if (to == 0.0) to = 0.0;
-      return create(from, to, true, true);
+    if (relationType == RelationType.EQ) {
+      DfType result = myNaN ? this : create(myFrom, myTo, myInvert, true);
+      DfType zero = DfTypes.doubleRange(-0.0, 0.0);
+      return meet(zero) != BOTTOM ? result.join(zero) : result;
     }
     if (myInvert) {
       double max = myTo == Double.POSITIVE_INFINITY ? nextDown(myFrom) : Double.POSITIVE_INFINITY;

@@ -24,7 +24,7 @@ public abstract class JavaJspRecursiveElementVisitor extends JavaJspElementVisit
     }
   }
 
-  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     myRefExprsInVisit.push(expression);
     try {
       visitExpression(expression);

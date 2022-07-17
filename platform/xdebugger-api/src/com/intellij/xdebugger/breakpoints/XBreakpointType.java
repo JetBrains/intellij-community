@@ -184,7 +184,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   @NotNull 
   public Comparator<B> getBreakpointComparator() {
-    return (b, b1) -> (int)(b1.getTimeStamp() - b.getTimeStamp());
+    return (b, b1) -> Long.compare(b1.getTimeStamp(), b.getTimeStamp());
     //return XDebuggerUtil.getInstance().getDefaultBreakpointComparator(this);
   }
 

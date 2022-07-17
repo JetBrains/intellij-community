@@ -60,6 +60,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<>();
   private boolean myDocumentChangeProcessed = true;
+  boolean myComplexDocumentChange;
   private final AtomicLong myExpansionCounter = new AtomicLong();
   private final EditorScrollingPositionKeeper myScrollingPositionKeeper;
 
@@ -343,17 +344,17 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   @Override
   @Nullable
   public FoldRegion getFoldingPlaceholderAt(@NotNull Point p) {
-    return getFoldingPlaceholderAt(new EditorLocation(myEditor, p));
+    return getFoldingPlaceholderAt(new EditorLocation(myEditor, p), false);
   }
 
-  FoldRegion getFoldingPlaceholderAt(@NotNull EditorLocation location) {
+  FoldRegion getFoldingPlaceholderAt(@NotNull EditorLocation location, boolean ignoreCustomRegionWidth) {
     Point p = location.getPoint();
     if (p.y < location.getVisualLineStartY() || p.y >= location.getVisualLineEndY()) {
       // block inlay area
       return null;
     }
     FoldRegion region = location.getCollapsedRegion();
-    return region instanceof CustomFoldRegion &&
+    return !ignoreCustomRegionWidth && region instanceof CustomFoldRegion &&
            p.x >= myEditor.getContentComponent().getInsets().left + ((CustomFoldRegion)region).getWidthInPixels() ? null : region;
   }
 
@@ -653,6 +654,16 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   private void validateAffectedCustomRegions() {
+    if (myComplexDocumentChange) {
+      // validate all custom fold regions
+      myRegionTree.processAll(r -> {
+        if (r instanceof CustomFoldRegionImpl) {
+          myAffectedCustomRegions.add((CustomFoldRegionImpl)r);
+        }
+        return true;
+      });
+      myComplexDocumentChange = false;
+    }
     for (CustomFoldRegionImpl region : myAffectedCustomRegions) {
       if (region.isValid() && !myFoldTree.checkIfValidToCreate(region.getStartOffset(), region.getEndOffset(), true, region)) {
         myRegionTree.removeInterval(region);
@@ -904,14 +915,16 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
 
     @Override
-    boolean collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<FoldRegionImpl> root,
+    void collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<FoldRegionImpl> root,
                                                    int start, int end, int lengthDelta,
                                                    @NotNull List<? super IntervalNode<FoldRegionImpl>> affected) {
-      if (inCollectCall) return super.collectAffectedMarkersAndShiftSubtrees(root, start, end, lengthDelta, affected);
+      if (inCollectCall) {
+        super.collectAffectedMarkersAndShiftSubtrees(root, start, end, lengthDelta, affected);
+        return;
+      }
       inCollectCall = true;
-      boolean result;
       try {
-        result = super.collectAffectedMarkersAndShiftSubtrees(root, start, end, lengthDelta, affected);
+        super.collectAffectedMarkersAndShiftSubtrees(root, start, end, lengthDelta, affected);
       }
       finally {
         inCollectCall = false;
@@ -927,7 +940,6 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
           region.mySizeBeforeUpdate = region.isExpanded() ? 0 : node.intervalEnd() - node.intervalStart();
         }
       }
-      return result;
     }
 
     @Override
@@ -947,7 +959,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
       @Override
       void onRemoved() {
-        for (Supplier<FoldRegionImpl> getter : intervals) {
+        for (Supplier<? extends FoldRegionImpl> getter : intervals) {
           removeRegionFromGroup(getter.get());
         }
       }

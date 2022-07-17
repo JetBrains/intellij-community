@@ -2,6 +2,7 @@
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.ml.common.CurrentProjectInfo
 import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.storage.MutableLookupStorage
@@ -14,6 +15,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.project.Project
 import com.intellij.stats.completion.CompletionStatsPolicy
 import com.intellij.stats.completion.sender.isCompletionLogsSendAllowed
 import kotlin.random.Random
@@ -55,7 +57,7 @@ class CompletionLoggerInitializer : LookupTracker() {
     if (!shouldInitialize()) return
 
     val experimentInfo = ExperimentStatus.getInstance().forLanguage(storage.language)
-    if (sessionShouldBeLogged(experimentInfo, storage.language)) {
+    if (sessionShouldBeLogged(experimentInfo, storage.language, lookup.project)) {
       val tracker = actionsTracker(lookup, storage, experimentInfo)
       actionListener.listener = tracker
       lookup.addLookupListener(tracker)
@@ -75,10 +77,10 @@ class CompletionLoggerInitializer : LookupTracker() {
     return LoggerPerformanceTracker(actionsTracker, storage.performanceTracker)
   }
 
-  private fun sessionShouldBeLogged(experimentInfo: ExperimentInfo, language: Language): Boolean {
+  private fun sessionShouldBeLogged(experimentInfo: ExperimentInfo, language: Language, project: Project): Boolean {
     if (CompletionStatsPolicy.isStatsLogDisabled(language) || !getPluginInfo(language::class.java).isSafeToReport()) return false
     val application = ApplicationManager.getApplication()
-    if (application.isUnitTestMode || experimentInfo.inExperiment) return true
+    if (application.isUnitTestMode || experimentInfo.inExperiment || CurrentProjectInfo.getInstance(project).isIdeaProject) return true
 
     if (!isCompletionLogsSendAllowed()) {
       return false

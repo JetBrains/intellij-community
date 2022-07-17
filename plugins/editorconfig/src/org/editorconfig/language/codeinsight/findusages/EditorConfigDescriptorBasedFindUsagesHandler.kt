@@ -17,7 +17,7 @@ import org.editorconfig.language.util.EditorConfigVfsUtil
 
 class EditorConfigDescriptorBasedFindUsagesHandler(element: EditorConfigDescribableElement) : FindUsagesHandler(element) {
   override fun processElementUsages(element: PsiElement, processor: Processor<in UsageInfo>, options: FindUsagesOptions) = runReadAction {
-    element as? EditorConfigDescribableElement ?: return@runReadAction false
+    if (element !is EditorConfigDescribableElement) return@runReadAction false
     val descriptor = element.getDescriptor(false) ?: return@runReadAction false
     EditorConfigVfsUtil
       .getEditorConfigFiles(project)
@@ -33,8 +33,8 @@ class EditorConfigDescriptorBasedFindUsagesHandler(element: EditorConfigDescriba
   }
 
   override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope) = runReadAction {
-    searchScope as? LocalSearchScope ?: return@runReadAction emptyList<PsiReference>()
-    target as? EditorConfigDescribableElement ?: return@runReadAction emptyList<PsiReference>()
+    if (searchScope !is LocalSearchScope) return@runReadAction emptyList<PsiReference>()
+    if (target !is EditorConfigDescribableElement) return@runReadAction emptyList<PsiReference>()
     val descriptor = target.getDescriptor(false) ?: return@runReadAction emptyList<PsiReference>()
     searchScope.scope.asSequence()
       .flatMap { PsiTreeUtil.findChildrenOfType(it, EditorConfigDescribableElement::class.java).asSequence() }

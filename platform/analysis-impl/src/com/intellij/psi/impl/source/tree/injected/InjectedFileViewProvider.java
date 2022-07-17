@@ -14,7 +14,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -22,8 +21,7 @@ import java.util.List;
 /**
  * @deprecated Use methods from {@link InjectedLanguageManager} instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public interface InjectedFileViewProvider extends FileViewProvider, FreeThreadedFileViewProvider {
   default void rootChangedImpl(@NotNull PsiFile psiFile) {
     if (!isPhysical()) return; // injected PSI change happened inside reparse; ignore
@@ -107,7 +105,7 @@ public interface InjectedFileViewProvider extends FileViewProvider, FreeThreaded
     return isEventSystemEnabled();
   }
 
-  default void performNonPhysically(Runnable runnable) {
+  default void performNonPhysically(@NotNull Runnable runnable) {
     synchronized (getLock()) {
       SingleRootInjectedFileViewProvider.disabledTemporarily.set(true);
       try {
@@ -143,10 +141,10 @@ public interface InjectedFileViewProvider extends FileViewProvider, FreeThreaded
   @NotNull
   DocumentWindowImpl getDocument();
 
-  static InjectedFileViewProvider create(@NotNull PsiManagerEx manager,
-                                         @NotNull VirtualFileWindowImpl file,
-                                         @NotNull DocumentWindowImpl window,
-                                         @NotNull Language language) {
+  static @NotNull InjectedFileViewProvider create(@NotNull PsiManagerEx manager,
+                                                  @NotNull VirtualFileWindowImpl file,
+                                                  @NotNull DocumentWindowImpl window,
+                                                  @NotNull Language language) {
     AbstractFileViewProvider original = (AbstractFileViewProvider)manager.getFileManager().createFileViewProvider(file, false);
     return original instanceof TemplateLanguageFileViewProvider ?
              new MultipleRootsInjectedFileViewProvider.Template(manager, file, window, language, original) :

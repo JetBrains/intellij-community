@@ -315,7 +315,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     List<Item> items = new ArrayList<>(getTableModel().getItems());
     if (myTable.isEditing()) {
       Object value = ChangesTrackingTableView.getValue(myTable.getEditorComponent());
-      ColumnInfo column = ((ListTableModel)myTable.getModel()).getColumnInfos()[myTable.getEditingColumn()];
+      ColumnInfo column = ((ListTableModel<?>)myTable.getModel()).getColumnInfos()[myTable.getEditingColumn()];
       ((ColumnInfoWrapper)column).myDelegate.setValue(items.get(myTable.getEditingRow()), value);
     }
     return items;

@@ -1,20 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.FontSize;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.function.Consumer;
 
-final class FontSizeMouseWheelListener implements MouseWheelListener {
+/**
+ * @deprecated Unused in v2 implementation.
+ */
+@Deprecated
+@Internal
+public final class FontSizeMouseWheelListener implements MouseWheelListener {
 
   private final @NotNull Consumer<? super @NotNull FontSize> mySizeConsumer;
 
-  FontSizeMouseWheelListener(@NotNull Consumer<? super @NotNull FontSize> sizeConsumer) {
+  public FontSizeMouseWheelListener(@NotNull Consumer<? super @NotNull FontSize> sizeConsumer) {
     mySizeConsumer = sizeConsumer;
   }
 

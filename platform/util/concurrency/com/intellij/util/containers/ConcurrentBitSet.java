@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * This class is a thread-safe version of the
- * {@code java.util.BitSet} except for some methods which don't make sense in concurrent environment or those i was too lazy to implement.
+ * {@code java.util.BitSet} except for some methods which don't make sense in concurrent environment or those I was too lazy to implement.
  *
  * Implementation: bits stored packed in {@link ConcurrentBitSetImpl#array}, 32 bits per array element.
  * When bit change request comes, the array is reallocated as necessary.

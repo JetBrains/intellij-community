@@ -2,7 +2,6 @@
 @file:ApiStatus.Internal
 package com.intellij.serviceContainer
 
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -22,14 +21,6 @@ internal fun checkCanceledIfNotInClassInit() {
     if (!e.stackTrace.any { it.methodName == "<clinit>" }) {
       throw e
     }
-  }
-}
-
-inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescriptorImpl,
-                               crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
-  task(mainPluginDescriptor)
-  executeRegisterTaskForContent(mainPluginDescriptor) {
-    task(it)
   }
 }
 

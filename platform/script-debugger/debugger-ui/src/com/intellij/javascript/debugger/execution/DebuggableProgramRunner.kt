@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javascript.debugger.execution
 
 import com.intellij.execution.ExecutionResult
@@ -50,7 +50,6 @@ fun doExecuteDebuggableProgram(environment: ExecutionEnvironment, state: RunProf
       LOG.info("Debug session started address=$socketAddress, configuration=$configuration")
       startSession(environment) { configuration.createDebugProcess(socketAddress, it, executionResult, environment) }.runContentDescriptor
     }
-    @Suppress("IfThenToElvis")
     if (state is DebuggableRunProfileState) {
       state.execute(socketAddress.port).then(starter)
     }

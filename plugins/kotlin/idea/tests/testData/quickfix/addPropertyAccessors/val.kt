@@ -1,5 +1,5 @@
 // "Add getter" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class Test {
     val x: Int<caret>
 }

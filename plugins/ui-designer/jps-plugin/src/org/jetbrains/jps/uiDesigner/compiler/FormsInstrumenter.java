@@ -148,12 +148,7 @@ public final class FormsInstrumenter extends FormsBuilder {
         // ignore non-IDEA forms
         continue;
       }
-      catch (UnexpectedFormElementException e) {
-        context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, e.getMessage(), formFile.getPath()));
-        LOG.info(e);
-        continue;
-      }
-      catch (UIDesignerException e) {
+      catch (UnexpectedFormElementException | UIDesignerException e) {
         context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, e.getMessage(), formFile.getPath()));
         LOG.info(e);
         continue;
@@ -289,12 +284,8 @@ public final class FormsInstrumenter extends FormsBuilder {
         }
         final File formFile = new File(sourceRoot, path);
         if (formFile.exists()) {
-          final BufferedInputStream stream = new BufferedInputStream(new FileInputStream(formFile));
-          try {
+          try (BufferedInputStream stream = new BufferedInputStream(new FileInputStream(formFile))) {
             return loadForm(formFileName, stream);
-          }
-          finally {
-            stream.close();
           }
         }
       }

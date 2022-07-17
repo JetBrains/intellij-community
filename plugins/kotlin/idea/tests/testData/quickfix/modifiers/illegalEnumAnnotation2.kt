@@ -2,3 +2,4 @@
 class A() {
     <caret>enum fun foo() {}
 }
+

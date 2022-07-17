@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit2.configuration;
 
 import com.intellij.execution.JUnitBundle;
@@ -12,7 +12,6 @@ import com.intellij.execution.junit.TestObject;
 import com.intellij.execution.ui.CommandLinePanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.execution.ui.SettingsEditorFragment;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -104,7 +103,8 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     setupField(DIR, directoryField, directoryField.getTextField().getDocument(), browsers[DIR], null);
     setupField(CATEGORY, category, category.getChildComponent().getDocument(), browsers[CATEGORY], null);
 
-    myUniqueIdField = new RawCommandLineEditor();
+    myUniqueIdField = new RawCommandLineEditor(text -> Arrays.asList(text.split("\u001B")),
+                                              strings -> StringUtil.join(strings, "\u001B"));
     setupField(UNIQUE_ID, myUniqueIdField, null, null, null);
 
     myTagsField = new RawCommandLineEditor();
@@ -120,14 +120,14 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
       JComponent field = myFields[getTestKind()];
       JComponent component = field instanceof ComponentWithBrowseButton ? ((ComponentWithBrowseButton<?>)field).getChildComponent() : field;
       if (testObject instanceof TestMethod) {
-        ValidationInfo info = RuntimeConfigurationException.validate(myFields[CLASS], () -> ReadAction.run(() -> ((TestMethod)testObject).checkClass()));
+        ValidationInfo info = RuntimeConfigurationException.validate(myFields[CLASS], () -> ((TestMethod)testObject).checkClass());
         infos.add(info);
         if (!info.message.isEmpty()) {
           infos.add(new ValidationInfo("", component));
           return infos;
         }
       }
-      infos.add(RuntimeConfigurationException.validate(component, () -> ReadAction.run(() -> testObject.checkConfiguration())));
+      infos.add(RuntimeConfigurationException.validate(component, () -> testObject.checkConfiguration()));
       return infos;
     });
   }
@@ -191,7 +191,7 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
   @Override
   protected void resetEditorFrom(@NotNull JUnitConfiguration s) {
     String[] ids = s.getPersistentData().getUniqueIds();
-    myUniqueIdField.setText(ids != null ? StringUtil.join(ids, " ") : null);
+    myUniqueIdField.setText(ids != null ? StringUtil.join(ids, "\u001B") : null);
     myTagsField.setText(s.getPersistentData().getTags());
     myChangeLists.setSelectedItem(s.getPersistentData().getChangeList());
     myModel.reset(s);

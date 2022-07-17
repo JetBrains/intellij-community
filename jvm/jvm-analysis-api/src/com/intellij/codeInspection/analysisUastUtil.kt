@@ -1,46 +1,39 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.Language
-import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.lang.jvm.actions.annotationRequest
-import com.intellij.lang.jvm.actions.createAddAnnotationActions
-import com.intellij.lang.jvm.actions.createModifierActions
-import com.intellij.lang.jvm.actions.modifierRequest
-import com.intellij.util.SmartList
-import org.jetbrains.uast.UField
-import org.jetbrains.uast.UMethod
-import org.jetbrains.uast.UastVisibility
+import com.intellij.psi.LambdaUtil
+import com.intellij.psi.PsiType
+import com.intellij.psi.util.InheritanceUtil
+import org.jetbrains.uast.*
+
+fun ULambdaExpression.getReturnType(): PsiType? {
+  val lambdaType = functionalInterfaceType
+                   ?: getExpressionType()
+                   ?: uastParent?.let {
+                     when (it) {
+                       is UVariable -> it.type // in Kotlin local functions looks like lambda stored in variable
+                       is UCallExpression -> it.getParameterForArgument(this)?.type
+                       else -> null
+                     }
+                   }
+  return LambdaUtil.getFunctionalInterfaceReturnType(lambdaType)
+}
+
+fun UAnnotated.findAnnotations(vararg fqNames: String) = uAnnotations.filter { ann -> fqNames.contains(ann.qualifiedName) }
 
 /**
- * Makes the visibility of a [UField] public.
- * This is a workaround see https://youtrack.jetbrains.com/issue/KTIJ-972
+ * Gets all classes in this file, including inner classes.
  */
-fun UField.createMakePublicActions(): List<IntentionAction> {
-  val jPsi = javaPsi
-  val isPublic = visibility == UastVisibility.PUBLIC
-  val actions = SmartList<IntentionAction>()
-  if (!isPublic) actions.addAll(createModifierActions(this, modifierRequest(JvmModifier.PUBLIC, true)))
-  if (sourcePsi?.language == Language.findLanguageByID("kotlin") &&
-      jPsi is JvmModifiersOwner && !jPsi.hasAnnotation("kotlin.jvm.JvmField")
-  ) {
-    actions.addAll(createAddAnnotationActions(jPsi, annotationRequest("kotlin.jvm.JvmField")))
-  }
-  return actions
+fun UFile.allClasses() = classes.toTypedArray() + classes.flatMap { it.allInnerClasses().toList() }
+
+fun UClass.allInnerClasses(): Array<UClass> = innerClasses + innerClasses.flatMap { it.allInnerClasses().toList() }
+
+fun UClass.isAnonymousOrLocal(): Boolean = this is UAnonymousClass || isLocal()
+
+fun UClass.isLocal(): Boolean {
+  val parent = uastParent
+  if (parent is UDeclarationsExpression && parent.uastParent is UBlockExpression) return true
+  return if (parent is UClass) parent.isLocal() else false
 }
 
-fun UMethod.createMakeStaticActions(): List<IntentionAction> {
-  val jPsi = javaPsi
-  val isStatic = isStatic
-  val actions = SmartList<IntentionAction>()
-  if (!isStatic) actions.addAll(createModifierActions(this, modifierRequest(JvmModifier.STATIC, true)))
-  val containingClass = jPsi.containingClass
-  if (sourcePsi?.language == Language.findLanguageByID("kotlin") &&
-      !jPsi.hasAnnotation("kotlin.jvm.JvmStatic") && ("Companion" == containingClass?.name)
-  ) {
-    actions.addAll(createAddAnnotationActions(jPsi, annotationRequest("kotlin.jvm.JvmStatic")))
-  }
-  return actions
-}
+fun PsiType.isInheritorOf(baseClassName: String) = InheritanceUtil.isInheritor(this, baseClassName)

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // HIGHLIGHT: INFORMATION
 
 fun test(list: List<Int>) {

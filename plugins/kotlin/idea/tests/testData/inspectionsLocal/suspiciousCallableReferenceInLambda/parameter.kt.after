@@ -1,5 +1,5 @@
 // FIX: Move suspicious callable reference into parentheses '()'
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo() {
     listOf(1,2,3).map(Int::toString)

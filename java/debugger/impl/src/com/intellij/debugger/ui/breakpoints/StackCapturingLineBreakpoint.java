@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 
@@ -207,7 +208,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
   private static class MyEvaluator {
     private final String myExpression;
     private ExpressionEvaluator myEvaluator;
-    private final Map<Location, ExpressionEvaluator> myEvaluatorCache = ContainerUtil.createWeakMap();
+    private final Map<Location, ExpressionEvaluator> myEvaluatorCache = new WeakHashMap<>();
 
     MyEvaluator(String expression) {
       myExpression = expression;
@@ -234,7 +235,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
       if (evaluator == null) {
         @SuppressWarnings("ConstantConditions")
         Location location = context.getFrameProxy().location();
-        evaluator = myEvaluatorCache.get(location);
+        evaluator = location == null ? null : myEvaluatorCache.get(location);
         if (evaluator == null && !StringUtil.isEmpty(myExpression)) {
           evaluator = ApplicationManager.getApplication().runReadAction((ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
             SourcePosition sourcePosition = ContextUtil.getSourcePosition(context);

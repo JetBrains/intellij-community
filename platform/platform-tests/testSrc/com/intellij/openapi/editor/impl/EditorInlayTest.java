@@ -492,7 +492,7 @@ public class EditorInlayTest extends AbstractEditorTest {
   public void testCorrectSoftWrappingAfterTextMovementWithInlays() {
     initText(" \tabcd efghijklmno");
     addInlay(1, TEST_CHAR_WIDTH);
-    configureSoftWraps(11);
+    configureSoftWraps(11, false);
     verifySoftWrapPositions(7);
     WriteCommandAction.writeCommandAction(getProject()).run(() -> ((EditorEx)getEditor()).getDocument().moveText(0, 1, 7));
     verifySoftWrapPositions(7, 16);

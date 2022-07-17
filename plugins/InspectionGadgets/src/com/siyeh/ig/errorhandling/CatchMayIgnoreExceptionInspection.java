@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.java.inst.ArrayStoreInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.ThrowInstruction;
@@ -81,7 +82,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitTryStatement(PsiTryStatement statement) {
+      public void visitTryStatement(@NotNull PsiTryStatement statement) {
         super.visitTryStatement(statement);
         final PsiCatchSection[] catchSections = statement.getCatchSections();
         for (final PsiCatchSection section : catchSections) {
@@ -152,11 +153,11 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
       }
 
       /**
-       * Returns true if given catch block may ignore VM exception such as NullPointerException
+       * Returns class name of important VM exception (like NullPointerException) if given catch block may ignore it
        *
        * @param parameter a catch block parameter
        * @param block     a catch block body
-       * @return true if it's determined that catch block may ignore VM exception
+       * @return class name of important VM exception (like NullPointerException) if given catch block may ignore it
        */
       private @Nullable String mayIgnoreVMException(PsiParameter parameter, PsiCodeBlock block) {
         PsiType type = parameter.getType();
@@ -249,6 +250,9 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
       }
       if (instruction instanceof MethodCallInstruction) {
         return !((MethodCallInstruction)instruction).getMutationSignature().isPure();
+      }
+      if (instruction instanceof ArrayStoreInstruction) {
+        return true;
       }
       return false;
     }

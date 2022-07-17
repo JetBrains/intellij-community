@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.*;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -27,7 +28,7 @@ public class MultiMap<K, V> implements Serializable {
   private Collection<V> values;
 
   public MultiMap() {
-    myMap = createMap();
+    myMap = new HashMap<>();
   }
 
   public MultiMap(@NotNull Map<K, Collection<V>> map) {
@@ -44,21 +45,12 @@ public class MultiMap<K, V> implements Serializable {
     putAllValues(toCopy);
   }
 
-  public @NotNull MultiMap<K, V> copy() {
+  public @NotNull MultiMap<@NotNull K, V> copy() {
     return new MultiMap<>(this);
   }
 
   public MultiMap(int initialCapacity, float loadFactor) {
     myMap = new HashMap<>(initialCapacity, loadFactor);
-  }
-
-  /**
-   * @deprecated Pass map to constructor.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected @NotNull Map<K, Collection<V>> createMap() {
-    return new HashMap<>();
   }
 
   protected @NotNull Collection<V> createCollection() {
@@ -69,7 +61,7 @@ public class MultiMap<K, V> implements Serializable {
     return Collections.emptyList();
   }
 
-  public final void putAllValues(@NotNull MultiMap<? extends K, ? extends V> from) {
+  public final void putAllValues(@NotNull MultiMap<? extends @NotNull K, ? extends V> from) {
     for (Map.Entry<? extends K, ? extends Collection<? extends V>> entry : from.entrySet()) {
       putValues(entry.getKey(), entry.getValue());
     }
@@ -166,7 +158,7 @@ public class MultiMap<K, V> implements Serializable {
    * @deprecated use {@link #remove(Object, Object)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public final void removeValue(K key, V value) {
     remove(key, value);
   }
@@ -251,15 +243,6 @@ public class MultiMap<K, V> implements Serializable {
     return myMap.remove(key);
   }
 
-  /**
-   * @deprecated Use {@link #empty()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull <K, V> MultiMap<K, V> emptyInstance() {
-    return empty();
-  }
-
   public static @NotNull <K, V> MultiMap<K, V> create() {
     return new MultiMap<>();
   }
@@ -304,7 +287,7 @@ public class MultiMap<K, V> implements Serializable {
    * @deprecated Use {@link #MultiMap()}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull <K, V> MultiMap<K, V> createSmart() {
     return new MultiMap<>();
   }
@@ -360,8 +343,8 @@ public class MultiMap<K, V> implements Serializable {
     };
   }
 
-  public static @NotNull <K, V> MultiMap<K, V> createWeakKey() {
-    return new MultiMap<>(ContainerUtil.createWeakMap());
+  public static @NotNull <K, V> MultiMap<@NotNull K, V> createWeakKey() {
+    return new MultiMap<>(new WeakHashMap<>());
   }
 
   public static <K, V> MultiMap<K, V> create(int initialCapacity, float loadFactor) {

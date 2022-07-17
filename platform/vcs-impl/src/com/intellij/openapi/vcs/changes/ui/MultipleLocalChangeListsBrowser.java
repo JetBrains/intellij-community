@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.chains.DiffRequestChain;
@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -48,14 +49,10 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY;
-import static com.intellij.util.containers.ContainerUtil.immutableSingletonList;
-import static com.intellij.util.containers.ContainerUtil.newUnmodifiableList;
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
 class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser implements Disposable {
@@ -79,10 +76,10 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   private final RollbackDialogAction myRollbackDialogAction;
 
   MultipleLocalChangeListsBrowser(@NotNull Project project,
-                                         boolean showCheckboxes,
-                                         boolean highlightProblems,
-                                         boolean enableUnversioned,
-                                         boolean enablePartialCommit) {
+                                  boolean showCheckboxes,
+                                  boolean highlightProblems,
+                                  boolean enableUnversioned,
+                                  boolean enablePartialCommit) {
     super(project, showCheckboxes, highlightProblems);
     myEnableUnversioned = enableUnversioned;
     myEnablePartialCommit = enablePartialCommit;
@@ -126,7 +123,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @Override
   protected JComponent createHeaderPanel() {
     return JBUI.Panels.simplePanel(myChangeListChooser)
-                      .withBorder(JBUI.Borders.emptyLeft(6));
+      .withBorder(JBUI.Borders.emptyLeft(6));
   }
 
   @NotNull
@@ -242,7 +239,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     updateDisplayedChanges();
     if (isListChanged && mySelectedListChangeListener != null) mySelectedListChangeListener.run();
 
-    myInclusionModel.setChangeLists(immutableSingletonList(myChangeList));
+    myInclusionModel.setChangeLists(List.of(myChangeList));
   }
 
   @Override
@@ -345,7 +342,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     if (!isShowUnversioned()) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.allUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
-    if (containsCollapsedUnversionedNode(treeModelData)) return newUnmodifiableList(myUnversioned);
+    if (containsCollapsedUnversionedNode(treeModelData)) {
+      return List.copyOf(myUnversioned);
+    }
 
     return treeModelData.userObjects(FilePath.class);
   }
@@ -356,7 +355,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     if (!isShowUnversioned()) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.selectedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
-    if (containsCollapsedUnversionedNode(treeModelData)) return newUnmodifiableList(myUnversioned);
+    if (containsCollapsedUnversionedNode(treeModelData)) {
+      return List.copyOf(myUnversioned);
+    }
 
     return treeModelData.userObjects(FilePath.class);
   }
@@ -367,17 +368,19 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     if (!isShowUnversioned()) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.includedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
-    if (containsCollapsedUnversionedNode(treeModelData)) return newUnmodifiableList(myUnversioned);
+    if (containsCollapsedUnversionedNode(treeModelData)) {
+      return List.copyOf(myUnversioned);
+    }
 
     return treeModelData.userObjects(FilePath.class);
   }
 
   private static boolean containsCollapsedUnversionedNode(@NotNull VcsTreeModelData treeModelData) {
-    Optional<ChangesBrowserNode<?>> node = treeModelData.nodesStream()
-      .filter(it -> it instanceof ChangesBrowserUnversionedFilesNode).findAny();
-    if (node.isEmpty()) return false;
+    ChangesBrowserUnversionedFilesNode unversionedFilesNode = treeModelData.iterateNodes()
+      .filter(ChangesBrowserUnversionedFilesNode.class)
+      .first();
+    if (unversionedFilesNode == null) return false;
 
-    ChangesBrowserUnversionedFilesNode unversionedFilesNode = (ChangesBrowserUnversionedFilesNode)node.get();
     return unversionedFilesNode.isManyFiles();
   }
 
@@ -391,7 +394,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
         @Override
         protected void customizeCellRenderer(@NotNull JList<? extends LocalChangeList> list, LocalChangeList value,
                                              int index, boolean selected, boolean hasFocus) {
-          String name = shortenTextWithEllipsis(value.getName().trim(), MAX_NAME_LEN, 0);
+          String name = StringUtil.shortenTextWithEllipsis(value.getName().trim(), MAX_NAME_LEN, 0);
           append(name, value.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       });

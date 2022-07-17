@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.script
 
@@ -17,23 +17,23 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.completion.test.KotlinCompletionTestCase
 import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
-import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingUtil
+import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationTest.Companion.useDefaultTemplate
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.projectStructure.getModuleDir
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
-import org.jetbrains.kotlin.test.KotlinCompilerStandalone
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.test.util.addDependency
 import org.jetbrains.kotlin.test.util.projectLibrary
@@ -59,10 +59,6 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
         const val useDefaultTemplate = "// DEPENDENCIES:"
         const val templatesSettings = "// TEMPLATES: "
     }
-
-    protected fun testPath(fileName: String = fileName()): String = testDataFile(fileName).toString()
-
-    protected fun testPath(): String = testPath(fileName())
 
     override fun setUpModule() {
         // do not create default module
@@ -115,7 +111,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
             module.addDependency(
                 projectLibrary(
                     "script-runtime",
-                    classesRoot = VfsUtil.findFileByIoFile(KotlinArtifacts.instance.kotlinScriptRuntime, true)
+                    classesRoot = VfsUtil.findFileByIoFile(KotlinArtifacts.kotlinScriptRuntime, true)
                 )
             )
 
@@ -123,28 +119,34 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
                 module.addDependency(
                     projectLibrary(
                         "script-template-library",
-                        classesRoot = VfsUtil.findFileByIoFile(environment["template-classes"] as File, true)
+                        classesRoot = environment.toVirtualFile("template-classes")
                     )
                 )
             }
         }
 
         if (configureConflictingModule in environment) {
-            val sharedLib = VfsUtil.findFileByIoFile(environment["lib-classes"] as File, true)!!
+            val sharedLib = environment.toVirtualFile("lib-classes")
+            val sharedLibSources = environment.toVirtualFile("lib-source")
             if (module == null) {
                 // Force create module if it doesn't exist
                 myModule = createTestModuleByName("mainModule")
             }
-            module.addDependency(projectLibrary("sharedLib", classesRoot = sharedLib))
+            module.addDependency(projectLibrary("sharedLib", classesRoot = sharedLib, sourcesRoot = sharedLibSources))
         }
 
-        if (module != null) {
-            ModuleRootModificationUtil.updateModel(module) { model ->
+        module?.let {
+            ModuleRootModificationUtil.updateModel(it) { model ->
                 model.sdk = sdk
             }
         }
 
         return createFileAndSyncDependencies(mainScriptFile)
+    }
+
+    private fun Environment.toVirtualFile(name: String): VirtualFile {
+        val value = this[name] as? File ?: error("no file value for '$name'")
+        return VfsUtil.findFileByIoFile(value, true) ?: error("unable to look up a virtual file for $name: $value")
     }
 
     private val oldScripClasspath: String? = System.getProperty("kotlin.script.classpath")
@@ -234,7 +236,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
         }
 
         val jdkKind = when ((env["javaHome"] as? List<String>)?.singleOrNull()) {
-            "9" -> TestJdkKind.FULL_JDK_9
+            "9" -> TestJdkKind.FULL_JDK_11 // TODO is that correct?
             else -> TestJdkKind.MOCK_JDK
         }
         runWriteAction {
@@ -273,8 +275,8 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
         }
 
         return mapOf(
-          "runtime-classes" to KotlinArtifacts.instance.kotlinStdlib,
-          "runtime-source" to KotlinArtifacts.instance.kotlinStdlibSources,
+          "runtime-classes" to KotlinArtifacts.kotlinStdlib,
+          "runtime-source" to KotlinArtifacts.kotlinStdlibSources,
           "lib-classes" to libClasses,
           "lib-source" to libSrcDir,
           "module-classes" to moduleClasses,
@@ -285,9 +287,9 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
 
     protected fun getScriptingClasspath(): List<File> {
         return listOf(
-          KotlinArtifacts.instance.kotlinScriptRuntime,
-          KotlinArtifacts.instance.kotlinScriptingCommon,
-          KotlinArtifacts.instance.kotlinScriptingJvm
+          KotlinArtifacts.kotlinScriptRuntime,
+          KotlinArtifacts.kotlinScriptingCommon,
+          KotlinArtifacts.kotlinScriptingJvm
         )
     }
 
@@ -324,7 +326,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
     protected fun checkHighlighting(file: KtFile = myFile as KtFile) {
         val reports = IdeScriptReportSink.getReports(file)
         val isFatalErrorPresent = reports.any { it.severity == ScriptDiagnostic.Severity.FATAL }
-        assert(isFatalErrorPresent || KotlinHighlightingUtil.shouldHighlight(file)) {
+        assert(isFatalErrorPresent || file.shouldHighlightFile()) {
             "Highlighting is switched off for ${file.virtualFile.path}\n" +
                     "reports=$reports\n" +
                     "scriptDefinition=${file.findScriptDefinition()}"

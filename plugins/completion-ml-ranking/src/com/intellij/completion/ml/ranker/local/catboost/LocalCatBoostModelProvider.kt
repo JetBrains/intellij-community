@@ -2,7 +2,7 @@ package com.intellij.completion.ml.ranker.local.catboost
 
 import com.intellij.completion.ml.ranker.local.DecisionFunctionWithLanguages
 import com.intellij.completion.ml.ranker.local.LocalZipModelProvider
-import com.intellij.completion.ml.ranker.local.ZipModelMetadataReader
+import com.intellij.completion.ml.ranker.local.ZipCompletionRankingModelMetadataReader
 import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.catboost.NaiveCatBoostModel
 import com.intellij.internal.ml.completion.CompletionRankingModelBase
@@ -19,7 +19,7 @@ class LocalCatBoostModelProvider : LocalZipModelProvider {
   }
 
   override fun loadModel(file: ZipFile): DecisionFunctionWithLanguages {
-    val reader = ZipModelMetadataReader(file)
+    val reader = ZipCompletionRankingModelMetadataReader(file)
     val metadata = FeaturesInfo.buildInfo(reader)
     val languages = reader.getSupportedLanguages()
     val stream = reader.tryGetResourceAsStream(MODEL_FILE) ?: throw IllegalStateException("Can't find '$MODEL_FILE' resource in zip file")

@@ -1,4 +1,7 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Variable 'i' is never used
+// AFTER-WARNING: Variable 's' is never used
+// AFTER-WARNING: Variable 's1' is never used
 class Foo(val id: Int, val name: String)
 
 operator fun Foo.component1() = id

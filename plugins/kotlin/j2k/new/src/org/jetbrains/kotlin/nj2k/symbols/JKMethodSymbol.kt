@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.symbols
 
@@ -7,7 +7,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.nj2k.tree.JKClass
 import org.jetbrains.kotlin.nj2k.tree.JKMethod
@@ -46,7 +46,7 @@ class JKMultiverseMethodSymbol(
         get() = target.parameterList.parameters.map { typeFactory.fromPsiType(it.type) }
     override val returnType: JKType
         get() = target.returnType?.let { typeFactory.fromPsiType(it) } // null for constructor call
-            ?: symbolProvider.provideClassSymbol(target.getKotlinFqName()!!).asType(Nullability.NotNull)
+            ?: symbolProvider.provideClassSymbol(target.kotlinFqName!!).asType(Nullability.NotNull)
 
     override val fqName: String
         get() {
@@ -87,7 +87,7 @@ class JKUnresolvedMethod(
 ) : JKMethodSymbol(), JKUnresolvedSymbol {
     constructor(target: PsiReference, typeFactory: JKTypeFactory) : this(target.canonicalText, typeFactory)
 
-    override val receiverType: JKType?
+    override val receiverType: JKType
         get() = typeFactory.types.nullableAny
     override val parameterTypes: List<JKType>
         get() = emptyList()
@@ -99,7 +99,7 @@ class KtClassImplicitConstructorSymbol(
 ) : JKMethodSymbol(), JKMultiverseSymbol<KtLightMethod> {
     override val receiverType: JKType?
         get() = null
-    override val parameterTypes: List<JKType>?
+    override val parameterTypes: List<JKType>
         get() = emptyList()
     override val returnType: JKType?
         get() = target.returnType?.let(typeFactory::fromPsiType)

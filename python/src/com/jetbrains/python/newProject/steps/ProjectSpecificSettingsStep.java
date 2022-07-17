@@ -70,7 +70,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   protected JPanel createAdvancedSettings() {
     JComponent advancedSettings = null;
     if (myProjectGenerator instanceof PythonProjectGenerator) {
-      advancedSettings = ((PythonProjectGenerator)myProjectGenerator).getSettingsPanel(myProjectDirectory);
+      advancedSettings = ((PythonProjectGenerator<?>)myProjectGenerator).getSettingsPanel(myProjectDirectory);
     }
     else if (myProjectGenerator instanceof WebProjectTemplate) {
       advancedSettings = getPeer().getComponent();
@@ -79,7 +79,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       final JPanel jPanel = new JPanel(new VerticalFlowLayout());
       final HideableDecorator deco = new HideableDecorator(jPanel, PyBundle.message("python.new.project.more.settings"), false);
       if (myProjectGenerator instanceof PythonProjectGenerator) {
-        final ValidationResult result = ((PythonProjectGenerator)myProjectGenerator).warningValidation(getInterpreterPanelSdk());
+        final ValidationResult result = ((PythonProjectGenerator<?>)myProjectGenerator).warningValidation(getInterpreterPanelSdk());
         deco.setOn(!result.isOk());
       }
       deco.setContentComponent(advancedSettings);
@@ -123,7 +123,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     if (myProjectGenerator instanceof PythonProjectGenerator) {
       addLocationChangeListener(event -> {
         final String fileName = PathUtil.getFileName(getProjectLocation());
-        ((PythonProjectGenerator)myProjectGenerator).locationChanged(fileName);
+        ((PythonProjectGenerator<?>)myProjectGenerator).locationChanged(fileName);
       });
     }
   }
@@ -144,8 +144,8 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   protected void initGeneratorListeners() {
     super.initGeneratorListeners();
     if (myProjectGenerator instanceof PythonProjectGenerator) {
-      ((PythonProjectGenerator)myProjectGenerator).addSettingsStateListener(this::checkValid);
-      myErrorLabel.addMouseListener(((PythonProjectGenerator)myProjectGenerator).getErrorLabelMouseListener());
+      ((PythonProjectGenerator<?>)myProjectGenerator).addSettingsStateListener(this::checkValid);
+      myErrorLabel.addMouseListener(((PythonProjectGenerator<?>)myProjectGenerator).getErrorLabelMouseListener());
     }
   }
 
@@ -218,7 +218,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
         myInstallFramework = validationInfo.first;
         warnings.addAll(validationInfo.second);
 
-        final ValidationResult warningResult = ((PythonProjectGenerator)myProjectGenerator).warningValidation(sdk);
+        final ValidationResult warningResult = ((PythonProjectGenerator<?>)myProjectGenerator).warningValidation(sdk);
         if (!warningResult.isOk()) {
           warnings.add(warningResult.getErrorMessage());
         }
@@ -272,9 +272,9 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
 
       locationPanel.add(location, BorderLayout.CENTER);
       panel.add(locationPanel);
-      panel.add(createInterpretersPanel(((PythonProjectGenerator)myProjectGenerator).getPreferredEnvironmentType()));
+      panel.add(createInterpretersPanel(((PythonProjectGenerator<?>)myProjectGenerator).getPreferredEnvironmentType()));
 
-      final JPanel basePanelExtension = ((PythonProjectGenerator)myProjectGenerator).extendBasePanel();
+      final JPanel basePanelExtension = ((PythonProjectGenerator<?>)myProjectGenerator).extendBasePanel();
       if (basePanelExtension != null) {
         panel.add(basePanelExtension);
       }
@@ -359,7 +359,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   }
 
   @NotNull
-  private static List<Sdk> getValidPythonSdks(@NotNull List<Sdk> existingSdks) {
+  public static List<Sdk> getValidPythonSdks(@NotNull List<Sdk> existingSdks) {
     return StreamEx
       .of(existingSdks)
       .filter(sdk -> sdk != null && sdk.getSdkType() instanceof PythonSdkType && !PythonSdkUtil.isInvalid(sdk))

@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.event;
 
 import com.intellij.openapi.Disposable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -55,8 +54,7 @@ public interface EditorEventMulticaster {
   /**
    * @deprecated Use {@link #addSelectionListener(SelectionListener, Disposable)} instead to avoid leaking listeners
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   void addSelectionListener(@NotNull SelectionListener listener);
 
   void addSelectionListener(@NotNull SelectionListener listener, @NotNull Disposable parentDisposable);

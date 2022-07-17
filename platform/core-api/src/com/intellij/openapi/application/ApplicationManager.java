@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -36,20 +36,15 @@ public class ApplicationManager {
   public static void setApplication(@NotNull Application instance,
                                     @NotNull Supplier<? extends FileTypeRegistry> fileTypeRegistryGetter,
                                     @NotNull Disposable parent) {
-    final Application old = ourApplication;
-    @SuppressWarnings("deprecation")
-    Supplier<FileTypeRegistry> oldFileTypeRegistry = FileTypeRegistry.ourInstanceGetter;
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        if (old != null) {
-          // to prevent NPEs in threads still running
-          setApplication(old);
-          FileTypeRegistry.setInstanceSupplier(oldFileTypeRegistry);
-        }
+    Application old = ourApplication;
+    setApplication(instance);
+    Supplier<? extends FileTypeRegistry> oldFileTypeRegistry = FileTypeRegistry.setInstanceSupplier(fileTypeRegistryGetter);
+    Disposer.register(parent, () -> {
+      if (old != null) {
+        // to prevent NPEs in threads still running
+        setApplication(old);
+        FileTypeRegistry.setInstanceSupplier(oldFileTypeRegistry);
       }
     });
-    setApplication(instance);
-    FileTypeRegistry.setInstanceSupplier(fileTypeRegistryGetter);
   }
 }

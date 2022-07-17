@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,12 +22,6 @@ import java.util.regex.PatternSyntaxException;
  * operations.
  */
 public class FindModel extends UserDataHolderBase implements Cloneable {
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void initStringToFindNoMultiline(FindModel findModel, String s) {
-    initStringToFind(findModel, s);
-  }
-
   public static void initStringToFind(FindModel findModel, String s) {
     if (!StringUtil.isEmpty(s)) {
       if (findModel.isMultiline() || (!s.contains("\r") && !s.contains("\n"))) {
@@ -508,8 +501,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param showInNewTab the value of the Open in New Tab flag.
    * @deprecated and not used anymore
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setOpenInNewTab(boolean showInNewTab) {
   }
 
@@ -519,8 +511,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @return true if Open in New Tab is enabled, false otherwise.
    * @deprecated and not used anymore
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean isOpenInNewTabEnabled() {
     return true;
   }
@@ -531,16 +522,14 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param showInNewTabEnabled true if Open in New Tab is enabled, false otherwise.
    * @deprecated and not used anymore
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setOpenInNewTabEnabled(boolean showInNewTabEnabled) {
   }
 
   /**
    * @deprecated and not used anymore
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean isOpenInNewTabVisible() {
     return true;
   }
@@ -548,8 +537,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   /**
    * @deprecated and not used anymore
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setOpenInNewTabVisible(boolean showInNewTabVisible) {
   }
 
@@ -638,26 +626,26 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   @Override
   public String toString() {
     return "--- FIND MODEL ---\n" +
-           "myStringToFind =" + myStringToFind + "\n" +
-           "myStringToReplace =" + myStringToReplace + "\n" +
-           "isReplaceState =" + isReplaceState + "\n" +
-           "isWholeWordsOnly =" + isWholeWordsOnly + "\n" +
-           "searchContext =" + searchContext + "\n" +
-           "isFromCursor =" + isFromCursor + "\n" +
-           "isForward =" + isForward + "\n" +
-           "isGlobal =" + isGlobal + "\n" +
-           "isRegularExpressions =" + isRegularExpressions + "\n" +
-           "isCaseSensitive =" + isCaseSensitive + "\n" +
-           "isMultipleFiles =" + isMultipleFiles + "\n" +
-           "isPromptOnReplace =" + isPromptOnReplace + "\n" +
-           "isReplaceAll =" + isReplaceAll + "\n" +
-           "isProjectScope =" + isProjectScope + "\n" +
-           "directoryName =" + directoryName + "\n" +
-           "isWithSubdirectories =" + isWithSubdirectories + "\n" +
-           "fileFilter =" + fileFilter + "\n" +
-           "moduleName =" + moduleName + "\n" +
-           "customScopeName =" + customScopeName + "\n" +
-           "searchInProjectFiles =" + mySearchInProjectFiles + "\n";
+           "myStringToFind = '" + myStringToFind + "'\n" +
+           "myStringToReplace = '" + myStringToReplace + "'\n" +
+           "isReplaceState = " + isReplaceState + "\n" +
+           "isWholeWordsOnly = " + isWholeWordsOnly + "\n" +
+           "searchContext = '" + searchContext + "'\n" +
+           "isFromCursor = " + isFromCursor + "\n" +
+           "isForward = " + isForward + "\n" +
+           "isGlobal = " + isGlobal + "\n" +
+           "isRegularExpressions = " + isRegularExpressions + "\n" +
+           "isCaseSensitive = " + isCaseSensitive + "\n" +
+           "isMultipleFiles = " + isMultipleFiles + "\n" +
+           "isPromptOnReplace = " + isPromptOnReplace + "\n" +
+           "isReplaceAll = " + isReplaceAll + "\n" +
+           "isProjectScope = " + isProjectScope + "\n" +
+           "directoryName = '" + directoryName + "'\n" +
+           "isWithSubdirectories = " + isWithSubdirectories + "\n" +
+           "fileFilter = " + fileFilter + "\n" +
+           "moduleName = '" + moduleName + "'\n" +
+           "customScopeName = '" + customScopeName + "'\n" +
+           "searchInProjectFiles = " + mySearchInProjectFiles + "\n";
   }
 
   /**

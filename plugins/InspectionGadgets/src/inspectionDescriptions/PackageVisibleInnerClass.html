@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports a nested class that is declared without any access modifier (also known as package-private).
+Reports nested classes that are declared without any access modifier (also known as package-private).
 <p><b>Example:</b></p>
 <pre><code>
- public class Outer {
+  public class Outer {
     static class Nested {}  // warning
     class Inner {}          // warning
     enum Mode {}            // warning depends on the setting

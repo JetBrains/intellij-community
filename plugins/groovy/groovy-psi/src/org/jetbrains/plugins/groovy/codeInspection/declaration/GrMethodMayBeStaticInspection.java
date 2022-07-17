@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.declaration;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -35,7 +35,7 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
   public boolean myIgnoreEmptyMethods = true;
 
   @Override
-  public JComponent createOptionsPanel() {
+  public JComponent createGroovyOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(GroovyBundle.message("method.may.be.static.option.ignore.trait.methods"), "myIgnoreTraitMethods");
     optionsPanel.addCheckbox(GroovyBundle.message("method.may.be.static.only.private.or.final.option"), "myOnlyPrivateOrFinal");

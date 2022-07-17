@@ -3,8 +3,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -15,13 +13,14 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.annotations.ApiStatus;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.statistics.MavenImportCollector;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
@@ -40,16 +39,16 @@ import java.util.Set;
 public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInterface {
 
   private final MavenProject myMavenProject;
-  private final ModifiableModuleModel myModuleModel;
+  private final ModuleModelProxy myModuleModel;
   private final ModifiableRootModel myRootModel;
 
   private final MavenSourceFoldersModuleExtension myRootModelModuleExtension;
 
   private final Set<String> myOrderEntriesBeforeJdk = new HashSet<>();
 
-  public MavenRootModelAdapterLegacyImpl(@NotNull MavenProject p, @NotNull Module module, final IdeModifiableModelsProvider rootModelsProvider) {
+  public MavenRootModelAdapterLegacyImpl(@NotNull MavenProject p, @NotNull Module module, final ModifiableModelsProviderProxy rootModelsProvider) {
     myMavenProject = p;
-    myModuleModel = rootModelsProvider.getModifiableModuleModel();
+    myModuleModel = rootModelsProvider.getModuleModelProxy();
     myRootModel = rootModelsProvider.getModifiableRootModel(module);
 
     myRootModelModuleExtension = myRootModel.getModuleExtension(MavenSourceFoldersModuleExtension.class);
@@ -96,10 +95,16 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
 
       if (e instanceof LibraryOrderEntry) {
         if (Registry.is("maven.always.remove.bad.entries")) {
-          if (!isMavenLibrary((LibraryOrderEntry)e)) continue;
+          if (!isMavenLibrary((LibraryOrderEntry)e)) {
+            MavenImportCollector.HAS_USER_ADDED_LIBRARY_DEP.log(myRootModel.getProject());
+            continue;
+          }
         }
         else {
-          if (!isMavenLibrary(((LibraryOrderEntry)e).getLibrary())) continue;
+          if (!isMavenLibrary(((LibraryOrderEntry)e).getLibrary())) {
+            MavenImportCollector.HAS_USER_ADDED_LIBRARY_DEP.log(myRootModel.getProject());
+            continue;
+          }
         }
       }
       if (e instanceof ModuleOrderEntry) {
@@ -107,6 +112,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
         if (m != null &&
             !MavenProjectsManager.getInstance(myRootModel.getProject()).isMavenizedModule(m) &&
             ExternalSystemModulePropertyManager.getInstance(m).getExternalSystemId() == null) {
+          MavenImportCollector.HAS_USER_ADDED_MODULE_DEP.log(myRootModel.getProject());
           continue;
         }
       }
@@ -260,8 +266,21 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   @Override
   public void useModuleOutput(String production, String test) {
     getCompilerExtension().inheritCompilerOutputPath(false);
-    getCompilerExtension().setCompilerOutputPath(toUrl(production).getUrl());
-    getCompilerExtension().setCompilerOutputPathForTests(toUrl(test).getUrl());
+    if (StringUtils.isEmpty(production) && StringUtils.isEmpty(test)) {
+      getCompilerExtension().inheritCompilerOutputPath(true);
+    }
+    else if (StringUtils.isEmpty(test)) {
+      getCompilerExtension().setCompilerOutputPath(toUrl(production).getUrl());
+      getCompilerExtension().setExcludeOutput(true);
+    }
+    else if (StringUtils.isEmpty(production)) {
+      getCompilerExtension().setCompilerOutputPathForTests(toUrl(test).getUrl());
+      getCompilerExtension().setExcludeOutput(true);
+    }
+    else {
+      getCompilerExtension().setCompilerOutputPath(toUrl(production).getUrl());
+      getCompilerExtension().setCompilerOutputPathForTests(toUrl(test).getUrl());
+    }
   }
 
   private CompilerModuleExtension getCompilerExtension() {
@@ -334,7 +353,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   @Override
   public LibraryOrderEntry addLibraryDependency(MavenArtifact artifact,
                                                 DependencyScope scope,
-                                                IdeModifiableModelsProvider provider,
+                                                ModifiableModelsProviderProxy provider,
                                                 MavenProject project) {
     assert !MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope()); // System dependencies must be added ad module library, not as project wide library.
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
@@ -34,9 +34,16 @@ public class I18nQuickFixTest extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    // avoid "memory/disk conflict" when the document for changed annotation.xml stays in memory
-    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject())).clearUncommittedDocuments();
-    super.tearDown();
+    try {
+      // avoid "memory/disk conflict" when the document for changed annotation.xml stays in memory
+      ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject())).clearUncommittedDocuments();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override

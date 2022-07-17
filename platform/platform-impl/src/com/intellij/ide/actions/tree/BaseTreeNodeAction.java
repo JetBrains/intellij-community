@@ -1,9 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.tree;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,11 @@ abstract class BaseTreeNodeAction extends AnAction implements DumbAware {
     e.getPresentation().setEnabled(enabledOn(getSourceComponent(e)));
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   private static boolean enabledOn(Object sourceComponent) {
     if (sourceComponent instanceof JTree) {
       return true;
@@ -44,6 +50,6 @@ abstract class BaseTreeNodeAction extends AnAction implements DumbAware {
   }
 
   private static Object getSourceComponent(@NotNull AnActionEvent e) {
-    return e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    return e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
   }
 }

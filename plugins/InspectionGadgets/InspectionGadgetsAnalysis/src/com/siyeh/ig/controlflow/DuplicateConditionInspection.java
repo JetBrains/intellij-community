@@ -79,7 +79,7 @@ public class DuplicateConditionInspection extends BaseInspection {
     }
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
 
       final IElementType tokenType = expression.getOperationTokenType();

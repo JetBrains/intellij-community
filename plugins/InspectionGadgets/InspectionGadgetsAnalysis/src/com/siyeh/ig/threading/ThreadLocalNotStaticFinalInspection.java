@@ -45,7 +45,7 @@ public class ThreadLocalNotStaticFinalInspection extends BaseInspection {
   private static class ThreadLocalNotStaticFinalVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       super.visitField(field);
       final PsiType type = field.getType();
       if (!InheritanceUtil.isInheritor(type, "java.lang.ThreadLocal")) {

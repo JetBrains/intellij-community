@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
@@ -16,9 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.rename.ResolveSnapshotProvider
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
-import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
-import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
@@ -27,61 +24,52 @@ import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.analysis.analyzeInContext
-import org.jetbrains.kotlin.idea.caches.project.forcedModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
-import org.jetbrains.kotlin.idea.caches.resolve.*
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.forcedModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMethodDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaOrKotlinMemberDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.javaResolutionFacade
-import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.compareDescriptors
-import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.*
-import org.jetbrains.kotlin.idea.refactoring.rename.noReceivers
+import org.jetbrains.kotlin.idea.refactoring.createJavaMethod
+import org.jetbrains.kotlin.idea.refactoring.isTrueJavaMethod
 import org.jetbrains.kotlin.idea.references.KtArrayAccessReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.search.codeUsageScopeRestrictedToKotlinSources
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
-import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.search.usagesSearch.processDelegationCallConstructorUsages
-import org.jetbrains.kotlin.idea.util.*
-import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.idea.base.util.useScope
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.getReceiverTargetDescriptor
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
-import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
+import org.jetbrains.kotlin.psi.psiUtil.getValueParameters
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
-import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getImplicitReceivers
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
-import org.jetbrains.kotlin.resolve.descriptorUtil.classId
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExtensionReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
-import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
-    private val ChangeInfo.asKotlinChangeInfo: KotlinChangeInfo?
-        get() = when (this) {
-            is KotlinChangeInfo -> this
-            is KotlinChangeInfoWrapper -> delegate
-            else -> null
-        }
 
     // This is special 'PsiElement' whose purpose is to wrap JetMethodDescriptor so that it can be kept in the usage list
     private class OriginalJavaMethodDescriptorWrapper(element: PsiElement) : UsageInfo(element) {
@@ -143,7 +131,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                     val propagationTarget = functionUsageInfo is CallerUsageInfo ||
                             (functionUsageInfo is OverriderUsageInfo && !functionUsageInfo.isOriginalOverrider)
 
-                    for (reference in ReferencesSearch.search(callee, callee.useScope.restrictToKotlinSources())) {
+                    for (reference in ReferencesSearch.search(callee, callee.codeUsageScopeRestrictedToKotlinSources())) {
                         val callElement = reference.element.getParentOfTypeAndBranch<KtCallElement> { calleeExpression } ?: continue
                         val usage = if (propagationTarget) {
                             KotlinCallerCallUsage(callElement)
@@ -163,7 +151,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
         val element = callerUsage.element ?: return
 
-        for (ref in ReferencesSearch.search(element, element.useScope)) {
+        for (ref in ReferencesSearch.search(element, element.useScope())) {
             val callElement = ref.element.getParentOfTypeAndBranch<KtCallElement> { calleeExpression } ?: continue
             result.add(KotlinCallerCallUsage(callElement))
         }
@@ -217,7 +205,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
     private fun findReferences(functionPsi: PsiElement): Set<PsiReference> {
         val result = LinkedHashSet<PsiReference>()
-        val searchScope = functionPsi.useScope
+        val searchScope = functionPsi.useScope()
         val options = KotlinReferencesSearchOptions(
             acceptCallableOverrides = true,
             acceptOverloads = false,
@@ -296,7 +284,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 val oldParamName = oldParam.name
 
                 if (parameterInfo == newReceiverInfo || (oldParamName != null && oldParamName != parameterInfo.name) || isDataClass && i != parameterInfo.oldIndex) {
-                    for (reference in ReferencesSearch.search(oldParam, oldParam.useScope)) {
+                    for (reference in ReferencesSearch.search(oldParam, oldParam.useScope())) {
                         val element = reference.element
 
                         if (isDataClass &&
@@ -337,7 +325,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             }
         }
 
-        functionPsi.processDelegationCallConstructorUsages(functionPsi.useScope) {
+        functionPsi.processDelegationCallConstructorUsages(functionPsi.useScope()) {
             when (it) {
                 is KtConstructorDelegationCall -> result.add(KotlinConstructorDelegationCallUsage(it, changeInfo))
                 is KtSuperTypeCallEntry -> result.add(KotlinFunctionCallUsage(it, functionUsageInfo))
@@ -542,7 +530,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
             if (!(oldParamName != null && oldParamName != parameterInfo.name)) continue
 
-            for (reference in ReferencesSearch.search(oldParam, oldParam.useScope)) {
+            for (reference in ReferencesSearch.search(oldParam, oldParam.useScope())) {
                 val element = reference.element
                 // Usages in named arguments of the calls usage will be changed when the function call is changed
                 if (!((element is KtSimpleNameExpression || element is KDocName) && element.parent !is KtValueArgumentName)) continue
@@ -566,401 +554,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     }
 
     override fun findConflicts(info: ChangeInfo, refUsages: Ref<Array<UsageInfo>>): MultiMap<PsiElement, String> {
-        val result = MultiMap<PsiElement, String>()
-
-        // Delete OverriderUsageInfo and CallerUsageInfo for Kotlin declarations since they can't be processed correctly
-        // TODO (OverriderUsageInfo only): Drop when OverriderUsageInfo.getElement() gets deleted
-        val usageInfos = refUsages.get()
-        val adjustedUsages = usageInfos.filterNot { getOverriderOrCaller(it.unwrapped) is KtLightMethod }
-        if (adjustedUsages.size < usageInfos.size) {
-            refUsages.set(adjustedUsages.toTypedArray())
-        }
-
-        val ktChangeInfo = info.asKotlinChangeInfo ?: return result
-
-        val parameterNames = hashSetOf<String>()
-        val function = ktChangeInfo.method
-        val bindingContext = (function as KtElement).analyze(BodyResolveMode.FULL)
-
-        // to avoid KT-35903
-        val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, function] ?: ktChangeInfo.originalBaseFunctionDescriptor
-        val containingDeclaration = descriptor.containingDeclaration
-
-        val parametersScope = when {
-            descriptor is ConstructorDescriptor && containingDeclaration is ClassDescriptorWithResolutionScopes -> {
-                val classDescriptor = containingDeclaration.classId?.let {
-                    function.findModuleDescriptor().findClassAcrossModuleDependencies(it) as? ClassDescriptorWithResolutionScopes
-                } ?: containingDeclaration
-
-                classDescriptor.scopeForInitializerResolution
-            }
-
-            function is KtFunction -> function.getBodyScope(bindingContext)
-            else -> null
-        }
-
-        val callableScope = descriptor.getContainingScope()
-
-        val kind = ktChangeInfo.kind
-        if (!kind.isConstructor && callableScope != null && ktChangeInfo.newName.isNotEmpty()) {
-            val newName = Name.identifier(ktChangeInfo.newName)
-            val conflicts = if (descriptor is FunctionDescriptor)
-                callableScope.getAllAccessibleFunctions(newName)
-            else
-                callableScope.getAllAccessibleVariables(newName)
-
-            val newTypes = ktChangeInfo.newParameters.map { it.currentTypeInfo.type }
-            for (conflict in conflicts) {
-                if (conflict === descriptor) continue
-
-                val conflictElement = DescriptorToSourceUtils.descriptorToDeclaration(conflict)
-                if (conflictElement === ktChangeInfo.method) continue
-
-                val candidateTypes = listOfNotNull(conflict.extensionReceiverParameter?.type) + conflict.valueParameters.map { it.type }
-
-                if (candidateTypes == newTypes) {
-                    result.putValue(
-                        conflictElement,
-                        KotlinBundle.message(
-                            "text.function.already.exists",
-                            DescriptorRenderer.SHORT_NAMES_IN_TYPES.render(conflict)
-                        )
-                    )
-
-                    break
-                }
-            }
-        }
-
-        val parametersToRemove = ktChangeInfo.parametersToRemove
-        if (ktChangeInfo.checkUsedParameters && function is KtCallableDeclaration) {
-            checkParametersToDelete(function, parametersToRemove, result)
-        }
-
-        for (parameter in ktChangeInfo.getNonReceiverParameters()) {
-            val valOrVar = parameter.valOrVar
-            val parameterName = parameter.name
-
-            if (!parameterNames.add(parameterName)) {
-                result.putValue(function, KotlinBundle.message("text.duplicating.parameter", parameterName))
-            }
-
-            if (parametersScope != null) {
-                if (kind === KotlinMethodDescriptor.Kind.PRIMARY_CONSTRUCTOR && valOrVar !== KotlinValVar.None) {
-                    for (property in parametersScope.getVariablesFromImplicitReceivers(Name.identifier(parameterName))) {
-                        val propertyDeclaration = DescriptorToSourceUtils.descriptorToDeclaration(property) ?: continue
-                        if (propertyDeclaration.parent !is KtParameterList) {
-                            result.putValue(
-                                propertyDeclaration,
-                                KotlinBundle.message("text.duplicating.property", parameterName)
-                            )
-
-                            break
-                        }
-                    }
-                } else if (function is KtFunction) {
-                    for (variable in parametersScope.getContributedVariables(Name.identifier(parameterName), NoLookupLocation.FROM_IDE)) {
-                        if (variable is ValueParameterDescriptor) continue
-                        val conflictElement = DescriptorToSourceUtils.descriptorToDeclaration(variable)
-                        result.putValue(conflictElement, KotlinBundle.message("text.duplicating.local.variable", parameterName))
-                    }
-                }
-            }
-        }
-
-        val newReceiverInfo = ktChangeInfo.receiverParameterInfo
-        val originalReceiverInfo = ktChangeInfo.methodDescriptor.receiver
-        if (function is KtCallableDeclaration && newReceiverInfo != originalReceiverInfo) {
-            findReceiverIntroducingConflicts(result, function, newReceiverInfo)
-            findInternalExplicitReceiverConflicts(function, refUsages.get(), result, originalReceiverInfo)
-            findReceiverToParameterInSafeCallsConflicts(refUsages.get(), result, ktChangeInfo)
-            findThisLabelConflicts(refUsages, result, ktChangeInfo, function)
-        }
-
-        fun processUsageInfo(changeInfo: KotlinChangeInfo, usageInfo: UsageInfo) {
-            if (usageInfo is KotlinCallerUsage) {
-                val namedDeclaration = usageInfo.element
-                val callerDescriptor = namedDeclaration?.resolveToDescriptorIfAny() ?: return
-                findParameterDuplicationInCaller(result, changeInfo, namedDeclaration, callerDescriptor)
-            }
-        }
-
-        for (usageInfo in usageInfos) {
-            when (usageInfo) {
-                is KotlinWrapperForPropertyInheritorsUsage -> processUsageInfo(usageInfo.propertyChangeInfo, usageInfo.originalUsageInfo)
-                is KotlinWrapperForJavaUsageInfos -> findConflictsInJavaUsages(usageInfo, result)
-                is KotlinCallableDefinitionUsage<*> -> {
-                    val declaration = usageInfo.declaration as? KtCallableDeclaration ?: continue
-                    if (ktChangeInfo.checkUsedParameters) {
-                        checkParametersToDelete(declaration, parametersToRemove, result)
-                    }
-                }
-
-                else -> processUsageInfo(ktChangeInfo, usageInfo)
-            }
-        }
-
-        return result
-    }
-
-    private fun findConflictsInJavaUsages(
-        wrapper: KotlinWrapperForJavaUsageInfos,
-        result: MultiMap<PsiElement, String>,
-    ) {
-        val kotlinChangeInfo = wrapper.kotlinChangeInfo
-        val javaChangeInfo = wrapper.javaChangeInfo
-        val javaUsageInfos = wrapper.javaUsageInfos
-        val parametersToRemove = javaChangeInfo.toRemoveParm()
-        val hasDefaultValue = javaChangeInfo.newParameters.any { !it.defaultValue.isNullOrBlank() }
-        val hasDefaultParameter = kotlinChangeInfo.newParameters.any { it.defaultValueAsDefaultParameter }
-
-        for (javaUsage in javaUsageInfos) when (javaUsage) {
-            is OverriderUsageInfo -> {
-                if (!kotlinChangeInfo.checkUsedParameters) continue
-
-                val javaMethod = javaUsage.overridingMethod
-                val baseMethod = javaUsage.baseMethod
-                if (baseMethod != javaChangeInfo.method) continue
-
-                JavaChangeSignatureUsageProcessor.ConflictSearcher.checkParametersToDelete(javaMethod, parametersToRemove, result)
-            }
-
-            is MethodCallUsageInfo -> {
-                val conflictMessage = when {
-                    hasDefaultValue -> KotlinBundle.message("change.signature.conflict.text.kotlin.default.value.in.non.kotlin.files")
-                    hasDefaultParameter -> KotlinBundle.message("change.signature.conflict.text.kotlin.default.parameter.in.non.kotlin.files")
-                    else -> continue
-                }
-
-                result.putValue(javaUsage.element, conflictMessage)
-            }
-        }
-    }
-
-    private fun findReceiverUsages(
-        callableDeclaration: KtCallableDeclaration,
-        result: MultiMap<PsiElement, String>,
-    ) {
-        var hasUsage = false
-        callableDeclaration.accept(referenceExpressionRecursiveVisitor(fun(referenceExpression: KtReferenceExpression) {
-            if (hasUsage) return
-
-            val context = referenceExpression.analyze(BodyResolveMode.PARTIAL)
-            val target = referenceExpression.getResolvedCall(context) ?: return
-            val descriptorsToCheck = if (referenceExpression.parent is KtThisExpression)
-                listOfNotNull(target.resultingDescriptor as? ReceiverParameterDescriptor)
-            else
-                target.getImplicitReceivers().mapNotNull { it.getReceiverTargetDescriptor(context) }
-
-            for (descriptor in descriptorsToCheck) {
-                val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(callableDeclaration.project, descriptor) ?: continue
-                if (declaration == callableDeclaration || declaration == callableDeclaration.receiverTypeReference) {
-                    hasUsage = true
-                    return
-                }
-            }
-        }))
-
-        if (hasUsage) {
-            result.putValue(
-                callableDeclaration.receiverTypeReference,
-                KotlinBundle.message("parameter.used.in.declaration.body.warning", KotlinBundle.message("text.receiver")),
-            )
-        }
-    }
-
-    private fun checkParametersToDelete(
-        callableDeclaration: KtCallableDeclaration,
-        toRemove: BooleanArray,
-        result: MultiMap<PsiElement, String>,
-    ) {
-        val scope = LocalSearchScope(callableDeclaration)
-        val valueParameters = callableDeclaration.valueParameters
-        val hasReceiver = valueParameters.size != toRemove.size
-        if (hasReceiver && toRemove[0]) {
-            findReceiverUsages(callableDeclaration, result)
-        }
-
-        for ((i, parameter) in valueParameters.withIndex()) {
-            val index = (if (hasReceiver) 1 else 0) + i
-            if (toRemove[index]) {
-                registerConflictIfUsed(parameter, scope, result)
-            }
-        }
-    }
-
-    private fun registerConflictIfUsed(element: PsiNamedElement, scope: LocalSearchScope, result: MultiMap<PsiElement, String>) {
-        if (ReferencesSearch.search(element, scope).findFirst() != null) {
-            result.putValue(element, KotlinBundle.message("parameter.used.in.declaration.body.warning", element.name.toString()))
-        }
-    }
-
-    private fun findParameterDuplicationInCaller(
-        result: MultiMap<PsiElement, String>,
-        changeInfo: KotlinChangeInfo,
-        caller: KtNamedDeclaration,
-        callerDescriptor: DeclarationDescriptor
-    ) {
-        val valueParameters = caller.getValueParameters()
-        val existingParameters = valueParameters.associateBy { it.name }
-        val signature = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.render(callerDescriptor)
-        for (parameterInfo in changeInfo.getNonReceiverParameters()) {
-            if (!(parameterInfo.isNewParameter)) continue
-
-            val name = parameterInfo.name
-            val parameter = existingParameters[name] ?: continue
-
-            result.putValue(parameter, KotlinBundle.message("text.there.is.already.a.parameter", name, signature))
-        }
-    }
-
-    private fun findThisLabelConflicts(
-        refUsages: Ref<Array<UsageInfo>>,
-        result: MultiMap<PsiElement, String>,
-        changeInfo: KotlinChangeInfo,
-        callable: KtCallableDeclaration
-    ) {
-        val psiFactory = KtPsiFactory(callable.project)
-        for (usageInfo in refUsages.get()) {
-            if (usageInfo !is KotlinParameterUsage) continue
-
-            val newExprText = usageInfo.getReplacementText(changeInfo)
-            if (!newExprText.startsWith("this")) continue
-
-            if (usageInfo.element is KDocName) continue // TODO support converting parameter to receiver in KDoc
-
-            val originalExpr = usageInfo.element as? KtExpression ?: continue
-            val bindingContext = originalExpr.analyze(BodyResolveMode.FULL)
-            val scope = originalExpr.getResolutionScope(bindingContext, originalExpr.getResolutionFacade())
-
-            val newExpr = psiFactory.createExpression(newExprText) as KtThisExpression
-
-            val newContext = newExpr.analyzeInContext(scope, originalExpr)
-
-            val labelExpr = newExpr.getTargetLabel()
-            if (labelExpr != null && newContext.get(BindingContext.AMBIGUOUS_LABEL_TARGET, labelExpr) != null) {
-                result.putValue(
-                    originalExpr,
-                    KotlinBundle.message(
-                        "text.parameter.reference.can.t.be.safely.replaced.with.0.since.1.is.ambiguous.in.this.context",
-                        newExprText,
-                        labelExpr.text
-                    )
-                )
-                continue
-            }
-
-            val thisTarget = newContext.get(BindingContext.REFERENCE_TARGET, newExpr.instanceReference)
-            val thisTargetPsi = (thisTarget as? DeclarationDescriptorWithSource)?.source?.getPsi()
-            if (thisTargetPsi != null && callable.isAncestor(thisTargetPsi, true)) {
-                result.putValue(
-                    originalExpr,
-                    KotlinBundle.message(
-                        "text.parameter.reference.can.t.be.safely.replaced.with.0.since.target.function.can.t.be.referenced.in.this.context",
-                        newExprText
-                    )
-                )
-            }
-        }
-    }
-
-    private fun findInternalExplicitReceiverConflicts(
-        function: KtCallableDeclaration,
-        usages: Array<UsageInfo>,
-        result: MultiMap<PsiElement, String>,
-        originalReceiverInfo: KotlinParameterInfo?
-    ) {
-        if (originalReceiverInfo != null) return
-
-        val isObjectFunction = function.containingClassOrObject is KtObjectDeclaration
-
-        loop@ for (usageInfo in usages) {
-            if (!(usageInfo is KotlinFunctionCallUsage || usageInfo is KotlinPropertyCallUsage || usageInfo is KotlinByConventionCallUsage)) continue
-
-            val callElement = usageInfo.element as? KtElement ?: continue
-
-            val parent = callElement.parent
-
-            val elementToReport = when {
-                usageInfo is KotlinByConventionCallUsage -> callElement
-                parent is KtQualifiedExpression && parent.selectorExpression === callElement && !isObjectFunction -> parent
-                else -> continue@loop
-            }
-
-            val message = KotlinBundle.message(
-                "text.explicit.receiver.is.already.present.in.call.element.0",
-                CommonRefactoringUtil.htmlEmphasize(elementToReport.text)
-            )
-            result.putValue(callElement, message)
-        }
-    }
-
-    private fun findReceiverToParameterInSafeCallsConflicts(
-        usages: Array<UsageInfo>,
-        result: MultiMap<PsiElement, String>,
-        changeInfo: KotlinChangeInfo
-    ) {
-        val originalReceiverInfo = changeInfo.methodDescriptor.receiver
-        if (originalReceiverInfo == null || originalReceiverInfo !in changeInfo.getNonReceiverParameters()) return
-
-        for (usageInfo in usages) {
-            if (!(usageInfo is KotlinFunctionCallUsage || usageInfo is KotlinPropertyCallUsage)) continue
-
-            val callElement = usageInfo.element as? KtElement ?: continue
-            val qualifiedExpression = callElement.getQualifiedExpressionForSelector()
-            if (qualifiedExpression is KtSafeQualifiedExpression) {
-                result.putValue(
-                    callElement,
-                    KotlinBundle.message(
-                        "text.receiver.can.t.be.safely.transformed.to.value.argument",
-                        CommonRefactoringUtil.htmlEmphasize(qualifiedExpression.text)
-                    )
-                )
-            }
-        }
-    }
-
-    private fun findReceiverIntroducingConflicts(
-        result: MultiMap<PsiElement, String>,
-        callable: PsiElement,
-        newReceiverInfo: KotlinParameterInfo?
-    ) {
-        if (newReceiverInfo != null && (callable is KtNamedFunction) && callable.bodyExpression != null) {
-            val originalContext = callable.analyzeWithContent()
-
-            val noReceiverRefs = ArrayList<KtSimpleNameExpression>()
-            callable.forEachDescendantOfType<KtSimpleNameExpression> {
-                val resolvedCall = it.getResolvedCall(originalContext) ?: return@forEachDescendantOfType
-                if (resolvedCall.noReceivers()) {
-                    noReceiverRefs += it
-                }
-            }
-
-            val psiFactory = KtPsiFactory(callable.project)
-            val tempFile = (callable.containingFile as KtFile).createTempCopy()
-            val functionWithReceiver = tempFile.findElementAt(callable.textOffset)?.getNonStrictParentOfType<KtNamedFunction>() ?: return
-            val receiverTypeRef = psiFactory.createType(newReceiverInfo.currentTypeInfo.render())
-            functionWithReceiver.setReceiverTypeReference(receiverTypeRef)
-            val newContext = functionWithReceiver.bodyExpression!!.analyze(BodyResolveMode.FULL)
-
-            val originalOffset = callable.bodyExpression!!.textOffset
-            val newBody = functionWithReceiver.bodyExpression ?: return
-            for (originalRef in noReceiverRefs) {
-                val newRef = newBody.findElementAt(originalRef.textOffset - originalOffset)
-                    ?.getNonStrictParentOfType<KtReferenceExpression>()
-
-                val newResolvedCall = newRef.getResolvedCall(newContext)
-                if (newResolvedCall == null || newResolvedCall.extensionReceiver != null || newResolvedCall.dispatchReceiver != null) {
-                    val descriptor = originalRef.getResolvedCall(originalContext)!!.candidateDescriptor
-                    val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(callable.project, descriptor)
-                    val prefix = if (declaration != null) RefactoringUIUtil.getDescription(declaration, true) else originalRef.text
-                    result.putValue(
-                        originalRef,
-                        KotlinBundle.message("text.0.will.no.longer.be.accessible.after.signature.change", prefix.capitalize())
-                    )
-                }
-            }
-        }
+        return KotlinChangeSignatureConflictSearcher(info, refUsages).findConflicts()
     }
 
     private fun isJavaMethodUsage(usageInfo: UsageInfo): Boolean {
@@ -1036,15 +630,6 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
     private fun isOverriderOrCaller(usage: UsageInfo) = usage is OverriderUsageInfo || usage is CallerUsageInfo
 
-    private fun getOverriderOrCaller(usage: UsageInfo): PsiMethod? {
-        if (usage is OverriderUsageInfo) return usage.overridingMethod
-        if (usage is CallerUsageInfo) {
-            val element = usage.element
-            return if (element is PsiMethod) element else null
-        }
-
-        return null
-    }
 
     override fun processUsage(
         changeInfo: ChangeInfo,
@@ -1184,10 +769,10 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             val methodDescriptor = KotlinChangeSignatureData(baseCallableDescriptor, baseFunction, listOf(baseCallableDescriptor))
             val dummyClass = JavaPsiFacade.getElementFactory(method.project).createClass("Dummy")
             val dummyMethod = createJavaMethod(method, dummyClass)
-            dummyMethod.containingFile.forcedModuleInfo = baseFunction.getModuleInfo()
+            dummyMethod.containingFile.forcedModuleInfo = baseFunction.moduleInfo
             try {
                 changeInfo.updateMethod(dummyMethod)
-                JavaChangeSignatureUsageProcessor().processPrimaryMethod(changeInfo)
+                JavaChangeSignatureUsageProcessor.processPrimaryMethod(changeInfo, changeInfo.method, null, true)
                 changeInfo.toJetChangeInfo(methodDescriptor, resolutionFacade)
             } finally {
                 changeInfo.updateMethod(method)
@@ -1209,7 +794,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     override fun setupDefaultValues(changeInfo: ChangeInfo, refUsages: Ref<Array<UsageInfo>>, project: Project) = true
 
     override fun registerConflictResolvers(
-        snapshots: List<ResolveSnapshotProvider.ResolveSnapshot>,
+        snapshots: MutableList<in ResolveSnapshotProvider.ResolveSnapshot>,
         resolveSnapshotProvider: ResolveSnapshotProvider,
         usages: Array<UsageInfo>, changeInfo: ChangeInfo
     ) {

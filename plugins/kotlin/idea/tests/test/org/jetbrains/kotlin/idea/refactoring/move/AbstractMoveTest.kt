@@ -17,6 +17,8 @@ import com.intellij.refactoring.move.moveInner.MoveInnerProcessor
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor
 import com.intellij.util.ActionRunner
+import org.jetbrains.kotlin.idea.base.util.allScope
+import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
@@ -28,8 +30,6 @@ import org.jetbrains.kotlin.idea.refactoring.move.moveClassesOrPackages.KotlinAw
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.MoveKotlinMethodProcessor
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
-import org.jetbrains.kotlin.idea.search.allScope
-import org.jetbrains.kotlin.idea.search.projectScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex
@@ -264,7 +264,7 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
             val targetClassName = config.getNullableString("targetClass")
             val targetClass =
                 if (targetClassName != null) {
-                    KotlinFullClassNameIndex.getInstance().get(targetClassName, project, project.projectScope()).first()!!
+                    KotlinFullClassNameIndex.get(targetClassName, project, project.projectScope()).first()!!
                 } else null
             val delegate = MoveDeclarationsDelegate.NestedClass(
                 config.getNullableString("newName"),
@@ -290,15 +290,14 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
         override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
             val project = mainFile.project
             val method =
-                KotlinFunctionShortNameIndex.getInstance().get(config.getString("methodToMove"), project, project.projectScope()).first()
+                KotlinFunctionShortNameIndex.get(config.getString("methodToMove"), project, project.projectScope()).first()
             val methodParameterName = config.getNullableString("methodParameter")
             val sourcePropertyName = config.getNullableString("sourceProperty")
             val targetObjectName = config.getNullableString("targetObject")
             val targetVariable = when {
                 methodParameterName != null -> method.valueParameters.find { it.name == methodParameterName }!!
-                sourcePropertyName != null -> KotlinPropertyShortNameIndex.getInstance()
-                    .get(sourcePropertyName, project, project.projectScope()).first()
-                else -> KotlinFullClassNameIndex.getInstance().get(targetObjectName!!, project, project.projectScope()).first()
+                sourcePropertyName != null -> KotlinPropertyShortNameIndex.get(sourcePropertyName, project, project.projectScope()).first()
+                else -> KotlinFullClassNameIndex.get(targetObjectName!!, project, project.projectScope()).first()
 
             }
             val oldClassParameterNames = mutableMapOf<KtClass, String>()

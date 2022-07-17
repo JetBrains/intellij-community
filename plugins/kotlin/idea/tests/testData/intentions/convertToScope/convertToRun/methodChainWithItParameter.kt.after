@@ -1,4 +1,5 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Parameter 'a' is never used
 
 class MyClass {
     fun foo1(a: MyClass): MyClass = this

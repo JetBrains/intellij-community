@@ -23,7 +23,6 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
  */
 public class PyStringLiteralFixer extends PyFixer<PyStringLiteralExpression> {

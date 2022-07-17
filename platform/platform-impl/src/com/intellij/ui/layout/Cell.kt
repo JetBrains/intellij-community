@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.layout
 
 import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UINumericRange
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -11,10 +12,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableClearableProperty
+import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.emptyText
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts.*
@@ -26,9 +30,7 @@ import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.util.Function
 import com.intellij.util.MathUtil
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.util.lockOrSkip
 import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -37,9 +39,7 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.*
 import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
-import javax.swing.event.DocumentEvent
 import javax.swing.text.JTextComponent
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
@@ -50,6 +50,8 @@ annotation class CellMarker
 data class PropertyBinding<V>(val get: () -> V, val set: (V) -> Unit)
 
 @PublishedApi
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Class<T>): PropertyBinding<T> {
   if (prop is CallableReference) {
     val name = prop.name
@@ -83,6 +85,7 @@ internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Cla
   return PropertyBinding(prop.getter, prop.setter)
 }
 
+@Deprecated("Use MutableProperty and Kotlin UI DSL 2")
 fun <T> PropertyBinding<T>.toNullable(): PropertyBinding<T?> {
   return PropertyBinding<T?>({ get() }, { set(it!!) })
 }
@@ -105,7 +108,11 @@ interface CellBuilder<out T : JComponent> {
 
   fun comment(@DetailedDescription text: String, maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH,
               forComponent: Boolean = false): CellBuilder<T>
+
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun commentComponent(component: JComponent, forComponent: Boolean = false): CellBuilder<T>
+
   fun focused(): CellBuilder<T>
   fun withValidationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
   fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
@@ -117,7 +124,9 @@ interface CellBuilder<out T : JComponent> {
    * All components of the same group share will get the same BoundSize (min/preferred/max),
    * which is that of the biggest component in the group
    */
+  @Deprecated("Use Kotlin UI DSL Version 2, see Cell.widthGroup()")
   fun sizeGroup(name: String): CellBuilder<T>
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T>
   fun constraints(vararg constraints: CCFlags): CellBuilder<T>
 
@@ -127,14 +136,14 @@ interface CellBuilder<out T : JComponent> {
   fun applyIfEnabled(): CellBuilder<T>
 
   @ApiStatus.Experimental
-  fun accessibleName(name: String): CellBuilder<T> {
+  fun accessibleName(@Nls name: String): CellBuilder<T> {
     component.accessibleContext.accessibleName = name
 
     return this
   }
 
   @ApiStatus.Experimental
-  fun accessibleDescription(description: String): CellBuilder<T> {
+  fun accessibleDescription(@Nls description: String): CellBuilder<T> {
     component.accessibleContext.accessibleDescription = description
 
     return this
@@ -172,14 +181,17 @@ interface CellBuilder<out T : JComponent> {
   fun withLeftGap(): CellBuilder<T>
 
   @Deprecated("Prefer not to use hardcoded values")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun withLeftGap(gapLeft: Int): CellBuilder<T>
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 internal interface CheckboxCellBuilder {
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun actsAsLabel()
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun <T : JCheckBox> CellBuilder<T>.actsAsLabel(): CellBuilder<T> {
   (this as CheckboxCellBuilder).actsAsLabel()
   return this
@@ -189,10 +201,13 @@ fun <T : JComponent> CellBuilder<T>.applyToComponent(task: T.() -> Unit): CellBu
   return also { task(component) }
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 internal interface ScrollPaneCellBuilder {
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun noGrowY()
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun <T : JScrollPane> CellBuilder<T>.noGrowY(): CellBuilder<T> {
   (this as ScrollPaneCellBuilder).noGrowY()
   return this
@@ -221,7 +236,6 @@ abstract class Cell : BaseBuilder {
    */
   val growX = CCFlags.growX
 
-  @Suppress("unused")
   val growY = CCFlags.growY
   val grow = CCFlags.grow
 
@@ -233,7 +247,6 @@ abstract class Cell : BaseBuilder {
   /**
    * Makes the row that the component is residing in grow with `weight`.
    */
-  @Suppress("unused")
   val pushY = CCFlags.pushY
   val push = CCFlags.push
 
@@ -264,6 +277,7 @@ abstract class Cell : BaseBuilder {
     return component(result)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun buttonFromAction(@Button text: String, @NonNls actionPlace: String, action: AnAction): CellBuilder<JButton> {
     val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
     button.addActionListener { ActionUtil.invokeAction(action, button, actionPlace, null, null) }
@@ -322,11 +336,13 @@ abstract class Cell : BaseBuilder {
     return component(comment = comment)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   open fun radioButton(@RadioButton text: String, getter: () -> Boolean, setter: (Boolean) -> Unit, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, getter())
     return component(comment = comment).withSelectedBinding(PropertyBinding(getter, setter))
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   open fun radioButton(@RadioButton text: String, prop: KMutableProperty0<Boolean>, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get())
     return component(comment = comment).withSelectedBinding(prop.toBinding())
@@ -420,19 +436,38 @@ abstract class Cell : BaseBuilder {
   }
 
   @JvmOverloads
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
+  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
+    return intTextField(prop, columns, range, null)
+  }
+
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null, step: Int? = null): CellBuilder<JBTextField> {
     return intTextField(prop.toBinding(), columns, range, step)
   }
 
   @JvmOverloads
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun intTextField(getter: () -> Int, setter: (Int) -> Unit, columns: Int? = null, range: IntRange? = null, step: Int? = null): CellBuilder<JBTextField> {
     return intTextField(PropertyBinding(getter, setter), columns, range, step)
+  }
+
+
+  @JvmOverloads
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
+  fun intTextField(binding: PropertyBinding<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
+    return intTextField(binding, columns, range, null)
   }
 
   /**
    * @param step allows changing value by up/down keys on keyboard
    */
-  @JvmOverloads
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun intTextField(binding: PropertyBinding<Int>,
                    columns: Int? = null,
                    range: IntRange? = null,
@@ -559,6 +594,7 @@ abstract class Cell : BaseBuilder {
   ): CellBuilder<TextFieldWithBrowseButton> {
     return textFieldWithBrowseButton(property, browseDialogTitle, project, fileChooserDescriptor, fileChosen)
       .applyToComponent { emptyText.bind(emptyTextProperty) }
+      .applyToComponent { emptyText.text = emptyTextProperty.get() }
   }
 
   fun textFieldWithBrowseButton(
@@ -573,6 +609,8 @@ abstract class Cell : BaseBuilder {
       .applyToComponent { bind(property) }
   }
 
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun actionButton(action: AnAction, dimension: Dimension = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE): CellBuilder<ActionButton> {
     val actionButton = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, dimension)
     return actionButton()
@@ -585,12 +623,7 @@ abstract class Cell : BaseBuilder {
       override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
         if (!label.isEnabled) return true
         JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, DefaultActionGroup(*actions), DataContext { dataId ->
-            when (dataId) {
-              PlatformDataKeys.CONTEXT_COMPONENT.name -> label
-              else -> null
-            }
-          }, true, null, 10)
+          .createActionGroupPopup(null, DefaultActionGroup(*actions), DataManager.getInstance().getDataContext(label), true, null, 10)
           .showUnderneathOf(label)
         return true
       }
@@ -640,14 +673,19 @@ abstract class Cell : BaseBuilder {
     return component(JBScrollPane(component))
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun comment(@DetailedDescription text: String, maxLineLength: Int = -1): CellBuilder<JLabel> {
     return component(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength, true))
   }
 
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun commentNoWrap(@DetailedDescription text: String): CellBuilder<JLabel> {
     return component(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
   }
 
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun placeholder(): CellBuilder<JComponent> {
     return component(JPanel().apply {
       minimumSize = Dimension(0, 0)
@@ -671,20 +709,6 @@ abstract class Cell : BaseBuilder {
   }
 }
 
-private fun JBCheckBox.bind(property: GraphProperty<Boolean>) {
-  val mutex = AtomicBoolean()
-  property.afterChange {
-    mutex.lockOrSkip {
-      isSelected = property.get()
-    }
-  }
-  addItemListener {
-    mutex.lockOrSkip {
-      property.set(isSelected)
-    }
-  }
-}
-
 class InnerCell(val cell: Cell) : Cell() {
   override fun <T : JComponent> component(component: T): CellBuilder<T> {
     return cell.component(component)
@@ -694,6 +718,8 @@ class InnerCell(val cell: Cell) : Cell() {
     return cell.component(component, viewComponent)
   }
 
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {
     cell.withButtonGroup(title, buttonGroup, body)
   }
@@ -709,58 +735,13 @@ fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: 
   }
 }
 
-fun <T> ComboBox<T>.bind(property: ObservableClearableProperty<T>) {
-  val mutex = AtomicBoolean()
-  property.afterChange {
-    mutex.lockOrSkip {
-      selectedItem = it
-    }
-  }
-  addItemListener {
-    if (it.stateChange == ItemEvent.SELECTED) {
-      mutex.lockOrSkip {
-        @Suppress("UNCHECKED_CAST")
-        property.set(it.item as T)
-      }
-    }
-  }
-}
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
+fun <C : JTextComponent> C.bindIntProperty(property: ObservableClearableProperty<Int>): C =
+  bind(property.transform({ it.toString() }, { it.toInt() }))
 
-private val TextFieldWithBrowseButton.emptyText
-  get() = (textField as JBTextField).emptyText
-
-fun StatusText.bind(property: ObservableClearableProperty<String>) {
-  text = property.get()
-  property.afterChange {
-    text = it
-  }
-  property.afterReset {
-    text = property.get()
-  }
-}
-
-fun TextFieldWithBrowseButton.bind(property: ObservableClearableProperty<String>) {
-  textField.bind(property)
-}
-
-fun JTextComponent.bind(property: ObservableClearableProperty<String>) {
-  val mutex = AtomicBoolean()
-  property.afterChange {
-    mutex.lockOrSkip {
-      text = it
-    }
-  }
-  document.addDocumentListener(
-    object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent) {
-        mutex.lockOrSkip {
-          property.set(text)
-        }
-      }
-    }
-  )
-}
-
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder<JSlider> {
   val slider = JSlider()
   UIUtil.setSliderIsFilled(slider, true)
@@ -774,11 +755,15 @@ fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder
   return slider()
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun <T : JSlider> CellBuilder<T>.labelTable(table: Hashtable<Int, JComponent>.() -> Unit): CellBuilder<T> {
   component.labelTable = Hashtable<Int, JComponent>().apply(table)
   return this
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun <T : JSlider> CellBuilder<T>.withValueBinding(modelBinding: PropertyBinding<Int>): CellBuilder<T> {
   return withBinding(JSlider::getValue, JSlider::setValue, modelBinding)
 }

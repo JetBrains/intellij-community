@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun test(map: Map<String, Int>) {
     for (<caret>entry in map.entries) {

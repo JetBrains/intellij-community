@@ -1,16 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectWizard.NewProjectWizardTestCase;
-import com.intellij.ide.projectWizard.ProjectTypeStep;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData;
+import com.intellij.ide.wizard.LanguageNewProjectWizardData;
+import com.intellij.ide.wizard.NewProjectWizardBaseData;
+import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.environment.Environment;
@@ -33,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,8 +40,7 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder;
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleStructureWizardStep;
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData;
 import org.jetbrains.plugins.gradle.util.GradleImportingTestUtil;
 
 import java.io.File;
@@ -49,73 +48,69 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.externalSystem.test.ExternalSystemTestCase.collectRootsInside;
+import static com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase.collectRootsInside;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 
-/**
- * @author Dmitry Avdeev
- */
 public class GradleProjectWizardTest extends NewProjectWizardTestCase {
   private static final String GRADLE_JDK_NAME = "Gradle JDK";
   private final List<Sdk> removedSdks = new SmartList<>();
   private String myJdkHome;
 
   public void testGradleNPWPropertiesSuggestion() throws Exception {
-    Project project = createProjectFromTemplate(IdeBundle.message("empty.project.generator.name"), null, null);
-    assertModules(project);
+    Project project = createProjectFromTemplate(UIBundle.message("label.project.wizard.empty.project.generator.name"), step -> {
+      NewProjectWizardBaseData.setName(step, "project");
+    });
+    assertModules(project, "project");
 
-    String externalProjectPath1 = project.getBasePath() + "/untitled";
-    String externalProjectPath2 = project.getBasePath() + "/untitled1";
+    var projectPath = project.getBasePath();
+    var externalProjectPath1 = projectPath + "/untitled";
+    var externalProjectPath2 = projectPath + "/untitled1";
     GradleImportingTestUtil.waitForProjectReload(() -> {
-      return createModuleFromTemplate("Gradle", null, project, step -> {
-        if (step instanceof GradleStructureWizardStep) {
-          GradleStructureWizardStep gradleStep = (GradleStructureWizardStep)step;
-          assertNull(gradleStep.getParentData());
-          assertEquals("untitled", gradleStep.getEntityName());
-          assertEquals(externalProjectPath1, gradleStep.getLocation());
-        }
+      return createModuleFromTemplate(project, step -> {
+        LanguageNewProjectWizardData.setLanguage(step, "Java");
+        BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
+        assertNull(GradleJavaNewProjectWizardData.getParentData(step));
+        assertEquals("untitled", NewProjectWizardBaseData.getName(step));
+        assertEquals(projectPath, NewProjectWizardBaseData.getPath(step));
       });
     });
     GradleImportingTestUtil.waitForProjectReload(() -> {
-      return createModuleFromTemplate("Gradle", null, project, step -> {
-        if (step instanceof GradleStructureWizardStep) {
-          GradleStructureWizardStep gradleStep = (GradleStructureWizardStep)step;
-          assertNull(gradleStep.getParentData());
-          assertEquals("untitled1", gradleStep.getEntityName());
-          assertEquals(externalProjectPath2, gradleStep.getLocation());
-        }
+      return createModuleFromTemplate(project, step -> {
+        LanguageNewProjectWizardData.setLanguage(step, "Java");
+        BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
+        assertNull(GradleJavaNewProjectWizardData.getParentData(step));
+        assertEquals("untitled1", NewProjectWizardBaseData.getName(step));
+        assertEquals(projectPath, NewProjectWizardBaseData.getPath(step));
       });
     });
     assertModules(
-      project,
+      project, "project",
       "untitled", "untitled.main", "untitled.test",
       "untitled1", "untitled1.main", "untitled1.test"
     );
 
-    DataNode<ProjectData> projectNode1 = ExternalSystemApiUtil.findProjectData(project, SYSTEM_ID, externalProjectPath1);
-    DataNode<ProjectData> projectNode2 = ExternalSystemApiUtil.findProjectData(project, SYSTEM_ID, externalProjectPath2);
+    DataNode<ProjectData> projectNode1 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, externalProjectPath1);
+    DataNode<ProjectData> projectNode2 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, externalProjectPath2);
     GradleImportingTestUtil.waitForProjectReload(() -> {
-      return createModuleFromTemplate("Gradle", null, project, step -> {
-        if (step instanceof GradleStructureWizardStep) {
-          GradleStructureWizardStep gradleStep = (GradleStructureWizardStep)step;
-          gradleStep.setParentData(projectNode1.getData());
-          assertEquals("untitled2", gradleStep.getEntityName());
-          assertEquals(externalProjectPath1 + "/untitled2", gradleStep.getLocation());
-        }
+      return createModuleFromTemplate(project, step -> {
+        LanguageNewProjectWizardData.setLanguage(step, "Java");
+        BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
+        GradleJavaNewProjectWizardData.setParentData(step, projectNode1.getData());
+        assertEquals("untitled2", NewProjectWizardBaseData.getName(step));
+        assertEquals(externalProjectPath1, NewProjectWizardBaseData.getPath(step));
       });
     });
     GradleImportingTestUtil.waitForProjectReload(() -> {
-      return createModuleFromTemplate("Gradle", null, project, step -> {
-        if (step instanceof GradleStructureWizardStep) {
-          GradleStructureWizardStep gradleStep = (GradleStructureWizardStep)step;
-          gradleStep.setParentData(projectNode2.getData());
-          assertEquals("untitled2", gradleStep.getEntityName());
-          assertEquals(externalProjectPath2 + "/untitled2", gradleStep.getLocation());
-        }
+      return createModuleFromTemplate(project, step -> {
+        LanguageNewProjectWizardData.setLanguage(step, "Java");
+        BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
+        GradleJavaNewProjectWizardData.setParentData(step, projectNode2.getData());
+        assertEquals("untitled2", NewProjectWizardBaseData.getName(step));
+        assertEquals(externalProjectPath2, NewProjectWizardBaseData.getPath(step));
       });
     });
     assertModules(
-      project,
+      project, "project",
       "untitled", "untitled.main", "untitled.test",
       "untitled1", "untitled1.main", "untitled1.test",
       "untitled.untitled2", "untitled.untitled2.main", "untitled.untitled2.test",
@@ -126,17 +121,11 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
   public void testGradleProject() throws Exception {
     final String projectName = "testProject";
     Project project = GradleImportingTestUtil.waitForProjectReload(() -> {
-      return createProject(step -> {
-        if (step instanceof ProjectTypeStep) {
-          assertTrue(((ProjectTypeStep)step).setSelectedTemplate("Gradle", null));
-          List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
-          assertEquals(3, steps.size());
-          final ProjectBuilder projectBuilder = myWizard.getProjectBuilder();
-          assertInstanceOf(projectBuilder, AbstractGradleModuleBuilder.class);
-          AbstractGradleModuleBuilder gradleProjectBuilder = (AbstractGradleModuleBuilder)projectBuilder;
-          gradleProjectBuilder.setName(projectName);
-          gradleProjectBuilder.setProjectId(new ProjectId("", null, null));
-        }
+      return createProjectFromTemplate(step -> {
+        NewProjectWizardBaseData.setName(step, projectName);
+        LanguageNewProjectWizardData.setLanguage(step, "Java");
+        BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
+        GradleJavaNewProjectWizardData.setGroupId(step, "");
       });
     });
 
@@ -165,8 +154,8 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
                  "}\n" +
                  "\n" +
                  "dependencies {\n" +
-                 "    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'\n" +
-                 "    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'\n" +
+                 "    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'\n" +
+                 "    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'\n" +
                  "}\n" +
                  "\n" +
                  "test {\n" +
@@ -179,17 +168,12 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
     assertEquals(1, settings.getLinkedProjectsSettings().size());
 
     Module childModule = GradleImportingTestUtil.waitForProjectReload(() -> {
-      return createModuleFromTemplate("Gradle", null, project, step -> {
-        if (step instanceof ProjectTypeStep) {
-          List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
-          assertEquals(3, steps.size());
-        }
-        else if (step instanceof GradleStructureWizardStep) {
-          GradleStructureWizardStep gradleStructureWizardStep = (GradleStructureWizardStep)step;
-          assertEquals(projectName, gradleStructureWizardStep.getParentData().getExternalName());
-          gradleStructureWizardStep.setArtifactId("childModule");
-          gradleStructureWizardStep.setGroupId("");
-        }
+      return createModuleFromTemplate(project, step -> {
+        LanguageNewProjectWizardData.setLanguage(step, "Java");
+        BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
+        assertEquals(projectName, GradleJavaNewProjectWizardData.getParentData(step).getExternalName());
+        GradleJavaNewProjectWizardData.setArtifactId(step, "childModule");
+        GradleJavaNewProjectWizardData.setGroupId(step, "");
       });
     });
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
@@ -210,8 +194,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
   }
 
   @Override
-  protected Project createProject(Consumer adjuster) throws IOException {
-    @SuppressWarnings("unchecked")
+  protected Project createProject(Consumer<? super Step> adjuster) throws IOException {
     Project project = super.createProject(adjuster);
     Disposer.register(getTestRootDisposable(), () -> PathKt.delete(ProjectUtil.getExternalConfigurationDir(project)));
     return project;

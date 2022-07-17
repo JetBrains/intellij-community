@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -11,6 +11,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.text.CharFilter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
@@ -18,7 +20,7 @@ import com.intellij.util.Function;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
@@ -64,9 +66,10 @@ public class GoToHashOrRefPopup {
         @Override
         public void onOk() {
           if (myFuture == null) {
-            final Future future = ((mySelectedRef == null || (!mySelectedRef.getName().equals(getText().trim())))
-                                   ? myOnSelectedHash.fun(getText().trim())
-                                   : myOnSelectedRef.fun(mySelectedRef));
+            String refText = StringUtil.trim(getText(), CharFilter.NOT_WHITESPACE_FILTER);
+            final Future<?> future = ((mySelectedRef == null || (!mySelectedRef.getName().equals(refText)))
+                                      ? myOnSelectedHash.fun(refText)
+                                      : myOnSelectedRef.fun(mySelectedRef));
             myFuture = future;
             showProgress();
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -89,7 +92,7 @@ public class GoToHashOrRefPopup {
     myTextField.setBorder(JBUI.Borders.empty(3));
 
     JBLabel label = new JBLabel(VcsLogBundle.message("vcs.log.go.to.hash.popup.label"));
-    label.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    label.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     label.setAlignmentX(Component.LEFT_ALIGNMENT);
 
     JPanel panel = new JPanel();

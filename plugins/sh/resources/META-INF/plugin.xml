@@ -8,6 +8,7 @@
   <content>
     <module name="intellij.sh/terminal"/>
     <module name="intellij.sh/copyright"/>
+    <module name="intellij.sh/markdown"/>
   </content>
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
@@ -22,9 +23,8 @@ Adds support for working with shell script files
 </li></ul>]]></description>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType language="Shell Script" extensions="bash;sh;zsh" hashBangs="sh;bash;zsh" fieldName="INSTANCE" name="Shell Script"
+    <fileType language="Shell Script" extensions="bash;sh;zsh" hashBangs="bash;sh;zsh" fieldName="INSTANCE" name="Shell Script"
               implementationClass="com.intellij.sh.ShFileType"/>
-    <backgroundPostStartupActivity implementation="com.intellij.sh.fileType.ShShebangFileTypeDetectorActivity"/>
     <lang.syntaxHighlighter language="Shell Script" implementationClass="com.intellij.sh.highlighter.ShSyntaxHighlighter"/>
     <lang.parserDefinition language="Shell Script" implementationClass="com.intellij.sh.parser.ShParserDefinition"/>
     <lang.commenter language="Shell Script" implementationClass="com.intellij.sh.editor.ShCommenter"/>
@@ -57,9 +57,6 @@ Adds support for working with shell script files
     <runConfigurationProducer implementation="com.intellij.sh.run.ShRunConfigurationProducer"/>
     <programRunner implementation="com.intellij.sh.run.ShRunProgramRunner"/>
     <runConfigurationBeforeRunProviderDelegate implementation="com.intellij.sh.run.ShBeforeRunProviderDelegate"/>
-    <experimentalFeature id="com.intellij.sh.run.with.wsl" percentOfUsers="0">
-      <description>Run shell scripts with WSL when needed</description>
-    </experimentalFeature>
     <runLineMarkerContributor language="" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
 
     <defaultLiveTemplates file="liveTemplates/ShellScript.xml"/>
@@ -98,7 +95,8 @@ Adds support for working with shell script files
       <bundleName>messages.ShBundle</bundleName>
       <categoryKey>intention.shell.script</categoryKey>
     </intentionAction>
-    <notificationGroup id="Shell Script" displayType="BALLOON" bundle="messages.ShBundle" key="sh.shell.script"/>
+    <notificationGroup id="Shell Script" displayType="BALLOON" bundle="messages.ShBundle" key="notification.group.shell.script"/>
+    <statistics.notificationIdsHolder implementation="com.intellij.sh.ShNotificationDisplayIds"/>
   </extensions>
   <actions>
     <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction" use-shortcut-of="RunClass"/>

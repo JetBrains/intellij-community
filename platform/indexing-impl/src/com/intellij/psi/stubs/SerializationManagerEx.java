@@ -18,6 +18,8 @@ public abstract class SerializationManagerEx implements StubTreeSerializer {
     return ApplicationManager.getApplication().getService(SerializationManagerEx.class);
   }
 
+  public abstract void performShutdown();
+
   /**
    * @deprecated only kept to support prebuilt stubs
    */
@@ -28,6 +30,8 @@ public abstract class SerializationManagerEx implements StubTreeSerializer {
 
   protected abstract void initSerializers();
 
+  public abstract void initialize();
+
   public abstract boolean isNameStorageCorrupted();
 
   public abstract void repairNameStorage(@NotNull Exception corruptionCause);
@@ -36,8 +40,7 @@ public abstract class SerializationManagerEx implements StubTreeSerializer {
    * @deprecated use {@link SerializationManagerEx#repairNameStorage(Exception)}
    * with specified corruption cause
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void repairNameStorage() {
     repairNameStorage(new Exception());
   }

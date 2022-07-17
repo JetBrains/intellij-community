@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -131,7 +131,7 @@ public class MissingAccessibleContextInspection extends DevKitUastInspectionBase
       while (!workList.isEmpty() && processed.size() < MAX_EXPRESSIONS_TO_PROCESS) {
         UExpression next = workList.poll();
         next = UastUtils.skipParenthesizedExprDown(next);
-        if (next == null || !processed.add(next)) continue;
+        if (!processed.add(next)) continue;
         if (next instanceof UIfExpression) {
           ContainerUtil.addIfNotNull(workList, ((UIfExpression)next).getThenExpression());
           ContainerUtil.addIfNotNull(workList, ((UIfExpression)next).getElseExpression());

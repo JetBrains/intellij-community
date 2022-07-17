@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -94,13 +94,18 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   @Override
   protected void tearDown() throws Exception {
-    Disposer.dispose(myEventsProcessor);
-    Disposer.dispose(myConsole);
-
-    super.tearDown();
-
-    if (myTempFile != null) {
-      assertFalse(myTempFile.exists());
+    try {
+      Disposer.dispose(myEventsProcessor);
+      Disposer.dispose(myConsole);
+      if (myTempFile != null) {
+        assertFalse(myTempFile.exists());
+      }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
     }
   }
 
@@ -632,12 +637,11 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
     handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
     File output = FileUtil.createTempFile("output", "");
-    try {
-      FileUtilRt.createParentDirs(output);
-      handler.setResult(new StreamResult(new FileWriter(output, StandardCharsets.UTF_8)));
+    FileUtilRt.createParentDirs(output);
+    try (FileWriter writer = new FileWriter(output, StandardCharsets.UTF_8)) {
+      handler.setResult(new StreamResult(writer));
       MockRuntimeConfiguration configuration = new MockRuntimeConfiguration(getProject());
       TestResultsXmlFormatter.execute(mySuite, configuration, new SMTRunnerConsoleProperties(configuration, "framework", new DefaultRunExecutor()), handler);
-
       String savedText = FileUtil.loadFile(output);
       assertTrue(savedText.split("\n").length > 550);
 
@@ -654,9 +658,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
       assertSize(559, allOut.split("\n"));
       assertTrue(allOut.contains("a < b"));
     }
-    finally {
-      FileUtil.delete(output);
-    }
+
   }
 
   public void testComparisonFailureImport() throws Exception {
@@ -672,27 +674,27 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
     handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
     File output = FileUtil.createTempFile("output", "");
-    try {
-      FileUtilRt.createParentDirs(output);
-      handler.setResult(new StreamResult(new FileWriter(output, StandardCharsets.UTF_8)));
+    FileUtilRt.createParentDirs(output);
+    try (FileWriter writer = new FileWriter(output, StandardCharsets.UTF_8)) {
+      handler.setResult(new StreamResult(writer));
       MockRuntimeConfiguration configuration = new MockRuntimeConfiguration(getProject());
       TestResultsXmlFormatter.execute(mySuite, configuration, new SMTRunnerConsoleProperties(configuration, "framework", new DefaultRunExecutor()), handler);
 
       String savedText = FileUtil.loadFile(output);
       assertTrue(StringUtil.convertLineSeparators(savedText)
                    .endsWith("<count name=\"total\" value=\"1\"/>\n" +
-                                    "    <count name=\"failed\" value=\"1\"/>\n" +
-                                    "    <config configId=\"MockRuntimeConfiguration\" name=\"\">\n" +
-                                    "        <method v=\"2\"/>\n" +
-                                    "    </config>\n" +
-                                    "    <test locationUrl=\"file://test.text\" name=\"test\" status=\"failed\">\n" +
-                                    "        <diff actual=\"actual\" expected=\"expected\"/>\n" +
-                                    "        <output type=\"stdout\">message\n" +
-                                    "</output>\n" +
-                                    "        <output type=\"stderr\">localizedstacktrace\n" +
-                                    "</output>\n" +
-                                    "    </test>\n" +
-                                    "</testrun>\n"));
+                             "    <count name=\"failed\" value=\"1\"/>\n" +
+                             "    <config configId=\"MockRuntimeConfiguration\" name=\"\">\n" +
+                             "        <method v=\"2\"/>\n" +
+                             "    </config>\n" +
+                             "    <test locationUrl=\"file://test.text\" name=\"test\" status=\"failed\">\n" +
+                             "        <diff actual=\"actual\" expected=\"expected\"/>\n" +
+                             "        <output type=\"stdout\">message\n" +
+                             "</output>\n" +
+                             "        <output type=\"stderr\">localizedstacktrace\n" +
+                             "</output>\n" +
+                             "    </test>\n" +
+                             "</testrun>\n"));
 
       myEventsProcessor.onStartTesting();
       ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader(savedText), myEventsProcessor);
@@ -711,9 +713,6 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
                    "\n" +
                    "\n" +
                    "localizedstacktrace", StringUtil.convertLineSeparators(mockPrinter.getAllOut().trim()));
-    }
-    finally {
-      FileUtil.delete(output);
     }
   }
 }

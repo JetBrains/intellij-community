@@ -1,10 +1,24 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.url;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.util.List;
 
 public interface VirtualFileUrl {
   String getUrl();
+
+  @ApiStatus.Internal
+  List<String> getUrlSegments();
+
+  default String getUrlWithoutTrailingSlash() {
+    String url = getUrl();
+    if (!url.isEmpty() && url.charAt(url.length() -1) == '/') {
+      return url.substring(0, url.length() - 1);
+    }
+    return url;
+  }
+
   String getFileName();
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
@@ -254,7 +254,7 @@ public final class TypeConversionUtil {
     PsiManager manager = fromClass.getManager();
     final LanguageLevel languageLevel = toClassType.getLanguageLevel();
     //  jep-397
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_16_PREVIEW)) {
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_17)) {
       if (fromClass.isInterface() || toClass.isInterface()) {
         if (fromClass.hasModifierProperty(PsiModifier.SEALED)) {
           if (!canConvertSealedTo(fromClass, toClass)) return false;
@@ -381,16 +381,26 @@ public final class TypeConversionUtil {
 
   private static @NotNull Set<PsiClass> findDirectSubClassesInFile(@NotNull PsiClass sealedClass) {
     Set<PsiClass> subClasses = new HashSet<>();
+
+    if (sealedClass.isEnum()) {
+      for (PsiField field : sealedClass.getFields()) {
+        if (field instanceof PsiEnumConstant) {
+          ContainerUtil.addIfNotNull(subClasses, ((PsiEnumConstant)field).getInitializingClass());
+        }
+      }
+      return subClasses;
+    }
+
     sealedClass.getContainingFile().accept(new JavaElementVisitor() {
       @Override
-      public void visitJavaFile(PsiJavaFile file) {
+      public void visitJavaFile(@NotNull PsiJavaFile file) {
         for (PsiClass psiClass : file.getClasses()) {
           visitClass(psiClass);
         }
       }
 
       @Override
-      public void visitClass(PsiClass psiClass) {
+      public void visitClass(@NotNull PsiClass psiClass) {
         for (PsiClass inner : psiClass.getInnerClasses()) {
           visitClass(inner);
         }

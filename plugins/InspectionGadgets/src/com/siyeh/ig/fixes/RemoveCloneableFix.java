@@ -75,7 +75,7 @@ public class RemoveCloneableFix extends InspectionGadgetsFix {
     private boolean cloneCalled = false;
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (cloneCalled) return;
       super.visitMethodCallExpression(expression);
       if (!CloneUtils.isCallToClone(expression)) {
@@ -90,7 +90,7 @@ public class RemoveCloneableFix extends InspectionGadgetsFix {
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {}
+    public void visitClass(@NotNull PsiClass aClass) {}
 
     private boolean isCloneCalled() {
       return cloneCalled;

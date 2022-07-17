@@ -83,6 +83,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   // Preserved for API compatibility
+  @SuppressWarnings("RedundantMethodOverride")
   @Override
   public List<? extends AnAction> getAdditionalPopupMenuActions(@NotNull XLineBreakpoint<P> breakpoint, @Nullable XDebugSession currentSession) {
     return super.getAdditionalPopupMenuActions(breakpoint, currentSession);

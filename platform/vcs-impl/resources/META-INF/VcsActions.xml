@@ -37,10 +37,13 @@
       <synonym key="action.Vcs.VcsClone.text.synonym1"/>
       <synonym key="action.Vcs.VcsClone.text.synonym2"/>
     </action>
-    <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup"/>
+    <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup" searchable="false"/>
     <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" icon="AllIcons.Actions.CheckOut">
       <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
+    </action>
+    <action id="Vcs.Toolbar.ShowMoreActions"  class="com.intellij.openapi.vcs.actions.VcsQuickActionsToolbarPopup">
+      <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="last"/>
     </action>
     <group class="com.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" popup="true">
       <add-to-group group-id="VersionControlsGroup" />
@@ -70,10 +73,14 @@
       <override-text place="GoToAction" use-text-of-place="MainMenu"/>
     </action>
 
+    <action id="ChangesView.SingleClickPreview" class="com.intellij.openapi.vcs.changes.ToggleDetailsAction"/>
+
     <!-- Main menu | Version Control -->
     <group id="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsGroupsActionGroup" popup="true">
       <group id="Vcs.MainMenu" class="com.intellij.openapi.vcs.actions.VcsMainMenuActionGroup">
-        <action id="Start.Use.Vcs" class="com.intellij.ide.actions.StartUseVcsAction"/>
+        <action id="Start.Use.Vcs" class="com.intellij.ide.actions.StartUseVcsAction">
+          <override-text place="Vcs.Toolbar.Widget"/>
+        </action>
         <separator/>
         <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup">
 
@@ -92,7 +99,6 @@
           <action id="ChangesView.ApplyPatch" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchAction">
             <add-to-group group-id="ProjectViewPopupMenu" relative-to-action="ProjectViewEditSource" anchor="after"/>
             <add-to-group group-id="NavbarPopupMenu" relative-to-action="EditSource" anchor="after"/>
-            <add-to-group group-id="FavoritesViewPopupMenu" relative-to-action="EditSource" anchor="after"/>
           </action>
           <action id="ChangesView.ApplyPatchFromClipboard" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchFromClipboardAction"/>
           <action id="ChangesView.Shelve" class="com.intellij.openapi.vcs.changes.shelf.ShelveChangesAction" icon="AllIcons.Vcs.Shelve"/>
@@ -158,6 +164,7 @@
     <action id="ChangesView.SaveToShelve" class="com.intellij.openapi.vcs.changes.actions.SaveToShelveAction"/>
 
     <action id="Vcs.Diff.ShowCombinedDiff" class="com.intellij.openapi.vcs.changes.actions.diff.ShowCombinedDiffAction"
+            internal="true"
             icon="AllIcons.Actions.Diff"/>
 
     <group id="ChangesViewPopupMenu">
@@ -236,6 +243,45 @@
       <reference ref="CollapseAll"/>
     </group>
 
+    <action id="Vcs.Shelf.Apply" class="com.intellij.openapi.vcs.changes.savedPatches.ApplyShelfAction"/>
+    <action id="Vcs.Shelf.Pop" class="com.intellij.openapi.vcs.changes.savedPatches.PopShelfAction"/>
+    <action id="Vcs.Shelf.Drop" class="com.intellij.openapi.vcs.changes.savedPatches.DropShelfAction" use-shortcut-of="$Delete"/>
+    <action id="Vcs.Shelf.UnshelveChanges" class="com.intellij.openapi.vcs.changes.savedPatches.UnshelveChangesAction"/>
+    <action id="Vcs.Shelf.UnshelveChangesAndRemove" class="com.intellij.openapi.vcs.changes.savedPatches.UnshelveChangesAndRemoveAction"/>
+
+    <group id="Vcs.Shelf.Operations.ContextMenu" class="com.intellij.openapi.vcs.changes.savedPatches.ShelfOperationsGroup">
+      <reference id="Vcs.Shelf.Apply"/>
+      <reference id="Vcs.Shelf.Pop"/>
+      <reference id="ShelveChanges.UnshelveWithDialog"/>
+      <reference ref="Vcs.Shelf.Drop"/>
+      <reference ref="ShelvedChanges.Restore"/>
+      <reference ref="ShelvedChanges.ImportPatches"/>
+    </group>
+
+    <group id="Vcs.Shelf.ChangesBrowser.ContextMenu" class="com.intellij.openapi.vcs.changes.savedPatches.ShelfOperationsGroup">
+      <reference ref="Vcs.Shelf.UnshelveChanges"/>
+      <reference ref="Vcs.Shelf.UnshelveChangesAndRemove"/>
+    </group>
+
+    <action id="Vcs.EditSource" class="com.intellij.openapi.vcs.changes.committed.EditSourceFromChangesBrowserAction"
+            icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSource"/>
+    <action id="Vcs.OpenRepositoryVersion" class="com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction"/>
+    <action id="Vcs.RevertSelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction$Revert"
+            icon="AllIcons.Actions.Rollback"/>
+    <action id="Vcs.ApplySelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction$Apply"/>
+
+    <group id="Vcs.SavedPatches.ContextMenu">
+      <reference id="Vcs.Shelf.Operations.ContextMenu"/>
+      <separator/>
+      <reference id="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowStandaloneDiff"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
+    </group>
+    <group id="Vcs.SavedPatches.ChangesBrowser.ContextMenu">
+      <reference ref="Vcs.ShowDiffWithLocal"/>
+      <reference ref="Vcs.Shelf.ChangesBrowser.ContextMenu"/>
+    </group>
+
     <!--a group for plugins to add their actions-->
     <group id="VcsHistoryActionsGroup"/>
     <group id="VcsHistoryActionsGroup.Toolbar"/>
@@ -245,16 +291,14 @@
     <group id="VcsHistoryInternalGroup.Popup">
       <reference ref="Diff.ShowDiff"/>
       <reference ref="Vcs.ShowDiffWithLocal"/>
-      <reference ref="VcsHistoryActionsGroup"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <reference ref="Vcs.GetVersion"/>
       <reference ref="FileHistory.AnnotateRevision"/>
     </group>
 
     <group id="VcsHistoryInternalGroup.Toolbar">
-      <reference ref="Diff.ShowDiff"/>
-      <reference ref="VcsHistoryActionsGroup.Toolbar"/>
       <reference ref="Vcs.RefreshFileHistory"/>
+      <reference ref="Diff.ShowDiff"/>
     </group>
 
     <group id="CommittedChangesToolbar">
@@ -270,13 +314,6 @@
       <action id="CommittedChanges.Clear" class="com.intellij.openapi.vcs.changes.committed.ClearCommittedAction"
               icon="AllIcons.Actions.GC"/>
     </group>
-
-    <action id="Vcs.EditSource" class="com.intellij.openapi.vcs.changes.committed.EditSourceFromChangesBrowserAction"
-            icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSource"/>
-    <action id="Vcs.OpenRepositoryVersion" class="com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction"/>
-    <action id="Vcs.RevertSelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction$Revert"
-            icon="AllIcons.Actions.Rollback"/>
-    <action id="Vcs.ApplySelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction$Apply"/>
 
     <group id="Vcs.RepositoryChangesBrowserToolbar">
       <reference ref="Vcs.RevertSelectedChanges"/>
@@ -377,9 +414,11 @@
  <!-- Window -->
     <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
       <add-to-group group-id="CloseEditorsGroup" anchor="after" relative-to-action="CloseAllEditors"/>
+      <add-to-group group-id="EditorTabsEntryPoint" anchor="after" relative-to-action="CloseAllEditors"/>
     </action>
 
     <action id="Vcs.RollbackChangedLines" class="com.intellij.openapi.vcs.ex.RollbackLineStatusAction" icon="AllIcons.Actions.Rollback"/>
+    <action id="Vcs.ShowDiffChangedLines" class="com.intellij.openapi.vcs.ex.ShowDiffLineStatusAction" icon="AllIcons.Actions.Diff"/>
     <action id="Vcs.MoveChangedLinesToChangelist" class="com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction"/>
     <action id="Vcs.Diff.ExcludeChangedLinesFromCommit" class="com.intellij.openapi.actionSystem.EmptyAction">
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="Diff.ResolveConflict" anchor="after"/>
@@ -387,11 +426,15 @@
     <action id="Vcs.Diff.IncludeOnlyChangedLinesIntoCommit" class="com.intellij.openapi.actionSystem.EmptyAction">
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="Vcs.Diff.ExcludeChangedLinesFromCommit" anchor="after"/>
     </action>
+    <action id="Vcs.Diff.ToggleDiffAligningMode" class="com.intellij.diff.actions.impl.ToggleDiffAligningModeAction">
+      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"/>
+      <override-text place="popup@DiffToolbar"/>
+    </action>
     <action id="Vcs.Diff.ShowDiffInEditorTab" class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToEditorAction">
       <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
       <add-to-group group-id="Diff.Binary.Settings" anchor="last"/>
     </action>
-    <group>
+    <group id="Vcs.Diff.EditorTabs.Group" searchable="false">
       <action id="Vcs.Diff.ShowDiffInNewWindow"
               icon="AllIcons.Actions.MoveToWindow"
               class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToNewWindowAction">
@@ -408,6 +451,9 @@
 
     <action id="Vcs.CopyRevisionNumberAction" class="com.intellij.openapi.vcs.history.actions.CopyRevisionNumberAction"
             icon="AllIcons.Actions.Copy" use-shortcut-of="CopyReference"/>
+
+    <action id="Vcs.CopyCommitSubjectAction" class="com.intellij.openapi.vcs.history.actions.CopyCommitSubjectAction"
+            icon="AllIcons.Actions.Copy"/>
 
     <group id="VcsSelectionHistoryDialog.Popup">
       <reference id="Diff.ShowDiff"/>
@@ -444,7 +490,7 @@
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
 
-    <group>
+    <group id="VcsActions.KeymapGroup" searchable="false">
       <reference ref="Vcs.ToggleAmendCommitMode"/>
       <reference ref="CheckinProject"/>
       <reference ref="CheckinFiles"/>
@@ -467,6 +513,7 @@
       <reference ref="VcsShowPrevChangeMarker"/>
       <reference ref="VcsShowCurrentChangeMarker"/>
       <reference ref="Vcs.RollbackChangedLines"/>
+      <reference ref="Vcs.ShowDiffChangedLines"/>
       <reference ref="Vcs.MoveChangedLinesToChangelist"/>
       <separator/>
       <reference ref="Start.Use.Vcs"/>
@@ -516,7 +563,7 @@
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
     </group>
 
-    <group>
+    <group id="Diff.CompareWith.KeymapGroup" searchable="false">
       <reference ref="Compare.SameVersion"/>
       <reference ref="Compare.LastVersion"/>
       <reference ref="Compare.Specified"/>
@@ -526,6 +573,12 @@
 
       <add-to-group group-id="Diff.KeymapGroup" anchor="after" relative-to-action="CompareClipboardWithSelection"/>
     </group>
+
+    <group id="Vcs.ToolWindow.CreateRepository" searchable="false"/>
+
+    <action id="ActivateCommitToolWindow" class="com.intellij.openapi.vcs.changes.ui.ActivateCommitToolWindowAction">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </action>
 
     <group id="CommitView.GearActions">
       <action id="CommitView.SwitchToCommitDialog" class="com.intellij.vcs.commit.SwitchToCommitDialogAction"/>
@@ -598,5 +651,8 @@
       <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" popup="true" id="ShowAnnotateOperationsPopupGroup"/>
     </group>
 
+    <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction">
+      <add-to-group group-id="Internal.VFS"/>
+    </action>
   </actions>
 </idea-plugin>

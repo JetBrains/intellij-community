@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.graph;
 
 import com.intellij.util.Chunk;
@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import java.util.*;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Eugene Zhuravlev
@@ -27,17 +27,17 @@ public class ChunkGraphTest extends GraphTestCase {
     final List<Chunk<String>> expectedNodes = new ArrayList<>();
     Chunk<String> A = new Chunk<>("a");
     expectedNodes.add(A);
-    Chunk<String> BC = new Chunk<>(ContainerUtil.newHashSet("b", "c"));
+    Chunk<String> BC = new Chunk<>(Set.of("b", "c"));
     expectedNodes.add(BC);
-    Chunk<String> DE = new Chunk<>(ContainerUtil.newHashSet("d", "e"));
+    Chunk<String> DE = new Chunk<>(Set.of("d", "e"));
     expectedNodes.add(DE);
 
     checkVertices(expectedNodes, graph.getNodes());
 
     final Map<Chunk<String>, Set<Chunk<String>>> expectedArcs = new HashMap<>();
     expectedArcs.put(A, new HashSet<>());
-    expectedArcs.put(BC, ContainerUtil.newHashSet(A));
-    expectedArcs.put(DE, ContainerUtil.newHashSet(BC));
+    expectedArcs.put(BC, Set.of(A));
+    expectedArcs.put(DE, Set.of(BC));
 
     checkArcs(expectedArcs, graph);
   }
@@ -53,7 +53,7 @@ public class ChunkGraphTest extends GraphTestCase {
     final Graph<Chunk<String>> graph = getAlgorithmsInstance().computeSCCGraph(initGraph(arcs));
 
     final List<Chunk<String>> expectedNodes = new ArrayList<>();
-    Chunk<String> ABC = new Chunk<>(ContainerUtil.newHashSet("a", "b", "c"));
+    Chunk<String> ABC = new Chunk<>(Set.of("a", "b", "c"));
     expectedNodes.add(ABC);
     Chunk<String> D = new Chunk<>("d");
     expectedNodes.add(D);
@@ -62,7 +62,7 @@ public class ChunkGraphTest extends GraphTestCase {
 
     final Map<Chunk<String>, Set<Chunk<String>>> expectedArcs = new HashMap<>();
     expectedArcs.put(ABC, new HashSet<>());
-    expectedArcs.put(D, ContainerUtil.newHashSet(ABC));
+    expectedArcs.put(D, Set.of(ABC));
 
     checkArcs(expectedArcs, graph);
   }
@@ -71,14 +71,14 @@ public class ChunkGraphTest extends GraphTestCase {
     for (Chunk<String> chunk : graph.getNodes()) {
       List<Chunk<String>> ins = ContainerUtil.newArrayList(() -> graph.getIn(chunk));
       Set<Chunk<String>> expectedIns = expectedArcs.get(chunk);
-      assertTrue(expectedIns.size() == ins.size());
-      assertTrue(expectedIns.equals(new HashSet<>(ins)));
+      assertEquals(expectedIns.size(), ins.size());
+      assertEquals(expectedIns, new HashSet<>(ins));
     }
   }
 
   private static void checkVertices(List<Chunk<String>> expected, Iterable<Chunk<String>> nodes) {
     List<Chunk<String>> realNodes = ContainerUtil.newArrayList(nodes);
-    assertTrue(expected.size() == realNodes.size());
-    assertTrue(new HashSet<>(expected).equals(new HashSet<>(realNodes)));
+    assertEquals(expected.size(), realNodes.size());
+    assertEquals(new HashSet<>(expected), new HashSet<>(realNodes));
   }
 }

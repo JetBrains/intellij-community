@@ -11,22 +11,21 @@ import com.intellij.grazie.ide.msg.GrazieInitializerManager
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.Rule
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
+import java.util.concurrent.atomic.AtomicLong
 
 @State(name = "GraziConfig", presentableName = GrazieConfig.PresentableNameGetter::class, storages = [
   Storage("grazie_global.xml"),
   Storage(value = "grazi_global.xml", deprecated = true)
-])
-class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
-  @Suppress("unused")
+], category = SettingsCategory.CODE)
+class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationTracker {
   enum class Version : VersionedState.Version<State> {
     INITIAL,
 
@@ -59,9 +58,9 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
    */
   data class State(
     @Property val enabledLanguages: Set<Lang> = hashSetOf(Lang.AMERICAN_ENGLISH),
-    @Deprecated("Use checkingContext.disabledLanguages") @Property val enabledGrammarStrategies: Set<String> = HashSet(defaultEnabledStrategies),
-    @Deprecated("Use checkingContext.disabledLanguages") @Property val disabledGrammarStrategies: Set<String> = HashSet(),
-    @Deprecated("Moved to checkingContext in version 2") @Property val enabledCommitIntegration: Boolean = false,
+    @Deprecated("Use checkingContext.disabledLanguages") @ApiStatus.ScheduledForRemoval @Property val enabledGrammarStrategies: Set<String> = HashSet(defaultEnabledStrategies),
+    @Deprecated("Use checkingContext.disabledLanguages") @ApiStatus.ScheduledForRemoval @Property val disabledGrammarStrategies: Set<String> = HashSet(),
+    @Deprecated("Moved to checkingContext in version 2") @ApiStatus.ScheduledForRemoval @Property val enabledCommitIntegration: Boolean = false,
     @Property val userDisabledRules: Set<String> = HashSet(),
     @Property val userEnabledRules: Set<String> = HashSet(),
     //Formerly suppressionContext -- name changed due to compatibility issues
@@ -125,26 +124,34 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
     /** Update Grazie config state */
     @Synchronized
     fun update(change: (State) -> State) = instance.loadState(change(get()))
-  }
 
-  class PresentableNameGetter : com.intellij.openapi.components.State.NameGetter() {
-    override fun get() = "Grazie Config"
-  }
-
-  private var myState = State()
-
-  override fun getState() = myState
-
-  override fun loadState(state: State) {
-    val prevState = myState
-    myState = migrateLTRuleIds(VersionedState.migrate(state))
-
-    if (prevState != myState) {
-      service<GrazieInitializerManager>().publisher.update(prevState, myState)
+    fun stateChanged(prevState: State, newState: State) {
+      service<GrazieInitializerManager>().publisher.update(prevState, newState)
 
       ProjectManager.getInstance().openProjects.forEach {
         DaemonCodeAnalyzer.getInstance(it).restart()
       }
+    }
+  }
+
+  class PresentableNameGetter : com.intellij.openapi.components.State.NameGetter() {
+    override fun get() = GrazieBundle.message("grazie.config.name")
+  }
+
+  private var myState = State()
+  private var myModCount = AtomicLong()
+
+  override fun getModificationCount(): Long = myModCount.get()
+
+  override fun getState() = myState
+
+  override fun loadState(state: State) {
+    myModCount.incrementAndGet()
+    val prevState = myState
+    myState = migrateLTRuleIds(VersionedState.migrate(state))
+
+    if (prevState != myState) {
+      stateChanged(prevState, myState)
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement
@@ -40,10 +40,18 @@ internal abstract class PropertyRenderer(
   }
 
   protected fun generatePrototypeField(): PsiField {
-    val prototypeType = if (propertyKind == PropertyKind.BOOLEAN_GETTER) PsiType.BOOLEAN else PsiType.VOID
+    val prototypeType = if (propertyKind == PropertyKind.BOOLEAN_GETTER || isBooleanSetter()) PsiType.BOOLEAN else  PsiType.VOID
     return factory.createField(suggestedFieldName, prototypeType).setStatic(isStatic)
   }
-
+  
+  private fun isBooleanSetter(): Boolean {
+    if (propertyKind == PropertyKind.SETTER) {
+      val expectedType = request.expectedParameters.single().expectedTypes.singleOrNull()
+      return expectedType != null && PsiType.BOOLEAN == JvmPsiConversionHelper.getInstance(project).convertType(expectedType.theType)
+    }
+    return false
+  }
+  
   private val expectedTypes: List<ExpectedTypeInfo> = when (propertyKind) {
     PropertyKind.GETTER -> extractExpectedTypes(project, request.returnType).orObject(target)
     PropertyKind.BOOLEAN_GETTER -> listOf(PsiType.BOOLEAN.toExpectedType())

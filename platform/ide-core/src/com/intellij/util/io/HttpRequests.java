@@ -11,13 +11,13 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.Url;
 import com.intellij.util.net.NetUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +31,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static java.util.Objects.requireNonNullElse;
 
 /**
  * <p>Handy class for reading data from URL connections with built-in support for HTTP redirects and gzipped content and automatic cleanup.</p>
@@ -84,12 +87,9 @@ public final class HttpRequests {
 
     @NotNull BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException;
 
-    /** @deprecated Called automatically on open connection. Use {@link RequestBuilder#tryConnect()} to get response code */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-    boolean isSuccessful() throws IOException;
-
-    @NotNull File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException;
+    default @NotNull File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException {
+      return saveToFile(file.toPath(), indicator).toFile();
+    }
 
     @NotNull Path saveToFile(@NotNull Path file, @Nullable ProgressIndicator indicator) throws IOException;
 
@@ -102,6 +102,8 @@ public final class HttpRequests {
     }
 
     @NotNull CharSequence readChars(@Nullable ProgressIndicator indicator) throws IOException;
+
+    @Nullable String readError() throws IOException;
 
     default void write(@NotNull String data) throws IOException {
       write(data.getBytes(StandardCharsets.UTF_8));
@@ -333,6 +335,8 @@ public final class HttpRequests {
   }
 
   private static final class RequestImpl implements Request, AutoCloseable {
+    private static final Pattern CHARSET_PATTERN = Pattern.compile("charset=([^;]+)");
+
     private final RequestBuilderImpl myBuilder;
     private String myUrl;
     private URLConnection myConnection;
@@ -380,7 +384,7 @@ public final class HttpRequests {
       if (myReader == null) {
         InputStream inputStream = getInputStream();
         if (indicator != null) {
-          int contentLength = getConnection().getContentLength();
+          long contentLength = getConnection().getContentLengthLong();
           if (contentLength > 0) {
             inputStream = new ProgressMonitorInputStream(indicator, inputStream, contentLength);
           }
@@ -390,14 +394,24 @@ public final class HttpRequests {
       return myReader;
     }
 
-    private @NotNull Charset getCharset() throws IOException {
-      return HttpUrlConnectionUtil.getCharset(getConnection());
+    private Charset getCharset() throws IOException {
+      return getCharset(getConnection());
     }
 
-    @Override
-    public boolean isSuccessful() throws IOException {
-      URLConnection connection = getConnection();
-      return !(connection instanceof HttpURLConnection) || ((HttpURLConnection)connection).getResponseCode() == 200;
+    private static Charset getCharset(URLConnection connection) throws IOException {
+      String contentType = connection.getContentType();
+      if (contentType != null && !contentType.isEmpty()) {
+        Matcher m = CHARSET_PATTERN.matcher(contentType);
+        if (m.find()) {
+          try {
+            return Charset.forName(StringUtil.unquoteString(m.group(1)));
+          }
+          catch (IllegalArgumentException e) {
+            throw new IOException("Unknown charset: " + contentType, e);
+          }
+        }
+      }
+      return StandardCharsets.UTF_8;
     }
 
     @Override
@@ -405,57 +419,43 @@ public final class HttpRequests {
       return doReadBytes(indicator).toByteArray();
     }
 
-    private @NotNull BufferExposingByteArrayOutputStream doReadBytes(@Nullable ProgressIndicator indicator) throws IOException {
-      return HttpUrlConnectionUtil.readBytes(getInputStream(), getConnection(), indicator);
-    }
-
     @Override
     public @NotNull String readString(@Nullable ProgressIndicator indicator) throws IOException {
-      return HttpUrlConnectionUtil.readString(getInputStream(), getConnection(), indicator);
+      BufferExposingByteArrayOutputStream stream = doReadBytes(indicator);
+      return stream.size() == 0 ? "" : new String(stream.getInternalBuffer(), 0, stream.size(), getCharset());
     }
 
     @Override
     public @NotNull CharSequence readChars(@Nullable ProgressIndicator indicator) throws IOException {
-      BufferExposingByteArrayOutputStream byteStream = doReadBytes(indicator);
-      if (byteStream.size() == 0) {
-        return Strings.EMPTY_CHAR_SEQUENCE;
-      }
-      else {
-        return getCharset().decode(ByteBuffer.wrap(byteStream.getInternalBuffer(), 0, byteStream.size()));
-      }
+      BufferExposingByteArrayOutputStream stream = doReadBytes(indicator);
+      return stream.size() == 0 ? "" : getCharset().decode(ByteBuffer.wrap(stream.getInternalBuffer(), 0, stream.size()));
+    }
+
+    private BufferExposingByteArrayOutputStream doReadBytes(@Nullable ProgressIndicator indicator) throws IOException {
+      long contentLength = getConnection().getContentLengthLong();
+      if (contentLength > Integer.MAX_VALUE) throw new IOException("Cannot download more than 2 GiB; content length is " + contentLength);
+      BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? (int)contentLength : 16384);
+      NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength);
+      return out;
     }
 
     @Override
-    public @NotNull File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException {
-      FileUtilRt.createParentDirs(file);
+    public @Nullable String readError() throws IOException {
+      return readError((HttpURLConnection)getConnection());
+    }
 
-      boolean deleteFile = true;
-      try (OutputStream out = new FileOutputStream(file)) {
-        NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
-        deleteFile = false;
-      }
-      catch (HttpStatusException e) {
-        throw e;
-      }
-      catch (IOException e) {
-        throw new IOException(createErrorMessage(e, this, false), e);
-      }
-      finally {
-        if (deleteFile) {
-          FileUtilRt.delete(file);
-        }
-      }
-
-      return file;
+    private @Nullable String readError(HttpURLConnection connection) throws IOException {
+      InputStream stream = connection.getErrorStream();
+      return stream == null ? null : StreamUtil.readText(new InputStreamReader(unzipStreamIfNeeded(connection, stream), getCharset(connection)));
     }
 
     @Override
     public @NotNull Path saveToFile(@NotNull Path file, @Nullable ProgressIndicator indicator) throws IOException {
-      Files.createDirectories(file.getParent());
+      NioFiles.createDirectories(file.getParent());
 
       boolean deleteFile = true;
       try (OutputStream out = Files.newOutputStream(file)) {
-        NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
+        NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLengthLong());
         deleteFile = false;
       }
       catch (HttpStatusException e) {
@@ -518,7 +518,7 @@ public final class HttpRequests {
       if (builder.myThrowStatusCodeException) {
         URLConnection connection = request.myConnection;
         if (connection != null && connection.getDoOutput()) {
-          // getResponseCode is not checked on connect, because write must be performed before read
+          // getResponseCode is not checked on connect, because writing must happen before reading
           HttpURLConnection urlConnection = (HttpURLConnection)connection;
           int responseCode = urlConnection.getResponseCode();
           if (responseCode >= 400) {
@@ -637,23 +637,19 @@ public final class HttpRequests {
     throw new IOException(IdeCoreBundle.message("error.connection.failed.redirects"));
   }
 
-  private static void throwHttpStatusError(@NotNull HttpURLConnection connection,
+  private static void throwHttpStatusError(HttpURLConnection connection,
                                            RequestImpl request,
                                            RequestBuilderImpl builder,
                                            int responseCode) throws IOException {
     String message = null;
     if (builder.myIsReadResponseOnError) {
-      InputStream errorStream = connection.getErrorStream();
-      if (errorStream != null) {
-        errorStream = request.unzipStreamIfNeeded(connection, errorStream);
-        message = HttpUrlConnectionUtil.readString(errorStream, connection);
-      }
+      message = request.readError(connection);
     }
-    if (Strings.isEmpty(message)) {
-      message = "Request failed with status code " + responseCode;
+    if (message == null || message.isEmpty()) {
+      message = IdeCoreBundle.message("error.connection.failed.status", responseCode);
     }
     connection.disconnect();
-    throw new HttpStatusException(message, responseCode, Objects.requireNonNullElse(request.myUrl, "Empty URL"));
+    throw new HttpStatusException(message, responseCode, requireNonNullElse(request.myUrl, "Empty URL"));
   }
 
   private static void configureSslConnection(@NotNull String url, @NotNull HttpsURLConnection connection) {

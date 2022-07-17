@@ -1,5 +1,5 @@
 // FLOW: IN
-// WITH_RUNTIME
+// WITH_STDLIB
 
 open class C {
     private var other: C? = null

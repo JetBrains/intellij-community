@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -14,7 +16,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,9 +56,11 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   @Override
   public final void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
+    Editor editor = e.getData(CommonDataKeys.HOST_EDITOR);
+    if (editor == null) editor = e.getData(CommonDataKeys.EDITOR);
+    boolean isActiveEditorPresented = editor != null && !ConsoleViewUtil.isConsoleViewEditor(editor) && !editor.isViewer();
     if (project == null
-        || e.getData(CommonDataKeys.HOST_EDITOR) != null
-        || e.getData(CommonDataKeys.EDITOR) != null
+        || isActiveEditorPresented
         || ComponentUtil.getParentOfType(InternalDecoratorImpl.class, e.getData(PlatformDataKeys.CONTEXT_COMPONENT)) == null) {
       setDisabled(e);
       return;
@@ -108,6 +112,11 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     else {
       setDisabled(e);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Nullable

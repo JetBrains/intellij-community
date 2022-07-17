@@ -3,33 +3,42 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
-final class JavaHomeFinderMac extends JavaHomeFinderBasic {
+public class JavaHomeFinderMac extends JavaHomeFinderBasic {
   public static final String JAVA_HOME_FIND_UTIL = "/usr/libexec/java_home";
 
   static String defaultJavaLocation = "/Library/Java/JavaVirtualMachines";
 
-  JavaHomeFinderMac(boolean forceEmbeddedJava) {
-    super(forceEmbeddedJava,
-          defaultJavaLocation,
-          "/System/Library/Java/JavaVirtualMachines",
-          FileUtil.expandUserHome("~/Library/Java/JavaVirtualMachines")
-    );
+  public JavaHomeFinderMac(@NotNull JavaHomeFinder.SystemInfoProvider systemInfoProvider) {
+    super(systemInfoProvider);
 
+    registerFinder(() -> {
+      Set<String> result = new TreeSet<>();
+      Collection<@NotNull Path> roots = systemInfoProvider.getFsRoots();
+      roots.forEach(root -> {
+        result.addAll(scanAll(root.resolve(defaultJavaLocation), true));
+      });
+      roots.forEach(root -> {
+        result.addAll(scanAll(root.resolve("System/Library/Java/JavaVirtualMachines"), true));
+      });
+      return result;
+    });
+
+    registerFinder(() -> {
+      Path jdk = getPathInUserHome("Library/Java/JavaVirtualMachines");
+      return jdk != null ? scanAll(jdk, true) : Collections.emptySet();
+    });
     registerFinder(() -> scanAll(getSystemDefaultJavaHome(), false));
   }
 
-  private static @Nullable Path getSystemDefaultJavaHome() {
+  protected @Nullable Path getSystemDefaultJavaHome() {
     String homePath = null;
     if (new File(JAVA_HOME_FIND_UTIL).canExecute()) {
       homePath = ExecUtil.execAndReadLine(new GeneralCommandLine(JAVA_HOME_FIND_UTIL));
@@ -42,8 +51,8 @@ final class JavaHomeFinderMac extends JavaHomeFinderBasic {
 
   @NotNull
   @Override
-  protected List<File> listPossibleJdkHomesFromInstallRoot(@NotNull File file) {
-    return Arrays.asList(file, new File(file, "/Home"), new File(file, "Contents/Home"));
+  protected List<Path> listPossibleJdkHomesFromInstallRoot(@NotNull Path path) {
+    return Arrays.asList(path, path.resolve("/Home"), path.resolve("Contents/Home"));
   }
 
   @Override

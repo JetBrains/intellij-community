@@ -1,5 +1,5 @@
 // "Add parameter to function 'called'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // DISABLE-ERRORS
 // WITH_NEW_INFERENCE
 

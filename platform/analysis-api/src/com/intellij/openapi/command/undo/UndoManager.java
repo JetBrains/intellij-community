@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,11 +18,11 @@ public abstract class UndoManager {
   public static final Key<Document> ORIGINAL_DOCUMENT = new Key<>("ORIGINAL_DOCUMENT");
 
   public static UndoManager getInstance(@NotNull Project project) {
-    return project.isDefault() ? getGlobalInstance() : project.getComponent(UndoManager.class);
+    return project.isDefault() ? getGlobalInstance() : project.getService(UndoManager.class);
   }
 
   public static UndoManager getGlobalInstance() {
-    return ApplicationManager.getApplication().getComponent(UndoManager.class);
+    return ApplicationManager.getApplication().getService(UndoManager.class);
   }
 
   public abstract void undoableActionPerformed(@NotNull UndoableAction action);

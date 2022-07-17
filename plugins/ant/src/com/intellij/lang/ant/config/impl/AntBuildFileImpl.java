@@ -371,7 +371,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
       myWorkspaceOptions.readExternal(parentNode);
       final Element expanded = parentNode.getChild("expanded");
       if (expanded != null) {
-        myShouldExpand = Boolean.valueOf(expanded.getAttributeValue("value"));
+        myShouldExpand = Boolean.parseBoolean(expanded.getAttributeValue("value"));
       }
 
       // don't lose old command line parameters

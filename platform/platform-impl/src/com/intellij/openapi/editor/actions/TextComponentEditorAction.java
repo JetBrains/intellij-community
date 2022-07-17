@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -33,6 +30,11 @@ public abstract class TextComponentEditorAction extends EditorAction {
   }
 
   @Override
+  public final @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   @Nullable
   protected Editor getEditor(@NotNull final DataContext dataContext) {
     return getEditorFromContext(dataContext, allowSpeedSearch);
@@ -47,7 +49,7 @@ public abstract class TextComponentEditorAction extends EditorAction {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null) return editor;
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    final Object data = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    final Object data = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (data instanceof EditorComponentImpl) {
       // can happen if editor is already disposed, or if it's in renderer mode
       return null;
@@ -67,7 +69,7 @@ public abstract class TextComponentEditorAction extends EditorAction {
   private static JTextField findActiveSpeedSearchTextField(JComponent c) {
     final SpeedSearchSupply supply = SpeedSearchSupply.getSupply(c);
     if (supply instanceof SpeedSearchBase) {
-      return ((SpeedSearchBase)supply).getSearchField();
+      return ((SpeedSearchBase<?>)supply).getSearchField();
     }
     if (c instanceof DataProvider) {
       final Object component = PlatformDataKeys.SPEED_SEARCH_COMPONENT.getData((DataProvider)c);

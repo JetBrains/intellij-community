@@ -9,5 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper.rt" />
   </component>
 </module>

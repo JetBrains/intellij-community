@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.application.options.RegistryManager;
@@ -26,8 +26,15 @@ public class PyPackageIconTest extends PyTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    RegistryManager.getInstance().get("python.explicit.namespace.packages").resetToDefault();
-    super.tearDown();
+    try {
+      RegistryManager.getInstance().get("python.explicit.namespace.packages").resetToDefault();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   // PY-38642

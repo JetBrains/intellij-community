@@ -96,16 +96,13 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
 
     var description = templatePresentation.text
     if (ActionPlaces.CONTEXT_TOOLBAR == e.place) {
-      val shortcutInfo = buildString {
-        val shortcut = KeymapUtil.getPrimaryShortcut("WebOpenInAction")
-        if (shortcut != null) {
-          append(KeymapUtil.getShortcutText(shortcut))
-        }
-
-        if (WebBrowserXmlService.getInstance().isHtmlFile(result.file)) {
-          append(if (shortcut != null) ", " else "")
-          append(IdeBundle.message("browser.shortcut"))
-        }
+      val shortcut = KeymapUtil.getPrimaryShortcut("WebOpenInAction")
+      val htmlFile = WebBrowserXmlService.getInstance().isHtmlFile(result.file)
+      val shortcutInfo = when {
+        shortcut != null && htmlFile -> IdeBundle.message("browser.shortcut.or.shift", KeymapUtil.getShortcutText(shortcut))
+        shortcut != null && !htmlFile -> KeymapUtil.getShortcutText(shortcut)
+        shortcut == null && htmlFile -> IdeBundle.message("browser.shortcut")
+        else -> ""
       }
       if (shortcutInfo.isNotEmpty()) {
         description = "$description ($shortcutInfo)"

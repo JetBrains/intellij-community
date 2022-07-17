@@ -3,6 +3,7 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -12,6 +13,7 @@ public class ConfigurationException extends Exception {
   private @NlsContexts.DialogTitle String myTitle = getDefaultTitle();
   private ConfigurationQuickFix myQuickFix;
   private Configurable myOriginator;
+  private boolean myIsHtmlMessage;
 
   /**
    * @param message the detail message describing the problem
@@ -35,6 +37,15 @@ public class ConfigurationException extends Exception {
                                 @NlsContexts.DialogTitle String title) {
     super(message, cause);
     myTitle = title;
+  }
+
+  public boolean isHtmlMessage() {
+    return myIsHtmlMessage;
+  }
+
+  public @NotNull ConfigurationException withHtmlMessage() {
+    myIsHtmlMessage = true;
+    return this;
   }
 
   @Override
@@ -66,7 +77,7 @@ public class ConfigurationException extends Exception {
    *
    * @deprecated use {@link #getConfigurationQuickFix()} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public Runnable getQuickFix() {
     return myQuickFix == null ? null : () -> myQuickFix.applyFix(DataContext.EMPTY_CONTEXT);

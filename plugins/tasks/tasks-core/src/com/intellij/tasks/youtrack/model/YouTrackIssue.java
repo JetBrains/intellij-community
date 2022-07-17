@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,7 @@ public class YouTrackIssue {
 
   @NotNull
   public List<CustomField> getCustomFields() {
-    return customFields;
+    return ContainerUtil.notNullize(customFields);
   }
 
   public static class CustomField {

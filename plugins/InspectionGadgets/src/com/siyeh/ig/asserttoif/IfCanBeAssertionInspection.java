@@ -70,7 +70,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
   private static class IfToAssertionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitIfStatement(PsiIfStatement statement) {
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
       final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
       if (condition == null || statement.getElseBranch() != null || getThrownNewException(statement.getThenBranch()) == null) {
@@ -83,7 +83,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (MATCHER.test(expression) && expression.getArgumentList().getExpressionCount() <= 2) { // for parametrized messages we don't suggest anything
         registerMethodCallError(expression, PsiUtil.isLanguageLevel7OrHigher(expression), false);

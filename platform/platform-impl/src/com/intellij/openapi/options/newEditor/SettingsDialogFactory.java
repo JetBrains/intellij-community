@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
 
 // extended externally
@@ -20,18 +19,18 @@ public class SettingsDialogFactory {
   }
 
   @NotNull
-  public DialogWrapper create(Project project, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton){
+  public DialogWrapper create(Project project, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     return new SettingsDialog(project, key, configurable, showApplyButton, showResetButton);
   }
 
   @NotNull
-  public DialogWrapper create(@NotNull Component parent, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton){
+  public DialogWrapper create(@NotNull Component parent, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     return new SettingsDialog(parent, key, configurable, showApplyButton, showResetButton);
   }
 
   @NotNull
-  public DialogWrapper create(@NotNull Project project, ConfigurableGroup @NotNull [] groups, Configurable configurable, String filter){
-    return create(project, Arrays.asList(groups), configurable, filter);
+  public DialogWrapper create(@NotNull Project project, ConfigurableGroup @NotNull [] groups, @Nullable Configurable configurable, String filter) {
+    return create(project, List.of(groups), configurable, filter);
   }
 
   @NotNull

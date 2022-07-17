@@ -72,8 +72,6 @@ public final class MavenArtifactIndex {
     return res;
   }
 
-
-
   public static MavenArtifactIndex build(@NotNull List<? extends MavenArtifact> dependencies) {
     if (dependencies.isEmpty()) return EMPTY_INDEX;
 

@@ -27,10 +27,6 @@ fun PsiElement.backwardSiblings(): Sequence<PsiElement> = generateSequence(this)
   it.prevSibling
 }
 
-inline fun <reified T : PsiElement> PsiElement.childrenOfType(): List<T> {
-  return PsiTreeUtil.getChildrenOfTypeAsList(this, T::class.java)
-}
-
 @JvmOverloads
 fun PsiElement.treeWalkUp(processor: PsiScopeProcessor, state: ResolveState = ResolveState.initial(), place: PsiElement = this): Boolean {
   for ((scope, lastParent) in contexts().withPrevious()) {

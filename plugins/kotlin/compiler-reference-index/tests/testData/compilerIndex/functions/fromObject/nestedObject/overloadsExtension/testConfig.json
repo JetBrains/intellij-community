@@ -1,0 +1,9 @@
+{
+    "mainFile": "KotlinObject.kt",
+    "usages": [
+        "Usage.java",
+        "Usage.kt",
+        "Usage2.java",
+        "Usage2.kt"
+    ]
+}

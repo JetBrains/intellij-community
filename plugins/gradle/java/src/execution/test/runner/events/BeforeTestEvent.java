@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +27,10 @@ public class BeforeTestEvent extends AbstractTestEvent {
     final String testId = eventXml.getTestId();
     final String parentTestId = eventXml.getTestParentId();
     final String name = eventXml.getTestName();
+    final String displayName = eventXml.getTestDisplayName();
     final String fqClassName = eventXml.getTestClassName();
 
-    doProcess(testId, parentTestId, name, fqClassName);
+    doProcess(testId, parentTestId, name, displayName, fqClassName);
   }
 
   @Override
@@ -38,15 +38,14 @@ public class BeforeTestEvent extends AbstractTestEvent {
     TestOperationDescriptor testDescriptor = testEvent.getDescriptor();
     final String testId = testEvent.getEventId();
     final String parentTestId = testEvent.getParentEventId();
-    final String name = ObjectUtils.coalesce(testDescriptor.getDisplayName(), testDescriptor.getMethodName(), testId);
     final String fqClassName = testDescriptor.getClassName();
 
-    doProcess(testId, parentTestId, name, fqClassName);
+    doProcess(testId, parentTestId, testDescriptor.getMethodName(), testDescriptor.getDisplayName(), fqClassName);
   }
 
-  private void doProcess(String testId, String parentTestId, String name, String fqClassName) {
-    String locationUrl = findLocationUrl(name, fqClassName);
-    final GradleSMTestProxy testProxy = new GradleSMTestProxy(name, false, locationUrl, fqClassName);
+  private void doProcess(String testId, String parentTestId, String name, String displayName, String fqClassName) {
+    String locationUrl = computeLocationUrl(findTestProxy(parentTestId), fqClassName, name, displayName);
+    final GradleSMTestProxy testProxy = new GradleSMTestProxy(displayName, false, locationUrl, fqClassName);
 
     testProxy.setStarted();
     testProxy.setLocator(getExecutionConsole().getUrlProvider());

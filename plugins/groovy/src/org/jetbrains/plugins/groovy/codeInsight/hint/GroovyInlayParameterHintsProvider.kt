@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMirrorElement
+import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.editor.shouldHideInlayHints
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
@@ -45,6 +46,8 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
   override fun getDefaultBlackList(): Set<String> = blackList
 
   override fun getBlackListDependencyLanguage(): Language = JavaLanguage.INSTANCE
+
+  override fun getDescription(): String = GroovyBundle.message("shows.parameter.names.at.function.call.sites")
 
   private companion object {
 

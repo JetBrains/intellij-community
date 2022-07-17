@@ -1,5 +1,6 @@
 package org.jetbrains.idea.reposearch
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.WaitFor
 import junit.framework.TestCase
@@ -12,18 +13,19 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
   override fun setUp() {
     super.setUp()
     dependencySearchService = DependencySearchService(project)
+    Disposer.register(testRootDisposable, dependencySearchService)
   }
 
 
   fun testShouldReturnDataFromCache() {
 
-    var requests = 0;
+    var requests = 0
     val searchParameters = SearchParameters(true, false)
     dependencySearchService.setProviders(emptyList(), listOf(object : TestSearchProvider() {
       override fun isLocal() = false
 
       override fun fulltextSearch(searchString: String, consumer: Consumer<RepositoryArtifactData>) {
-        requests++;
+        requests++
         consumer.accept(RepositoryArtifactData { searchString })
       }
     }))

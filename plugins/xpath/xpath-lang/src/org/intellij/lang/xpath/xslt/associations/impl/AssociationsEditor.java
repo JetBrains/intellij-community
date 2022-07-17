@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -10,6 +10,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +23,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -103,7 +104,8 @@ final class AssociationsEditor {
     myComponent.add(splitter, BorderLayout.CENTER);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.setBorder(IdeBorderFactory.createTitledBorder(XPathBundle.message("border.title.project.xslt.files"), false, JBUI.emptyInsets()).setShowLine(false));
+    leftPanel.setBorder(IdeBorderFactory.createTitledBorder(XPathBundle.message("border.title.project.xslt.files"), false,
+                                                            JBInsets.emptyInsets()).setShowLine(false));
     myTree = new Tree();
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
@@ -119,7 +121,7 @@ final class AssociationsEditor {
       .addExtraAction(AnActionButton.fromAction(new RemoveAssociationAction()))
       .disableUpDownActions().disableAddAction().disableRemoveAction().createPanel();
     final IdeaTitledBorder border =
-      IdeBorderFactory.createTitledBorder(XPathBundle.message("border.title.associated.files"), false, JBUI.emptyInsets());
+      IdeBorderFactory.createTitledBorder(XPathBundle.message("border.title.associated.files"), false, JBInsets.emptyInsets());
     UIUtil.addBorder(rightPanel, border.setShowLine(false));
     splitter.setSecondComponent(rightPanel);
   }
@@ -200,6 +202,11 @@ final class AssociationsEditor {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getTreeSelection(myTree) instanceof PsiFile);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

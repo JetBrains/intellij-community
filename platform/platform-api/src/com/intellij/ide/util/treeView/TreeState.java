@@ -224,7 +224,7 @@ public final class TreeState implements JDOMExternalizable {
     if (userObject == null) return "";
     Object value =
       userObject instanceof NodeDescriptorProvidingKey ? ((NodeDescriptorProvidingKey)userObject).getKey() :
-      userObject instanceof AbstractTreeNode ? ((AbstractTreeNode)userObject).getValue() :
+      userObject instanceof AbstractTreeNode ? ((AbstractTreeNode<?>)userObject).getValue() :
       userObject;
     if (value instanceof NavigationItem) {
       try {

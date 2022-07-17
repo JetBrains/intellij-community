@@ -1,15 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -30,9 +26,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
+@Service(Service.Level.PROJECT)
 @State(name = "editorHistoryManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class EditorHistoryManager implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(EditorHistoryManager.class);
@@ -241,7 +239,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   }
 
   /**
-   * @return a set of valid files that are in the history, oldest first.
+   * @return a list of valid files that are in the history, oldest first.
    */
   @NotNull
   public synchronized List<VirtualFile> getFileList() {
@@ -253,16 +251,6 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       }
     }
     return result;
-  }
-
-  /**
-   * @deprecated use {@link #getFileList()}
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public synchronized LinkedHashSet<VirtualFile> getFileSet() {
-    return new LinkedHashSet<>(getFileList());
   }
 
   public synchronized boolean hasBeenOpen(@NotNull VirtualFile f) {

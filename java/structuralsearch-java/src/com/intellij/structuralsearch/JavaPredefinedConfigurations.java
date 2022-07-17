@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -91,22 +91,22 @@ final class JavaPredefinedConfigurations {
                                 getClassType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.fields.of.the.class"), "fields of a class",
                                 "class '_Class:[script( \"!__context__.interface && !__context__.enum && !__context__.record\" )] {\n" +
-                                "  '_FieldType 'Field+ = '_Init?;\n" +
+                                "  '_FieldType 'Field = '_Init?;\n" +
                                 "}",
                                 getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.all.methods.of.the.class.within.hierarchy"),
                                 "all methods of a class (within hierarchy)",
                                 "class '_Class:[script( \"!__context__.interface && !__context__.enum && !__context__.record\" )] {\n" +
-                                "  '_ReturnType 'Method+:* ('_ParameterType '_Parameter*);\n" +
+                                "  '_ReturnType 'Method:* ('_ParameterType '_Parameter*);\n" +
                                 "}",
                                 getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.all.fields.of.the.class"), "all fields of a class",
                                 "class '_Class:[script( \"!__context__.interface && !__context__.enum && !__context__.record\" )] {\n" +
-                                "  '_FieldType 'Field+:* = '_Init?;\n" +
+                                "  '_FieldType 'Field:* = '_Init?;\n" +
                                 "}",
                                 getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.instance.fields.of.the.class"), "instance fields of a class",
-                                "class '_Class { \n  @Modifier(\"Instance\") '_FieldType 'Field+ = '_Init?;\n}",
+                                "class '_Class { \n  @Modifier(\"Instance\") '_FieldType 'Field = '_Init?;\n}",
                                 getClassType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.packagelocal.fields.of.the.class"), "package-private fields",
                                 "@Modifier(\"packageLocal\") '_FieldType 'Field = '_Init?;",
@@ -131,11 +131,11 @@ final class JavaPredefinedConfigurations {
                                 "interface 'Interface {}",
                                 getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.inner.classes"), "inner classes",
-                                "class '_ {\n  class 'InnerClass+ {}\n}",
+                                "class '_ {\n  class 'InnerClass {}\n}",
                                 getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.all.inner.classes.within.hierarchy"),
                                 "all inner classes (within hierarchy)",
-                                "class '_Class {\n  class 'InnerClass+:* {}\n}",
+                                "class '_Class {\n  class 'InnerClass:* {}\n}",
                                 getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.anonymous.classes"), "anonymous classes",
                                 "new 'AnonymousClass() {}",
@@ -172,7 +172,7 @@ final class JavaPredefinedConfigurations {
                                 getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.static.fields.without.final"),
                                 "static fields that are not final",
-                                "static '_Type 'Variable+:[ script( \"!__context__.hasModifierProperty(\"final\")\" ) ] = '_Init?;",
+                                "static '_Type 'Variable:[ script( \"!__context__.hasModifierProperty(\"final\")\" ) ] = '_Init?;",
                                 getClassType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.interfaces.having.no.descendants"),
                                 "interface that is not implemented or extended",
@@ -193,8 +193,8 @@ final class JavaPredefinedConfigurations {
                                 "( '_Type <'_GenericArgument+> ) '_Expr",
                                 getGenericsType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.type.var.substitutions.in.instanceof.with.generic.types"),
-                                "type var substitutions in intanceof with generic types",
-                                "'_Expr instanceof '_Type <'Substitutions+> ",
+                                "type var substitutions in instanceof with generic types",
+                                "'_Expr instanceof '_Type <'Substitutions> ",
                                 getGenericsType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.variables.of.generic.types"), "variables of generic types",
                                 "'_Type <'_GenericArgument+>  'Var = '_Init?;",
@@ -233,10 +233,14 @@ final class JavaPredefinedConfigurations {
                                 " * '_Comment\n" +
                                 " * @'_Tag* '_TagValue*\n" +
                                 " */\n" +
-                                "'_Type+ 'Field+ = '_Init*;",
+                                "'_Type+ 'Field = '_Init*;",
                                 getMetadataType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.javadoc.tags"), "javadoc tags",
-                                "/** @'Tag+ '_TagValue* */", getMetadataType(), JavaFileType.INSTANCE),
+                                "/**\n" +
+                                " * '_Comment\n" +
+                                " * @'Tag '_TagValue*\n" +
+                                " */",
+                                getMetadataType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.xdoclet.metadata"), "XDoclet metadata",
                                 "/** @'Tag \n  '_Property+\n*/",
                                 getMetadataType(), JavaFileType.INSTANCE),
@@ -248,7 +252,7 @@ final class JavaPredefinedConfigurations {
                                 "class 'Class {}", getMetadataType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.annotated.fields"), "annotated fields",
                                 "@'_Annotation+\n" +
-                                "'_FieldType 'Field+ = '_Init?;\n",
+                                "'_FieldType 'Field = '_Init?;\n",
                                 getMetadataType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.annotated.methods"), "annotated methods",
                                 "@'_Annotation+\n'_MethodType '_Method('_ParameterType '_Parameter*);",

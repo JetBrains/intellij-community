@@ -26,7 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.trivialif.MergeIfAndIntention;
@@ -55,10 +55,10 @@ public class SurroundWithIfFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
-    PsiElement anchorStatement = RefactoringUtil.getParentStatement(element, false);
+    PsiElement anchorStatement = CommonJavaRefactoringUtil.getParentStatement(element, false);
     LOG.assertTrue(anchorStatement != null);
     if (anchorStatement.getParent() instanceof PsiLambdaExpression) {
-      final PsiCodeBlock body = RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)anchorStatement.getParent());
+      final PsiCodeBlock body = CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)anchorStatement.getParent());
       anchorStatement = body.getStatements()[0];
     }
     Editor editor = PsiEditorUtil.findEditor(anchorStatement);

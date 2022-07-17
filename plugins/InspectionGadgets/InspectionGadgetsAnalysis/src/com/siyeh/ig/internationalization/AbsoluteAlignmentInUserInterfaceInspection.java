@@ -124,7 +124,7 @@ public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
   private static class AbsoluteAlignmentInUserInterfaceVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       final PsiElement referenceNameElement = expression.getReferenceNameElement();
       if (referenceNameElement ==  null) {

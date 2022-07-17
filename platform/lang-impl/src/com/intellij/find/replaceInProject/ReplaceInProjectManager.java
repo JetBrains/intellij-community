@@ -527,7 +527,7 @@ public final class ReplaceInProjectManager {
     }
 
     final List<Usage> usages = new ArrayList<>(usagesSet);
-    usages.sort(UsageViewImpl.USAGE_COMPARATOR);
+    usages.sort(UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET);
 
     if (!ensureUsagesWritable(replaceContext, usages)) return;
 

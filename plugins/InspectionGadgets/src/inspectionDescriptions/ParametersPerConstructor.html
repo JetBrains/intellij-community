@@ -1,10 +1,15 @@
 <html>
 <body>
-Reports a constructor with too many parameters.
-<p>Such objects are hard to instantiate, especially if some parameters are optional. Constructors with too many parameters may indicate that refactoring is necessary. Consider applying the builder pattern, for example.
+Reports constructors whose number of parameters exceeds the specified maximum.
+Such objects are hard to instantiate, especially if some parameters are optional.
+Constructors with too many parameters may indicate that refactoring is necessary.
+Consider applying the builder pattern, for example.
 <p><b>Example:</b></p>
 <pre><code>
-  public BankAccount(long accountNumber, String owner, double balance, double interestRate) {
+  public BankAccount(long accountNumber,
+                     String owner,
+                     double balance,
+                     double interestRate) {
     // fields initialization
   }
 </code></pre>

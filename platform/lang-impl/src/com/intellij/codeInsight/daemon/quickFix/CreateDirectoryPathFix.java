@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
@@ -10,6 +12,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 /**
  * Quick fix that creates a new directory in one of the target directories. Automatically creates all intermediate directories of
@@ -56,5 +60,10 @@ public class CreateDirectoryPathFix extends AbstractCreateFileFix {
     throws IncorrectOperationException {
 
     targetDirectory.createSubdirectory(myNewFileName);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.Html(getDescription(AllIcons.Nodes.Folder));
   }
 }

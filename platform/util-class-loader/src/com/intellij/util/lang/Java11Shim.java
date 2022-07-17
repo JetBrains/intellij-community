@@ -1,13 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-@ReviseWhenPortedToJDK("11")
 @ApiStatus.Internal
 // implementation of `copyOf` is allowed to not do copy - it can return the same map, read `copyOf` as `immutable`
 public abstract class Java11Shim {
@@ -24,13 +22,8 @@ public abstract class Java11Shim {
     }
 
     @Override
-    public <E> @NotNull List<E> copyOf(List<? extends E> collection) {
+    public <E> @NotNull List<E> copyOfCollection(Collection<? extends E> collection) {
       return Collections.unmodifiableList(new ArrayList<>(collection));
-    }
-
-    @Override
-    public @NotNull <E> List<E> listOf(E[] collection) {
-      return Arrays.asList(collection);
     }
   };
 
@@ -38,7 +31,5 @@ public abstract class Java11Shim {
 
   public abstract <@NotNull E> @NotNull Set<E> copyOf(Set<? extends E> collection);
 
-  public abstract <@NotNull E> @NotNull List<E> copyOf(List<? extends E> collection);
-
-  public abstract <@NotNull E> @NotNull List<E> listOf(E[] collection);
+  public abstract <@NotNull E> @NotNull List<E> copyOfCollection(Collection<? extends E> collection);
 }

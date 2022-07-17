@@ -2,6 +2,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +17,10 @@ public interface GlobalIndexFilter {
    */
   boolean isExcludedFromIndex(@NotNull VirtualFile virtualFile, @NotNull IndexId<?, ?> indexId);
 
+  default boolean isExcludedFromIndex(@NotNull VirtualFile virtualFile, @NotNull IndexId<?, ?> indexId, Project project) {
+    return isExcludedFromIndex(virtualFile, indexId);
+  }
+
   int getVersion();
 
   boolean affectsIndex(@NotNull IndexId<?, ?> indexId);
@@ -25,9 +30,9 @@ public interface GlobalIndexFilter {
   /**
    * Returns true if the given file should be excluded from indexing by any of the registered filters.
    */
-  static boolean isExcludedFromIndexViaFilters(@NotNull VirtualFile file, @NotNull IndexId<?, ?> indexId) {
+  static boolean isExcludedFromIndexViaFilters(@NotNull VirtualFile file, @NotNull IndexId<?, ?> indexId, Project project) {
     for (GlobalIndexFilter filter : EP_NAME.getExtensionList()) {
-      if (filter.isExcludedFromIndex(file, indexId)) {
+      if (filter.isExcludedFromIndex(file, indexId, project)) {
         return true;
       }
     }

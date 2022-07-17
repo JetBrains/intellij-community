@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PROBLEM: none
 
 fun foo(arg: Int) = arg.toString()

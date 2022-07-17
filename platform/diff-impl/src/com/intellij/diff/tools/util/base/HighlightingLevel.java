@@ -7,6 +7,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.util.Predicates;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,13 +17,12 @@ import javax.swing.*;
 import java.util.function.Predicate;
 
 public enum HighlightingLevel {
-  INSPECTIONS("option.highlighting.level.inspections", AllIcons.Ide.HectorOn, rangeHighlighter -> true),
+  INSPECTIONS("option.highlighting.level.inspections", AllIcons.Ide.HectorOn, Predicates.alwaysTrue()),
 
   ADVANCED("option.highlighting.level.syntax", AllIcons.Ide.HectorSyntax, rangeHighlighter -> {
     if (rangeHighlighter.getLayer() > HighlighterLayer.ADDITIONAL_SYNTAX) return false;
     HighlightInfo info = HighlightInfo.fromRangeHighlighter(rangeHighlighter);
-    if (info != null && info.getSeverity().compareTo(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) >= 0) return false;
-    return true;
+    return info == null || info.getSeverity().compareTo(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) < 0;
   }),
 
   SIMPLE("option.highlighting.level.none", AllIcons.Ide.HectorOff, rangeHighlighter ->

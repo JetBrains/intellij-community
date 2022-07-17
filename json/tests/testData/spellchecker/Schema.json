@@ -1,6 +1,12 @@
 {
   "properties": {
-    "qwertyuiop": {}
+    "qwertyuiop": {},
+    "bugagahjkl": {
+      "enum": [
+        "ququhjkl",
+        "pupuhjkl"
+      ]
+    }
   },
   "patternProperties": {
     "^boo.*moo$": {}

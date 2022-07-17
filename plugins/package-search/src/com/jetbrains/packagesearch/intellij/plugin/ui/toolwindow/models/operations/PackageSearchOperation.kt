@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
@@ -6,22 +22,21 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 
-internal sealed class PackageSearchOperation<T>(
-    open val model: T,
-    open val projectModule: ProjectModule
-) {
+internal sealed class PackageSearchOperation<T> {
 
-    sealed class Package(
-        override val model: UnifiedDependency,
-        override val projectModule: ProjectModule
-    ) : PackageSearchOperation<UnifiedDependency>(model, projectModule) {
+    abstract val model: T
+    abstract val projectModule: ProjectModule
+
+    sealed class Package : PackageSearchOperation<UnifiedDependency>() {
+
+        abstract override val model: UnifiedDependency
 
         data class Install(
             override val model: UnifiedDependency,
             override val projectModule: ProjectModule,
             val newVersion: PackageVersion,
             val newScope: PackageScope
-        ) : Package(model, projectModule) {
+        ) : Package() {
 
             override fun toString() =
                 "Package.Install(model='${model.displayName}', projectModule='${projectModule.getFullName()}', " +
@@ -33,7 +48,7 @@ internal sealed class PackageSearchOperation<T>(
             override val projectModule: ProjectModule,
             val currentVersion: PackageVersion,
             val currentScope: PackageScope
-        ) : Package(model, projectModule) {
+        ) : Package() {
 
             override fun toString() =
                 "Package.Remove(model='${model.displayName}', projectModule='${projectModule.getFullName()}', " +
@@ -47,7 +62,7 @@ internal sealed class PackageSearchOperation<T>(
             val currentScope: PackageScope,
             val newVersion: PackageVersion,
             val newScope: PackageScope
-        ) : Package(model, projectModule) {
+        ) : Package() {
 
             override fun toString() =
                 "Package.ChangeInstalled(model='${model.displayName}', projectModule='${projectModule.getFullName()}', " +
@@ -56,15 +71,14 @@ internal sealed class PackageSearchOperation<T>(
         }
     }
 
-    sealed class Repository(
-        override val model: UnifiedDependencyRepository,
-        override val projectModule: ProjectModule
-    ) : PackageSearchOperation<UnifiedDependencyRepository>(model, projectModule) {
+    sealed class Repository : PackageSearchOperation<UnifiedDependencyRepository>() {
+
+        abstract override val model: UnifiedDependencyRepository
 
         data class Install(
             override val model: UnifiedDependencyRepository,
             override val projectModule: ProjectModule
-        ) : Repository(model, projectModule) {
+        ) : Repository() {
 
             override fun toString() = "Repository.Install(model='${model.displayName}', projectModule='${projectModule.getFullName()}')"
         }
@@ -72,7 +86,7 @@ internal sealed class PackageSearchOperation<T>(
         data class Remove(
             override val model: UnifiedDependencyRepository,
             override val projectModule: ProjectModule
-        ) : Repository(model, projectModule) {
+        ) : Repository() {
 
             override fun toString() = "Repository.Remove(model='${model.displayName}', projectModule='${projectModule.getFullName()}')"
         }

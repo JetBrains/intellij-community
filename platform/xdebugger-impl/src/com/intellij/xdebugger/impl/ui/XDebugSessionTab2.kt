@@ -146,12 +146,19 @@ class XDebugSessionTab2(
   override fun getWatchesContentId() = debuggerContentId
   override fun getFramesContentId() = debuggerContentId
 
+  private fun getWatchesViewImpl(session: XDebugSessionImpl, watchesIsVariables: Boolean): XWatchesViewImpl {
+    val useSplitterView = (session.debugProcess as? XDebugSessionTabCustomizer)?.bottomLocalsComponentProvider != null
+    return if (useSplitterView)
+      XSplitterWatchesViewImpl(session, watchesIsVariables, true, withToolbar = true)
+    else
+      XWatchesViewImpl(session, watchesIsVariables, true, true)
+  }
+
   override fun addVariablesAndWatches(session: XDebugSessionImpl) {
     val variablesView: XVariablesView?
     val watchesView: XVariablesView?
-    val layoutDisposable = Disposer.newDisposable(ui.contentManager, "debugger layout disposable")
     if (isWatchesInVariables) {
-      variablesView = XWatchesViewImpl2(session, true, true, layoutDisposable)
+      variablesView = getWatchesViewImpl(session, true)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
       variables = variablesView
 
@@ -162,7 +169,7 @@ class XDebugSessionTab2(
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
       variables = variablesView
       
-      watchesView = XWatchesViewImpl2(session, false, true, layoutDisposable)
+      watchesView = getWatchesViewImpl(session, watchesIsVariables = false)
       registerView(DebuggerContentInfo.WATCHES_CONTENT, watchesView)
       myWatchesView = watchesView
     }
@@ -189,7 +196,7 @@ class XDebugSessionTab2(
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView)
 
     framesView.setThreadsVisible(threadsIsVisible)
-    splitter.firstComponent = xThreadsFramesView.mainPanel
+    splitter.firstComponent = xThreadsFramesView.mainComponent
     addVariablesAndWatches(session)
 
     val name = debuggerContentId
@@ -199,7 +206,9 @@ class XDebugSessionTab2(
 
     myUi.addContent(content, 0, PlaceInGrid.left, false)
 
-    ui.defaults.initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION, LayoutAttractionPolicy.FocusOnce())
+    ui.defaults
+      .initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION, LayoutAttractionPolicy.FocusOnce())
+      .initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION, LayoutAttractionPolicy.FocusOnce())
 
     toolWindow?.let {
       val contentManager = it.contentManager
@@ -380,7 +389,7 @@ class XDebugSessionTab2(
         is XDebuggerThreadsList -> component.isEmpty
         is XDebuggerFramesList -> component.isEmpty
         is XDebuggerTree -> component.isEmpty
-        else -> false;
+        else -> false
       }
     }
   }

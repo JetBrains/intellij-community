@@ -107,7 +107,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   /**
    * @param function a function to process current structure on a valid thread
-   * @return a promise that will be succeed if the specified function returns non-null value
+   * @return a promise that will succeed when the specified function returns non-null value
    */
   @NotNull
   private <Result> Promise<Result> onValidThread(@NotNull Function<? super Structure, ? extends Result> function) {
@@ -125,7 +125,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   /**
    * @param path     a path to the node
    * @param function a function to process corresponding node on a valid thread
-   * @return a promise that will be succeed if the specified function returns non-null value
+   * @return a promise that will succeed when the specified function returns non-null value
    */
   @NotNull
   private <Result> Promise<Result> onValidThread(@NotNull TreePath path, @NotNull Function<? super Node, ? extends Result> function) {
@@ -140,7 +140,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   /**
    * @param element  an element of the internal tree structure
    * @param function a function to process corresponding node on a valid thread
-   * @return a promise that will be succeed if the specified function returns non-null value
+   * @return a promise that will succeed when the specified function returns non-null value
    */
   @NotNull
   private <Result> Promise<Result> onValidThread(@NotNull Object element, @NotNull Function<? super Node, ? extends Result> function) {
@@ -173,7 +173,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @param path      a path to the node to invalidate
    * @param structure {@code true} means that all child nodes must be invalidated;
    *                  {@code false} means that only the node specified by {@code path} must be updated
-   * @return a promise that will be succeed if path to invalidate is found
+   * @return a promise that will succeed when path is invalidated
    * @see #invalidate(Object, boolean)
    */
   @NotNull
@@ -188,7 +188,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @param element   an element of the internal tree structure
    * @param structure {@code true} means that all child nodes must be invalidated;
    *                  {@code false} means that only the node specified by {@code path} must be updated
-   * @return a promise that will be succeed if path to invalidate is found
+   * @return a promise that will succeed when the path is invalidated
    * @see #invalidate(TreePath, boolean)
    */
   @NotNull
@@ -264,7 +264,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * Promises to create default visitor to find the specified element.
    *
    * @param element an element of the internal tree structure
-   * @return a promise that will be succeed if visitor is created
+   * @return a promise that will succeed when the visitor is created
    * @see TreeUtil#promiseExpand(JTree, TreeVisitor)
    * @see TreeUtil#promiseSelect(JTree, TreeVisitor)
    */
@@ -332,7 +332,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   @Override
   public final boolean isLeaf(Object object) {
     Node node = getNode(object, false);
-    return node == null || node.isLeaf(this::validateChildren);
+    return node == null || node.isModelLeaf(this::validateChildren);
   }
 
   @Override
@@ -420,16 +420,19 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   }
 
   private static final class Node extends DefaultMutableTreeNode implements LeafState.Supplier {
+    /**
+     * {@link DefaultMutableTreeNode#children} is not used, all methods are overridden.
+     */
     @SuppressWarnings("FieldNameHidesFieldInSuperclass")
     private final Reference<List<Node>> children = new Reference<>();
     private LeafState leafState; // NB!: modify in #canReuse only
     private final int hashCode;
 
-    private Node(@NotNull AbstractTreeStructure structure, @NotNull Object element, NodeDescriptor<?> parent) {
+    Node(@NotNull AbstractTreeStructure structure, @NotNull Object element, NodeDescriptor<?> parent) {
       this(structure.createDescriptor(element, parent), structure.getLeafState(element), element.hashCode());
     }
 
-    private Node(@NotNull NodeDescriptor descriptor, @NotNull LeafState leafState, int hashCode) {
+    Node(@NotNull NodeDescriptor descriptor, @NotNull LeafState leafState, int hashCode) {
       super(descriptor, leafState != LeafState.ALWAYS);
       this.hashCode = hashCode;
       setLeafState(leafState);
@@ -457,9 +460,9 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
     private void invalidate() {
       if (leafState != LeafState.ALWAYS) {
+        getChildren().forEach(Node::invalidate);
         children.invalidate();
         if (LOG.isTraceEnabled()) LOG.debug("node invalidated: ", this);
-        getChildren().forEach(Node::invalidate);
       }
     }
 
@@ -545,12 +548,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       return getChildren().size();
     }
 
-    @Override
-    public boolean isLeaf() {
-      return isLeaf(null);
-    }
-
-    private boolean isLeaf(@Nullable Consumer<? super Node> validator) {
+    boolean isModelLeaf(@Nullable Consumer<? super Node> validator) {
       // root node should not be a leaf node when it is not visible in a tree
       // javax.swing.tree.VariableHeightLayoutCache.TreeStateNode.expand(boolean)
       if (null == getParent()) return false;

@@ -5,6 +5,7 @@
     <keyboard-shortcut first-keystroke="control Y"/>
   </action>
   <action id="ActivateFavoritesToolWindow"/>
+  <action id="ActivateBookmarksToolWindow"/>
   <action id="ActivateFindToolWindow">
     <keyboard-shortcut first-keystroke="shift alt U"/>
     <keyboard-shortcut first-keystroke="shift control 0"/>
@@ -30,7 +31,6 @@
     <keyboard-shortcut first-keystroke="alt 6"/>
     <keyboard-shortcut first-keystroke="control 6"/>
   </action>
-  <action id="AddToFavoritesPopup"/>
   <action id="Back">
     <keyboard-shortcut first-keystroke="alt LEFT"/>
     <mouse-shortcut keystroke="button4"/>
@@ -343,6 +343,7 @@
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="shift control M"/>
   </action>
+  <action id="ShowTypeBookmarks"/>
   <action id="ShowPopupMenu">
     <keyboard-shortcut first-keystroke="CONTEXT_MENU"/>
     <keyboard-shortcut first-keystroke="shift F10"/>
@@ -403,4 +404,6 @@
   <action id="Vcs.MoveChangedLinesToChangelist"/>
   <action id="ChangesView.Move"/>
   <action id="GoFmtProjectAction"/>
+  <action id="EditorDecreaseFontSizeGlobal"/>
+  <action id="EditorIncreaseFontSizeGlobal"/>
 </keymap>

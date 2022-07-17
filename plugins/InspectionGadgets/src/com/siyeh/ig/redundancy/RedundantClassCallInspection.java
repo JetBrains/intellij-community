@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -26,7 +27,7 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
         if (nameElement == null) return;
         boolean isInstance = IS_INSTANCE.test(call);
@@ -38,7 +39,9 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
             PsiType classType = typeElement.getType();
             PsiExpression argument = call.getArgumentList().getExpressions()[0];
             PsiType argumentType = argument.getType();
-            if (argumentType == null || !argumentType.isConvertibleFrom(classType)) {
+            if (argumentType == null ||
+                (isInstance && TypeConversionUtil.isPrimitiveAndNotNull(argumentType)) ||
+                !argumentType.isConvertibleFrom(classType)) {
               // will be a compilation error after replacement; skip this
               return;
             }

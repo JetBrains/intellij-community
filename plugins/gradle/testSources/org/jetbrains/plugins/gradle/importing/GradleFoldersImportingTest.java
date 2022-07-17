@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +20,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.plugins.gradle.GradleManager;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
+import org.jetbrains.plugins.gradle.service.project.data.GradleExcludeBuildFilesDataService;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
@@ -99,6 +101,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   private void assertNotDelegatedBaseJavaProject() {
     assertModules("project", "project.main", "project.test");
     assertContentRoots("project", getProjectPath());
+    assertNoExcludePatterns("project", "build.gradle");
 
     assertDefaultGradleJavaProjectFolders("project");
 
@@ -119,6 +122,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   private void assertDelegatedBaseJavaProject() {
     assertModules("project", "project.main", "project.test");
     assertContentRoots("project", getProjectPath());
+    assertNoExcludePatterns("project", "build.gradle");
 
     if (isGradleNewerOrSameAs("4.0")) {
       assertModuleOutputs("project.main",
@@ -190,9 +194,17 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertDefaultGradleJavaProjectFolders("project");
 
-    assertModuleOutput("project.main", getProjectPath() + "/build", "");
+    String mainClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/main" : "/build/classes/main";
+    assertModuleOutput("project.main", getProjectPath() + mainClassesOutputPath, "");
     String testClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/test" : "/build/classes/test";
     assertModuleOutput("project.test", "", getProjectPath() + testClassesOutputPath);
+
+    getCurrentExternalProjectSettings().setDelegatedBuild(false);
+    GradleSettings.getInstance(myProject).getPublisher().onBuildDelegationChange(false, getProjectPath());
+    assertModuleOutput("project.main", getProjectPath() + "/build", "");
+    assertModuleOutput("project.test", "", getProjectPath() + "/out/test/classes");
+
+    getCurrentExternalProjectSettings().setDelegatedBuild(true);
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project");
@@ -252,6 +264,28 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     importProjectUsingSingeModulePerGradleProject();
     assertSources("project", "src/generated/java", "src/main/java");
     assertTestSources("project", "src/test/java");
+  }
+
+  @Test
+  @TargetVersions("4.7+")
+  public void testResourceFoldersWithIdeaPluginInNonJavaProject() throws Exception {
+    createProjectSubDirs("python/src", "python/test", "python/resources");
+    importProject(createBuildScriptBuilder().withIdeaPlugin()
+                    .addPostfix(      "idea {",
+                                      "  module {",
+                                      "    sourceDirs += file('python/src')",
+                                      "    resourceDirs += file('python/resources')",
+                                      "    testSourceDirs += file('python/test')",
+                                      "  }",
+                                      "}")
+                    .generate());
+
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+
+    assertSources("project", "python/src");
+    assertResources("project", "python/resources");
+    assertTestSources("project", "python/test");
   }
 
   @Test
@@ -756,6 +790,75 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
       assertResources("project.app1", getProjectPath() + "/shared/resources");
       assertResources("project.app2");
     }
+  }
+
+  @Test
+  public void testBuildFileAtSourceRootLayout() throws Exception {
+    createProjectSubDir("build");
+    final GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
+      .withJavaPlugin()
+      .addPostfix(
+        "sourceSets {",
+        "  main.java.srcDirs = ['.']",
+        "}"
+      );
+
+    Registry.get(GradleExcludeBuildFilesDataService.REGISTRY_KEY).setValue(false);
+    importPerSourceSet(true);
+    importProject(buildScript.generate());
+    assertModules("project", "project.main", "project.test");
+    assertContentRoots("project");
+    assertContentRoots("project.main", getProjectPath());
+    assertExcludes("project.main", "build");
+    assertNoExcludePatterns("project.main", getExternalSystemConfigFileName());
+
+    Registry.get(GradleExcludeBuildFilesDataService.REGISTRY_KEY).setValue(true);
+    importPerSourceSet(true);
+    importProject(buildScript.generate());
+    assertModules("project", "project.main", "project.test");
+    assertContentRoots("project");
+    assertContentRoots("project.main", getProjectPath());
+    assertExcludes("project.main", "build");
+    assertExcludePatterns("project.main", getExternalSystemConfigFileName());
+
+    importPerSourceSet(false);
+    importProject(buildScript.generate());
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+    assertExcludes("project", "build");
+    assertExcludePatterns("project", getExternalSystemConfigFileName());
+  }
+
+  @Test
+  @TargetVersions("7.4+")
+  public void testJvmTestSuitesImported() throws Exception {
+    createDefaultDirs();
+    createProjectSubFile("src/integrationTest/java/A.java", "class A {}");
+    createProjectSubFile("src/integrationTest/resources/file.txt", "test data");
+    final GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
+      .withPlugin("java", null)
+      .withPlugin("jvm-test-suite", null)
+      .addPostfix(
+        "testing {",
+        "    suites { ",
+        "        test { ",
+        "            useJUnitJupiter() ",
+        "        }",
+        "        integrationTest(JvmTestSuite) { ",
+        "            dependencies {",
+        "                implementation project ",
+        "            }",
+        "        }",
+        "    }",
+        "}"
+      );
+
+    importProject(buildScript.generate());
+    assertDefaultGradleJavaProjectFolders("project");
+    final String testSourceSetModuleName = "project.integrationTest";
+    assertContentRoots(testSourceSetModuleName, getProjectPath() + "/src/integrationTest");
+    assertTestSources(testSourceSetModuleName, "java");
+    assertTestResources(testSourceSetModuleName, "resources");
   }
 
   protected void assertDefaultGradleJavaProjectFolders(@NotNull String mainModuleName) {

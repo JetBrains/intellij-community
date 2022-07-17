@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.errorreport.error.InternalEAPException;
@@ -91,7 +91,7 @@ final class ITNProxy {
   static @NotNull List<Developer> fetchDevelopers(@NotNull ProgressIndicator indicator) throws IOException {
     return HttpRequests.request(DEVELOPERS_LIST_URL).connectTimeout(3000).connect(request -> {
       List<Developer> developers = new ArrayList<>();
-      developers.add(Developer.NULL);
+      developers.add(Developer.Companion.getNULL());
 
       String line;
       while ((line = request.getReader().readLine()) != null) {
@@ -267,8 +267,8 @@ final class ITNProxy {
         append(builder, "assignee.id", Integer.toString(messageObj.getAssigneeId()));
       }
       append(builder, "assignee.list.visible", Boolean.toString(messageObj.isAssigneeVisible()));
-      if (messageObj.getDevelopersTimestamp() != null) {
-        append(builder, "assignee.list.timestamp", Long.toString(messageObj.getDevelopersTimestamp()));
+      if (messageObj.getDevListTimestamp() != null) {
+        append(builder, "assignee.list.timestamp", Long.toString(messageObj.getDevListTimestamp()));
       }
     }
 
@@ -277,11 +277,8 @@ final class ITNProxy {
 
   private static void append(StringBuilder builder, String key, @Nullable String value) {
     if (value != null && !value.isEmpty()) {
-      String encoded;
-      try { encoded = URLEncoder.encode(value, StandardCharsets.UTF_8.name()); }
-      catch (UnsupportedEncodingException e) { throw new IllegalStateException(e); }  // not expected to happen
       if (builder.length() > 0) builder.append('&');
-      builder.append(key).append('=').append(encoded);
+      builder.append(key).append('=').append(URLEncoder.encode(value, StandardCharsets.UTF_8));
     }
   }
 

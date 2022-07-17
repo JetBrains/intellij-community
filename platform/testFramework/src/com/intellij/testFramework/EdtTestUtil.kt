@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.openapi.util.ThrowableComputable
@@ -6,8 +6,7 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.TestOnly
 
 /**
- * Consider using Kotlin coroutines and `com.intellij.openapi.application.AppUIExecutor.onUiThread().coroutineDispatchingContext()`
- * @see com.intellij.openapi.application.AppUIExecutor.onUiThread
+ * Consider using Kotlin coroutines and [Dispatchers.EDT][com.intellij.openapi.application.EDT].
  */
 @TestOnly
 inline fun <V> runInEdtAndGet(crossinline compute: () -> V): V {
@@ -16,8 +15,7 @@ inline fun <V> runInEdtAndGet(crossinline compute: () -> V): V {
 }
 
 /**
- * Consider using Kotlin coroutines and `com.intellij.openapi.application.AppUIExecutor.onUiThread().coroutineDispatchingContext()`
- * @see com.intellij.openapi.application.AppUIExecutor.onUiThread
+ * Consider using Kotlin coroutines and [Dispatchers.EDT][com.intellij.openapi.application.EDT].
  */
 @TestOnly
 inline fun runInEdtAndWait(crossinline runnable: () -> Unit) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
 import com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser;
@@ -36,7 +37,7 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.MergedChange;
 import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -45,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 import java.util.function.Consumer;
@@ -57,7 +57,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES;
 
 /**
- * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
+ * Change browser for commits in the Log. For merge commits, can display changes to the commits parents in separate groups.
  */
 public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
@@ -74,7 +74,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull private Consumer<StatusText> myUpdateEmptyText = this::updateEmptyText;
   @NotNull private final Wrapper myToolbarWrapper;
   @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
-  @Nullable private EditorDiffPreview myEditorDiffPreview;
+  @Nullable private DiffPreviewController myEditorDiffPreviewController;
 
   VcsLogChangesBrowser(@NotNull Project project,
                        @NotNull MainVcsLogUiProperties uiProperties,
@@ -103,13 +103,12 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
     init();
 
-    setEditorDiffPreview(isWithEditorDiffPreview && VcsLogUiUtil.isDiffPreviewInEditor(myProject));
     if (isWithEditorDiffPreview) {
-      EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, () -> {
-        setEditorDiffPreview(VcsLogUiUtil.isDiffPreviewInEditor(myProject));
-      });
+      setEditorDiffPreview();
+      EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, this::setEditorDiffPreview);
     }
 
+    hideViewerBorder();
     myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"));
     myViewer.rebuildTree();
   }
@@ -126,15 +125,9 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     JComponent centerPanel = super.createCenterPanel();
     JScrollPane scrollPane = UIUtil.findComponentOfType(centerPanel, JScrollPane.class);
     if (scrollPane != null) {
-      ComponentUtil.putClientProperty(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
+      ClientProperty.put(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
     }
     return centerPanel;
-  }
-
-  @NotNull
-  @Override
-  protected Border createViewerBorder() {
-    return IdeBorderFactory.createBorder(SideBorder.TOP);
   }
 
   public void setToolbarHeightReferent(@NotNull JComponent referent) {
@@ -165,7 +158,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   protected List<AnAction> createPopupMenuActions() {
     return ContainerUtil.append(
       super.createPopupMenuActions(),
-      ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_POPUP_ACTION_GROUP)
+      ActionManager.getInstance().getAction(VcsLogActionIds.CHANGES_BROWSER_POPUP_ACTION_GROUP)
     );
   }
 
@@ -275,7 +268,8 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
       for (CommitId commitId : changesToParents.keySet()) {
         Collection<Change> changesFromParent = changesToParents.get(commitId);
         if (!changesFromParent.isEmpty()) {
-          ChangesBrowserNode<?> parentNode = new ChangesBrowserParentNode(commitId);
+          ChangesBrowserNode<?> parentNode = new TagChangesBrowserNode(new ParentTag(commitId.getHash(), getText(commitId)),
+                                                                       SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
           parentNode.markAsHelperNode();
 
           builder.insertSubtreeRoot(parentNode);
@@ -403,16 +397,18 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return ChangeDiffRequestProducer.create(project, change, context);
   }
 
-  public void setEditorDiffPreview(boolean isWithEditorDiffPreview) {
-    EditorDiffPreview preview = myEditorDiffPreview;
+  private void setEditorDiffPreview() {
 
-    if (isWithEditorDiffPreview && preview == null) {
-      preview = new VcsLogEditorDiffPreview(myProject, this);
-      myEditorDiffPreview = preview;
+    DiffPreviewController editorDiffPreviewController = myEditorDiffPreviewController;
+
+    boolean isWithEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject);
+
+    if (isWithEditorDiffPreview && editorDiffPreviewController == null) {
+      myEditorDiffPreviewController = new VcsLogChangesBrowserDiffPreviewController();
     }
-    else if (!isWithEditorDiffPreview && preview != null) {
-      preview.closePreview();
-      myEditorDiffPreview = null;
+    else if (!isWithEditorDiffPreview && editorDiffPreviewController != null) {
+      editorDiffPreviewController.getActivePreview().closePreview();
+      myEditorDiffPreviewController = null;
     }
   }
 
@@ -423,10 +419,15 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
   @Override
   protected @Nullable DiffPreview getShowDiffActionPreview() {
-    return myEditorDiffPreview;
+    DiffPreviewController editorDiffPreviewController = myEditorDiffPreviewController;
+    return editorDiffPreviewController != null ? editorDiffPreviewController.getActivePreview() : null;
   }
 
-  private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
+  public void selectChange(@NotNull Object userObject, @Nullable ChangesBrowserNode.Tag tag) {
+    selectObjectWithTag(myViewer, userObject, tag);
+  }
+
+  public @Nullable ChangesBrowserNode.Tag getTag(@NotNull Change change) {
     CommitId parentId = null;
     for (CommitId commitId : myChangesToParents.keySet()) {
       if (myChangesToParents.get(commitId).contains(change)) {
@@ -435,8 +436,13 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
       }
     }
 
-    if (parentId != null) {
-      RootTag tag = new RootTag(parentId.getHash(), getText(parentId));
+    if (parentId == null) return null;
+    return new ParentTag(parentId.getHash(), getText(parentId));
+  }
+
+  private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
+    ChangesBrowserNode.Tag tag = getTag(change);
+    if (tag != null) {
       context.put(ChangeDiffRequestProducer.TAG_KEY, tag);
     }
   }
@@ -451,24 +457,6 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     context.put(VCS_DIFF_CENTER_CONTENT_TITLE, getRevisionTitle(centerRevision, centerFile, null));
     context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(rightRevision, rightFile, centerFile));
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(leftRevision, leftFile, centerFile == null ? rightFile : centerFile));
-  }
-
-  class ChangesBrowserParentNode extends ChangesBrowserStringNode {
-    @NotNull private final CommitId myCommitId;
-
-    protected ChangesBrowserParentNode(@NotNull CommitId commitId) {
-      super(getText(commitId));
-      myCommitId = commitId;
-    }
-
-    @Override
-    public boolean shouldExpandByDefault() {
-      return false;
-    }
-
-    RootTag wrap() {
-      return new RootTag(myCommitId.getHash(), getUserObject());
-    }
   }
 
   @NotNull
@@ -486,31 +474,31 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     void onModelUpdated();
   }
 
-  private static class RootTag implements ChangesBrowserNode.Tag {
-    private final @NotNull Hash myCommit;
+  private class VcsLogChangesBrowserDiffPreviewController extends DiffPreviewControllerBase {
+    @NotNull
+    @Override
+    protected DiffPreview getSimplePreview() {
+      return new VcsLogEditorDiffPreview(myProject, VcsLogChangesBrowser.this);
+    }
+
+    @NotNull
+    @Override
+    protected CombinedDiffPreview createCombinedDiffPreview() {
+      return new VcsLogCombinedDiffPreview(VcsLogChangesBrowser.this);
+    }
+  }
+
+  private static class ParentTag extends ChangesBrowserNode.ValueTag<Hash> {
     private final @NotNull @Nls String myText;
 
-    RootTag(@NotNull Hash commit, @NotNull @Nls String text) {
-      myCommit = commit;
+    ParentTag(@NotNull Hash commit, @NotNull @Nls String text) {
+      super(commit);
       myText = text;
     }
 
     @Override
     public String toString() {
       return myText;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      RootTag tag = (RootTag)o;
-      return Objects.equals(myCommit, tag.myCommit);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myCommit);
     }
   }
 }

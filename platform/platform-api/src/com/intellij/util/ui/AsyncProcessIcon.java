@@ -42,11 +42,6 @@ public class AsyncProcessIcon extends AnimatedIcon {
     return new Dimension(myPassiveIcon.getIconWidth(), myPassiveIcon.getIconHeight());
   }
 
-  @Override
-  protected void paintIcon(Graphics g, Icon icon, int x, int y) {
-    super.paintIcon(g, icon, x, y);
-  }
-
   public void updateLocation(final JComponent container) {
     final Rectangle newBounds = calculateBounds(container);
     if (!newBounds.equals(getBounds())) {

@@ -25,6 +25,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
+/**
+ * Use {@link TempCopyArchiveHandler} if you'd like to extract archive to a temporary file
+ * and use it to read attributes and content.
+ */
 public abstract class ArchiveHandler {
   public static final long DEFAULT_LENGTH = 0L;
   public static final long DEFAULT_TIMESTAMP = -1L;
@@ -47,7 +51,7 @@ public abstract class ArchiveHandler {
     }
   }
 
-  private final File myPath;
+  private volatile File myPath;
   private final Object myLock = new Object();
   private volatile Reference<Map<String, EntryInfo>> myEntries = new SoftReference<>(null);
   private volatile Reference<AddonlyKeylessHash<EntryInfo, Object>> myChildrenEntries = new SoftReference<>(null);
@@ -59,6 +63,13 @@ public abstract class ArchiveHandler {
 
   public @NotNull File getFile() {
     return myPath;
+  }
+
+  protected void setFile(@NotNull File path) {
+    synchronized (myLock) {
+      assert myEntries.get() == null && myChildrenEntries.get() == null && !myCorrupted : "Archive already opened";
+      myPath = path;
+    }
   }
 
   public @Nullable FileAttributes getAttributes(@NotNull String relativePath) {
@@ -149,11 +160,8 @@ public abstract class ArchiveHandler {
     return result;
   }
 
-  public void dispose() {
-    clearCaches();
-  }
-
-  protected void clearCaches() {
+  @ApiStatus.OverrideOnly
+  public void clearCaches() {
     synchronized (myLock) {
       myEntries.clear();
       myChildrenEntries.clear();
@@ -220,7 +228,7 @@ public abstract class ArchiveHandler {
                                     @Nullable Logger logger,
                                     @NotNull String entryName,
                                     @SuppressWarnings("BoundedWildcard") @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, @NotNull ? extends EntryInfo> entryFun) {
-    String normalizedName = StringUtil.trimTrailing(StringUtil.trimLeading(FileUtil.normalize(entryName), '/'), '/');
+    String normalizedName = normalizeName(entryName);
     if (normalizedName.isEmpty() || normalizedName.contains("..") && ArrayUtil.contains("..", normalizedName.split("/"))) {
       if (logger != null) logger.trace("invalid entry: " + getFile() + "!/" + entryName);
       return;
@@ -240,6 +248,11 @@ public abstract class ArchiveHandler {
     Pair<String, String> path = split(normalizedName);
     EntryInfo parent = directoryEntry(map, logger, path.first);
     map.put(normalizedName, entryFun.apply(parent, path.second));
+  }
+
+  @NotNull
+  protected String normalizeName(@NotNull String entryName) {
+    return StringUtil.trimTrailing(StringUtil.trimLeading(FileUtil.normalize(entryName), '/'), '/');
   }
 
   private EntryInfo directoryEntry(Map<String, EntryInfo> map, @Nullable Logger logger, String normalizedName) {
@@ -268,30 +281,7 @@ public abstract class ArchiveHandler {
 
   /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  protected @NotNull EntryInfo getOrCreate(@NotNull Map<String, EntryInfo> map, @NotNull String entryName) {
-    EntryInfo entry = map.get(entryName);
-    if (entry == null) {
-      int slashP = entryName.lastIndexOf('/');
-      int p = Math.max(slashP, entryName.lastIndexOf('\\'));
-      String parentName = p > 0 ? entryName.substring(0, p) : "";
-      String shortName = p > 0 ? entryName.substring(p + 1) : entryName;
-      String fixedParent = parentName.replace('\\', '/');
-      //noinspection StringEquality
-      if (fixedParent != parentName || slashP == -1 && p != -1) {
-        parentName = fixedParent;
-        entryName = parentName + '/' + shortName;
-      }
-      EntryInfo parent = getOrCreate(map, parentName);
-      entry = new EntryInfo(shortName, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
-      map.put(entryName, entry);
-    }
-    return entry;
-  }
-
-  /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   protected @NotNull Pair<String, String> splitPath(@NotNull String entryName) {
     return split(entryName);
   }

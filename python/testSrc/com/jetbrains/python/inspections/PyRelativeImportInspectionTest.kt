@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
 import com.intellij.application.options.RegistryManager
@@ -15,8 +15,15 @@ class PyRelativeImportInspectionTest: PyInspectionTestCase() {
   }
 
   override fun tearDown() {
-    RegistryManager.getInstance()["python.explicit.namespace.packages"].resetToDefault()
-    super.tearDown()
+    try {
+      RegistryManager.getInstance()["python.explicit.namespace.packages"].resetToDefault()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   override fun getInspectionClass(): Class<out PyInspection> {

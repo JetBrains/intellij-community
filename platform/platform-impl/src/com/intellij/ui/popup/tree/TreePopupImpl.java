@@ -11,7 +11,9 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.TreePopup;
 import com.intellij.openapi.ui.popup.TreePopupStep;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
@@ -19,6 +21,7 @@ import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,6 +136,8 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
         oldCollapseAction.actionPerformed(e);
       }
     });
+
+    PopupUtil.applyNewUIBackground(myWizardTree);
 
     return myWizardTree;
   }
@@ -387,6 +392,16 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
         !getTreeStep().isSelectable(value, extractUserObject(value)) && selected || shouldPaintSelected || hasFocus;
 
       super.customizeCellRenderer(tree, value, shouldPaintSelected, expanded, leaf, row, shouldPaintFocus);
+    }
+
+    @Override
+    @NotNull
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      if (ExperimentalUI.isNewUI()) {
+        size.height = JBUI.CurrentTheme.Tree.rowHeight();
+      }
+      return size;
     }
   }
 

@@ -57,7 +57,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
   private static final NotNullizer ourNotNullizer = new NotNullizer("ServiceViewTreeTraversal.NotNull");
 
   private final Project myProject;
-  private final Invoker myInvoker = Invoker.forBackgroundThreadWithReadAction(this);
+  private final Invoker myInvoker = Invoker.forBackgroundThreadWithoutReadAction(this);
   private final List<ServiceViewItem> myRoots = new CopyOnWriteArrayList<>();
   private volatile boolean myRootsInitialized;
   private final List<ServiceModelEventListener> myListeners = new CopyOnWriteArrayList<>();

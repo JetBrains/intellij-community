@@ -3,23 +3,24 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiYieldStatement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UYieldExpression
 
+@ApiStatus.Internal
 class JavaUYieldExpression(
   override val sourcePsi: PsiYieldStatement,
-  private val psiExpression: PsiExpression?,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UYieldExpression {
   override val expression: UExpression? by lazy {
-    JavaConverter.convertOrEmpty(psiExpression, this)
+    JavaConverter.convertOrEmpty(sourcePsi.expression, this)
   }
 
   override val label: String?
     get() = null
 
   override val jumpTarget: UElement? by lz {
-    sourcePsi.findEnclosingExpression().takeIf { sourcePsi !== it }?.let { JavaConverter.convertExpression(it, null) }
+    sourcePsi.findEnclosingExpression().takeIf { sourcePsi !== it }?.let { JavaConverter.convertExpression(it, null, UExpression::class.java) }
   }
 }

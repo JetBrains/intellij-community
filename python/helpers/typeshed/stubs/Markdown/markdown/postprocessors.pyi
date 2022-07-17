@@ -13,5 +13,5 @@ class RawHtmlPostprocessor(Postprocessor):
 class AndSubstitutePostprocessor(Postprocessor): ...
 
 class UnescapePostprocessor(Postprocessor):
-    RE: Pattern
+    RE: Pattern[str]
     def unescape(self, m): ...

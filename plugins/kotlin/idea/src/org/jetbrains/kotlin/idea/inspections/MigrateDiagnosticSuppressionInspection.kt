@@ -10,13 +10,15 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.annotationEntryVisitor
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class MigrateDiagnosticSuppressionInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -30,7 +32,7 @@ class MigrateDiagnosticSuppressionInspection : AbstractKotlinInspection(), Clean
                 val expression = argument.getArgumentExpression() as? KtStringTemplateExpression ?: continue
                 val text = expression.text
                 if (text.firstOrNull() != '\"' || text.lastOrNull() != '\"') continue
-                val newDiagnosticFactory = MIGRATION_MAP[StringUtil.unquoteString(text)] ?: continue
+                val newDiagnosticFactory = Holder.MIGRATION_MAP[StringUtil.unquoteString(text)] ?: continue
 
                 holder.registerProblem(
                     expression,
@@ -54,12 +56,10 @@ class MigrateDiagnosticSuppressionInspection : AbstractKotlinInspection(), Clean
             val psiFactory = KtPsiFactory(expression)
             expression.replace(psiFactory.createExpression("\"${diagnosticFactory.name}\""))
         }
-
     }
 
-    companion object {
-
-        private val MIGRATION_MAP = mapOf(
+    private object Holder {
+        val MIGRATION_MAP = mapOf(
             "HEADER_DECLARATION_WITH_BODY" to EXPECTED_DECLARATION_WITH_BODY,
             "HEADER_CLASS_CONSTRUCTOR_DELEGATION_CALL" to EXPECTED_CLASS_CONSTRUCTOR_DELEGATION_CALL,
             "HEADER_CLASS_CONSTRUCTOR_PROPERTY_PARAMETER" to EXPECTED_CLASS_CONSTRUCTOR_PROPERTY_PARAMETER,

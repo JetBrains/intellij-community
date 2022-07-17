@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -30,13 +32,26 @@ import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.ROOT_ADDED;
 import static java.util.stream.Collectors.toList;
 
 public abstract class VcsIntegrationEnabler {
-
   @NotNull protected final Project myProject;
   @NotNull private final AbstractVcs myVcs;
+  @Nullable private final VirtualFile myTargetDirectory;
 
+  @SuppressWarnings("unused") // Used in 3rd-party plugins
   protected VcsIntegrationEnabler(@NotNull AbstractVcs vcs) {
+    this(vcs, null);
+  }
+
+  protected VcsIntegrationEnabler(@NotNull AbstractVcs vcs, @Nullable VirtualFile targetDirectory) {
     myProject = vcs.getProject();
     myVcs = vcs;
+    myTargetDirectory = targetDirectory;
+  }
+
+  public void detectAndEnable() {
+    Collection<VcsRoot> roots = myTargetDirectory != null
+                                ? VcsRootDetector.getInstance(myProject).detect(myTargetDirectory)
+                                : VcsRootDetector.getInstance(myProject).detect();
+    enable(roots);
   }
 
   public void enable(@NotNull Collection<? extends VcsRoot> vcsRoots) {
@@ -47,13 +62,13 @@ public abstract class VcsIntegrationEnabler {
       }).
       map(VcsRoot::getPath).collect(toList());
 
-    VirtualFile projectDir = myProject.getBaseDir();
-    assert projectDir != null : "Base dir is unexpectedly null for project: " + myProject;
+    VirtualFile directoryToInitVcs = myTargetDirectory != null ? myTargetDirectory :  ProjectUtil.guessProjectDir(myProject);
+    assert directoryToInitVcs != null : "Base dir is unexpectedly null for project: " + myProject;
 
     if (roots.isEmpty()) {
-      boolean succeeded = initOrNotifyError(projectDir);
+      boolean succeeded = initOrNotifyError(directoryToInitVcs);
       if (succeeded) {
-        addVcsRoots(Collections.singleton(projectDir));
+        addVcsRoots(Collections.singleton(directoryToInitVcs));
       }
     }
     else {
@@ -74,7 +89,7 @@ public abstract class VcsIntegrationEnabler {
     return StringUtil.join(roots, VirtualFile::getPresentableUrl, ", ");
   }
 
-  protected abstract boolean initOrNotifyError(@NotNull final VirtualFile projectDir);
+  protected abstract boolean initOrNotifyError(@NotNull final VirtualFile directory);
 
   protected void notifyAddedRoots(Collection<? extends VirtualFile> roots) {
     String message = VcsBundle.message("roots.notification.content.added.vcs.name.roots", myVcs.getName(), roots.size(), joinRootsPaths(roots));

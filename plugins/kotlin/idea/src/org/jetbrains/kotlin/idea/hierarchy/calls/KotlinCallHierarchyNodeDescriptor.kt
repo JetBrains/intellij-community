@@ -9,13 +9,14 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.roots.ui.util.CompositeAppearance
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.ui.LayeredIcon
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -96,6 +97,7 @@ class KotlinCallHierarchyNodeDescriptor(
             )
         }
 
+        @NlsSafe
         val packageName = KtPsiUtil.getPackageName(targetElement as KtElement) ?: ""
 
         myHighlightedText.ending.addText("  ($packageName)", getPackageNameAttributes())
@@ -121,6 +123,7 @@ class KotlinCallHierarchyNodeDescriptor(
     }
 
     companion object {
+        @NlsSafe
         private fun renderElement(element: PsiElement?): String? {
             when (element) {
                 is KtFile -> {

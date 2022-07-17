@@ -12,6 +12,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
@@ -148,6 +149,16 @@ public abstract class XDebugProcess {
    */
   @Nullable
   public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
+    return null;
+  }
+
+  /**
+   * Implement {@link  XDropFrameHandler} and return its instance from this method to enable Drop Frame action
+   * @return {@link  XDropFrameHandler} instance
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  public XDropFrameHandler getDropFrameHandler() {
     return null;
   }
 

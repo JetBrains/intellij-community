@@ -1,16 +1,97 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedRepository
 
 internal class PackageSearchOperationFactory {
+
+    inline fun <reified T : PackageModel, V : PackageVersion> computeInstallActionsFor(
+        project: Project,
+        packageModel: T,
+        moduleModel: ModuleModel,
+        defaultScope: PackageScope,
+        knownRepositories: KnownRepositories.InTargetModules,
+        targetVersion: NormalizedPackageVersion<V>
+    ): List<PackageSearchOperation<*>> {
+        if (packageModel !is PackageModel.SearchResult) return emptyList()
+
+        val versionToInstall = targetVersion.originalVersion
+        return createAddPackageOperations(
+            packageModel = packageModel,
+            version = versionToInstall,
+            scope = defaultScope,
+            targetModules = TargetModules.from(moduleModel),
+            repoToInstall = knownRepositories.repositoryToAddWhenInstallingOrUpgrading(project, packageModel, versionToInstall)
+        )
+    }
+
+    inline fun <reified T : PackageModel, V : PackageVersion> computeUpgradeActionsFor(
+        project: Project,
+        packageModel: T,
+        moduleModel: ModuleModel,
+        knownRepositories: KnownRepositories.InTargetModules,
+        targetVersion: NormalizedPackageVersion<V>
+    ): List<PackageSearchOperation<*>> {
+        if (packageModel !is PackageModel.Installed) return emptyList()
+
+        return packageModel.usageInfo.asSequence()
+            .filter { it.projectModule == moduleModel.projectModule }
+            .flatMap { usageInfo ->
+                createChangePackageVersionOperations(
+                    packageModel = packageModel,
+                    newVersion = targetVersion.originalVersion,
+                    targetModules = TargetModules.from(moduleModel),
+                    repoToInstall = knownRepositories.repositoryToAddWhenInstallingOrUpgrading(project, packageModel, targetVersion.originalVersion)
+                )
+            }
+            .toList()
+    }
+
+    inline fun <reified T : PackageModel> computeRemoveActionsFor(
+        packageModel: T,
+        moduleModel: ModuleModel
+    ): List<PackageSearchOperation<*>> {
+        if (packageModel !is PackageModel.Installed) return emptyList()
+
+        return packageModel.usageInfo.asSequence()
+            .filter { it.projectModule == moduleModel.projectModule }
+            .flatMap { usageInfo ->
+                createRemovePackageOperations(
+                    packageModel = packageModel,
+                    version = usageInfo.declaredVersion,
+                    scope = usageInfo.scope,
+                    targetModules = TargetModules.from(moduleModel)
+                )
+            }
+            .toList()
+    }
 
     fun createChangePackageVersionOperations(
         packageModel: PackageModel.Installed,
@@ -76,9 +157,9 @@ internal class PackageSearchOperationFactory {
         return usagesByModule(targetModules, packageModel)
             .flatMap { (module, usageInfo) ->
                 val packageOperation = PackageSearchOperation.Package.ChangeInstalled(
-                    model = packageModel.toUnifiedDependency(usageInfo.version, usageInfo.scope),
+                    model = packageModel.toUnifiedDependency(usageInfo.declaredVersion, usageInfo.scope),
                     projectModule = module.projectModule,
-                    currentVersion = usageInfo.version,
+                    currentVersion = usageInfo.declaredVersion,
                     currentScope = usageInfo.scope,
                     newVersion = newVersion,
                     newScope = newScope
@@ -130,7 +211,7 @@ internal class PackageSearchOperationFactory {
         return usagesByModule(targetModules, packageModel)
             .map { (module, usageInfo) ->
                 PackageSearchOperation.Package.Remove(
-                    model = packageModel.toUnifiedDependency(usageInfo.version, usageInfo.scope),
+                    model = packageModel.toUnifiedDependency(usageInfo.declaredVersion, usageInfo.scope),
                     projectModule = module.projectModule,
                     currentVersion = version,
                     currentScope = scope

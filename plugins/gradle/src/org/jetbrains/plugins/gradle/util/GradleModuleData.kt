@@ -10,13 +10,14 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 
 @ApiStatus.Experimental
 class GradleModuleData(private val dataNode: DataNode<out ModuleData>) {
-  private val moduleData = dataNode.data
+  val moduleData = dataNode.data
 
   init {
     val systemId = moduleData.owner
     require(systemId == GradleConstants.SYSTEM_ID) { "Gradle module expected but '$systemId' module has been got." }
   }
 
+  val moduleName = moduleData.moduleName
   val gradleProjectDir = moduleData.linkedExternalProjectPath
   val directoryToRunTask: String
     get() = moduleData.getDirectoryToRunTask()
@@ -36,6 +37,10 @@ class GradleModuleData(private val dataNode: DataNode<out ModuleData>) {
 
   fun <T> findAll(key: Key<T>): Collection<T> {
     return ExternalSystemApiUtil.findAll(dataNode, key).mapNotNull { it.data }
+  }
+
+  fun <T> find(key: Key<T>): T? {
+    return ExternalSystemApiUtil.find(dataNode, key)?.data
   }
 }
 

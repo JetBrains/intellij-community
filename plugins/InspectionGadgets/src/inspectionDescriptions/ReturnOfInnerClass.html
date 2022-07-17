@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports the <code>return</code> statements that return an instance of an anonymous, local, or inner class.
+Reports <code>return</code> statements that return an instance of an anonymous, local, or inner class.
 Such instances keep an implicit reference to the outer instance, which can prevent the outer instance from being garbage-collected.
 Any caller of a method returning such an instance might cause a memory leak by holding on to the instance returned.
 <!-- tooltip end -->

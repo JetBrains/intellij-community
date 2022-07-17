@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.sh.run.ShRunner;
@@ -13,7 +14,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
 import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory;
 import org.jetbrains.plugins.terminal.TerminalView;
@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 final class ShTerminalRunner implements ShRunner {
-  private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
+  private static final Logger LOG = Logger.getInstance(ShTerminalRunner.class);
 
   @Override
   public void run(@NotNull Project project,
@@ -91,7 +91,7 @@ final class ShTerminalRunner implements ShRunner {
     }
 
     String currentWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(shellTerminalWidget, null);
-    if (currentWorkingDirectory == null || !currentWorkingDirectory.equals(workingDirectory)) {
+    if (!FileUtil.pathsEqual(workingDirectory, currentWorkingDirectory)) {
       return null;
     }
 

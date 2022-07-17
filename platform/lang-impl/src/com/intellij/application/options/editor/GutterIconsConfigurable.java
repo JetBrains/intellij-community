@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -44,7 +45,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
   private JPanel myPanel;
   private CheckBoxList<GutterIconDescriptor> myList;
   private JBCheckBox myShowGutterIconsJBCheckBox;
-  private List<GutterIconDescriptor> myDescriptors;
+  private final List<GutterIconDescriptor> myDescriptors = new ArrayList<>();
   private final Map<GutterIconDescriptor, PluginDescriptor> myFirstDescriptors = new HashMap<>();
 
   @Nls
@@ -71,7 +72,6 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     MultiMap<PluginDescriptor, LanguageExtensionPoint<LineMarkerProvider>> map = ContainerUtil.groupBy(Arrays.asList(extensions), function);
     Map<GutterIconDescriptor, PluginDescriptor> pluginDescriptorMap = new HashMap<>();
     Set<String> ids = new HashSet<>();
-    myDescriptors = new ArrayList<>();
     for (final PluginDescriptor descriptor : map.keySet()) {
       Collection<LanguageExtensionPoint<LineMarkerProvider>> points = map.get(descriptor);
       for (LanguageExtensionPoint<LineMarkerProvider> extensionPoint : points) {
@@ -168,7 +168,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     }
   }
 
-  private static @Nls String getPluginDisplayName(@Nullable PluginDescriptor pluginDescriptor) {
+  private static @Nls String getPluginDisplayName(@NotNull PluginDescriptor pluginDescriptor) {
     return pluginDescriptor instanceof IdeaPluginDescriptor &&
            PluginManagerCore.CORE_ID.equals(pluginDescriptor.getPluginId()) ?
            IdeBundle.message("title.common") :
@@ -240,6 +240,11 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       ShowSettingsUtil.getInstance().showSettingsDialog(e.getProject(), GutterIconsConfigurable.class);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }

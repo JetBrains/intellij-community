@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.project.Project
@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.UnindexedFileStatus
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
+import com.intellij.util.indexing.roots.IndexableFilesIterator
 
 class ScanningStatistics(val fileSetName: String) {
   var numberOfScannedFiles: Int = 0
@@ -19,13 +20,16 @@ class ScanningStatistics(val fileSetName: String) {
 
   var numberOfFilesForIndexing: Int = 0
   var numberOfFilesFullyIndexedByInfrastructureExtension: Int = 0
+  var listOfFilesFullyIndexedByInfrastructureExtension = arrayListOf<String>()
 
   var scanningTime: TimeNano = 0
+  var statusTime: TimeNano = 0
 
   var timeProcessingUpToDateFiles: TimeNano = 0
   var timeUpdatingContentLessIndexes: TimeNano = 0
   var timeIndexingWithoutContent: TimeNano = 0
 
+  var providerRoots = emptyList<String>()
   val scannedFiles = arrayListOf<ScannedFile>()
 
   data class ScannedFile(val portableFilePath: PortableFilePath, val isUpToDate: Boolean, val wasFullyIndexedByInfrastructureExtension: Boolean)
@@ -36,7 +40,7 @@ class ScanningStatistics(val fileSetName: String) {
     if (unindexedFileStatus.shouldIndex) {
       numberOfFilesForIndexing++
     }
-    scanningTime += statusTime
+    this.statusTime += statusTime
 
     timeProcessingUpToDateFiles += unindexedFileStatus.timeProcessingUpToDateFiles
     timeUpdatingContentLessIndexes += unindexedFileStatus.timeUpdatingContentLessIndexes
@@ -44,10 +48,12 @@ class ScanningStatistics(val fileSetName: String) {
 
     if (unindexedFileStatus.wasFullyIndexedByInfrastructureExtension) {
       numberOfFilesFullyIndexedByInfrastructureExtension++
+      listOfFilesFullyIndexedByInfrastructureExtension.add(fileOrDir.toString())
     }
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
       val portableFilePath = getIndexedFilePath(fileOrDir, project)
-      scannedFiles += ScannedFile(portableFilePath, !unindexedFileStatus.shouldIndex, unindexedFileStatus.wasFullyIndexedByInfrastructureExtension)
+      scannedFiles += ScannedFile(portableFilePath, !unindexedFileStatus.shouldIndex,
+                                  unindexedFileStatus.wasFullyIndexedByInfrastructureExtension)
     }
   }
 
@@ -56,5 +62,29 @@ class ScanningStatistics(val fileSetName: String) {
   }
   catch (e: Exception) {
     PortableFilePath.AbsolutePath(file.url)
+  }
+
+  fun addScanningTime(time: Long) {
+    scanningTime += time
+  }
+
+  fun setNoRootsForRefresh() {
+    providerRoots = listOf("Not collected for refresh")
+  }
+
+  fun setProviderRoots(provider: IndexableFilesIterator, project: Project) {
+    if(!IndexDiagnosticDumper.shouldDumpProviderRootPaths) return
+    val rootUrls = provider.getRootUrls(project)
+    if (rootUrls.isEmpty()) return
+    val basePath = project.basePath
+    if (basePath == null) {
+      providerRoots = rootUrls.toList()
+    }
+    else {
+      val baseUrl = "file://$basePath"
+      providerRoots = rootUrls.map { url ->
+        if (url.startsWith(baseUrl)) url.replaceRange(0, baseUrl.length, "<project root>") else url
+      }.toList()
+    }
   }
 }

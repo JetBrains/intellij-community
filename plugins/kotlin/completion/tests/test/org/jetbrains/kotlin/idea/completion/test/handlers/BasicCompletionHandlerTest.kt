@@ -3,9 +3,10 @@
 package org.jetbrains.kotlin.completion.handlers
 
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import org.jetbrains.kotlin.idea.completion.test.handlers.CompletionHandlerTestBase
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -13,7 +14,7 @@ import org.junit.runner.RunWith
 @TestRoot("completion/tests/testData")
 @TestMetadata("handlers")
 @RunWith(JUnit38ClassRunner::class)
-class BasicCompletionHandlerTest : CompletionHandlerTestBase() {
+class BasicCompletionHandlerTest12 : CompletionHandlerTestBase() {
     private fun checkResult() {
         fixture.checkResultByFile(getTestName(false) + ".kt.after")
     }
@@ -63,6 +64,22 @@ class BasicCompletionHandlerTest : CompletionHandlerTestBase() {
     fun testParamsFunction() = doTest()
 
     fun testNamedParametersCompletion() = doTest()
+
+    fun testNamedParametersAreNotProperlyOrdered() = doTest()
+
+    fun testAddNameToExistingArgument() = doTest()
+
+    fun testBasicCompletionWorksAfterLastAllowedArgument() = doTest()
+
+    fun testNamedParameterBeforeAnotherNamedParameter() = doTest() // The test checks parsing error
+
+    fun testNamedParameterCompletionWithLeadingSpace() = doTest()
+
+    fun testNamedParameterWithExistingComma() = doTest()
+
+    fun testNamedParameterManualRenameCompletion() = doTest()
+
+    fun testNamedParameterCompletionWithTrailingCommaAndSpace() = doTest()
 
     fun testNamedParametersCompletionOnEqual() = doTest(0, "paramTest =", "paramTest =", null, '=')
 
@@ -147,5 +164,18 @@ class BasicCompletionHandlerTest : CompletionHandlerTestBase() {
 
     fun testInnerClass() {
         doTest(1, "Inner", null, null, '\n')
+    }
+
+    fun testNoParentheses() {
+        val settings = EditorSettingsExternalizable.getInstance()
+        settings.setInsertParenthesesAutomatically(false)
+        try {
+            fixture.configureByText("test.kt", "fun myFunction() { myFun<caret> }")
+            fixture.completeBasic()
+            fixture.checkResult("fun myFunction() { myFunction<caret> }")
+        }
+        finally {
+            settings.setInsertParenthesesAutomatically(true)
+        }
     }
 }

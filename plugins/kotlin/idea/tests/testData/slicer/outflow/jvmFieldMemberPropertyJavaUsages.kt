@@ -1,5 +1,5 @@
 // FLOW: OUT
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class A {
     @JvmField val <caret>x = 1

@@ -36,12 +36,12 @@ import org.jetbrains.kotlin.asJava.finder.KtLightPackage
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.findClassAcrossModuleDependencies
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.*
@@ -79,10 +79,10 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         val withRuntime = renameObject.getNullableString("withRuntime")
         val libraryInfos = renameObject.getAsJsonArray("libraries")?.map { it.asString!! }
         if (libraryInfos != null) {
-            val jarPaths = listOf(KotlinArtifacts.instance.kotlinStdlib) + libraryInfos.map {
+            val jarPaths = listOf(KotlinArtifacts.kotlinStdlib) + libraryInfos.map {
                 File(PlatformTestUtil.getCommunityPath(), it.substringAfter("@"))
             }
-            return KotlinWithJdkAndRuntimeLightProjectDescriptor(jarPaths, listOf(KotlinArtifacts.instance.kotlinStdlibSources))
+            return KotlinWithJdkAndRuntimeLightProjectDescriptor(jarPaths, listOf(KotlinArtifacts.kotlinStdlibSources))
         }
 
         if (withRuntime != null) {
@@ -169,7 +169,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         val classFQN = renameParamsObject.getString("classId").toClassId().asSingleFqName().asString()
         val newName = renameParamsObject.getString("newName")
 
-        doTestCommittingDocuments(context) { _ ->
+        doTestCommittingDocuments(context) {
             val aClass = context.javaFacade.findClass(classFQN, context.project.allScope())!!
             val substitution = RenamePsiElementProcessor.forElement(aClass).substituteElementToRename(aClass, null)
 
@@ -234,10 +234,11 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
             val fileFqn = mainFile.packageFqName
             Assert.assertTrue("File '${mainFilePath}' should have package containing ${fqn}", fileFqn.isSubpackageOf(fqn))
 
-            val packageSegment = mainFile.packageDirective!!.packageNames[fqn.pathSegments().size - 1]
+            val packageDirective = mainFile.packageDirective!!
+            val packageSegment = packageDirective.packageNames[fqn.pathSegments().size - 1]
             val segmentReference = packageSegment.mainReference
 
-            val psiElement = segmentReference.resolve()!!
+            val psiElement = segmentReference.resolve() ?: error("unable to resolve '${segmentReference.element.text}' from $packageDirective '${packageDirective.text}'")
 
             val substitution = RenamePsiElementProcessor.forElement(psiElement).substituteElementToRename(psiElement, null)
             runRenameProcessor(context.project, newName, substitution, renameParamsObject, true, true)

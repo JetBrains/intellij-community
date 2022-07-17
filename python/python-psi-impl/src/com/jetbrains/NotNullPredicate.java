@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Ilya.Kazakevich
  * @deprecated use java 8 primitives instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class NotNullPredicate<T> implements Predicate<T> {
   /**
    * Simply filters nulls

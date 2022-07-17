@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -43,6 +43,20 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class ModuleBuilder extends AbstractModuleBuilder {
+  public static final int JVM_WEIGHT = 2000;
+  public static final int KOTLIN_WEIGHT = 1900;
+  public static final int GROOVY_WEIGHT = 1800;
+  public static final int SCALA_WEIGHT = 1700;
+  public static final int WEB_WEIGHT = 1600;
+  public static final int PYTHON_WEIGHT = 1500;
+  public static final int RUST_WEIGHT = 1400;
+  public static final int PHP_WEIGHT = 1300;
+  public static final int RUBY_WEIGHT = 1200;
+  public static final int GO_WEIGHT = 1100;
+  public static final int IJ_PLUGIN_WEIGHT = 1000;
+
+  public static final int OTHER_WEIGHT = 900;
+
   private static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = new ExtensionPointName<>("com.intellij.moduleBuilder");
 
   private static final Logger LOG = Logger.getInstance(ModuleBuilder.class);
@@ -50,11 +64,10 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   private final EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
   protected Sdk myJdk;
   private String myName;
-  @NonNls private String myModuleFilePath;
+  private @NonNls String myModuleFilePath;
   private String myContentEntryPath;
 
-  @NotNull
-  public List<Class<? extends ModuleWizardStep>> getIgnoredSteps() {
+  public @NotNull List<Class<? extends ModuleWizardStep>> getIgnoredSteps() {
     return Collections.emptyList();
   }
 
@@ -101,8 +114,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return true;
   }
 
-  @Nullable
-  protected static String acceptParameter(String param) {
+  protected static @Nullable String acceptParameter(String param) {
     return param != null && param.length() > 0 ? param : null;
   }
 
@@ -116,8 +128,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   @Override
-  @Nullable
-  public @NonNls String getBuilderId() {
+  public @Nullable @NonNls String getBuilderId() {
     ModuleType<?> moduleType = getModuleType();
     return moduleType == null ? null : moduleType.getId();
   }
@@ -137,8 +148,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
    *         will be invoked)
    */
   @Override
-  @Nullable
-  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+  public @Nullable ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     return modifyStep(settingsStep);
   }
 
@@ -185,8 +195,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return type == null ? null : type.modifyProjectTypeStep(settingsStep, this);
   }
 
-  @NotNull
-  protected List<WizardInputField<?>> getAdditionalFields() {
+  protected @NotNull List<WizardInputField<?>> getAdditionalFields() {
     return Collections.emptyList();
   }
 
@@ -203,8 +212,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     myUpdaters.add(updater);
   }
 
-  @Nullable
-  public String getContentEntryPath() {
+  public @Nullable String getContentEntryPath() {
     if (myContentEntryPath == null) {
       final String directory = getModuleFileDirectory();
       if (directory == null) {
@@ -244,8 +252,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return modifiableRootModel.addContentEntry(moduleContentRoot);
   }
 
-  @Nullable
-  public String getModuleFileDirectory() {
+  public @Nullable String getModuleFileDirectory() {
     if (myModuleFilePath == null) {
       return null;
     }
@@ -256,9 +263,8 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return parent.replace(File.separatorChar, '/');
   }
 
-  @NotNull
-  public Module createModule(@NotNull ModifiableModuleModel moduleModel)
-    throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
+  public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
+    throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, ConfigurationException, JDOMException {
     LOG.assertTrue(myName != null);
     LOG.assertTrue(myModuleFilePath != null);
 
@@ -300,8 +306,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     }
   }
 
-  @NotNull
-  public Module createAndCommitIfNeeded(@NotNull Project project, @Nullable ModifiableModuleModel model, boolean runFromProjectWizard)
+  public @NotNull Module createAndCommitIfNeeded(@NotNull Project project, @Nullable ModifiableModuleModel model, boolean runFromProjectWizard)
     throws InvalidDataException, ConfigurationException, IOException, JDOMException, ModuleWithNameAlreadyExists {
     final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
     final Module module = createModule(moduleModel);
@@ -333,14 +338,12 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   @Override
-  @Nullable
-  public List<Module> commit(@NotNull final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
+  public @Nullable List<Module> commit(final @NotNull Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
     final Module module = commitModule(project, model);
     return module != null ? Collections.singletonList(module) : null;
   }
 
-  @Nullable
-  public Module commitModule(@NotNull final Project project, @Nullable final ModifiableModuleModel model) {
+  public @Nullable Module commitModule(final @NotNull Project project, final @Nullable ModifiableModuleModel model) {
     if (canCreateModule()) {
       if (myName == null) {
         myName = project.getName();
@@ -365,18 +368,15 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return getModuleType().getNodeIcon(false);
   }
 
-  @NlsContexts.DetailedDescription
-  public String getDescription() {
+  public @NlsContexts.DetailedDescription String getDescription() {
     return getModuleType().getDescription();
   }
 
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public String getPresentableName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName() {
     return getModuleTypeName();
   }
 
-  @Nls(capitalization = Nls.Capitalization.Title)
-  protected String getModuleTypeName() {
+  protected @Nls(capitalization = Nls.Capitalization.Title) String getModuleTypeName() {
     String name = getModuleType().getName();
     return StringUtil.trimEnd(name, " Module");  // NON-NLS
   }
@@ -413,12 +413,11 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     myJdk = jdk;
   }
 
-  @NotNull
-  public FrameworkRole getDefaultAcceptableRole() {
+  public @NotNull FrameworkRole getDefaultAcceptableRole() {
     return getModuleType().getDefaultAcceptableRole();
   }
 
-  public static abstract class ModuleConfigurationUpdater {
+  public abstract static class ModuleConfigurationUpdater {
 
     public abstract void update(@NotNull Module module, @NotNull ModifiableRootModel rootModel);
 

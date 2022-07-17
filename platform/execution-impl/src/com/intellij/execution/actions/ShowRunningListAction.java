@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -9,6 +9,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -42,8 +43,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-public final class ShowRunningListAction extends AnAction {
-  public ShowRunningListAction() {
+final class ShowRunningListAction extends AnAction {
+
+  ShowRunningListAction() {
     super(ExecutionBundle.messagePointer("show.running.list.action.name"),
           ExecutionBundle.messagePointer("show.running.list.action.description"), null);
   }
@@ -96,13 +98,13 @@ public final class ShowRunningListAction extends AnAction {
               component = SwingUtilities.getDeepestComponentAt(component, mouseEvent.getX(), mouseEvent.getY());
               Object value = ((JComponent)component).getClientProperty(KEY);
               if (value instanceof Trinity) {
-                Project aProject = (Project)((Trinity)value).first;
+                Project aProject = (Project)((Trinity<?, ?, ?>)value).first;
                 JFrame aFrame = WindowManager.getInstance().getFrame(aProject);
                 if (aFrame != null && !aFrame.isActive()) {
                   IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(aFrame, true));
                 }
                 RunContentManager.getInstance(aProject).
-                  toFrontRunContent((Executor)((Trinity)value).second, (RunContentDescriptor)((Trinity)value).third);
+                  toFrontRunContent((Executor)((Trinity<?, ?, ?>)value).second, (RunContentDescriptor)((Trinity<?, ?, ?>)value).third);
               }
             }
           }
@@ -165,6 +167,11 @@ public final class ShowRunningListAction extends AnAction {
     }
 
     return Pair.create(panel, state.toString());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

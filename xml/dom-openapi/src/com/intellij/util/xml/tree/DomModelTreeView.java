@@ -110,7 +110,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
         if (element.isValid()) {
           queueUpdate(DomUtil.getFile(element).getVirtualFile());
         } else if (element instanceof DomFileElement) {
-          final XmlFile xmlFile = ((DomFileElement)element).getFile();
+          final XmlFile xmlFile = ((DomFileElement<?>)element).getFile();
           queueUpdate(xmlFile.getVirtualFile());
         }
       }

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(value: Int?): Int? {
     return if (value != null) baz(value) else null

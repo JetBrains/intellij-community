@@ -145,7 +145,6 @@
     <inspection_tool class="AssignmentToStaticFieldFromInstanceMethod" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="Tests" level="WARNING" enabled="false" />
     </inspection_tool>
-    <inspection_tool class="AssignmentUsedAsCondition" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="BadExpressionStatementJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="BindingAnnotationWithoutInject" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="BlockingMethodInNonBlockingContext" enabled="true" level="WARNING" enabled_by_default="true">
@@ -159,7 +158,6 @@
     </inspection_tool>
     <inspection_tool class="BpmnConfigDomInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="BuildoutUnresolvedPartInspection" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="BusyWait" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="BvConfigDomInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="BvConstraintMappingsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="CallerJS" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -191,7 +189,6 @@
     <inspection_tool class="ConditionalBreakInInfiniteLoop" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="noConversionToDoWhile" value="true" />
     </inspection_tool>
-    <inspection_tool class="ConditionalExpressionWithIdenticalBranches" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ConflictingAnnotations" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ConfusingOctalEscape" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ConstantConditionalExpression" enabled="true" level="WARNING" enabled_by_default="true">
@@ -227,6 +224,9 @@
     <inspection_tool class="CovariantEquals" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="DeclareParentsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="DeprecatedGemInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="DialogTitleCapitalization" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Tests" level="WARNING" enabled="false" />
+    </inspection_tool>
     <inspection_tool class="DjangoBrokenLineCommentInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DjangoCloseTagInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DjangoUnresolvedFilterInspection" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -247,12 +247,11 @@
     <inspection_tool class="EmptyStatementBodyJS" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="m_reportEmptyBlocks" value="false" />
     </inspection_tool>
-    <inspection_tool class="EmptySynchronizedStatement" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="EnumSwitchStatementWhichMissesCases" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoreSwitchStatementsWithDefault" value="true" />
     </inspection_tool>
-    <inspection_tool class="EqualsWithItself" enabled="true" level="Strong Warning" enabled_by_default="true">
-      <scope name="Tests" level="Strong Warning" enabled="false" />
+    <inspection_tool class="EqualsWithItself" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Tests" level="WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="ExceptionCaughtLocallyJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ExceptionNameDoesntEndWithException" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -268,7 +267,6 @@
     <inspection_tool class="Finalize" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoreTrivialFinalizers" value="true" />
     </inspection_tool>
-    <inspection_tool class="FinalizeNotProtected" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ForLoopReplaceableByWhile" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="m_ignoreLoopsWithoutConditions" value="false" />
     </inspection_tool>
@@ -308,14 +306,10 @@
     <inspection_tool class="InspectionDescriptionNotFoundInspection" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="InstanceofCatchParameter" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="InstanceofIncompatibleInterface" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="IntegerMultiplicationImplicitCastToLong" enabled="true" level="WARNING" enabled_by_default="true">
-      <option name="ignoreNonOverflowingCompileTimeConstants" value="true" />
-    </inspection_tool>
     <inspection_tool class="InterceptionAnnotationWithoutRuntimeRetention" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InvalidImplementedBy" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InvalidProvidedBy" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InvalidRequestParameters" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="IteratorHasNextCallsIteratorNext" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="JBoss" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="JSDeprecatedSymbols" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="JSDuplicatedDeclaration" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -515,8 +509,8 @@
       <option name="m_onlyPrivateOrFinal" value="true" />
       <option name="m_ignoreEmptyMethods" value="true" />
     </inspection_tool>
-    <inspection_tool class="MethodNamesDifferOnlyByCase" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MethodNameSameAsParentName" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="MethodNamesDifferOnlyByCase" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MethodOverloadsParentMethod" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MethodOverridesStaticMethod" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MinMaxValuesInspection" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -749,24 +743,17 @@
       <option name="m_ignoreExpressionsContainingConstants" value="false" />
     </inspection_tool>
     <inspection_tool class="PointlessBooleanExpressionJS" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="PointlessNullCheck" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="android" level="WARNING" enabled="false" />
-    </inspection_tool>
+    <inspection_tool class="PointlessNullCheck" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PrivatePropertyName" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="namePattern" value="([A-Z_][A-Z_\d]*)|(_?[a-z][A-Za-z\d]*)" />
     </inspection_tool>
-    <inspection_tool class="ProtectedMemberInFinalClass" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PublicConstructorInNonPublicClass" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PublicFieldAccessedInSynchronizedContext" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="Query_bound_parameters" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Query_index_required" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Query_restricted" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="RawUseOfParameterizedType" enabled="true" level="WEAK WARNING" enabled_by_default="true">
-      <option name="ignoreObjectConstruction" value="false" />
       <option name="ignoreParametersOfOverridingMethods" value="true" />
-    </inspection_tool>
-    <inspection_tool class="RedundantCast" enabled="true" level="WARNING" enabled_by_default="true">
-      <option name="IGNORE_SUSPICIOUS_METHOD_CALLS" value="true" />
     </inspection_tool>
     <inspection_tool class="RedundantSamConstructor" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="RedundantScopeBinding" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -779,6 +766,9 @@
     <inspection_tool class="ReplaceAssignmentWithOperatorAssignment" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoreLazyOperators" value="true" />
       <option name="ignoreObscureOperators" value="true" />
+    </inspection_tool>
+    <inspection_tool class="ReplaceNullCheck" enabled="true" level="INFORMATION" enabled_by_default="true">
+      <option name="noWarningReplacementBigger" value="false" />
     </inspection_tool>
     <inspection_tool class="ReservedWordUsedAsNameJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Restricted_Python_calls" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -798,6 +788,14 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="class" regexp=".*Performance.*" negateName="true" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="@ScheduledForRemoval with version" description="Report usages of @ScheduledForRemoval annotation which specify 'inVersion' attribute. " suppressId="ScheduledForRemovalWithVersion" problemDescriptor="We don't specify target version in @ScheduledForRemoval annotation anymore." text="@org.jetbrains.annotations.ApiStatus.ScheduledForRemoval(inVersion = $version$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="@org.jetbrains.annotations.ApiStatus.ScheduledForRemoval">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="version" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="@ScheduledForRemoval with version" text="@org.jetbrains.annotations.ApiStatus.ScheduledForRemoval(inVersion = $version$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="@org.jetbrains.annotations.ApiStatus.ScheduledForRemoval">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="version" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="Anonymous Disposable passed to method" description="Do not pass Disposer.newDisposable() or similar to method expecting Disposable, because it can cause memory leak via Disposer tree.&#10;Instead, pass Disposable which you can guarantee to be disposed at the time needed." problemDescriptor="Anonymous Disposable passed to method: possible memory leak" text="new $f$($s1$, com.intellij.openapi.util.Disposer.$newDisposable$($a$), $s2$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
@@ -962,16 +960,6 @@
         <constraint name="n" within="" contains="" />
         <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def stringUtil = JavaPsiFacade.getInstance(e.getProject()).findClass(&quot;com.intellij.openapi.util.text.StringUtil&quot;, GlobalSearchScope.allScope(e.getProject()));&#10;def strVirtualFile = PsiUtil.getVirtualFile(stringUtil);&#10;&#10;e instanceof PsiLiteralExpression &amp;&amp;&#10;n instanceof PsiLiteralExpression &amp;&amp;&#10;((PsiLiteralExpression)e).getValue() instanceof String &amp;&amp;&#10;((PsiLiteralExpression)n).getValue() instanceof Integer &amp;&amp;&#10;((String)((PsiLiteralExpression)e).getValue()).length() ==&#10;((Integer)((PsiLiteralExpression)n).getValue()).intValue() &amp;&amp;&#10;e.getParent().getParent().getParent() instanceof PsiIfStatement &amp;&amp;&#10;((PsiIfStatement)e.getParent().getParent().getParent()).getElseBranch() == null &amp;&amp;  &#10;strVirtualFile != null &amp;&amp;  &#10;e.getResolveScope().contains(strVirtualFile)&quot;" target="true" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="charset expression can be simplified" description="e.g. charset used instead of the name, etc" text="$input$.getBytes($charset$.name())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$input$.getBytes($charset$)">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="input" nameOfExprType="java\.lang\.String" exprTypeWithinHierarchy="true" within="" contains="" />
-        <constraint name="charset" nameOfExprType="java\.nio\.charset\.Charset" exprTypeWithinHierarchy="true" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="charset expression can be simplified" text="$input$.getBytes($charset$.name())" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$input$.getBytes($charset$)">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="input" nameOfExprType="java\.lang\.String" exprTypeWithinHierarchy="true" within="" contains="" />
-        <constraint name="charset" nameOfExprType="java\.nio\.charset\.Charset" exprTypeWithinHierarchy="true" within="" contains="" />
-      </replaceConfiguration>
       <searchConfiguration name="Comparing Swift Types without context" description="Whether two types are equal depends on the context" suppressId="swift.type.equals" problemDescriptor="Use equalsInContext" text="$ref1$.equals($ref2$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref2" nameOfExprType="com\.jetbrains\.swift\.psi\.types\.SwiftType" exprTypeWithinHierarchy="true" within="" contains="" />
@@ -1102,6 +1090,14 @@
         <constraint name="T2" within="" contains="" />
         <constraint name="T3" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="Don't use javax.swing.FocusManager" uuid="fdcd3e7e-31cb-3d1e-b4c1-373c34bde609" description="javax.swing.FocusManager is obsolete, using it can cause default application's focus traversal policy to be changed. javax.swing.KeyboardFocusManager should be used instead." suppressId="jsFocusManager" problemDescriptor="Obsolete class, use KeyboardFocusManager instead" text="$Clz$" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Clz" nameOfExprType="javax\.swing\.FocusManager" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Don't use javax.swing.FocusManager" uuid="fdcd3e7e-31cb-3d1e-b4c1-373c34bde609" text="$Clz$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Clz" nameOfExprType="javax\.swing\.FocusManager" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="EventLogGroup version should be &gt; 0" text="EventLogGroup($Parameter1$, $Parameter2$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Parameter2" regexp="0" within="" contains="" />
@@ -1115,27 +1111,27 @@
       <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" description="a type can be a type alias or a single-item tuple of a desired type. And you most likely want to support them as well" suppressId="explicit.cast.to.swift.type" problemDescriptor="Please use `SwiftTypeUtil.as&lt;type&gt;` method instead" text="$ref$ instanceof $SwiftType$" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis).+Type" within="" contains="" />
+        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis)(?!FileElement).+Type" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" text="$ref$ is $SwiftType$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis).+Type" within="" contains="" />
+        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis)(?!FileElement).+Type" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" text="$ref$ !is $SwiftType$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis).+Type" within="" contains="" />
+        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis)(?!FileElement).+Type" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" text="$ref$ as $SwiftType$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis).+Type" within="" contains="" />
+        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis)(?!FileElement).+Type" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" text="$ref$ as? $SwiftType$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis).+Type" within="" contains="" />
+        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis)(?!FileElement).+Type" within="" contains="" />
       </searchConfiguration>
       <replaceConfiguration name="File.createTempFile()" uuid="dee96c73-c402-36ca-a972-4b6641585bc0" text="java.io.File.createTempFile($prefix$, $suffix$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($prefix$, $suffix$)">
         <constraint name="prefix" within="" contains="" />
@@ -1178,7 +1174,7 @@
         <constraint name="Parameter" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Graphics clipping region should be updated not replaced" suppressId="GraphicsSetClipInspection" text="$Instance$.setClip($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.clipRect($Parameter$)" description="&lt;code&gt;setClip&lt;/code&gt; is a dangerous method that can break rendering of Swing components. It ignores the current clipping region and allows painting outside of the component. This method can be used in some specific cases, one of them is to restore the previous clip. In other cases, you have to use &lt;code&gt;Graphics.clipRect&lt;/code&gt; or &lt;code&gt;Graphics2D.clip&lt;/code&gt;.">
+      <replaceConfiguration name="Graphics clipping region should be updated not replaced" description="&lt;code&gt;setClip&lt;/code&gt; is a dangerous method that can break rendering of Swing components. It ignores the current clipping region and allows painting outside of the component. This method can be used in some specific cases, one of them is to restore the previous clip. In other cases, you have to use &lt;code&gt;Graphics.clipRect&lt;/code&gt; or &lt;code&gt;Graphics2D.clip&lt;/code&gt;." suppressId="GraphicsSetClipInspection" text="$Instance$.setClip($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.clipRect($Parameter$)">
         <constraint name="Instance" nameOfExprType="java\.awt\.Graphics" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
         <constraint name="Parameter" minCount="4" maxCount="4" within="" contains="" />
       </replaceConfiguration>
@@ -1188,15 +1184,15 @@
       </replaceConfiguration>
       <replaceConfiguration name="Graphics clipping region should be updated not replaced" suppressId="GraphicsSetClipInspection" text="$Instance$.setClip($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="((java.awt.Graphics2D)$Instance$).clip($Parameter$)">
         <constraint name="Instance" nameOfExprType="java\.awt\.Graphics" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
-        <constraint name="Parameter" minCount="1" maxCount="1" within="" contains="" />
+        <constraint name="Parameter" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="Graphics clipping region should be updated not replaced" suppressId="GraphicsSetClipInspection" text="$Instance$.setClip($Parameter$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="($Instance$ as java.awt.Graphics2D).clip($Parameter$)">
         <constraint name="Instance" nameOfExprType="java\.awt\.Graphics" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
-        <constraint name="Parameter" minCount="1" maxCount="1" within="" contains="" />
+        <constraint name="Parameter" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="Graphics clipping region should be updated not replaced" suppressId="GraphicsSetClipInspection" text="$Instance$.clip=$Parameter$" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="($Instance$ as java.awt.Graphics2D).clip($Parameter$)">
         <constraint name="Instance" nameOfExprType="java\.awt\.Graphics" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
-        <constraint name="Parameter" minCount="1" maxCount="1" within="" contains="" />
+        <constraint name="Parameter" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="incorrect DumbAware check" created="1522680840725" text="$target$ instanceof DumbAware" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.project.DumbService.isDumbAware($target$)">
         <constraint name="target" within="" contains="" />
@@ -1299,9 +1295,10 @@
         <constraint name="Variable" nameOfExprType="JamAnnotationMeta" maxCount="2147483647" target="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
-      <replaceConfiguration name="notNullize(s,&quot;&quot;) can be simplified" text="com.intellij.openapi.util.text.StringUtil.notNullize($s$, &quot;&quot;)" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.notNullize($s$)">
+      <replaceConfiguration name="notNullize(s,&quot;&quot;) can be simplified" text="com.intellij.openapi.util.text.StringUtil.notNullize($s$, &quot;$l$&quot;)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.notNullize($s$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="s" within="" contains="" />
+        <constraint name="l" regexp="^$" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="notNullize(s,&quot;&quot;) can be simplified" text="com.intellij.openapi.util.text.StringUtil.notNullize($s$, &quot;&quot;)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.notNullize($s$)">
         <constraint name="__context__" within="" contains="" />
@@ -1477,10 +1474,10 @@
         <constraint name="a" within="" contains="" />
         <constraint name="b" within="" contains="" />
       </replaceConfiguration>
-      <searchConfiguration name="Storing localized strings in static fields prevents dynamic loading of language bundles" text="$bundle$.$message$(&quot;$s$&quot;, $p$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
-        <constraint name="__context__" script="&quot;import com.intellij.psi.*;&#10;import com.intellij.psi.util.*;&#10;PsiElement member = PsiTreeUtil.getParentOfType(__context__, PsiMember.class, PsiLambdaExpression.class)&#10;return member instanceof PsiField &amp;&amp; member.hasModifierProperty(PsiModifier.STATIC)&quot;" within="" contains="" />
+      <searchConfiguration name="Storing localized strings in static fields prevents dynamic loading of language bundles" description="When references to localized strings are stored in static fields,&#10;it is impossible to dynamically unload the resources. This means a &#10;user will need to restart their IDE for the affected UI elements to &#10;get the updated text, after enabling or disabling a language pack.&#10;&lt;p&gt;&#10;To fix the problem use a &lt;code&gt;Bundle.message()&lt;/code&gt; call directly &#10;instead of storing its value in a &lt;code&gt;static&lt;/code&gt; field. Or use &#10;&lt;code&gt;Bundle.messagePointer()&lt;/code&gt; if that is not possible." text="$bundle$.$message$(&quot;$s$&quot;, $p$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" script="&quot;import com.intellij.psi.*;&#10;import com.intellij.psi.util.*;&#10;PsiElement member = PsiTreeUtil.getParentOfType(__context__, PsiMember.class, PsiLambdaExpression.class)&#10;if (member instanceof PsiClassInitializer) {&#10;  PsiElement parent = member.getParent()&#10;  if (parent instanceof PsiAnonymousClass) {&#10;    // yuk, double brace initialization&#10;    member = PsiTreeUtil.getParentOfType(parent, PsiMember.class, PsiLambdaExpression.class)&#10;  }&#10;}&#10;return member instanceof PsiField &amp;&amp; member.hasModifierProperty(PsiModifier.STATIC)&quot;" within="" contains="" />
         <constraint name="s" within="" contains="" />
-        <constraint name="bundle" regexp="AbstractBundle" withinHierarchy="true" within="" contains="" />
+        <constraint name="bundle" regexp="AbstractBundle" withinHierarchy="true" minCount="0" within="" contains="" />
         <constraint name="p" minCount="0" maxCount="2147483647" within="" contains="" />
         <constraint name="message" regexp="message" target="true" within="" contains="" />
       </searchConfiguration>
@@ -1684,6 +1681,11 @@
         <constraint name="m" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$m$.stream().anyMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="String.getBytes() is current locale-dependant, use String.getBytes(Charset) instead" text="$s$.getBytes()" recursive="false" caseInsensitive="true" type="JAVA">
         <constraint name="s" nameOfExprType="java.lang.String" exprTypeWithinHierarchy="true" within="" contains="" />
       </searchConfiguration>
@@ -1733,6 +1735,12 @@
         <constraint name="s1" minCount="0" maxCount="2147483647" within="" contains="" />
         <constraint name="s2" minCount="0" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Suppressed exceptions are ignored" text="try {&#10;  $TryStatement$&#10;} &#10;finally {&#10;  $s1$&#10;  super.tearDown()&#10;  $s2$&#10;}" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="try {&#10;  $TryStatement$&#10;} &#10;catch (e: Throwable) {&#10;  addSuppressedException(e)&#10;}&#10;finally {&#10;  $s1$super.tearDown()$s2$&#10;}">
+        <constraint name="__context__" script="&quot;org.jetbrains.kotlin.psi.KtTryExpression ts = com.intellij.psi.util.PsiTreeUtil.getParentOfType(__context__, org.jetbrains.kotlin.psi.KtTryExpression.class, false); return ts != null &amp;&amp; ts.catchClauses.size() == 0&quot;" within="" contains="" />
+        <constraint name="TryStatement" maxCount="2147483647" within="" contains="" />
+        <constraint name="s1" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="s2" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="Suspicious usage of PsiUtilBase#findEditor inside quick fix, probably better idea to use LocalQuickFixAndIntentionActionOnPsiElement" text="$Instance$.$MethodCall$($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA">
         <constraint name="Instance" regexp="com.intellij.psi.util.PsiUtilBase" minCount="0" within="" contains="" />
         <constraint name="MethodCall" script="&quot;import com.intellij.psi.PsiClass&#10;import com.intellij.psi.util.InheritanceUtil&#10;import com.intellij.psi.util.PsiTreeUtil&#10;&#10;PsiClass aClass = PsiTreeUtil.getParentOfType(__context__, PsiClass.class)&#10;aClass != null &amp;&amp; InheritanceUtil.isInheritor(aClass, &quot;com.intellij.codeInspection.LocalQuickFix&quot;)&quot;" regexp="findEditor" target="true" within="" contains="" />
@@ -1754,43 +1762,6 @@
       <replaceConfiguration name="TokenSet.create(TokenType.WHITE_SPACE) -&gt; TokenSet.WHITE_SPACE" text="com.intellij.psi.tree.TokenSet.create(com.intellij.psi.TokenType.WHITE_SPACE)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.psi.tree.TokenSet.WHITE_SPACE">
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Too convoluted &quot;register(()-&gt;dispose())&quot; (wastes memory)" text="Disposer.register($myRoot$, () -&gt; Disposer.dispose($myFolder2$));" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="Disposer.register($myRoot$, $myFolder2$);">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="myRoot" within="" contains="" />
-        <constraint name="myFolder2" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Too convoluted &quot;register(()-&gt;dispose())&quot; (wastes memory)" text="Disposer.register($myRoot$) { Disposer.dispose($myFolder2$) }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="Disposer.register($myRoot$, $myFolder2$)">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="myRoot" within="" contains="" />
-        <constraint name="myFolder2" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="use explicit toArray() method" text="com.intellij.util.ArrayUtil.toObjectArray($collection$, $class$.class)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$collection$.toArray(new $class$[0])">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="class" within="" contains="" />
-        <constraint name="collection" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
-      </replaceConfiguration>
-      <searchConfiguration name="use NotificationGroup.toolWindowGroup().createNotification().notify() instead" text="$Instance$.notifyByBalloon($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA">
-        <constraint name="Instance" nameOfExprType="com.intellij.openapi.wm.ToolWindowManager" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
-        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="use NotificationGroup.toolWindowGroup().createNotification().notify() instead" text="$Instance$.notifyByBalloon($Parameter$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default">
-        <constraint name="Instance" nameOfExprType="com.intellij.openapi.wm.ToolWindowManager" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
-        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
-        <constraint name="__context__" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="Use RecursionManager?" text="class $Class$ { &#10;  ThreadLocal&lt;$FieldType$&gt; $FieldName$ = $Init$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
-        <constraint name="Class" within="" contains="" />
-        <constraint name="FieldType" regexp="Collection" withinHierarchy="true" target="true" within="" contains="" />
-        <constraint name="FieldName" maxCount="2147483647" within="" contains="" />
-        <constraint name="Init" minCount="0" within="" contains="" />
-        <constraint name="__context__" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="Use RecursionManager?" text="class $Class$ {&#10;  val $FieldName$: ThreadLocal&lt;$FieldType$&gt;&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="Class" within="" contains="" />
-        <constraint name="FieldName" within="" contains="" />
-        <constraint name="FieldType" regexp="Collection" within="" contains="" />
-      </searchConfiguration>
       <replaceConfiguration name="Too concrete fastutil class" text="Object2IntOpenHashMap&lt;$e$&gt; $p$;" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="it.unimi.dsi.fastutil.objects.Object2IntMap&lt;$e$&gt; $p$;">
         <constraint name="__context__" within="" contains="" />
         <constraint name="p" within="" contains="" />
@@ -1833,6 +1804,43 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Too convoluted &quot;register(()-&gt;dispose())&quot; (wastes memory)" text="Disposer.register($myRoot$, () -&gt; Disposer.dispose($myFolder2$));" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="Disposer.register($myRoot$, $myFolder2$);">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="myRoot" within="" contains="" />
+        <constraint name="myFolder2" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Too convoluted &quot;register(()-&gt;dispose())&quot; (wastes memory)" text="Disposer.register($myRoot$) { Disposer.dispose($myFolder2$) }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="Disposer.register($myRoot$, $myFolder2$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="myRoot" within="" contains="" />
+        <constraint name="myFolder2" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="use explicit toArray() method" text="com.intellij.util.ArrayUtil.toObjectArray($collection$, $class$.class)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$collection$.toArray(new $class$[0])">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="class" within="" contains="" />
+        <constraint name="collection" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
+      <searchConfiguration name="use NotificationGroup.toolWindowGroup().createNotification().notify() instead" text="$Instance$.notifyByBalloon($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA">
+        <constraint name="Instance" nameOfExprType="com.intellij.openapi.wm.ToolWindowManager" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="use NotificationGroup.toolWindowGroup().createNotification().notify() instead" text="$Instance$.notifyByBalloon($Parameter$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default">
+        <constraint name="Instance" nameOfExprType="com.intellij.openapi.wm.ToolWindowManager" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use RecursionManager?" text="class $Class$ { &#10;  ThreadLocal&lt;$FieldType$&gt; $FieldName$ = $Init$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
+        <constraint name="Class" within="" contains="" />
+        <constraint name="FieldType" regexp="Collection" withinHierarchy="true" target="true" within="" contains="" />
+        <constraint name="FieldName" maxCount="2147483647" within="" contains="" />
+        <constraint name="Init" minCount="0" within="" contains="" />
+        <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use RecursionManager?" text="class $Class$ {&#10;  val $FieldName$: ThreadLocal&lt;$FieldType$&gt;&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Class" within="" contains="" />
+        <constraint name="FieldName" within="" contains="" />
+        <constraint name="FieldType" regexp="Collection" within="" contains="" />
+      </searchConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />
@@ -1867,20 +1875,21 @@
     <inspection_tool class="StringConstructor" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreSubstringArguments" value="false" />
     </inspection_tool>
-    <inspection_tool class="StringEquality" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="StringEqualsEmptyString" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL" value="true" />
     </inspection_tool>
-    <inspection_tool class="StringOperationCanBeSimplifiedMerged" />
+    <inspection_tool class="StringOperationCanBeSimplified" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoreStringConstructor" value="true" />
+    </inspection_tool>
     <inspection_tool class="StringToUpperWithoutLocale" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="Struts2ModelInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="StrutsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="StrutsTilesInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="StrutsValidatorFormInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="StrutsValidatorInspection" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="SuperTearDownInFinally" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="SuperTearDownInFinally" enabled="true" level="Strong Warning" enabled_by_default="true" />
+    <inspection_tool class="SuspiciousLiteralUnderscore" enabled="true" level="Strong Warning" enabled_by_default="true" />
     <inspection_tool class="SwitchStatementWithConfusingDeclaration" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="SynchronizeOnThis" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SystemOutErr" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="Tests" level="WARNING" enabled="false" />
     </inspection_tool>
@@ -1908,7 +1917,6 @@
     <inspection_tool class="TrivialIf" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TrivialIfJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TrivialStringConcatenation" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="TryFinallyCanBeTryWithResources" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TryWithIdenticalCatches" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TypeParameterExtendsFinalClass" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="UNCHECKED_WARNING" enabled="true" level="WARNING" enabled_by_default="true">
@@ -1976,14 +1984,11 @@
       <scope name="Tests" level="WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="UseOfPropertiesAsHashtable" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="UsePluginIdEquals" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="UseVirtualFileEquals" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="UtilityClassWithPublicConstructor" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ValidatorConfigModelInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="ValidatorModelInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="WaitNotInLoop" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="WaitNotInSynchronizedContext" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="WaitWhileHoldingTwoLocks" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="WeakerAccess" enabled="false" level="WARNING" enabled_by_default="true">
       <option name="SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS" value="false" />
       <option name="SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES" value="false" />

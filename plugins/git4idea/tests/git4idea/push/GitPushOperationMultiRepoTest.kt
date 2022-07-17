@@ -2,11 +2,16 @@
 package git4idea.push
 
 import com.intellij.dvcs.push.PushSpec
+import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.vcs.Executor.cd
 import git4idea.commands.GitCommandResult
+import git4idea.push.GitRejectedPushUpdateDialog.Companion.PushRejectedExitCode
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import git4idea.update.GitUpdateResult
+import org.junit.After
+import org.junit.Before
 import java.io.File
 import java.nio.file.Path
 import java.util.*
@@ -18,6 +23,16 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
 
   private lateinit var brultimate: Path
   private lateinit var brommunity: Path
+
+  @Before
+  fun beforeEach() {
+    TestDialogManager.setTestDialog(TestDialog.DEFAULT)
+  }
+
+  @After
+  fun afterEach() {
+    TestDialogManager.setTestDialog(TestDialog.DEFAULT)
+  }
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -80,7 +95,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
     makeCommit("file.txt")
 
     val mainSpec = makePushSpec(ultimate, "master", "origin/master")
-    agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE) // auto-update-all-roots is selected by default
+    TestDialogManager.setTestDialog { PushRejectedExitCode.MERGE.exitCode } // auto-update-all-roots is selected by default
 
     refresh()
     updateChangeListManager()
@@ -130,7 +145,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
 
     listOf(ultimate, community).forEach { it.update() }
 
-    agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE) // auto-update-all-roots is selected by default
+    TestDialogManager.setTestDialog { PushRejectedExitCode.MERGE.exitCode } // auto-update-all-roots is selected by default
 
     refresh()
     updateChangeListManager()

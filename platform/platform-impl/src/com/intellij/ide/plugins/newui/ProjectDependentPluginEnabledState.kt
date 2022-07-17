@@ -3,9 +3,9 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.icons.AllIcons.General.ProjectConfigurable
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.DynamicPluginEnabler
 import com.intellij.ide.plugins.PluginEnabledState
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.ProjectPluginTrackerManager
+import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -22,15 +22,16 @@ class ProjectDependentPluginEnabledState(
       emptyList()
     }
     else {
-      val trackerManager = ProjectPluginTrackerManager.instance
-      ProjectManager.getInstance()
-        .openProjects
-        .asSequence()
-        .filterNot { it == project }
-        .map { trackerManager.getPluginTracker(it) }
-        .filter { !PluginManagerCore.isDisabled(pluginId) || it.isEnabled(pluginId) }
-        .map { it.projectName }
-        .toList()
+      (PluginEnabler.getInstance() as? DynamicPluginEnabler)?.let { pluginEnabler ->
+        ProjectManager.getInstance()
+          .openProjects
+          .asSequence()
+          .filterNot { it == project }
+          .map { pluginEnabler.getPluginTracker(it) }
+          .filter { !pluginEnabler.isDisabled(pluginId) || it.isEnabled(pluginId) }
+          .map { it.projectName }
+          .toList()
+      } ?: emptyList()
     }
   }
 

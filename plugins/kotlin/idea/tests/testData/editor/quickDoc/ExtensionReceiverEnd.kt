@@ -7,4 +7,4 @@ fun Foo.bar() {
     foo(this<caret>)
 }
 
-//INFO: <div class='definition'><pre><font color="808080"><i>ExtensionReceiverEnd.kt</i></font><br>public fun <a href="psi_element://Foo">Foo</a>.<b>bar</b>(): Unit</pre></div></pre></div><table class='sections'><p></table>
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">fun</span> <span style="color:#000000;"><a href="psi_element://Foo">Foo</a></span><span style="">.</span><span style="color:#000000;">bar</span>()<span style="">: </span><span style="color:#000000;">Unit</span></pre></div></pre></div><table class='sections'><p></table><div class='bottom'><icon src="/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"/>&nbsp;ExtensionReceiverEnd.kt<br/></div>

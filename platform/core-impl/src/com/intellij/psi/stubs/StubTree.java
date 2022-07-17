@@ -39,7 +39,7 @@ public class StubTree extends ObjectStubTree<StubElement<?>> {
   @NotNull
   @Override
   protected List<StubElement<?>> enumerateStubs(@NotNull Stub root) {
-    return ((StubBase)root).myStubList.finalizeLoadingStage().toPlainList();
+    return ((StubBase<?>)root).myStubList.finalizeLoadingStage().toPlainList();
   }
 
   @NotNull
@@ -48,7 +48,7 @@ public class StubTree extends ObjectStubTree<StubElement<?>> {
     PsiFileStub[] roots = ((PsiFileStubImpl<?>)getRoot()).getStubRoots();
     if (roots.length == 1) return super.getPlainListFromAllRoots();
 
-    return ContainerUtil.concat(roots, stub -> ((PsiFileStubImpl)stub).myStubList.toPlainList());
+    return ContainerUtil.concat(roots, stub -> ((PsiFileStubImpl<?>)stub).myStubList.toPlainList());
   }
 
   @NotNull

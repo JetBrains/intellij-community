@@ -74,13 +74,26 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
       LOG.info("Windows Subsystem for Linux has no installed distributions");
       return Collections.emptyList();
     }
+    if (isWslDisabled(output)) {
+      LOG.info("WSL is disabled in the system");
+      return Collections.emptyList();
+    }
     if (output.isTimeout() || output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
-      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + output);
+      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + output +
+                            ", done in " + TimeoutUtil.getDurationMillis(startNano) + " ms");
     }
     List<WslDistributionAndVersion> versions = parseWslVerboseListOutput(output.getStdoutLines());
     LOG.info("Fetched WSL distributions: " + versions +
              " (\"" + commandLine.getCommandLineString() + "\" done in " + TimeoutUtil.getDurationMillis(startNano) + " ms)");
     return versions;
+  }
+
+  private static boolean isWslDisabled(@NotNull ProcessOutput output) {
+    if (output.getExitCode() == 0) {
+      return false;
+    }
+    String stdout = output.getStdout();
+    return stdout.contains("--install") && stdout.contains("--list") && stdout.contains("--help");
   }
 
   /**

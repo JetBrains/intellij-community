@@ -1,0 +1,4 @@
+from typing import Any
+
+RESERVED_WORDS_MARIADB: Any
+RESERVED_WORDS_MYSQL: Any

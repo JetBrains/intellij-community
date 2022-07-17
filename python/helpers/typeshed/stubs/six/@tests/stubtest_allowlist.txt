@@ -1,0 +1,25 @@
+# Problems inherited from the standard library
+six.BytesIO.readlines
+six.BytesIO.seek
+six.StringIO.seek
+six.StringIO.truncate
+six.create_bound_method.__closure__
+six.create_bound_method.__defaults__
+six.moves.*
+
+# Implemented using "operator" functions in the implementation
+six.byte2int
+six.indexbytes
+six.get_function_closure
+six.get_function_code
+six.get_function_defaults
+six.get_function_globals
+six.get_method_function
+six.get_method_self
+six.viewitems
+six.viewkeys
+six.viewvalues
+
+# Unclear problems
+six.Iterator.__init__
+six.callable

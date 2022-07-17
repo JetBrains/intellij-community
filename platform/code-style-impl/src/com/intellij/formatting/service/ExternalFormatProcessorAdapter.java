@@ -2,6 +2,7 @@
 package com.intellij.formatting.service;
 
 import com.intellij.formatting.FormattingRangesInfo;
+import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -10,6 +11,7 @@ import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -49,7 +51,13 @@ public final class ExternalFormatProcessorAdapter implements FormattingService {
   @Override
   public void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly, boolean quickFormat) {
     List<CoreCodeStyleUtil.RangeFormatInfo> infos = CoreCodeStyleUtil.getRangeFormatInfoList(file, rangesInfo);
+    // IMPORTANT: Don't use canChangeWhiteSpaceOnly from parameters because we always want it to be 'false' for formatRanges called here.
     CoreCodeStyleUtil.postProcessRanges(
-      file, infos, range -> ExternalFormatProcessor.formatRangeInFile(file, range, false, false));
+      infos, range -> ExternalFormatProcessor.formatRangeInFile(file, range, false, false));
+  }
+
+  @Override
+  public @NotNull Set<ImportOptimizer> getImportOptimizers(@NotNull PsiFile file) {
+    return Collections.emptySet();
   }
 }

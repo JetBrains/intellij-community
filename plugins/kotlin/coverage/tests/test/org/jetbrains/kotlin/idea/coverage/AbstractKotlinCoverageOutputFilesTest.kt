@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.coverage
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractKotlinCoverageOutputFilesTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -15,7 +15,7 @@ abstract class AbstractKotlinCoverageOutputFilesTest : KotlinLightCodeInsightFix
         val kotlinFile = myFixture.configureByFile(fileName()) as KtFile
         val outDir = myFixture.tempDirFixture.findOrCreateDir("coverageTestOut")
 
-        val testFile = testDataFile()
+        val testFile = dataFile()
 
         try {
             val classesFile = File(testFile.parent, testFile.nameWithoutExtension + ".classes.txt")

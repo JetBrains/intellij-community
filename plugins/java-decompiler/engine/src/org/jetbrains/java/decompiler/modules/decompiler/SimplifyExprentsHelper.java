@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -6,10 +6,12 @@ import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.SSAConstructorSparseEx;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -230,7 +232,7 @@ public class SimplifyExprentsHelper {
 
                         if (tempExpr.type == Exprent.EXPRENT_NEW) {
                           NewExprent tempNewExpr = (NewExprent)tempExpr;
-                          int dims = newExpr.getNewType().arrayDim;
+                          int dims = newExpr.getNewType().getArrayDim();
                           if (dims > 1 && !tempNewExpr.getLstArrayElements().isEmpty()) {
                             tempNewExpr.setDirectArrayInit(true);
                           }
@@ -259,7 +261,7 @@ public class SimplifyExprentsHelper {
       if (as.getRight().type == Exprent.EXPRENT_NEW && as.getLeft().type == Exprent.EXPRENT_VAR) {
         NewExprent newExpr = (NewExprent)as.getRight();
 
-        if (newExpr.getExprType().arrayDim > 0 && newExpr.getLstDims().size() == 1 && newExpr.getLstArrayElements().isEmpty() &&
+        if (newExpr.getExprType().getArrayDim() > 0 && newExpr.getLstDims().size() == 1 && newExpr.getLstArrayElements().isEmpty() &&
             newExpr.getLstDims().get(0).type == Exprent.EXPRENT_CONST) {
 
           int size = (Integer)((ConstExprent)newExpr.getLstDims().get(0)).getValue();
@@ -311,7 +313,7 @@ public class SimplifyExprentsHelper {
               lstRet.add(defaultVal.copy());
             }
 
-            int dims = newExpr.getNewType().arrayDim;
+            int dims = newExpr.getNewType().getArrayDim();
             for (Entry<Integer, Exprent> ent : mapInit.entrySet()) {
               Exprent tempExpr = ent.getValue();
               lstRet.set(ent.getKey(), tempExpr);
@@ -518,10 +520,10 @@ public class SimplifyExprentsHelper {
         for (Exprent expr : lstExprents) {
           if (expr.type == Exprent.EXPRENT_NEW) {
             NewExprent newExpr = (NewExprent)expr;
-            if (newExpr.getConstructor() != null && !newExpr.getConstructor().getLstParameters().isEmpty() &&
-                newExpr.getConstructor().getLstParameters().get(0).equals(invocation.getInstance())) {
+            if (newExpr.getConstructor() != null && !newExpr.getConstructor().getParameters().isEmpty() &&
+                newExpr.getConstructor().getParameters().get(0).equals(invocation.getInstance())) {
 
-              String classname = newExpr.getNewType().value;
+              String classname = newExpr.getNewType().getValue();
               ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
               if (node != null && node.type != ClassNode.CLASS_ROOT) {
                 return true;
@@ -548,7 +550,7 @@ public class SimplifyExprentsHelper {
         VarType newType = newExpr.getNewType();
         VarVersionPair leftPair = new VarVersionPair((VarExprent)as.getLeft());
 
-        if (newType.type == CodeConstants.TYPE_OBJECT && newType.arrayDim == 0 && newExpr.getConstructor() == null) {
+        if (newType.getType() == CodeConstants.TYPE_OBJECT && newType.getArrayDim() == 0 && newExpr.getConstructor() == null) {
           for (int i = index + 1; i < list.size(); i++) {
             Exprent remote = list.get(i);
 
@@ -556,7 +558,7 @@ public class SimplifyExprentsHelper {
             if (remote.type == Exprent.EXPRENT_INVOCATION) {
               InvocationExprent in = (InvocationExprent)remote;
 
-              if (in.getFunctype() == InvocationExprent.TYP_INIT &&
+              if (in.getFuncType() == InvocationExprent.TYPE_INIT &&
                   in.getInstance().type == Exprent.EXPRENT_VAR &&
                   as.getLeft().equals(in.getInstance())) {
                 newExpr.setConstructor(in);
@@ -593,7 +595,7 @@ public class SimplifyExprentsHelper {
     if (exprent.type == Exprent.EXPRENT_INVOCATION) {
       InvocationExprent in = (InvocationExprent)exprent;
 
-      if (in.getInvocationTyp() == InvocationExprent.INVOKE_DYNAMIC) {
+      if (in.getInvocationType() == InvocationExprent.INVOKE_DYNAMIC) {
         String lambda_class_name = cl.qualifiedName + in.getInvokeDynamicClassSuffix();
         ClassNode lambda_class = DecompilerContext.getClassProcessor().getMapRootClasses().get(lambda_class_name);
 
@@ -623,7 +625,7 @@ public class SimplifyExprentsHelper {
 
     if (exprent.type == Exprent.EXPRENT_INVOCATION) {
       InvocationExprent in = (InvocationExprent)exprent;
-      if (in.getFunctype() == InvocationExprent.TYP_INIT && in.getInstance().type == Exprent.EXPRENT_NEW) {
+      if (in.getFuncType() == InvocationExprent.TYPE_INIT && in.getInstance().type == Exprent.EXPRENT_NEW) {
         NewExprent newExpr = (NewExprent)in.getInstance();
         newExpr.setConstructor(in);
         in.setInstance(null);
@@ -635,7 +637,7 @@ public class SimplifyExprentsHelper {
   }
 
   private static boolean buildIff(Statement stat, SSAConstructorSparseEx ssa) {
-    if (stat.type == Statement.TYPE_IF && stat.getExprents() == null) {
+    if (stat.type == StatementType.IF && stat.getExprents() == null) {
       IfStatement statement = (IfStatement)stat;
       Exprent ifHeadExpr = statement.getHeadexprent();
       Set<Integer> ifHeadExprBytecode = (ifHeadExpr == null ? null : ifHeadExpr.bytecode);
@@ -724,7 +726,7 @@ public class SimplifyExprentsHelper {
 
               StatEdge retEdge = ifStatement.getAllSuccessorEdges().get(0);
               Statement closure = retEdge.closure == statement ? statement.getParent() : retEdge.closure;
-              statement.addSuccessor(new StatEdge(StatEdge.TYPE_BREAK, statement, retEdge.getDestination(), closure));
+              statement.addSuccessor(new StatEdge(EdgeType.BREAK, statement, retEdge.getDestination(), closure));
 
               SequenceHelper.destroyAndFlattenStatement(statement);
 

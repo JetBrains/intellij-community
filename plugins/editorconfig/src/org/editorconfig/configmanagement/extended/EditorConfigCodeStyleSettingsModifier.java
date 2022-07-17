@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
@@ -7,52 +7,56 @@ import com.intellij.application.options.codeStyle.properties.CodeStyleProperties
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper;
 import com.intellij.lang.Language;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.util.ObjectUtils;
+import org.editorconfig.EditorConfigNotifier;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EditorConfigFilesCollector;
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
 import org.editorconfig.core.EditorConfig;
+import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.core.EditorConfigException;
 import org.editorconfig.core.ParsingException;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.settings.EditorConfigSettings;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 
-import static org.editorconfig.core.EditorConfig.OutPair;
-
 @SuppressWarnings("SameParameterValue")
-public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsModifier {
+public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsModifier {
+  private static final Logger LOG = Logger.getInstance(EditorConfigCodeStyleSettingsModifier.class);
 
-  private final static Logger LOG = Logger.getInstance(EditorConfigCodeStyleSettingsModifier.class);
-  public static final ProgressIndicator EMPTY_PROGRESS_INDICATOR = new EmptyProgressIndicator();
+  private static final Duration TIMEOUT = Duration.ofSeconds(10);
 
   private static boolean ourEnabledInTests;
+
+  private final Set<String> myReportedErrorIds = new HashSet<>();
 
   @Override
   public boolean modifySettings(@NotNull TransientCodeStyleSettings settings, @NotNull PsiFile psiFile) {
@@ -64,25 +68,27 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
         // Get editorconfig settings
         try {
           final MyContext context = new MyContext(settings, psiFile);
-            return runWithCheckCancelled(() -> {
+            return runWithTimeout(() -> {
               processEditorConfig(project, psiFile, context);
               // Apply editorconfig settings for the current editor
               if (applyCodeStyleSettings(context)) {
                 settings.addDependencies(context.getEditorConfigFiles());
-                ObjectUtils.consumeIfNotNull(
-                  EditorConfigNavigationActionsFactory.getInstance(psiFile),
-                  navigationFactory -> navigationFactory.updateEditorConfigFilePaths(context.getFilePaths())
-                );
+                EditorConfigNavigationActionsFactory navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile);
+                if (navigationFactory != null) {
+                  navigationFactory.updateEditorConfigFilePaths(context.getFilePaths());
+                }
                 return true;
               }
               return false;
-            }, getIndicator());
+            });
+        }
+        catch (TimeoutException toe) {
+          if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+            error(project, "timeout", EditorConfigBundle.message("error.timeout"), new DisableEditorConfigAction(project), true);
+          }
         }
         catch (EditorConfigException e) {
           // TODO: Report an error, ignore for now
-        }
-        catch (ProcessCanceledException pce) {
-          throw pce;
         }
         catch (Exception ex) {
           LOG.error(ex);
@@ -92,26 +98,67 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     return false;
   }
 
-  private static boolean runWithCheckCancelled(@NotNull Callable<Boolean> callable,
-                                               @NotNull ProgressIndicator progressIndicator) throws Exception {
-      Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(callable);
-      try {
-        return ApplicationUtil.runWithCheckCanceled(future, progressIndicator);
+  private static boolean runWithTimeout(@NotNull Callable<Boolean> callable) throws TimeoutException, EditorConfigException {
+    Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(callable);
+    try {
+      return future.get(TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+    }
+    catch (InterruptedException e) {
+      LOG.warn(e);
+    }
+    catch (ExecutionException e) {
+      if (e.getCause() instanceof EditorConfigException) {
+        throw (EditorConfigException)e.getCause();
       }
-      catch (ProcessCanceledException pce) {
-        future.cancel(true);
-        throw pce;
-      }
+      LOG.error(e);
+    }
+    return false;
   }
 
-  @NotNull
-  private static ProgressIndicator getIndicator() {
-    return ObjectUtils.notNull(ProgressIndicatorProvider.getInstance().getProgressIndicator(), EMPTY_PROGRESS_INDICATOR);
+  public synchronized void error(Project project, String id, @Nls String message, @Nullable AnAction fixAction, boolean oneTime) {
+    if (oneTime) {
+      if (myReportedErrorIds.contains(id)) return;
+      else {
+        myReportedErrorIds.add(id);
+      }
+    }
+    Notification notification =
+      new Notification(EditorConfigNotifier.GROUP_DISPLAY_ID, EditorConfigBundle.message("editorconfig"), message, NotificationType.ERROR);
+    if (fixAction != null) {
+      notification.addAction(
+        new AnAction(fixAction.getTemplateText()) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            fixAction.actionPerformed(e);
+            myReportedErrorIds.remove(id);
+            notification.expire();
+          }
+        }
+      );
+    }
+    Notifications.Bus.notify(notification, project);
   }
 
-  @Nullable
+  private static class DisableEditorConfigAction extends AnAction {
+
+    private final Project myProject;
+
+    private DisableEditorConfigAction(Project project) {
+      super(EditorConfigBundle.message("action.disable"));
+      myProject = project;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      EditorConfigSettings editorConfigSettings =
+        CodeStyle.getSettings(myProject).getCustomSettings(EditorConfigSettings.class);
+      editorConfigSettings.ENABLED = false;
+      CodeStyleSettingsManager.getInstance(myProject).notifyCodeStyleSettingsChanged();
+    }
+  }
+
   @Override
-  public CodeStyleStatusBarUIContributor getStatusBarUiContributor(@NotNull TransientCodeStyleSettings transientSettings) {
+  public @NotNull CodeStyleStatusBarUIContributor getStatusBarUiContributor(@NotNull TransientCodeStyleSettings transientSettings) {
     return new EditorConfigCodeStyleStatusBarUIContributor();
   }
 
@@ -163,8 +210,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     return isModified;
   }
 
-  @NotNull
-  private static List<String> getDependentProperties(@NotNull String property, @Nullable String langPrefix) {
+  private static @NotNull List<String> getDependentProperties(@NotNull String property, @Nullable String langPrefix) {
     property = StringUtil.trimStart(property, EditorConfigIntellijNameUtil.IDE_PREFIX);
     if (langPrefix != null && property.startsWith(langPrefix)) {
       property = StringUtil.trimStart(property, langPrefix);
@@ -175,12 +221,18 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     return Collections.emptyList();
   }
 
-  private static String preprocessValue(@NotNull CodeStylePropertyAccessor accessor,
+  private static String preprocessValue(@NotNull CodeStylePropertyAccessor<?> accessor,
                                         @NotNull MyContext context,
                                         @NotNull String optionKey,
                                         @NotNull String optionValue) {
-    if ("indent_size".equals(optionKey) && "tab".equals(optionValue)) {
-      return context.getTabSize();
+    if ("indent_size".equals(optionKey)) {
+      String explicitTabSize = context.getExplicitTabSize();
+      if ("tab".equals(optionValue)) {
+        return ObjectUtils.notNull(explicitTabSize, context.getDefaultTabSize());
+      }
+      else if (context.isTabIndent() && explicitTabSize != null) {
+        return explicitTabSize;
+      }
     }
     else if (EditorConfigValueUtil.EMPTY_LIST_VALUE.equals(optionValue) &&
              CodeStylePropertiesUtil.isAccessorAllowingEmptyList(accessor)) {
@@ -189,10 +241,9 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     return optionValue;
   }
 
-  @Nullable
-  private static CodeStylePropertyAccessor<?> findAccessor(@NotNull AbstractCodeStylePropertyMapper mapper,
-                                                        @NotNull String propertyName,
-                                                        @Nullable String langPrefix) {
+  private static @Nullable CodeStylePropertyAccessor<?> findAccessor(@NotNull AbstractCodeStylePropertyMapper mapper,
+                                                                     @NotNull String propertyName,
+                                                                     @Nullable String langPrefix) {
     if (langPrefix != null) {
       if (propertyName.startsWith(langPrefix)) {
         final String prefixlessName = StringUtil.trimStart(propertyName, langPrefix);
@@ -226,7 +277,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     }
     catch (ParsingException pe) {
       // Parsing exceptions may occur with incomplete files which is a normal case when .editorconfig is being edited.
-      // Thus the error is logged only when debug mode is enabled.
+      // Thus, the error is logged only when debug mode is enabled.
       LOG.debug(pe);
     }
   }
@@ -245,35 +296,44 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       myOptions = options;
     }
 
-    @NotNull
-    private CodeStyleSettings getSettings() {
+    private @NotNull CodeStyleSettings getSettings() {
       return mySettings;
     }
 
-    @NotNull
-    private List<OutPair> getOptions() {
+    private @NotNull List<OutPair> getOptions() {
       return myOptions == null ? Collections.emptyList() : myOptions;
     }
 
-    @NotNull
-    private Language getLanguage() {
+    private @NotNull Language getLanguage() {
       return myFile.getLanguage();
     }
 
-    private String getTabSize() {
+    private @NotNull String getDefaultTabSize() {
+      CommonCodeStyleSettings.IndentOptions indentOptions = mySettings.getIndentOptions(myFile.getFileType());
+      return String.valueOf(indentOptions.TAB_SIZE);
+    }
+
+    private @Nullable String getExplicitTabSize() {
       for (OutPair pair : getOptions()) {
         if ("tab_width".equals(pair.getKey())) {
           return pair.getVal();
         }
       }
-      CommonCodeStyleSettings.IndentOptions indentOptions = mySettings.getIndentOptions(myFile.getFileType());
-      return String.valueOf(indentOptions.TAB_SIZE);
+      return null;
+    }
+
+    private boolean isTabIndent() {
+      for (OutPair pair : getOptions()) {
+        if ("indent_style".equals(pair.getKey())) {
+          return "tab".equals(pair.getVal());
+        }
+      }
+      return false;
     }
   }
 
-  @Nullable
   @Override
-  public Consumer<CodeStyleSettings> getDisablingFunction() {
+  public @NotNull Consumer<CodeStyleSettings> getDisablingFunction(@NotNull Project project) {
     return settings -> {
       EditorConfigSettings editorConfigSettings = settings.getCustomSettings(EditorConfigSettings.class);
       editorConfigSettings.ENABLED = false;
@@ -320,8 +380,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     return providers;
   }
 
-  @NotNull
-  private static Collection<String> getLanguageIds(@NotNull MyContext context) {
+  private static @NotNull Collection<String> getLanguageIds(@NotNull MyContext context) {
     Set<String> langIds = new HashSet<>();
     for (OutPair option : context.getOptions()) {
       String key = option.getKey();

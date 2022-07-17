@@ -22,7 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.TextRange;
@@ -36,6 +36,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
+import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.PyPep8Inspection;
 import com.jetbrains.python.inspections.flake8.Flake8InspectionSuppressor;
@@ -143,10 +144,10 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   @Override
   public State collectInformation(@NotNull PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
-    if (vFile == null || vFile.getFileType() != PythonFileType.INSTANCE) {
+    if (vFile == null || !FileTypeRegistry.getInstance().isFileOfType(vFile, PythonFileType.INSTANCE)) {
       return null;
     }
-    Sdk sdk = PythonSdkType.findLocalCPython(ModuleUtilCore.findModuleForPsiElement(file));
+    Sdk sdk = PythonSdkType.findLocalCPython(DocStringUtil.getModuleForElement(file));
     if (sdk == null) {
       if (!myReportedMissingInterpreter) {
         myReportedMissingInterpreter = true;

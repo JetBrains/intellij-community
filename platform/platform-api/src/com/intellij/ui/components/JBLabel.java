@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.JBComponent;
@@ -108,6 +109,14 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     super.setForeground(fg);
     if (myEditorPane != null) {
       updateEditorPaneStyle();
+    }
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    if (myEditorPane != null) {
+      myEditorPane.setEnabled(enabled);
     }
   }
 
@@ -235,9 +244,22 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     }
   }
 
+  @Override
+  public void setHorizontalTextPosition(int textPosition) {
+    super.setHorizontalTextPosition(textPosition);
+    if (myEditorPane != null) {
+      updateLayout();
+    }
+  }
+
   private void updateLayout() {
     setLayout(new BorderLayout(getIcon() == null ? 0 : getIconTextGap(), 0));
-    add(myIconLabel, BorderLayout.WEST);
+    int position = getHorizontalTextPosition();
+    String iconConstraint = getComponentOrientation().isLeftToRight() ? BorderLayout.WEST : BorderLayout.EAST;
+    if (getComponentOrientation().isLeftToRight() && position == SwingConstants.LEADING) iconConstraint = BorderLayout.EAST;
+    if (!getComponentOrientation().isLeftToRight() && position == SwingConstants.TRAILING) iconConstraint = BorderLayout.EAST;
+    if (position == SwingConstants.LEFT) iconConstraint = BorderLayout.EAST;
+    add(myIconLabel, iconConstraint);
     add(myEditorPane, BorderLayout.CENTER);
   }
 
@@ -320,7 +342,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
         myEditorPane.addHyperlinkListener(createHyperlinkListener());
         ComponentUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
 
-        myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
+        myEditorPane.setEditorKit(HTMLEditorKitBuilder.simple());
         updateEditorPaneStyle();
 
         if (myEditorPane.getCaret() instanceof DefaultCaret) {

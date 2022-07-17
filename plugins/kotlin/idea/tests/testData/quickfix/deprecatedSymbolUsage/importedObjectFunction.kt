@@ -1,5 +1,5 @@
 // "Replace with 'stopKoin()'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 package com.example.pkg
 

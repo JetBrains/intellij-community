@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
-import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInspection.InspectionEngine;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
+import com.intellij.codeInspection.javaDoc.MissingJavadocInspection;
 import com.intellij.javadoc.JavadocNavigationDelegate;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -19,6 +21,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,17 +70,23 @@ public class JavaDocCommentFixer implements DocCommentFixer {
     PsiFile file = owner.getContainingFile();
     if (file == null) return;
 
-    InspectionManager inspectionManager = InspectionManager.getInstance(project);
-    ProblemsHolder referenceProblems = new ProblemsHolder(inspectionManager, file, false);
-    owner.accept(new JavaDocReferenceInspection().buildVisitor(referenceProblems, referenceProblems.isOnTheFly()));
-    ProblemsHolder commonProblems = new ProblemsHolder(inspectionManager, file, false);
-    owner.accept(getDocLocalInspection().buildVisitor(commonProblems, commonProblems.isOnTheFly()));
+    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> referenceProblems =
+      InspectionEngine.inspectElements(Collections.singletonList(new LocalInspectionToolWrapper(new JavaDocReferenceInspection())), file,
+                                       file.getTextRange(),
+                                       true, false, new DaemonProgressIndicator(), Collections.singletonList(owner), PairProcessor.alwaysTrue());
 
-    if (referenceProblems.getResultCount() > 0) {
-      fixReferenceProblems(referenceProblems.getResults(), project);
+    List<LocalInspectionToolWrapper> toolWrappers = List.of(
+      new LocalInspectionToolWrapper(getMissingJavadocInspection()), new LocalInspectionToolWrapper(getJavadocDeclarationInspection())
+    );
+    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> commonProblems =
+      InspectionEngine.inspectElements(toolWrappers, file, file.getTextRange(), true, true,
+                                       new DaemonProgressIndicator(), Collections.singletonList(owner), PairProcessor.alwaysTrue());
+
+    if (!referenceProblems.isEmpty()) {
+      fixReferenceProblems(ContainerUtil.flatten(referenceProblems.values()), project);
     }
-    if (commonProblems.getResultCount() > 0) {
-      fixCommonProblems(commonProblems.getResults(), comment, editor.getDocument(), project);
+    if (!commonProblems.isEmpty()) {
+      fixCommonProblems(ContainerUtil.flatten(commonProblems.values()), comment, editor.getDocument(), project);
     }
 
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
@@ -86,27 +95,32 @@ public class JavaDocCommentFixer implements DocCommentFixer {
   }
 
   @NotNull
-  private static JavaDocLocalInspection getDocLocalInspection() {
-    JavaDocLocalInspection localInspection = new JavaDocLocalInspection();
+  private static MissingJavadocInspection getMissingJavadocInspection() {
+    MissingJavadocInspection localInspection = new MissingJavadocInspection();
 
     //region visibility
-    localInspection.TOP_LEVEL_CLASS_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = PsiModifier.PRIVATE;
-    localInspection.INNER_CLASS_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = PsiModifier.PRIVATE;
-    localInspection.FIELD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = PsiModifier.PRIVATE;
-    localInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = PsiModifier.PRIVATE;
+    localInspection.TOP_LEVEL_CLASS_SETTINGS.MINIMAL_VISIBILITY = PsiModifier.PRIVATE;
+    localInspection.INNER_CLASS_SETTINGS.MINIMAL_VISIBILITY = PsiModifier.PRIVATE;
+    localInspection.FIELD_SETTINGS.MINIMAL_VISIBILITY = PsiModifier.PRIVATE;
+    localInspection.METHOD_SETTINGS.MINIMAL_VISIBILITY = PsiModifier.PRIVATE;
     //endregion
-
-    localInspection.setIgnoreEmptyDescriptions(true);
 
     //region class type arguments
-    if (!localInspection.TOP_LEVEL_CLASS_OPTIONS.REQUIRED_TAGS.contains(PARAM_TAG)) {
-      localInspection.TOP_LEVEL_CLASS_OPTIONS.REQUIRED_TAGS += PARAM_TAG;
+    if (!localInspection.TOP_LEVEL_CLASS_SETTINGS.isTagRequired(PARAM_TAG)) {
+      localInspection.TOP_LEVEL_CLASS_SETTINGS.setTagRequired(PARAM_TAG, true);
     }
-    if (!localInspection.INNER_CLASS_OPTIONS.REQUIRED_TAGS.contains(PARAM_TAG)) {
-      localInspection.INNER_CLASS_OPTIONS.REQUIRED_TAGS += PARAM_TAG;
+    if (!localInspection.INNER_CLASS_SETTINGS.isTagRequired(PARAM_TAG)) {
+      localInspection.INNER_CLASS_SETTINGS.setTagRequired(PARAM_TAG, true);
     }
     //endregion
 
+    return localInspection;
+  }
+
+  @NotNull
+  private static JavadocDeclarationInspection getJavadocDeclarationInspection() {
+    JavadocDeclarationInspection localInspection = new JavadocDeclarationInspection();
+    localInspection.setIgnoreEmptyDescriptions(true);
     return localInspection;
   }
 

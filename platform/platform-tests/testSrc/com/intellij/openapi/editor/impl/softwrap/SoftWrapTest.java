@@ -4,8 +4,8 @@ package com.intellij.openapi.editor.impl.softwrap;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.TestFileType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +58,7 @@ public class SoftWrapTest extends AbstractEditorTest {
     assertTrue("Missing closing fold marker tag: " + text, foldInsertPosition == 0);
     cleanedText.append(text.substring(pos));
 
-    init(cleanedText.toString(), TestFileType.TEXT);
+    init(cleanedText.toString(), PlainTextFileType.INSTANCE);
 
     for (MyFoldRegion region : foldRegions) {
       FoldRegion r = addFoldRegion(region.startPos, region.endPos, region.placeholder);

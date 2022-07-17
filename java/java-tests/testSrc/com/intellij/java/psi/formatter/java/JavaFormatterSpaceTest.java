@@ -859,4 +859,37 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "    }\n" +
       "}\n");
   }
+
+  public void testSnippet() {
+    doTextTest(
+      "/**\n" +
+      " * {@snippet lang=java}\n" +
+      " **/\n" +
+      "class {}",
+
+      "/**\n" +
+      " * {@snippet lang = java}\n" +
+      " **/\n" +
+      "class {}");
+  }
+
+  public void testLeftShiftExpressionSpacing() {
+    getSettings().SPACE_AROUND_SHIFT_OPERATORS = false;
+    doMethodTest(
+      "int x = a << 2;",
+      "int x = a<<2;");
+  }
+
+  public void testRightShiftExpressionSpacing() {
+    getSettings().SPACE_AROUND_SHIFT_OPERATORS = false;
+    doMethodTest(
+      "int x = a >> 2;",
+      "int x = a>>2;");
+  }
+
+  public void testNamedRecordPatternSpacing() {
+    doMethodTest(
+      "return o instanceof Rec(int i)r",
+      "return o instanceof Rec(int i) r");
+  }
 }

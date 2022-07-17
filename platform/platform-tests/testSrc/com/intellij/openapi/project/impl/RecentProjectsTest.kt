@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
 import com.intellij.ide.*
@@ -80,13 +80,13 @@ class RecentProjectsTest {
 
   @Test
   fun timestampForOpenProjectUpdatesWhenGetStateCalled() {
-    val path = tempDir.newPath("z1")
-    var project = PlatformTestUtil.loadAndOpenProject(path, disposableRule.disposable)
+    val z1 = tempDir.newPath("z1")
+    var project = PlatformTestUtil.loadAndOpenProject(z1, disposableRule.disposable)
     try {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      project = PlatformTestUtil.loadAndOpenProject(path, disposableRule.disposable)
+      project = PlatformTestUtil.loadAndOpenProject(z1, disposableRule.disposable)
       val timestamp = getProjectOpenTimestamp("z1")
-      RecentProjectsManagerBase.instanceEx.updateLastProjectPath()
+      RecentProjectsManagerBase.getInstanceEx().updateLastProjectPath()
       // "Timestamp for opened project has not been updated"
       assertThat(getProjectOpenTimestamp("z1")).isGreaterThan(timestamp)
     }
@@ -109,7 +109,7 @@ class RecentProjectsTest {
   }
 
   private fun getProjectOpenTimestamp(@Suppress("SameParameterValue") projectName: String): Long {
-    val additionalInfo = RecentProjectsManagerBase.instanceEx.state.additionalInfo
+    val additionalInfo = RecentProjectsManagerBase.getInstanceEx().state.additionalInfo
     for (s in additionalInfo.keys) {
       if (s.endsWith(projectName) || s.substringBeforeLast('_').endsWith(projectName)) {
         return additionalInfo.get(s)!!.projectOpenTimestamp

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.common
 
 import com.intellij.openapi.application.ApplicationManager
@@ -23,7 +23,6 @@ import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.Comparator
 import kotlin.math.min
 
 
@@ -652,7 +651,6 @@ object UastClassToString {
 object PsiClassToString {
   val asIs: PsiClazz?.() -> String = { this?.simpleName ?: "null" }
 
-  @Suppress("unused")
   val kotlinAsIs: PsiClazz?.() -> String = {
     if (this == null)
       "null"

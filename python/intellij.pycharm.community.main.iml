@@ -34,5 +34,11 @@
     <orderEntry type="module" module-name="intellij.emojipicker" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grazie" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.color.scheme.monokai" />
+    <orderEntry type="module" module-name="intellij.color.scheme.twilight" />
+    <orderEntry type="module" module-name="intellij.color.scheme.warmNeon" />
+    <orderEntry type="module" module-name="intellij.color.scheme.github" />
+    <orderEntry type="module" module-name="intellij.dev" scope="RUNTIME" />
   </component>
 </module>

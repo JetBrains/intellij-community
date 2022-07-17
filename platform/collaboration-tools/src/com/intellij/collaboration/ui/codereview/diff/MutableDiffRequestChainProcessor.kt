@@ -6,15 +6,15 @@ import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.CacheDiffRequestProcessor
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
+import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
-import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import kotlin.properties.Delegates
 
-open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?) : CacheDiffRequestProcessor.Simple(project) {
+abstract class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?) : CacheDiffRequestProcessor.Simple(project) {
 
   private val asyncChangeListener = AsyncDiffRequestChain.Listener {
     dropCaches()
@@ -66,11 +66,13 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
 
   override fun goToNextChange(fromDifferences: Boolean) {
     currentIndex += 1
+    selectCurrentChange()
     updateRequest(false, if (fromDifferences) ScrollToPolicy.FIRST_CHANGE else null)
   }
 
   override fun goToPrevChange(fromDifferences: Boolean) {
     currentIndex -= 1
+    selectCurrentChange()
     updateRequest(false, if (fromDifferences) ScrollToPolicy.LAST_CHANGE else null)
   }
 
@@ -80,23 +82,25 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
   }
 
   override fun createGoToChangeAction(): AnAction? {
-    return MyGoToChangePopupProvider().createGoToChangeAction()
+    return MyGoToChangePopupAction()
   }
 
-  open fun selectFilePath(filePath: FilePath) {}
+  abstract fun selectFilePath(filePath: FilePath)
 
-  private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
-    override fun getChanges(): List<PresentableChange> {
-      return chain?.requests?.mapNotNull { it as? ChangeDiffRequestChain.Producer } ?: emptyList()
+  private fun selectCurrentChange() {
+    val producer = currentRequestProvider as? ChangeDiffRequestChain.Producer ?: return
+    selectFilePath(producer.filePath)
+  }
+
+  private inner class MyGoToChangePopupAction : PresentableGoToChangePopupAction.Default<ChangeDiffRequestChain.Producer>() {
+    override fun getChanges(): ListSelection<out ChangeDiffRequestChain.Producer> {
+      val requests = chain?.requests ?: return ListSelection.empty()
+      val list = ListSelection.createAt(requests, currentIndex)
+      return list.map { it as? ChangeDiffRequestChain.Producer }
     }
 
-    override fun getSelectedChange(): PresentableChange? {
-      val producer = chain?.requests?.getOrNull(currentIndex)
-      return if (producer is ChangeDiffRequestChain.Producer) producer else null
-    }
-
-    override fun select(change: PresentableChange) {
-      this@MutableDiffRequestChainProcessor.selectFilePath(change.filePath)
+    override fun onSelected(change: ChangeDiffRequestChain.Producer) {
+      selectFilePath(change.filePath)
     }
   }
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
@@ -13,15 +14,15 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @see FileBasedIndexExtension
@@ -35,6 +36,24 @@ public abstract class FileBasedIndex {
    */
   @Nullable
   public abstract VirtualFile getFileBeingCurrentlyIndexed();
+
+  /**
+   * @return the file which the current thread is writing evaluated values of indexes right now,
+   * or {@code null} if current thread isn't writing index values.
+   */
+  @Nullable
+  public abstract IndexWritingFile getFileWritingCurrentlyIndexes();
+
+  public static class IndexWritingFile {
+    public final int fileId;
+    @Nullable
+    public final String filePath;
+
+    public IndexWritingFile(int id, @Nullable String path) {
+      fileId = id;
+      filePath = path;
+    }
+  }
 
   @ApiStatus.Internal
   public void registerProjectFileSets(@NotNull Project project) {
@@ -75,8 +94,7 @@ public abstract class FileBasedIndex {
   /**
    * @deprecated see {@link com.intellij.openapi.vfs.newvfs.ManagingFS#findFileById(int)}
    */ // note: upsource implementation requires access to Project here, please don't remove (not anymore)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract VirtualFile findFileById(Project project, int id);
 
   public void requestRebuild(@NotNull ID<?, ?> indexId) {
@@ -90,6 +108,15 @@ public abstract class FileBasedIndex {
   public abstract <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
                                                                     @NotNull K dataKey,
                                                                     @NotNull GlobalSearchScope filter);
+
+  /**
+   * @return lazily reified iterator of VirtualFile's.
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public abstract <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId,
+                                                                          @NotNull K dataKey,
+                                                                          @NotNull GlobalSearchScope filter);
 
   /**
    * @return {@code false} if ValueProcessor.process() returned {@code false}; {@code true} otherwise or if ValueProcessor was not called at all
@@ -120,6 +147,13 @@ public abstract class FileBasedIndex {
                                                                @Nullable Condition<? super V> valueChecker,
                                                                @NotNull Processor<? super VirtualFile> processor);
 
+  public abstract <K, V> boolean processFilesContainingAnyKey(@NotNull ID<K, V> indexId,
+                                                              @NotNull Collection<? extends K> dataKeys,
+                                                              @NotNull GlobalSearchScope filter,
+                                                              @Nullable IdFilter idFilter,
+                                                              @Nullable Condition<? super V> valueChecker,
+                                                              @NotNull Processor<? super VirtualFile> processor);
+
   /**
    * It is guaranteed to return data which is up-to-date within the given project.
    * Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist.
@@ -134,6 +168,11 @@ public abstract class FileBasedIndex {
   @ApiStatus.Internal
   public abstract <K> void ensureUpToDate(@NotNull ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter);
 
+  /**
+   * Marks index as requiring rebuild and requests asynchronously full indexing.
+   * In unit tests one needs for full effect to dispatch events from event queue
+   * with {@code PlatformTestUtil.dispatchAllEventsInIdeEventQueue()}
+   */
   public abstract void requestRebuild(@NotNull ID<?, ?> indexId, @NotNull Throwable throwable);
 
   public abstract <K> void scheduleRebuild(@NotNull ID<K, ?> indexId, @NotNull Throwable e);
@@ -275,7 +314,7 @@ public abstract class FileBasedIndex {
    * which optimized to perform several queries for different indexes.
    */
   @ApiStatus.Experimental
-  public boolean processFilesContainingAllKeys(@NotNull Collection<AllKeysQuery<?, ?>> queries,
+  public boolean processFilesContainingAllKeys(@NotNull Collection<? extends AllKeysQuery<?, ?>> queries,
                                                @NotNull GlobalSearchScope filter,
                                                @NotNull Processor<? super VirtualFile> processor) {
     throw new UnsupportedOperationException();
@@ -299,17 +338,15 @@ public abstract class FileBasedIndex {
   /**
    * An input filter which accepts {@link IndexedFile} as parameter.
    * One could use this interface for filters which require {@link Project} instance to filter out files.
-   * <br>
-   * Note, that in most of cases no one needs this filter.
-   * And the only use case is to optimize indexed file count when corresponding indexer is relatively slow.
+   * <p>
+   * Note that in most the cases no one needs this filter.
+   * And the only use case is to optimize indexed file count when the corresponding indexer is relatively slow.
    */
   @ApiStatus.Experimental
   public interface ProjectSpecificInputFilter extends InputFilter {
     @Override
     default boolean acceptInput(@NotNull VirtualFile file) {
-      DeprecatedMethodException.reportDefaultImplementation(ProjectSpecificInputFilter.class,
-                                                            "acceptInput",
-                                                            "acceptInput(IndexedFile) should be called");
+      PluginException.reportDeprecatedDefault(getClass(), "acceptInput", "`acceptInput(IndexedFile)` should be called");
       return false;
     }
 
@@ -324,8 +361,7 @@ public abstract class FileBasedIndex {
   }
 
   /** @deprecated inline true */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping = true;
 
   @ApiStatus.Internal
@@ -335,11 +371,11 @@ public abstract class FileBasedIndex {
   public static boolean isIndexAccessDuringDumbModeEnabled() {
     return !ourDisableIndexAccessDuringDumbMode;
   }
-  private static final boolean ourDisableIndexAccessDuringDumbMode = SystemProperties.getBooleanProperty("idea.disable.index.access.during.dumb.mode", false);
+  private static final boolean ourDisableIndexAccessDuringDumbMode = Boolean.getBoolean("idea.disable.index.access.during.dumb.mode");
 
   @ApiStatus.Internal
-  public static final boolean USE_IN_MEMORY_INDEX = SystemProperties.is("idea.use.in.memory.file.based.index");
+  public static final boolean USE_IN_MEMORY_INDEX = Boolean.getBoolean("idea.use.in.memory.file.based.index");
 
   @ApiStatus.Internal
-  public static final boolean IGNORE_PLAIN_TEXT_FILES = SystemProperties.is("idea.ignore.plain.text.indexing");
+  public static final boolean IGNORE_PLAIN_TEXT_FILES = Boolean.getBoolean("idea.ignore.plain.text.indexing");
 }

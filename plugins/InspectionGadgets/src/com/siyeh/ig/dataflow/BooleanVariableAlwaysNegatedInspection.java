@@ -61,7 +61,7 @@ public class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
   private static class BooleanVariableAlwaysNegatedVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       super.visitField(field);
       if (!field.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
@@ -73,7 +73,7 @@ public class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
     }
 
     @Override
-    public void visitLocalVariable(PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
       final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
       if (!isAlwaysInvertedBoolean(variable, codeBlock)) {
@@ -108,7 +108,7 @@ public class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
 
     @Override
     public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
+      @NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (!alwaysNegated) {
         return;

@@ -21,8 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * Describes elemenets which may appear at top-level of file.
  *
- * @author: Dmitry.Krasilschikov
- * @date: 21.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public interface GrTopStatement extends GroovyPsiElement {
 

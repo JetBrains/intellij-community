@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -73,7 +73,7 @@ public final class JpsGlobalLoader extends JpsLoaderBase {
     loadComponents(optionsDir, defaultConfigFile.getParent(), serializer, myGlobal);
   }
 
-  public static class PathVariablesSerializer extends JpsGlobalExtensionSerializer {
+  public static final class PathVariablesSerializer extends JpsGlobalExtensionSerializer {
     public static final String MACRO_TAG = "macro";
     public static final String NAME_ATTRIBUTE = "name";
     public static final String VALUE_ATTRIBUTE = "value";
@@ -96,7 +96,7 @@ public final class JpsGlobalLoader extends JpsLoaderBase {
     }
   }
 
-  public static class GlobalLibrariesSerializer extends JpsGlobalExtensionSerializer {
+  public static final class GlobalLibrariesSerializer extends JpsGlobalExtensionSerializer {
     public GlobalLibrariesSerializer() {
       super("applicationLibraries.xml", "libraryTable");
     }
@@ -107,7 +107,7 @@ public final class JpsGlobalLoader extends JpsLoaderBase {
     }
   }
 
-  public static class SdkTableSerializer extends JpsGlobalExtensionSerializer {
+  public static final class SdkTableSerializer extends JpsGlobalExtensionSerializer {
     public SdkTableSerializer() {
       super("jdk.table.xml", SDK_TABLE_COMPONENT_NAME);
     }

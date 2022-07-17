@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.stdlib;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -974,7 +975,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
 
   @Nullable
   @Override
-  public Function<Document, String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
+  public Function<Document, @NlsSafe String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
     return document -> {
       final String moduleName = getModuleNameForDocumentationUrl(namedElement, namedElement);
 
@@ -1006,7 +1007,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
                              ((PyFunction)element).getContainingClass().getName() : "";
     final String name = element instanceof PsiNamedElement && !(element instanceof PyFile) ? ((PsiNamedElement)element).getName() : null;
     final String name2 = "__init__".equals(name) ? "" : name;
-    final String qName = name == null ? null : className + (!"".equals(className) && !"".equals(name2) ? "." : "") + name2;
+    final String qName = name == null ? null : className + (!"".equals(className) && !name2.isEmpty() ? "." : "") + name2;
     final String webpageName2 = isBuiltin ? stdlibObjectsToWebpage.get(qName) : webpageName;
 
     if (webpageName2 != null) {

@@ -30,13 +30,6 @@ class KotlinStructureViewElement(
                 KotlinStructureElementPresentation(isInherited, element, countDescriptor())
             }
 
-    @Deprecated("Use 'visibility' instead.", level = DeprecationLevel.ERROR)
-    var isPublic
-            by AssignableLazyProperty {
-                isPublic(countDescriptor())
-            }
-        private set
-
     var visibility
             by AssignableLazyProperty {
                 Visibility(countDescriptor())
@@ -67,9 +60,7 @@ class KotlinStructureViewElement(
     }
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
-        val element = element
-
-        val children = when (element) {
+        val children = when (val element = element) {
             is KtFile -> element.declarations
             is KtClass -> element.getStructureDeclarations()
             is KtClassOrObject -> element.declarations

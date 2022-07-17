@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task.impl;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.internal.statistic.StructuredIdeActivity;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -16,12 +18,13 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.task.*;
+import com.intellij.tracing.Tracer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +44,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static com.intellij.task.impl.ProjectTaskManagerStatisticsCollector.BUILD_ACTIVITY;
-import static com.intellij.task.impl.ProjectTaskManagerStatisticsCollector.TASK_RUNNER;
+import static com.intellij.task.impl.ProjectTaskManagerStatisticsCollector.*;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Arrays.stream;
@@ -51,7 +53,6 @@ import static java.util.stream.Collectors.groupingBy;
 /**
  * @author Vladislav.Soroka
  */
-@SuppressWarnings("deprecation")
 public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   private static final Logger LOG = Logger.getInstance(ProjectTaskManager.class);
   private final ProjectTaskRunner myDummyTaskRunner = new DummyTaskRunner();
@@ -77,7 +78,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   public Promise<Result> compile(VirtualFile @NotNull [] files) {
     List<ModuleFilesBuildTask> buildTasks = map(
       stream(files)
-        .collect(groupingBy(file -> ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(file, false)))
+        .collect(groupingBy(file -> ProjectFileIndex.getInstance(myProject).getModuleForFile(file, false)))
         .entrySet(),
       entry -> new ModuleFilesBuildTaskImpl(entry.getKey(), false, entry.getValue())
     );
@@ -110,22 +111,13 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   }
 
   @Override
-  public ProjectTask createModulesBuildTask(Module module,
-                                            boolean isIncrementalBuild,
-                                            boolean includeDependentModules,
-                                            boolean includeRuntimeDependencies) {
-    return createModulesBuildTask(ContainerUtil.ar(module), isIncrementalBuild, includeDependentModules, includeRuntimeDependencies);
-  }
-
-  @Override
-  public ProjectTask createModulesBuildTask(Module[] modules,
-                                            boolean isIncrementalBuild,
-                                            boolean includeDependentModules,
-                                            boolean includeRuntimeDependencies) {
-    return modules.length == 1
-           ? new ModuleBuildTaskImpl(modules[0], isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)
-           : new ProjectTaskList(map(Arrays.asList(modules), module ->
-             new ModuleBuildTaskImpl(module, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)));
+  public ProjectTask createModulesBuildTask(Module[] modules, boolean isIncrementalBuild, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests) {
+    if (modules.length == 1) {
+      return new ModuleBuildTaskImpl(modules[0], isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, includeTests);
+    }
+    return new ProjectTaskList(
+      map(Arrays.asList(modules), module -> new ModuleBuildTaskImpl(module, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, includeTests))
+    );
   }
 
   @Override
@@ -136,6 +128,25 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
                                      buildableElement -> new ProjectModelBuildTaskImpl<>(buildableElement, isIncrementalBuild)));
   }
 
+  @ApiStatus.Experimental
+  @Override
+  public @Nullable ExecutionEnvironment createProjectTaskExecutionEnvironment(@NotNull ProjectTask projectTask) {
+    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = groupByRunner(projectTask);
+    if (toRun.isEmpty()) return null;
+    Map<ProjectTaskRunner, List<ProjectTask>> tasksMap = new LinkedHashMap<>();
+    for (Pair<ProjectTaskRunner, Collection<? extends ProjectTask>> pair : toRun) {
+      tasksMap.computeIfAbsent(pair.first, runner -> new ArrayList<>()).addAll(pair.second);
+    }
+    if (tasksMap.size() != 1) {
+      LOG.debug("Can not create single execution environment for tasks of different runners: '" + tasksMap + "'");
+      return null;
+    }
+    Map.Entry<ProjectTaskRunner, List<ProjectTask>> entry = tasksMap.entrySet().iterator().next();
+    ProjectTask[] tasks = entry.getValue().toArray(EMPTY_TASKS_ARRAY);
+    ProjectTaskRunner taskRunner = entry.getKey();
+    return taskRunner.createExecutionEnvironment(myProject, tasks);
+  }
+
   @Override
   public Promise<Result> run(@NotNull ProjectTask projectTask) {
     return run(new ProjectTaskContext(), projectTask);
@@ -143,33 +154,11 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
 
   @Override
   public Promise<Result> run(@NotNull ProjectTaskContext context, @NotNull ProjectTask projectTask) {
+    Tracer.Span buildSpan = Tracer.start("build");
     AsyncPromise<Result> promiseResult = new AsyncPromise<>();
-    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = new SmartList<>();
+    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = groupByRunner(projectTask);
 
-    Consumer<Collection<? extends ProjectTask>> taskClassifier = tasks -> {
-      Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild = tasks.stream().collect(
-        groupingBy(aTask -> stream(ProjectTaskRunner.EP_NAME.getExtensions())
-          .filter(runner -> {
-            try {
-              return runner.canRun(myProject, aTask);
-            }
-            catch (ProcessCanceledException e) {
-              throw e;
-            }
-            catch (Throwable e) {
-              LOG.error("Broken project task runner: " + runner.getClass().getName(), e);
-            }
-            return false;
-          })
-          .findFirst()
-          .orElse(myDummyTaskRunner))
-      );
-      for (Map.Entry<ProjectTaskRunner, ? extends List<? extends ProjectTask>> entry : toBuild.entrySet()) {
-        toRun.add(Pair.create(entry.getKey(), entry.getValue()));
-      }
-    };
-    visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
-
+    buildSpan.complete();
     context.putUserData(ProjectTaskScope.KEY, new ProjectTaskScope() {
       @Override
       public @NotNull <T extends ProjectTask> List<T> getRequestedTasks(@NotNull Class<T> instanceOf) {
@@ -181,10 +170,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     });
 
 
-    StructuredIdeActivity activity = BUILD_ACTIVITY.started(myProject, () ->
-      Collections.singletonList(TASK_RUNNER.with(map(toRun, it -> it.first.getClass().getName())))
-    );
-
+    StructuredIdeActivity activity = reportBuildStart(projectTask, toRun);
     myEventPublisher.started(context);
 
     Runnable runnable = () -> {
@@ -234,7 +220,77 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     else {
       runnable.run();
     }
+    promiseResult.onProcessed(result -> {
+      buildSpan.complete();
+    });
     return promiseResult;
+  }
+
+  @NotNull
+  private StructuredIdeActivity reportBuildStart(@NotNull ProjectTask projectTask,
+                                                 List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun) {
+    Ref<Boolean> incremental = new Ref<>(null);
+    AtomicInteger modules = new AtomicInteger(0);
+    visitTask(projectTask, tasks -> {
+      for (ProjectTask task : tasks) {
+        if (task instanceof BuildTask) {
+          boolean taskIncremental = ((BuildTask) task).isIncrementalBuild();
+          // if any of the tasks is full rebuild, assume everything is full rebuild
+          if (!taskIncremental) {
+            incremental.set(false);
+          }
+          else if (incremental.get() == null) {
+            incremental.set(true);
+          }
+        }
+
+        if (task instanceof ModuleBuildTask) {
+          modules.incrementAndGet();
+        }
+      }
+    });
+
+    List<EventPair<?>> fields = new SmartList<>();
+    fields.add(TASK_RUNNER.with(map(toRun, it -> it.first.getClass().getName())));
+    if (incremental.get() != null) {
+      fields.add(INCREMENTAL.with(incremental.get()));
+    }
+    if (modules.get() > 0) {
+      fields.add(MODULES.with(modules.get()));
+    }
+    return BUILD_ACTIVITY.started(myProject, () -> fields);
+  }
+
+  private List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> groupByRunner(@NotNull ProjectTask projectTask) {
+    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = new SmartList<>();
+    Consumer<Collection<? extends ProjectTask>> taskClassifier = tasks -> {
+      Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild = tasks.stream().collect(
+        groupingBy(aTask -> stream(ProjectTaskRunner.EP_NAME.getExtensions())
+          .filter(runner -> {
+            try {
+              return runner.canRun(myProject, aTask);
+            }
+            catch (ProcessCanceledException e) {
+              throw e;
+            }
+            catch (Throwable e) {
+              LOG.error("Broken project task runner: " + runner.getClass().getName(), e);
+            }
+            return false;
+          })
+          .findFirst()
+          .orElse(myDummyTaskRunner))
+      );
+      for (Map.Entry<ProjectTaskRunner, ? extends List<? extends ProjectTask>> entry : toBuild.entrySet()) {
+        toRun.add(Pair.create(entry.getKey(), entry.getValue()));
+      }
+    };
+    visitTask(projectTask, taskClassifier);
+    return toRun;
+  }
+
+  private static void visitTask(@NotNull ProjectTask projectTask, Consumer<? super Collection<? extends ProjectTask>> taskClassifier) {
+    visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
   }
 
   @ApiStatus.Experimental
@@ -404,7 +460,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
           myResultConsumer.accept(new MyResult(myContext, myTasksState, myAbortedFlag.get(), myErrorsFlag.get()));
         }
         finally {
-          myActivity.finished();
+          myActivity.finished(() -> List.of(HAS_ERRORS.with(myErrorsFlag.get())));
         }
       }
     }

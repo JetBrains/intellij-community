@@ -7,12 +7,14 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Ref
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
@@ -49,7 +51,18 @@ class PyRunTest : PyEnvTestCase() {
         val connection = project.messageBus.connect()
         val latch = CountDownLatch(1)
         val output = mutableListOf<String>()
+        val handlerRef = Ref<ProcessHandler>()
         connection.subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
+          override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
+            super.processStarted(executorId, env, handler)
+            handlerRef.set(handler)
+          }
+
+          override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
+            super.processTerminated(executorId, env, handler, exitCode)
+            latch.countDown()
+          }
+
           override fun processNotStarted(executorId: String, e: ExecutionEnvironment) {
             if (executorId == executor.id && e == env) {
               processNotStarted = true
@@ -76,7 +89,9 @@ class PyRunTest : PyEnvTestCase() {
         runInEdt {
           runner.execute(env)
         }
-        latch.await(myTimeout.toLong(), TimeUnit.MILLISECONDS)
+        val await = latch.await(myTimeout.toLong(), TimeUnit.MILLISECONDS)
+        handlerRef.get()?.destroyProcess()
+        Assert.assertTrue("Test frozen", await)
         connection.disconnect()
         if (processNotStarted) {
           Assert.fail("Failed to start the script")

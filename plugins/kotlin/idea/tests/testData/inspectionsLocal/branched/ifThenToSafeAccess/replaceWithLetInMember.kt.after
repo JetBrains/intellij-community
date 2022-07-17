@@ -1,5 +1,5 @@
 // HIGHLIGHT: INFORMATION
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class Test {
     fun doAThing(param1: String) {

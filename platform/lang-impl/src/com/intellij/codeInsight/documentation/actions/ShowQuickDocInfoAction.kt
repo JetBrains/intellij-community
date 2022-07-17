@@ -1,10 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 package com.intellij.codeInsight.documentation.actions
 
 import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.featureStatistics.FeatureUsageTracker
+import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS
+import com.intellij.lang.documentation.ide.impl.DocumentationManager.Companion.instance
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.EditorGutter
 import com.intellij.openapi.project.DumbAware
@@ -15,7 +19,6 @@ open class ShowQuickDocInfoAction : AnAction(),
                                     ActionToIgnore,
                                     DumbAware,
                                     PopupAction,
-                                    UpdateInBackground,
                                     PerformWithDocumentsCommitted {
 
   init {
@@ -24,7 +27,13 @@ open class ShowQuickDocInfoAction : AnAction(),
     setInjectedContext(true)
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
+    if (isDocumentationV2Enabled()) {
+      e.presentation.isEnabled = e.dataContext.getData(DOCUMENTATION_TARGETS)?.isNotEmpty() ?: false
+      return
+    }
     val presentation = e.presentation
     val dataContext = e.dataContext
     presentation.isEnabled = false
@@ -46,6 +55,10 @@ open class ShowQuickDocInfoAction : AnAction(),
   }
 
   override fun actionPerformed(e: AnActionEvent) {
+    if (isDocumentationV2Enabled()) {
+      actionPerformedV2(e.dataContext)
+      return
+    }
     val dataContext = e.dataContext
     val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return
     val editor = CommonDataKeys.EDITOR.getData(dataContext)
@@ -68,6 +81,11 @@ open class ShowQuickDocInfoAction : AnAction(),
       val hint = documentationManager.docInfoHint
       documentationManager.showJavaDocInfo(element, null, hint != null, null)
     }
+  }
+
+  private fun actionPerformedV2(dataContext: DataContext) {
+    val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
+    instance(project).actionPerformed(dataContext)
   }
 
   @Suppress("SpellCheckingInspection")

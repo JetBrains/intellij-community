@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.ide.DataManager;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
-import com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleTypeId;
@@ -36,12 +23,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.FileContentUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
@@ -55,6 +43,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
   protected void setUp() throws Exception {
     super.setUp();
     initProjectsManager(true);
+    Assume.assumeFalse(MavenUtil.isLinearImportEnabled());
   }
 
   @Test
@@ -69,6 +58,17 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertNull(myProjectsManager.findProject(myProjectPom));
   }
 
+  @Test
+  public void testShouldReturnNotNullForProcessedFiles() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+    importProject();
+
+    // shouldn't throw
+    assertNotNull(myProjectsManager.findProject(myProjectPom));
+  }
+
   @Test 
   public void testUpdatingProjectsWhenAbsentManagedProjectFileAppears() throws IOException {
     importProject("<groupId>test</groupId>" +
@@ -79,14 +79,14 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                   "<modules>" +
                   "  <module>m</module>" +
                   "</modules>");
-    assertEquals(1, myProjectsTree.getRootProjects().size());
+    assertEquals(1, getProjectsTree().getRootProjects().size());
 
     WriteCommandAction.writeCommandAction(myProject).run(() -> myProjectPom.delete(this));
 
     configConfirmationForYesAnswer();
     scheduleProjectImportAndWait();
 
-    assertEquals(0, myProjectsTree.getRootProjects().size());
+    assertEquals(0, getProjectsTree().getRootProjects().size());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -97,7 +97,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                      "</modules>");
     scheduleProjectImportAndWait();
 
-    assertEquals(1, myProjectsTree.getRootProjects().size());
+    assertEquals(1, getProjectsTree().getRootProjects().size());
   }
 
   @Test 
@@ -113,16 +113,16 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                                            "<version>1</version>");
     importProjects(p1, p2);
 
-    assertEquals(2, myProjectsTree.getRootProjects().size());
+    assertEquals(2, getProjectsTree().getRootProjects().size());
 
     runWriteAction(() -> p2.rename(this, "foo.bar"));
     configConfirmationForYesAnswer();
-    scheduleProjectImportAndWait();
-    assertEquals(1, myProjectsTree.getRootProjects().size());
+    scheduleProjectImportAndWaitWithoutCheckFloatingBar();
+    assertEquals(1, getProjectsTree().getRootProjects().size());
 
     runWriteAction(() -> p2.rename(this, "pom.xml"));
-    scheduleProjectImportAndWait();
-    assertEquals(2, myProjectsTree.getRootProjects().size());
+    scheduleProjectImportAndWaitWithoutCheckFloatingBar();
+    assertEquals(2, getProjectsTree().getRootProjects().size());
   }
 
   @Test 
@@ -141,16 +141,16 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     final VirtualFile oldDir = p2.getParent();
     runWriteAction(() -> VfsUtil.markDirtyAndRefresh(false, true, true, myProjectRoot));
     VirtualFile newDir = runWriteAction(() -> myProjectRoot.createChildDirectory(this, "foo"));
-    assertEquals(2, myProjectsTree.getRootProjects().size());
+    assertEquals(2, getProjectsTree().getRootProjects().size());
 
     runWriteAction(() -> p2.move(this, newDir));
     configConfirmationForYesAnswer();
-    scheduleProjectImportAndWait();
-    assertEquals(1, myProjectsTree.getRootProjects().size());
+    scheduleProjectImportAndWaitWithoutCheckFloatingBar();
+    assertEquals(1, getProjectsTree().getRootProjects().size());
 
     runWriteAction(() -> p2.move(this, oldDir));
-    scheduleProjectImportAndWait();
-    assertEquals(2, myProjectsTree.getRootProjects().size());
+    scheduleProjectImportAndWaitWithoutCheckFloatingBar();
+    assertEquals(2, getProjectsTree().getRootProjects().size());
   }
 
   @Test 
@@ -175,26 +175,26 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     WriteCommandAction.writeCommandAction(myProject).run(() -> {
       VirtualFile newDir = myProjectRoot.createChildDirectory(this, "m2");
 
-      assertEquals(1, myProjectsTree.getRootProjects().size());
-      assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
+      assertEquals(1, getProjectsTree().getRootProjects().size());
+      assertEquals(1, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
 
       m.move(this, newDir);
-      scheduleProjectImportAndWait();
+      scheduleProjectImportAndWaitWithoutCheckFloatingBar();
 
-      assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
+      assertEquals(1, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
 
       m.move(this, oldDir);
-      scheduleProjectImportAndWait();
+      scheduleProjectImportAndWaitWithoutCheckFloatingBar();
 
-      assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
+      assertEquals(1, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
 
       m.move(this, myProjectRoot.createChildDirectory(this, "xxx"));
     });
 
     configConfirmationForYesAnswer();
-    scheduleProjectImportAndWait();
+    scheduleProjectImportAndWaitWithoutCheckFloatingBar();
 
-    assertEquals(0, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
+    assertEquals(0, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
   }
 
   @Test 
@@ -208,11 +208,11 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                   "  <module>m</module>" +
                   "</modules>");
 
-    List<MavenProject> roots = myProjectsTree.getRootProjects();
+    List<MavenProject> roots = getProjectsTree().getRootProjects();
     MavenProject parentNode = roots.get(0);
 
     assertNotNull(parentNode);
-    assertTrue(myProjectsTree.getModules(roots.get(0)).isEmpty());
+    assertTrue(getProjectsTree().getModules(roots.get(0)).isEmpty());
 
     VirtualFile m = createModulePom("m",
                                     "<groupId>test</groupId>" +
@@ -220,7 +220,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                                     "<version>1</version>");
     scheduleProjectImportAndWait();
 
-    List<MavenProject> children = myProjectsTree.getModules(roots.get(0));
+    List<MavenProject> children = getProjectsTree().getModules(roots.get(0));
     assertEquals(1, children.size());
     assertEquals(m, children.get(0).getFile());
   }
@@ -238,16 +238,16 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                                      "<version>1</version>");
     importProject(m1);
 
-    assertUnorderedElementsAreEqual(myProjectsTree.getRootProjectsFiles(), m1);
+    assertUnorderedElementsAreEqual(getProjectsTree().getRootProjectsFiles(), m1);
 
     myProjectsManager.addManagedFiles(Arrays.asList(m2));
     waitForReadingCompletion();
 
-    assertUnorderedElementsAreEqual(myProjectsTree.getRootProjectsFiles(), m1, m2);
+    assertUnorderedElementsAreEqual(getProjectsTree().getRootProjectsFiles(), m1, m2);
 
     myProjectsManager.removeManagedFiles(Arrays.asList(m2));
     waitForReadingCompletion();
-    assertUnorderedElementsAreEqual(myProjectsTree.getRootProjectsFiles(), m1);
+    assertUnorderedElementsAreEqual(getProjectsTree().getRootProjectsFiles(), m1);
   }
 
   @Test 
@@ -298,14 +298,14 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                                     "<version>1</version>");
     scheduleProjectImportAndWait();
 
-    assertEquals(1, myProjectsTree.getRootProjects().size());
-    assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
+    assertEquals(1, getProjectsTree().getRootProjects().size());
+    assertEquals(1, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
 
     myProjectsManager.addManagedFiles(Arrays.asList(m));
     waitForReadingCompletion();
 
-    assertEquals(1, myProjectsTree.getRootProjects().size());
-    assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
+    assertEquals(1, getProjectsTree().getRootProjects().size());
+    assertEquals(1, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -314,9 +314,9 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                      "");
     scheduleProjectImportAndWait();
 
-    assertEquals(2, myProjectsTree.getRootProjects().size());
-    assertEquals(0, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
-    assertEquals(0, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(1)).size());
+    assertEquals(2, getProjectsTree().getRootProjects().size());
+    assertEquals(0, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
+    assertEquals(0, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(1)).size());
   }
 
   @Test 
@@ -363,10 +363,10 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     importProject();
 
-    List<MavenProject> roots = myProjectsTree.getRootProjects();
+    List<MavenProject> roots = getProjectsTree().getRootProjects();
 
     MavenProject parentNode = roots.get(0);
-    MavenProject childNode = myProjectsTree.getModules(roots.get(0)).get(0);
+    MavenProject childNode = getProjectsTree().getModules(roots.get(0)).get(0);
 
     assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
@@ -454,10 +454,10 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     importProject();
 
-    List<MavenProject> roots = myProjectsTree.getRootProjects();
+    List<MavenProject> roots = getProjectsTree().getRootProjects();
 
     MavenProject parentNode = roots.get(0);
-    MavenProject childNode = myProjectsTree.getModules(roots.get(0)).get(0);
+    MavenProject childNode = getProjectsTree().getModules(roots.get(0)).get(0);
 
     assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
@@ -483,7 +483,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                      "<version>1</version>");
 
     importProject();
-    assertUnorderedElementsAreEqual(myProjectsTree.getAvailableProfiles());
+    assertUnorderedElementsAreEqual(getProjectsTree().getAvailableProfiles());
 
     updateSettingsXml("<profiles>" +
                       "  <profile>" +
@@ -491,11 +491,11 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                       "  </profile>" +
                       "</profiles>");
     waitForReadingCompletion();
-    assertUnorderedElementsAreEqual(myProjectsTree.getAvailableProfiles(), "one");
+    assertUnorderedElementsAreEqual(getProjectsTree().getAvailableProfiles(), "one");
 
     deleteSettingsXml();
     waitForReadingCompletion();
-    assertUnorderedElementsAreEqual(myProjectsTree.getAvailableProfiles());
+    assertUnorderedElementsAreEqual(getProjectsTree().getAvailableProfiles());
   }
 
   @Test 
@@ -585,10 +585,10 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     importProject();
 
-    List<MavenProject> roots = myProjectsTree.getRootProjects();
+    List<MavenProject> roots = getProjectsTree().getRootProjects();
 
     MavenProject parentNode = roots.get(0);
-    MavenProject childNode = myProjectsTree.getModules(roots.get(0)).get(0);
+    MavenProject childNode = getProjectsTree().getModules(roots.get(0)).get(0);
 
     assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
@@ -693,8 +693,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     importProjects(p1, p2);
     myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList("one", "two")));
-    myProjectsManager.setIgnoredFilesPaths(Arrays.asList(p1.getPath()));
-    myProjectsManager.setIgnoredFilesPatterns(Arrays.asList("*.xxx"));
+    setIgnoredFilesPathForNextImport(Arrays.asList(p1.getPath()));
+    setIgnoredPathPatternsForNextImport(Arrays.asList("*.xxx"));
 
     state = myProjectsManager.getState();
     assertUnorderedPathsAreEqual(state.originalFiles, Arrays.asList(p1.getPath(), p2.getPath()));
@@ -739,7 +739,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                                           "<version>1</version>");
     importProject();
     myProjectsManager.performScheduledImportInTests(); // ensure no pending requests
-    assertModules("project", "m");
+    assertModules("project", mn("project", "m"));
 
     runWriteAction(() -> m.delete(this));
 
@@ -1217,12 +1217,17 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Override
   protected void doImportProjects(List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
-    super.doImportProjects(files, failOnReadingError, profiles);
-    resolveDependenciesAndImport(); // wait of full import completion
+    if(isNewImportingProcess){
+      importViaNewFlow(files, failOnReadingError, Collections.emptyList(), profiles);
+    } else {
+      super.doImportProjects(files, failOnReadingError, profiles);
+      resolveDependenciesAndImport(); // wait of full import completion
+    }
+
   }
 
   private boolean hasProjectsToBeImported() {
-    return ProjectNotificationAware.getInstance(myProject).isNotificationVisible();
+    return ExternalSystemProjectNotificationAware.getInstance(myProject).isNotificationVisible();
   }
 
   private void scheduleProjectImportAndWait() {
@@ -1230,5 +1235,16 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh();
     resolveDependenciesAndImport();
     assertFalse(hasProjectsToBeImported()); // otherwise project settings was modified while importing
+  }
+
+  /**
+   * temporary solution. since The maven deletes files during the import process (renaming the file).
+   * And therefore the floating bar is always displayed.
+   * Because there is no information who deleted the import file or the other user action
+   * problem in MavenProjectsAware#collectSettingsFiles() / yieldAll(projectsTree.projectsFiles.map { it.path })
+   */
+  private void scheduleProjectImportAndWaitWithoutCheckFloatingBar() {
+    ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh();
+    resolveDependenciesAndImport();
   }
 }

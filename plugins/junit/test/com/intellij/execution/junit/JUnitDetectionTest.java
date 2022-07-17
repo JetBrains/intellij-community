@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -46,6 +46,24 @@ public class JUnitDetectionTest extends LightJavaCodeInsightFixtureTestCase {
     PsiClass innerClass = aClass.getInnerClasses()[0];
     assertFalse(framework.isTestClass(innerClass));
     assertFalse(framework.isTestMethod(innerClass.getMethods()[0]));
+  }
+  
+  public void testJUnit3TestCase() {
+    myFixture.addClass("package junit.framework; public class TestCase {}");
+    PsiFile file = myFixture.configureByText("Foo.java", "public class Foo extends junit.framework.TestCase {\n" +
+                                                         "    public class Bar extends Foo {\n" +
+                                                         "        public void testFoo() {\n" +
+                                                         "        }\n" +
+                                                         "    }\n" +
+                                                         "    public void testFoo2() {\n" +
+                                                         "    }\n" +
+                                                         "}");
+    PsiClass aClass = ((PsiClassOwner)file).getClasses()[0];
+    TestFramework framework = TestFrameworks.detectFramework(aClass);
+    assertNotNull(framework);
+    assertTrue(framework.isTestClass(aClass));
+    PsiClass innerClass = aClass.getInnerClasses()[0];
+    assertFalse(framework.isTestClass(innerClass));
   }
 
   public void testKnownClassInheritor() {
@@ -151,6 +169,9 @@ public class JUnitDetectionTest extends LightJavaCodeInsightFixtureTestCase {
   }
   
   public void testableClassTest() {
+     myFixture.addClass("package org.junit.jupiter.api;" +
+                       "@org.junit.platform.commons.annotation.Testable public @interface Test {}");
+       
     PsiFile file = myFixture.configureByText("TestableClassTest.java",
                                              "@org.junit.platform.commons.annotation.Testable " +
                                              "class TestableClassTest {\n" +

@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment;
+import com.intellij.codeInsight.hints.InlayHintsUtilsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -26,6 +27,7 @@ import java.util.Set;
 
 public final class ParameterHintsPresentationManager implements Disposable {
   private static final Key<AnimationStep> ANIMATION_STEP = Key.create("ParameterHintAnimationStep");
+  private static final Key<Boolean> PREVIEW_MODE = Key.create("ParameterHintsPreviewMode");
 
   private static final int ANIMATION_STEP_MS = 25;
   private static final int ANIMATION_CHARS_PER_STEP = 3;
@@ -39,7 +41,7 @@ public final class ParameterHintsPresentationManager implements Disposable {
   private ParameterHintsPresentationManager() {
   }
 
-  public List<Inlay> getParameterHintsInRange(@NotNull Editor editor, int startOffset, int endOffset) {
+  public List<Inlay<?>> getParameterHintsInRange(@NotNull Editor editor, int startOffset, int endOffset) {
     //noinspection unchecked
     return (List)editor.getInlayModel().getInlineElementsInRange(startOffset, endOffset, MyRenderer.class);
   }
@@ -109,6 +111,10 @@ public final class ParameterHintsPresentationManager implements Disposable {
     return renderer.current;
   }
 
+  public void setPreviewMode(Editor editor, boolean b) {
+    PREVIEW_MODE.set(editor, b);
+  }
+
   private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText, HintWidthAdjustment widthAdjuster,
                               boolean useAnimation) {
     MyRenderer renderer = (MyRenderer)hint.getRenderer();
@@ -154,6 +160,11 @@ public final class ParameterHintsPresentationManager implements Disposable {
       updateState(editor, text, widthAdjustment, animated);
     }
 
+    @Override
+    public String toString() {
+      return "[" + this.getText() + "]";
+    }
+
     public void update(Editor editor, String newText, HintWidthAdjustment widthAdjustment, boolean animated) {
       updateState(editor, newText, widthAdjustment, animated);
     }
@@ -162,10 +173,13 @@ public final class ParameterHintsPresentationManager implements Disposable {
     @Override
     protected TextAttributes getTextAttributes(@NotNull Editor editor) {
       if (step > steps || startWidth != 0) {
-        return editor.getColorsScheme().getAttributes(current
-                                                      ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT
-                                                      : highlighted ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED
-                                                                    : DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+        TextAttributes attributes = editor.getColorsScheme().getAttributes(current
+                                                                           ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT
+                                                                           : highlighted
+                                                                             ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED
+                                                                             : DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+        Boolean aBoolean = PREVIEW_MODE.get(editor);
+        return aBoolean != null && aBoolean ? InlayHintsUtilsKt.strikeOutBuilder(editor).applyTo(attributes.clone()) : attributes;
       }
       return null;
     }
@@ -177,7 +191,7 @@ public final class ParameterHintsPresentationManager implements Disposable {
 
     private void updateState(Editor editor, String text, HintWidthAdjustment widthAdjustment, boolean animated) {
       setWidthAdjustment(widthAdjustment);
-      FontMetrics metrics = getFontMetrics(editor).getMetrics();
+      FontMetrics metrics = getFontMetrics(editor, useEditorFont()).getMetrics();
       startWidth = calcHintTextWidth(getText(), metrics);
       setText(text);
       int endWidth = calcHintTextWidth(getText(), metrics);

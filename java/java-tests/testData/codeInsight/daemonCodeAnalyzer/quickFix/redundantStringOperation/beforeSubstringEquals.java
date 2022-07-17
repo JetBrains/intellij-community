@@ -1,4 +1,4 @@
-// "Fix all 'Redundant String operation' problems in file" "true"
+// "Fix all 'Redundant 'String' operation' problems in file" "true"
 class X {
     void test(String s, int pos, String s2) {
         if (s.sub<caret>string(pos, pos + 4).equals("xyzt")) { }
@@ -11,5 +11,6 @@ class X {
         if (s.substring(1, 1+"xyzt".length()).equals("xyzt")) { }
         if (s.substring(s.length() - 3).equals("...")) {}
         if (s.substring(s.length() - s2.length()).equals(s2)) {}
+        if (s.substring(s.length() - 4, s.length()).equals("xyzt")) {}
     }
 }

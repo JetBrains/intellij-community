@@ -196,7 +196,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
           // Imagine "def f(x, y=None): ..." -> "def f(x, foo=None, y=None): ..." and a call "f(1, 2)"
           keywordArgsRequired = true;
         }
-        else {
+        else if (!isKeywordVararg && !isPositionalVararg) {
           newArguments.add(formatArgument(paramName, paramDefault, keywordArgsRequired));
         }
       }
@@ -261,6 +261,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   @NotNull
   private static String formatArgument(@NotNull String name, @NotNull String value, boolean keywordArgument) {
     if (keywordArgument && !value.startsWith("*")) {
+      assert !name.startsWith("*");
       return name + "=" + value;
     }
     else {
@@ -397,7 +398,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   @Override
-  public void registerConflictResolvers(List<ResolveSnapshotProvider.ResolveSnapshot> snapshots,
+  public void registerConflictResolvers(List<? super ResolveSnapshotProvider.ResolveSnapshot> snapshots,
                                         @NotNull ResolveSnapshotProvider resolveSnapshotProvider,
                                         UsageInfo[] usages, ChangeInfo changeInfo) {
   }

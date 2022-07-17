@@ -33,5 +33,12 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" exported="" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
+    <orderEntry type="library" scope="PROVIDED" name="JUnit5Launcher" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="JUnit5" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="JUnit5Params" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.common" exported="" />
   </component>
 </module>

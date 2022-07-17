@@ -16,8 +16,8 @@
 
 package nonplatformtypeparameter;
 
-import org.jspecify.annotations.DefaultNonNull;
-import org.jspecify.annotations.Nullable;
+import org.jspecify.nullness.NullMarked;
+import org.jspecify.nullness.Nullable;
 
 public class NonPlatformTypeParameter<T extends @Nullable Object> {
   public void foo(T t) {}
@@ -27,7 +27,7 @@ public class NonPlatformTypeParameter<T extends @Nullable Object> {
 
 class Test {}
 
-@DefaultNonNull
+@NullMarked
 class Use {
   public <T extends Test> void main(
       NonPlatformTypeParameter<@Nullable Object> a1, NonPlatformTypeParameter<Test> a2, T x) {

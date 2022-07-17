@@ -2,11 +2,10 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.implicitVisibility
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.intentions.isFinalizeMethod
@@ -17,6 +16,8 @@ import org.jetbrains.kotlin.psi.addRemoveModifier.addModifier
 import org.jetbrains.kotlin.psi.declarationVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class ProtectedInFinalInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -47,7 +48,6 @@ class ProtectedInFinalInspection : AbstractKotlinInspection() {
         override fun getFamilyName(): String = name
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.psiElement)) return
             val modifierListOwner = descriptor.psiElement.getParentOfType<KtModifierListOwner>(true)
                 ?: throw IllegalStateException("Can't find modifier list owner for modifier")
             addModifier(modifierListOwner, KtTokens.PRIVATE_KEYWORD)
@@ -60,7 +60,6 @@ class ProtectedInFinalInspection : AbstractKotlinInspection() {
         override fun getFamilyName(): String = name
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.psiElement)) return
             val modifierListOwner = descriptor.psiElement.getParentOfType<KtModifierListOwner>(true)
                 ?: throw IllegalStateException("Can't find modifier list owner for modifier")
             val parentClass = modifierListOwner.getParentOfType<KtClass>(true) ?: return

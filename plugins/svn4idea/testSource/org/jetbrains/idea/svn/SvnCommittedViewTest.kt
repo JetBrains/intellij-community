@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -125,7 +126,7 @@ class SvnCommittedViewTest : SvnTestCase() {
     assertRevisions(
       r(2,
         Data(d1, FileStatus.MODIFIED, "- moved from .." + File.separatorChar),
-        Data(f11, FileStatus.MODIFIED, "- moved from $oldF11Path")
+        Data(f11, FileStatus.MODIFIED, "- moved from " + FileUtil.toSystemDependentName("../../d1/"))
       )
     )
   }

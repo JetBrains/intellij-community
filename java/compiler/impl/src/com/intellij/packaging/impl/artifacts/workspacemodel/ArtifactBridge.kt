@@ -13,15 +13,19 @@ import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.util.EventDispatcher
-import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactPropertiesEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArchivePackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.CompositePackagingElementEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.util.JpsPathUtil
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 open class ArtifactBridge(
   _artifactId: ArtifactId,
@@ -36,7 +40,7 @@ open class ArtifactBridge(
     WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
       override fun beforeChanged(event: VersionedStorageChange) {
         event.getChanges(ArtifactEntity::class.java).filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
-          if (it.entity.persistentId() != artifactId) return@forEach
+          if (it.entity.persistentId != artifactId) return@forEach
 
           // Artifact may be "re-added" with the same id
           // In this case two artifact bridges exists with the same ArtifactId: one for removed artifact and one for newly created
@@ -56,7 +60,7 @@ open class ArtifactBridge(
     })
   }
 
-  private val diffOrNull: WorkspaceEntityStorageBuilder?
+  private val diffOrNull: MutableEntityStorage?
     get() {
       val storage = entityStorage
       if (storage is VersionedEntityStorageOnBuilder) {
@@ -65,7 +69,7 @@ open class ArtifactBridge(
       return null
     }
 
-  private val diff: WorkspaceEntityStorageBuilder
+  private val diff: MutableEntityStorage
     get() = diffOrNull ?: error("")
 
   private var artifactIdRaw = _artifactId
@@ -78,7 +82,7 @@ open class ArtifactBridge(
   // and not supposed to be) and the name of the artifact is modified directly in diff. However, we assume that this case isn't possible.
   val artifactId: ArtifactId
     get() {
-      val persistentId = (entityStorage.base.artifactsMap.getEntities(this@ArtifactBridge).singleOrNull() as? ArtifactEntity)?.persistentId()
+      val persistentId = (entityStorage.base.artifactsMap.getEntities(this@ArtifactBridge).singleOrNull() as? ArtifactEntity)?.persistentId
       if (persistentId != null) {
         artifactIdRaw = persistentId
       }
@@ -116,7 +120,7 @@ open class ArtifactBridge(
   override fun getRootElement(): CompositePackagingElement<*> {
     val artifactEntity = entityStorage.base.get(artifactId)
     val rootElement = artifactEntity.rootElement!!
-    val compositeElement = rootElement.toCompositeElement(project, entityStorage.base)
+    val compositeElement = rootElement.toCompositeElement(project, entityStorage)
     if (!compositeElement.hasStorage() || (compositeElement.storageIsStore() && diffOrNull != null)) {
       compositeElement.setStorage(entityStorage, project, elementsWithDiff, PackagingElementInitializer)
       if (entityStorage is VersionedEntityStorageOnBuilder) {
@@ -132,21 +136,27 @@ open class ArtifactBridge(
     return artifactEntity.outputUrl?.url?.let { JpsPathUtil.urlToPath(it) }
   }
 
-  override fun getPropertiesProviders(): MutableCollection<out ArtifactPropertiesProvider> {
-    val artifactEntity = entityStorage.base.get(artifactId)
-    return artifactEntity.customProperties.map { ArtifactPropertiesProvider.findById(it.providerType)!! }.toMutableList()
+  override fun getPropertiesProviders(): Collection<ArtifactPropertiesProvider> {
+    val artifactType = this.artifactType
+    return ArtifactPropertiesProvider.getProviders().filter { it.isAvailableFor(artifactType) }
   }
 
   override fun getProperties(propertiesProvider: ArtifactPropertiesProvider): ArtifactProperties<*>? {
     val artifactEntity = entityStorage.base.get(artifactId)
     val providerId = propertiesProvider.id
-    val customProperty = artifactEntity.customProperties.find { it.providerType == providerId } ?: return null
-    val propertiesXmlTag = customProperty.propertiesXmlTag ?: return null
+    val customProperty = artifactEntity.customProperties.find { it.providerType == providerId }
+                         ?: return if (propertiesProvider.isAvailableFor(this.artifactType)) {
+                           propertiesProvider.createProperties(this.artifactType)
+                         }
+                         else null
 
     @Suppress("UNCHECKED_CAST")
     val createdProperties: ArtifactProperties<Any> = propertiesProvider.createProperties(this.artifactType) as ArtifactProperties<Any>
     val state = createdProperties.state!!
-    JDOMUtil.load(propertiesXmlTag).deserializeInto(state)
+
+    customProperty.propertiesXmlTag?.let {
+      JDOMUtil.load(it).deserializeInto(state)
+    }
 
     createdProperties.loadState(state)
 
@@ -171,7 +181,7 @@ open class ArtifactBridge(
 
   override fun setBuildOnMake(enabled: Boolean) {
     val entity = diff.get(artifactId)
-    diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
+    diff.modifyEntity(entity) {
       this.includeInProjectBuild = enabled
     }
   }
@@ -179,7 +189,7 @@ open class ArtifactBridge(
   override fun setOutputPath(outputPath: String?) {
     val outputUrl = outputPath?.let { VirtualFileUrlManager.getInstance(project).fromPath(it) }
     val entity = diff.get(artifactId)
-    diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
+    diff.modifyEntity(entity) {
       this.outputUrl = outputUrl
     }
   }
@@ -188,7 +198,7 @@ open class ArtifactBridge(
     val actualArtifactId = artifactId
     val entity = diff.get(actualArtifactId)
     val oldName = actualArtifactId.name
-    diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
+    diff.modifyEntity(entity) {
       this.name = name
     }
     this.artifactIdRaw = ArtifactId(name)
@@ -207,7 +217,7 @@ open class ArtifactBridge(
     }
     val oldRootElement = entity.rootElement!!
     if (oldRootElement != rootEntity) {
-      diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
+      diff.modifyEntity(entity) {
         this.rootElement = rootEntity
       }
       diff.removeEntity(oldRootElement)
@@ -219,20 +229,14 @@ open class ArtifactBridge(
       val entity = diff.get(artifactId)
       val (toBeRemoved, filtered) = entity.customProperties.partition { it.providerType == provider.id }
       if (toBeRemoved.isNotEmpty()) {
-        diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
-          this.customProperties = filtered.asSequence()
+        diff.modifyEntity(entity) {
+          this.customProperties = filtered
         }
         toBeRemoved.forEach { diff.removeEntity(it) }
       }
     }
     else {
-      val state = properties.state
-      val tag = if (state != null) {
-        val element = XmlSerializer.serialize(state)
-        element.name = "options"
-        JDOMUtil.write(element)
-      }
-      else null
+      val tag = properties.propertiesTag()
 
       val entity = diff.get(artifactId)
 
@@ -242,7 +246,7 @@ open class ArtifactBridge(
         diff.addArtifactPropertiesEntity(entity, provider.id, tag, entity.entitySource)
       }
       else {
-        diff.modifyEntity(ModifiableArtifactPropertiesEntity::class.java, existingProperty) {
+        diff.modifyEntity(existingProperty) {
           this.propertiesXmlTag = tag
         }
       }
@@ -251,9 +255,11 @@ open class ArtifactBridge(
 
   override fun setArtifactType(selected: ArtifactType) {
     val entity = diff.get(artifactId)
-    diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
+    diff.modifyEntity(entity) {
       this.artifactType = selected.id
     }
+
+    resetProperties(artifactId, diffOrNull)
   }
 
   fun copyFrom(modified: ArtifactBridge) {
@@ -269,5 +275,17 @@ open class ArtifactBridge(
   @NonNls
   override fun toString(): String {
     return "artifact:${artifactId.name}"
+  }
+
+  companion object {
+    internal fun resetProperties(id: ArtifactId, myDiff: MutableEntityStorage?) {
+      // We process only artifact bridges with builder because this logic is applied to the new created artifacts only.
+      // If the artifact entity already exists, we suppose that this artifact already has all custom properties filled.
+      val builder = myDiff ?: return
+
+      val entity = builder.get(id)
+      val previousProperties = entity.customProperties.toList()
+      previousProperties.forEach { builder.removeEntity(it) }
+    }
   }
 }

@@ -28,7 +28,7 @@ public class RenameElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
 
   public RenameElementFix(@NotNull PsiNamedElement element) {
     super(element);
-    final VirtualFile vFile = element.getContainingFile().getVirtualFile();
+    VirtualFile vFile = element.getContainingFile().getVirtualFile();
     assert vFile != null : element;
     myNewName = vFile.getNameWithoutExtension();
     myText = CodeInsightBundle.message("rename.public.class.text", element.getName(), myNewName);

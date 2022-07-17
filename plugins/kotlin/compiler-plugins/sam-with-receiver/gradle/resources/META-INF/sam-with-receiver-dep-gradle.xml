@@ -1,8 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.samWithReceiver.SamWithReceiverGradleProjectImportHandler"/>
-  </extensions>
-  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
-    <projectResolve implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.samWithReceiver.SamWithReceiverProjectResolverExtension" order="last"/>
-  </extensions>
-</idea-plugin>

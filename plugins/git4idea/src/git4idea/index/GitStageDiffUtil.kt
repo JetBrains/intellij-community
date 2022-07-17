@@ -311,23 +311,8 @@ private class StagedContentRevision(val project: Project, val root: VirtualFile,
   override fun getContentAsBytes(): ByteArray = stagedContentFile(project, root, status).contentsToByteArray()
 }
 
-internal class KindTag(private val kind: NodeKind) : ChangesBrowserNode.Tag {
-  override fun toString(): String = GitBundle.message(kind.key)
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as KindTag
-
-    if (kind != other.kind) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int {
-    return kind.hashCode()
-  }
+internal class KindTag(kind: NodeKind) : ChangesBrowserNode.ValueTag<NodeKind>(kind) {
+  override fun toString(): String = GitBundle.message(value.key)
 
   companion object {
     private val tags = NodeKind.values().associateWith { KindTag(it) }

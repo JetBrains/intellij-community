@@ -1,4 +1,4 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 val x = listOf(System.getProperty("")).<caret>filterIsInstance<String>()

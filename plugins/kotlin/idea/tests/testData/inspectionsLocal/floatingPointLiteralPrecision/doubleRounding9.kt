@@ -1,3 +1,3 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 val x = <caret>9999999999999999.1

@@ -17,8 +17,10 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiInstanceOfExpression
 import com.intellij.psi.PsiType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class JavaUInstanceCheckExpression(
   override val sourcePsi: PsiInstanceOfExpression,
   givenParent: UElement?
@@ -29,6 +31,6 @@ class JavaUInstanceCheckExpression(
   override val type: PsiType
     get() = sourcePsi.checkType?.type ?: UastErrorType
 
-  override val operationKind: UastBinaryExpressionWithTypeKind.InstanceCheck
+  override val operationKind: UastBinaryExpressionWithTypeKind
     get() = UastBinaryExpressionWithTypeKind.InstanceCheck.INSTANCE
 }

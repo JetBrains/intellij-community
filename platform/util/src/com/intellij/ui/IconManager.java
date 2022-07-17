@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.ui.icons.RowIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -42,17 +43,7 @@ public interface IconManager {
    * Path must be specified without a leading slash, in a format for {@link ClassLoader#getResourceAsStream(String)}
    */
   @ApiStatus.Internal
-  @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int flags);
-
-  /**
-   * @deprecated Method just for backward compatibility (old generated icon classes).
-   */
-  @Deprecated
-  @ApiStatus.Internal
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey, int flags) {
-    return loadRasterizedIcon(path.startsWith("/") ? path.substring(1) : path, aClass.getClassLoader(), cacheKey, flags);
-  }
+  @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, int cacheKey, int flags);
 
   default @NotNull Icon createEmptyIcon(@NotNull Icon icon) {
     return icon;
@@ -83,6 +74,14 @@ public interface IconManager {
   void registerIconLayer(int flagMask, @NotNull Icon icon);
 
   @NotNull Icon tooltipOnlyIfComposite(@NotNull Icon icon);
+
+  /**
+   * @param icon the icon to which the colored badge should be added
+   * @return an icon that paints the given icon with the colored badge
+   */
+  default @NotNull Icon withIconBadge(@NotNull Icon icon, @NotNull Paint color) {
+    return icon;
+  }
 }
 
 final class IconManagerHelper {
@@ -127,7 +126,7 @@ final class DummyIconManager implements IconManager {
   }
 
   @Override
-  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int flags) {
+  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, int cacheKey, int flags) {
     return new DummyIcon(path);
   }
 
@@ -167,7 +166,7 @@ final class DummyIconManager implements IconManager {
     return new DummyRowIcon(icons);
   }
 
-  private static class DummyIcon implements Icon {
+  private static class DummyIcon implements ScalableIcon {
     static final DummyIcon INSTANCE = new DummyIcon("<DummyIcon>");
     private final String path;
 
@@ -202,6 +201,16 @@ final class DummyIconManager implements IconManager {
     @Override
     public String toString() {
       return path;
+    }
+
+    @Override
+    public float getScale() {
+      return 1;
+    }
+
+    @Override
+    public @NotNull Icon scale(float scaleFactor) {
+      return this;
     }
   }
 

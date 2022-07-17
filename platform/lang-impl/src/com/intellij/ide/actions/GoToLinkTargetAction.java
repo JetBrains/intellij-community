@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +23,11 @@ public class GoToLinkTargetAction extends DumbAwareAction {
     Project project = getEventProject(e);
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     e.getPresentation().setEnabledAndVisible(project != null && underSymlink(file));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

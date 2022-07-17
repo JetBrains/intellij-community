@@ -46,7 +46,8 @@ public abstract class DebuggerSessionTabBase extends RunTab {
 
     defaults
       .initContentAttraction(DebuggerContentInfo.FRAME_CONTENT, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION)
-      .initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT, LayoutViewOptions.STARTUP, new LayoutAttractionPolicy.FocusOnce(false));
+      .initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT, LayoutViewOptions.STARTUP, new LayoutAttractionPolicy.FocusOnce(false))
+      .initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT, XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION, new LayoutAttractionPolicy.FocusOnce());
   }
 
   public static ActionGroup getCustomizedActionGroup(final String id) {

@@ -13,7 +13,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
+public final class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
   private static final Icon DEFAULT_ICON = JBUIScale.scaleIcon(EmptyIcon.create(13)).asUIResource();
 
   @Override

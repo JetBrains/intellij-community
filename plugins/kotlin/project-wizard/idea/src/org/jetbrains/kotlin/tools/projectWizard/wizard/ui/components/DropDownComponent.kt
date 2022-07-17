@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.components
 
 import com.intellij.openapi.application.ApplicationManager
@@ -75,7 +75,7 @@ class DropDownComponent<T : DisplayableSettingItem>(
         }
     }
 
-    override val alignTarget: JComponent? get() = combobox
+    override val alignTarget: JComponent get() = combobox
 
     override val uiComponent = componentWithCommentAtBottom(combobox, description)
 

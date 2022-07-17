@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
@@ -48,7 +49,7 @@ open class CompositeDeclarativeInsertHandler(val handlers: Map<String, Lazy<Decl
 
 /**
  * Important statements of the contract.
- * * Operations of RelativeTextEdit have greedy ranges which may NOT intersect, their offsets must also be independent (with regards to order of application), for example:
+ * * Operations of RelativeTextEdit have greedy ranges which may NOT intersect, their offsets must also be independent (in regard to order of application), for example:
  *    operations (0, 0, "AA) and (2, 2, "BB) - offsets of "BB" should not be calculated with expectation of operation "AA" applied first, and vice-versa.
  *    following text: _<caret>___ should look like: _<caret>AA_BB__
  * * Reasoning for intersection rule: if ranges intersect, then order of application becomes important; so please merge your operations' ranges
@@ -125,8 +126,23 @@ open class DeclarativeInsertHandler2 protected constructor(
     fun produce(builder: Builder)
   }
 
-  class LazyBuilder(private val block: HandlerProducer) : Lazy<DeclarativeInsertHandler2> {
-    private val delegate = lazy { Builder().also(block::produce).build() }
+  /**
+   * @param holdReadLock flag whether to run the @param block inside a readAction
+   * @param block code block that modifies the provided builder
+   */
+  class LazyBuilder(holdReadLock: Boolean, private val block: HandlerProducer) : Lazy<DeclarativeInsertHandler2> {
+    private val delegate = if (holdReadLock) {
+      lazy {
+        runReadAction {
+          Builder().also(block::produce).build()
+        }
+      }
+    }
+    else {
+      lazy {
+        Builder().also(block::produce).build()
+      }
+    }
 
     override val value: DeclarativeInsertHandler2
       get() = delegate.value
@@ -198,3 +214,12 @@ class SingleInsertionDeclarativeInsertHandler(private val stringToInsert: String
            editor.document.getText(TextRange.create(startOffset, startOffset + valueLength)) == stringToInsert
   }
 }
+
+@ApiStatus.Experimental
+object EmptyDeclarativeInsertHandler : DeclarativeInsertHandler2(
+  textOperations = emptyList(),
+  offsetToPutCaret = 0,
+  addCompletionChar = null,
+  postInsertHandler = null,
+  popupOptions = PopupOptions.DoNotShow,
+)

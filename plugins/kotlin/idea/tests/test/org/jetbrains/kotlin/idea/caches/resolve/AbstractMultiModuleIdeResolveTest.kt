@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.exists
-import org.jetbrains.kotlin.checkers.API_VERSION_DIRECTIVE
+import org.jetbrains.kotlin.idea.checkers.API_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.checkers.diagnostics.factories.DebugInfoDiagnosticFactory0
 import org.jetbrains.kotlin.checkers.diagnostics.factories.SyntaxErrorDiagnosticFactory
 import org.jetbrains.kotlin.checkers.utils.CheckerTestUtil
@@ -20,20 +20,19 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.KotlinMultiplatformAnalysisModeComponent
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromTextFile
-import org.jetbrains.kotlin.idea.project.KotlinMultiplatformAnalysisModeComponent
 import org.jetbrains.kotlin.idea.codeMetaInfo.AbstractDiagnosticCodeMetaInfoTest
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.allKotlinFiles
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.Directives
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Paths
@@ -85,23 +84,23 @@ abstract class AbstractMultiModuleIdeResolveTest : AbstractMultiModuleTest() {
 
     protected open fun checkFile(file: KtFile, expectedFile: File) {
         val resolutionFacade = file.getResolutionFacade()
-        val (bindingContext, moduleDescriptor) = resolutionFacade.analyzeWithAllCompilerChecks(listOf(file))
+        val (bindingContext, moduleDescriptor) = resolutionFacade.analyzeWithAllCompilerChecks(file)
 
         val directives = KotlinTestUtils.parseDirectives(file.text)
         val diagnosticsFilter = parseDiagnosticFilterDirective(directives, allowUnderscoreUsage = false)
 
         val actualDiagnostics = CheckerTestUtil.getDiagnosticsIncludingSyntaxErrors(
-            bindingContext,
-            file,
-            markDynamicCalls = false,
-            dynamicCallDescriptors = mutableListOf(),
-            configuration = DiagnosticsRenderingConfiguration(
-                platform = null, // we don't need to attach platform-description string to diagnostic here
-                withNewInference = false,
-                languageVersionSettings = resolutionFacade.getLanguageVersionSettings(),
+          bindingContext,
+          file,
+          markDynamicCalls = false,
+          dynamicCallDescriptors = mutableListOf(),
+          configuration = DiagnosticsRenderingConfiguration(
+              platform = null, // we don't need to attach platform-description string to diagnostic here
+              withNewInference = false,
+              languageVersionSettings = resolutionFacade.languageVersionSettings,
             ),
-            dataFlowValueFactory = resolutionFacade.getDataFlowValueFactory(),
-            moduleDescriptor = moduleDescriptor as ModuleDescriptorImpl
+          dataFlowValueFactory = resolutionFacade.dataFlowValueFactory,
+          moduleDescriptor = moduleDescriptor as ModuleDescriptorImpl
         ).filter { diagnosticsFilter.value(it.diagnostic) }
 
         val actualTextWithDiagnostics = CheckerTestUtil.addDiagnosticMarkersToText(

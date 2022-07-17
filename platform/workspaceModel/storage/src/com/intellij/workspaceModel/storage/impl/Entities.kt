@@ -1,14 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.util.ReflectionUtil
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import kotlin.properties.ReadWriteProperty
+import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
+import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import kotlin.reflect.KClass
-import kotlin.reflect.KProperty
-import kotlin.reflect.full.memberProperties
 
 
 /**
@@ -29,7 +27,7 @@ import kotlin.reflect.full.memberProperties
  *
  *      val childModule: MyModuleEntity? by OneToOneParent.Nullable(MyModuleEntity::class.java, true)
  *
- *      fun persistentId() = NameId(name)
+ *      fun persistentId = NameId(name)
  *   }
  *   ```
  *
@@ -65,9 +63,9 @@ import kotlin.reflect.full.memberProperties
  *
  *       override fun persistentId(): NameId = NameId(name)
  *
-*        override fun createEntity(snapshot: WorkspaceEntityStorage): MyModuleEntity = MyModuleEntity(name).also {
-*            addMetaData(it, snapshot)
-*        }
+ *        override fun createEntity(snapshot: WorkspaceEntityStorage): MyModuleEntity = MyModuleEntity(name).also {
+ *            addMetaData(it, snapshot)
+ *        }
  *   }
  *   ```
  *
@@ -97,48 +95,76 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
   override lateinit var entitySource: EntitySource
     internal set
 
-  internal lateinit var id: EntityId
+  var id: EntityId = invalidEntityId
 
-  internal lateinit var snapshot: AbstractEntityStorage
+  lateinit var snapshot: EntityStorage
 
-  override fun hasEqualProperties(e: WorkspaceEntity): Boolean {
-    if (this.javaClass != e.javaClass) return false
-
-    this::class.memberProperties.forEach {
-      if (it.name == WorkspaceEntityBase::id.name) return@forEach
-      if (it.name == WorkspaceEntityBase::snapshot.name) return@forEach
-      if (it.getter.call(this) != it.getter.call(e)) return false
-    }
-    return true
-  }
+  abstract fun connectionIdList(): List<ConnectionId>
 
   override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> {
-    val connectionId = snapshot.refs.findConnectionId(this::class.java, entityClass)
-    if (connectionId == null) return emptySequence()
-    return when (connectionId.connectionType) {
-      ConnectionId.ConnectionType.ONE_TO_MANY -> snapshot.extractOneToManyChildren(connectionId, id)
-      ConnectionId.ConnectionType.ONE_TO_ONE -> snapshot.extractOneToOneChild<R>(connectionId, id)?.let { sequenceOf(it) }
-                                                ?: emptySequence()
-      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> snapshot.extractOneToAbstractManyChildren(connectionId, id.asParent())
-      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> snapshot.extractAbstractOneToOneChild<R>(connectionId, id.asParent())?.let {
-        sequenceOf(it)
-      } ?: emptySequence()
+    val mySnapshot = snapshot as AbstractEntityStorage
+    return getReferences(mySnapshot, entityClass)
+  }
+
+  internal fun <R : WorkspaceEntity> getReferences(
+    mySnapshot: AbstractEntityStorage,
+    entityClass: Class<R>
+  ): Sequence<R> {
+    var connectionId =
+      mySnapshot.refs.findConnectionId(getEntityInterface(), entityClass)
+    if (connectionId != null) {
+      return when (connectionId.connectionType) {
+        ConnectionId.ConnectionType.ONE_TO_MANY -> mySnapshot.extractOneToManyChildren(connectionId, id)
+        ConnectionId.ConnectionType.ONE_TO_ONE -> mySnapshot.extractOneToOneChild<R>(connectionId, id)
+          ?.let { sequenceOf(it) }
+          ?: emptySequence()
+        ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> mySnapshot.extractOneToAbstractManyChildren(
+          connectionId,
+          id.asParent()
+        )
+        ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> /*mySnapshot.extractAbstractOneToOneChild<R>(connectionId, id.asParent())?.let {
+          sequenceOf(it)
+        } ?: */emptySequence()
+      }
     }
+    connectionId =
+      mySnapshot.refs.findConnectionId(entityClass, getEntityInterface())
+    if (connectionId != null) {
+      return when (connectionId.connectionType) {
+        ConnectionId.ConnectionType.ONE_TO_MANY -> mySnapshot.extractOneToManyParent<R>(connectionId, id)?.let { sequenceOf(it) } ?: emptySequence()
+        ConnectionId.ConnectionType.ONE_TO_ONE -> mySnapshot.extractOneToOneParent<R>(connectionId, id)
+          ?.let { sequenceOf(it) }
+          ?: emptySequence()
+        ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> mySnapshot.extractOneToAbstractManyParent<R>(
+          connectionId,
+          id.asChild()
+        )
+          ?.let { sequenceOf(it) }
+          ?: emptySequence()
+        ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> /*mySnapshot.extractAbstractOneToOneChild<R>(connectionId, id.asParent())?.let {
+          sequenceOf(it)
+        } ?: */emptySequence()
+      }
+    }
+    return emptySequence()
   }
 
   override fun <E : WorkspaceEntity> createReference(): EntityReference<E> {
     return EntityReferenceImpl(this.id)
   }
 
-  override fun toString(): String = "$id"
+  override fun getEntityInterface(): Class<out WorkspaceEntity> = id.clazz.findWorkspaceEntity()
+
+  override fun toString(): String = id.asString()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as WorkspaceEntityBase
+    if (other !is WorkspaceEntityBase) return false
 
     if (id != other.id) return false
+    if ((this.snapshot as AbstractEntityStorage).entityDataById(id) !==
+      (other.snapshot as AbstractEntityStorage).entityDataById(other.id)
+    ) return false
 
     return true
   }
@@ -146,14 +172,174 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
   override fun hashCode(): Int = id.hashCode()
 }
 
-abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntityBase> : WorkspaceEntityBase(), ModifiableWorkspaceEntity<T> {
+data class EntityLink(
+  val isThisFieldChild: Boolean,
+  val connectionId: ConnectionId,
+)
+
+val EntityLink.remote: EntityLink
+  get() = EntityLink(!this.isThisFieldChild, connectionId)
+
+abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEntityBase(), ModifiableWorkspaceEntity<T>, ModifiableReferableWorkspaceEntity {
+  /**
+   * In case any of two referred entities is not added to diff, the reference between entities will be stored in this field
+   */
+  val entityLinks: MutableMap<EntityLink, Any?> = HashMap()
 
   internal lateinit var original: WorkspaceEntityData<T>
-  internal lateinit var diff: WorkspaceEntityStorageBuilderImpl
+  var diff: MutableEntityStorage? = null
 
-  internal val modifiable = ThreadLocal.withInitial { false }
+  val modifiable: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
+  val changedProperty: MutableSet<String> = mutableSetOf()
 
-  internal inline fun allowModifications(action: () -> Unit) {
+  override fun linkExternalEntity(entityClass: KClass<out WorkspaceEntity>,
+                                  isThisFieldChild: Boolean,
+                                  entities: List<WorkspaceEntity?>) {
+    val foundConnectionId = findConnectionId(entityClass, entities)
+    if (foundConnectionId == null) return
+
+    // If the diff is empty, we should link entities using the internal map
+    // If it's not, we should add entity to store and update indexes
+    val myDiff = diff
+    if (myDiff != null) {
+      //if (foundConnectionId.parentClass == getEntityClass().toClassId()) {
+      if (isThisFieldChild) {
+        // Branch for case `this` entity is a parent
+        if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY || foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
+          // One - to - many connection
+          for (item in entities) {
+            if (item != null && item is ModifiableWorkspaceEntityBase<*> && item.diff == null) {
+              @Suppress("KotlinConstantConditions")
+              item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] =  this
+              myDiff.addEntity(item)
+            }
+          }
+          myDiff.updateOneToManyChildrenOfParent(foundConnectionId, this, entities.filterNotNull())
+        } else {
+          // One - to -one connection
+          val item = entities.single()
+          if (item != null && item is ModifiableWorkspaceEntityBase<*> && item.diff == null) {
+            @Suppress("KotlinConstantConditions")
+            item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
+            myDiff.addEntity(item)
+          }
+          myDiff.updateOneToOneChildOfParent(foundConnectionId, this, item)
+        }
+      }
+      else {
+        // Branch for case `this` entity is a child
+        if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY || foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
+          // One - to - many connection
+          val item = entities.single()
+          if (item != null && item is ModifiableWorkspaceEntityBase<*> && item.diff == null) {
+            @Suppress("KotlinConstantConditions", "UNCHECKED_CAST")
+            item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = (item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] as? List<Any> ?: emptyList()) + this
+            myDiff.addEntity(item)
+          }
+          myDiff.updateOneToManyParentOfChild(foundConnectionId, this, item)
+        }
+        else {
+          // One - to -one connection
+          val item = entities.single()
+          if (item != null && item is ModifiableWorkspaceEntityBase<*> && item.diff == null) {
+            @Suppress("KotlinConstantConditions")
+            item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
+            myDiff.addEntity(item)
+          }
+          myDiff.updateOneToOneParentOfChild(foundConnectionId, this, item)
+        }
+      }
+    }
+    else {
+      //if (foundConnectionId.parentClass == getEntityClass().toClassId()) {
+      if (isThisFieldChild) {
+        // Branch for case `this` entity is a parent
+        if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY || foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
+          // One - to - many connection
+          @Suppress("KotlinConstantConditions")
+          this.entityLinks[EntityLink(isThisFieldChild, foundConnectionId)] = entities
+          for (item in entities) {
+            if (item != null && item is ModifiableWorkspaceEntityBase<*>) {
+              @Suppress("KotlinConstantConditions")
+              item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
+            }
+          }
+        } else {
+          // One - to -one connection
+          val item = entities.single()
+          @Suppress("KotlinConstantConditions")
+          this.entityLinks[EntityLink(isThisFieldChild, foundConnectionId)] = item
+          if (item != null && item is ModifiableWorkspaceEntityBase<*>) {
+            @Suppress("KotlinConstantConditions")
+            item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
+          }
+        }
+      }
+      else {
+        // Branch for case `this` entity is a child
+        if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY || foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
+          // One - to - many connection
+          val item = entities.single()
+
+          @Suppress("KotlinConstantConditions")
+          this.entityLinks[EntityLink(isThisFieldChild, foundConnectionId)] = item
+          if (item != null && item is ModifiableWorkspaceEntityBase<*>) {
+            @Suppress("KotlinConstantConditions", "UNCHECKED_CAST")
+            item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = (item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] as? List<Any> ?: emptyList()) + this
+          }
+        } else {
+          // One - to -one connection
+          val item = entities.single()
+
+          @Suppress("KotlinConstantConditions")
+          this.entityLinks[EntityLink(isThisFieldChild, foundConnectionId)] = item
+          if (item != null && item is ModifiableWorkspaceEntityBase<*>) {
+            @Suppress("KotlinConstantConditions")
+            item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
+          }
+        }
+      }
+    }
+  }
+
+  private fun findConnectionId(entityClass: KClass<out WorkspaceEntity>, entity: List<WorkspaceEntity?>): ConnectionId? {
+    val someEntity = entity.filterNotNull().firstOrNull()
+    return if (someEntity != null) {
+      val firstClass = this.getEntityClass()
+      (someEntity as WorkspaceEntityBase).connectionIdList().single { it.parentClass == firstClass.toClassId() && it.childClass == entityClass.java.toClassId() || it.childClass == firstClass.toClassId() && it.parentClass == entityClass.java.toClassId() }
+    }
+    else {
+      val firstClass = this.getEntityClass()
+      entityLinks.keys.asSequence().map { it.connectionId }.singleOrNull { it.parentClass == firstClass.toClassId() && it.childClass == entityClass.java.toClassId() || it.childClass == firstClass.toClassId() && it.parentClass == entityClass.java.toClassId() }
+    }
+  }
+
+  override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> {
+    val myDiff = diff
+    val entitiesFromDiff = if (myDiff != null) {
+      getReferences(myDiff as AbstractEntityStorage, entityClass)
+    } else emptySequence()
+
+    val entityClassId = entityClass.toClassId()
+    val thisClassId = getEntityClass().toClassId()
+    val res = entityLinks.entries.singleOrNull {
+      it.key.connectionId.parentClass == entityClassId && it.key.connectionId.childClass == thisClassId
+      || it.key.connectionId.parentClass == thisClassId && it.key.connectionId.childClass == entityClassId
+    }?.value
+    return entitiesFromDiff + if (res == null) {
+      emptySequence()
+    } else {
+      if (res is List<*>) {
+        @Suppress("UNCHECKED_CAST")
+        res.asSequence() as Sequence<R>
+      } else {
+        @Suppress("UNCHECKED_CAST")
+        sequenceOf(res as R)
+      }
+    }
+  }
+
+  inline fun allowModifications(action: () -> Unit) {
     modifiable.set(true)
     try {
       action()
@@ -163,53 +349,177 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntityBase> : Workspac
     }
   }
 
-  internal fun getEntityClass(): KClass<T> = ClassConversion.modifiableEntityToEntity(this::class)
-}
-
-internal data class EntityId(val arrayId: Int, val clazz: Int) {
-  init {
-    if (arrayId < 0) error("ArrayId cannot be negative: $arrayId")
+  protected fun checkModificationAllowed() {
+    if (diff != null && !modifiable.get()) {
+      throw IllegalStateException("Modifications are allowed inside `modifyEntity` method only!")
+    }
   }
 
-  override fun toString(): String = clazz.findEntityClass<WorkspaceEntity>().simpleName + "-:-" + arrayId.toString()
+  abstract fun getEntityClass(): Class<T>
+
+  open fun applyToBuilder(builder: MutableEntityStorage) {
+    throw NotImplementedError()
+  }
+
+  fun processLinkedEntities(builder: MutableEntityStorage) {
+    val parentKeysToRemove = ArrayList<EntityLink>()
+    for ((key, entity) in HashMap(entityLinks)) {
+      if (key.isThisFieldChild) {
+        processLinkedChildEntity(entity, builder, key.connectionId)
+      }
+      else {
+        processLinkedParentEntity(entity, builder, key, parentKeysToRemove)
+      }
+    }
+    for (key in parentKeysToRemove) {
+      val data = entityLinks[key]
+      if (data != null) {
+        if (data is List<*>) {
+          error("Cannot have parent lists")
+        }
+        else if (data is ModifiableWorkspaceEntityBase<*>) {
+          val remoteData = data.entityLinks[key.remote]
+          if (remoteData != null) {
+            if (remoteData is List<*>) {
+              data.entityLinks[key.remote] = remoteData.filterNot { it === this }
+            }
+            else {
+              data.entityLinks.remove(key.remote)
+            }
+          }
+          this.entityLinks.remove(key)
+        }
+      }
+    }
+  }
+
+  private fun processLinkedParentEntity(entity: Any?,
+                                        builder: MutableEntityStorage,
+                                        entityLink: EntityLink,
+                                        parentKeysToRemove: ArrayList<EntityLink>) {
+    if (entity is List<*>) {
+      error("Cannot have parent lists")
+    }
+    else if (entity is WorkspaceEntity) {
+      if (entity is ModifiableWorkspaceEntityBase<*> && entity.diff == null) {
+        builder.addEntity(entity)
+      }
+      applyParentRef(entityLink.connectionId, entity)
+      parentKeysToRemove.add(entityLink)
+    }
+  }
+
+  private fun processLinkedChildEntity(entity: Any?,
+                                       builder: MutableEntityStorage,
+                                       connectionId: ConnectionId) {
+    if (entity is List<*>) {
+      for (item in entity) {
+        if (item is ModifiableWorkspaceEntityBase<*>) {
+          builder.addEntity(item)
+        }
+        @Suppress("UNCHECKED_CAST")
+        entity as List<WorkspaceEntity>
+        val withBuilder_entity = entity.filter { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
+        applyRef(connectionId, withBuilder_entity)
+      }
+    }
+    else if (entity is WorkspaceEntity) {
+      builder.addEntity(entity)
+      applyRef(connectionId, entity)
+    }
+  }
+
+  open fun getEntityData(): WorkspaceEntityData<T> {
+    val actualEntityData = (diff as MutableEntityStorageImpl).entityDataById(id)
+      ?: error("Requested entity data doesn't exist at entity family")
+    @Suppress("UNCHECKED_CAST")
+    return actualEntityData as WorkspaceEntityData<T>
+  }
+
+  // For generated entities
+  fun addToBuilder() {
+    val builder = diff as MutableEntityStorageImpl
+    builder.putEntity(this)
+  }
+
+  // For generated entities
+  private fun applyRef(connectionId: ConnectionId, child: WorkspaceEntity) {
+    val builder = diff as MutableEntityStorageImpl
+    when (connectionId.connectionType) {
+      ConnectionId.ConnectionType.ONE_TO_ONE -> builder.updateOneToOneChildOfParent(connectionId, this, child)
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> builder.updateOneToAbstractOneChildOfParent(connectionId, this, child)
+      else -> error("Unexpected branch")
+    }
+  }
+
+  private fun applyRef(connectionId: ConnectionId, children: List<WorkspaceEntity>) {
+    val builder = diff as MutableEntityStorageImpl
+    when (connectionId.connectionType) {
+      ConnectionId.ConnectionType.ONE_TO_MANY -> builder.updateOneToManyChildrenOfParent(connectionId, this, children)
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> builder.updateOneToAbstractManyChildrenOfParent(connectionId, this, children.asSequence())
+      else -> error("Unexpected branch")
+    }
+  }
+
+  private fun applyParentRef(connectionId: ConnectionId, parent: WorkspaceEntity) {
+    val builder = diff as MutableEntityStorageImpl
+    when (connectionId.connectionType) {
+      ConnectionId.ConnectionType.ONE_TO_ONE -> builder.updateOneToOneParentOfChild(connectionId, this, parent)
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> builder.updateOneToAbstractOneParentOfChild(connectionId, this, parent)
+      ConnectionId.ConnectionType.ONE_TO_MANY -> builder.updateOneToManyParentOfChild(connectionId, this, parent)
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> builder.updateOneToAbstractManyParentOfChild(connectionId, this, parent)
+    }
+  }
+
+  fun existsInBuilder(builder: MutableEntityStorage): Boolean {
+    builder as MutableEntityStorageImpl
+    val entityData = getEntityData()
+    return builder.entityDataById(entityData.createEntityId()) != null
+  }
+
+  // For generated entities
+  fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrl: VirtualFileUrl?) {
+    val builder = diff as MutableEntityStorageImpl
+    builder.getMutableVirtualFileUrlIndex().index(entity, propertyName, virtualFileUrl)
+  }
+
+  // For generated entities
+  fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrls: Set<VirtualFileUrl>) {
+    val builder = diff as MutableEntityStorageImpl
+    (builder.getMutableVirtualFileUrlIndex() as VirtualFileIndex.MutableVirtualFileIndex).index((entity as WorkspaceEntityBase).id,
+                                                                                                propertyName, virtualFileUrls)
+  }
+
+  // For generated entities
+  fun indexJarDirectories(entity: WorkspaceEntity, virtualFileUrls: Set<VirtualFileUrl>) {
+    val builder = diff as MutableEntityStorageImpl
+    (builder.getMutableVirtualFileUrlIndex() as VirtualFileIndex.MutableVirtualFileIndex).indexJarDirectories(
+      (entity as WorkspaceEntityBase).id, virtualFileUrls)
+  }
 }
 
 interface SoftLinkable {
   fun getLinks(): Set<PersistentEntityId<*>>
+  fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>)
+  fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>)
   fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean
 }
 
-abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
+abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, SerializableEntityData {
   lateinit var entitySource: EntitySource
   var id: Int = -1
 
-  internal fun createEntityId(): EntityId = EntityId(id, ClassConversion.entityDataToEntity(this.javaClass).toClassId())
+  fun isEntitySourceInitialized(): Boolean = ::entitySource.isInitialized
 
-  abstract fun createEntity(snapshot: WorkspaceEntityStorage): E
+  fun createEntityId(): EntityId = createEntityId(id, getEntityInterface().toClassId())
 
-  fun addMetaData(res: E, snapshot: WorkspaceEntityStorage) {
-    (res as WorkspaceEntityBase).entitySource = entitySource
-    (res as WorkspaceEntityBase).id = createEntityId()
-    (res as WorkspaceEntityBase).snapshot = snapshot as AbstractEntityStorage
-  }
+  abstract fun createEntity(snapshot: EntityStorage): E
 
-  fun addMetaData(res: E, snapshot: WorkspaceEntityStorage, classId: Int) {
-    (res as WorkspaceEntityBase).entitySource = entitySource
-    (res as WorkspaceEntityBase).id = EntityId(id, classId)
-    (res as WorkspaceEntityBase).snapshot = snapshot as AbstractEntityStorage
-  }
+  abstract fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<E>
 
-  internal fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilderImpl): ModifiableWorkspaceEntity<E> {
-    val returnClass = ClassConversion.entityDataToModifiableEntity(this::class)
-    val res = returnClass.java.newInstance()
-    res as ModifiableWorkspaceEntityBase
-    res.original = this
-    res.diff = diff
-    res.id = createEntityId()
-    res.entitySource = this.entitySource
-    return res
-  }
+  abstract fun getEntityInterface(): Class<out WorkspaceEntity>
 
+  @Suppress("UNCHECKED_CAST")
   public override fun clone(): WorkspaceEntityData<E> = super.clone() as WorkspaceEntityData<E>
 
   override fun equals(other: Any?): Boolean {
@@ -253,49 +563,11 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
   abstract class WithCalculablePersistentId<E : WorkspaceEntity> : WorkspaceEntityData<E>() {
     abstract fun persistentId(): PersistentEntityId<*>
   }
-
-  abstract class WithPersistentId<E : WorkspaceEntity> : WorkspaceEntityData<E>()
 }
 
-fun WorkspaceEntityData<*>.persistentId(snapshot: WorkspaceEntityStorage): PersistentEntityId<*>? = when (this) {
+fun WorkspaceEntityData<*>.persistentId(): PersistentEntityId<*>? = when (this) {
   is WorkspaceEntityData.WithCalculablePersistentId -> this.persistentId()
-  is WorkspaceEntityData.WithPersistentId -> (this.createEntity(snapshot) as WorkspaceEntityWithPersistentId).persistentId()
   else -> null
-}
-
-class EntityDataDelegation<A : ModifiableWorkspaceEntityBase<*>, B> : ReadWriteProperty<A, B> {
-  override fun getValue(thisRef: A, property: KProperty<*>): B {
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    return field.get(thisRef.original) as B
-  }
-
-  override fun setValue(thisRef: A, property: KProperty<*>, value: B) {
-    if (!thisRef.modifiable.get()) {
-      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
-    }
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    field.set(thisRef.original, value)
-  }
-}
-
-class ModuleDependencyEntityDataDelegation : ReadWriteProperty<ModifiableModuleEntity, List<ModuleDependencyItem>> {
-  override fun getValue(thisRef: ModifiableModuleEntity, property: KProperty<*>): List<ModuleDependencyItem> {
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    return field.get(thisRef.original) as List<ModuleDependencyItem>
-  }
-
-  override fun setValue(thisRef: ModifiableModuleEntity, property: KProperty<*>, value: List<ModuleDependencyItem>) {
-    if (!thisRef.modifiable.get()) {
-      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
-    }
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    thisRef.dependencyChanged = true
-    field.isAccessible = true
-    field.set(thisRef.original, value)
-  }
 }
 
 /**
@@ -306,8 +578,8 @@ class ModuleDependencyEntityDataDelegation : ReadWriteProperty<ModifiableModuleE
  *
  * Interface should be applied to *entity data*.
  *
- * [assertConsistency] method is called during [WorkspaceEntityStorageBuilderImpl.assertConsistency].
+ * [assertConsistency] method is called during [MutableEntityStorageImpl.assertConsistency].
  */
 interface WithAssertableConsistency {
-  fun assertConsistency(storage: WorkspaceEntityStorage)
+  fun assertConsistency(storage: EntityStorage)
 }

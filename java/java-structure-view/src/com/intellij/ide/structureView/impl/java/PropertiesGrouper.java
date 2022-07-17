@@ -20,7 +20,7 @@ public final class PropertiesGrouper implements Grouper {
     Map<Group,Group> result = new HashMap<>();
     for (TreeElement o : children) {
       if (o instanceof JavaClassTreeElementBase) {
-        PsiElement element = ((JavaClassTreeElementBase)o).getElement();
+        PsiElement element = ((JavaClassTreeElementBase<?>)o).getElement();
         PropertyGroup group = PropertyGroup.createOn(element, o);
         if (group != null) {
           PropertyGroup existing = (PropertyGroup)result.get(group);

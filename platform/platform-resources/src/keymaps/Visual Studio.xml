@@ -12,9 +12,7 @@
     <keyboard-shortcut first-keystroke="ctrl L"/>
     <keyboard-shortcut first-keystroke="ctrl shift L"/>
   </action>
-  <action id="ShowErrorDescription">
-    <keyboard-shortcut first-keystroke="alt T"/>
-  </action>
+  <action id="ShowErrorDescription"/>
   <action id="HighlightUsagesInFile">
     <keyboard-shortcut first-keystroke="shift alt F11"/>
   </action>
@@ -153,6 +151,7 @@
     <keyboard-shortcut first-keystroke="control K" second-keystroke="W"/>
     <keyboard-shortcut first-keystroke="control K" second-keystroke="control W"/>
   </action>
+  <action id="ShowTypeBookmarks"/>
   <action id="GotoNextBookmark">
     <keyboard-shortcut first-keystroke="ctrl K" second-keystroke="N"/>
     <keyboard-shortcut first-keystroke="ctrl K" second-keystroke="ctrl N"/>
@@ -273,6 +272,8 @@
   <action id="SurroundWithLiveTemplate">
     <keyboard-shortcut first-keystroke="control E" second-keystroke="U"/>
     <keyboard-shortcut first-keystroke="control E" second-keystroke="control U"/>
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="S"/><!--Edit.SurroundWith-->
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="control S"/>
   </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control H"/>
@@ -571,6 +572,14 @@
   <action id="HelpTopics">
     <keyboard-shortcut first-keystroke="control F1"/>
   </action>
+
+  <action id="MainMenuButton.ShowMenu">
+    <keyboard-shortcut first-keystroke="alt PERIOD"/>
+  </action>
+
+  <action id="EditorDecreaseFontSizeGlobal"/>
+  <action id="EditorIncreaseFontSizeGlobal"/>
+
 
   <!--KNOWN CONFLICTS: https://youtrack.jetbrains.com/issue/IDEA-268674-->
   <!--MISSING VISUAL STUDIO SHORTCUTS-->

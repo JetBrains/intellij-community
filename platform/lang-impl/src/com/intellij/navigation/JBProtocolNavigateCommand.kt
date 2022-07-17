@@ -1,22 +1,48 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.navigation
 
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.JBProtocolCommand
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.project.DumbService
 
-private val LOG = logger<JBProtocolNavigateCommand>()
+open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
+  /**
+   * The handler parses the following "navigate" command parameters:
+   *
+   * \\?project=(?<project>[\\w]+)
+   *   (&fqn[\\d]*=(?<fqn>[\\w.\\-#]+))*
+   *   (&path[\\d]*=(?<path>[\\w-_/\\\\.]+)
+   *     (:(?<lineNumber>[\\d]+))?
+   *     (:(?<columnNumber>[\\d]+))?)*
+   *   (&selection[\\d]*=
+   *     (?<line1>[\\d]+):(?<column1>[\\d]+)
+   *    -(?<line2>[\\d]+):(?<column2>[\\d]+))*
+   */
+  override suspend fun execute(target: String?, parameters: Map<String, String>, fragment: String?): String? {
+    if (target != REFERENCE_TARGET) {
+      return IdeBundle.message("jb.protocol.navigate.target", target)
+    }
 
-open class JBProtocolNavigateCommand: JBProtocolNavigateCommandBase(NAVIGATE_COMMAND) {
-  companion object {
-    const val NAVIGATE_COMMAND = "navigate"
+    val project = try {
+      openProject(parameters) ?: return IdeBundle.message("jb.protocol.navigate.no.project")
+    }
+    catch (e: Throwable) {
+      return "${e.javaClass.name}: ${e.message}"
+    }
+
+    DumbService.getInstance(project).runWhenSmart {
+      NavigatorWithinProject(project, parameters, ::locationToOffset).navigate(listOf(
+        NavigatorWithinProject.NavigationKeyPrefix.FQN,
+        NavigatorWithinProject.NavigationKeyPrefix.PATH
+      ))
+    }
+
+    return null
   }
 
-  override fun perform(target: String, parameters: Map<String, String>) {
-    if (target != REFERENCE_TARGET) {
-      LOG.warn("JB navigate action supports only reference target, got $target")
-      return
-    }
-    openProject(parameters) {
-      findAndNavigateToReference(it, parameters)
-    }
+  private fun locationToOffset(locationInFile: LocationInFile, editor: Editor): Int {
+    return editor.logicalPositionToOffset(LogicalPosition(locationInFile.line, locationInFile.column))
   }
 }

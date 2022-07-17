@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.postProcessing.processings
 
@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.idea.base.util.or
+import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
@@ -20,14 +22,13 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.search.or
-import org.jetbrains.kotlin.idea.search.projectScope
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.asGetterName
@@ -194,7 +195,13 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
         return property.add(ktGetter).cast<KtPropertyAccessor>().also {
             if (getter is RealGetter) {
                 getter.function.forAllUsages { usage ->
-                    usage.getStrictParentOfType<KtCallExpression>()?.replace(factory.createExpression(getter.name))
+                    val callExpression = usage.getStrictParentOfType<KtCallExpression>() ?: return@forAllUsages
+                    val qualifier = callExpression.getQualifiedExpressionForSelector()
+                    if (qualifier != null) {
+                        qualifier.replace(factory.createExpression("${qualifier.receiverExpression.text}.${getter.name}"))
+                    } else {
+                        callExpression.replace(factory.createExpression("this.${getter.name}"))
+                    }
                 }
             }
         }
@@ -254,7 +261,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
                         factory.createExpression("${qualifier.receiverExpression.text}.$propertyName = ${newValue.text}")
                     )
                 } else {
-                    callExpression.replace(factory.createExpression("$propertyName = ${newValue.text}"))
+                    callExpression.replace(factory.createExpression("this.$propertyName = ${newValue.text}"))
                 }
             }
         }
@@ -610,7 +617,6 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
                 }
             }
 
-
             val propertyInfo = when (property) {
                 is RealProperty -> property.property.fqNameWithoutCompanions.let(externalCodeUpdater::getMember)
                 is MergedProperty -> property.mergeTo.fqNameWithoutCompanions.let(externalCodeUpdater::getMember)
@@ -622,20 +628,18 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
                 ).also { externalCodeUpdater.addMember(it) }
             }?.also { it.name = property.name } as? JKFieldData
 
-
             val getterFqName = getter.safeAs<RealGetter>()?.function?.fqNameWithoutCompanions
             val setterFqName = setter.safeAs<RealSetter>()?.function?.fqNameWithoutCompanions
 
-            getterFqName?.let { fqName ->
-                externalCodeUpdater.getMember(fqName)?.safeAs<JKMethodData>()?.let {
-                    it.usedAsAccessorOfProperty = propertyInfo ?: return@let
+            fun FqName.setPropertyInfo(info: JKFieldData) {
+                externalCodeUpdater.getMember(this)?.safeAs<JKMethodData>()?.let {
+                    it.usedAsAccessorOfProperty = info
                 }
             }
 
-            setterFqName?.let { fqName ->
-                externalCodeUpdater.getMember(fqName)?.safeAs<JKMethodData>()?.let {
-                    it.usedAsAccessorOfProperty = propertyInfo ?: return@let
-                }
+            if (propertyInfo != null) {
+                getterFqName?.setPropertyInfo(propertyInfo)
+                setterFqName?.setPropertyInfo(propertyInfo)
             }
 
             val isOpen = getter.safeAs<RealGetter>()?.function?.hasModifier(KtTokens.OPEN_KEYWORD) == true

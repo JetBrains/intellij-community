@@ -12,6 +12,15 @@ import java.util.function.Consumer;
 
 /**
  * Log line parser for maven task execution process (maven build log).
+ * Example of use:
+ * override fun checkLogLine(...): Boolean {
+ *     if (logLine.line.contains("error1") && logEntryReader.readLine().line.contains("error2")) {
+ *       messageConsumer.accept(BuildIssueEventImpl(parentId, BuildIssue(...), MessageEvent.Kind.ERROR));
+ *       return true
+ *     }
+ *     return false
+ *   }
+ *
  * {@link MavenLogOutputParser)
  */
 @ApiStatus.Experimental

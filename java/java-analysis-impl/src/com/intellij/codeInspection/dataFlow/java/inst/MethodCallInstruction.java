@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +49,6 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
   private final @Nullable PsiMethod myTargetMethod;
   private final List<MethodContract> myContracts;
   private final @Nullable DfaValue myPrecalculatedReturnValue;
-  private final boolean myVarArgCall;
   private final Nullability[] myArgRequiredNullability;
   private final Nullability myReturnNullability;
 
@@ -75,7 +75,6 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
         myReturnNullability = DfaPsiUtil.getElementNullability(myType, myTargetMethod);
       }
     }
-    myVarArgCall = false; // vararg method reference calls are not supported now
     myPrecalculatedReturnValue = null;
     myArgRequiredNullability = myTargetMethod == null
                                ? EMPTY_NULLABILITY_ARRAY
@@ -90,19 +89,17 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     myContracts = Collections.unmodifiableList(contracts);
     final PsiExpressionList argList = call.getArgumentList();
     PsiExpression[] args = argList != null ? argList.getExpressions() : PsiExpression.EMPTY_ARRAY;
-    myArgCount = args.length;
     myType = call instanceof PsiCallExpression ? ((PsiCallExpression)call).getType() : null;
 
     JavaResolveResult result = call.resolveMethodGenerics();
     myTargetMethod = (PsiMethod)result.getElement();
+    myArgCount = myTargetMethod != null && MethodCallUtils.isVarArgCall(call) ? myTargetMethod.getParameterList().getParametersCount() : args.length;
 
     PsiSubstitutor substitutor = result.getSubstitutor();
     if (argList != null && myTargetMethod != null) {
       PsiParameter[] parameters = myTargetMethod.getParameterList().getParameters();
-      myVarArgCall = isVarArgCall(myTargetMethod, substitutor, args, parameters);
       myArgRequiredNullability = calcArgRequiredNullability(substitutor, parameters);
     } else {
-      myVarArgCall = false;
       myArgRequiredNullability = EMPTY_NULLABILITY_ARRAY;
     }
 
@@ -120,7 +117,6 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     myMutation = from.myMutation;
     myType = from.myType;
     myTargetMethod = from.myTargetMethod;
-    myVarArgCall = from.myVarArgCall;
     myArgRequiredNullability = from.myArgRequiredNullability;
     myReturnNullability = from.myReturnNullability;
   }
@@ -128,9 +124,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     if (myPrecalculatedReturnValue == null) return this;
-    var instruction = new MethodCallInstruction(this, myPrecalculatedReturnValue.bindToFactory(factory));
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new MethodCallInstruction(this, myPrecalculatedReturnValue.bindToFactory(factory));
   }
 
   /**
@@ -157,25 +151,13 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       return EMPTY_NULLABILITY_ARRAY;
     }
 
-    int checkedCount = Math.min(myArgCount, parameters.length - (myVarArgCall ? 1 : 0));
+    int checkedCount = Math.min(myArgCount, parameters.length);
 
     Nullability[] nullabilities = new Nullability[myArgCount];
     for (int i = 0; i < checkedCount; i++) {
       nullabilities[i] = DfaPsiUtil.getElementNullability(substitutor.substitute(parameters[i].getType()), parameters[i]);
     }
-
-    if (myVarArgCall) {
-      PsiType lastParamType = substitutor.substitute(parameters[parameters.length - 1].getType());
-      if (isEllipsisWithNotNullElements(lastParamType)) {
-        Arrays.fill(nullabilities, parameters.length - 1, myArgCount, Nullability.NOT_NULL);
-      }
-    }
     return nullabilities;
-  }
-
-  private static boolean isEllipsisWithNotNullElements(PsiType lastParamType) {
-    return lastParamType instanceof PsiEllipsisType &&
-           DfaPsiUtil.getElementNullability(((PsiEllipsisType)lastParamType).getComponentType(), null) == Nullability.NOT_NULL;
   }
 
   public static boolean isVarArgCall(PsiMethod method, PsiSubstitutor substitutor, PsiExpression[] args, PsiParameter[] parameters) {
@@ -210,10 +192,6 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
 
   public @Nullable PsiMethod getTargetMethod() {
     return myTargetMethod;
-  }
-
-  public boolean isVarArgCall() {
-    return myVarArgCall;
   }
 
   public @Nullable Nullability getArgRequiredNullability(int index) {
@@ -259,8 +237,16 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     DfaValue[] args = callArguments.toArray();
     for (DfaMemoryState state : finalStates) {
       ContractValue.flushContractTempVariables(state);
+      boolean keepNonFlushed = state.peek() instanceof DfaVariableValue;
+      DfaValue tos = null;
+      if (keepNonFlushed) {
+        tos = state.pop();
+      }
       callArguments.flush(state, factory, realMethod);
-      pushResult(interpreter, state, state.pop(), args);
+      if (!keepNonFlushed) {
+        tos = state.pop();
+      }
+      pushResult(interpreter, state, tos, args);
       result[i++] = nextState(interpreter, state);
     }
     return result;
@@ -393,19 +379,12 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     DfaValue precalculated = getPrecalculatedReturnValue();
     PsiType type = getResultType();
 
-    SpecialField field = SpecialField.findSpecialField(myTargetMethod);
-    if (field != null) {
-      return field.createValue(factory, qualifierValue);
+    VariableDescriptor descriptor = JavaDfaValueFactory.getAccessedVariableOrGetter(myTargetMethod);
+    if (descriptor instanceof SpecialField || descriptor != null && qualifierValue instanceof DfaVariableValue) {
+      return descriptor.createValue(factory, qualifierValue);
     }
     if (precalculated != null) {
       return precalculated;
-    }
-
-    if (getContext() instanceof PsiMethodReferenceExpression && qualifierValue instanceof DfaVariableValue) {
-      VariableDescriptor descriptor = JavaDfaValueFactory.getAccessedVariableOrGetter(myTargetMethod);
-      if (descriptor != null) {
-        return descriptor.createValue(factory, qualifierValue);
-      }
     }
 
     if (type != null && !(type instanceof PsiPrimitiveType)) {
@@ -430,7 +409,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       }
       return factory.fromDfType(dfType.meet(mutable.asDfType()));
     }
-    LongRangeSet range = JvmPsiRangeSetUtil.typeRange(type);
+    LongRangeSet range = JvmPsiRangeSetUtil.typeRange(type, true);
     if (range != null) {
       if (myTargetMethod != null) {
         range = range.meet(JvmPsiRangeSetUtil.fromPsiElement(myTargetMethod));
@@ -456,13 +435,15 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     return false;
   }
 
-  private DfaValue popQualifier(@NotNull DataFlowInterpreter runner,
+  private DfaValue popQualifier(@NotNull DataFlowInterpreter interpreter,
                                 @NotNull DfaMemoryState memState,
                                 DfaValue @Nullable [] argValues) {
     DfaValue value = memState.pop();
     if (getContext() instanceof PsiMethodReferenceExpression) {
       PsiMethodReferenceExpression context = (PsiMethodReferenceExpression)getContext();
-      value = CheckNotNullInstruction.dereference(runner, memState, value, NullabilityProblemKind.callMethodRefNPE.problem(context, null));
+      if (MethodReferenceInstruction.isQualifierDereferenced(context)) {
+        value = CheckNotNullInstruction.dereference(interpreter, memState, value, NullabilityProblemKind.callMethodRefNPE.problem(context, null));
+      }
     }
     DfType dfType = memState.getDfType(value);
     if (getMutationSignature().mutatesThis() && !Mutability.fromDfType(dfType).canBeModified()) {
@@ -470,7 +451,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       // Inferred mutation annotation may infer mutates="this" if invisible state is mutated (e.g. cached hashCode is stored).
       // So let's conservatively skip the warning here. Such contract is still useful because it assures that nothing else is mutated.
       if (method != null && JavaMethodContractUtil.hasExplicitContractAnnotation(method)) {
-        runner.getListener().onCondition(new MutabilityProblem(getContext(), true), value, ThreeState.YES, memState);
+        interpreter.getListener().onCondition(new MutabilityProblem(getContext(), true), value, ThreeState.YES, memState);
         if (dfType instanceof DfReferenceType) {
           memState.setDfType(value, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
         }
@@ -483,20 +464,14 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     return value;
   }
 
-  private DfaValue @Nullable [] popCallArguments(DataFlowInterpreter runner, DfaMemoryState memState) {
+  private DfaValue @Nullable [] popCallArguments(DataFlowInterpreter interpreter, DfaMemoryState memState) {
     DfaValue[] argValues = null;
     PsiParameterList paramList = null;
     if (myTargetMethod != null) {
       paramList = myTargetMethod.getParameterList();
       int paramCount = paramList.getParametersCount();
-      if (paramCount == myArgCount || myTargetMethod.isVarArgs() && myArgCount >= paramCount - 1) {
+      if (paramCount == myArgCount) {
         argValues = new DfaValue[paramCount];
-        if (myVarArgCall) {
-          PsiType arrayType = Objects.requireNonNull(paramList.getParameter(paramCount - 1)).getType();
-          DfType dfType = SpecialField.ARRAY_LENGTH.asDfType(intValue(myArgCount - paramCount + 1))
-            .meet(TypeConstraints.exact(arrayType).asDfType());
-          argValues[paramCount - 1] = runner.getFactory().fromDfType(dfType);
-        }
       }
     }
 
@@ -513,46 +488,38 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
         // If we write to local object only, it should not leak
         arg = JavaDfaHelpers.dropLocality(arg, memState);
       }
-      PsiElement anchor = getArgumentAnchor(paramIndex);
       if (getContext() instanceof PsiMethodReferenceExpression) {
         PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)getContext();
         if (paramList != null) {
           PsiParameter parameter = paramList.getParameter(paramIndex);
           if (parameter != null) {
-            if (TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
-              arg = CheckNotNullInstruction.dereference(runner, memState, arg, NullabilityProblemKind.unboxingMethodRefParameter.problem(methodRef, null));
-            }
-            arg = DfaUtil.boxUnbox(arg, parameter.getType());
+            Nullability nullability = getArgRequiredNullability(paramIndex);
+            arg = MethodReferenceInstruction.adaptMethodRefArgument(interpreter, memState, arg, methodRef, parameter, nullability);
           }
-        }
-        Nullability nullability = getArgRequiredNullability(paramIndex);
-        if (nullability == Nullability.NOT_NULL) {
-          arg = CheckNotNullInstruction.dereference(runner, memState, arg, NullabilityProblemKind.passingToNotNullMethodRefParameter.problem(methodRef, null));
-        } else if (nullability == Nullability.UNKNOWN) {
-          CheckNotNullInstruction.checkNotNullable(runner, memState, arg, NullabilityProblemKind.passingToNonAnnotatedMethodRefParameter.problem(methodRef, null));
         }
       }
       if (myMutation.mutatesArg(paramIndex)) {
         DfType dfType = memState.getDfType(arg);
         if (!Mutability.fromDfType(dfType).canBeModified() &&
             // Empty array cannot be modified at all
-            !memState.getDfType(SpecialField.ARRAY_LENGTH.createValue(runner.getFactory(), arg)).equals(intValue(0))) {
-          runner.getListener().onCondition(new MutabilityProblem(anchor, false), arg, ThreeState.YES, memState);
+            !memState.getDfType(SpecialField.ARRAY_LENGTH.createValue(interpreter.getFactory(), arg)).equals(intValue(0))) {
+          PsiElement anchor = getArgumentAnchor(paramIndex);
+          interpreter.getListener().onCondition(new MutabilityProblem(anchor, false), arg, ThreeState.YES, memState);
           if (dfType instanceof DfReferenceType) {
             memState.setDfType(arg, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
           }
         }
       }
-      if (argValues != null && (paramIndex < argValues.length - 1 || !myVarArgCall)) {
+      if (argValues != null) {
         argValues[paramIndex] = arg;
       }
     }
     return argValues;
   }
 
-  private @NotNull DfaCallArguments popCall(@NotNull DataFlowInterpreter runner, @NotNull DfaMemoryState memState) {
-    DfaValue[] argValues = popCallArguments(runner, memState);
-    final DfaValue qualifier = popQualifier(runner, memState, argValues);
+  private @NotNull DfaCallArguments popCall(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState memState) {
+    DfaValue[] argValues = popCallArguments(interpreter, memState);
+    final DfaValue qualifier = popQualifier(interpreter, memState, argValues);
     return new DfaCallArguments(qualifier, argValues, getMutationSignature());
   }
 

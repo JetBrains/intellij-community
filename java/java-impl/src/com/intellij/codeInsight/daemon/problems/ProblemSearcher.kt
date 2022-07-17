@@ -9,6 +9,10 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 
+/**
+ * Pair of reported element and context. 
+ * Context is mainly used for display purposes.
+ */
 class Problem(val reportedElement: PsiElement, val context: PsiElement) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -135,6 +139,12 @@ internal class ProblemSearcher(private val file: PsiFile, private val memberType
 
   companion object {
 
+    /**
+     * Checks if usage is broken due to change in target file.
+     * 
+     * To understand if usage is broken we visit this usage with {@link HighlightVisitorImpl} and check if highlighter reported any problems
+     * It is possible that one broken usage led to multiple problems.
+     */
     internal fun getProblems(usage: PsiElement, targetFile: PsiFile, memberType: MemberType): Set<Problem> {
       val startElement = getSearchStartElement(usage, targetFile) ?: return emptySet()
       val psiFile = startElement.containingFile

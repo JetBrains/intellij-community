@@ -6,20 +6,25 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -28,6 +33,8 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 public final class VfsImplUtil {
   private static final Logger LOG = Logger.getInstance(VfsImplUtil.class);
@@ -90,11 +97,11 @@ public final class VfsImplUtil {
       }
 
       if (file == null) {
-        return new Pair<>(null, last);
+        return pair(null, last);
       }
     }
 
-    return new Pair<>(file, null);
+    return pair(file, null);
   }
 
   public static @Nullable NewVirtualFile refreshAndFindFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
@@ -125,24 +132,40 @@ public final class VfsImplUtil {
   }
 
   private static @Nullable Pair<NewVirtualFile, Iterable<String>> prepare(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+    Pair<NewVirtualFile, String> pair = extractRootFromPath(vfs, path);
+    if (pair == null) return null;
+    Iterable<String> parts = StringUtil.tokenize(pair.second, FILE_SEPARATORS);
+    return pair(pair.first, parts);
+  }
+
+  /**
+   * @return (file system root, relative path inside that root) or null if the path is invalid or the root is not found
+   * For example, {@code extractRootFromPath(LocalFileSystem.getInstance, "C:/temp")} -> ("C:", "/temp")
+   * {@code extractRootFromPath(JarFileSystem.getInstance, "/temp/temp.jar!/com/foo/bar")} -> ("/temp/temp.jar!/", "/com/foo/bar")
+   */
+  public static Pair<NewVirtualFile, String> extractRootFromPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     String normalizedPath = vfs.normalize(path);
-    if (StringUtil.isEmptyOrSpaces(normalizedPath)) {
+    if (normalizedPath == null || normalizedPath.isBlank()) {
       return null;
     }
 
-    String basePath = vfs.extractRootPath(normalizedPath);
-    if (StringUtil.isEmptyOrSpaces(basePath) || basePath.length() > normalizedPath.length()) {
-      LOG.warn(vfs + " has extracted incorrect root '" + basePath + "' from '" + normalizedPath + "' (original '" + path + "')");
+    String rootPath = vfs.extractRootPath(normalizedPath);
+    if (rootPath.isBlank() || rootPath.length() > normalizedPath.length()) {
+      LOG.warn(vfs + " has extracted incorrect root '" + rootPath + "' from '" + normalizedPath + "' (original '" + path + "')");
       return null;
     }
 
-    NewVirtualFile root = ManagingFS.getInstance().findRoot(basePath, vfs);
+    NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, vfs);
     if (root == null || !root.exists()) {
       return null;
     }
 
-    Iterable<String> parts = StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS);
-    return new Pair<>(root, parts);
+    int i = rootPath.length();
+    if (i < normalizedPath.length() && normalizedPath.charAt(i) == '/') {
+      i++;
+    }
+    String relativePath = normalizedPath.substring(i);
+    return pair(root, relativePath);
   }
 
   public static void refresh(@NotNull NewVirtualFileSystem vfs, boolean asynchronous) {
@@ -175,12 +198,17 @@ public final class VfsImplUtil {
   private static final AtomicBoolean ourSubscribed = new AtomicBoolean(false);
   private static final Object ourLock = new Object();
   private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlerCache = CollectionFactory.createFilePathMap(); // guarded by ourLock
-  private static final Map<String, Set<String>> ourDominatorsMap = CollectionFactory.createFilePathMap(); // guarded by ourLock; its Set<String> is guarded by ourLock too
+  private static final Map<String, Set<String>> ourDominatorsMap = CollectionFactory.createFilePathMap(); // guarded by ourLock; values too
+
+  @ApiStatus.Internal
+  public static @NotNull String getLocalPath(@NotNull ArchiveFileSystem vfs, @NotNull String entryPath) {
+    return vfs.extractLocalPath(entryPath);
+  }
 
   public static @NotNull <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
                                                                  @NotNull VirtualFile entryFile,
                                                                  @NotNull Function<? super String, ? extends T> producer) {
-    String localPath = vfs.extractLocalPath(VfsUtilCore.getRootFile(entryFile).getPath());
+    String localPath = getLocalPath(vfs, VfsUtilCore.getRootFile(entryFile).getPath());
     checkSubscription();
 
     T handler;
@@ -190,7 +218,7 @@ public final class VfsImplUtil {
 
       if (record == null) {
         handler = producer.fun(localPath);
-        record = new Pair<>(vfs, handler);
+        record = pair(vfs, handler);
         ourHandlerCache.put(localPath, record);
 
         forEachDirectoryComponent(localPath, containingDirectoryPath -> {
@@ -271,7 +299,7 @@ public final class VfsImplUtil {
   private static @Nullable InvalidationState invalidate(@Nullable InvalidationState state, @NotNull String path) {
     Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlerCache.remove(path);
     if (handlerPair != null) {
-      handlerPair.second.dispose();
+      handlerPair.second.clearCaches();
 
       forEachDirectoryComponent(path, containingDirectoryPath -> {
         Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
@@ -290,23 +318,24 @@ public final class VfsImplUtil {
   /**
    * If the {@code parent} case-sensitivity flag is still not known, try to determine it via {@link FileSystemUtil#readParentCaseSensitivity(File)}.
    * If this flag read successfully, prepare to fire the {@link VirtualFile#PROP_CHILDREN_CASE_SENSITIVITY} event
-   * (but only if this flag is different from the FS-default case-sensitivity to avoid too many unnecessary events: see {@link VirtualFileSystem#isCaseSensitive()}).
+   * (but only if this flag is different from the FS-default case-sensitivity to avoid too many unnecessary events:
+   * see {@link VirtualFileSystem#isCaseSensitive()}).
    * Otherwise, return null.
    */
   public static VFilePropertyChangeEvent generateCaseSensitivityChangedEventForUnknownCase(@NotNull VirtualFile parent, @NotNull String childName) {
-    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() != FileAttributes.CaseSensitivity.UNKNOWN) {
+    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() != CaseSensitivity.UNKNOWN) {
       return null;
     }
-    FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
+    CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
     return generateCaseSensitivityChangedEvent(parent, sensitivity);
   }
 
-  public static VFilePropertyChangeEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile dir, @NotNull FileAttributes.CaseSensitivity actualCaseSensitivity) {
-    if (actualCaseSensitivity != FileAttributes.CaseSensitivity.UNKNOWN) {
-      if (dir.getFileSystem().isCaseSensitive() != (actualCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
-        // fire only when the new case sensitivity is different from the default FS sensitivity, because only in that case the file.isCaseSensitive() value could change
-        return new VFilePropertyChangeEvent(null, dir, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
-                                            FileAttributes.CaseSensitivity.UNKNOWN, actualCaseSensitivity, true);
+  public static VFilePropertyChangeEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile dir, @NotNull CaseSensitivity actualCaseSensitivity) {
+    if (actualCaseSensitivity != CaseSensitivity.UNKNOWN) {
+      if (dir.getFileSystem().isCaseSensitive() != (actualCaseSensitivity == CaseSensitivity.SENSITIVE)) {
+        // fire only when the new case sensitivity is different from the default FS sensitivity,
+        // because only in that case the file.isCaseSensitive() value could change
+        return new VFilePropertyChangeEvent(null, dir, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY, CaseSensitivity.UNKNOWN, actualCaseSensitivity, true);
       }
       else {
         PersistentFSImpl.executeChangeCaseSensitivity(dir, actualCaseSensitivity);
@@ -320,7 +349,7 @@ public final class VfsImplUtil {
 
     private void registerPathToRefresh(@NotNull String path, @NotNull ArchiveFileSystem vfs) {
       if (myRootsToRefresh == null) myRootsToRefresh = new HashSet<>();
-      myRootsToRefresh.add(new Pair<>(path, vfs));
+      myRootsToRefresh.add(pair(path, vfs));
     }
 
     private void scheduleRefresh() {
@@ -382,7 +411,7 @@ public final class VfsImplUtil {
     VirtualFile local = null;
     if (entryFileSystem instanceof ArchiveFileSystem) {
       local = ((ArchiveFileSystem)entryFileSystem).getLocalByEntry(file);
-      path = local == null ? ((ArchiveFileSystem)entryFileSystem).extractLocalPath(path) : local.getPath();
+      path = local == null ? getLocalPath((ArchiveFileSystem)entryFileSystem, path) : local.getPath();
     }
     String[] jarPaths;
     synchronized (ourLock) {
@@ -408,7 +437,7 @@ public final class VfsImplUtil {
           Runnable runnable = () -> {
             Pair<ArchiveFileSystem, ArchiveHandler> pair = ourHandlerCache.remove(jarPath);
             if (pair != null) {
-              pair.second.dispose();
+              pair.second.clearCaches();
               synchronized (ourLock) {
                 forEachDirectoryComponent(jarPath, containingDirectoryPath -> {
                   Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
@@ -433,5 +462,33 @@ public final class VfsImplUtil {
       }
     }
     return events;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull String getRecordPath(int record) {
+    StringBuilder name = new StringBuilder(FSRecords.getName(record));
+    int parent = FSRecords.getParent(record);
+    while (parent > 0) {
+      name.insert(0, FSRecords.getName(parent) + "/");
+      parent = FSRecords.getParent(parent);
+    }
+    return name.toString();
+  }
+
+  @ApiStatus.Internal
+  public static int @NotNull [] loadAllChildIds(int record) {
+    IntSet result = new IntOpenHashSet();
+    Queue<Integer> queue = new ArrayDeque<>();
+    queue.add(record);
+    while (!queue.isEmpty()) {
+      int recordId = queue.poll();
+      if (result.add(recordId)) {
+        ProgressManager.checkCanceled();
+        for (int childId : FSRecords.listIds(recordId)) {
+          queue.add(childId);
+        }
+      }
+    }
+    return result.toIntArray();
   }
 }

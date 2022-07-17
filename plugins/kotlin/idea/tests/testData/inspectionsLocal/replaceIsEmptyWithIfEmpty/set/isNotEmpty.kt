@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(set: Set<Int>): Set<Int> {
     return if (set.isNotEmpty<caret>()) {
         set

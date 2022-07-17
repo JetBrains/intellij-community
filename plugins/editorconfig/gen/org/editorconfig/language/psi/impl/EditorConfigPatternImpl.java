@@ -21,6 +21,7 @@ public class EditorConfigPatternImpl extends EditorConfigHeaderElementBase imple
     visitor.visitPattern(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof EditorConfigVisitor) accept((EditorConfigVisitor)visitor);
     else super.accept(visitor);

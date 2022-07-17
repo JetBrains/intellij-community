@@ -15,6 +15,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.GotItTooltipService;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,12 +32,12 @@ public final class TipDialog extends DialogWrapper {
   private final TipPanel myTipPanel;
   private final boolean myShowingOnStartup;
 
-  TipDialog(@NotNull final Window parent) {
+  TipDialog(@NotNull final Window parent, @Nullable final Project project) {
     super(parent, true);
     setModal(false);
     setTitle(IdeBundle.message("title.tip.of.the.day"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
-    myTipPanel = new TipPanel();
+    myTipPanel = new TipPanel(project);
     setDoNotAskOption(myTipPanel);
     myShowingOnStartup = myTipPanel.isToBeShown();
     setHorizontalStretch(1.33f);
@@ -79,6 +80,7 @@ public final class TipDialog extends DialogWrapper {
   public static boolean canBeShownAutomaticallyNow(@NotNull Project project) {
     if (!GeneralSettings.getInstance().isShowTipsOnStartup() ||
         DISABLE_TIPS_FOR_PROJECT.get(project, false) ||
+        GotItTooltipService.Companion.getInstance().isFirstRun() ||
         (ourInstance != null && ourInstance.isVisible())) {
       return false;
     }
@@ -96,7 +98,7 @@ public final class TipDialog extends DialogWrapper {
     if (ourInstance != null && ourInstance.isVisible()) {
       ourInstance.dispose();
     }
-    ourInstance = new TipDialog(w);
+    ourInstance = new TipDialog(w, project);
     ourInstance.show();
   }
 

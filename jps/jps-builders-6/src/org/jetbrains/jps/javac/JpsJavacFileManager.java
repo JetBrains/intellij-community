@@ -177,7 +177,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
       }
     }
     if (originatingSources == null) {
-      final Collection<String> originating = myGeneratedToOriginatingMap.get(className != null? className : fileName);
+      final Collection<String> originating = lookupOriginatingNames(className, fileName);
       if (originating != null) {
         for (String origQName : originating) {
           JavaFileObject found = lookupInputSource(origQName);
@@ -206,11 +206,27 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
       }
     }
     final File file = (dir == null? new File(fileName).getAbsoluteFile() : new File(dir, fileName));
-    final boolean isGenerated = (sibling instanceof OutputFileObject && ((OutputFileObject)sibling).getKind() == JavaFileObject.Kind.SOURCE) /*created from generated source*/ ||
-                                myGeneratedToOriginatingMap.containsKey(className != null? className : fileName);
+    final boolean isGenerated = (sibling instanceof OutputFileObject && ((OutputFileObject)sibling).getKind() == JavaFileObject.Kind.SOURCE) /*created from generated source*/ || hasOriginatingNames(className, fileName);
     return new OutputFileObject(
       myContext, dir, fileName, file, kind, className, originatingSources == null? Collections.<URI>emptyList() : originatingSources, myEncodingName, null, location, isGenerated
     );
+  }
+
+  private Collection<String> lookupOriginatingNames(@Nullable String className, String fileName) {
+    if (className != null) {
+      Collection<String> dotsResult = myGeneratedToOriginatingMap.get(className.replace('/', '.'));
+      // normalize classname: eclipse compiler sometimes outputs internal class names
+      return dotsResult != null? dotsResult : myGeneratedToOriginatingMap.get(className.replace('.', '/'));
+    }
+    return myGeneratedToOriginatingMap.get(fileName);
+  }
+
+  private boolean hasOriginatingNames(@Nullable String className, String fileName) {
+    if (className != null) {
+      // normalize classname: eclipse compiler sometimes outputs internal class names
+      return myGeneratedToOriginatingMap.containsKey(className.replace('/', '.')) || myGeneratedToOriginatingMap.containsKey(className.replace('.', '/'));
+    }
+    return myGeneratedToOriginatingMap.containsKey(fileName);
   }
 
   @Nullable

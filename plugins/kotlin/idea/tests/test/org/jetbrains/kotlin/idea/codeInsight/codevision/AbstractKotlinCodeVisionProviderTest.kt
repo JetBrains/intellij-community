@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.codevision
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.io.File
 
 abstract class AbstractKotlinCodeVisionProviderTest :
@@ -36,7 +36,7 @@ abstract class AbstractKotlinCodeVisionProviderTest :
             else -> provider.mode(usages = false, inheritors = false)
         }
 
-        testProvider("kotlinCodeVision.kt", fileContents, provider)
+        doTestProvider("kotlinCodeVision.kt", fileContents, provider)
     }
 
     private fun KotlinCodeVisionProvider.mode(usages: Boolean, inheritors: Boolean) {

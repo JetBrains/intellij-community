@@ -4,7 +4,7 @@ fun main(args: Array<String>) {
     //Breakpoint!
     myPrint("OK")
 
-    forEach { print2("123")}
+    forEach { print2("123") }
 
     println("OK")  //stdlib test
 }

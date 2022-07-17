@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.components.JBList
@@ -75,7 +76,7 @@ class ListWithSeparators<V>(
     }
 
     data class ListGroup<V>(
-        val title: String,
+        @NlsContexts.Separator val title: String,
         val values: List<V>
     )
 }

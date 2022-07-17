@@ -3,7 +3,7 @@ package com.jetbrains.python.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -119,7 +119,7 @@ public class PyMarkAsNamespacePackageActionTest extends PyTestCase {
     MapDataContext mapDataContext = new MapDataContext();
     mapDataContext.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, new VirtualFile[] {directory});
     mapDataContext.put(CommonDataKeys.PROJECT, myFixture.getProject());
-    mapDataContext.put(LangDataKeys.MODULE, myFixture.getModule());
+    mapDataContext.put(PlatformCoreDataKeys.MODULE, myFixture.getModule());
 
     AnAction action = new PyMarkAsNamespacePackageAction();
     TestActionEvent e = new TestActionEvent(mapDataContext, action);

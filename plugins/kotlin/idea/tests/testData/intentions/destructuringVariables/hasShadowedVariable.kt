@@ -1,4 +1,6 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Variable 'x' is never used
+// AFTER-WARNING: Variable 'z' is never used
 fun main() {
     data class A(var x: Int)
 

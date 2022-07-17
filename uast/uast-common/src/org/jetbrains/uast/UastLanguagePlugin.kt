@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast
 
 import com.intellij.lang.Language
@@ -10,6 +10,13 @@ import org.jetbrains.uast.analysis.UastAnalysisPlugin
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.classSetOf
 
+/**
+ * Extension to provide UAST (Unified Abstract Syntax Tree) language support. UAST is an abstraction layer on PSI of different JVM
+ * languages. It provides a unified API for working with common language elements like classes and method declarations, literal values and
+ * control flow operators.
+ *
+ * @see org.jetbrains.uast.generate.UastCodeGenerationPlugin for UAST code generation.
+ */
 interface UastLanguagePlugin {
   companion object {
     val extensionPointName = ExtensionPointName<UastLanguagePlugin>("org.jetbrains.uast.uastLanguagePlugin")
@@ -22,6 +29,9 @@ interface UastLanguagePlugin {
   data class ResolvedMethod(val call: UCallExpression, val method: PsiMethod)
   data class ResolvedConstructor(val call: UCallExpression, val constructor: PsiMethod, val clazz: PsiClass)
 
+  /**
+   * The underlying programming language.
+   */
   val language: Language
 
   /**
@@ -62,16 +72,9 @@ interface UastLanguagePlugin {
    */
   fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement?
 
-  fun getMethodCallExpression(
-    element: PsiElement,
-    containingClassFqName: String?,
-    methodName: String
-  ): ResolvedMethod?
+  fun getMethodCallExpression(element: PsiElement, containingClassFqName: String?, methodName: String): ResolvedMethod?
 
-  fun getConstructorCallExpression(
-    element: PsiElement,
-    fqName: String
-  ): ResolvedConstructor?
+  fun getConstructorCallExpression(element: PsiElement, fqName: String): ResolvedConstructor?
 
   fun getMethodBody(element: PsiMethod): UExpression? {
     if (element is UMethod) return element.uastBody
@@ -106,8 +109,10 @@ interface UastLanguagePlugin {
 
 
   @JvmDefault
-  fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> =
-    sequenceOf(convertElementWithParent(element, requiredTypes)).filterNotNull()
+  fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> {
+    val result = convertElementWithParent(element, requiredTypes)
+    return if (result == null) emptySequence() else sequenceOf(result)
+  }
 
   @JvmDefault
   val analysisPlugin: UastAnalysisPlugin?

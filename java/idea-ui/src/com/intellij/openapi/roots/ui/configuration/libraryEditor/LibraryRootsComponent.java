@@ -68,10 +68,10 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private JPanel myTreePanel;
   private MultiLineLabel myPropertiesLabel;
   private JPanel myPropertiesPanel;
-  private JPanel myBottomPanel;
+  private JLabel myBottomLabel;
   private LibraryPropertiesEditor myPropertiesEditor;
   private Tree myTree;
-  private final ModificationOfImportedModelWarningComponent myModificationOfImportedModelWarningComponent;
+  private ModificationOfImportedModelWarningComponent myModificationOfImportedModelWarningComponent;
   private VirtualFile myLastChosen;
 
   private final Collection<Runnable> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -105,8 +105,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       myDescriptor = new DefaultLibraryRootsComponentDescriptor();
     }
     myRootRemovalHandler = myDescriptor.createRootRemovalHandler();
-    myModificationOfImportedModelWarningComponent = new ModificationOfImportedModelWarningComponent();
-    myBottomPanel.add(BorderLayout.CENTER, myModificationOfImportedModelWarningComponent.getLabel());
     init(new LibraryTreeStructure(this, myDescriptor));
     updatePropertiesLabel();
     onRootsChanged();
@@ -169,7 +167,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myTreePanel.setLayout(new BorderLayout());
 
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTree).disableUpDownActions()
-      .setPanelBorder(JBUI.Borders.empty())
       .setRemoveActionName(JavaUiBundle.message("library.remove.action"))
       .disableRemoveAction();
     final List<AttachRootButtonDescriptor> popupItems = new ArrayList<>();
@@ -256,7 +253,10 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       }
     });
 
-    myTreePanel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
+    JPanel panel = toolbarDecorator.createPanel();
+    panel.setBorder(null);
+
+    myTreePanel.add(panel, BorderLayout.CENTER);
   }
 
   public JComponent getComponent() {
@@ -339,6 +339,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     updateModificationOfImportedModelWarning();
   }
 
+  private void createUIComponents() {
+    myModificationOfImportedModelWarningComponent = new ModificationOfImportedModelWarningComponent();
+    myBottomLabel = myModificationOfImportedModelWarningComponent.getLabel();
+  }
+
   @Nullable
   private static Object getPathElement(final TreePath selectionPath) {
     if (selectionPath == null) {
@@ -352,7 +357,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     if (!(userObject instanceof NodeDescriptor)) {
       return null;
     }
-    final Object element = ((NodeDescriptor)userObject).getElement();
+    final Object element = ((NodeDescriptor<?>)userObject).getElement();
     if (!(element instanceof LibraryTableTreeContentElement)) {
       return null;
     }

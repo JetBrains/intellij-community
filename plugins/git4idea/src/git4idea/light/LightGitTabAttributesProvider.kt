@@ -9,7 +9,7 @@ import java.awt.Color
 import java.awt.Font
 
 internal class LightGitTabAttributesProvider : LightEditTabAttributesProvider, Disposable {
-  override fun calcAttributes(editorInfo: LightEditorInfo): TextAttributes? {
+  override fun calcAttributes(editorInfo: LightEditorInfo): TextAttributes {
     return foreground(LightGitTracker.getInstance().getFileStatus(editorInfo.file).color)
   }
 

@@ -108,7 +108,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   }
 
   public void testWrongSelectionIfPart() {
-    doFail("bar", "Cannot perform extract method using the selected element(s)");
+    doFail("bar", "Cannot perform the Extract Method refactoring using the selected elements");
   }
 
   public void testWrongSelectionFromImportStar() {

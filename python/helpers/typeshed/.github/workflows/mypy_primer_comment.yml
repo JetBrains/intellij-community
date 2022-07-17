@@ -17,11 +17,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download diffs
-        uses: actions/github-script@v3
+        uses: actions/github-script@v5
         with:
           script: |
             const fs = require('fs');
-            const artifacts = await github.actions.listWorkflowRunArtifacts({
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
                owner: context.repo.owner,
                repo: context.repo.repo,
                run_id: ${{ github.event.workflow_run.id }},
@@ -29,7 +29,7 @@ jobs:
             const [matchArtifact] = artifacts.data.artifacts.filter((artifact) =>
               artifact.name == "mypy_primer_diffs");
 
-            const download = await github.actions.downloadArtifact({
+            const download = await github.rest.actions.downloadArtifact({
                owner: context.repo.owner,
                repo: context.repo.repo,
                artifact_id: matchArtifact.id,
@@ -38,23 +38,18 @@ jobs:
             fs.writeFileSync("diff.zip", Buffer.from(download.data));
 
       - run: unzip diff.zip
+      # 30000 bytes is about 300 lines, posting comment fails if too long
+      - run: |
+          cat diff_*.txt | head -c 30000 | tee fulldiff.txt
 
       - name: Post comment
         id: post-comment
-        uses: actions/github-script@v3
+        uses: actions/github-script@v5
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const fs = require('fs')
-            const data = (
-              ['diff_0.txt', 'diff_1.txt']
-              .map(fileName => fs.readFileSync(fileName, { encoding: 'utf8' }))
-              .join('')
-              .substr(0, 30000)  // About 300 lines
-            )
-
-            console.log("Diff from mypy_primer:")
-            console.log(data)
+            const data = fs.readFileSync('fulldiff.txt', { encoding: 'utf8' })
 
             let body
             if (data.trim()) {
@@ -64,7 +59,7 @@ jobs:
             }
 
             const prNumber = parseInt(fs.readFileSync("pr_number.txt", { encoding: "utf8" }))
-            await github.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: prNumber,
               owner: context.repo.owner,
               repo: context.repo.repo,

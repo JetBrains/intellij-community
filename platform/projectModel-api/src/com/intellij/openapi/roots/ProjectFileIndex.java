@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -18,6 +18,11 @@ import java.util.List;
  */
 @ApiStatus.NonExtendable
 public interface ProjectFileIndex extends FileIndex {
+
+  /**
+   * @deprecated use {@link ProjectFileIndex#getInstance(Project)} instead
+   */
+  @Deprecated
   final class SERVICE {
     private SERVICE() { }
 
@@ -124,8 +129,7 @@ public interface ProjectFileIndex extends FileIndex {
    * If you want to check if the file is ignored use {@link FileTypeRegistry#isFileIgnored(VirtualFile)}.
    * If you want to check if the file or one of its parents is ignored use {@link #isUnderIgnored(VirtualFile)}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   boolean isIgnored(@NotNull VirtualFile file);
 
   /**

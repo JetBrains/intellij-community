@@ -33,10 +33,12 @@ public class LombokLoggerHandler extends BaseLombokHandler {
     final boolean lombokLoggerIsStatic = AbstractLogProcessor.isLoggerStatic(psiClass);
 
     for (AbstractLogProcessor logProcessor : logProcessors) {
+      String loggerType = logProcessor.getLoggerType(psiClass); // null when the custom log's declaration is invalid
+      if (loggerType == null) {
+        continue;
+      }
       for (PsiField psiField : psiClass.getFields()) {
-        String loggerType = logProcessor.getLoggerType(psiClass); // null when the custom log's declaration is invalid
-        if (loggerType != null && psiField.getType().equalsToText(loggerType)
-          && checkLoggerField(psiField, lombokLoggerName, lombokLoggerIsStatic)) {
+        if (psiField.getType().equalsToText(loggerType) && checkLoggerField(psiField, lombokLoggerName, lombokLoggerIsStatic)) {
           processLoggerField(psiField, psiClass, logProcessor, lombokLoggerName);
         }
       }

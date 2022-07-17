@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -33,10 +33,9 @@ import java.util.Map;
 
 
 final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
-  private AnnotationHolderImpl myAnnotationHolder;
-  private final Map<Language, List<Annotator>> myAnnotators = FactoryMap.create(l -> createAnnotators(l));
   private static final Logger LOG = Logger.getInstance(DefaultHighlightVisitor.class);
-
+  private AnnotationHolderImpl myAnnotationHolder;
+  private final Map<Language, List<Annotator>> myAnnotators = ConcurrentFactoryMap.createMap(language -> createAnnotators(language));
   private final Project myProject;
   private final boolean myHighlightErrorElements;
   private final boolean myRunAnnotators;
@@ -105,13 +104,11 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
 
   @Override
   public void visit(@NotNull PsiElement element) {
-    if (element instanceof PsiErrorElement) {
-      if (myHighlightErrorElements) {
-        visitErrorElement((PsiErrorElement)element);
-      }
-    }
-    else if (myRunAnnotators) {
+    if (myRunAnnotators) {
       runAnnotators(element);
+    }
+    if (element instanceof PsiErrorElement && myHighlightErrorElements) {
+      visitErrorElement((PsiErrorElement)element);
     }
   }
 

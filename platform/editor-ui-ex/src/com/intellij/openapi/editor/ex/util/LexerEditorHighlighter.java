@@ -31,7 +31,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.SingleCharSequence;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,7 +99,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   public final synchronized boolean checkContentIsEqualTo(@NotNull CharSequence sequence) {
-    final Document document = getDocument();
+    Document document = getDocument();
     return document != null && isInSyncWithDocument() && Comparing.equal(document.getImmutableCharSequence(), sequence);
   }
 
@@ -131,7 +130,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   public HighlighterIterator createIterator(int startOffset) {
     synchronized (this) {
       if (!isInSyncWithDocument()) {
-        final Document document = getDocument();
+        Document document = getDocument();
         assert document != null;
         if (document.isInBulkUpdate()) {
           document.setInBulkUpdate(false); // bulk mode failed
@@ -139,8 +138,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         doSetText(document.getImmutableCharSequence());
       }
 
-      final int latestValidOffset = mySegments.getLastValidOffset();
-      return new HighlighterIteratorImpl(Math.min(startOffset, latestValidOffset));
+      int latestValidOffset = mySegments.getLastValidOffset();
+      return new HighlighterIteratorImpl(Math.max(0, Math.min(startOffset, latestValidOffset)));
     }
   }
 
@@ -167,7 +166,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   /**
    * @return last updated offset - used by LazyLexerEditorHighlighter to optimize bulk updates
    */
-  int incrementalUpdate(final int eventOffset, final int eventOldLength, final int eventNewLength, Document document) {
+  int incrementalUpdate(int eventOffset, int eventOldLength, int eventNewLength, @NotNull Document document) {
     CharSequence text = document.getImmutableCharSequence();
     if (mySegments.getSegmentCount() == 0) {
       setText(text);
@@ -175,8 +174,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     }
     myText = text;
 
-    final int segmentIndex = mySegments.findSegmentIndex(eventOffset) - 2;
-    final int oldStartIndex = Math.max(0, segmentIndex);
+    int segmentIndex = mySegments.findSegmentIndex(eventOffset) - 2;
+    int oldStartIndex = Math.max(0, segmentIndex);
     int startIndex = oldStartIndex;
 
     int data;
@@ -324,7 +323,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   @Override
   public synchronized void documentChanged(@NotNull DocumentEvent e) {
     try {
-      final Document document = e.getDocument();
+      Document document = e.getDocument();
 
       if (document.isInBulkUpdate()) {
         myText = null;
@@ -346,7 +345,6 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   @NotNull
   private TokenIterator createTokenIterator(int start) {
     return new TokenIterator() {
-
       @Override
       public int getStartOffset(int index) {
         return mySegments.getSegmentStart(index);
@@ -358,7 +356,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       }
 
       @Override
-      public IElementType getType(int index) {
+      public @NotNull IElementType getType(int index) {
         return mySegments.unpackTokenFromData(mySegments.getSegmentData(index));
       }
 
@@ -399,7 +397,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
                                        int idx1,
                                        @NotNull SegmentArrayWithData a2,
                                        int idx2,
-                                       final int offsetShift) {
+                                       int offsetShift) {
     return a1.getSegmentStart(idx1) + offsetShift == a2.getSegmentStart(idx2) &&
            a1.getSegmentEnd(idx1) + offsetShift == a2.getSegmentEnd(idx2) &&
            a1.getSegmentData(idx1) == a2.getSegmentData(idx2);
@@ -440,7 +438,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
                        myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState);
     int i = 0;
     while (true) {
-      final IElementType tokenType = lexerWrapper.getTokenType();
+      IElementType tokenType = lexerWrapper.getTokenType();
       if (tokenType == null) break;
 
       int state = lexerWrapper.getState();
@@ -467,7 +465,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   @NotNull
-  protected TokenProcessor createTokenProcessor(int startIndex, SegmentArrayWithData segments, CharSequence myText) {
+  protected TokenProcessor createTokenProcessor(int startIndex, @NotNull SegmentArrayWithData segments, @NotNull CharSequence myText) {
     return (tokenIndex, startOffset, endOffset, data, tokenType) -> segments.setElementAt(tokenIndex, startOffset, endOffset, data);
   }
 
@@ -487,20 +485,22 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return attrs;
   }
 
-  @ApiStatus.Internal
-  public TextAttributesKey @NotNull [] getAttributesKeys(@NotNull IElementType tokenType) {
-    return myKeysMap.computeIfAbsent(tokenType, type -> {
-      return myHighlighter.getTokenHighlights(type);
-    });
+  private TextAttributesKey @NotNull [] getAttributesKeys(@NotNull IElementType tokenType) {
+    TextAttributesKey[] attributesKeys = myKeysMap.get(tokenType);
+    if (attributesKeys == null) {
+      attributesKeys = myHighlighter.getTokenHighlights(tokenType);
+      myKeysMap.put(tokenType, attributesKeys);
+    }
+    return attributesKeys;
   }
 
   @NotNull
   public List<TextAttributes> getAttributesForPreviousAndTypedChars(@NotNull Document document, int offset, char c) {
-    final CharSequence text = document.getImmutableCharSequence();
+    CharSequence text = document.getImmutableCharSequence();
 
     CharSequence newText = StringUtil.replaceSubSequence(text, offset, offset, new SingleCharSequence(c));
 
-    final List<IElementType> tokenTypes = getTokenType(newText, offset);
+    List<IElementType> tokenTypes = getTokenType(newText, offset);
 
     return Arrays.asList(getAttributes(tokenTypes.get(0)).clone(), getAttributes(tokenTypes.get(1)).clone());
   }
@@ -516,7 +516,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     int startIndex = 0;
 
     if (offset > 0 && mySegments.getSegmentCount() > 0) {
-      final int segmentIndex = mySegments.findSegmentIndex(offset - 1) - 2;
+      int segmentIndex = mySegments.findSegmentIndex(offset - 1) - 2;
       oldStartIndex = Math.max(0, segmentIndex);
       startIndex = oldStartIndex;
 
@@ -609,6 +609,9 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     private int mySegmentIndex;
 
     HighlighterIteratorImpl(int startOffset) {
+      if (startOffset < 0 || startOffset > mySegments.getLastValidOffset()) {
+        throw new IllegalArgumentException("Invalid offset: " + startOffset + "; mySegments.getLastValidOffset()=" + mySegments.getLastValidOffset());
+      }
       try {
         mySegmentIndex = mySegments.findSegmentIndex(startOffset);
       }

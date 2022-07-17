@@ -1,5 +1,5 @@
 // "Replace with 'Factory<Int>()'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class Foo<T> @Deprecated("", ReplaceWith("Factory()")) constructor()
 fun <T> Factory(): Foo<T> = TODO()

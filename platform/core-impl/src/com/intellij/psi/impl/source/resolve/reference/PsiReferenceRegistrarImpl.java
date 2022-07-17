@@ -110,6 +110,11 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
           PsiReferenceRegistrarImpl.this.unregisterReferenceProvider(scope, provider);
           myCleanupDisposables.remove(this);
         }
+
+        @Override
+        public String toString() {
+          return "PsiReferenceRegistrarImpl cleanuper for " + provider;
+        }
       };
       Disposer.register(parentDisposable, disposable);
       myCleanupDisposables.add(disposable);

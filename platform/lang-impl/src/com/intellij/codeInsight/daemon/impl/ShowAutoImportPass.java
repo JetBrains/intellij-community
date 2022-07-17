@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -17,7 +17,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
@@ -43,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class ShowAutoImportPass extends TextEditorHighlightingPass {
@@ -50,22 +50,15 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   private final PsiFile myFile;
 
-  private final int myStartOffset;
-  private final int myEndOffset;
+  private final TextRange myVisibleRange;
   private final boolean hasDirtyTextRange;
 
-  ShowAutoImportPass(@NotNull Project project, @NotNull final PsiFile file, @NotNull Editor editor) {
-    super(project, editor.getDocument(), false);
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  ShowAutoImportPass(@NotNull PsiFile file, @NotNull Editor editor) {
+    super(file.getProject(), editor.getDocument(), false);
 
     myEditor = editor;
-
-    TextRange range = VisibleHighlightingPassFactory.calculateVisibleRange(myEditor);
-    myStartOffset = range.getStartOffset();
-    myEndOffset = range.getEndOffset();
-
+    myVisibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
     myFile = file;
-
     hasDirtyTextRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL) != null;
   }
 
@@ -79,8 +72,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   private void showImports() {
-    Application application = ApplicationManager.getApplication();
-    application.assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!UIUtil.hasFocus(myEditor.getContentComponent())) return;
     if (DumbService.isDumb(myProject) || !myFile.isValid()) return;
     if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) return;
@@ -92,22 +84,21 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     int caretOffset = myEditor.getCaretModel().getOffset();
     importUnambiguousImports(caretOffset);
     if (isImportHintEnabled()) {
-      List<HighlightInfo> visibleHighlights = getVisibleHighlights(myStartOffset, myEndOffset, myProject, myEditor, hasDirtyTextRange);
-
-      for (int i = visibleHighlights.size() - 1; i >= 0; i--) {
-        HighlightInfo info = visibleHighlights.get(i);
-        if (info.startOffset <= caretOffset && showAddImportHint(info)) return;
-      }
-
+      List<HighlightInfo> visibleHighlights = getVisibleHighlights(myVisibleRange.getStartOffset(), myVisibleRange.getEndOffset(), myProject, myEditor, hasDirtyTextRange);
+      // sort by distance to the caret
+      visibleHighlights.sort(Comparator.comparingInt(info -> Math.abs(info.getActualStartOffset() - caretOffset)));
       for (HighlightInfo visibleHighlight : visibleHighlights) {
-        if (visibleHighlight.startOffset > caretOffset && showAddImportHint(visibleHighlight)) return;
+        if (showAddImportHint(visibleHighlight)) {
+          break;
+        }
       }
     }
   }
 
-  private void importUnambiguousImports(final int caretOffset) {
+  private void importUnambiguousImports(int caretOffset) {
+    if (!mayAutoImportNow(myFile)) return;
     Document document = myEditor.getDocument();
-    final List<HighlightInfo> infos = new ArrayList<>();
+    List<HighlightInfo> infos = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), info -> {
       if (info.hasHint() && info.getSeverity() == HighlightSeverity.ERROR && !info.getFixTextRange().containsOffset(caretOffset)) {
         infos.add(info);
@@ -117,9 +108,8 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
     for (HighlightInfo info : infos) {
       for (HintAction action : extractHints(info)) {
-        if (action.isAvailable(myProject, myEditor, myFile)
-            && mayAutoImportNow(myFile)
-            && action.fixSilently(myEditor)) {
+        if (action.isAvailable(myProject, myEditor, myFile) &&
+            action.fixSilently(myEditor)) {
           break;
         }
       }
@@ -145,12 +135,12 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   @NotNull
-  private static List<HighlightInfo> getVisibleHighlights(final int startOffset,
-                                                          final int endOffset,
+  private static List<HighlightInfo> getVisibleHighlights(int startOffset,
+                                                          int endOffset,
                                                           @NotNull Project project,
                                                           @NotNull Editor editor,
                                                           boolean isDirty) {
-    final List<HighlightInfo> highlights = new ArrayList<>();
+    List<HighlightInfo> highlights = new ArrayList<>();
     int offset = editor.getCaretModel().getOffset();
     DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, startOffset, endOffset, info -> {
       //no changes after escape => suggest imports under caret only
@@ -196,7 +186,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       // really can't run highlighting from within EDT
       // also, guard against recursive call optimize imports->add imports->optimize imports (in AddImportAction.doAddImport())
-      throw new IllegalStateException("Must not be run from within EDT"); //return Collections.emptyList();
+      throw new IllegalStateException("Must not be run from within EDT");
     }
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
@@ -273,8 +263,8 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
 
   @NotNull
-  public static @NlsContexts.HintText String getMessage(final boolean multiple, @NotNull String name) {
-    final String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";
+  public static @NlsContexts.HintText String getMessage(boolean multiple, @NotNull String name) {
+    String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";
     String hintText = DaemonBundle.message(messageKey, name);
     hintText +=
       " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));

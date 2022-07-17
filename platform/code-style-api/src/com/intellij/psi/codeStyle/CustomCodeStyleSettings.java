@@ -23,7 +23,7 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
 
   private final static Logger LOG  = Logger.getInstance(CustomCodeStyleSettings.class);
 
-  protected CustomCodeStyleSettings(@NonNls @NotNull String tagName, CodeStyleSettings container) {
+  protected CustomCodeStyleSettings(@NonNls @NotNull String tagName, @NotNull CodeStyleSettings container) {
     myTagName = tagName;
     myContainer = container;
   }

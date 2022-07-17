@@ -1,0 +1,190 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.dsl
+
+import com.intellij.psi.PsiMethod
+import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.junit.jupiter.params.ParameterizedTest
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.JAVA_PROJECT
+
+class GradleDependenciesTest : GradleCodeInsightTestCase() {
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test dependencies delegate`(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { <caret> }") {
+        closureDelegateTest(GRADLE_API_DEPENDENCY_HANDLER, 1)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource("""
+    "dependencies { add('archives', name: 42) { <caret> } }",
+    "dependencies { add('archives', [name:42]) { <caret> } }",
+    "dependencies { add('archives', ':42') { <caret> } }",
+    "dependencies { archives(name: 42) { <caret> } }",
+    "dependencies { archives([name:42]) { <caret> } }",
+    "dependencies { archives(':42') { <caret> } }",
+    "dependencies.add('archives', name: 42) { <caret> }",
+    "dependencies.add('archives', [name:42]) { <caret> }",
+    "dependencies.add('archives', ':42') { <caret> }",
+    "dependencies.archives(name: 42) { <caret> }",
+    "dependencies.archives([name:42]) { <caret> }",
+    "dependencies.archives(':42') { <caret> }"
+  """)
+  fun `test add external module dependency delegate`(gradleVersion: GradleVersion, expression: String) {
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript(expression) {
+        closureDelegateTest(GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY, 1)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource("""
+    "dependencies { add('archives', files()) { <caret> } }",
+    "dependencies { add('archives', fileTree("libs")) { <caret> } }",
+    "dependencies { archives(files()) { <caret> } }",
+    "dependencies { archives(fileTree('libs')) { <caret> } }",
+    "dependencies.add('archives', files()) { <caret> }",
+    "dependencies.add('archives', fileTree('libs')) { <caret> }",
+    "dependencies.archives(files()) { <caret> }",
+    "dependencies.archives(fileTree('libs')) { <caret> }"
+  """)
+  fun `test add self resolving dependency delegate`(gradleVersion: GradleVersion, expression: String) {
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript(expression) {
+        closureDelegateTest(GRADLE_API_ARTIFACTS_SELF_RESOLVING_DEPENDENCY, 1)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource("""
+      "dependencies { add('archives', project(':')) { <caret> } }",
+      "dependencies { archives(project(':')) { <caret> } }",
+      "dependencies.add('archives', project(':')) { <caret> }",
+      "dependencies.archives(project(':')) { <caret> }"
+  """)
+  fun `test add project dependency delegate`(gradleVersion: GradleVersion, expression: String) {
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript(expression) {
+        closureDelegateTest(GRADLE_API_ARTIFACTS_PROJECT_DEPENDENCY, 1)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test add delegate method setter`(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { add('archives', 'notation') { <caret>transitive(false) } }") {
+        setterMethodTest("transitive", "setTransitive", GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test module delegate`(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { module(':') {<caret>} }") {
+        closureDelegateTest(GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY, 1)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test module delegate method setter`(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { module(':') { <caret>changing(true) } }") {
+        setterMethodTest("changing", "setChanging", GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test components delegate`(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { components {<caret>} }") {
+        closureDelegateTest(GRADLE_API_COMPONENT_METADATA_HANDLER, 1)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test modules delegate`(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { modules {<caret>} }") {
+        closureDelegateTest(GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER, 1)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test modules module delegate`(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { modules { module(':') { <caret> } } }") {
+        closureDelegateTest(GRADLE_API_COMPONENT_MODULE_METADATA_DETAILS, 1)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test classpath configuration`(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { <caret>classpath('hi') }") {
+        resolveTest<Nothing>(null)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test archives configuration`(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { <caret>archives('hi') }") {
+        methodTest(resolveTest(PsiMethod::class.java), "archives", GRADLE_API_DEPENDENCY_HANDLER)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test archives configuration via property`(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies.<caret>archives('hi')") {
+        methodTest(resolveTest(PsiMethod::class.java), "archives", GRADLE_API_DEPENDENCY_HANDLER)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test buildscript classpath configuration`(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("buildscript { dependencies { <caret>classpath('hi') } }") {
+        methodTest(resolveTest(PsiMethod::class.java), "classpath", GRADLE_API_DEPENDENCY_HANDLER)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test buildscript archives configuration`(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("buildscript { dependencies { <caret>archives('hi') } }") {
+        resolveTest<Nothing>(null)
+      }
+    }
+  }
+}

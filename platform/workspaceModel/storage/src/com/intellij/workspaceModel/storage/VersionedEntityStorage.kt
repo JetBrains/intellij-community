@@ -4,14 +4,14 @@ package com.intellij.workspaceModel.storage
 import java.util.*
 
 /**
- * Provides access to instance of [WorkspaceEntityStorage] which can be replaced by newer versions.
+ * Provides access to instance of [EntityStorage] which can be replaced by newer versions.
  */
 interface VersionedEntityStorage {
   val version: Long
-  val current: WorkspaceEntityStorage
+  val current: EntityStorage
 
   // Return builder or storage that is base for this entity storage
-  val base: WorkspaceEntityStorage
+  val base: EntityStorage
 
   /**
    * Return cached result or evaluate it by calling [value::source] if it isn't evaluated for the current version of storage yet.
@@ -32,16 +32,16 @@ interface VersionedEntityStorage {
  */
 // TODO: future: optimized computations if `source` is pure
 // TODO debug by print .ctor call site
-class CachedValue<R>(val source: (WorkspaceEntityStorage) -> R)
+class CachedValue<R>(val source: (EntityStorage) -> R)
 
 /**
  * Represents a key for a parametrized cached value and provide [source] function to evaluate it. [source] must be thread safe.
  */
-class CachedValueWithParameter<P, R>(val source: (WorkspaceEntityStorage, P) -> R)
+class CachedValueWithParameter<P, R>(val source: (EntityStorage, P) -> R)
 
 abstract class VersionedStorageChange(versionedStorage: VersionedEntityStorage) : EventObject(versionedStorage) {
-  abstract val storageBefore: WorkspaceEntityStorage
-  abstract val storageAfter: WorkspaceEntityStorage
+  abstract val storageBefore: EntityStorage
+  abstract val storageAfter: EntityStorage
 
   abstract fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>>
 

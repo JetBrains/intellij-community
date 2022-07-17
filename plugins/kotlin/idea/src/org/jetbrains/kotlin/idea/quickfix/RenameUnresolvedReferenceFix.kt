@@ -7,19 +7,21 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.NotPropertiesService
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.guessTypes
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.toRange
+import org.jetbrains.kotlin.idea.util.psi.patternMatching.match
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -94,7 +96,7 @@ class RenameUnresolvedReferenceFix(element: KtNameReferenceExpression) : KotlinQ
             .filter { candidate ->
                 candidate is CallableDescriptor && (expectedTypes.any { candidate.returnType?.isSubtypeOf(it) ?: false })
             }
-            .mapTo(if (ApplicationManager.getApplication().isUnitTestMode) linkedSetOf() else linkedSetOf(originalName)) {
+            .mapTo(if (isUnitTestMode()) linkedSetOf() else linkedSetOf(originalName)) {
                 it.name.asString()
             }
             .map { LookupElementBuilder.create(it) }
@@ -111,7 +113,9 @@ class RenameUnresolvedReferenceFix(element: KtNameReferenceExpression) : KotlinQ
         }
 
         editor.caretModel.moveToOffset(container.startOffset)
-        TemplateManager.getInstance(project).startTemplate(editor, builder.buildInlineTemplate())
+        if (file.isPhysical) {
+            TemplateManager.getInstance(project).startTemplate(editor, builder.buildInlineTemplate())
+        }
     }
 }
 

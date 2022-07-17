@@ -1,92 +1,87 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.io.NioFiles;
 import org.jetbrains.annotations.*;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
-public final class DisabledPluginsState {
+@ApiStatus.Internal
+public final class DisabledPluginsState implements PluginEnabler.Headless {
 
   public static final @NonNls String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
 
+  private static final boolean IGNORE_DISABLED_PLUGINS = Boolean.getBoolean("idea.ignore.disabled.plugins");
+
   private static volatile @Nullable Set<PluginId> ourDisabledPlugins;
   private static final List<Runnable> ourDisabledPluginListeners = new CopyOnWriteArrayList<>();
-  private static volatile boolean ourIgnoreDisabledPlugins;
 
-  private DisabledPluginsState() {
+  private static volatile boolean ourIgnoredDisabledPlugins = IGNORE_DISABLED_PLUGINS;
+
+  DisabledPluginsState() {
   }
 
-  @ApiStatus.Internal
   public static void addDisablePluginListener(@NotNull Runnable listener) {
     ourDisabledPluginListeners.add(listener);
   }
 
-  @ApiStatus.Internal
   public static void removeDisablePluginListener(@NotNull Runnable listener) {
     ourDisabledPluginListeners.remove(listener);
   }
 
-  // For use in headless environment only
-  @ApiStatus.Internal
-  public static void setIgnoreDisabledPlugins(boolean ignoreDisabledPlugins) {
-    ourIgnoreDisabledPlugins = ignoreDisabledPlugins;
+  @Override
+  public boolean isIgnoredDisabledPlugins() {
+    return ourIgnoredDisabledPlugins;
   }
 
-  @ApiStatus.Internal
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+  @Override
+  public void setIgnoredDisabledPlugins(boolean ignoredDisabledPlugins) {
+    ourIgnoredDisabledPlugins = ignoredDisabledPlugins;
+  }
+
   public static @NotNull Set<PluginId> loadDisabledPlugins() {
     Set<PluginId> disabledPlugins = new LinkedHashSet<>();
 
-    Path file = Paths.get(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
-    if (!Files.isRegularFile(file)) {
-      return disabledPlugins;
-    }
-
+    Path path = getDefaultFilePath();
     ApplicationInfoEx applicationInfo = ApplicationInfoImpl.getShadowInstance();
-    List<String> requiredPlugins = splitByComma(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY);
+    Set<PluginId> requiredPlugins = splitByComma(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY);
 
-    boolean updateDisablePluginsList = false;
-    try (BufferedReader reader = Files.newBufferedReader(file)) {
-      String id;
-      while ((id = reader.readLine()) != null) {
-        id = id.trim();
-        if (id.isEmpty()) {
-          continue;
-        }
-
-        if (!requiredPlugins.contains(id) && !applicationInfo.isEssentialPlugin(id)) {
-          addIdTo(id, disabledPlugins);
+    boolean updateFile = false;
+    try {
+      for (PluginId id : PluginManagerCore.readPluginIdsFromFile(path)) {
+        if (!requiredPlugins.contains(id) &&
+            !applicationInfo.isEssentialPlugin(id)) {
+          disabledPlugins.add(id);
         }
         else {
-          updateDisablePluginsList = true;
+          updateFile = true;
         }
       }
 
-      for (String suppressedId : getNonEssentialSuppressedPlugins(applicationInfo)) {
-        if (addIdTo(suppressedId, disabledPlugins)) {
-          updateDisablePluginsList = true;
+      for (PluginId suppressedPluginId : splitByComma("idea.suppressed.plugins.id")) {
+        if (!applicationInfo.isEssentialPlugin(suppressedPluginId) &&
+            disabledPlugins.add(suppressedPluginId)) {
+          updateFile = true;
         }
       }
     }
     catch (IOException e) {
-      getLogger().info("Unable to load disabled plugins list from " + file, e);
+      getLogger().info("Unable to load disabled plugins list from " + path, e);
     }
     finally {
-      if (updateDisablePluginsList) {
-        trySaveDisabledPlugins(file, disabledPlugins, false);
+      if (updateFile) {
+        trySaveDisabledPlugins(disabledPlugins, false);
       }
     }
 
@@ -104,7 +99,7 @@ public final class DisabledPluginsState {
     }
 
     // to preserve the order of additions and removals
-    if (ourIgnoreDisabledPlugins || System.getProperty("idea.ignore.disabled.plugins") != null) {
+    if (ourIgnoredDisabledPlugins) {
       return new HashSet<>();
     }
 
@@ -119,12 +114,31 @@ public final class DisabledPluginsState {
     }
   }
 
-  @ApiStatus.Internal
-  static boolean isDisabled(@NotNull PluginId pluginId) {
+  @Override
+  public boolean isDisabled(@NotNull PluginId pluginId) {
     return getDisabledIds().contains(pluginId);
   }
 
-  @ApiStatus.Internal
+  @Override
+  public boolean enable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+    return enableById(IdeaPluginDescriptorImplKt.toPluginSet(descriptors));
+  }
+
+  @Override
+  public boolean disable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+    return disableById(IdeaPluginDescriptorImplKt.toPluginSet(descriptors));
+  }
+
+  @Override
+  public boolean enableById(@NotNull Set<PluginId> pluginIds) {
+    return setEnabledState(pluginIds, true);
+  }
+
+  @Override
+  public boolean disableById(@NotNull Set<PluginId> pluginIds) {
+    return setEnabledState(pluginIds, false);
+  }
+
   static boolean setEnabledState(@NotNull Set<PluginId> plugins,
                                  boolean enabled) {
     Set<PluginId> disabled = getDisabledIds();
@@ -133,54 +147,49 @@ public final class DisabledPluginsState {
                       disabled.addAll(plugins);
 
     getLogger().info(joinedPluginIds(plugins, enabled));
-    return changed && trySaveDisabledPlugins(disabled);
+    return changed && saveDisabledPluginsAndInvalidate(disabled);
   }
 
-  @ApiStatus.Internal
-  public static boolean trySaveDisabledPlugins(@NotNull Collection<PluginId> pluginIds) {
-    return trySaveDisabledPlugins(PathManager.getConfigDir().resolve(DISABLED_PLUGINS_FILENAME), pluginIds, true);
+  public static boolean saveDisabledPluginsAndInvalidate(@NotNull Set<PluginId> pluginIds) {
+    return trySaveDisabledPlugins(pluginIds,
+                                  true);
   }
 
-  private static boolean trySaveDisabledPlugins(@NotNull Path file,
-                                                @NotNull Collection<PluginId> pluginIds,
+  private static boolean trySaveDisabledPlugins(@NotNull Set<PluginId> pluginIds,
                                                 boolean invalidate) {
     try {
-      saveDisabledPlugins(file, pluginIds, invalidate);
-      return true;
+      PluginManagerCore.writePluginIdsToFile(getDefaultFilePath(),
+                                             pluginIds);
     }
     catch (IOException e) {
       getLogger().warn("Unable to save disabled plugins list", e);
       return false;
     }
-  }
 
-  @TestOnly
-  public static void saveDisabledPlugins(@NotNull Path configDir, String... ids) throws IOException {
-    List<PluginId> pluginIds = new ArrayList<>();
-    for (String id : ids) {
-      addIdTo(id, pluginIds);
-    }
-    saveDisabledPlugins(configDir.resolve(DISABLED_PLUGINS_FILENAME), pluginIds, true);
-  }
-
-  private static void saveDisabledPlugins(@NotNull Path file,
-                                          @NotNull Collection<PluginId> pluginIds,
-                                          boolean invalidate) throws IOException {
-    savePluginsList(pluginIds, file);
     if (invalidate) {
       invalidate();
     }
+
     for (Runnable listener : ourDisabledPluginListeners) {
       listener.run();
     }
+
+    return true;
   }
 
-  public static void savePluginsList(@NotNull Collection<PluginId> ids, @NotNull Path file) throws IOException {
-    NioFiles.createDirectories(file.getParent());
-    try (BufferedWriter writer = Files.newBufferedWriter(file)) {
-      PluginManagerCore.writePluginsList(ids, writer);
-    }
+  @TestOnly
+  public static void saveDisabledPluginsAndInvalidate(@NotNull Path configPath,
+                                                      String... pluginIds) throws IOException {
+    PluginManagerCore.writePluginIdsToFile(configPath.resolve(DISABLED_PLUGINS_FILENAME),
+                                           Arrays.asList(pluginIds));
+    invalidate();
   }
+
+  private static @NotNull Path getDefaultFilePath() {
+    return PathManager.getConfigDir()
+      .resolve(DISABLED_PLUGINS_FILENAME);
+  }
+
 
   private static @NotNull Logger getLogger() {
     // do not use class reference here
@@ -191,30 +200,11 @@ public final class DisabledPluginsState {
     ourDisabledPlugins = null;
   }
 
-  private static boolean addIdTo(@NotNull String id, @NotNull Collection<PluginId> pluginIds) {
-    return pluginIds.add(PluginId.getId(id));
-  }
-
-  private static @NotNull List<String> getNonEssentialSuppressedPlugins(@NotNull ApplicationInfoEx applicationInfo) {
-    List<String> suppressedPlugins = splitByComma("idea.suppressed.plugins.id");
-    if (suppressedPlugins.isEmpty()) {
-      return Collections.emptyList();
-    }
-
-    List<String> result = new ArrayList<>(suppressedPlugins.size());
-    for (String suppressedPlugin : suppressedPlugins) {
-      if (!applicationInfo.isEssentialPlugin(suppressedPlugin)) {
-        result.add(suppressedPlugin);
-      }
-    }
-    return result;
-  }
-
-  private static @NotNull List<String> splitByComma(@NotNull String key) {
-    String[] strings = System.getProperty(key, "").split(",");
-    return strings.length == 0 || strings.length == 1 && strings[0].isEmpty() ?
-           Collections.emptyList() :
-           Arrays.asList(strings);
+  @ReviseWhenPortedToJDK(value = "10", description = "toUnmodifiableSet")
+  private static @NotNull Set<PluginId> splitByComma(@NotNull String key) {
+    return Arrays.stream(System.getProperty(key, "").split(","))
+      .map(PluginId::getId)
+      .collect(Collectors.toSet());
   }
 
   private static @NotNull String joinedPluginIds(@NotNull Collection<PluginId> pluginIds, boolean enabled) {

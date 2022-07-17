@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.eval4j.jdi
 
@@ -6,8 +6,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.sun.jdi.*
 import org.jetbrains.eval4j.*
 import org.jetbrains.eval4j.Value
-import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper.InternalNameMapper.canBeMangledInternalName
-import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper.InternalNameMapper.internalNameWithoutModuleSuffix
 import org.jetbrains.org.objectweb.asm.Type
 import java.lang.reflect.AccessibleObject
 import com.sun.jdi.Type as jdi_Type
@@ -241,7 +239,7 @@ open class JDIEval(
         if (internalNameWithoutSuffix != null) {
             val internalMethods = clazz.visibleMethods().filter {
                 val name = it.name()
-                name.startsWith(internalNameWithoutSuffix) && canBeMangledInternalName(name) && it.signature() == methodDesc.desc
+                name.startsWith(internalNameWithoutSuffix) && '$' in name && it.signature() == methodDesc.desc
             }
 
             if (internalMethods.isNotEmpty()) {
@@ -251,6 +249,12 @@ open class JDIEval(
         }
 
         return null
+    }
+
+    private fun internalNameWithoutModuleSuffix(name: String): String? {
+        val indexOfDollar = name.indexOf('$')
+        val demangledName = if (indexOfDollar >= 0) name.substring(0, indexOfDollar) else null
+        return if (demangledName != null) "$demangledName$" else null
     }
 
     open fun jdiInvokeStaticMethod(type: ClassType, method: Method, args: List<jdi_Value?>, invokePolicy: Int): jdi_Value? {
@@ -496,7 +500,6 @@ open class JDIEval(
 internal val Type.jdiName: String
     get() = internalName.replace('/', '.')
 
-@Suppress("unused")
 private sealed class JdiOperationResult<T> {
     class Fail<T>(val cause: Exception) : JdiOperationResult<T>()
     class OK<T>(val value: T) : JdiOperationResult<T>()

@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 class TimeIndex(val intValue: Int) : Comparable<TimeIndex> {
     override fun compareTo(other: TimeIndex): Int {
         TODO()

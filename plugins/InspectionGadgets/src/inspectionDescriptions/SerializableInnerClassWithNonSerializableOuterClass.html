@@ -6,14 +6,12 @@ and are declared inside a class that doesn't implement <code>Serializable</code>
   Such classes are unlikely to serialize correctly due to implicit references to the outer class.
 </p>
 <p><b>Example:</b></p>
-<pre>
-  <code>
-    class A {
-      class Main implements Serializable {
-      }
+<pre><code>
+  class A {
+    class Main implements Serializable {
     }
-  </code>
-</pre>
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>Use the following options to configure the inspection:</p>
 <ul>

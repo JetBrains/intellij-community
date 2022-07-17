@@ -26,10 +26,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.table.DefaultTableColumnModel;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
+import javax.swing.table.*;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
@@ -235,6 +232,20 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
 
   public TreeTableModel getModel() {
     return myModel;
+  }
+
+  /**
+   * Enable sorting by columns in this tree-table.
+   * Use this method only if this RowSorter or your model support tree sorting.
+   * For example, com.intellij.ui.tree.StructureTreeModel supports sorting via setComparator method,
+   * so in this case a RowSorter may just redirect sorting requests to the StructureTreeModel.
+   */
+  public void setRowSorter(RowSorter<? extends TableModel> sorter) {
+    myTable.setRowSorter(sorter);
+
+    final JTable ref = myTreeTableHeader.getTable();
+    ref.setModel(myTable.getModel());
+    ref.setRowSorter(sorter);
   }
 
   @Nullable

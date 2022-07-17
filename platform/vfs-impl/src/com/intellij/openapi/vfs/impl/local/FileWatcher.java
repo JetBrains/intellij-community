@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.application.options.RegistryManager;
@@ -110,7 +110,7 @@ public final class FileWatcher {
   }
 
   public boolean isSettingRoots() {
-    Future<?> lastTask = myLastTask.get();  // a new task may come after the read, but this seem to be an acceptable race
+    Future<?> lastTask = myLastTask.get();  // a new task may come after the read, but this seems to be an acceptable race
     if (lastTask != null && !lastTask.isDone()) {
       return true;
     }
@@ -172,7 +172,11 @@ public final class FileWatcher {
     ApplicationManager.getApplication().invokeLater(
       () -> {
         Notification notification = group.createNotification(title, cause, NotificationType.WARNING);
-        if (listener != null) notification.setListener(listener);
+        notification.setSuggestionType(true);
+        if (listener != null) {
+          //noinspection deprecation
+          notification.setListener(listener);
+        }
         Notifications.Bus.notify(notification);
       },
       ModalityState.NON_MODAL);
@@ -210,11 +214,6 @@ public final class FileWatcher {
     }
 
     @Override
-    public void notifyManualWatchRoots(@NotNull Collection<String> roots) {
-      registerManualWatchRoots(new Object(), roots);
-    }
-
-    @Override
     public void notifyManualWatchRoots(@NotNull PluggableFileWatcher watcher, @NotNull Collection<String> roots) {
       registerManualWatchRoots(watcher, roots);
     }
@@ -227,7 +226,7 @@ public final class FileWatcher {
     }
 
     @Override
-    public void notifyMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
+    public void notifyMapping(@NotNull Collection<Pair<String, String>> mapping) {
       if (!mapping.isEmpty()) {
         myPathMap.addMapping(mapping);
       }
@@ -316,15 +315,15 @@ public final class FileWatcher {
   public static final String RESET = "(reset)";
   public static final String OTHER = "(other)";
 
-  private volatile Consumer<String> myTestNotifier;
+  private volatile Consumer<? super String> myTestNotifier;
 
   private void notifyOnEvent(String path) {
-    Consumer<String> notifier = myTestNotifier;
+    Consumer<? super String> notifier = myTestNotifier;
     if (notifier != null) notifier.accept(path);
   }
 
   @TestOnly
-  public void startup(@Nullable Consumer<String> notifier) throws Exception {
+  public void startup(@Nullable Consumer<? super String> notifier) throws Exception {
     myTestNotifier = notifier;
     myFileWatcherExecutor.submit(() -> {
       for (PluggableFileWatcher watcher : PluggableFileWatcher.EP_NAME.getIterable()) {

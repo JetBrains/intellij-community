@@ -1,5 +1,5 @@
 // "Cast expression '1' to 'UInt'" "false"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: Conversion of signed constants to unsigned ones is prohibited
 // ACTION: Convert to lazy property
 // ACTION: Change parameter 'u' type of function 'takeUInt' to 'Int'

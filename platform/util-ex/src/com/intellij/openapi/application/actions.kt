@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.util.Computable
+import org.jetbrains.annotations.ApiStatus.Internal
 
 inline fun <T> runWriteAction(crossinline runnable: () -> T): T {
   return ApplicationManager.getApplication().runWriteAction(Computable { runnable() })
@@ -23,6 +24,7 @@ inline fun <T> runReadAction(crossinline runnable: () -> T): T {
 /**
  * @suppress Internal use only
  */
+@Internal
 fun <T> invokeAndWaitIfNeeded(modalityState: ModalityState? = null, runnable: () -> T): T {
   val app = ApplicationManager.getApplication()
   if (app.isDispatchThread) {

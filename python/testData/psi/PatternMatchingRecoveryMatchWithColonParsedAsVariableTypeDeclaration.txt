@@ -1,0 +1,8 @@
+PyFile:PatternMatchingRecoveryMatchWithColonParsedAsVariableTypeDeclaration.py
+  PyTypeDeclarationStatement
+    PyTargetExpression: match
+      PsiElement(Py:IDENTIFIER)('match')
+    PyAnnotation
+      PsiElement(Py:COLON)(':')
+      PsiErrorElement:Expression expected
+        <empty list>

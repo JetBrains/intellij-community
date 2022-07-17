@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.navigation.ItemPresentation
@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.SyntheticLibraryOrigin
-import com.intellij.util.indexing.roots.kind.SyntheticLibraryOriginImpl
+import com.intellij.util.indexing.roots.origin.SyntheticLibraryOriginImpl
 
 internal class SyntheticLibraryIndexableFilesIteratorImpl(private val syntheticLibrary: SyntheticLibrary) : SyntheticLibraryIndexableFilesIterator {
 
@@ -43,5 +43,9 @@ internal class SyntheticLibraryIndexableFilesIteratorImpl(private val syntheticL
   ): Boolean {
     val roots = runReadAction { syntheticLibrary.allRoots }
     return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, fileFilter)
+  }
+
+  override fun getRootUrls(project: Project): Set<String> {
+    return syntheticLibrary.allRoots.map { it.url }.toSet()
   }
 }

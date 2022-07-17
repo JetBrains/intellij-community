@@ -105,7 +105,7 @@ public class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
   @Override
   public ArtifactRootDescriptor findRootDescriptor(String rootId,
                                                 BuildRootIndex rootIndex) {
-    return rootIndex.getTargetRoots(this, null).get(Integer.valueOf(rootId));
+    return rootIndex.getTargetRoots(this, null).get(Integer.parseInt(rootId));
   }
 
   @NotNull

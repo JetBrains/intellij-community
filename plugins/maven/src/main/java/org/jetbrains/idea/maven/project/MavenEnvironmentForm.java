@@ -61,7 +61,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
   private final PathOverrider localRepositoryOverrider;
 
   private boolean isUpdating = false;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm();
   private String myTargetName;
   private Project myProject;
 

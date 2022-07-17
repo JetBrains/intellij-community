@@ -128,6 +128,7 @@ public final class RefactoringChangeUtil {
     return getThisClass(expression);
   }
 
+  @SuppressWarnings("unchecked")
   static <T extends PsiQualifiedExpression> T createQualifiedExpression(@NotNull PsiManager manager,
                                                                         PsiClass qualifierClass,
                                                                         @NotNull String qName) throws IncorrectOperationException {

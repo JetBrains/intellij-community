@@ -24,6 +24,9 @@ public class MalformedFormatStringInspectionTest extends LightJavaInspectionTest
   public void testMalformedFormatString() {
     doTest();
   }
+  public void testPrintFormatAnnotation() {
+    doTest();
+  }
 
   @Nullable
   @Override

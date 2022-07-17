@@ -16,6 +16,7 @@
 class C {
     /**
      * This is the role -
+     *
      * @param role another desc
      * @return return description
      */

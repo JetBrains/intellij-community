@@ -420,7 +420,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
           }
         }
       }
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return HELP_ID;
       }
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) {

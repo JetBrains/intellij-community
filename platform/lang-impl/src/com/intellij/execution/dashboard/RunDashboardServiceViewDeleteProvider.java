@@ -10,7 +10,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
@@ -75,7 +75,7 @@ final class RunDashboardServiceViewDeleteProvider implements ServiceViewContribu
   }
 
   private static List<ConfigurationType> getTargetTypes(DataContext dataContext) {
-    Object[] items = dataContext.getData(PlatformDataKeys.SELECTED_ITEMS);
+    Object[] items = dataContext.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
     if (items == null) return Collections.emptyList();
 
     List<ConfigurationType> types = new SmartList<>();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
@@ -122,11 +122,12 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  private static List<PsiAnnotation> findNonCodeAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotationNames) {
-    if (listOwner instanceof PsiLocalVariable) {
+  private static List<PsiAnnotation> findNonCodeAnnotations(@NotNull PsiModifierListOwner element, @NotNull Collection<String> annotationNames) {
+    if (element instanceof PsiLocalVariable) {
       // Non-code annotations for local variables are not supported: don't bother to search them
       return null;
     }
+    PsiModifierListOwner listOwner = AnnotationCacheOwnerNormalizer.normalize(element);
     Map<Collection<String>, List<PsiAnnotation>> map = CachedValuesManager.getCachedValue(
       listOwner,
       () -> {
@@ -181,19 +182,20 @@ public class AnnotationUtil {
 
   @NotNull
   public static <T extends PsiModifierListOwner> List<T> getSuperAnnotationOwners(@NotNull T element) {
-    return CachedValuesManager.getCachedValue(element, () -> {
+    PsiModifierListOwner listOwner = AnnotationCacheOwnerNormalizer.normalize(element);
+    return CachedValuesManager.getCachedValue(listOwner, () -> {
       Set<PsiModifierListOwner> result = new LinkedHashSet<>();
-      if (element instanceof PsiMethod) {
-        if (!element.hasModifierProperty(PsiModifier.STATIC)) {
-          collectSuperMethods(result, ((PsiMethod)element).getHierarchicalMethodSignature(), element,
-                              JavaPsiFacade.getInstance(element.getProject()).getResolveHelper());
+      if (listOwner instanceof PsiMethod) {
+        if (!listOwner.hasModifierProperty(PsiModifier.STATIC)) {
+          collectSuperMethods(result, ((PsiMethod)listOwner).getHierarchicalMethodSignature(), listOwner,
+                              JavaPsiFacade.getInstance(listOwner.getProject()).getResolveHelper());
         }
       }
-      else if (element instanceof PsiClass) {
-        InheritanceUtil.processSupers((PsiClass)element, false, Processors.cancelableCollectProcessor(result));
+      else if (listOwner instanceof PsiClass) {
+        InheritanceUtil.processSupers((PsiClass)listOwner, false, Processors.cancelableCollectProcessor(result));
       }
-      else if (element instanceof PsiParameter) {
-        collectSuperParameters(result, (PsiParameter)element);
+      else if (listOwner instanceof PsiParameter) {
+        collectSuperParameters(result, (PsiParameter)listOwner);
       }
 
       List<T> list;
@@ -492,7 +494,7 @@ public class AnnotationUtil {
           HierarchicalMethodSignature methodSignature = method.getHierarchicalMethodSignature();
 
           final List<HierarchicalMethodSignature> superSignatures = methodSignature.getSuperSignatures();
-          PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(aClass.getProject());
+          PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(aClass.getProject());
           for (final HierarchicalMethodSignature superSignature : superSignatures) {
             final PsiMethod superMethod = superSignature.getMethod();
             if (visited == null) {
@@ -517,7 +519,7 @@ public class AnnotationUtil {
             HierarchicalMethodSignature methodSignature = method.getHierarchicalMethodSignature();
 
             final List<HierarchicalMethodSignature> superSignatures = methodSignature.getSuperSignatures();
-            PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(aClass.getProject());
+            PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(aClass.getProject());
             for (final HierarchicalMethodSignature superSignature : superSignatures) {
               final PsiMethod superMethod = superSignature.getMethod();
               if (visited == null) {
@@ -721,7 +723,7 @@ public class AnnotationUtil {
     {"NotNull", "Nullable", "NonNls", "PropertyKey", "TestOnly", "Language", "Identifier", "Pattern", "PrintFormat", "RegExp", "Subst"};
 
   /** @deprecated simple name is not enough for reliable identification */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isJetbrainsAnnotation(@NotNull String simpleName) {
     return ArrayUtil.find(SIMPLE_NAMES, simpleName) != -1;
@@ -729,21 +731,21 @@ public class AnnotationUtil {
 
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations) {
     return isAnnotated(listOwner, annotations, CHECK_TYPE);
   }
 
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, boolean checkHierarchy) {
     return isAnnotated(listOwner, annotationFQN, flags(checkHierarchy, true, true));
   }
 
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
                                     @NotNull String annotationFQN,
                                     boolean checkHierarchy,

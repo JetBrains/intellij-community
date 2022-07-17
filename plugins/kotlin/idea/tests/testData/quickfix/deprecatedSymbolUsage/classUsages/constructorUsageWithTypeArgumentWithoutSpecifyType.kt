@@ -1,5 +1,5 @@
 // "Replace with 'Factory()'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 class Foo<T> @Deprecated("", ReplaceWith("Factory<T>()")) constructor()

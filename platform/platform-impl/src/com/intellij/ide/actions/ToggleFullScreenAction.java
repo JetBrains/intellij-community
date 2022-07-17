@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -46,6 +47,11 @@ final class ToggleFullScreenAction extends DumbAwareAction implements LightEditC
       p.setText(frame.isInFullScreen() ? ActionsBundle.message("action.ToggleFullScreen.text.exit")
                                        : ActionsBundle.message("action.ToggleFullScreen.text.enter"));
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Nullable

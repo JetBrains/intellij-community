@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.core.CoreBundle;
@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -46,6 +45,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @ApiStatus.Internal
   public static final ExtensionPointName<PluggableLocalFileSystemContentLoader> PLUGGABLE_CONTENT_LOADER_EP_NAME =
     ExtensionPointName.create("com.intellij.vfs.local.pluggableContentLoader");
+
+  @ApiStatus.Internal
+  private static final ExtensionPointName<LocalFileOperationsHandler> FILE_OPERATIONS_HANDLER_EP_NAME =
+    ExtensionPointName.create("com.intellij.vfs.local.fileOperationsHandler");
+
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
   private final FileAttributes FAKE_ROOT_ATTRIBUTES =
@@ -53,6 +57,66 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
                        isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
 
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<>();
+
+  public LocalFileSystemBase() {
+    myHandlers.add(new LocalFileOperationsHandler() {
+      @Override
+      public boolean delete(@NotNull VirtualFile file) throws IOException {
+        for (LocalFileOperationsHandler handler : FILE_OPERATIONS_HANDLER_EP_NAME.getExtensionList()) {
+          if (handler.delete(file)) return true;
+        }
+        return false;
+      }
+
+      @Override
+      public boolean move(@NotNull VirtualFile file, @NotNull VirtualFile toDir) throws IOException {
+        for (LocalFileOperationsHandler handler : FILE_OPERATIONS_HANDLER_EP_NAME.getExtensionList()) {
+          if (handler.move(file, toDir)) return true;
+        }
+        return false;
+      }
+
+      @Override
+      public @Nullable File copy(@NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String copyName) throws IOException {
+        for (LocalFileOperationsHandler handler : FILE_OPERATIONS_HANDLER_EP_NAME.getExtensionList()) {
+          File copy = handler.copy(file, toDir, copyName);
+          if (copy != null) return copy;
+        }
+        return null;
+      }
+
+      @Override
+      public boolean rename(@NotNull VirtualFile file, @NotNull String newName) throws IOException {
+        for (LocalFileOperationsHandler handler : FILE_OPERATIONS_HANDLER_EP_NAME.getExtensionList()) {
+          if (handler.rename(file, newName)) return true;
+        }
+        return false;
+      }
+
+      @Override
+      public boolean createFile(@NotNull VirtualFile dir, @NotNull String name) throws IOException {
+        for (LocalFileOperationsHandler handler : FILE_OPERATIONS_HANDLER_EP_NAME.getExtensionList()) {
+          if (handler.createFile(dir, name)) return true;
+        }
+        return false;
+      }
+
+      @Override
+      public boolean createDirectory(@NotNull VirtualFile dir, @NotNull String name) throws IOException {
+        for (LocalFileOperationsHandler handler : FILE_OPERATIONS_HANDLER_EP_NAME.getExtensionList()) {
+          if (handler.createDirectory(dir, name)) return true;
+        }
+        return false;
+      }
+
+      @Override
+      public void afterDone(@NotNull ThrowableConsumer<? super LocalFileOperationsHandler, ? extends IOException> invoker) {
+        for (LocalFileOperationsHandler handler : FILE_OPERATIONS_HANDLER_EP_NAME.getExtensionList()) {
+          handler.afterDone(invoker);
+        }
+      }
+    });
+  }
 
   @Override
   public @Nullable VirtualFile findFileByPath(@NotNull String path) {
@@ -69,9 +133,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return VfsImplUtil.refreshAndFindFileByPath(this, path);
   }
 
-  protected static @NotNull String toIoPath(@NotNull VirtualFile file) {
+  private static @NotNull String toIoPath(@NotNull VirtualFile file) {
     String path = file.getPath();
-    if (StringUtil.endsWithChar(path, ':') && path.length() == 2 && SystemInfo.isWindows) {
+    if (path.length() == 2 && SystemInfo.isWindows && OSAgnosticPathUtil.startsWithWindowsDrive(path)) {
       // makes 'C:' resolve to a root directory of the drive C:, not the current directory on that drive
       path += '/';
     }
@@ -87,14 +151,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return file.getFileSystem() == this ? Paths.get(toIoPath(file)) : null;
   }
 
-  protected static @NotNull File convertToIOFileAndCheck(@NotNull VirtualFile file) throws FileNotFoundException {
+  private static @NotNull File convertToIOFileAndCheck(@NotNull VirtualFile file) throws FileNotFoundException {
     File ioFile = convertToIOFile(file);
 
-    if (SystemInfo.isUnix) { // avoid opening fifo files
-      FileAttributes attributes = FileSystemUtil.getAttributes(ioFile);
-      if (attributes != null && !attributes.isFile()) {
-        throw new FileNotFoundException("Not a file: " + ioFile + " (type=" + attributes.getType() + ')');
-      }
+    if (SystemInfo.isUnix && file.is(VFileProperty.SPECIAL)) { // avoid opening fifo files
+      throw new FileNotFoundException("Not a file: " + ioFile + " (type=" + FileSystemUtil.getAttributes(ioFile) + ')');
     }
 
     return ioFile;
@@ -174,7 +235,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
     try {
       Path file = Path.of(path);
-      if (!file.isAbsolute() && !(SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':')) {
+      if (!file.isAbsolute() && !(SystemInfo.isWindows && path.length() == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(path))) {
         path = file.toAbsolutePath().toString();
       }
     }
@@ -283,7 +344,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return false;
   }
 
-  private void auxNotifyCompleted(@NotNull ThrowableConsumer<LocalFileOperationsHandler, IOException> consumer) {
+  private void auxNotifyCompleted(@NotNull ThrowableConsumer<? super LocalFileOperationsHandler, ? extends IOException> consumer) {
     for (LocalFileOperationsHandler handler : myHandlers) {
       handler.afterDone(consumer);
     }
@@ -346,7 +407,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         throw new IOException(IdeCoreBundle.message("new.file.failed.error", ioFile.getPath()));
       }
       else if (existing != null) {
-        // wow, IO created file successfully although it already existed in VFS. Maybe we got dir case sensitivity wrong?
+        // wow, IO created file successfully even though it already existed in VFS. Maybe we got dir case sensitivity wrong?
         boolean oldCaseSensitive = parent.isCaseSensitive();
         FileAttributes.CaseSensitivity actualSensitivity = FileSystemUtil.readParentCaseSensitivity(new File(existing.getPath()));
         if ((actualSensitivity == FileAttributes.CaseSensitivity.SENSITIVE) != oldCaseSensitive) {
@@ -415,11 +476,15 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
     }
 
+    long l = file.getLength();
+    if (l >= FileUtilRt.LARGE_FOR_CONTENT_LOADING) throw new FileTooBigException(file.getPath());
+    int length = (int)l;
+    if (length < 0) throw new IOException("Invalid file length: " + length + ", " + file);
+    return loadFileContent(ioFile, length);
+  }
+
+  protected static byte @NotNull [] loadFileContent(@NotNull File ioFile, int length) throws IOException {
     try (InputStream stream = new FileInputStream(ioFile)) {
-      long l = file.getLength();
-      if (l >= FileUtilRt.LARGE_FOR_CONTENT_LOADING) throw new FileTooBigException(file.getPath());
-      int length = (int)l;
-      if (length < 0) throw new IOException("Invalid file length: " + length + ", " + file);
       // io_util.c#readBytes allocates custom native stack buffer for io operation with malloc if io request > 8K
       // so let's do buffered requests with buffer size 8192 that will use stack allocated buffer
       return loadBytes(length <= 8192 ? stream : new BufferedInputStream(stream), length);
@@ -445,7 +510,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public @NotNull OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
     File ioFile = convertToIOFileAndCheck(file);
     OutputStream stream = !SafeWriteRequestor.shouldUseSafeWrite(requestor) ? new FileOutputStream(ioFile) :
-                          Registry.is("ide.io.preemptive.safe.write") ? new PreemptiveSafeFileOutputStream(ioFile.toPath()) :
+                          requestor instanceof LargeFileWriteRequestor ? new PreemptiveSafeFileOutputStream(ioFile.toPath()) :
                           new SafeFileOutputStream(ioFile);
     return new BufferedOutputStream(stream) {
       @Override
@@ -604,20 +669,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
-  private static final String[] ourRootPaths;
-  static {
-    //noinspection SpellCheckingInspection
-    List<String> roots = StringUtil.split(System.getProperty("idea.persistentfs.roots", ""), File.pathSeparator);
-    roots.sort((o1, o2) -> o2.length() - o1.length());  // longest first
-    ourRootPaths = ArrayUtilRt.toStringArray(roots);
-  }
-
   @Override
   protected @NotNull String extractRootPath(@NotNull String normalizedPath) {
-    for (String customRootPath : ourRootPaths) {
-      if (normalizedPath.startsWith(customRootPath)) return customRootPath;
-    }
-
     String rootPath = FileUtil.extractRootPath(normalizedPath);
     return StringUtil.notNullize(rootPath);
   }
@@ -650,10 +703,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
 
       // linux & mac support symbolic links
-      // unfortunately canonical file resolves sym links
+      // unfortunately canonical file resolves symlinks
       // so its name may differ from name of origin file
       //
-      // Here FS is case sensitive, so let's check that original and
+      // Here FS is case-sensitive, so let's check that original and
       // canonical file names are equal if we ignore name case
       if (canonicalFileName.compareToIgnoreCase(originalFileName) == 0) {
         // p.s. this should cover most cases related to not symbolic links
@@ -694,18 +747,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    String path = file.getPath();
-    if (SystemInfo.isWindows && file.getParent() == null && path.startsWith("//")) {
+    if (SystemInfo.isWindows && file.getParent() == null && file.getPath().startsWith("//")) {
       return FAKE_ROOT_ATTRIBUTES;  // UNC roots
     }
-    return getAttributes(path);
+    return myAttrGetter.accessDiskWithCheckCanceled(file);
   }
 
-  protected FileAttributes getAttributes(@NotNull String path) {
-    return myAttrGetter.accessDiskWithCheckCanceled(FileUtilRt.toSystemDependentName(path));
-  }
-
-  private final DiskQueryRelay<String, FileAttributes> myAttrGetter = new DiskQueryRelay<>(FileSystemUtil::getAttributes);
+  private final DiskQueryRelay<VirtualFile, FileAttributes> myAttrGetter = new DiskQueryRelay<>(LocalFileSystemBase::getAttributesWithCustomTimestamp);
   private final DiskQueryRelay<File, String[]> myChildrenGetter = new DiskQueryRelay<>(dir -> dir.list());
 
   @Override
@@ -733,5 +781,32 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public void cleanupForNextTest() {
     FileDocumentManager.getInstance().saveAllDocuments();
     PersistentFS.getInstance().clearIdCache();
+  }
+
+  private static @Nullable FileAttributes getAttributesWithCustomTimestamp(@NotNull VirtualFile file) {
+    final FileAttributes attributes = FileSystemUtil.getAttributes(FileUtilRt.toSystemDependentName(file.getPath()));
+    return copyWithCustomTimestamp(file, attributes);
+  }
+
+  protected static @Nullable FileAttributes copyWithCustomTimestamp(@NotNull VirtualFile file, @Nullable FileAttributes attributes) {
+    if (attributes == null) return null;
+
+    for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
+      final Long custom = provider.getTimestamp(file);
+      if (custom != null) {
+        return new FileAttributes(
+          attributes.isDirectory(),
+          attributes.isSpecial(),
+          attributes.isSymLink(),
+          attributes.isHidden(),
+          attributes.length,
+          custom,
+          attributes.isWritable(),
+          attributes.areChildrenCaseSensitive()
+        );
+      }
+    }
+
+    return attributes;
   }
 }

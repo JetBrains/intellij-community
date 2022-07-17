@@ -618,7 +618,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
   internal inner class TestExistingValidationRule : LocalEnumCustomValidationRule("existing_rule", TestCustomActionId::class.java)
 
   internal inner class TestThirdPartyValidationRule : CustomValidationRule() {
-    override fun acceptRuleId(ruleId: String?): Boolean = "third_party_rule" == ruleId
+    override fun getRuleId(): String = "third_party_rule"
 
     override fun doValidate(data: String, context: EventContext): ValidationResultType {
       return if (data == "FIRST") ValidationResultType.ACCEPTED else ValidationResultType.THIRD_PARTY

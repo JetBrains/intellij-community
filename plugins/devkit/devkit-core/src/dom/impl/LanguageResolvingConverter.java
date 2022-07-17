@@ -3,8 +3,8 @@ package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
@@ -35,7 +35,15 @@ class LanguageResolvingConverter extends ResolvingConverter<LanguageResolvingUti
   @Nullable
   @Override
   public LanguageResolvingUtil.LanguageDefinition fromString(@Nullable @NonNls final String s, ConvertContext context) {
-    return ContainerUtil.find(getVariants(context), definition -> definition.id.equals(s));
+    Ref<LanguageResolvingUtil.LanguageDefinition> result = new Ref<>();
+    LanguageResolvingUtil.processAllLanguageDefinitions(context, definition -> {
+      if (definition.id.equals(s)) {
+        result.set(definition);
+        return false;
+      }
+      return true;
+    });
+    return result.get();
   }
 
   @Nullable

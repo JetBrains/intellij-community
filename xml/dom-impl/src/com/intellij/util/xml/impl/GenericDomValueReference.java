@@ -207,6 +207,6 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   @Override
   public boolean canResolveTo(Class<? extends PsiElement> elementClass) {
     Converter<T> converter = getConverter();
-    return !(converter instanceof ResolvingConverter) || ((ResolvingConverter)converter).canResolveTo(elementClass);
+    return !(converter instanceof ResolvingConverter) || ((ResolvingConverter<?>)converter).canResolveTo(elementClass);
   }
 }

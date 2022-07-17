@@ -37,7 +37,7 @@ abstract class BarChart<T: Number>: GridChartWrapper<Int, T>() {
   var datasets: List<BarDataset<T>> = mutableListOf()
   override val ranges: Grid<Int, T> = Grid()
   var gap: Int = 10
-  var space: Int = -1;
+  var space: Int = -1
 
   override fun paintComponent(g: Graphics2D) {
 

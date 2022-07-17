@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -10,7 +11,6 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,15 +18,20 @@ import java.awt.event.ActionEvent;
 
 import static javax.swing.SwingConstants.TOP;
 
-public class JTabbedPaneDemoAction extends DumbAwareAction {
+final class JTabbedPaneDemoAction extends DumbAwareAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
 
     DialogWrapper dialog = new DialogWrapper(e.getProject(), false, DialogWrapper.IdeModalityType.MODELESS) {
 
-      @Nullable
       @Override
-      protected JComponent createCenterPanel() {
+      protected @NotNull JComponent createCenterPanel() {
         JTabbedPane tabbedPane = new JTabbedPane(TOP, JTabbedPane.SCROLL_TAB_LAYOUT) {
           @Override
           public Dimension getPreferredSize() {

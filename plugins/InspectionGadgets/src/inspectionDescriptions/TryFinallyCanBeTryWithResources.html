@@ -14,11 +14,11 @@ which is less error-prone.
   }
 </code></pre>
 <p>A quick-fix is provided to pass the cause to a constructor:</p>
-<pre>
+<pre><code>
   try (PrintStream printStream = new PrintStream(fileName)) {
     printStream.print(true);
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>This inspection only reports if the language level of the project or module is 7 or higher.</p>
 </body>

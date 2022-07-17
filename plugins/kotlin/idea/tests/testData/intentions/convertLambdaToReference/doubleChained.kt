@@ -1,4 +1,5 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Parameter 'data' is never used
 
 interface Data
 val data: Data? = null

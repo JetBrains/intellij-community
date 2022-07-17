@@ -52,7 +52,7 @@ public class JavaAnnotationParameterListType extends JavaStubElementType<PsiAnno
 
   @NotNull
   @Override
-  public PsiAnnotationParameterListStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
+  public PsiAnnotationParameterListStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     return new PsiAnnotationParameterListStubImpl(parentStub);
   }
 

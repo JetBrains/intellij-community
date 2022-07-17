@@ -24,7 +24,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.core.util.getLineNumber
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.scratch.*
 import org.jetbrains.kotlin.idea.scratch.output.*
 import org.jetbrains.kotlin.psi.UserDataProperty
@@ -53,7 +53,7 @@ class KtScratchFileEditorProvider : FileEditorProvider, DumbAware {
 class KtScratchFileEditorWithPreview private constructor(
     val scratchFile: ScratchFile,
     sourceTextEditor: TextEditor,
-    private val previewTextEditor: TextEditor
+    previewTextEditor: TextEditor
 ) : TextEditorWithPreview(sourceTextEditor, previewTextEditor), TextEditor, ScratchEditorLinesTranslator {
 
     private val sourceEditor = sourceTextEditor.editor as EditorEx
@@ -77,6 +77,7 @@ class KtScratchFileEditorWithPreview private constructor(
 
     init {
         sourceTextEditor.parentScratchEditorWithPreview = this
+        previewTextEditor.parentScratchEditorWithPreview = this
 
         scratchFile.compilingScratchExecutor?.addOutputHandler(commonPreviewOutputHandler)
         scratchFile.replScratchExecutor?.addOutputHandler(commonPreviewOutputHandler)
@@ -169,12 +170,12 @@ class KtScratchFileEditorWithPreview private constructor(
      * That's why we set long and descriptive [Presentation.getText], but short [Presentation.getDescription].
      */
     override fun getShowEditorAction(): ToggleAction = super.getShowEditorAction().apply {
-        templatePresentation.text = KotlinJvmBundle.message("scratch.inlay.output.mode")
+        templatePresentation.text = KotlinJvmBundle.message("scratch.inlay.output.mode.title")
         templatePresentation.description = KotlinJvmBundle.message("scratch.inlay.output.mode.description")
     }
 
     override fun getShowEditorAndPreviewAction(): ToggleAction = super.getShowEditorAndPreviewAction().apply {
-        templatePresentation.text = KotlinJvmBundle.message("scratch.side.panel.output.mode")
+        templatePresentation.text = KotlinJvmBundle.message("scratch.side.panel.output.mode.title")
         templatePresentation.description = KotlinJvmBundle.message("scratch.side.panel.output.mode.description")
     }
 

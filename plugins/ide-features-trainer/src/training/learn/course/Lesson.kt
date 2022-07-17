@@ -12,17 +12,13 @@ import training.learn.CourseManager
 import training.learn.lesson.LessonListener
 import training.learn.lesson.LessonState
 import training.learn.lesson.LessonStateManager
-import training.util.findLanguageByID
+import training.statistic.LearningInternalProblems
+import training.statistic.LessonStartingWay
+import training.util.LessonEndInfo
+import training.util.filterUnseenLessons
 
 abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
   abstract val module: IftModule
-
-  /** This name will be used for generated file with lesson sample */
-  open val fileName: String
-    get() {
-      val id = languageId
-      return module.sanitizedName + if (id != null) "." + findLanguageByID(id)!!.associatedFileType!!.defaultExtension else ""
-    }
 
   open val languageId: String? get() = module.primaryLanguage?.primaryLanguage
 
@@ -30,8 +26,12 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
 
   open fun preferredLearnWindowAnchor(project: Project): ToolWindowAnchor = module.preferredLearnWindowAnchor(project)
 
-  /** Relative path to existed file in the learning project */
-  open val existedFile: String? = null
+  /**
+   * Relative path to file in the learning project. Will be used existed or generated the new empty file.
+   *
+   * Also this non-null value will be used for scratch file name if this is a scratch lesson.
+   */
+  open val sampleFilePath: String? = null
 
   /** This method is called for all project-based lessons before the start of any project-based lesson */
   @RequiresBackgroundThread
@@ -42,9 +42,12 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
   /** Map: name -> url */
   open val helpLinks: Map<String, String> get() = emptyMap()
 
+  /** IDs of TipAndTrick suggestions in that this lesson can be promoted */
+  open val suitableTips: List<String> = emptyList()
+
   open val testScriptProperties: TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties()
 
-  open fun onLessonEnd(project: Project, lessonPassed: Boolean) = Unit
+  open fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) = Unit
 
   fun addLessonListener(lessonListener: LessonListener) {
     lessonListeners.add(lessonListener)
@@ -61,13 +64,17 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
 
   internal val lessonListeners: MutableList<LessonListener> = mutableListOf()
 
-  internal fun onStart() {
-    lessonListeners.forEach { it.lessonStarted(this) }
+  internal fun onStart(way: LessonStartingWay) {
+    lessonListeners.forEach { it.lessonStarted(this, way) }
   }
 
-  internal fun onStop(project: Project, lessonPassed: Boolean) {
+  internal fun onStop(project: Project,
+                      lessonPassed: Boolean,
+                      currentTaskIndex: Int,
+                      currentVisualIndex: Int,
+                      internalProblems: Set<LearningInternalProblems>) {
     lessonListeners.forEach { it.lessonStopped(this) }
-    onLessonEnd(project, lessonPassed)
+    onLessonEnd(project, LessonEndInfo(lessonPassed, currentTaskIndex, currentVisualIndex, internalProblems))
   }
 
   internal fun pass() {
@@ -78,7 +85,12 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
   internal fun isNewLesson(): Boolean {
     val availableSince = properties.availableSince ?: return false
     val lessonVersion = BuildNumber.fromString(availableSince) ?: return false
-    val previousOpenedVersion = CourseManager.instance.previousOpenedVersion ?: return true
-    return previousOpenedVersion < lessonVersion
+
+    val previousOpenedVersion = CourseManager.instance.previousOpenedVersion
+    if (previousOpenedVersion  != null) {
+      return previousOpenedVersion < lessonVersion
+    } else {
+      return filterUnseenLessons(module.lessons).contains(this)
+    }
   }
 }

@@ -1,14 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.platform.util.plugins.DataLoader
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import java.util.zip.ZipFile
 
-@Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolver {
   companion object {
     // don't use Kotlin emptyList here
@@ -25,7 +23,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
       try {
         // do not use kotlin stdlib here
         val entry = zipFile.getEntry(if (relativePath.startsWith("/")) relativePath.substring(1) else relativePath) ?: return false
-        readModuleDescriptor(inputStream = zipFile.getInputStream(entry),
+        readModuleDescriptor(input = zipFile.getInputStream(entry),
                              readContext = readContext,
                              pathResolver = pathResolver,
                              dataLoader = dataLoader,
@@ -96,7 +94,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
     // it is allowed to reference any platform XML file using href="/META-INF/EnforcedPlainText.xml"
     if (path.startsWith("META-INF/")) {
       PluginXmlPathResolver::class.java.classLoader.getResourceAsStream(path)?.let {
-        readModuleDescriptor(inputStream = it,
+        readModuleDescriptor(input = it,
                              readContext = readContext,
                              pathResolver = this,
                              dataLoader = dataLoader,

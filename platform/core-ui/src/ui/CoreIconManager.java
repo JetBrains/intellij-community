@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.AbstractBundle;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -56,7 +57,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
   }
 
   @Override
-  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int flags) {
+  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, int cacheKey, int flags) {
     assert !path.isEmpty() && path.charAt(0) != '/';
     return new IconWithToolTipImpl(path, createRasterizedImageDataLoader(path, classLoader, cacheKey, flags));
   }
@@ -64,19 +65,21 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
   // reflective path is not supported
   // result is not cached
   @SuppressWarnings("DuplicatedCode")
-  private static @NotNull ImageDataLoader createRasterizedImageDataLoader(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int imageFlags) {
+  private static @NotNull ImageDataLoader createRasterizedImageDataLoader(@NotNull String path,
+                                                                          @NotNull ClassLoader classLoader,
+                                                                          int cacheKey,
+                                                                          int imageFlags) {
     long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
     Pair<String, ClassLoader> patchedPath = IconLoader.patchPath(path, classLoader);
-    String effectivePath = path;
-    if (patchedPath != null) {
-      // not safe for now to decide should patchPath return path with leading slash or not
-      effectivePath = patchedPath.first.startsWith("/") ? patchedPath.first.substring(1) : patchedPath.first;
-      if (patchedPath.second != null) {
-        classLoader = patchedPath.second;
-      }
+    ImageDataLoader resolver;
+    WeakReference<ClassLoader> classLoaderWeakRef = new WeakReference<>(classLoader);
+    if (patchedPath == null) {
+      resolver = new RasterizedImageDataLoader(path, classLoaderWeakRef, path, classLoaderWeakRef, cacheKey, imageFlags);
     }
-
-    ImageDataLoader resolver = new RasterizedImageDataLoader(effectivePath, classLoader, cacheKey, imageFlags);
+    else {
+      // not safe for now to decide should patchPath return path with leading slash or not
+      resolver = RasterizedImageDataLoaderKt.createPatched(path, classLoaderWeakRef, patchedPath, cacheKey, imageFlags);
+    }
     if (startTime != -1) {
       IconLoadMeasurer.findIcon.end(startTime);
     }
@@ -87,7 +90,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
     private String result;
     private boolean isTooltipCalculated;
 
-    IconWithToolTipImpl(@NotNull String originalPath, @NotNull ImageDataLoader resolver) {
+    private IconWithToolTipImpl(@NotNull String originalPath, @NotNull ImageDataLoader resolver) {
       super(originalPath, resolver, null, null);
     }
 
@@ -205,21 +208,21 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
   }
 
   private static final class IconDescriptionLoader implements Supplier<String> {
-    private final String myPath;
-    private String myResult;
-    private boolean myCalculated;
+    private final String path;
+    private String result;
+    private boolean isCalculated;
 
     private IconDescriptionLoader(String path) {
-      myPath = path;
+      this.path = path;
     }
 
     @Override
     public String get() {
-      if (!myCalculated) {
-        myResult = findIconDescription(myPath);
-        myCalculated = true;
+      if (!isCalculated) {
+        result = findIconDescription(path);
+        isCalculated = true;
       }
-      return myResult;
+      return result;
     }
   }
 
@@ -232,7 +235,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
       if (classLoader == null) {
         classLoader = CoreIconManager.class.getClassLoader();
       }
-      ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(ep.resourceBundle, classLoader);
+      ResourceBundle bundle = DynamicBundle.getResourceBundle(classLoader, ep.resourceBundle);
       String description = AbstractBundle.messageOrNull(bundle, key);
       if (description != null) {
         result.set(description);
@@ -242,5 +245,10 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
       LOG.info("Icon tooltip requested but not found for " + path);
     }
     return result.get();
+  }
+
+  @Override
+  public @NotNull Icon withIconBadge(@NotNull Icon icon, @NotNull Paint color) {
+    return new BadgeIcon(icon, color);
   }
 }

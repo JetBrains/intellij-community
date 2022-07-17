@@ -10,18 +10,23 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.destructuringDeclarationVisitor
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class IncompleteDestructuringInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -44,7 +49,13 @@ class IncompleteDestructuringInspection : AbstractKotlinInspection() {
 }
 
 private fun KtDestructuringDeclaration.primaryParameters(): List<ValueParameterDescriptor>? {
-    val type = initializer?.getType(analyze(BodyResolveMode.PARTIAL)) ?: return null
+    val initializer = this.initializer
+    val parameter = this.parent as? KtParameter
+    val type = when {
+        initializer != null -> initializer.getType(analyze(BodyResolveMode.PARTIAL))
+        parameter != null -> analyze(BodyResolveMode.PARTIAL)[BindingContext.VALUE_PARAMETER, parameter]?.type
+        else -> null
+    } ?: return null
     val classDescriptor = type.constructor.declarationDescriptor as? ClassDescriptor ?: return null
     return classDescriptor.constructors.firstOrNull { it.isPrimary }?.valueParameters
 }
@@ -62,10 +73,10 @@ class IncompleteDestructuringQuickfix : LocalQuickFix {
             val primaryParameters = destructuringDeclaration.primaryParameters() ?: return
 
             val nameValidator = CollectingNameValidator(
-                filter = NewDeclarationNameValidator(
+                filter = Fe10KotlinNewDeclarationNameValidator(
                     destructuringDeclaration.parent,
                     null,
-                    NewDeclarationNameValidator.Target.VARIABLES
+                    KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER
                 )
             )
             val psiFactory = KtPsiFactory(destructuringDeclaration)
@@ -74,7 +85,7 @@ class IncompleteDestructuringQuickfix : LocalQuickFix {
             val additionalEntries = primaryParameters
                 .drop(currentEntries.size)
                 .map {
-                    val name = KotlinNameSuggester.suggestNameByName(it.name.asString(), nameValidator)
+                    val name = Fe10KotlinNameSuggester.suggestNameByName(it.name.asString(), nameValidator)
                     if (hasType) {
                         val type = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(it.type)
                         "$name: $type"

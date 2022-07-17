@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -62,6 +62,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
+import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 import static icons.ExternalSystemIcons.Task;
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
@@ -374,14 +375,16 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public <T extends MavenSimpleNode> T findParent(Class<T> parentClass) {
+      return ObjectUtils.doIfNotNull(myParent, it -> it.findNode(parentClass));
+    }
+
+    public <T extends MavenSimpleNode> T findNode(Class<T> parentClass) {
       MavenSimpleNode node = this;
-      while (true) {
+      while (node != null && !parentClass.isInstance(node)) {
         node = node.myParent;
-        if (node == null || parentClass.isInstance(node)) {
-          //noinspection unchecked
-          return (T)node;
-        }
       }
+      //noinspection unchecked
+      return (T)node;
     }
 
     public boolean isVisible() {
@@ -812,7 +815,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private void updateProject() {
-      setErrorLevel(myMavenProject.getProblems().isEmpty() ? ErrorLevel.NONE : ErrorLevel.ERROR);
+      setErrorLevel(myMavenProject.getCacheProblems().isEmpty() ? ErrorLevel.NONE : ErrorLevel.ERROR);
       myLifecycleNode.updateGoalsList();
       myPluginsNode.updatePlugins(myMavenProject);
 
@@ -875,25 +878,33 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     @NlsContexts.DetailedDescription
     private String makeDescription() {
       StringBuilder desc = new StringBuilder();
-      desc.append("<html>" + "<table>" + "<tr>" + "<td nowrap>" + "<table>" + "<tr>" + "<td nowrap>")
-        .append(message("detailed.description.project")).append("</td>").append("<td nowrap>")
-        .append(myMavenProject.getMavenId()).append("</td>" + "</tr>" + "<tr>" + "<td nowrap>")
-        .append(message("detailed.description.location")).append(":</td>").append("<td nowrap>").append(myMavenProject.getPath())
-        .append("</td>" +
-                "</tr>" +
-                "</table>" +
-                "</td>" +
-                "</tr>");
+
+      desc.append("<html>")
+        .append("<table>");
+
+      desc.append("<tr>")
+        .append("<td nowrap>").append("<table>")
+        .append("<tr>")
+        .append("<td nowrap>").append(message("detailed.description.project")).append("</td>")
+        .append("<td nowrap>").append(myMavenProject.getMavenId()).append("</td>")
+        .append("</tr>")
+        .append("<tr>")
+        .append("<td nowrap>").append(message("detailed.description.location")).append("</td>")
+        .append("<td nowrap>").append(getPresentablePath(myMavenProject.getPath())).append("</td>")
+        .append("</tr>")
+        .append("</table>").append("</td>")
+        .append("</tr>");
 
       appendProblems(desc);
 
-      desc.append("</table></html>");
+      desc.append("</table>")
+        .append("</html>");
 
       return desc.toString(); //NON-NLS
     }
 
     private void appendProblems(StringBuilder desc) {
-      List<MavenProjectProblem> problems = myMavenProject.getProblems();
+      List<MavenProjectProblem> problems = myMavenProject.getCacheProblems();
       if (problems.isEmpty()) return;
 
       desc.append("<tr>" +
@@ -997,7 +1008,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myMavenProject = findParent(ProjectNode.class).getMavenProject();
       myGoal = goal;
       myDisplayName = displayName;
-      setUniformIcon(Task);
+      getTemplatePresentation().setIcon(Task);
     }
 
     public MavenProject getMavenProject() {
@@ -1255,12 +1266,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         if (newNodes == null) {
           if (validChildCount < myChildren.size()) {
             DependencyNode currentValidNode = myChildren.get(validChildCount);
-
-            if (currentValidNode.myArtifact.equals(each.getArtifact())) {
+            if (currentValidNode.myArtifact.equals(each.getArtifact())
+                && currentValidNode.isUnresolved() == each.getArtifact().isFileUnresolved()) {
               if (each.getState() == MavenArtifactState.ADDED) {
                 currentValidNode.updateChildren(each.getDependencies(), mavenProject);
               }
-              currentValidNode.updateDependency();
 
               validChildCount++;
               continue;
@@ -1296,11 +1306,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private DependencyNode findOrCreateNodeFor(MavenArtifactNode artifact, MavenProject mavenProject, int from) {
       for (int i = from; i < myChildren.size(); i++) {
         DependencyNode node = myChildren.get(i);
-        if (node.myArtifact.equals(artifact.getArtifact())) {
+        if (node.myArtifact.equals(artifact.getArtifact()) && node.isUnresolved() == artifact.getArtifact().isFileUnresolved()) {
           return node;
         }
       }
-      return new DependencyNode(this, artifact, mavenProject);
+      return new DependencyNode(this, artifact, mavenProject, artifact.getArtifact().isFileUnresolved());
     }
 
     @Override
@@ -1328,16 +1338,22 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public class DependencyNode extends BaseDependenciesNode {
     private final MavenArtifact myArtifact;
     private final MavenArtifactNode myArtifactNode;
+    private final boolean myUnresolved;
 
-    public DependencyNode(MavenSimpleNode parent, MavenArtifactNode artifactNode, MavenProject mavenProject) {
+    public DependencyNode(MavenSimpleNode parent, MavenArtifactNode artifactNode, MavenProject mavenProject, boolean unresolved) {
       super(parent, mavenProject);
       myArtifactNode = artifactNode;
       myArtifact = artifactNode.getArtifact();
-      setUniformIcon(AllIcons.Nodes.PpLib);
+      myUnresolved = unresolved;
+      getTemplatePresentation().setIcon(AllIcons.Nodes.PpLib);
     }
 
     public MavenArtifact getArtifact() {
       return myArtifact;
+    }
+
+    public boolean isUnresolved() {
+      return myUnresolved;
     }
 
     @Override
@@ -1381,7 +1397,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private void updateDependency() {
-      setErrorLevel(myArtifact.isResolved() ? ErrorLevel.NONE : ErrorLevel.ERROR);
+      setErrorLevel(myUnresolved ? ErrorLevel.ERROR : ErrorLevel.NONE);
     }
 
     @Override
@@ -1443,8 +1459,6 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         }
       }
 
-      String directory = mavenProject.getDirectory();
-
       int oldSize = myChildren.size();
 
       for (RunnerAndConfigurationSettings cfg : settings) {
@@ -1504,7 +1518,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     @Override
     public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
       MavenActionsUsagesCollector
-        .trigger(myProject, MavenActionsUsagesCollector.ActionID.ExecuteMavenRunConfigurationAction, TOOL_WINDOW_PLACE_ID, false, null);
+        .trigger(myProject, MavenActionsUsagesCollector.EXECUTE_MAVEN_CONFIGURATION, TOOL_WINDOW_PLACE_ID, false, null);
       ProgramRunnerUtil.executeConfiguration(mySettings, DefaultRunExecutor.getRunExecutorInstance());
     }
   }

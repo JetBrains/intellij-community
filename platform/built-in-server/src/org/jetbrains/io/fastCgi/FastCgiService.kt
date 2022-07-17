@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.fastCgi
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -126,7 +126,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
       return
     }
 
-    val extraSuffix = WebServerPageConnectionService.instance.fileRequested(client.request, client.pathInfo::getOrResolveVirtualFile)
+    val extraSuffix = WebServerPageConnectionService.instance.fileRequested(client.request, false, client.pathInfo::getOrResolveVirtualFile)
     val bufferWithExtraSuffix =
       if (extraSuffix == null) buffer
       else {
@@ -167,7 +167,6 @@ private fun sendBadGateway(channel: Channel, extraHeaders: HttpHeaders) {
   }
 }
 
-@Suppress("HardCodedStringLiteral")
 private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
   val builder = StringBuilder()
   while (buffer.isReadable) {
@@ -201,7 +200,6 @@ private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
     }
 
     // skip standard headers
-    @Suppress("SpellCheckingInspection")
     if (key.isNullOrEmpty() || key.startsWith("http", ignoreCase = true) || key.startsWith("X-Accel-", ignoreCase = true)) {
       continue
     }

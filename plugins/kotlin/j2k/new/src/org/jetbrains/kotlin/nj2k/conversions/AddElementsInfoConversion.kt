@@ -62,7 +62,7 @@ class AddElementsInfoConversion(context: NewJ2kConverterContext) : RecursiveAppl
         }
         return psiMethod.findSuperMethods().mapNotNull { superMethod ->
             when (superMethod) {
-                is KtLightMethod -> superMethod.kotlinOrigin?.resolveToDescriptorIfAny()?.safeAs()
+                is KtLightMethod -> superMethod.kotlinOrigin?.resolveToDescriptorIfAny() as? FunctionDescriptor
                 else -> superMethod.getJavaMethodDescriptor()
             }
         }

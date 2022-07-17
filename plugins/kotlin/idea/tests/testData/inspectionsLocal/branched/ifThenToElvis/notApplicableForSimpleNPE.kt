@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 // DISABLE-ERRORS
 fun main(args: Array<String>) {
     val t: String? = "abc"

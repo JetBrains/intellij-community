@@ -5,6 +5,8 @@ import com.intellij.util.ReflectionUtilRt;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
+import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.apache.maven.model.*;
 import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -30,14 +32,14 @@ public class MavenModelConverter {
     return convertModel(model,
                         asSourcesList(build.getSourceDirectory()),
                         asSourcesList(build.getTestSourceDirectory()),
-                        Collections.<Artifact>emptyList(),
-                        Collections.<DependencyNode>emptyList(),
-                        Collections.<Artifact>emptyList(),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
                         localRepository);
   }
 
   private static List<String> asSourcesList(String directory) {
-    return directory == null ? Collections.<String>emptyList() : Collections.singletonList(directory);
+    return directory == null ? Collections.emptyList() : Collections.singletonList(directory);
   }
 
   @NotNull
@@ -88,7 +90,7 @@ public class MavenModelConverter {
     result.setDirectory(build.getDirectory());
     result.setResources(convertResources(build.getResources()));
     result.setTestResources(convertResources(build.getTestResources()));
-    result.setFilters(build.getFilters() == null ? Collections.<String>emptyList() : build.getFilters());
+    result.setFilters(build.getFilters() == null ? Collections.emptyList() : build.getFilters());
   }
 
   public static MavenId createMavenId(Artifact artifact) {
@@ -110,7 +112,7 @@ public class MavenModelConverter {
   }
 
   private static List<String> ensurePatterns(List<String> patterns) {
-    return patterns == null ? Collections.<String>emptyList() : patterns;
+    return patterns == null ? Collections.emptyList() : patterns;
   }
 
   public static List<MavenRemoteRepository> convertRepositories(List<? extends Repository> repositories) {
@@ -128,7 +130,29 @@ public class MavenModelConverter {
     return result;
   }
 
+  public static List<MavenRemoteRepository> convertRemoteRepositories(List<? extends ArtifactRepository> repositories) {
+    if (repositories == null) return new ArrayList<MavenRemoteRepository>();
+
+    List<MavenRemoteRepository> result = new ArrayList<MavenRemoteRepository>(repositories.size());
+    for (ArtifactRepository each : repositories) {
+      result.add(new MavenRemoteRepository(each.getId(),
+                                           each.getId(),
+                                           each.getUrl(),
+                                           each.getLayout() != null ? each.getLayout().getId() : "default",
+                                           convertPolicy(each.getReleases()),
+                                           convertPolicy(each.getSnapshots())));
+    }
+    return result;
+  }
+
+
   private static MavenRemoteRepository.Policy convertPolicy(RepositoryPolicy policy) {
+    return policy != null
+           ? new MavenRemoteRepository.Policy(policy.isEnabled(), policy.getUpdatePolicy(), policy.getChecksumPolicy())
+           : null;
+  }
+
+  private static MavenRemoteRepository.Policy convertPolicy(ArtifactRepositoryPolicy policy) {
     return policy != null
            ? new MavenRemoteRepository.Policy(policy.isEnabled(), policy.getUpdatePolicy(), policy.getChecksumPolicy())
            : null;
@@ -294,7 +318,7 @@ public class MavenModelConverter {
       if (id == null) continue;
       MavenProfile profile = new MavenProfile(id, each.getSource());
       List<String> modules = each.getModules();
-      profile.setModules(modules == null ? Collections.<String>emptyList() : modules);
+      profile.setModules(modules == null ? Collections.emptyList() : modules);
       profile.setActivation(convertActivation(each.getActivation()));
       if (each.getBuild() != null) convertBuildBase(profile.getBuild(), each.getBuild());
       result.add(profile);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.lang.ASTNode;
@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
@@ -968,7 +969,7 @@ public class ExpressionGenerator extends Generator {
       return;
     }
 
-    if (type == GroovyTokenTypes.mOPTIONAL_DOT) {
+    if (type == GroovyTokenTypes.mOPTIONAL_DOT || qualifierHasSafeChain(referenceExpression)) {
       LOG.assertTrue(qualifier != null);
 
       String qualifierName = createVarByInitializer(qualifier);
@@ -1045,10 +1046,23 @@ public class ExpressionGenerator extends Generator {
       }
     }
 
-    if (type == GroovyTokenTypes.mOPTIONAL_DOT) {
+    if (type == GroovyTokenTypes.mOPTIONAL_DOT || qualifierHasSafeChain(referenceExpression)) {
       builder.append(')');
     }
 
+  }
+
+  private static boolean qualifierHasSafeChain(GrExpression expression) {
+    if (expression instanceof GrMethodCallExpression) {
+      expression = ((GrMethodCallExpression)expression).getInvokedExpression();
+    }
+    if (!(expression instanceof GrReferenceExpression)) {
+      return false;
+    }
+    if (GroovyTokenTypes.mOPTIONAL_CHAIN_DOT.equals(((GrReferenceExpression)expression).getDotTokenType())) {
+      return true;
+    }
+    return qualifierHasSafeChain(((GrReferenceExpression)expression).getQualifierExpression());
   }
 
   private void writeThisOrSuperRef(GrReferenceExpression referenceExpression, GrExpression qualifier, String referenceName) {

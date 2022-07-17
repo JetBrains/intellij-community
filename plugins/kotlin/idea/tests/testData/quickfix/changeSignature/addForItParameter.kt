@@ -1,5 +1,5 @@
 // "Add parameter to constructor 'Foo'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class Foo
 

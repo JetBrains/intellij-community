@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PARAM_TYPES: kotlin.String
 // PARAM_DESCRIPTOR: value-parameter l: kotlin.String defined in Foo.test
 

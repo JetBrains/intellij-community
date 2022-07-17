@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.actions
 import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 const val KOTLIN_WORKSHEET_EXTENSION: String = "ws.kts"
 

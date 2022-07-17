@@ -2,16 +2,17 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 class AnalysisCanceledSoftException extends RuntimeException {
   private final PsiElement myErrorElement;
 
-  AnalysisCanceledSoftException(PsiElement errorElement) {
+  AnalysisCanceledSoftException(@NotNull PsiElement errorElement) {
     myErrorElement = errorElement;
   }
 
+  @NotNull
   public PsiElement getErrorElement() {
     return myErrorElement;
   }
-
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl
 
 import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo
@@ -17,19 +17,37 @@ internal data class DeclaredReferencedData(
 
 internal data class SymbolWithProvider(val symbol: Symbol, val navigationProvider: Any?)
 
-internal sealed class TargetData {
+internal sealed class TargetData(val drs: List<DeclarationOrReference>) {
+
+  init {
+    require(drs.isNotEmpty())
+  }
 
   abstract val targets: List<SymbolWithProvider>
 
-  class Declared(val declaration: PsiSymbolDeclaration) : TargetData() {
-    override val targets: List<SymbolWithProvider> get() = listOf(SymbolWithProvider(declaration.symbol, null))
+  class Declared(declarations: List<DeclarationOrReference.Declaration>) : TargetData(declarations) {
+
+    val declarations: List<PsiSymbolDeclaration>
+      get() {
+        return drs.map {
+          (it as DeclarationOrReference.Declaration).declaration
+        }
+      }
+
+    override val targets: List<SymbolWithProvider>
+      get() = declarations.map { declaration ->
+        SymbolWithProvider(declaration.symbol, null)
+      }
   }
 
-  class Referenced(val references: List<PsiSymbolReference>) : TargetData() {
+  class Referenced(references: List<DeclarationOrReference.Reference>) : TargetData(references) {
 
-    init {
-      require(references.isNotEmpty())
-    }
+    val references: List<PsiSymbolReference>
+      get() {
+        return drs.map {
+          (it as DeclarationOrReference.Reference).reference
+        }
+      }
 
     override val targets: List<SymbolWithProvider>
       get() = references.flatMap { reference ->

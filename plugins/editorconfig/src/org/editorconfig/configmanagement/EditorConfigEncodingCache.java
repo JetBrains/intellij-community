@@ -6,16 +6,18 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.util.ObjectUtils;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.jdom.Attribute;
+import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +32,7 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
   private final static String ENTRY_ELEMENT = "file";
   private final static String URL_ATTR = "url";
   private final static String CHARSET_ATTR = "charset";
+  private final static String IGNORE_ATTR = "ignore";
 
   private final Map<String, CharsetData> myCharsetMap = new ConcurrentHashMap<>();
 
@@ -50,6 +53,9 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
           final Attribute charsetAttr = new Attribute(CHARSET_ATTR, charsetStr);
           entryElement.setAttribute(urlAttr);
           entryElement.setAttribute(charsetAttr);
+          if (charsetData.isIgnored()) {
+            entryElement.setAttribute(IGNORE_ATTR, Boolean.toString(charsetData.isIgnored()));
+          }
           root.addContent(entryElement);
         }
       }
@@ -60,7 +66,6 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
   @Override
   public void loadState(@NotNull Element state) {
     myCharsetMap.clear();
-    final VirtualFileManager vfManager = VirtualFileManager.getInstance();
     for (Element fileElement : state.getChildren(ENTRY_ELEMENT)) {
       final Attribute urlAttr = fileElement.getAttribute(URL_ATTR);
       final Attribute charsetAttr =  fileElement.getAttribute(CHARSET_ATTR);
@@ -70,9 +75,16 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
         final Charset charset = ConfigEncodingManager.toCharset(charsetStr);
         final boolean useBom = ConfigEncodingManager.UTF8_BOM_ENCODING.equals(charsetStr);
         if (charset != null) {
-          VirtualFile vf = vfManager.findFileByUrl(url);
-          if (vf != null) {
-            myCharsetMap.put(url, new CharsetData(charset, useBom));
+          CharsetData charsetData = new CharsetData(charset, useBom);
+          myCharsetMap.put(url, charsetData);
+          Attribute ignoreAttr = fileElement.getAttribute(IGNORE_ATTR);
+          if (ignoreAttr != null) {
+            try {
+              charsetData.setIgnored(ignoreAttr.getBooleanValue());
+            }
+            catch (DataConversionException e) {
+              // Ignore, do not set
+            }
           }
         }
       }
@@ -81,51 +93,70 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
 
   public boolean getUseUtf8Bom(@Nullable Project project, @NotNull VirtualFile virtualFile) {
     return ObjectUtils.notNull(
-      ObjectUtils.doIfNotNull(getCharsetData(project, virtualFile), CharsetData::isUseBom), false);
+      ObjectUtils.doIfNotNull(getCharsetData(project, virtualFile, true), CharsetData::isUseBom), false);
   }
 
   @Nullable
-  public Charset getEncoding(@Nullable Project project, @NotNull VirtualFile virtualFile) {
-    return ObjectUtils.doIfNotNull(getCharsetData(project, virtualFile), CharsetData::getCharset);
-  }
-
-  @Nullable
-  private CharsetData getCharsetData(@Nullable Project project, @NotNull VirtualFile virtualFile) {
+  CharsetData getCharsetData(@Nullable Project project, @NotNull VirtualFile virtualFile, boolean withCache) {
     if (!Utils.isApplicableTo(virtualFile) || Utils.isEditorConfigFile(virtualFile)) return null;
-    CharsetData cached = getCachedCharsetData(virtualFile);
-    if (cached != null) return cached;
+    if (withCache) {
+      CharsetData cached = getCachedCharsetData(virtualFile);
+      if (cached != null) return cached;
+    }
     if (project != null) {
-      final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(project, virtualFile);
-      final String charsetStr = Utils.configValueForKey(outPairs, ConfigEncodingManager.charsetKey);
-      if (!charsetStr.isEmpty()) {
-        final Charset charset = ConfigEncodingManager.toCharset(charsetStr);
-        final boolean useBom = ConfigEncodingManager.UTF8_BOM_ENCODING.equals(charsetStr);
-        if (charset != null) {
-          return new CharsetData(charset, useBom);
-        }
+      return computeCharsetData(project, virtualFile);
+    }
+    return null;
+  }
+
+  private static @Nullable CharsetData computeCharsetData(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(project, virtualFile);
+    final String charsetStr = Utils.configValueForKey(outPairs, ConfigEncodingManager.charsetKey);
+    if (!charsetStr.isEmpty()) {
+      final Charset charset = ConfigEncodingManager.toCharset(charsetStr);
+      final boolean useBom = ConfigEncodingManager.UTF8_BOM_ENCODING.equals(charsetStr);
+      if (charset != null) {
+        return new CharsetData(charset, useBom);
       }
     }
     return null;
   }
 
-  private void cacheEncoding(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+  public void computeAndCacheEncoding(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     final String key = getKey(virtualFile);
-    if (!myCharsetMap.containsKey(key)) {
-      final CharsetData charsetData = getCharsetData(project, virtualFile);
-      if (charsetData != null) {
-        myCharsetMap.put(key, charsetData);
-      }
+    final CharsetData charsetData = getCharsetData(project, virtualFile, false);
+    if (charsetData != null) {
+      myCharsetMap.put(key, charsetData);
+      virtualFile.setCharset(charsetData.charset);
     }
   }
 
   @Nullable
   public Charset getCachedEncoding(@NotNull VirtualFile virtualFile) {
-    return ObjectUtils.doIfNotNull(getCachedCharsetData(virtualFile), CharsetData::getCharset);
+    CharsetData charsetData = getCachedCharsetData(virtualFile);
+    return charsetData != null && !charsetData.isIgnored ? charsetData.getCharset() : null;
   }
 
   @Nullable
   private CharsetData getCachedCharsetData(@NotNull VirtualFile virtualFile) {
     return myCharsetMap.get(getKey(virtualFile));
+  }
+
+  public boolean isIgnored(@NotNull VirtualFile virtualFile) {
+    CharsetData charsetData = getCachedCharsetData(virtualFile);
+    return charsetData != null && charsetData.isIgnored();
+  }
+
+  public void setIgnored(@NotNull VirtualFile virtualFile) {
+    CharsetData charsetData = getCachedCharsetData(virtualFile);
+    if (charsetData == null) {
+      charsetData = new CharsetData(Charset.defaultCharset(), false);
+      charsetData.setIgnored(true);
+      myCharsetMap.put(getKey(virtualFile), charsetData);
+    }
+    else {
+      charsetData.setIgnored(true);
+    }
   }
 
   @NotNull
@@ -137,9 +168,10 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
     myCharsetMap.clear();
   }
 
-  private static class CharsetData {
+  static class CharsetData {
     private final Charset charset;
     private final boolean useBom;
+    private boolean isIgnored;
 
     CharsetData(Charset charset, boolean useBom) {
       this.charset = charset;
@@ -150,15 +182,33 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
       return charset;
     }
 
-    private boolean isUseBom() {
+    boolean isUseBom() {
       return useBom;
+    }
+
+    boolean isIgnored() {
+      return isIgnored;
+    }
+
+    void setIgnored(boolean isIgnored) {
+      this.isIgnored = isIgnored;
     }
   }
 
-  public static class FileEditorListener implements FileEditorManagerListener {
-    @Override
-    public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      getInstance().cacheEncoding(source.getProject(), file);
+  public static class VfsListener extends BulkVirtualFileListenerAdapter {
+
+    public VfsListener() {
+      super(new VirtualFileListener() {
+        @Override
+        public void fileCreated(@NotNull VirtualFileEvent event) {
+          VirtualFile file = event.getFile();
+          Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+          if (project != null && ConfigEncodingManager.isEnabledFor(project, file)) {
+            getInstance().computeAndCacheEncoding(project, event.getFile());
+          }
+        }
+      });
     }
+
   }
 }

@@ -1,3 +1,5 @@
+// AFTER-WARNING: Parameter 'f' is never used
+// AFTER-WARNING: Parameter 'i' is never used
 interface I {
     fun foo(i: Int)
 }

@@ -62,7 +62,15 @@ public class RelativeRectangle {
     return getPoint().getComponent();
   }
 
+  /**
+   * @deprecated Use the overload that takes a DevicePoint, which handles locations on different screens with different scaling factors
+   */
+  @Deprecated()
   public boolean contains(final RelativePoint relativePoint) {
-    return getScreenRectangle().contains(relativePoint.getScreenPoint());
+    return contains(new DevicePoint(relativePoint));
+  }
+
+  public boolean contains(final DevicePoint devicePoint) {
+    return getScreenRectangle().contains(devicePoint.getLocationOnScreen());
   }
 }

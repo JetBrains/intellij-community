@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.compiler.impl.ModuleCompileScope;
+import com.intellij.configurationStore.StoreUtilKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -30,8 +32,11 @@ public class UnloadedModulesCompilationTest extends BaseCompilerTestCase {
     Module unloaded = addModule("unloaded", a.getParent());
     File outputDir = getOutputDir(unloaded, false);
 
-    List<String> unloadedList = Collections.singletonList(unloaded.getName());
-    ModuleManager.getInstance(myProject).setUnloadedModules(unloadedList);
+    List<String> unloadedList = List.of(unloaded.getName());
+    StoreUtilKt.runInAllowSaveMode(true, () -> {
+      ModuleManager.getInstance(myProject).setUnloadedModules(unloadedList);
+      return Unit.INSTANCE;
+    });
 
     make(createScopeWithUnloaded(Collections.emptyList(), unloadedList));
     fs().file("A.class").build().assertDirectoryEqual(outputDir);

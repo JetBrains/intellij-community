@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -225,7 +225,7 @@ public class CallTracer implements OverheadProducer {
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      DebugProcessImpl process = JavaDebugProcess.getCurrentDebugProcess(e.getProject());
+      DebugProcessImpl process = JavaDebugProcess.getCurrentDebugProcess(e);
       if (process != null) {
         CallTracer tracer = process.getUserData(CALL_TRACER_KEY);
         if (tracer != null) {
@@ -237,7 +237,7 @@ public class CallTracer implements OverheadProducer {
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      DebugProcessImpl process = JavaDebugProcess.getCurrentDebugProcess(e.getProject());
+      DebugProcessImpl process = JavaDebugProcess.getCurrentDebugProcess(e);
       if (process != null) {
         get(process).setEnabled(state);
       }

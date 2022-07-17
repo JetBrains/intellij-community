@@ -32,7 +32,7 @@ public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
   }
 
   public void testTest() {
-    myFixture.configureByFile("unittest.py");
+    myFixture.configureByFile("packages/unittest/unittest.py");
     doTest();
   }
 

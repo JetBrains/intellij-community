@@ -166,7 +166,7 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
     private final List<PsiMethodCallExpression> cloneCalls = new SmartList<>();
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (CloneUtils.isCallToClone(expression)) {
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
@@ -181,7 +181,7 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {}
+    public void visitClass(@NotNull PsiClass aClass) {}
 
     private List<PsiMethodCallExpression> getCloneCalls() {
       return cloneCalls;

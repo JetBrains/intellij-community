@@ -1,11 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -20,8 +16,6 @@ import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.StyleContext;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -29,18 +23,11 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 
 public final class StartupUiUtil {
-  private static volatile StyleSheet ourDefaultHtmlKitCss;
-
   @ApiStatus.Internal
   @NonNls public static final String[] ourPatchableFontResources = {"Button.font", "ToggleButton.font", "RadioButton.font",
     "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font", "MenuItem.font",
@@ -50,35 +37,6 @@ public final class StartupUiUtil {
     "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font"};
 
   public static final String ARIAL_FONT_NAME = "Arial";
-
-  public static void configureHtmlKitStylesheet() {
-    if (ourDefaultHtmlKitCss != null) {
-      return;
-    }
-
-    Activity activity = StartUpMeasurer.startActivity("html kit configuration");
-
-    // save the default JRE CSS and ..
-    HTMLEditorKit kit = new HTMLEditorKit();
-    ourDefaultHtmlKitCss = kit.getStyleSheet();
-    // .. erase global ref to this CSS so no one can alter it
-    kit.setStyleSheet(null);
-
-    // Applied to all JLabel instances, including subclasses. Supported in JBR only.
-    UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", JBHtmlEditorKit.createStyleSheet());
-    activity.end();
-  }
-
-  public static @NotNull StyleSheet createStyleSheet(@NotNull String css) {
-    StyleSheet styleSheet = new StyleSheet();
-    try {
-      styleSheet.loadRules(new StringReader(css), null);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e); // shouldn't happen
-    }
-    return styleSheet;
-  }
 
   public static boolean isUnderDarcula() {
     return UIManager.getLookAndFeel().getName().contains("Darcula");
@@ -110,10 +68,6 @@ public final class StartupUiUtil {
 
   static int normalizeLcdContrastValue(int lcdContrastValue) {
     return (lcdContrastValue < 100 || lcdContrastValue > 250) ? 140 : lcdContrastValue;
-  }
-
-  static StyleSheet getDefaultHtmlKitCss() {
-    return ourDefaultHtmlKitCss;
   }
 
   /**
@@ -159,9 +113,13 @@ public final class StartupUiUtil {
     drawImage(g, image, new Rectangle(x, y, -1, -1), null, null, observer);
   }
 
-  static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, int width, int height, @Nullable BufferedImageOp op, ImageObserver observer) {
+  static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, int width, int height, @Nullable BufferedImageOp op) {
     Rectangle srcBounds = width >= 0 && height >= 0 ? new Rectangle(x, y, width, height) : null;
-    drawImage(g, image, new Rectangle(x, y, width, height), srcBounds, op, observer);
+    drawImage(g, image, new Rectangle(x, y, width, height), srcBounds, op, null);
+  }
+
+  public static void drawImage(@NotNull Graphics g, @NotNull Image image) {
+    drawImage(g, image, 0, 0, -1, -1, null);
   }
 
   /**
@@ -221,7 +179,7 @@ public final class StartupUiUtil {
       scale = hidpiImage.getScale();
 
       double delta = 0;
-      if (Registry.is("ide.icon.scale.useAccuracyDelta", true)) {
+      if (Boolean.parseBoolean(System.getProperty("ide.icon.scale.useAccuracyDelta", "true"))) {
         // Calculate the delta based on the image size. The bigger the size - the smaller the delta.
         int maxSize = Math.max(userWidth, userHeight);
         if (maxSize < Integer.MAX_VALUE / 2) { // sanity check
@@ -294,7 +252,7 @@ public final class StartupUiUtil {
    * @see #drawImage(Graphics, Image, int, int, ImageObserver)
    */
   public static void drawImage(@NotNull Graphics g, @NotNull BufferedImage image, @Nullable BufferedImageOp op, int x, int y) {
-    drawImage(g, image, x, y, -1, -1, op, null);
+    drawImage(g, image, x, y, -1, -1, op);
   }
 
   public static Font getLabelFont() {
@@ -303,22 +261,6 @@ public final class StartupUiUtil {
 
   public static boolean isDialogFont(@NotNull Font font) {
     return Font.DIALOG.equals(font.getFamily(Locale.US));
-  }
-
-  public static @Nullable StyleSheet loadStyleSheet(@Nullable URL url) {
-    if (url == null) {
-      return null;
-    }
-
-    try {
-      StyleSheet styleSheet = new StyleSheet();
-      styleSheet.loadRules(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8), url);
-      return styleSheet;
-    }
-    catch (IOException e) {
-      Logger.getInstance(StartupUiUtil.class).warn(url + " loading failed", e);
-      return null;
-    }
   }
 
   public static void initInputMapDefaults(UIDefaults defaults) {
@@ -380,10 +322,11 @@ public final class StartupUiUtil {
     defaults.put("EditorPane.font", textFont);
   }
 
-  public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
+  public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, float size) {
     // On macOS font fallback is implemented in JDK by default
     // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
-    Font fontWithFallback = SystemInfoRt.isMac ? new Font(familyName, style, size) : new StyleContext().getFont(familyName, style, size);
+    // in headless mode just use fallback in order to avoid font loading
+    Font fontWithFallback = (SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) ? new Font(familyName, style, (int)size).deriveFont(size) : new StyleContext().getFont(familyName, style, (int)size).deriveFont(size);
     return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);
   }
 }

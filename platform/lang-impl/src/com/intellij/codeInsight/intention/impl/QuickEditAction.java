@@ -28,10 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.ElementManipulators;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -67,7 +64,7 @@ public class QuickEditAction extends QuickEditActionKeys implements IntentionAct
     final int offset = editor.getCaretModel().getOffset();
     final PsiLanguageInjectionHost host =
       PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
-    if (host == null || ElementManipulators.getManipulator(host) == null) return null;
+    if (host == null || host instanceof PsiComment || ElementManipulators.getManipulator(host) == null) return null;
     final List<Pair<PsiElement, TextRange>> injections = InjectedLanguageManager.getInstance(host.getProject()).getInjectedPsiFiles(host);
     if (injections == null || injections.isEmpty()) return null;
     final int offsetInElement = offset - host.getTextRange().getStartOffset();
@@ -78,7 +75,7 @@ public class QuickEditAction extends QuickEditActionKeys implements IntentionAct
 
 
       Object action = host.getUserData(EDIT_ACTION_AVAILABLE);
-      if(action == null) {
+      if (action == null) {
         action = language.getUserData(EDIT_ACTION_AVAILABLE);
       }
       if (action != null && action.equals(false)) return null;
@@ -170,7 +167,7 @@ public class QuickEditAction extends QuickEditActionKeys implements IntentionAct
   public static Balloon.Position getBalloonPosition(Editor editor) {
     final int line = editor.getCaretModel().getVisualPosition().line;
     final Rectangle area = editor.getScrollingModel().getVisibleArea();
-    int startLine  = area.y / editor.getLineHeight() + 1;
+    int startLine = area.y / editor.getLineHeight() + 1;
     return (line - startLine) * editor.getLineHeight() < 200 ? Balloon.Position.below : Balloon.Position.above;
   }
 }

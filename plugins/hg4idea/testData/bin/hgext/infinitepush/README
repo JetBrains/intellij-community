@@ -1,0 +1,23 @@
+## What is it?
+
+This extension adds ability to save certain pushes to a remote blob store
+as bundles and to serve commits from remote blob store.
+The revisions are stored on disk or in everstore.
+The metadata are stored in sql or on disk.
+
+## Config options
+
+infinitepush.branchpattern: pattern to detect a scratchbranch, example
+                            're:scratch/.+'
+
+infinitepush.indextype: disk or sql for the metadata
+infinitepush.reponame: only relevant for sql metadata backend, reponame to put in
+                       sql
+
+infinitepush.indexpath: only relevant for ondisk metadata backend, the path to
+                        store the index on disk. If not set will be under .hg
+                        in a folder named filebundlestore
+
+infinitepush.storepath: only relevant for ondisk metadata backend, the path to
+                        store the bundles. If not set, it will be
+                        .hg/filebundlestore

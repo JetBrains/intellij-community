@@ -1,6 +1,6 @@
 // PARAM_DESCRIPTOR: val s: kotlin.String defined in foo
 // PARAM_TYPES: kotlin.String, kotlin.Comparable<kotlin.String>, kotlin.CharSequence, java.io.Serializable, kotlin.Any
-// WITH_RUNTIME
+// WITH_STDLIB
 
 import org.jetbrains.annotations.NotNull
 

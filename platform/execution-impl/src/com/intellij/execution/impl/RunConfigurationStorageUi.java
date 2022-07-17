@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.configurationStore.Scheme_implKt;
@@ -32,9 +32,11 @@ import com.intellij.project.ProjectKt;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.UriUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
@@ -94,16 +96,17 @@ public class RunConfigurationStorageUi {
 
       myStoreAsFileGearButton.setEnabled(myStoreAsFileCheckBox.isSelected());
       if (myStoreAsFileCheckBox.isSelected()) {
-        manageStorageFileLocation();
+        manageStorageFileLocation(null);
       }
     });
   }
 
   private @NotNull ActionButton createStoreAsFileGearButton() {
+    PopupState<Balloon> state = PopupState.forBalloon();
     AnAction showStoragePathAction = new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        manageStorageFileLocation();
+        if (!state.isRecentlyHidden()) manageStorageFileLocation(state);
       }
     };
     Presentation presentation = new Presentation(ExecutionBundle.message("run.configuration.manage.file.location"));
@@ -122,7 +125,7 @@ public class RunConfigurationStorageUi {
     };
   }
 
-  private void manageStorageFileLocation() {
+  private void manageStorageFileLocation(@Nullable PopupState<Balloon> state) {
     Disposable balloonDisposable = Disposer.newDisposable();
 
     Function<String, String> pathToErrorMessage = path -> getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, path);
@@ -173,6 +176,7 @@ public class RunConfigurationStorageUi {
       }
     });
 
+    if (state != null) state.prepareToShow(balloon);
     balloon.show(RelativePoint.getSouthOf(myStoreAsFileCheckBox), Balloon.Position.below);
   }
 
@@ -375,8 +379,6 @@ public class RunConfigurationStorageUi {
   }
 
   public void apply(@NotNull RunnerAndConfigurationSettings settings) {
-    if (!isModified()) return;
-
     switch (myRCStorageType) {
       case Workspace:
         settings.storeInLocalWorkspace();
@@ -398,8 +400,6 @@ public class RunConfigurationStorageUi {
       default:
         throw new IllegalStateException("Unexpected value: " + myRCStorageType);
     }
-    myRCStorageTypeInitial = myRCStorageType;
-    myFolderPathIfStoredInArbitraryFileInitial = myFolderPathIfStoredInArbitraryFile;
   }
 
   private static class RunConfigurationStoragePopup {
@@ -470,7 +470,8 @@ public class RunConfigurationStorageUi {
         }
 
         @Override
-        public boolean isFileSelectable(VirtualFile file) {
+        public boolean isFileSelectable(@Nullable VirtualFile file) {
+          if (file == null) return false;
           if (file.getPath().equals(myDotIdeaStoragePath)) return true;
           return file.isDirectory() &&
                  super.isFileSelectable(file) &&
@@ -503,7 +504,7 @@ public class RunConfigurationStorageUi {
     }
 
     @NotNull @SystemIndependent String getPath() {
-      return StringUtil.trimTrailing(FileUtil.toSystemIndependentName(myPathComboBox.getEditor().getItem().toString().trim()), '/');
+      return UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(myPathComboBox.getEditor().getItem().toString().trim()));
     }
   }
 

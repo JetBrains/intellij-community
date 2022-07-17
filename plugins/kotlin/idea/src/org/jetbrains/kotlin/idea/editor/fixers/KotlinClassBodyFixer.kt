@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.editor.fixers
 
 import com.intellij.lang.SmartEnterProcessorWithFixers
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.editor.KotlinSmartEnterHandler
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinClassBodyFixer : SmartEnterProcessorWithFixers.Fixer<KotlinSmartEnterHandler>() {
     override fun apply(editor: Editor, processor: KotlinSmartEnterHandler, psiElement: PsiElement) {
@@ -32,8 +34,9 @@ class KotlinClassBodyFixer : SmartEnterProcessorWithFixers.Fixer<KotlinSmartEnte
         val notInitializedSuperType = allowResolveInDispatchThread {
             psiElement.superTypeListEntries.firstOrNull {
                 if (it is KtSuperTypeCallEntry) return@firstOrNull false
-                (it.typeAsUserType?.referenceExpression?.mainReference?.resolve() as? KtClass)?.isInterface() != true
-            }            
+                val resolved = it.typeAsUserType?.referenceExpression?.mainReference?.resolve()
+                resolved.safeAs<KtClass>()?.isInterface() == false || resolved.safeAs<PsiClass>()?.isInterface == false
+            }
         }
         if (notInitializedSuperType != null) {
             editor.document.insertString(notInitializedSuperType.endOffset, "()")

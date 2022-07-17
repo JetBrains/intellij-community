@@ -17,23 +17,28 @@ package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.codeInspection.utils.GrInspectionUIUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
+import javax.swing.*;
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * For new inspections, please use {@link GroovyLocalInspectionTool}.
+ */
 public abstract class BaseInspection extends LocalInspectionTool {
-  /**
-   * @deprecated Use {@link #getProbableBugs()} instead
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static final String PROBABLE_BUGS = getProbableBugs();
+
+  public @NotNull Set<String> explicitlyEnabledFileTypes = new HashSet<>();
 
   @Nullable
   @InspectionMessage
@@ -45,8 +50,18 @@ public abstract class BaseInspection extends LocalInspectionTool {
     return false;
   }
 
+  @Override
+  public final @Nullable JComponent createOptionsPanel() {
+    JComponent actualPanel = createGroovyOptionsPanel();
+    return GrInspectionUIUtil.enhanceInspectionToolPanel(this, explicitlyEnabledFileTypes, actualPanel);
+  }
+
+  protected @Nullable JComponent createGroovyOptionsPanel() {
+    return null;
+  }
+
   @Nullable
-  protected GroovyFix buildFix(@NotNull PsiElement location) {
+  protected LocalQuickFix buildFix(@NotNull PsiElement location) {
     return null;
   }
 
@@ -57,7 +72,14 @@ public abstract class BaseInspection extends LocalInspectionTool {
                                         @NotNull LocalInspectionToolSession session) {
     BaseInspectionVisitor visitor = buildVisitor();
     visitor.initialize(this, holder, isOnTheFly);
-    return new GroovyPsiElementVisitor(visitor);
+    return new GroovyPsiElementVisitor(visitor) {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (GrInspectionUIUtil.checkInspectionEnabledByFileType(BaseInspection.this, element, explicitlyEnabledFileTypes)) {
+          super.visitElement(element);
+        }
+      }
+    };
   }
 
   @NotNull

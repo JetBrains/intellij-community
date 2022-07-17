@@ -160,7 +160,7 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
   private static class SimplifiableBooleanExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
       if (!JavaTokenType.EXCL.equals(expression.getOperationTokenType())) return;
 
@@ -176,7 +176,7 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
     }
 
     @Override
-    public void visitBinaryExpression(PsiBinaryExpression disjunction) {
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression disjunction) {
       super.visitBinaryExpression(disjunction);
       if (!JavaTokenType.OROR.equals(disjunction.getOperationTokenType())) return;
       PsiPolyadicExpression conjunction =

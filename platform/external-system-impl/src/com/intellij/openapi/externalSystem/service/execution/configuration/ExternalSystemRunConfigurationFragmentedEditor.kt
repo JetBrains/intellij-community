@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution.configuration
 
 import com.intellij.diagnostic.logging.LogsGroupFragment
@@ -9,7 +9,7 @@ class ExternalSystemRunConfigurationFragmentedEditor(
   runConfiguration: ExternalSystemRunConfiguration
 ) : RunConfigurationFragmentedEditor<ExternalSystemRunConfiguration>(
   runConfiguration,
-  ExternalSystemRunConfigurationExtensionManager.instance
+  ExternalSystemRunConfigurationExtensionManager.getInstance()
 ) {
   override fun createRunFragments(): List<SettingsEditorFragment<ExternalSystemRunConfiguration, *>> {
     return SettingsFragmentsContainer.fragments {

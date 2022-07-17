@@ -109,7 +109,7 @@ public class BooleanExpressionMayBeConditionalInspection extends BaseInspection 
   private static class BooleanExpressionMayBeConditionalVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(PsiBinaryExpression expression) {
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!JavaTokenType.OROR.equals(tokenType)) {

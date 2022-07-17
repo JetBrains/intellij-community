@@ -9,7 +9,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClass {
         System.out.println(caption);
         Object btn = new Object() {
             public void foo() {
-                System.out.println(<warning descr="Access to private member of class 'PrivateMemberAccessBetweenOuterAndInnerClass' requires synthetic accessor">caption</warning>);
+                System.out.println(<warning descr="Access to 'private' member of class 'PrivateMemberAccessBetweenOuterAndInnerClass' requires synthetic accessor">caption</warning>);
                 System.out.println(N);
             }
         };
@@ -20,7 +20,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClass {
 class X {
     void test() {
         Private ref = new Private("access");
-        System.out.println(ref.<warning descr="Access to private member of class 'Private' requires synthetic accessor">field</warning>);
+        System.out.println(ref.<warning descr="Access to 'private' member of class 'Private' requires synthetic accessor">field</warning>);
         PrivateAccessor.printPrivate(ref);
         new PrivateAccessor().print(ref);
     }
@@ -37,10 +37,10 @@ class X {
             // prevent synthetic constructor
         }
         void print(Private ref) {
-            System.out.println(ref.<warning descr="Access to private member of class 'Private' requires synthetic accessor">field</warning>);
+            System.out.println(ref.<warning descr="Access to 'private' member of class 'Private' requires synthetic accessor">field</warning>);
         }
         static void printPrivate(Private ref) {
-            System.out.println(ref.<warning descr="Access to private member of class 'Private' requires synthetic accessor">field</warning>);
+            System.out.println(ref.<warning descr="Access to 'private' member of class 'Private' requires synthetic accessor">field</warning>);
         }
     }
 }
@@ -65,7 +65,7 @@ class AnonymousArgTest {
         new Inner(m());
         new Inner(m()) {};
         new Inner(m()) {
-            int x = <warning descr="Access to private member of class 'AnonymousArgTest' requires synthetic accessor">m</warning>();
+            int x = <warning descr="Access to 'private' member of class 'AnonymousArgTest' requires synthetic accessor">m</warning>();
         };
     }
 
@@ -75,7 +75,7 @@ class AnonymousArgTest {
 }
 final class InheritTest {
     Object createInnerClass() {
-        return new <warning descr="Access to private member of class 'InnerClass' requires synthetic accessor">InnerClass</warning>();
+        return new <warning descr="Access to 'private' member of class 'InnerClass' requires synthetic accessor">InnerClass</warning>();
     }
     private final class InnerClass {
         // default private constructor

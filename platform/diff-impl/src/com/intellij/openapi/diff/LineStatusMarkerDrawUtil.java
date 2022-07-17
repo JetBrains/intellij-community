@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.editor.Editor;
@@ -11,9 +11,12 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.ex.VisibleRangeMerger.FlagsProvider;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IntPair;
+import com.intellij.util.ui.JBUI;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,7 +98,8 @@ public class LineStatusMarkerDrawUtil {
                                        @NotNull List<? extends ChangedLines<DefaultLineFlags>> block,
                                        int framingBorder) {
     Color borderColor = getGutterBorderColor(editor);
-    Color gutterBackgroundColor = ((EditorEx)editor).getGutterComponentEx().getBackground();
+    EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
+    Color gutterBackgroundColor = gutter.getBackground();
 
     IntPair area = getGutterArea(editor);
     final int x = area.first;
@@ -119,7 +123,12 @@ public class LineStatusMarkerDrawUtil {
         int start = change.y1;
         int end = change.y2;
         Color gutterColor = getGutterColor(change.type, editor);
-        paintRect(g, gutterColor, null, x, start, endX, end);
+        int line = gutter.getHoveredFreeMarkersLine();
+        if (line != -1 && editor.xyToLogicalPosition(new Point(x, start)).line <= line && line < editor.xyToLogicalPosition(new Point(x, end)).line) {
+          paintRect(g, gutterColor, null, x - 1, start, endX + 2, end);
+        } else {
+          paintRect(g, gutterColor, null, x, start, endX, end);
+        }
       }
     }
 
@@ -187,17 +196,33 @@ public class LineStatusMarkerDrawUtil {
   public static IntPair getGutterArea(@NotNull Editor editor) {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     int x = gutter.getLineMarkerFreePaintersAreaOffset() + 1; // leave 1px for brace highlighters
+    if (ExperimentalUI.isNewUI()) {
+      x += 2; //IDEA-286352
+      return new IntPair(x, x + (int)(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", 4) * getEditorScale(editor))));
+    }
     int endX = gutter.getWhitespaceSeparatorOffset();
     return new IntPair(x, endX);
   }
 
   public static boolean isInsideMarkerArea(@NotNull MouseEvent e) {
     final EditorGutterComponentEx gutter = (EditorGutterComponentEx)e.getComponent();
-    return e.getX() > gutter.getLineMarkerFreePaintersAreaOffset();
+    return gutter.isInsideMarkerArea(e);
   }
 
   public static void paintRect(@NotNull Graphics2D g, @Nullable Color color, @Nullable Color borderColor,
                                int x1, int y1, int x2, int y2) {
+    if (ExperimentalUI.isNewUI()) {
+      if (color != null) {
+        g.setColor(color);
+        double width = x2 - x1;
+        RectanglePainter2D.FILL.paint(g, x1, y1 + 1, width, y2 - y1 - 2, width);
+      } else if (borderColor != null) {
+        g.setColor(borderColor);
+        double width = x2 - x1;
+        RectanglePainter2D.DRAW.paint(g, x1, y1 + 1, width, y2 - y1 - 2, width);
+      }
+      return;
+    }
     if (color != null) {
       g.setColor(color);
       g.fillRect(x1, y1, x2 - x1, y2 - y1);
@@ -215,9 +240,17 @@ public class LineStatusMarkerDrawUtil {
 
   public static void paintTriangle(@NotNull Graphics2D g, @NotNull Editor editor, @Nullable Color color, @Nullable Color borderColor,
                                    int x1, int x2, int y) {
-    float editorScale = editor instanceof EditorImpl ? ((EditorImpl)editor).getScale() : 1.0f;
-    int size = (int)JBUIScale.scale(4 * editorScale);
+    int size = (int)JBUIScale.scale(4 * getEditorScale(editor));
     if (y < size) y = size;
+
+    if (ExperimentalUI.isNewUI()) {
+      if (color != null) {
+        g.setColor(color);
+        double width = x2 - x1;
+        RectanglePainter2D.FILL.paint(g, x1, y - size + 1, width, 2 * size - 2, width);
+      }
+      return;
+    }
 
     final int[] xPoints = new int[]{x1, x1, x2};
     final int[] yPoints = new int[]{y - size, y + size, y};
@@ -233,6 +266,10 @@ public class LineStatusMarkerDrawUtil {
       g.drawPolygon(xPoints, yPoints, xPoints.length);
       g.setStroke(oldStroke);
     }
+  }
+
+  private static float getEditorScale(@NotNull Editor editor) {
+    return editor instanceof EditorImpl ? ((EditorImpl)editor).getScale() : 1.0f;
   }
 
   @Nullable

@@ -32,7 +32,7 @@ public class ExpectedExceptionNeverThrownTestNGInspection extends AbstractBaseJa
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, "org.testng.annotations.Test");
       if (annotation == null) {

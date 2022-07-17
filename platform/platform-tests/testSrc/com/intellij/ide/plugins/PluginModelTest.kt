@@ -34,7 +34,7 @@ fun validatePluginModel(): PluginModelValidator {
   val errors = validator.errorsAsString
   if (!errors.isEmpty()) {
     System.err.println(errors)
-    Assert.fail()
+    Assert.fail(errors.toString().take(1000))
   }
   return validator
 }

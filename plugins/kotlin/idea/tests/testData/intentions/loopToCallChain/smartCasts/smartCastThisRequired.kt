@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // IS_APPLICABLE: false
 // IS_APPLICABLE_2: false
 fun Any.foo(list: List<String>): Int? {

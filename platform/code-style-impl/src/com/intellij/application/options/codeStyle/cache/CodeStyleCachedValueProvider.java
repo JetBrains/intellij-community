@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.cache;
 
 import com.intellij.openapi.application.Application;
@@ -17,7 +17,6 @@ import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSettings> {
+final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSettings> {
   private final static Logger LOG = Logger.getInstance(CodeStyleCachedValueProvider.class);
 
   private final static int MAX_COMPUTATION_THREADS = 10;
@@ -282,10 +281,10 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
         runnable.run();
       }
       if (!myProject.isDisposed()) {
-        ObjectUtils.consumeIfNotNull(myFileRef.get(), file -> {
-          final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(myProject);
-          settingsManager.fireCodeStyleSettingsChanged(file);
-        });
+        PsiFile psiFile = myFileRef.get();
+        if (psiFile != null) {
+          CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(psiFile);
+        }
       }
       myComputation.reset();
     }

@@ -1,18 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test.handlers
 
-import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.completion.KotlinCompletionContributor
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
 
 abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase() {
     protected val fixture: JavaCodeInsightTestFixture
@@ -36,7 +33,7 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
                 afterTypingBlock()
             }
 
-            if (actions != null && actions.isNotEmpty()) {
+            if (!actions.isNullOrEmpty()) {
                 for (action in actions) {
                     fixture.performEditorAction(action)
                 }
@@ -97,7 +94,7 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
                     if (textOk) {
                         val tailOk = if (tailText != null) {
                             val itemTailText = presentation.tailText
-                            itemTailText != null && itemTailText == tailText
+                            tailText.isEmpty() && itemTailText == null || itemTailText != null && itemTailText == tailText
                         } else {
                             true
                         }

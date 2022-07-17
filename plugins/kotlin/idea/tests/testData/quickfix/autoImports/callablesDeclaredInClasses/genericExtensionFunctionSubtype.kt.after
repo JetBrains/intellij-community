@@ -1,0 +1,17 @@
+// "Import" "true"
+package p
+
+import p.CObject.bar
+
+open class A
+open class B : A()
+
+fun B.usage() {
+    bar()
+}
+
+open class C {
+    fun <T : A> T.bar() {}
+}
+
+object CObject : C()

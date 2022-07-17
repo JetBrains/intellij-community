@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -59,7 +59,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
   private class MethodOnlyUsedFromInnerClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (!method.hasModifierProperty(PsiModifier.PRIVATE) || method.isConstructor()) {
         return;
@@ -127,8 +127,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
     }
 
     public PsiClass getOnlyAccessInnerClass() {
-      ReferencesSearch.search(method).forEach(this);
-      return myContainingClass;
+      return ReferencesSearch.search(method).forEach(this) ? myContainingClass : null;
     }
   }
 }

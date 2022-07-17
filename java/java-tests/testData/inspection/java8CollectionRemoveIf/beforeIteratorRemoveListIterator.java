@@ -4,7 +4,7 @@ import java.util.*;
 public class Test {
     void test(List<String> list) {
         ListIterator<String> iterator = list.listIterator();
-        while(iterator<caret>.hasNext()) {
+        while<caret>(iterator.hasNext()) {
             if(iterator.next().isEmpty()) {
                 iterator.remove();
             }

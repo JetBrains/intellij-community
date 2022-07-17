@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
@@ -12,47 +11,53 @@ import com.intellij.psi.util.PsiTreeUtil.findElementOfClassAtRange
 import com.intellij.util.Function
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiverOrThis
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isBoolean
 
 
 class KtPostfixTemplateProvider : PostfixTemplateProvider {
-    override fun getTemplates() = setOf(
-        KtNotPostfixTemplate,
-        KtIfExpressionPostfixTemplate,
-        KtElseExpressionPostfixTemplate,
-        KtNotNullPostfixTemplate("notnull"),
-        KtNotNullPostfixTemplate("nn"),
-        KtIsNullPostfixTemplate,
-        KtWhenExpressionPostfixTemplate,
-        KtTryPostfixTemplate,
-        KtIntroduceVariablePostfixTemplate("val"),
-        KtIntroduceVariablePostfixTemplate("var"),
-        KtForEachPostfixTemplate("for"),
-        KtForEachPostfixTemplate("iter"),
-        KtAssertPostfixTemplate,
-        KtParenthesizedPostfixTemplate,
-        KtSoutPostfixTemplate,
-        KtReturnPostfixTemplate,
-        KtWhilePostfixTemplate,
-        KtWrapWithListOfPostfixTemplate,
-        KtWrapWithSetOfPostfixTemplate,
-        KtWrapWithArrayOfPostfixTemplate,
-        KtWrapWithSequenceOfPostfixTemplate,
-        KtSpreadPostfixTemplate,
-        KtArgumentPostfixTemplate,
-        KtWithPostfixTemplate,
-    )
+    private val templatesSet by lazy {
+        setOf(
+            KtNotPostfixTemplate(this),
+            KtIfExpressionPostfixTemplate(this),
+            KtElseExpressionPostfixTemplate(this),
+            KtNotNullPostfixTemplate("notnull", this),
+            KtNotNullPostfixTemplate("nn", this),
+            KtIsNullPostfixTemplate(this),
+            KtWhenExpressionPostfixTemplate(this),
+            KtTryPostfixTemplate(this),
+            KtIntroduceVariablePostfixTemplate("val", this),
+            KtIntroduceVariablePostfixTemplate("var", this),
+            KtForEachPostfixTemplate("for", this),
+            KtForEachPostfixTemplate("iter", this),
+            KtAssertPostfixTemplate(this),
+            KtParenthesizedPostfixTemplate(this),
+            KtSoutPostfixTemplate(this),
+            KtReturnPostfixTemplate(this),
+            KtWhilePostfixTemplate(this),
+            KtWrapWithListOfPostfixTemplate(this),
+            KtWrapWithSetOfPostfixTemplate(this),
+            KtWrapWithArrayOfPostfixTemplate(this),
+            KtWrapWithSequenceOfPostfixTemplate(this),
+            KtSpreadPostfixTemplate(this),
+            KtArgumentPostfixTemplate(this),
+            KtWithPostfixTemplate(this),
+        )
+    }
+
+    override fun getTemplates() = templatesSet
 
     override fun isTerminalSymbol(currentChar: Char) = currentChar == '.' || currentChar == '!'
 
@@ -74,14 +79,16 @@ class KtPostfixTemplateProvider : PostfixTemplateProvider {
     }
 }
 
-private object KtNotPostfixTemplate : NotPostfixTemplate(
+private class KtNotPostfixTemplate(provider: PostfixTemplateProvider) : NotPostfixTemplate(
     KtPostfixTemplatePsiInfo,
-    createExpressionSelector { it.isBoolean() }
+    createExpressionSelector { it.isBoolean() },
+    provider
 )
 
 private class KtIntroduceVariablePostfixTemplate(
-    val kind: String
-) : PostfixTemplateWithExpressionSelector(kind, "$kind name = expression", createExpressionSelector()) {
+    val kind: String,
+    provider: PostfixTemplateProvider
+) : PostfixTemplateWithExpressionSelector(kind, kind, "$kind name = expression", createExpressionSelector(), provider) {
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
         KotlinIntroduceVariableHandler.doRefactoring(
             expression.project, editor, expression as KtExpression,
@@ -128,6 +135,8 @@ private class KtExpressionPostfixTemplateSelector(
     private fun filterElement(element: PsiElement): Boolean {
         if (element !is KtExpression) return false
 
+        if (element.parent is KtThisExpression) return false
+
         // Can't be independent expressions
         if (element.isSelector || element.parent is KtUserType || element.isOperationReference || element is KtBlockExpression) return false
 
@@ -143,7 +152,7 @@ private class KtExpressionPostfixTemplateSelector(
         }
         if (checkCanBeUsedAsValue && !element.canBeUsedAsValue()) return false
 
-        return predicate?.invoke(element, element.analyze(BodyResolveMode.PARTIAL)) ?: true
+        return predicate?.invoke(element, element.safeAnalyze(element.getResolutionFacade(), BodyResolveMode.PARTIAL)) ?: true
     }
 
     private fun KtExpression.canBeUsedAsValue() =
@@ -180,7 +189,7 @@ private class KtExpressionPostfixTemplateSelector(
 
         val result = filteredByOffset.filter(this::filterElement)
 
-        if (ApplicationManager.getApplication().isUnitTestMode && result.size > 1) {
+        if (isUnitTestMode() && result.size > 1) {
             KtPostfixTemplateProvider.previouslySuggestedExpressions = result.map { it.text }
         }
 

@@ -27,7 +27,7 @@ public final class CopyrightOnSaveInfoProvider extends ActionOnSaveInfoProvider 
   public static boolean isUpdateCopyrightOnSaveEnabled(@NotNull Project project) {
     return PropertiesComponent.getInstance(project).getBoolean(UPDATE_COPYRIGHT_ON_SAVE, UPDATE_COPYRIGHT_BY_DEFAULT);
   }
-  
+
   @Override
   protected @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull ActionOnSaveContext context) {
     return List.of(new ActionOnSaveInfoBase(context, CopyrightBundle.message("checkbox.update.copyright.notice"), UPDATE_COPYRIGHT_ON_SAVE, UPDATE_COPYRIGHT_BY_DEFAULT) {
@@ -53,10 +53,15 @@ public final class CopyrightOnSaveInfoProvider extends ActionOnSaveInfoProvider 
 
       @Override
       public ActionOnSaveComment getComment() {
-        return ActionOnSaveComment.info(CopyrightBundle.message(hasCopyrights() 
-                                                                ? "label.updates.existing.copyrights.e.g.changes.year.or.updated.notice" 
+        return ActionOnSaveComment.info(CopyrightBundle.message(hasCopyrights()
+                                                                ? "label.updates.existing.copyrights.e.g.changes.year.or.updated.notice"
                                                                 : "label.no.copyright.configured"));
       }
     });
+  }
+
+  @Override
+  public Collection<String> getSearchableOptions() {
+    return List.of(CopyrightBundle.message("checkbox.update.copyright.notice"));
   }
 }

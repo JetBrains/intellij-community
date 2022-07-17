@@ -1,6 +1,6 @@
-// "class org.jetbrains.kotlin.idea.quickfix.ImportFix" "false"
-// ACTION: Convert to lazy property
+// "Import" "false"
 // ACTION: Convert property initializer to getter
+// ACTION: Convert to lazy property
 // ACTION: Create class 'SomeTest'
 // ACTION: Rename reference
 // ERROR: Unresolved reference: SomeTest

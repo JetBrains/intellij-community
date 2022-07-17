@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
@@ -7,12 +7,12 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
@@ -128,11 +128,11 @@ abstract class ServiceView extends JPanel implements Disposable {
         return serviceView.isGroupByServiceGroups();
       }
     };
-    serviceView.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, (DataProvider)dataId -> {
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    DataManager.registerDataProvider(serviceView, dataId -> {
+      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return ServiceViewManagerImpl.getToolWindowContextHelpId();
       }
-      if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
+      if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
         return ContainerUtil.map2Array(serviceView.getSelectedItems(), ServiceViewItem::getValue);
       }
       if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
@@ -157,14 +157,9 @@ abstract class ServiceView extends JPanel implements Disposable {
         return viewOptions;
       }
       List<ServiceViewItem> selectedItems = serviceView.getSelectedItems();
-      if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-        return new SmartList<DataProvider>(slowDataId -> {
-          if (CommonDataKeys.NAVIGATABLE_ARRAY.is(slowDataId)) {
-            List<Navigatable> navigatables = ContainerUtil.mapNotNull(selectedItems, item -> item.getViewDescriptor().getNavigatable());
-            return navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-          }
-          return null;
-        });
+      if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+        List<Navigatable> navigatables = ContainerUtil.mapNotNull(selectedItems, item -> item.getViewDescriptor().getNavigatable());
+        return navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
       }
       ServiceViewItem selectedItem = ContainerUtil.getOnlyItem(selectedItems);
       ServiceViewDescriptor descriptor = selectedItem == null || selectedItem.isRemoved() ? null : selectedItem.getViewDescriptor();

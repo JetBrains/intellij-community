@@ -13,6 +13,7 @@ import com.intellij.ide.ui.IdeUiService;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ExecutionDataKeys;
@@ -35,6 +36,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class ExecutionUtil {
@@ -42,7 +44,10 @@ public final class ExecutionUtil {
 
   private static final Logger LOG = Logger.getInstance(ExecutionUtil.class);
 
-  private static final NotificationGroup ourNotificationGroup = NotificationGroup.logOnlyGroup("Execution");
+  private static final NotificationGroup ourSilentNotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("Silent Execution");
+  private static final NotificationGroup ourNotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("Execution");
 
   private ExecutionUtil() { }
 
@@ -128,6 +133,10 @@ public final class ExecutionUtil {
       LOG.info(fullMessage, e);
     }
 
+    if (e instanceof ProcessNotCreatedException) {
+      LOG.debug("Attempting to run: " + ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString());
+    }
+
     if (listener == null) {
       listener = ExceptionUtil.findCause(e, HyperlinkListener.class);
     }
@@ -139,9 +148,11 @@ public final class ExecutionUtil {
         return;
       }
 
-      IdeUiService.getInstance().notifyByBalloon(project, toolWindowId, MessageType.ERROR, title, fullMessage, _description, null, _listener);
+      boolean balloonShown = IdeUiService.getInstance().notifyByBalloon(project, toolWindowId, MessageType.ERROR,
+                                                                        fullMessage, null, _listener);
 
-      Notification notification = ourNotificationGroup.createNotification(title, _description, NotificationType.ERROR);
+      NotificationGroup notificationGroup = balloonShown ? ourSilentNotificationGroup : ourNotificationGroup;
+      Notification notification = notificationGroup.createNotification(title, _description, NotificationType.ERROR);
       if (_listener != null) {
         notification.setListener((_notification, event) -> {
           if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -215,6 +226,15 @@ public final class ExecutionUtil {
                                         @Nullable ExecutionTarget targetOrNullForDefault,
                                         @Nullable Long executionId,
                                         @Nullable DataContext dataContext) {
+    doRunConfiguration(configuration, executor, targetOrNullForDefault, executionId, dataContext, null);
+  }
+
+  public static void doRunConfiguration(@NotNull RunnerAndConfigurationSettings configuration,
+                                        @NotNull Executor executor,
+                                        @Nullable ExecutionTarget targetOrNullForDefault,
+                                        @Nullable Long executionId,
+                                        @Nullable DataContext dataContext,
+                                        @Nullable Consumer<? super ExecutionEnvironment> environmentCustomization) {
     ExecutionEnvironmentBuilder builder = createEnvironment(executor, configuration);
     if (builder == null) {
       return;
@@ -232,7 +252,13 @@ public final class ExecutionUtil {
     if (dataContext != null) {
       builder.dataContext(dataContext);
     }
-    ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder.build());
+
+    ExecutionEnvironment environment = builder.build();
+    if(environmentCustomization != null) {
+      environmentCustomization.accept(environment);
+    }
+
+    ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(environment);
   }
 
   @Nullable

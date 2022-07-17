@@ -1,4 +1,5 @@
 // IS_APPLICABLE: true
+// AFTER-WARNING: Parameter 'ts' is never used
 class Array
 
 fun test() {

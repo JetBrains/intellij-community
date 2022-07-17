@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
+import training.learn.course.KLesson
 
 @LearningDsl
 abstract class LessonContext : LearningDslBase {
@@ -74,7 +75,13 @@ abstract class LessonContext : LearningDslBase {
     caret(position)
   }
 
-  open fun prepareSample(sample: LessonSample) = prepareRuntimeTask {
-    setSample(sample)
+  open fun prepareSample(sample: LessonSample, checkSdkConfiguration: Boolean = true) {
+    prepareRuntimeTask { setSample(sample) }
+
+    if (checkSdkConfiguration) {
+      sdkConfigurationTasks()
+    }
   }
+
+  internal abstract val lesson: KLesson
 }

@@ -143,8 +143,13 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   }
 
   public boolean updateGridUI() {
+    var isHidden = myViewContext.getLayoutSettings().isTabLabelsHidden();
     for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
-      cell.setHideTabs(myContents.size() == 1);
+      if (isHidden) {
+        cell.setHideTabs(cell.getContentCount() == 1);
+      } else {
+        cell.setHideTabs(myContents.size() == 1);
+      }
     }
 
     final Content onlyContent = myContents.get(0);

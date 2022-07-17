@@ -5,8 +5,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
@@ -17,13 +17,18 @@ import java.util.Set;
 
 import static org.jetbrains.plugins.javaFX.actions.CreateFxmlFileAction.isJavaFxTemplateAvailable;
 
-public final class CreateJavaFxApplicationAction extends CreateFromTemplateActionBase implements UpdateInBackground {
+public final class CreateJavaFxApplicationAction extends CreateFromTemplateActionBase {
 
   private static final String FILE_TEMPLATE_NAME = "JavaFXApplication.java";
 
   public CreateJavaFxApplicationAction() {
     super(JavaFXBundle.message("javafx.create.new.application.title"), JavaFXBundle.message("javafx.create.new.application.description"),
           AllIcons.Nodes.Class);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Iterator, List, Optional, Protocol, Sequence, Text, Type, Union
+from typing import Any, Iterable, Iterator, Protocol, Sequence, Text, Union
 
 QUOTE_ALL: int
 QUOTE_MINIMAL: int
@@ -9,8 +9,8 @@ class Error(Exception): ...
 
 class Dialect:
     delimiter: str
-    quotechar: Optional[str]
-    escapechar: Optional[str]
+    quotechar: str | None
+    escapechar: str | None
     doublequote: bool
     skipinitialspace: bool
     lineterminator: str
@@ -18,12 +18,12 @@ class Dialect:
     strict: int
     def __init__(self) -> None: ...
 
-_DialectLike = Union[str, Dialect, Type[Dialect]]
+_DialectLike = Union[str, Dialect, type[Dialect]]
 
-class _reader(Iterator[List[str]]):
+class _reader(Iterator[list[str]]):
     dialect: Dialect
     line_num: int
-    def next(self) -> List[str]: ...
+    def next(self) -> list[str]: ...
 
 class _writer:
     dialect: Dialect
@@ -38,5 +38,5 @@ def reader(csvfile: Iterable[Text], dialect: _DialectLike = ..., **fmtparams: An
 def register_dialect(name: str, dialect: Any = ..., **fmtparams: Any) -> None: ...
 def unregister_dialect(name: str) -> None: ...
 def get_dialect(name: str) -> Dialect: ...
-def list_dialects() -> List[str]: ...
+def list_dialects() -> list[str]: ...
 def field_size_limit(new_limit: int = ...) -> int: ...

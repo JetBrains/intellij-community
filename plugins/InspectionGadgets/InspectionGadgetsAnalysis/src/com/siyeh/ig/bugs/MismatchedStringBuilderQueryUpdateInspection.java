@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -64,7 +64,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
   private static class MismatchedQueryAndUpdateOfStringBuilderVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       super.visitField(field);
       if (!field.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
@@ -82,7 +82,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     }
 
     @Override
-    public void visitLocalVariable(PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
       final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
       if (!checkVariable(variable, codeBlock)) {
@@ -155,14 +155,14 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (updated) return;
       super.visitMethodCallExpression(expression);
       checkReferenceExpression(expression.getMethodExpression());
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       if (updated) return;
       super.visitMethodReferenceExpression(expression);
       checkReferenceExpression(expression);
@@ -202,7 +202,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (queried) return;
       super.visitReferenceExpression(expression);
       final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
@@ -226,7 +226,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       if (queried) return;
       super.visitMethodReferenceExpression(expression);
       final String name = expression.getReferenceName();
@@ -239,7 +239,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (queried) return;
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();

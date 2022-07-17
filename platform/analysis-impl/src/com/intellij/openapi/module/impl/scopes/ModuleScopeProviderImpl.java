@@ -99,6 +99,16 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   }
 
   @Override
+  public @NotNull GlobalSearchScope getModuleProductionSourceScope() {
+    return getCachedScope(0);
+  }
+
+  @Override
+  public @NotNull GlobalSearchScope getModuleTestSourceScope() {
+    return getCachedScope(ModuleWithDependenciesScope.TESTS);
+  }
+
+  @Override
   public void clearCache() {
     myScopeCache.clear();
     myModuleTestsWithDependentsScope = null;

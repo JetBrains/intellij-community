@@ -108,9 +108,11 @@ public abstract class LocalChangesBrowser extends ChangesBrowserBase implements 
 
       if (state) {
         myViewer.includeChange(change);
+        myViewer.logInclusionToggleEvents(false, e);
       }
       else {
         myViewer.excludeChange(change);
+        myViewer.logInclusionToggleEvents(true, e);
       }
     }
   }

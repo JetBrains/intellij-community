@@ -1,6 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots
 
+import com.intellij.facet.FacetManager
+import com.intellij.facet.mock.MockFacetType
+import com.intellij.facet.mock.registerFacetType
+import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
@@ -53,6 +57,35 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     assertNotNull(newA)
     assertNull(moduleManager.findModuleByName("b"))
     assertEquals(VfsUtilCore.pathToUrl(contentRootPath), assertOneElement(ModuleRootManager.getInstance(newA!!).contentRootUrls))
+  }
+
+  @TestFor(issues = ["IDEA-296840"])
+  fun `test reload module and check if facet is not disposed`() {
+    registerFacetType(MockFacetType(), project)
+    val a = createModule("a")
+    val b = createModule("b")
+    val contentRootPath = FileUtil.toSystemIndependentName(createTempDirectory().absolutePath)
+    ModuleRootModificationUtil.addContentRoot(a, contentRootPath)
+    ModuleRootModificationUtil.addDependency(a, b)
+
+    runWriteAction {
+      FacetManager.getInstance(a).addFacet(MockFacetType.getInstance(), "myFacet", null)
+    }
+
+    val moduleManager = ModuleManager.getInstance(project)
+    moduleManager.setUnloadedModules(listOf("a"))
+    assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
+    assertNull(moduleManager.findModuleByName("a"))
+    assertNotNull(moduleManager.findModuleByName("b"))
+
+    moduleManager.setUnloadedModules(listOf())
+
+    val moduleA = ModuleManager.getInstance(project).findModuleByName("a")!!
+    val allFacets = FacetManager.getInstance(moduleA).allFacets
+
+    allFacets.forEach {
+      assertFalse(it.isDisposed)
+    }
   }
 
   fun `test add unloaded module back`() {

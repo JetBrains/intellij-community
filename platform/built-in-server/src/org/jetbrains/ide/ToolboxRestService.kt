@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.google.gson.JsonElement
@@ -15,6 +15,7 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelOption
 import io.netty.handler.codec.http.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.io.addCommonHeaders
 import java.nio.file.Files
 import java.nio.file.Path
@@ -25,6 +26,7 @@ import kotlin.io.path.writeText
 
 val toolboxHandlerEP: ExtensionPointName<ToolboxServiceHandler<*>> = ExtensionPointName.create("com.intellij.toolboxServiceHandler")
 
+@ApiStatus.Internal
 interface ToolboxServiceHandler<T> {
   /**
    * Specifies a request, it is actually the last part of the path,
@@ -102,15 +104,12 @@ internal class ToolboxRestServiceConfig : Disposable {
 
 internal class ToolboxRestService : RestService() {
   internal companion object {
-    @Suppress("SSBasedInspection")
     private val LOG = logger<ToolboxRestService>()
   }
 
   override fun getServiceName() = "toolbox"
 
   override fun isSupported(request: FullHttpRequest): Boolean {
-    val token = System.getProperty("toolbox.notification.token") ?: return false
-    if (request.headers()["Authorization"] != "toolbox $token") return false
     val requestUri = request.uri().substringBefore('?')
     if (findToolboxHandlerByUri(requestUri) == null) return false
     return super.isSupported(request)
@@ -119,35 +118,44 @@ internal class ToolboxRestService : RestService() {
   override fun isMethodSupported(method: HttpMethod) = method == HttpMethod.POST
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
-    val requestJson = createJsonReader(request).use { JsonParser.parseReader(it) }
     val channel = context.channel()
 
-    val toolboxRequest : ToolboxInnerHandler = try {
+    //we do authentication check here to avoid WEB-52152
+    val token = System.getProperty("toolbox.notification.token")
+    if (token == null || request.headers()["Authorization"] != "toolbox $token") {
+      sendStatus(HttpResponseStatus.NOT_FOUND, false, channel)
+      return null
+    }
+
+    val (toolboxRequest : ToolboxInnerHandler, heartbeatDelay) = try {
+      val requestJson = createJsonReader(request).use { JsonParser.parseReader(it) }
+
       val handler = findToolboxHandlerByUri(urlDecoder.path())
       if (handler == null) {
         sendStatus(HttpResponseStatus.NOT_FOUND, false, channel)
         return null
       }
 
-      wrapHandler(handler, requestJson)
+      val toolboxRequest = wrapHandler(handler, requestJson)
+      val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
+      response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=utf-8")
+      response.addCommonHeaders()
+      response.headers().remove(HttpHeaderNames.ACCEPT_RANGES)
+      response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate") //NON-NLS
+      response.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED)
+      response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(Calendar.getInstance().timeInMillis))
+      channel.writeAndFlush(response).get()
+
+      val heartbeatDelay = requestJson.castSafelyTo<JsonObject>()?.get("heartbeatMillis")?.asLong
+                           ?: System.getProperty("toolbox.heartbeat.millis", "5000").toLong()
+
+      toolboxRequest to heartbeatDelay
     }
     catch (t: Throwable) {
       LOG.warn("Failed to process parameters of $request. ${t.message}", t)
       sendStatus(HttpResponseStatus.BAD_REQUEST, false, channel)
       return null
     }
-
-    val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
-    response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=utf-8")
-    response.addCommonHeaders()
-    response.headers().remove(HttpHeaderNames.ACCEPT_RANGES)
-    response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate") //NON-NLS
-    response.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED)
-    response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(Calendar.getInstance().timeInMillis))
-    channel.writeAndFlush(response).get()
-
-    val heartbeatDelay = requestJson.castSafelyTo<JsonObject>()?.get("heartbeatMillis")?.asLong
-                         ?: System.getProperty("toolbox.heartbeat.millis", "5000").toLong()
 
     runCatching { channel.config().setOption(ChannelOption.TCP_NODELAY, true) }
     runCatching { channel.config().setOption(ChannelOption.SO_KEEPALIVE, true) }

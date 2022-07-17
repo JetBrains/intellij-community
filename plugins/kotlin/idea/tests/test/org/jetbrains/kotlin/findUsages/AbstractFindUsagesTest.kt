@@ -39,6 +39,10 @@ import com.intellij.usages.rules.UsageGroupingRule
 import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.util.projectScope
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.util.clearDialogsResults
@@ -48,20 +52,18 @@ import org.jetbrains.kotlin.idea.findUsages.KotlinFunctionFindUsagesOptions
 import org.jetbrains.kotlin.idea.findUsages.KotlinPropertyFindUsagesOptions
 import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindMemberUsagesHandler
 import org.jetbrains.kotlin.idea.refactoring.CHECK_SUPER_METHODS_YES_NO_DIALOG
-import org.jetbrains.kotlin.idea.search.projectScope
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.TestFixtureExtension
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.runReadActionInSmartMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.test.utils.IgnoreTests.DIRECTIVES.IGNORE_FIR_LOG
 import java.io.File
 
 
@@ -94,12 +96,15 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
 
     protected open val prefixForResults = ""
 
+    protected open val ignoreLog = false
+
     protected open fun <T : PsiElement> doTest(path: String): Unit = doFindUsageTest<T>(
         path,
         this::extraConfig,
         KotlinFindUsageConfigurator.fromFixture(myFixture),
         if (isFirPlugin) FindUsageTestType.FIR else FindUsageTestType.DEFAULT,
         prefixForResults,
+        ignoreLog,
     )
 
     companion object {
@@ -113,6 +118,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
             configurator: KotlinFindUsageConfigurator,
             testType: FindUsageTestType = FindUsageTestType.DEFAULT,
             prefixForResults: String = "",
+            ignoreLog: Boolean,
             executionWrapper: (findUsageTest: (FindUsageTestType) -> Unit) -> Unit = { it(testType) }
         ) {
             val mainFile = File(path)
@@ -194,8 +200,8 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                 if (testType != FindUsageTestType.FIR) {
                     (configurator.file as? KtFile)?.let { ktFile ->
                         val diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithAllCompilerChecks().bindingContext.diagnostics }
-                        DirectiveBasedActionUtils.checkForUnexpectedWarnings(ktFile, diagnosticsProvider)
-                        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, diagnosticsProvider)
+                        DirectiveBasedActionUtils.checkForUnexpectedWarnings(ktFile, diagnosticsProvider = diagnosticsProvider)
+                        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, diagnosticsProvider = diagnosticsProvider)
                     }
                 }
 
@@ -206,18 +212,18 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                                 configurator.editor,
                                 TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED or TargetElementUtil.getInstance().referenceSearchFlags,
                             )
-                        }!!
+                        }
                     }
 
                     isFindFileUsages -> configurator.file
                     else -> configurator.elementAtCaret
                 }
 
-                UsefulTestCase.assertInstanceOf(caretElement, caretElementClass)
+                UsefulTestCase.assertInstanceOf(caretElement!!, caretElementClass)
 
                 val containingFile = caretElement.containingFile
                 val project = configurator.project
-                val isLibraryElement = containingFile != null && ProjectRootsUtil.isLibraryFile(project, containingFile.virtualFile)
+                val isLibraryElement = containingFile != null && RootKindFilter.libraryFiles.matches(containingFile)
 
                 val options = parser?.parse(mainFileText, project)
 
@@ -238,6 +244,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                             alwaysAppendFileName = false,
                             testType = executionTestType,
                             javaNamesMap = javaNamesMap,
+                            ignoreLog = ignoreLog
                         )
 
                         val navigationElement = caretElement.navigationElement
@@ -252,6 +259,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                                 alwaysAppendFileName = false,
                                 testType = executionTestType,
                                 javaNamesMap = javaNamesMap,
+                                ignoreLog = ignoreLog
                             )
                         }
                     } else {
@@ -265,6 +273,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                             alwaysAppendFileName = false,
                             testType = executionTestType,
                             javaNamesMap = javaNamesMap,
+                            ignoreLog = ignoreLog
                         )
                     }
                 }
@@ -314,6 +323,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
     alwaysAppendFileName: Boolean = false,
     testType: FindUsageTestType = FindUsageTestType.DEFAULT,
     javaNamesMap: Map<String, String>? = null,
+    ignoreLog: Boolean = false
 ) {
     val highlightingMode = InTextDirectivesUtils.isDirectiveDefined(mainFileText, "// HIGHLIGHTING")
 
@@ -363,6 +373,9 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
 
         val usageChunks = ArrayList<TextChunk>()
         usageChunks.addAll(usageAdapter.presentation.text.asList())
+        if (usageChunks.isNotEmpty()) {
+            usageChunks[1] = TextChunk(usageChunks[1] .attributes, usageChunks[1].text.trimIndent())
+        }
         usageChunks.add(1, TextChunk(TextAttributes(), " ")) // add space after line number
 
         buildString {
@@ -379,7 +392,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
     val finalUsages = filteredUsages.map(convertToString).sorted()
     KotlinTestUtils.assertEqualsToFile(testType.name, File(rootPath, prefix + "results.txt"), finalUsages.joinToString("\n"))
 
-    if (log != null) {
+    if (log != null  && !ignoreLog) {
         KotlinTestUtils.assertEqualsToFile(testType.name, File(rootPath, prefix + "log"), log)
 
         // if log is empty then compare results with plain search

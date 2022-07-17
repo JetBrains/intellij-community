@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ui.JBColor;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBValue;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -12,7 +12,7 @@ import javax.swing.plaf.ComponentUI;
 import java.awt.*;
 
 public class StatusBarUI extends ComponentUI {
-  private static final Color BORDER_TOP_COLOR = JBColor.namedColor("StatusBar.borderColor", new JBColor(0x919191, 0x919191));
+  public static final JBValue BORDER_WIDTH = new JBValue.Float(1.0f);
 
   @Override
   public void paint(final Graphics g, final JComponent c) {
@@ -22,8 +22,10 @@ public class StatusBarUI extends ComponentUI {
       g2d.setColor(getBackground());
       g2d.fill(r);
 
-      g2d.setColor(BORDER_TOP_COLOR);
-      RectanglePainter2D.FILL.paint(g2d, r.x, r.y, r.width, 1);
+      if (!ExperimentalUI.isNewUI()) {
+        g2d.setColor(JBUI.CurrentTheme.StatusBar.BORDER_COLOR);
+        RectanglePainter2D.FILL.paint(g2d, r.x, r.y, r.width, BORDER_WIDTH.get());
+      }
     }
     finally {
       g2d.dispose();
@@ -41,6 +43,6 @@ public class StatusBarUI extends ComponentUI {
   }
 
   public @NotNull Color getBackground() {
-    return UIUtil.getPanelBackground();
+    return JBUI.CurrentTheme.StatusBar.BACKGROUND;
   }
 }

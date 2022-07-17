@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.vcs.VcsBundle
@@ -9,7 +10,11 @@ import git4idea.index.ui.GitStageDataKeys
 
 class GitToggleIgnoredFilesAction : DumbAwareToggleAction(VcsBundle.messagePointer("changes.action.show.ignored.text"),
                                                           VcsBundle.messagePointer("changes.action.show.ignored.description"),
-                                                          AllIcons.Actions.ShowHiddens) {
+                                                          AllIcons.Actions.ToggleVisibility) {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   override fun isSelected(e: AnActionEvent): Boolean {
     return e.getData(GitStageDataKeys.GIT_STAGE_UI_SETTINGS)?.ignoredFilesShown() ?: return false
   }

@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem
 
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.tools.projectWizard.GeneratedIdentificator
 import org.jetbrains.kotlin.tools.projectWizard.Identificator
 import org.jetbrains.kotlin.tools.projectWizard.IdentificatorOwner
@@ -12,7 +13,8 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemP
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import java.nio.file.Paths
 
-inline class ModulePath(val parts: List<String>) {
+@JvmInline
+value class ModulePath(val parts: List<String>) {
     constructor(path: String) : this(path.trim().split('.'))
 
     fun asString(separator: String = ".") = parts.joinToString(separator)
@@ -54,8 +56,11 @@ class Sourceset(
     override val identificator: Identificator = GeneratedIdentificator(sourcesetType.name),
     val createDirectory: Boolean = true
 ) : DisplayableSettingItem, IdentificatorOwner {
-    override val text: String get() = sourcesetType.name
-    override val greyText: String? get() = null
+    override val text: String
+        @NlsSafe
+        get() = sourcesetType.name
+    override val greyText: String?
+        get() = null
 
     companion object {
         fun parser() = mapParser { map, path ->
@@ -78,6 +83,7 @@ enum class SourcesetType : DisplayableSettingItem {
     main, test;
 
     override val text: String
+        @NlsSafe
         get() = name
 
     companion object {

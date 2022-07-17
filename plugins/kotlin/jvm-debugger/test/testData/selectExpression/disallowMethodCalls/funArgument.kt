@@ -5,4 +5,5 @@ fun foo() {
 
 fun bar(i: Int) = 1
 
+// DISALLOW_METHOD_CALLS
 // EXPECTED: a

@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class MavenResource implements Serializable {
   private final String myDirectory;
@@ -31,8 +32,8 @@ public class MavenResource implements Serializable {
     myDirectory = directory;
     myFiltered = filtered;
     myTargetPath = targetPath;
-    myIncludes = includes == null ? Collections.<String>emptyList() : new ArrayList<String>(includes);
-    myExcludes = excludes == null ? Collections.<String>emptyList() : new ArrayList<String>(excludes);
+    myIncludes = includes == null ? Collections.emptyList() : new ArrayList<String>(includes);
+    myExcludes = excludes == null ? Collections.emptyList() : new ArrayList<String>(excludes);
   }
 
   public String getDirectory() {
@@ -63,10 +64,10 @@ public class MavenResource implements Serializable {
     MavenResource that = (MavenResource)o;
 
     if (myFiltered != that.myFiltered) return false;
-    if (myDirectory != null ? !myDirectory.equals(that.myDirectory) : that.myDirectory != null) return false;
+    if (!Objects.equals(myDirectory, that.myDirectory)) return false;
     if (!myExcludes.equals(that.myExcludes)) return false;
     if (!myIncludes.equals(that.myIncludes)) return false;
-    if (myTargetPath != null ? !myTargetPath.equals(that.myTargetPath) : that.myTargetPath != null) return false;
+    if (!Objects.equals(myTargetPath, that.myTargetPath)) return false;
 
     return true;
   }

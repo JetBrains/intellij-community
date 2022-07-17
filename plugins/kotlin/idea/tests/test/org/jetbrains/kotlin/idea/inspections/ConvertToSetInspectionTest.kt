@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.testFramework.IdeaTestUtil
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
  *
  * @see org.jetbrains.kotlin.idea.intentions.IntentionTestGenerated.ConvertArgumentToSet
  */
-class ConvertToSetInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
+class ConvertToSetInspectionTest15 : KotlinLightCodeInsightFixtureTestCase() {
 
     fun `test regular minus`() = runTests(
         receiverTypes = listOf("Iterable<Int>", "Set<Int>", "Sequence<Int>"),

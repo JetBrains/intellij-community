@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit;
 
@@ -18,6 +18,7 @@ import org.jetbrains.uast.UastContextKt;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public class TestMethod extends TestObject {
   TestMethod(JUnitConfiguration configuration, ExecutionEnvironment environment) {
@@ -53,8 +54,9 @@ public class TestMethod extends TestObject {
   }
 
   @Override
-  public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
+  public RefactoringElementListener getListener(final PsiElement element) {
     UElement uElement = UastContextKt.toUElement(element);
+    JUnitConfiguration configuration = getConfiguration();
     if (uElement instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)uElement;
       if (!method.getName().equals(configuration.getPersistentData().getMethodName())) return null;
@@ -117,13 +119,17 @@ public class TestMethod extends TestObject {
       throw new RuntimeConfigurationError(JUnitBundle.message("method.name.not.specified.error.message"));
     }
     final JUnitUtil.TestMethodFilter filter = new JUnitUtil.TestMethodFilter(psiClass);
-    boolean found = false;
-    for (final PsiMethod method : psiClass.findMethodsByName(methodName, true)) {
-      if (filter.value(method) && Objects.equals(methodNameWithSignature, JUnitConfiguration.Data.getMethodPresentation(method))) {
-        found = true;
+
+    Predicate<String> hasMethod = name -> {
+      for (final PsiMethod method : psiClass.findMethodsByName(name, true)) {
+        if (filter.value(method) && Objects.equals(methodNameWithSignature, JUnitConfiguration.Data.getMethodPresentation(method))) {
+          return true;
+        }
       }
-    }
-    if (!found) {
+      return false;
+    };
+    
+    if (!hasMethod.test(methodName) && !hasMethod.test(methodNameWithSignature)) {
       throw new RuntimeConfigurationWarning(JUnitBundle.message("test.method.doesnt.exist.error.message", methodName));
     }
   }

@@ -1,26 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.copyright
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
-import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.ProjectExtension
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.write
 import com.maddyhome.idea.copyright.CopyrightProfile
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 internal class CopyrightManagerTest {
   companion object {
     @JvmField
-    @ClassRule
-    val projectRule = ProjectRule(runPostStartUpActivities = false, preloadServices = false)
+    @RegisterExtension
+    val projectRule = ProjectExtension(runPostStartUpActivities = false, preloadServices = false)
   }
 
   @JvmField
-  @Rule
-  val fsRule = InMemoryFsRule()
+  @RegisterExtension
+  val fsRule = InMemoryFsExtension()
 
   @Test
   fun serialize() {

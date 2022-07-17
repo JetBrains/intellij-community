@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,7 +33,7 @@ public abstract class ProjectManager {
   /**
    * @deprecated Use {@link #TOPIC} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener);
 
   public abstract void addProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
@@ -41,7 +41,7 @@ public abstract class ProjectManager {
   /**
    * @deprecated Use {@link #TOPIC} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void removeProjectManagerListener(@NotNull ProjectManagerListener listener);
 
   public abstract void removeProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
@@ -109,14 +109,12 @@ public abstract class ProjectManager {
    *
    * @param project the project to reload.
    */
-  @SuppressWarnings("unused")
   public abstract void reloadProject(@NotNull Project project);
 
   /**
    * @deprecated Use {@link com.intellij.openapi.project.ex.ProjectManagerEx#newProject(Path, com.intellij.ide.impl.OpenProjectTask)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.Internal
   public abstract @Nullable Project createProject(@Nullable String name, @NotNull String path);
 
   public @Nullable Project findOpenProjectByHash(@Nullable String locationHash) {

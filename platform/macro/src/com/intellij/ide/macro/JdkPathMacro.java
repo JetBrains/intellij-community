@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public final class JdkPathMacro extends Macro {
+public final class JdkPathMacro extends Macro implements PathMacro {
   @NotNull
   @Override
   public String getName() {

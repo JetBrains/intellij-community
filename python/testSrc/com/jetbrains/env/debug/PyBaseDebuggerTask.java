@@ -28,6 +28,7 @@ import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
+import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
 import org.apache.commons.lang.StringUtils;
@@ -180,6 +181,10 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
   protected List<PyDebugValue> loadFrame() throws PyDebuggerException {
     return convertToList(myDebugProcess.loadFrame(null));
+  }
+
+  protected List<PyDebugValue> loadSpecialVariables(ProcessDebugger.GROUP_TYPE groupType) throws PyDebuggerException {
+    return convertToList(myDebugProcess.loadSpecialVariables(groupType));
   }
 
   protected PyStackFrame getCurrentStackFrame() {

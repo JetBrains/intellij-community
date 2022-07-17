@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInspection
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -11,7 +11,6 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getDelegatesToInfo
 
 class JCenterRepositoryInspection : GradleBaseInspection() {
@@ -24,7 +23,7 @@ class JCenterRepositoryInspection : GradleBaseInspection() {
       val file: PsiFile = literal.containingFile
       if (!FileUtilRt.extensionEquals(file.name, GradleConstants.EXTENSION)) return
       super.visitLiteralExpression(literal)
-      if (literal !is GrLiteralImpl || !literal.isStringLiteral) return
+      if (!literal.isString) return
       val value = literal.value ?: return
       if ("https://jcenter.bintray.com" == value || value.toString().startsWith("https://dl.bintray.com/")) {
         val closure = literal.parentOfType<GrClosableBlock>() ?: return

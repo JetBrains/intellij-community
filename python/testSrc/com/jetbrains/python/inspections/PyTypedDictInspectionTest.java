@@ -272,6 +272,65 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                  "Y = TypedDict('Y', {'n': None})\n");
   }
 
+  // PY-50025
+  public void testNoWarningInSubscriptionExpressionOnDictLiteral() {
+    doTestByText("ROMAN = {'I': 1, 'V': 5, 'X': 10, 'L': 50, 'C': 100, 'D': 500, 'M': 1000}\n" +
+                 "class Solution:\n" +
+                 "    def romanToInt(self, roman: str) -> int:\n" +
+                 "        result = 0\n" +
+                 "        for letter in roman:\n" +
+                 "            int_value = ROMAN[letter]\n" +
+                 "        return 42");
+  }
+
+  // PY-50113
+  public void testNoWarningInGetMethodOnDictLiteral() {
+    doTestByText("def baz(param: str):\n" +
+                 "    {'a': 1}.get(param)");
+  }
+
+  // PY-43689
+  public void testNoWarningOnTypesUsingForwardReferences() {
+    doTestByText("from typing import TypedDict\n" +
+                 "class MyDict(TypedDict):\n" +
+                 "    sub: 'SubDict'\n" +
+                 "class SubDict(TypedDict):\n" +
+                 "    foo: str");
+  }
+
+  // PY-43689
+  public void testNoWarningOnUnionTypesUsingBinaryOrOperator() {
+    doTestByText("from typing import TypedDict\n" +
+                 "class A(TypedDict):\n" +
+                 "    a: int | str");
+  }
+
+  // PY-53611
+  public void testRequiredOutsideTypedDictItems() {
+    doTestByText("from typing_extensions import Required, NotRequired\n" +
+                 "x: <warning descr=\"'Required' can be used only in a TypedDict definition\">Required</warning>[int]\n" +
+                 "y = print(<warning descr=\"'NotRequired' can be used only in a TypedDict definition\">NotRequired</warning>[int])\n" +
+                 "class B:\n" +
+                 "    a: <warning descr=\"'Required' can be used only in a TypedDict definition\">Required</warning>[int]");
+  }
+
+  // PY-53611
+  public void testRequiredNotRequiredAtTheSameTime() {
+    doTestByText("from typing_extensions import TypedDict, Required, NotRequired\n" +
+                 "class A(TypedDict):\n" +
+                 "    x: <warning descr=\"Key cannot be required and not required at the same time\">Required[NotRequired[int]]</warning>\n" +
+                 "    y: Required[int]\n" +
+                 "    z: NotRequired[int]\n" +
+                 "A = TypedDict('A', {'x': <warning descr=\"Key cannot be required and not required at the same time\">Required[NotRequired[int]]</warning>, 'y': NotRequired[int]})");
+  }
+
+  // PY-53611
+  public void testRequiredWithMultipleParameters() {
+    doTestByText("from typing_extensions import TypedDict, Annotated, Required, NotRequired\n" +
+                 "Alternative = TypedDict(\"Alternative\", {'x': Annotated[Required[int], \"constraint\"],\n" +
+                 "                                        'y': NotRequired[<warning descr=\"'NotRequired' must have exactly one type argument\">Required[int], \"constraint\"</warning>]})");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

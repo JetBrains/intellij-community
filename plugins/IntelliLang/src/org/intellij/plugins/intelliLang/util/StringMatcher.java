@@ -18,12 +18,9 @@ package org.intellij.plugins.intelliLang.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StringPattern;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Simple abstraction of a String matcher that can be based on simple and vastly more
@@ -57,7 +54,7 @@ public abstract class StringMatcher<T> {
     }
 
     @Override
-    public boolean matches(String what) {
+    public boolean matches(@NotNull String what) {
       return myTarget.matcher(StringPattern.newBombedCharSequence(what)).matches();
     }
 
@@ -73,7 +70,7 @@ public abstract class StringMatcher<T> {
     }
 
     @Override
-    public boolean matches(String what) {
+    public boolean matches(@NotNull String what) {
       return myTarget.equals(what);
     }
   }
@@ -84,7 +81,7 @@ public abstract class StringMatcher<T> {
     }
 
     @Override
-    public boolean matches(String what) {
+    public boolean matches(@NotNull String what) {
       return what.startsWith(myTarget);
     }
 
@@ -100,7 +97,7 @@ public abstract class StringMatcher<T> {
     }
 
     @Override
-    public boolean matches(String what) {
+    public boolean matches(@NotNull String what) {
       return what.endsWith(myTarget);
     }
 
@@ -116,7 +113,7 @@ public abstract class StringMatcher<T> {
     }
 
     @Override
-    public boolean matches(String what) {
+    public boolean matches(@NotNull String what) {
       return what.contains(myTarget);
     }
 
@@ -135,7 +132,7 @@ public abstract class StringMatcher<T> {
     }
 
     @Override
-    public boolean matches(String what) {
+    public boolean matches(@NotNull String what) {
       return myMatches;
     }
   }
@@ -146,7 +143,7 @@ public abstract class StringMatcher<T> {
     }
 
     @Override
-    public boolean matches(String what) {
+    public boolean matches(@NotNull String what) {
       return myTarget.matches(StringUtil.toLowerCase(what));
     }
 
@@ -157,7 +154,7 @@ public abstract class StringMatcher<T> {
   }
 
   private static final class Cache extends StringMatcher<StringMatcher> {
-    private final Map<String, Boolean> myCache = ContainerUtil.createWeakMap();
+    private final Map<String, Boolean> myCache = new WeakHashMap<>();
 
     Cache(StringMatcher target) {
       super(target);
@@ -169,7 +166,7 @@ public abstract class StringMatcher<T> {
     }
 
     @Override
-    public synchronized boolean matches(String what) {
+    public synchronized boolean matches(@NotNull String what) {
       final Boolean o = myCache.get(what);
       if (o != null) {
         return o;
@@ -194,7 +191,7 @@ public abstract class StringMatcher<T> {
     }
 
     @Override
-    public boolean matches(String what) {
+    public boolean matches(@NotNull String what) {
       for (StringMatcher matcher : myTarget) {
         if (matcher.matches(what)) {
           return true;
@@ -209,7 +206,7 @@ public abstract class StringMatcher<T> {
     }
   }
 
-  public abstract boolean matches(String what);
+  public abstract boolean matches(@NotNull String what);
 
   public abstract String getPattern();
 
@@ -288,6 +285,6 @@ public abstract class StringMatcher<T> {
   public boolean equals(Object obj) {
     if (obj == null) return false;
     if (obj.getClass() != getClass()) return false;
-    return ((StringMatcher)obj).myTarget.equals(myTarget);
+    return ((StringMatcher<?>)obj).myTarget.equals(myTarget);
   }
 }

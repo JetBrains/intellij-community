@@ -10,13 +10,14 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.intentions.AddNameToArgumentIntention
 import org.jetbrains.kotlin.idea.intentions.AddNamesToCallArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.AddNamesToFollowingArgumentsIntention
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -44,7 +45,7 @@ class BooleanLiteralArgumentInspection(
             val call = argument.getStrictParentOfType<KtCallExpression>() ?: return
             val valueArguments = call.valueArguments
 
-            if (argumentExpression.analyze().diagnostics.forElement(argumentExpression).any { it.severity == Severity.ERROR }) return
+            if (argumentExpression.safeAnalyzeNonSourceRootCode().diagnostics.forElement(argumentExpression).any { it.severity == Severity.ERROR }) return
             if (AddNameToArgumentIntention.detectNameToAdd(argument, shouldBeLastUnnamed = false) == null) return
 
             val resolvedCall = call.resolveToCall() ?: return
@@ -69,20 +70,20 @@ class BooleanLiteralArgumentInspection(
             }
             val fix = if (argument != valueArguments.lastOrNull { !it.isNamed() }) {
                 if (argument == valueArguments.firstOrNull()) {
-                    IntentionWrapper(AddNamesToCallArgumentsIntention(), argument.containingKtFile)
+                    AddNamesToCallArgumentsIntention()
                 } else {
-                    IntentionWrapper(AddNamesToFollowingArgumentsIntention(), argument.containingKtFile)
+                    AddNamesToFollowingArgumentsIntention()
                 }
             } else {
-                IntentionWrapper(AddNameToArgumentIntention(), argument.containingKtFile)
+                AddNameToArgumentIntention()
             }
             holder.registerProblemWithoutOfflineInformation(
                 argument, KotlinBundle.message("boolean.literal.argument.without.parameter.name"),
-                isOnTheFly, highlightType, fix
+                isOnTheFly, highlightType, IntentionWrapper(fix)
             )
         })
 
-    override fun createOptionsPanel(): JComponent? {
+    override fun createOptionsPanel(): JComponent {
         val panel = MultipleCheckboxOptionsPanel(this)
         panel.addCheckbox(KotlinBundle.message("report.also.on.call.with.single.boolean.literal.argument"), "reportSingle")
         return panel

@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +95,7 @@ class EmbeddedComboBoxUI extends DarculaComboBoxUI {
     // there's no 'ComboBox.padding' option in the tests,
     // because they don't use DarculaLaF
     if (padding == null) {
-      padding = JBUI.emptyInsets();
+      padding = JBInsets.emptyInsets();
     }
   }
 

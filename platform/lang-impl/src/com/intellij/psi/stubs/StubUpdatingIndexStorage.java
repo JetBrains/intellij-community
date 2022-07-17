@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
@@ -16,7 +18,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
-final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, SerializedStubTree> {
+final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, SerializedStubTree, StubUpdatingIndexStorage.Data> {
   private static final Logger LOG = Logger.getInstance(StubUpdatingIndexStorage.class);
 
   private StubIndexImpl myStubIndex;
@@ -64,7 +66,7 @@ final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, 
       try {
         Boolean result = indexUpdateComputable.compute();
         if (Boolean.TRUE.equals(result) && !StaleIndexesChecker.isStaleIdDeletion()) {
-          StubUpdatingIndex.saveIndexingStampInfo(indexingStampInfo, inputId);
+          StubTreeLoaderImpl.saveIndexingStampInfo(indexingStampInfo, inputId);
         }
         return result;
       }
@@ -76,15 +78,10 @@ final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, 
   }
 
   @Override
-  protected void removeTransientDataForInMemoryKeys(int inputId, @NotNull Map<Integer, SerializedStubTree> map) throws IOException {
-    super.removeTransientDataForInMemoryKeys(inputId, map);
-  }
-
-  @Override
   public void removeTransientDataForKeys(int inputId, @NotNull InputDataDiffBuilder<Integer, SerializedStubTree> diffBuilder) {
     Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> maps = getStubIndexMaps((StubCumulativeInputDiffBuilder)diffBuilder);
 
-    if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
+    if (FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE) {
       LOG.info("removing transient data for inputId = " + inputId +
                ", keys = " + ((StubCumulativeInputDiffBuilder)diffBuilder).getKeys() +
                ", data = " + maps);
@@ -109,7 +106,7 @@ final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, 
 
   @Override
   protected void doClear() throws StorageException, IOException {
-    final StubIndexImpl stubIndex = (StubIndexImpl)StubIndexImpl.getInstance();
+    final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
     if (stubIndex != null) {
       stubIndex.clearAllIndices();
     }
@@ -122,8 +119,36 @@ final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, 
       super.doDispose();
     }
     finally {
-      getStubIndex().dispose();
+      try {
+        getStubIndex().dispose();
+      }
+      finally {
+        mySerializationManager.performShutdown();
+      }
     }
+  }
+
+  static class Data extends IndexerIdHolder {
+    private final FileType myFileType;
+
+    Data(int indexerId, FileType type) {
+      super(indexerId);
+      myFileType = type;
+    }
+  }
+
+  @Override
+  public Data getFileIndexMetaData(@NotNull IndexedFile file) {
+    IndexerIdHolder data = super.getFileIndexMetaData(file);
+    FileType fileType = ProgressManager.getInstance().computeInNonCancelableSection(() -> file.getFileType());
+    return new Data(data == null ? -1 : data.indexerId, fileType);
+  }
+
+  @Override
+  public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable StubUpdatingIndexStorage.Data fileData) {
+    super.setIndexedStateForFileOnFileIndexMetaData(fileId, fileData);
+    LOG.assertTrue(fileData != null, "getFileIndexMetaData doesn't return null");
+    setBinaryBuilderConfiguration(fileId, fileData);
   }
 
   @Override
@@ -159,6 +184,17 @@ final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, 
     if (myCompositeBinaryBuilderMap != null) {
       try {
         myCompositeBinaryBuilderMap.persistState(fileId, file.getFile());
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+  }
+
+  private void setBinaryBuilderConfiguration(int fileId, @NotNull Data fileData) {
+    if (myCompositeBinaryBuilderMap != null) {
+      try {
+        myCompositeBinaryBuilderMap.persistState(fileId, fileData.myFileType);
       }
       catch (IOException e) {
         LOG.error(e);

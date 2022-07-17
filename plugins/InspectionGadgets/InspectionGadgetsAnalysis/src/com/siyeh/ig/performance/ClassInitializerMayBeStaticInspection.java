@@ -56,7 +56,7 @@ public class ClassInitializerMayBeStaticInspection extends BaseInspection {
 
   private static class ClassInitializerCanBeStaticVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitClassInitializer(PsiClassInitializer initializer) {
+    public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
       if (initializer.hasModifierProperty(PsiModifier.STATIC)) return;
 
       final PsiClass containingClass =

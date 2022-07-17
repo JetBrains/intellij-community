@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.FileIntPropertyPusher;
@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Gregory.Shrago
  */
 public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLevel> {
-
   public static void pushLanguageLevel(@NotNull final Project project) {
     PushedFilePropertiesUpdater instance = PushedFilePropertiesUpdater.getInstance(project);
     for (FilePropertyPusher<?> pusher : EP_NAME.getExtensionList()) {
@@ -61,13 +60,8 @@ public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLe
   }
 
   @Override
-  public boolean acceptsFile(@NotNull VirtualFile file) {
-    return false;
-  }
-
-  @Override
   public boolean acceptsDirectory(@NotNull VirtualFile file, @NotNull Project project) {
-    return ProjectFileIndex.SERVICE.getInstance(project).isInSourceContent(file);
+    return ProjectFileIndex.getInstance(project).isInSourceContent(file);
   }
 
   private static final FileAttribute PERSISTENCE = new FileAttribute("language_level_persistence", 3, true);

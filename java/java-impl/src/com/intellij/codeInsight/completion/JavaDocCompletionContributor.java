@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -12,8 +12,8 @@ import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtilCore;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
-import com.intellij.codeInspection.javaDoc.JavadocHighlightUtil;
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
+import com.intellij.codeInspection.javaDoc.MissingJavadocInspection;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -31,6 +31,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -38,6 +39,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,6 +53,9 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.string;
 
 public class JavaDocCompletionContributor extends CompletionContributor implements DumbAware {
+  private static final Set<String> INLINE_TAGS_WITH_PARAMETER =
+    Set.of("link", "linkplain", "code", "return", "literal", "value", "index", "summary");
+
   private static final Logger LOG = Logger.getInstance(JavaDocCompletionContributor.class);
   private static final @NonNls String VALUE_TAG = "value";
   private static final @NonNls String LINK_TAG = "link";
@@ -191,6 +196,20 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
   @Override
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
+    if (position instanceof PsiDocToken && ((PsiDocToken)position).getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
+      PsiElement parent = position.getParent();
+      if (parent instanceof PsiDocTagValue && !(parent instanceof PsiDocParamRef) && !(parent instanceof PsiDocMethodOrFieldRef)) {
+        PsiDocTag docTag = ObjectUtils.tryCast(parent.getParent(), PsiDocTag.class);
+        if (docTag != null) {
+          JavadocManager docManager = JavadocManager.getInstance(parameters.getOriginalFile().getProject());
+          JavadocTagInfo info = docManager.getTagInfo(docTag.getName());
+          if (info != null) {
+            // Avoid suggesting standard tags inside custom tag value, as custom tag may require custom value (e.g., reference)
+            suggestTags(parameters, result, position, true);
+          }
+        }
+      }
+    }
     if (PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_COMMENT_DATA).accepts(position)) {
       final PsiParameter param = getDocTagParam(position.getParent());
       if (param != null) {
@@ -203,10 +222,32 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
 
       suggestCodeLiterals(result, position);
 
+      suggestTags(parameters, result, position, false);
+
       return;
     }
 
     super.fillCompletionVariants(parameters, result);
+  }
+
+  private static void suggestTags(@NotNull CompletionParameters parameters,
+                                  @NotNull CompletionResultSet result,
+                                  @NotNull PsiElement position,
+                                  boolean forceInlineTag) {
+    TextRange rangeBefore = new TextRange(position.getTextRange().getStartOffset(), parameters.getOffset());
+    boolean hasOpeningBrace = rangeBefore.isEmpty() && position.getPrevSibling() != null &&
+                              position.getPrevSibling().textMatches("{");
+    boolean isInline = hasOpeningBrace || forceInlineTag || !parameters.getEditor().getDocument().getText(rangeBefore).isBlank();
+    List<String> tags = getTags(position, isInline);
+    for (String tag : tags) {
+      if (isInline) {
+        String lookupString = hasOpeningBrace ? "@" + tag : "{@" + tag + "}";
+        result.addElement(LookupElementDecorator.withInsertHandler(LookupElementBuilder.create(lookupString), new InlineInsertHandler()));
+      }
+      else {
+        result.addElement(TailTypeDecorator.withTail((LookupElement)LookupElementBuilder.create("@" + tag), TailType.INSERT_SPACE));
+      }
+    }
   }
 
   private static void suggestCodeLiterals(@NotNull CompletionResultSet result, PsiElement position) {
@@ -298,13 +339,13 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
         PsiParameter param1 = getDocTagParam(element);
         if (param1 != null && param1 != param &&
             Objects.equals(param1.getName(), param.getName()) && Comparing.equal(param1.getType(), param.getType())) {
-          String text = "";
+          StringBuilder sb = new StringBuilder();
           for (PsiElement psiElement : ((PsiDocTag)element).getDataElements()) {
             if (psiElement != ((PsiDocTag)element).getValueElement()) {
-              text += psiElement.getText();
+              sb.append(psiElement.getText());
             }
           }
-          text = text.trim();
+          String text = sb.toString().trim();
           if (text.contains(" ")) {
             descriptions.add(text);
           }
@@ -323,81 +364,99 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
 
     @Override
     protected void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result) {
-      final List<String> ret = new ArrayList<>();
       final PsiElement position = parameters.getPosition();
-      final PsiDocComment comment = PsiTreeUtil.getParentOfType(position, PsiDocComment.class);
-      assert comment != null;
-      PsiElement parent = comment.getContext();
-      if (parent instanceof PsiJavaFile) {
-        final PsiJavaFile file = (PsiJavaFile)parent;
-        if (PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
-          final String packageName = file.getPackageName();
-          parent = JavaPsiFacade.getInstance(position.getProject()).findPackage(packageName);
-        }
-      }
 
       final boolean isInline = position.getContext() instanceof PsiInlineDocTag;
 
-      for (JavadocTagInfo info : JavadocManager.SERVICE.getInstance(position.getProject()).getTagInfos(parent)) {
-        String tagName = info.getName();
-        if (tagName.equals(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
-        if (isInline != info.isInline() && !(PsiUtil.isLanguageLevel16OrHigher(comment) && tagName.equals("return"))) continue;
-        ret.add(tagName);
-        addSpecialTags(ret, comment, tagName);
-      }
-
-      InspectionProfile inspectionProfile =
-        InspectionProjectProfileManager.getInstance(position.getProject()).getCurrentProfile();
-      JavaDocLocalInspection inspection =
-        (JavaDocLocalInspection)inspectionProfile.getUnwrappedTool(JavaDocLocalInspection.SHORT_NAME, position);
-      if (inspection != null) {
-        final StringTokenizer tokenizer = new StringTokenizer(inspection.myAdditionalJavadocTags, ", ");
-        while (tokenizer.hasMoreTokens()) {
-          ret.add(tokenizer.nextToken());
-        }
-      }
+      final List<String> ret = getTags(position, isInline);
       for (final String s : ret) {
         if (isInline) {
           result.addElement(LookupElementDecorator.withInsertHandler(LookupElementBuilder.create(s), new InlineInsertHandler()));
-        } else {
+        }
+        else {
           result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailType.INSERT_SPACE));
         }
       }
       result.stopHere(); // no word completions at this point
     }
+  }
 
-    private static void addSpecialTags(final List<? super String> result, PsiDocComment comment, String tagName) {
-      if ("author".equals(tagName)) {
-        result.add(tagName + " " + SystemProperties.getUserName());
-        return;
-      }
-
-      if ("param".equals(tagName)) {
-        for (PsiNamedElement parameter : getParametersToSuggest(comment)) {
-          result.add(tagName + " " + nameForParamTag(parameter));
-        }
-        return;
-      }
-
-      if ("see".equals(tagName)) {
-        PsiMember member = PsiTreeUtil.getParentOfType(comment, PsiMember.class);
-        if (member instanceof PsiClass) {
-          InheritanceUtil.processSupers((PsiClass)member, false, psiClass -> {
-            String name = psiClass.getQualifiedName();
-            if (StringUtil.isNotEmpty(name) && !CommonClassNames.JAVA_LANG_OBJECT.equals(name)) {
-              result.add("see " + name);
-            }
-            return true;
-          });
-        }
+  @NotNull
+  private static List<String> getTags(PsiElement position, boolean isInline) {
+    final PsiDocComment comment = PsiTreeUtil.getParentOfType(position, PsiDocComment.class);
+    assert comment != null;
+    JavadocTagInfo[] infos = getTagInfos(position, comment);
+    final List<String> ret = new ArrayList<>();
+    for (JavadocTagInfo info : infos) {
+      String tagName = info.getName();
+      if (tagName.equals(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
+      if (isInline != info.isInline() && !(PsiUtil.isLanguageLevel16OrHigher(comment) && tagName.equals("return"))) continue;
+      if (addSpecialTags(ret, comment, tagName)) {
+        ret.add(tagName);
       }
     }
+
+    InspectionProfile inspectionProfile =
+      InspectionProjectProfileManager.getInstance(position.getProject()).getCurrentProfile();
+    JavadocDeclarationInspection inspection =
+      (JavadocDeclarationInspection)inspectionProfile.getUnwrappedTool(JavadocDeclarationInspection.SHORT_NAME, position);
+    if (inspection != null) {
+      final StringTokenizer tokenizer = new StringTokenizer(inspection.ADDITIONAL_TAGS, ", ");
+      while (tokenizer.hasMoreTokens()) {
+        ret.add(tokenizer.nextToken());
+      }
+    }
+    return ret;
+  }
+
+  /**
+   * @return true if simple tag (without parameter) should be added as well
+   */
+  private static boolean addSpecialTags(final List<? super String> result, PsiDocComment comment, String tagName) {
+    if ("author".equals(tagName)) {
+      result.add(tagName + " " + SystemProperties.getUserName());
+      return true;
+    }
+
+    if ("param".equals(tagName)) {
+      List<PsiNamedElement> parameters = getParametersToSuggest(comment);
+      for (PsiNamedElement parameter : parameters) {
+        result.add(tagName + " " + nameForParamTag(parameter));
+      }
+      return !parameters.isEmpty();
+    }
+
+    if ("see".equals(tagName)) {
+      PsiMember member = PsiTreeUtil.getParentOfType(comment, PsiMember.class);
+      if (member instanceof PsiClass) {
+        InheritanceUtil.processSupers((PsiClass)member, false, psiClass -> {
+          String name = psiClass.getQualifiedName();
+          if (StringUtil.isNotEmpty(name) && !CommonClassNames.JAVA_LANG_OBJECT.equals(name)) {
+            result.add("see " + name);
+          }
+          return true;
+        });
+      }
+    }
+    return true;
+  }
+
+  private static JavadocTagInfo @NotNull [] getTagInfos(PsiElement position, PsiDocComment comment) {
+    PsiElement parent = comment.getContext();
+    if (parent instanceof PsiJavaFile) {
+      final PsiJavaFile file = (PsiJavaFile)parent;
+      if (PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
+        final String packageName = file.getPackageName();
+        parent = JavaPsiFacade.getInstance(position.getProject()).findPackage(packageName);
+      }
+    }
+    return JavadocManager.getInstance(position.getProject()).getTagInfos(parent);
   }
 
   private static List<PsiNamedElement> getParametersToSuggest(PsiDocComment comment) {
     List<PsiNamedElement> allParams = PsiDocParamRef.getAllParameters(comment);
     PsiDocTag[] tags = comment.getTags();
-    return ContainerUtil.filter(allParams, param -> !JavadocHighlightUtil.hasTagForParameter(tags, param));
+    return ContainerUtil.filter(allParams, param -> !MissingJavadocInspection.hasTagForParameter(tags, param));
   }
 
   private static String nameForParamTag(PsiNamedElement param) {
@@ -408,6 +467,23 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
   private static class InlineInsertHandler implements InsertHandler<LookupElement> {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
+      String lookupString = item.getLookupString();
+      String tagName = lookupString.startsWith("@") ? lookupString.substring(1) :
+                   lookupString.startsWith("{@") ? lookupString.substring(2, lookupString.length() - 1) :
+                   lookupString;
+      boolean hasParameter = INLINE_TAGS_WITH_PARAMETER.contains(tagName);
+      if (hasParameter) {
+        final Editor editor = context.getEditor();
+        final CaretModel caretModel = editor.getCaretModel();
+        int offset = caretModel.getOffset();
+        if (lookupString.endsWith("}")) {
+          offset--;
+        }
+        if (context.getCompletionChar() != ' ') {
+          context.getDocument().insertString(offset, " ");
+          caretModel.moveToOffset(offset + 1);
+        }
+      }
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
         final Project project = context.getProject();
         PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -436,13 +512,13 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
           caretModel.moveToOffset(offset + 2);
         }
         else if (name.equals(LINK_TAG)) {
-          EditorModificationUtil.insertStringAtCaret(editor, " }");
+          EditorModificationUtilEx.insertStringAtCaret(editor, " }");
           caretModel.moveToOffset(offset + 1);
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           editor.getSelectionModel().removeSelection();
         }
         else {
-          EditorModificationUtil.insertStringAtCaret(editor, "}");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "}");
           caretModel.moveToOffset(offset + 1);
         }
       }

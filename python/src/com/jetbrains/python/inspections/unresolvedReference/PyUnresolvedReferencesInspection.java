@@ -25,6 +25,8 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
+import com.jetbrains.python.inspections.PyInspection;
+import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection;
 import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider;
 import com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuickFix;
@@ -35,6 +37,7 @@ import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.packaging.PyRequirementsKt;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +66,7 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
   @Override
   @NotNull
   protected PyUnresolvedReferencesVisitor createVisitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session, ignoredIdentifiers);
+    return new Visitor(holder, ignoredIdentifiers, this, PyInspectionVisitor.getContext(session));
   }
 
   @Override
@@ -75,8 +78,11 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
   }
 
   public static class Visitor extends PyUnresolvedReferencesVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, List<String> ignoredIdentifiers) {
-      super(holder, session, ignoredIdentifiers);
+    public Visitor(@Nullable ProblemsHolder holder,
+                   List<String> ignoredIdentifiers,
+                   @NotNull PyInspection inspection,
+                   @NotNull TypeEvalContext context) {
+      super(holder, ignoredIdentifiers, inspection, context);
     }
 
     @Override

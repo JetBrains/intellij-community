@@ -7,14 +7,16 @@ import com.google.common.collect.Sets;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -64,14 +66,16 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   private final Set<PyImportedNameDefiner> myImportsInsideGuard = Collections.synchronizedSet(new HashSet<>());
   private final Set<PyImportedNameDefiner> myUsedImports = Collections.synchronizedSet(new HashSet<>());
   private final ImmutableSet<String> myIgnoredIdentifiers;
+  private final PyInspection myInspection;
   private volatile Boolean myIsEnabled = null;
 
-  public static final Key<PyInspection> INSPECTION = Key.create("PyUnresolvedReferencesVisitor.inspection");
-
   protected PyUnresolvedReferencesVisitor(@Nullable ProblemsHolder holder,
-                                          @NotNull LocalInspectionToolSession session, List<String> ignoredIdentifiers) {
-    super(holder, session);
+                                          List<String> ignoredIdentifiers,
+                                          @NotNull PyInspection inspection,
+                                          @NotNull TypeEvalContext context) {
+    super(holder, context);
     myIgnoredIdentifiers = ImmutableSet.copyOf(ignoredIdentifiers);
+    myInspection = inspection;
   }
 
   @Override
@@ -257,13 +261,13 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     final String text = element.getText();
     TextRange rangeInElement = reference.getRangeInElement();
     String refText = text;  // text of the part we're working with
-    if (rangeInElement.getStartOffset() > 0 && rangeInElement.getEndOffset() > 0) {
+    if (rangeInElement.getStartOffset() >= 0 && rangeInElement.getEndOffset() > 0) {
       refText = rangeInElement.substring(text);
     }
 
     final String refName = (element instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)element).getReferencedName() : refText;
     // Empty text, nothing to highlight
-    if (refName == null || refName.length() <= 0) {
+    if (StringUtil.isEmpty(refName)) {
       return;
     }
 
@@ -329,8 +333,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         if ("__qualname__".equals(refText) && !LanguageLevel.forElement(element).isPython2()) {
           return;
         }
-        final PyQualifiedExpression expr = (PyQualifiedExpression)element;
-        if (PyNames.COMPARISON_OPERATORS.contains(expr.getReferencedName())) {
+        if (PyNames.COMPARISON_OPERATORS.contains(refName)) {
           return;
         }
       }
@@ -617,7 +620,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       }
       PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(unusedImport, PyImportStatementBase.class);
       if (importStatement != null && !unusedStatements.contains(importStatement) && !getUsedImports().contains(unusedImport)) {
-        PyInspection inspection = getSession().getUserData(INSPECTION);
+        PyInspection inspection = myInspection;
         assert inspection != null;
         if (inspection.isSuppressedFor(importStatement)) {
           continue;

@@ -24,6 +24,7 @@ import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
+import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
@@ -47,7 +48,7 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
     final PsiElement context = getFile().findElementAt(offset);
     final JavaCodeFragmentFactory fragmentFactory = JavaCodeFragmentFactory.getInstance(getProject());
     final JavaCodeFragment fragment = codeBlock ? fragmentFactory.createCodeBlockCodeFragment(evaluatedText, context, false) : fragmentFactory.createExpressionCodeFragment(evaluatedText, context, null, false);
-    final ExtractLightMethodObjectHandler.ExtractedData extractedData =
+    final LightMethodObjectExtractedData extractedData =
       ExtractLightMethodObjectHandler.extractLightMethodObject(getProject(), context, fragment, "test", JavaSdkVersion.JDK_1_8);
     assertNotNull(extractedData);
     assertEquals(expectedCallSite, extractedData.getGeneratedCallText());

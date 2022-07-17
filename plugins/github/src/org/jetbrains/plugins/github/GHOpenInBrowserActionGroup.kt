@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
@@ -26,6 +27,7 @@ import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
+import git4idea.repo.GitRepository
 import org.apache.commons.httpclient.util.URIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -43,7 +45,11 @@ open class GHOpenInBrowserActionGroup
 
   override fun update(e: AnActionEvent) {
     val data = getData(e.dataContext)
-    e.presentation.isEnabledAndVisible = data != null && data.isNotEmpty()
+    e.presentation.isEnabledAndVisible = !data.isNullOrEmpty()
+    e.presentation.isPerformGroup = data?.size == 1
+    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup);
+    e.presentation.isPopupGroup = true
+    e.presentation.isDisableGroupIfEmpty = false
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
@@ -54,17 +60,9 @@ open class GHOpenInBrowserActionGroup
     return data.map { GithubOpenInBrowserAction(it) }.toTypedArray()
   }
 
-  override fun isPopup(): Boolean = true
-
   override fun actionPerformed(e: AnActionEvent) {
     getData(e.dataContext)?.let { GithubOpenInBrowserAction(it.first()) }?.actionPerformed(e)
   }
-
-  override fun canBePerformed(context: DataContext): Boolean {
-    return getData(context)?.size == 1
-  }
-
-  override fun disableIfNoVisibleChildren(): Boolean = false
 
   protected open fun getData(dataContext: DataContext): List<Data>? {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return null
@@ -200,8 +198,8 @@ open class GHOpenInBrowserActionGroup
           return
         }
 
-        val githubUrl = makeUrlToOpen(editor, relativePath, hash, path)
-        if (githubUrl != null) BrowserUtil.browse(githubUrl)
+        val githubUrl = GHPathUtil.makeUrlToOpen(editor, relativePath, hash, path)
+        BrowserUtil.browse(githubUrl)
       }
 
       private fun getCurrentFileRevisionHash(project: Project, file: VirtualFile): String? {
@@ -217,36 +215,52 @@ open class GHOpenInBrowserActionGroup
         }.queue()
         return if (ref.isNull) null else ref.get().rev
       }
+    }
+  }
+}
 
-      private fun makeUrlToOpen(editor: Editor?,
-                                relativePath: String,
-                                branch: String,
-                                path: GHRepositoryCoordinates): String? {
-        val builder = StringBuilder()
+object GHPathUtil {
+  fun getFileURL(repository: GitRepository,
+                 path: GHRepositoryCoordinates,
+                 virtualFile: VirtualFile,
+                 editor: Editor?): String? {
+    val relativePath = VfsUtilCore.getRelativePath(virtualFile, repository.root)
+    if (relativePath == null) {
+      return null
+    }
 
-        if (StringUtil.isEmptyOrSpaces(relativePath)) {
-          builder.append(path.toUrl()).append("/tree/").append(branch)
-        }
-        else {
-          builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(URIUtil.encodePath(relativePath))
-        }
+    val hash = repository.currentRevision
+    if (hash == null) {
+      return null
+    }
 
-        if (editor != null && editor.document.lineCount >= 1) {
-          // lines are counted internally from 0, but from 1 on github
-          val selectionModel = editor.selectionModel
-          val begin = editor.document.getLineNumber(selectionModel.selectionStart) + 1
-          val selectionEnd = selectionModel.selectionEnd
-          var end = editor.document.getLineNumber(selectionEnd) + 1
-          if (editor.document.getLineStartOffset(end - 1) == selectionEnd) {
-            end -= 1
-          }
-          builder.append("#L").append(begin)
-          if (begin != end) {
-            builder.append("-L").append(end)
-          }
-        }
-        return builder.toString()
+    return makeUrlToOpen(editor, relativePath, hash, path)
+  }
+
+  fun makeUrlToOpen(editor: Editor?, relativePath: String, branch: String, path: GHRepositoryCoordinates): String {
+    val builder = StringBuilder()
+
+    if (StringUtil.isEmptyOrSpaces(relativePath)) {
+      builder.append(path.toUrl()).append("/tree/").append(branch)
+    }
+    else {
+      builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(URIUtil.encodePath(relativePath))
+    }
+
+    if (editor != null && editor.document.lineCount >= 1) {
+      // lines are counted internally from 0, but from 1 on github
+      val selectionModel = editor.selectionModel
+      val begin = editor.document.getLineNumber(selectionModel.selectionStart) + 1
+      val selectionEnd = selectionModel.selectionEnd
+      var end = editor.document.getLineNumber(selectionEnd) + 1
+      if (editor.document.getLineStartOffset(end - 1) == selectionEnd) {
+        end -= 1
+      }
+      builder.append("#L").append(begin)
+      if (begin != end) {
+        builder.append("-L").append(end)
       }
     }
+    return builder.toString()
   }
 }

@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts;
 
 public class ProjectDescriptorWithStdlibSources extends KotlinWithJdkAndRuntimeLightProjectDescriptor {
     @NotNull
@@ -21,7 +21,7 @@ public class ProjectDescriptorWithStdlibSources extends KotlinWithJdkAndRuntimeL
         Library library = model.getModuleLibraryTable().getLibraryByName(KotlinJdkAndLibraryProjectDescriptor.LIBRARY_NAME);
         assert library != null;
         Library.ModifiableModel modifiableModel = library.getModifiableModel();
-        modifiableModel.addRoot(VfsUtil.getUrlForLibraryRoot(KotlinArtifacts.getInstance().getKotlinStdlibSources()), OrderRootType.SOURCES);
+        modifiableModel.addRoot(VfsUtil.getUrlForLibraryRoot(KotlinArtifacts.getKotlinStdlibSources()), OrderRootType.SOURCES);
         modifiableModel.commit();
     }
 }

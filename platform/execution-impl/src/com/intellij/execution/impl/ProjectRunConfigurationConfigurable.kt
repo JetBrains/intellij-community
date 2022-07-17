@@ -58,7 +58,7 @@ open class ProjectRunConfigurationConfigurable(project: Project, runDialog: RunD
   }
 
   override fun typeOrFactorySelected(userObject: Any) {
-    drawPressAddButtonMessage(userObject as ConfigurationType);
+    drawPressAddButtonMessage(userObject as ConfigurationType)
   }
 
   override fun addRunConfigurationsToModel(model: DefaultMutableTreeNode) {

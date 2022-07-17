@@ -1,0 +1,10 @@
+{header}
+ <!-- Changelog -->
+ <id>{urlbase}{url|urlescape}</id>
+ <link rel="self" href="{urlbase}{url|urlescape}atom-log"/>
+ <link rel="alternate" href="{urlbase}{url|urlescape}"/>
+ <title>{repo|escape} Changelog</title>
+ {latestentry%feedupdated}
+
+{entries%changelogentry}
+</feed>

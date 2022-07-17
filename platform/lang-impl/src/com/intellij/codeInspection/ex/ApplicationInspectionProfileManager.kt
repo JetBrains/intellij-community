@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInspection.InspectionsBundle
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.PersistentStateComponent
@@ -16,6 +17,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
@@ -26,9 +28,11 @@ import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Paths
 
-@State(name = "InspectionProfileManager", storages = [Storage("editor.xml")], additionalExportDirectory = InspectionProfileManager.INSPECTION_DIR)
-open class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) : ApplicationInspectionProfileManagerBase(schemeManagerFactory),
-                                                                                                                                  PersistentStateComponent<Element> {
+@State(name = "InspectionProfileManager",
+       storages = [Storage("editor.xml")],
+       additionalExportDirectory = InspectionProfileManager.INSPECTION_DIR)
+open class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory)
+  : ApplicationInspectionProfileManagerBase(schemeManagerFactory), PersistentStateComponent<Element> {
   open val converter: InspectionProfileConvertor
     get() = InspectionProfileConvertor(this)
 
@@ -67,9 +71,12 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
   }
 
   @TestOnly
-  fun forceInitProfiles(flag: Boolean) {
-    LOAD_PROFILES = flag
+  fun forceInitProfilesInTestUntil(disposable: Disposable) {
+    LOAD_PROFILES = true
     profilesAreInitialized
+    Disposer.register(disposable) {
+      LOAD_PROFILES = false
+    }
   }
 
   override fun getState(): Element? {
@@ -91,7 +98,7 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
   @Throws(IOException::class, JDOMException::class)
   override fun loadProfile(path: String): InspectionProfileImpl? {
     try {
-     return super.loadProfile(path)
+      return super.loadProfile(path)
     }
     catch (e: IOException) {
       throw e

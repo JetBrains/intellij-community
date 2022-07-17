@@ -3,11 +3,14 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 
 internal val PARAMETER_HINTS_SUPPRESSORS_EP = ExtensionPointName.create<ParameterNameHintsSuppressor>("com.intellij.codeInsight.parameterNameHintsSuppressor")
 
-@ApiStatus.Experimental
+/**
+ * Allows programmatic suppression of parameter hints in specific places.
+ *
+ * Registered via `com.intellij.codeInsight.parameterNameHintsSuppressor` extension point.
+ */
 interface ParameterNameHintsSuppressor {
   fun isSuppressedFor(file: PsiFile, inlayInfo: InlayInfo): Boolean
 

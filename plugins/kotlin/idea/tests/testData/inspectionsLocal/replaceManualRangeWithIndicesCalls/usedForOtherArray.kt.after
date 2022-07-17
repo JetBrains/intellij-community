@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Replace with indices
 fun foo() {
     val a = listOf(1, 2, 3)

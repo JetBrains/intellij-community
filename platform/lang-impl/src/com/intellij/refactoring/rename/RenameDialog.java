@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.find.FindBundle;
@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -47,7 +48,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
-public class RenameDialog extends RefactoringDialog {
+public class RenameDialog extends RefactoringDialog implements RenameRefactoringDialog {
   private SuggestedNameInfo mySuggestedNameInfo;
   private JLabel myNameLabel;
   private NameSuggestionsField myNameSuggestionsField;
@@ -81,7 +82,7 @@ public class RenameDialog extends RefactoringDialog {
     boolean toSearchInComments = isToSearchInCommentsForRename();
     myCbSearchInComments.setSelected(toSearchInComments);
 
-    if (myCbSearchTextOccurrences.isEnabled()) {
+    if (isSearchForTextOccurrencesEnabled()) {
       boolean toSearchForTextOccurrences = isToSearchForTextOccurrencesForRename();
       myCbSearchTextOccurrences.setSelected(toSearchForTextOccurrences);
     }
@@ -160,6 +161,7 @@ public class RenameDialog extends RefactoringDialog {
     validateButtons();
   }
 
+  @Override
   public String[] getSuggestedNames() {
     final LinkedHashSet<String> result = new LinkedHashSet<>();
     final String initialName = VariableInplaceRenameHandler.getInitialName();
@@ -314,10 +316,11 @@ public class RenameDialog extends RefactoringDialog {
     performRename(newName);
   }
 
+  @Override
   public void performRename(@NotNull String newName) {
     final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(myPsiElement);
     elementProcessor.setToSearchInComments(myPsiElement, isSearchInComments());
-    if (myCbSearchTextOccurrences.isEnabled()) {
+    if (isSearchForTextOccurrencesEnabled()) {
       elementProcessor.setToSearchForTextOccurrences(myPsiElement, isSearchInNonJavaFiles());
     }
     if (mySuggestedNameInfo != null) {
@@ -334,6 +337,10 @@ public class RenameDialog extends RefactoringDialog {
     }
 
     invokeRefactoring(processor);
+  }
+
+  protected boolean isSearchForTextOccurrencesEnabled() {
+    return myCbSearchTextOccurrences.isEnabled();
   }
 
   public RenameProcessor createRenameProcessorEx(@NotNull String newName) {
@@ -372,5 +379,10 @@ public class RenameDialog extends RefactoringDialog {
 
   private static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("rename.title");
+  }
+
+  @Override
+  public void close() {
+    close(DialogWrapper.CANCEL_EXIT_CODE);
   }
 }

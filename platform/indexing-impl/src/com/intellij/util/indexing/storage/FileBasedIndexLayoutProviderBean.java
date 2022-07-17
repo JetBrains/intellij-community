@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.storage;
 
 import com.intellij.AbstractBundle;
@@ -62,8 +62,7 @@ public final class FileBasedIndexLayoutProviderBean implements PluginAware {
       Logger.getInstance(FileBasedIndexLayoutProviderBean.class).error("Can't find resource bundle name for " + myPluginDescriptor.getName());
       return "!" + presentableNameKey + "!";
     }
-    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(resourceBundleBaseName,
-                                                                             myPluginDescriptor.getPluginClassLoader());
+    ResourceBundle resourceBundle = DynamicBundle.getResourceBundle(myPluginDescriptor.getClassLoader(), resourceBundleBaseName);
     return AbstractBundle.message(resourceBundle, presentableNameKey);
   }
 

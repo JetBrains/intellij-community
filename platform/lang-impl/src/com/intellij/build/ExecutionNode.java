@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
@@ -53,18 +53,14 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private final ExecutionNode myParentNode;
   private volatile long startTime;
   private volatile long endTime;
-  @Nullable
-  private @BuildEventsNls.Title String myTitle;
-  @Nullable
-  private @BuildEventsNls.Hint String myHint;
-  @Nullable
-  private volatile EventResult myResult;
+  private @Nullable @BuildEventsNls.Title String myTitle;
+  private @Nullable @BuildEventsNls.Hint String myHint;
+  private final @NotNull HintData myHintData;
+  private volatile @Nullable EventResult myResult;
   private final boolean myAutoExpandNode;
   private final Supplier<Boolean> myIsCorrectThread;
-  @Nullable
-  private volatile Navigatable myNavigatable;
-  @Nullable
-  private volatile NullableLazyValue<Icon> myPreferredIconValue;
+  private volatile @Nullable Navigatable myNavigatable;
+  private volatile @Nullable NullableLazyValue<Icon> myPreferredIconValue;
   private Predicate<? super ExecutionNode> myFilter;
   private boolean myAlwaysLeaf;
   private boolean myAlwaysVisible;
@@ -75,6 +71,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     myParentNode = parentNode;
     myAutoExpandNode = isAutoExpandNode;
     myIsCorrectThread = isCorrectThread;
+    myHintData = new HintData();
   }
 
   private boolean nodeIsVisible(ExecutionNode node) {
@@ -91,7 +88,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
       presentation.addText(myTitle + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
 
-    String hint = getCurrentHint();
+    String hint = myHintData.getCurrentHint(this);
     boolean isNotEmptyName = StringUtil.isNotEmpty(myName);
     if (isNotEmptyName && myTitle != null || hint != null) {
       presentation.addText(myName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -191,9 +188,14 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   public ExecutionNode setEndTime(long endTime) {
+    return setEndTime(endTime, true);
+  }
+  @Nullable
+  @ApiStatus.Internal
+  ExecutionNode setEndTime(long endTime, boolean reapplyParentFilterIfRequired) {
     assert myIsCorrectThread.get();
     this.endTime = endTime;
-    return reapplyParentFilterIfRequired(null);
+    return reapplyParentFilterIfRequired ? reapplyParentFilterIfRequired(null) : null;
   }
 
   private ExecutionNode reapplyParentFilterIfRequired(@Nullable ExecutionNode result) {
@@ -294,9 +296,14 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   public ExecutionNode setResult(@Nullable EventResult result) {
+    return setResult(result, true);
+  }
+
+  @ApiStatus.Internal
+  ExecutionNode setResult(@Nullable EventResult result, boolean reapplyParentFilterIfRequired) {
     assert myIsCorrectThread.get();
     myResult = result;
-    return reapplyParentFilterIfRequired(null);
+    return reapplyParentFilterIfRequired ? reapplyParentFilterIfRequired(null) : null;
   }
 
   public boolean isAutoExpandNode() {
@@ -371,32 +378,6 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return myChildrenList.stream().filter(filter).findFirst().orElse(null);
   }
 
-  private @BuildEventsNls.Hint String getCurrentHint() {
-    assert myIsCorrectThread.get();
-    int warnings = myWarnings.get();
-    int errors = myErrors.get();
-    if (warnings > 0 || errors > 0) {
-      String errorHint = errors > 0 ? LangBundle.message("build.event.message.errors", errors) : "";
-      String warningHint = warnings > 0 ? LangBundle.message("build.event.message.warnings", warnings) : "";
-      String issuesHint = !errorHint.isEmpty() && !warningHint.isEmpty() ? errorHint + ", " + warningHint : errorHint + warningHint;
-      ExecutionNode parent = getParent();
-      if (parent == null || parent.getParent() == null) {
-        if (isRunning()) {
-          return StringUtil.notNullize(myHint) + "  " + issuesHint;
-        }
-        else {
-          return LangBundle.message("build.event.message.with", StringUtil.notNullize(myHint), issuesHint);
-        }
-      }
-      else {
-        return StringUtil.notNullize(myHint) + " " + issuesHint;
-      }
-    }
-    else {
-      return myHint;
-    }
-  }
-
   private Icon getCurrentIcon() {
     if (myPreferredIconValue != null) {
       return myPreferredIconValue.getValue();
@@ -449,5 +430,56 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
         return NODE_ICON_SIMPLE;
     }
     return NODE_ICON_DEFAULT;
+  }
+
+  static private class HintData {
+    private int myErrors;
+    private int myWarnings;
+    private boolean isRunning;
+    private @Nullable @BuildEventsNls.Hint String myHint;
+    private @Nullable @BuildEventsNls.Hint String myCurrentHint;
+
+    private @BuildEventsNls.Hint String getCurrentHint(@NotNull ExecutionNode node) {
+      if (!idUpToDate(node)) {
+        myHint = node.myHint;
+        myErrors = node.myErrors.get();
+        myWarnings = node.myWarnings.get();
+        isRunning = node.isRunning();
+        myCurrentHint = calculateCurrentHint(node);
+      }
+      return myCurrentHint;
+    }
+
+    private boolean idUpToDate(@NotNull ExecutionNode node) {
+      if (!Objects.equals(myHint, node.myHint)) return false;
+      if (myErrors != node.myErrors.get()) return false;
+      if (myWarnings != node.myWarnings.get()) return false;
+      if (isRunning != node.isRunning()) return false;
+      return true;
+    }
+
+    private @BuildEventsNls.Hint String calculateCurrentHint(@NotNull ExecutionNode node) {
+      assert node.myIsCorrectThread.get();
+      if (myWarnings > 0 || myErrors > 0) {
+        String errorHint = myErrors > 0 ? LangBundle.message("build.event.message.errors", myErrors) : "";
+        String warningHint = myWarnings > 0 ? LangBundle.message("build.event.message.warnings", myWarnings) : "";
+        String issuesHint = !errorHint.isEmpty() && !warningHint.isEmpty() ? errorHint + ", " + warningHint : errorHint + warningHint;
+        ExecutionNode parent = node.getParent();
+        if (parent == null || parent.getParent() == null) {
+          if (node.isRunning()) {
+            return StringUtil.notNullize(myHint) + "  " + issuesHint;
+          }
+          else {
+            return LangBundle.message("build.event.message.with", StringUtil.notNullize(myHint), issuesHint);
+          }
+        }
+        else {
+          return StringUtil.notNullize(myHint) + " " + issuesHint;
+        }
+      }
+      else {
+        return myHint;
+      }
+    }
   }
 }

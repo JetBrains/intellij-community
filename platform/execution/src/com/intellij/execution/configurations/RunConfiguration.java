@@ -179,11 +179,17 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    * @see RunConfiguration#restartSingleton
    */
   enum RestartSingletonResult {
-    /** Ask user to stop and restart the run configuration. */
+    /**
+     * Ask user to stop and restart the run configuration.
+     */
     ASK_AND_RESTART,
-    /** Stop and restart the run configuration without additional interaction with user. */
+    /**
+     * Stop and restart the run configuration without additional interaction with user.
+     */
     RESTART,
-    /** No further action is needed. */
+    /**
+     * No further action is needed.
+     */
     NO_FURTHER_ACTION
   }
 }

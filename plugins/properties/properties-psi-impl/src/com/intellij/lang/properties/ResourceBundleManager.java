@@ -1,16 +1,27 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.SingletonNotificationManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -30,11 +42,17 @@ import java.util.Set;
 @State(name = "ResourceBundleManager", storages = @Storage("resourceBundles.xml"))
 public final class ResourceBundleManager implements PersistentStateComponent<ResourceBundleManagerState>, Disposable {
   private final static Logger LOG = Logger.getInstance(ResourceBundleManager.class);
+  private static final String BUNDLE_EDITOR_PLUGIN_ID = "com.intellij.properties.bundle.editor";
+  private static final String SUGGEST_RESOURCE_BUNDLE_EDITOR_PLUGIN = "suggest.resource.bundle.editor.plugin";
 
   private ResourceBundleManagerState myState = new ResourceBundleManagerState();
 
+  private final SingletonNotificationManager myNotificationManager = new SingletonNotificationManager(PluginsAdvertiser.getNotificationGroup().getDisplayId(), 
+                                                                                                      NotificationType.INFORMATION);
+  
   public ResourceBundleManager(@NotNull Project project) {
-    PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
+    PsiManager manager = PsiManager.getInstance(project);
+    manager.addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
       public void childMoved(@NotNull final PsiTreeChangeEvent event) {
         final PsiElement child = event.getChild();
@@ -144,6 +162,39 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
         }
       }
     }, this);
+  
+    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        if (file.getFileType() == PropertiesFileType.INSTANCE &&
+            PropertiesComponent.getInstance().getBoolean(SUGGEST_RESOURCE_BUNDLE_EDITOR_PLUGIN, true)) {
+          PsiFile psiFile = manager.findFile(file);
+          if (psiFile != null && !file.getNameWithoutExtension().equals(PropertiesUtil.getDefaultBaseName(psiFile))) {
+            PluginId pluginId = PluginId.getId(BUNDLE_EDITOR_PLUGIN_ID);
+            IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
+            if (pluginDescriptor == null || !pluginDescriptor.isEnabled()) {
+              myNotificationManager.notify(IdeBundle.message("plugins.advertiser.plugins.suggestions.title"),
+                                           PropertiesBundle.message("notification.content.resource.bundle.plugin.advertisement"), project, notification -> {
+                notification.setSuggestionType(true);
+                notification.setDisplayId("resource.bundle.editor");
+                if (pluginDescriptor == null) {
+                  notification.addAction(NotificationAction.createSimpleExpiring(PropertiesBundle.message("notification.content.install.plugin"), () -> {
+                    PluginsAdvertiser.installAndEnable(project, Collections.singleton(pluginId), true, () -> {});
+                  }));
+                }
+                else {
+                  notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.enable.plugin"), 
+                                                                                 () -> PluginManagerConfigurable.showPluginConfigurableAndEnable(project, Set.of(pluginDescriptor))));
+                }
+                notification.addAction(NotificationAction.createSimpleExpiring(
+                  PropertiesBundle.message("notification.content.ignore.plugin"),
+                  () -> PropertiesComponent.getInstance().setValue(SUGGEST_RESOURCE_BUNDLE_EDITOR_PLUGIN, false)));
+              });
+            }
+          }
+        }
+      }
+    });
   }
 
   @Override

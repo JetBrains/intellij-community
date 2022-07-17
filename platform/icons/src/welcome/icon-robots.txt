@@ -1,1 +1,1 @@
-deprecated: createNewProject.svg; to be removed in IDEA 2021.1
+deprecated: createNewProject.svg; to be removed

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.style.string
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -17,7 +17,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
-import javax.swing.*
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 import kotlin.reflect.KMutableProperty
 import org.jetbrains.plugins.groovy.lang.psi.util.StringKind as OuterStringKind
 
@@ -112,7 +115,7 @@ class GrStringStyleViolationInspection : BaseInspection() {
                           arrayOf(UNDEFINED, *MULTILINE_STRING_OPTIONS), 3, constraints)
   }
 
-  override fun createOptionsPanel(): JComponent {
+  override fun createGroovyOptionsPanel(): JComponent {
     return panel {
       titledRow(GroovyBundle.message("separator.preferable.string.kind")) {
         row { generateComboBoxes()() }

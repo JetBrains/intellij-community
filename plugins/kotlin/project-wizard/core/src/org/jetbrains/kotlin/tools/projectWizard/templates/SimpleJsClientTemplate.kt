@@ -27,6 +27,9 @@ object SimpleJsClientTemplate : JsClientTemplate() {
     @NonNls
     override val id: String = "simpleJsClient"
 
+    private const val clientFileToCreate = "Client.kt"
+    override val filesToOpenInEditor = listOf(clientFileToCreate)
+
     val useKotlinxHtml by booleanSetting(
         KotlinNewProjectWizardBundle.message("module.template.simple.use.kotlinx.html"),
         GenerationPhase.PROJECT_GENERATION
@@ -41,9 +44,9 @@ object SimpleJsClientTemplate : JsClientTemplate() {
         buildList {
             if (useKotlinxHtml.reference.settingValue()) {
                 +ArtifactBasedLibraryDependencyIR(
-                  MavenArtifact(Repositories.KOTLINX_HTML, "org.jetbrains.kotlinx", "kotlinx-html"),
-                  Versions.KOTLINX.KOTLINX_HTML,
-                  DependencyType.MAIN
+                    MavenArtifact(Repositories.KOTLINX_HTML, "org.jetbrains.kotlinx", "kotlinx-html"),
+                    Versions.KOTLINX.KOTLINX_HTML,
+                    DependencyType.MAIN
                 )
             }
         }
@@ -57,7 +60,7 @@ object SimpleJsClientTemplate : JsClientTemplate() {
                     +(FileTemplateDescriptor("jsClient/index.html.vm") asResourceOf SourcesetType.main)
                 }
                 if (useKotlinxHtml.reference.settingValue()) {
-                    +(FileTemplateDescriptor("$id/client.kt.vm", "Client.kt".asPath()) asSrcOf SourcesetType.main)
+                    +(FileTemplateDescriptor("$id/client.kt.vm", clientFileToCreate.asPath()) asSrcOf SourcesetType.main)
                     +(FileTemplateDescriptor("$id/TestClient.kt.vm", "TestClient.kt".asPath()) asSrcOf SourcesetType.test)
                 } else {
                     +(FileTemplateDescriptor("$id/simple.kt.vm", "Simple.kt".asPath()) asSrcOf SourcesetType.main)

@@ -13,7 +13,7 @@ class Test {
             r.doSomething();
         } catch (E1 ignore) {
         } catch (E2 e) {
-            <selection>e.printStackTrace();</selection>
+            <selection>throw new RuntimeException(e);</selection>
         }
     }
 }

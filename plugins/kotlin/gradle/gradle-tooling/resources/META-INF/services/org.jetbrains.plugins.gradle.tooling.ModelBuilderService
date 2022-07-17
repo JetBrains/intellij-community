@@ -1,11 +1,11 @@
 # Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-org.jetbrains.kotlin.gradle.KotlinDslScriptTaskModelBuilder
-org.jetbrains.kotlin.gradle.KotlinGradleModelBuilder
-org.jetbrains.kotlin.gradle.KotlinMPPGradleModelBuilder
-org.jetbrains.kotlin.gradle.KotlinCocoaPodsModelBuilder
-org.jetbrains.kotlin.gradle.KotlinCommonizerModelBuilder
-org.jetbrains.kotlin.allopen.ide.AllOpenModelBuilderService
-org.jetbrains.kotlin.kapt.idea.KaptModelBuilderService
-org.jetbrains.kotlin.noarg.ide.NoArgModelBuilderService
-org.jetbrains.kotlin.samWithReceiver.ide.SamWithReceiverModelBuilderService
-org.jetbrains.kotlin.parcelize.ide.ParcelizeModelBuilderService
+org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptTaskModelBuilder
+org.jetbrains.kotlin.idea.gradleTooling.KotlinGradleModelBuilder
+org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
+org.jetbrains.kotlin.idea.gradleTooling.PrepareKotlinIdeaImportTaskModelBuilder
+org.jetbrains.kotlin.idea.gradleTooling.model.allopen.AllOpenModelBuilderService
+org.jetbrains.kotlin.idea.gradleTooling.model.kapt.KaptModelBuilderService
+org.jetbrains.kotlin.idea.gradleTooling.model.noarg.NoArgModelBuilderService
+org.jetbrains.kotlin.idea.gradleTooling.model.samWithReceiver.SamWithReceiverModelBuilderService
+org.jetbrains.kotlin.idea.gradleTooling.model.parcelize.ParcelizeModelBuilderService
+org.jetbrains.kotlin.idea.gradleTooling.model.lombok.LombokModelBuilderService

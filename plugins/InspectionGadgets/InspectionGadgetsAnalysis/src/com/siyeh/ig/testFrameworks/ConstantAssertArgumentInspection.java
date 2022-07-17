@@ -39,8 +39,8 @@ public class ConstantAssertArgumentInspection extends BaseInspection {
   private static class ConstantAssertArgumentVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      AssertHint<PsiExpression> assertHint = AssertHint.create(expression, methodName -> ASSERT_METHODS.contains(methodName) ? 1 : null);
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      AssertHint assertHint = AssertHint.create(expression, methodName -> ASSERT_METHODS.contains(methodName) ? 1 : null);
       if (assertHint == null) {
         return;
       }

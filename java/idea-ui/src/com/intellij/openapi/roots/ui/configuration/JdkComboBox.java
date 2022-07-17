@@ -5,7 +5,6 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
@@ -15,7 +14,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,13 +29,13 @@ import static com.intellij.openapi.roots.ui.configuration.JdkComboBox.JdkComboBo
 public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
   private final @Nullable Project myProject;
   @NotNull private final Consumer<Sdk> myOnNewSdkAdded;
+  @Nullable private JButton myEditButton;
 
   /**
    * @deprecated since {@link #setSetupButton} methods are deprecated, use the
    * more specific constructor to pass all parameters
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel) {
     this(jdkModel, null);
   }
@@ -49,27 +47,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
   @Deprecated
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
                      @Nullable Condition<? super SdkTypeId> filter) {
-    this(jdkModel, filter, getSdkFilter(filter), filter, false);
-  }
-
-  /**
-   * @deprecated since {@link #setSetupButton} methods are deprecated, use the
-   * more specific constructor to pass all parameters
-   *
-   * The {@param addSuggestedItems} is ignored (it was not actively used) and
-   * it is no longer possible to have {@link SuggestedJdkItem} as a selected
-   * item of that ComboBox. The implementation will take care about turning a
-   * suggested SDKs into {@link Sdk}s
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SuppressWarnings("unused")
-  public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
-                     @Nullable Condition<? super SdkTypeId> sdkTypeFilter,
-                     @Nullable Condition<? super Sdk> filter,
-                     @Nullable Condition<? super SdkTypeId> creationFilter,
-                     boolean addSuggestedItems) {
-    this(null, jdkModel, sdkTypeFilter, filter, creationFilter, null);
+    this(null, jdkModel, filter, getSdkFilter(filter), filter, null);
   }
 
   /**
@@ -171,9 +149,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
    * that class. The {@param setUpButton} is no longer used, the JdkComboBox shows
    * all the needed actions in the popup. The button will be made invisible.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SuppressWarnings("unused")
+  @Deprecated(forRemoval = true)
   public void setSetupButton(final JButton setUpButton,
                                 @Nullable final Project project,
                                 final ProjectSdksModel jdksModel,
@@ -185,21 +161,26 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
   public void setEditButton(@NotNull JButton editButton,
                             @NotNull Project project,
                             @NotNull Supplier<? extends Sdk> retrieveJDK) {
-    editButton.addActionListener(e -> {
+    myEditButton = editButton;
+    myEditButton.addActionListener(e -> {
       final Sdk projectJdk = retrieveJDK.get();
       if (projectJdk != null) {
         ProjectStructureConfigurable.getInstance(project).select(projectJdk, true);
       }
     });
-    addActionListener(e -> {
+    addActionListener(l -> updateEditButton());
+  }
+
+  private void updateEditButton() {
+    if (myEditButton != null) {
       final JdkComboBoxItem selectedItem = getSelectedItem();
-      if (selectedItem instanceof ProjectJdkComboBoxItem) {
-        editButton.setEnabled(ProjectStructureConfigurable.getInstance(project).getProjectJdksModel().getProjectSdk() != null);
+      if (selectedItem instanceof ProjectJdkComboBoxItem && myProject != null) {
+        myEditButton.setEnabled(ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel().getProjectSdk() != null);
       }
       else {
-        editButton.setEnabled(selectedItem != null && selectedItem.getJdk() != null);
+        myEditButton.setEnabled(selectedItem != null && selectedItem.getJdk() != null);
       }
-    });
+    }
   }
 
   @Nullable
@@ -259,6 +240,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
   public void setSelectedItem(@Nullable Object anObject) {
     if (anObject instanceof SdkListItem) {
       setSelectedItem(wrapItem((SdkListItem)anObject));
+      updateEditButton();
       return;
     }
 
@@ -498,37 +480,6 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     @Override
     public boolean equals(Object obj) {
       return obj instanceof NoneJdkComboBoxItem;
-    }
-  }
-
-  /**
-   * @deprecated this type is never visible from the {@link #getSelectedItem()} method,
-   * it is kept here for binary compatibility
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static class SuggestedJdkItem extends JdkComboBoxItem {
-    private final SdkType mySdkType;
-    private final String myPath;
-
-    SuggestedJdkItem(@NotNull SdkType sdkType, @NotNull String path) {
-      mySdkType = sdkType;
-      myPath = path;
-    }
-
-    @NotNull
-    public SdkType getSdkType() {
-      return mySdkType;
-    }
-
-    @NotNull
-    public String getPath() {
-      return myPath;
-    }
-
-    @Override
-    public String toString() {
-      return myPath;
     }
   }
 

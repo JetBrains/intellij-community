@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.offlineViewer;
 
@@ -38,10 +38,13 @@ public final class OfflineInspectionRVContentProvider extends InspectionRVConten
   }
 
   @Override
-  public QuickFixAction @NotNull [] getCommonQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
+  public QuickFixAction @NotNull [] getCommonQuickFixes(@NotNull final InspectionToolWrapper toolWrapper,
+                                                        @NotNull final InspectionTree tree,
+                                                        CommonProblemDescriptor @NotNull [] descriptors, 
+                                                        RefEntity @NotNull [] refElements) {
     GlobalInspectionContextImpl context = tree.getContext();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    return getCommonFixes(presentation, tree.getSelectedDescriptors());
+    return getCommonFixes(presentation, descriptors);
   }
 
   @Override

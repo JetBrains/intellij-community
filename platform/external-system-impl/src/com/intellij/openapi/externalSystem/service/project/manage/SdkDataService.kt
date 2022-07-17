@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ModuleSdkData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
@@ -16,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 
-class ProjectSdkDataService : AbstractProjectDataService<ProjectSdkData, Project?>() {
+internal class ProjectSdkDataService : AbstractProjectDataService<ProjectSdkData, Project?>() {
   override fun getTargetDataKey() = ProjectSdkData.KEY
 
   override fun importData(
@@ -49,7 +48,7 @@ class ProjectSdkDataService : AbstractProjectDataService<ProjectSdkData, Project
   }
 }
 
-class ModuleSdkDataService : AbstractProjectDataService<ModuleSdkData, Project?>() {
+internal class ModuleSdkDataService : AbstractProjectDataService<ModuleSdkData, Project?>() {
   override fun getTargetDataKey() = ModuleSdkData.KEY
 
   override fun importData(
@@ -67,7 +66,6 @@ class ModuleSdkDataService : AbstractProjectDataService<ModuleSdkData, Project?>
       importModuleSdk(module, sdkDataNode.data, modelsProvider, useDefaultsIfCan)
     }
   }
-
 
   private fun importModuleSdk(
     module: Module,

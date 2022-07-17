@@ -70,11 +70,6 @@ public final class YamlArrayAdapter implements JsonArrayValueAdapter {
     return this;
   }
 
-  @Override
-  public boolean shouldCheckIntegralRequirements() {
-    return true;
-  }
-
   @NotNull
   private List<JsonValueAdapter> computeChildAdapters() {
     List<YAMLSequenceItem> items = myArray.getItems();

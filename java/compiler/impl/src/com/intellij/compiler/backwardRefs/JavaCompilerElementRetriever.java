@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -19,7 +19,8 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,7 @@ public final class JavaCompilerElementRetriever {
 
   private final static TokenSet FUN_EXPR = TokenSet.create(JavaElementType.LAMBDA_EXPRESSION, JavaElementType.METHOD_REF_EXPRESSION);
 
-  static PsiFunctionalExpression @NotNull [] retrieveFunExpressionsByIndices(@NotNull TIntHashSet indices,
+  static PsiFunctionalExpression @NotNull [] retrieveFunExpressionsByIndices(@NotNull IntSet indices,
                                                                              @NotNull PsiFileWithStubSupport psiFile) {
     StubbedSpine spine = psiFile.getStubbedSpine();
 
@@ -92,11 +93,11 @@ public final class JavaCompilerElementRetriever {
 
   private static final class ClassMatcher {
     @Nullable
-    private final TIntHashSet myAnonymousIndices;
+    private final IntSet myAnonymousIndices;
     @NotNull
     private final Collection<? extends InternalNameMatcher> myClassNameMatchers;
 
-    private ClassMatcher(@Nullable TIntHashSet anonymousIndices,
+    private ClassMatcher(@Nullable IntSet anonymousIndices,
                          @NotNull Collection<? extends InternalNameMatcher> nameMatchers) {
       myAnonymousIndices = anonymousIndices;
       myClassNameMatchers = nameMatchers;
@@ -142,11 +143,11 @@ public final class JavaCompilerElementRetriever {
 
     private static ClassMatcher create(SearchId @NotNull [] internalIds) {
       List<InternalNameMatcher> nameMatchers = new SmartList<>();
-      TIntHashSet anonymousIndices = null;
+      IntSet anonymousIndices = null;
       for (SearchId internalId : internalIds) {
         if (internalId.getId() != -1) {
           if (anonymousIndices == null) {
-            anonymousIndices = new TIntHashSet();
+            anonymousIndices = new IntOpenHashSet();
           }
           anonymousIndices.add(internalId.getId());
         }

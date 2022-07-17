@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,14 @@ public abstract class JavaRunConfigurationBase extends ModuleBasedConfiguration<
   protected boolean runsUnderWslJdk() {
     String path = getAlternativeJrePath();
     if (path != null) {
-      return WslDistributionManager.isWslPath(path);
+      Sdk sdk = ProjectJdkTable.getInstance().findJdk(path);
+      if (sdk != null) {
+        String homePath = sdk.getHomePath();
+        if (homePath != null) {
+          return WslPath.isWslUncPath(homePath);
+        }
+      }
+      return WslPath.isWslUncPath(path);
     }
     Module module = getConfigurationModule().getModule();
     if (module != null) {
@@ -39,7 +47,7 @@ public abstract class JavaRunConfigurationBase extends ModuleBasedConfiguration<
         return false;
       }
       String sdkHomePath = sdk.getHomePath();
-      return sdkHomePath != null && WslDistributionManager.isWslPath(sdkHomePath);
+      return sdkHomePath != null && WslPath.isWslUncPath(sdkHomePath);
     }
     return false;
   }

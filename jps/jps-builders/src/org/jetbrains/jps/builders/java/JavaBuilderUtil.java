@@ -9,7 +9,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +45,6 @@ public final class JavaBuilderUtil {
    * @deprecated This functionality is obsolete and is not used by dependency analysis anymore. To be removed in future releases
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final Key<Callbacks.ConstantAffectionResolver> CONSTANT_SEARCH_SERVICE = Key.create("_constant_search_service_");
 
   private static final Logger LOG = Logger.getInstance(Builder.class);
@@ -375,7 +373,10 @@ public final class JavaBuilderUtil {
   }
 
   public static boolean isForcedRecompilationAllJavaModules(CompileContext context) {
-    CompileScope scope = context.getScope();
+    return isForcedRecompilationAllJavaModules(context.getScope());
+  }
+
+  public static boolean isForcedRecompilationAllJavaModules(CompileScope scope) {
     return scope.isBuildForcedForAllTargets(JavaModuleBuildTargetType.PRODUCTION) &&
            scope.isBuildForcedForAllTargets(JavaModuleBuildTargetType.TEST);
   }

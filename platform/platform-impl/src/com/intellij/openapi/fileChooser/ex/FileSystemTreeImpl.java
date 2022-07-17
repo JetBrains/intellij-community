@@ -168,7 +168,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   }
 
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected boolean useNewAsyncModel() {
     return Registry.is("file.chooser.async.tree.model");
   }

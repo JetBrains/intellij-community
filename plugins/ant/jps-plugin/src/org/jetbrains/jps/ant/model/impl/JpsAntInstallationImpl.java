@@ -26,7 +26,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JpsAntInstallationImpl extends JpsElementBase<JpsAntInstallationImpl> implements JpsAntInstallation {
+public final class JpsAntInstallationImpl extends JpsElementBase<JpsAntInstallationImpl> implements JpsAntInstallation {
   private final File myAntHome;
   private final String myName;
   private final List<String> myClasspath;

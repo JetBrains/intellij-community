@@ -48,6 +48,15 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
   }
 
   @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitVariable(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+  @Override
   public String toString() {
     return "LightVariableBuilder:" + getName();
   }
@@ -64,11 +73,13 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
     return myModifierList;
   }
 
+  @SuppressWarnings("unchecked")
   public T setModifiers(String... modifiers) {
     myModifierList = new LightModifierList(getManager(), getLanguage(), modifiers);
     return (T)this;
   }
 
+  @SuppressWarnings("unchecked")
   public T setModifierList(LightModifierList modifierList) {
     myModifierList = modifierList;
     return (T)this;
@@ -130,6 +141,7 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
+  @SuppressWarnings("unchecked")
   public T setBaseIcon(Icon baseIcon) {
     myBaseIcon = baseIcon;
     return (T)this;

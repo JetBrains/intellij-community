@@ -25,9 +25,4 @@ public class KotlinExpressionSurroundDescriptor extends KotlinExpressionSurround
     public Surrounder[] getSurrounders() {
         return SURROUNDERS;
     }
-
-    @Override
-    public boolean isExclusive() {
-        return false;
-    }
 }

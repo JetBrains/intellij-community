@@ -3,6 +3,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.NlsContexts;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 
 /**
  * Status bar shown on the bottom of IDE frame.
@@ -61,8 +63,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
    *
    * @deprecated Use {@link StatusBarWidgetFactory}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   void addWidget(@NotNull StatusBarWidget widget);
 
   /**
@@ -70,8 +71,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
    *
    * @deprecated Use {@link StatusBarWidgetFactory}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   void addWidget(@NotNull StatusBarWidget widget, @NonNls @NotNull String anchor);
 
   /**
@@ -90,18 +90,19 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   @ApiStatus.Internal
   void addWidget(@NotNull StatusBarWidget widget, @NonNls @NotNull String anchor, @NotNull Disposable parentDisposable);
 
+  @ApiStatus.Experimental
+  void setCentralWidget(@NotNull StatusBarCentralWidget widget);
+
   /**
    * @deprecated Use {@link StatusBarWidgetFactory}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   void addCustomIndicationComponent(@NotNull JComponent c);
 
   /**
    * @deprecated Use {@link StatusBarWidgetFactory}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   void removeCustomIndicationComponent(@NotNull JComponent c);
 
   /**
@@ -153,4 +154,29 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   void startRefreshIndication(@NlsContexts.Tooltip String tooltipText);
 
   void stopRefreshIndication();
+
+  default void addListener(@NotNull StatusBarListener listener, @NotNull Disposable parentDisposable) {
+  }
+
+  @Nullable
+  default Collection<StatusBarWidget> getAllWidgets() {
+    return null;
+  }
+
+  @NonNls
+  @Nullable
+  default String getWidgetAnchor(@NonNls @NotNull String id) {
+    return null;
+  }
+
+  /**
+   * @return if not {@code null}, an editor which should be used as the current one
+   * by editor-based widgets installed on this status bar,
+   * otherwise should be ignored.
+   */
+  @Nullable
+  @ApiStatus.Experimental
+  default FileEditor getCurrentEditor() {
+    return null;
+  }
 }

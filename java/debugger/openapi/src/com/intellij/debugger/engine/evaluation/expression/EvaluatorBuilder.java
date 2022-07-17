@@ -18,11 +18,13 @@ package com.intellij.debugger.engine.evaluation.expression;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Main interface to extend evaluation for different JVM languages.
  * @see com.intellij.debugger.engine.evaluation.CodeFragmentFactory
  */
 public interface EvaluatorBuilder {
+  @NotNull
   ExpressionEvaluator build(PsiElement codeFragment, final SourcePosition position) throws EvaluateException;
 }

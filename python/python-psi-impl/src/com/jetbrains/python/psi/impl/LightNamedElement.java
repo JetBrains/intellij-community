@@ -32,11 +32,6 @@ public class LightNamedElement extends LightElement implements PyElement, PsiNam
   }
 
   @Override
-  public PsiElement copy() {
-    return null;
-  }
-
-  @Override
   public String getName() {
     return myName;
   }

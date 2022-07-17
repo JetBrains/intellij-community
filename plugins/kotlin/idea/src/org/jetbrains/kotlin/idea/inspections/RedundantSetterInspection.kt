@@ -5,14 +5,14 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.util.isRedundantSetter
+import org.jetbrains.kotlin.idea.util.removeRedundantSetter
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.propertyAccessorVisitor
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class RedundantSetterInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -31,21 +31,6 @@ class RedundantSetterInspection : AbstractKotlinInspection(), CleanupLocalInspec
     }
 }
 
-fun KtPropertyAccessor.isRedundantSetter(): Boolean {
-    if (!isSetter) return false
-    val expression = bodyExpression ?: return canBeCompletelyDeleted()
-    if (expression is KtBlockExpression) {
-        val statement = expression.statements.singleOrNull() ?: return false
-        val parameter = valueParameters.singleOrNull() ?: return false
-        val binaryExpression = statement as? KtBinaryExpression ?: return false
-        return binaryExpression.operationToken == KtTokens.EQ
-                && binaryExpression.left?.isBackingFieldReferenceTo(property) == true
-                && binaryExpression.right?.mainReference?.resolve() == parameter
-    }
-    return false
-}
-
-
 class RemoveRedundantSetterFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("remove.redundant.setter.fix.text")
 
@@ -54,15 +39,5 @@ class RemoveRedundantSetterFix : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val accessor = descriptor.psiElement as? KtPropertyAccessor ?: return
         removeRedundantSetter(accessor)
-    }
-
-    companion object {
-        fun removeRedundantSetter(setter: KtPropertyAccessor) {
-            if (setter.canBeCompletelyDeleted()) {
-                setter.delete()
-            } else {
-                setter.deleteBody()
-            }
-        }
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
@@ -18,6 +19,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -158,6 +160,9 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
   }
 
   private static Set<String> getExportedPackageNames(@NotNull PsiJavaModule javaModule) {
+    if (javaModule instanceof LightJavaModule) {
+      return Collections.emptySet();
+    }
     return CachedValuesManager.getCachedValue(javaModule, () -> {
       Set<String> packages = StreamEx.of(javaModule.getExports().spliterator())
         .map(PsiPackageAccessibilityStatement::getPackageName)
@@ -168,6 +173,9 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
   }
 
   private static Set<String> getServiceClassNames(@NotNull PsiJavaModule javaModule) {
+    if (javaModule instanceof LightJavaModule) {
+      return Collections.emptySet();
+    }
     return CachedValuesManager.getCachedValue(javaModule, () -> {
       Set<String> classes = StreamEx.of(javaModule.getProvides().spliterator())
         .map(PsiProvidesStatement::getImplementationList)

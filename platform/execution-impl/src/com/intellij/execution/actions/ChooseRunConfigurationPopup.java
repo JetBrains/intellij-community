@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.CommonBundle;
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -203,11 +204,16 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  private static void deleteConfiguration(ChooseRunConfigurationPopup popup, final Project project, @NotNull final RunnerAndConfigurationSettings configurationSettings) {
+  public static void deleteConfiguration(@NotNull Project project,
+                                         @NotNull RunnerAndConfigurationSettings configurationSettings,
+                                         @Nullable JBPopup popupToCancel) {
     RunManagerConfig runManagerConfig = RunManagerImpl.getInstanceImpl(project).getConfig();
     boolean confirmed;
     if (runManagerConfig.isDeletionFromPopupRequiresConfirmation()) {
-      popup.myPopup.cancel();
+      if (popupToCancel != null) {
+        popupToCancel.cancel();
+      }
+
       confirmed = MessageDialogBuilder.yesNo(CommonBundle.message("title.confirmation"),
                                              ExecutionBundle.message("are.you.sure.you.want.to.delete.0", configurationSettings.getName()))
                     .doNotAsk(new DoNotAskOption.Adapter() {
@@ -337,7 +343,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       if (this == o) return true;
       if (!(o instanceof ItemWrapper)) return false;
 
-      if (!Objects.equals(myValue, ((ItemWrapper)o).myValue)) return false;
+      if (!Objects.equals(myValue, ((ItemWrapper<?>)o).myValue)) return false;
       return true;
     }
 
@@ -378,7 +384,10 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
         @Override
         public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
           RunnerAndConfigurationSettings config = getValue();
-          RunManager.getInstance(project).setSelectedConfiguration(config);
+
+          final RunManager manager = RunManager.getInstance(project);
+
+          if (!manager.isRunWidgetActive()) RunManager.getInstance(project).setSelectedConfiguration(config);
           MacroManager.getInstance().cacheMacrosPreview(context);
           ExecutionUtil.doRunConfiguration(config, executor, null, null, context);
         }
@@ -625,7 +634,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
               if (dynamic) {
                 manager.setTemporaryConfiguration(settings);
               }
-              manager.setSelectedConfiguration(settings);
+              if (!manager.isRunWidgetActive()) manager.setSelectedConfiguration(settings);
               ExecutionUtil.runConfiguration(settings, executor);
             }
           });
@@ -658,7 +667,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       result.add(new ActionWrapper(ExecutionBundle.message("choose.run.popup.delete"), AllIcons.Actions.Cancel) {
         @Override
         public void perform() {
-          deleteConfiguration(action, project, settings);
+          deleteConfiguration(project, settings, action.myPopup);
         }
       });
 
@@ -725,7 +734,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       if (myListPopup.getSpeedSearch().isHoldingFilter())
         return;
       for (final Object item : myListPopup.getListStep().getValues()) {
-        if (item instanceof ItemWrapper && ((ItemWrapper)item).getMnemonic() == myNumber) {
+        if (item instanceof ItemWrapper && ((ItemWrapper<?>)item).getMnemonic() == myNumber) {
           myListPopup.setFinalRunnable(() -> execute((ItemWrapper)item, myExecutor));
           myListPopup.closeOk(null);
         }
@@ -807,8 +816,9 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       }
 
       final Object o = getListModel().get(index);
-      if (o instanceof ItemWrapper && ((ItemWrapper)o).canBeDeleted()) {
-        deleteConfiguration(ChooseRunConfigurationPopup.this, myProject, (RunnerAndConfigurationSettings)((ItemWrapper)o).getValue());
+      if (o instanceof ItemWrapper && ((ItemWrapper<?>)o).canBeDeleted()) {
+        RunnerAndConfigurationSettings runConfig = (RunnerAndConfigurationSettings)((ItemWrapper<?>)o).getValue();
+        deleteConfiguration(myProject, runConfig, ChooseRunConfigurationPopup.this.myPopup);
         getListModel().deleteItem(o);
         final List<Object> values = getListStep().getValues();
         values.remove(o);
@@ -1130,7 +1140,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
 
     final List<ConfigurationFromContext> producers = PreferredProducerFind.getConfigurationsFromContext(context.getLocation(),
-                                                                                                         context, false);
+                                                                                                        context, false, true);
     if (producers == null) return;
 
     producers.sort(ConfigurationFromContext.NAME_COMPARATOR);

@@ -28,7 +28,7 @@ internal class GitBranchCheckoutOperation(private val project: Project, private 
     val name = options.name
     val reset = options.reset
 
-    val localHasMoreCommits = checkLocalHasMoreCommits(name, startPoint)
+    val localHasMoreCommits = checkLocalHasMoreCommits(project, repositories, name, startPoint)
     if (checkout) {
       performCheckout(startPoint, name, localHasMoreCommits, reset)
     }
@@ -94,19 +94,6 @@ internal class GitBranchCheckoutOperation(private val project: Project, private 
     }
   }
 
-  private fun checkLocalHasMoreCommits(localBranch: String, startPoint: String): Boolean {
-    val existingLocalBranches = ContainerUtil.map2MapNotNull(repositories) { r: GitRepository ->
-      val local = r.branches.findLocalBranch(localBranch)
-      if (local != null) Pair.create(r, local) else null
-    }
-
-    val existingLocalHasCommits = if (existingLocalBranches.isNotEmpty()) {
-      checkCommitsUnderProgress(project, existingLocalBranches.keys.toList(), startPoint, localBranch)
-    }
-    else false
-    return existingLocalHasCommits
-  }
-
   private fun checkout(startPoint: String, name: String, localConflictResolution: CheckoutConflictResolution) {
     val (reposWithLocalBranch, reposWithoutLocalBranch) = repositories.partition { it.branches.findLocalBranch(name) != null }
 
@@ -145,6 +132,21 @@ internal class GitBranchCheckoutOperation(private val project: Project, private 
 
   companion object {
     private val LOG = logger<GitBranchCheckoutOperation>()
+
+    internal fun checkLocalHasMoreCommits(project: Project,
+                                         repositories: List<GitRepository>,
+                                         localBranch: String, startPoint: String): Boolean {
+      val existingLocalBranches = ContainerUtil.map2MapNotNull(repositories) { r: GitRepository ->
+        val local = r.branches.findLocalBranch(localBranch)
+        if (local != null) Pair.create(r, local) else null
+      }
+
+      val existingLocalHasCommits = if (existingLocalBranches.isNotEmpty()) {
+        checkCommitsUnderProgress(project, existingLocalBranches.keys.toList(), startPoint, localBranch)
+      }
+      else false
+      return existingLocalHasCommits
+    }
 
     internal fun checkCommitsUnderProgress(project: Project,
                                            repositories: List<GitRepository>,

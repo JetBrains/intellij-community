@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
@@ -8,11 +9,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModuleConfiguratorImpl;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceClasses;
-import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
-import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModuleConfiguratorImpl;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -152,7 +153,7 @@ public abstract class PyDocumentationSettings
     }
   }
 
-  @State(name = "AppPyDocumentationSettings", storages = @Storage("PyDocumentationSettings.xml"))
+  @State(name = "AppPyDocumentationSettings", storages = @Storage("PyDocumentationSettings.xml"), category = SettingsCategory.CODE)
   public static final class AppService extends PyDocumentationSettings {
   }
 

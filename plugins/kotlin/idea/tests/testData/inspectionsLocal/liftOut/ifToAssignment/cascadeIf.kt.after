@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(x: Any) {
     var res: String
     <caret>res = if (x is String)

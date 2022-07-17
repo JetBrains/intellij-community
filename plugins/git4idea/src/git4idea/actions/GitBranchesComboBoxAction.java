@@ -5,6 +5,8 @@ import com.intellij.dvcs.branch.DvcsBranchUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -13,6 +15,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
+import git4idea.ui.branch.BranchIconUtil;
 import git4idea.ui.branch.GitBranchPopup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +24,10 @@ import javax.swing.*;
 import java.util.Objects;
 
 public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAware {
+
+  public GitBranchesComboBoxAction() {
+    KeymapManager.getInstance().bindShortcuts("Git.Branches", "Git.ShowBranches");
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -39,9 +46,10 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
     String branchName = repo.getCurrentRevision() != null ? GitBranchUtil.getDisplayableBranchText(repo)
                                                           : GitBundle.message("no.revisions.available");
     String name = DvcsBranchUtil.shortenBranchName(branchName);
-    presentation.setText(name);
-    presentation.setIcon(AllIcons.Vcs.Branch);
+    presentation.setText(name, false);
+    presentation.setIcon(BranchIconUtil.Companion.getBranchIcon(repo));
     presentation.setEnabledAndVisible(true);
+    presentation.setDescription(GitBundle.messagePointer("action.Git.ShowBranches.description").get());
   }
 
   @Override

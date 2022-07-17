@@ -1,10 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.forloop;
 
 import com.intellij.psi.PsiForeachStatement;
 import com.intellij.psi.PsiType;
+import com.siyeh.IntentionPowerPackBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceForEachLoopWithOptimizedIndexedForLoopIntention extends ReplaceForEachLoopWithIndexedForLoopIntention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("replace.for.each.loop.with.optimized.indexed.for.loop.intention.family.name");
+  }
+
+  @Override
+  public @NotNull String getText() {
+    return IntentionPowerPackBundle.message("replace.for.each.loop.with.optimized.indexed.for.loop.intention.name");
+  }
+
   @Override
   protected void createForLoopDeclaration(PsiForeachStatement statement,
                                           boolean isArray,

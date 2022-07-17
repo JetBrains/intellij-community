@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class A {
     var a: List<String> = <caret>emptyList()

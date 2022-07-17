@@ -1,6 +1,6 @@
 // "Join with initializer" "true"
 // TOOL: org.jetbrains.kotlin.idea.inspections.SuspiciousCollectionReassignmentInspection
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(otherList: List<Int>) {
     var list = createList() + otherList<caret>
     // comment

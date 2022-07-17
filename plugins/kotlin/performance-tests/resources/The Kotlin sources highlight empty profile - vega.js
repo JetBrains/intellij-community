@@ -5,10 +5,8 @@
   "$schema": "https://vega.github.io/schema/vega/v4.3.0.json",
   "description": "The Kotlin sources: highlight empty profile",
   "title": "The Kotlin sources: highlight empty profile",
-  "width": 800,
-  "height": 500,
   "padding": 5,
-  "autosize": {"type": "pad", "resize": true},
+  "autosize": {"type": "fit", "contains": "padding"},
   "signals": [
     {
       "name": "clear",
@@ -306,7 +304,7 @@
       "name": "branchColor",
       "type": "ordinal",
       "domain": {"data": "table", "field": "branch"},
-      "range": "category"
+      "range": {"scheme": "dark2"}
     }
   ],
   "legends": [

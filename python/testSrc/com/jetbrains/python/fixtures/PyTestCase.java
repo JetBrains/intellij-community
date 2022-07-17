@@ -21,13 +21,12 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -41,7 +40,9 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
+import com.intellij.util.ContentsUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
@@ -61,7 +62,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.*;
 import java.util.function.Consumer;
@@ -124,30 +124,13 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    initApplication();
     super.setUp();
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
     myFixture.setTestDataPath(getTestDataPath());
-    if (SwingUtilities.isEventDispatchThread()) {
-      myFixture.setUp();
-    }
-    else {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        try {
-          myFixture.setUp();
-        }
-        catch (final Exception e) {
-          throw new RuntimeException("Error running setup", e);
-        }
-      });
-    }
-  }
-
-  private static void initApplication() {
-    TestApplicationManager.getInstance();
+    myFixture.setUp();
   }
 
   /**
@@ -256,6 +239,13 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
   }
 
+  protected void dumpSdkRoots() {
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+    assertNotNull(sdk);
+    final String[] roots = sdk.getRootProvider().getUrls(OrderRootType.CLASSES);
+    System.out.println(StringUtil.join(roots, "\n"));
+  }
+
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath();
   }
@@ -329,7 +319,8 @@ public abstract class PyTestCase extends UsefulTestCase {
     sourceRoots.forEach(root -> PsiTestUtil.addSourceRoot(module, root));
     try {
       runnable.run();
-    } finally {
+    }
+    finally {
       sourceRoots.forEach(root -> PsiTestUtil.removeSourceRoot(module, root));
     }
   }
@@ -452,7 +443,6 @@ public abstract class PyTestCase extends UsefulTestCase {
   public static String getHelpersPath() {
     return new File(PythonHelpersLocator.getPythonCommunityPath(), "helpers").getPath();
   }
-
 
 
   /**

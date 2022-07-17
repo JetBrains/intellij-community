@@ -54,7 +54,7 @@ public class PyEvaluatorTest extends PyTestCase {
   }
 
   public void testLong() {
-    final long expected = Long.valueOf(Integer.MAX_VALUE) + 1;
+    final long expected = (long)Integer.MAX_VALUE + 1;
     final long l = byExpression(Long.toString(expected), Long.class);
     assertEquals(expected, l);
   }
@@ -227,8 +227,8 @@ public class PyEvaluatorTest extends PyTestCase {
   public void testNumbersAddition() {
     assertEquals(Integer.valueOf(3), byExpression("1 + 2", Integer.class));
 
-    assertEquals(Long.valueOf(Long.valueOf(Integer.MAX_VALUE) + 1), byExpression("1 + " + Integer.MAX_VALUE, Long.class));
-    assertEquals(Long.valueOf(Long.valueOf(Integer.MAX_VALUE) + 1), byExpression(Integer.MAX_VALUE + "+ 1", Long.class));
+    assertEquals(Long.valueOf((long)Integer.MAX_VALUE + 1), byExpression("1 + " + Integer.MAX_VALUE, Long.class));
+    assertEquals(Long.valueOf((long)Integer.MAX_VALUE + 1), byExpression(Integer.MAX_VALUE + "+ 1", Long.class));
 
     assertEquals(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), byExpression("1 + " + Long.MAX_VALUE, BigInteger.class));
     assertEquals(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), byExpression(Long.MAX_VALUE + "+ 1", BigInteger.class));

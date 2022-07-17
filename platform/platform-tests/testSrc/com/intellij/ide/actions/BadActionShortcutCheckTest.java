@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.RunAll;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,22 +18,20 @@ public class BadActionShortcutCheckTest extends LightPlatformTestCase {
   private final List<String> myLoggedWarnings = ContainerUtil.createConcurrentList();
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
-      public boolean processWarn(@NotNull String category, String message, Throwable t) {
+      public boolean processWarn(@NotNull String category, @NotNull String message, Throwable t) {
         myLoggedWarnings.add(message);
         return super.processWarn(category, message, t);
       }
-    });
+    }, ()-> super.runTestRunnable(testRunnable));
   }
 
   @Override
   public void tearDown() throws Exception {
     new RunAll(
       () -> myLoggedWarnings.clear(),
-      () -> LoggedErrorProcessor.restoreDefaultProcessor(),
       () -> super.tearDown()
     ).run();
   }

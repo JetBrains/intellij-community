@@ -8,13 +8,14 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 
 fun getCurrentElement(dataContext: DataContext, project: Project): PsiElement? {
     val editor = CommonDataKeys.EDITOR.getData(dataContext)
     if (editor != null) {
         val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return null
-        if (!ProjectRootsUtil.isInProjectOrLibSource(file)) return null
+        if (!RootKindFilter.projectAndLibrarySources.matches(file)) return null
         return TargetElementUtil.findTargetElement(editor, TargetElementUtil.getInstance().allAccepted)
     }
 

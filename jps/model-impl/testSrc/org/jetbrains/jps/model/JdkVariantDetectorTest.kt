@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model
 
 import com.intellij.testFramework.rules.TempDirectory
@@ -12,7 +12,7 @@ import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 
 class JdkVariantDetectorTest {
-  @Suppress("SpellCheckingInspection") private val RELEASE_ORACLE_OPEN_1_8_0_41 =
+  private val RELEASE_ORACLE_OPEN_1_8_0_41 =
     """|JAVA_VERSION="1.8.0_41"
        |OS_NAME="Windows"
        |OS_VERSION="5.1"
@@ -20,7 +20,7 @@ class JdkVariantDetectorTest {
        |SOURCE=""
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val MANIFEST_ORACLE_OPEN_1_8_0_41 =
+  private val MANIFEST_ORACLE_OPEN_1_8_0_41 =
     """|Manifest-Version: 1.0
        |Implementation-Vendor: N/A
        |Implementation-Title: Java Runtime Environment
@@ -31,7 +31,7 @@ class JdkVariantDetectorTest {
        |Specification-Version: 1.8
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_ORACLE_1_8_0_291 =
+  private val RELEASE_ORACLE_1_8_0_291 =
     """|JAVA_VERSION="1.8.0_291"
        |OS_NAME="Linux"
        |OS_VERSION="2.6"
@@ -40,7 +40,7 @@ class JdkVariantDetectorTest {
        |BUILD_TYPE="commercial"
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val MANIFEST_ORACLE_1_8_0_291 =
+  private val MANIFEST_ORACLE_1_8_0_291 =
     """|Manifest-Version: 1.0
        |Implementation-Vendor: Oracle Corporation
        |Implementation-Title: Java Runtime Environment
@@ -106,7 +106,7 @@ class JdkVariantDetectorTest {
        |LIBC=""
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val MANIFEST_CORRETTO_1_8_0_292 =
+  private val MANIFEST_CORRETTO_1_8_0_292 =
     """|Manifest-Version: 1.0
        |Implementation-Title: Java Runtime Environment
        |Implementation-Version: 1.8.0_292
@@ -170,7 +170,7 @@ class JdkVariantDetectorTest {
        |SOURCE=" .:ddbdd8cb2baa hotspot:19eb9031626c ..."
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val MANIFEST_ZULU_1_8_0_292 =
+  private val MANIFEST_ZULU_1_8_0_292 =
     """|Manifest-Version: 1.0
        |Implementation-Title: Java Runtime Environment
        |Implementation-Version: 1.8.0_292
@@ -191,7 +191,7 @@ class JdkVariantDetectorTest {
        |JAVA_VERSION="11.0.10"
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_IBM_1_8_0_291 =
+  private val RELEASE_IBM_1_8_0_291 =
     """|JAVA_VERSION="1.8.0_291"
        |OS_NAME="Windows"
        |OS_VERSION="5.2"
@@ -199,7 +199,7 @@ class JdkVariantDetectorTest {
        |SOURCE=""
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val MANIFEST_IBM_1_8_0_291 =
+  private val MANIFEST_IBM_1_8_0_291 =
     """|Manifest-Version: 1.0
        |Ant-Version: Apache Ant 1.7.1
        |Created-By: 1.8.0 (IBM Corporation)
@@ -256,6 +256,45 @@ class JdkVariantDetectorTest {
        |component_catalog="..."
     """.trimMargin()
 
+  @Suppress("SpellCheckingInspection") private val RELEASE_SEMERU_16_0_2 =
+    """|IMPLEMENTOR="International Business Machines Corporation"
+       |IMPLEMENTOR_VERSION="16.0.2.0"
+       |JAVA_VERSION="16.0.2"
+       |JAVA_VERSION_DATE="2021-07-20"
+       |LIBC="default"
+       |MODULES="java.base ..."
+       |OS_ARCH="x86_64"
+       |OS_NAME="Darwin"
+       |SOURCE="OpenJDK:34df42439f3 OpenJ9:1851b0074 OMR:9db1c870d"
+       |BUILD_SOURCE="git:03546ff"
+       |FULL_VERSION="16.0.2+7"
+       |SEMANTIC_VERSION="16.0.2+7"
+       |BUILD_INFO="OS: Mac OS X Version: 10.14.6 18G9216"
+       |JVM_VARIANT="Openj9"
+       |JVM_VERSION="openj9-0.27.0"
+       |HEAP_SIZE="Standard"
+       |IMAGE_TYPE="JDK"
+    """.trimMargin()
+
+  @Suppress("SpellCheckingInspection") private val RELEASE_TEMURIN_17_0_1 =
+    """|IMPLEMENTOR="Eclipse Adoptium"
+       |IMPLEMENTOR_VERSION="Temurin-17.0.1+12"
+       |JAVA_VERSION="17.0.1"
+       |JAVA_VERSION_DATE="2021-10-19"
+       |LIBC="default"
+       |MODULES="java.base ..."
+       |OS_ARCH="x86_64"
+       |OS_NAME="Darwin"
+       |SOURCE=".:git:571f1238bb46"
+       |BUILD_SOURCE="git:732e6ff"
+       |FULL_VERSION="17.0.1+12"
+       |SEMANTIC_VERSION="17.0.1+12"
+       |BUILD_INFO="OS: Mac OS X Version: 10.14.6 18G84"
+       |JVM_VARIANT="Hotspot"
+       |JVM_VERSION="17.0.1+12"
+       |IMAGE_TYPE="JDK"
+    """.trimMargin()
+
   @Rule @JvmField val tempDir = TempDirectory()
 
   @Test fun `Oracle OpenJDK 8`() = assertVariant(Unknown, RELEASE_ORACLE_OPEN_1_8_0_41, MANIFEST_ORACLE_OPEN_1_8_0_41)  // no vendor info
@@ -274,6 +313,8 @@ class JdkVariantDetectorTest {
   @Test fun `IBM JDK 11`() = assertVariant(IBM, RELEASE_IBM_11_0_11)
   @Test fun `GraalVM 8`() = assertVariant(GraalVM, RELEASE_GRAALVM_1_8_0_292)
   @Test fun `GraalVM 16`() = assertVariant(GraalVM, RELEASE_GRAALVM_16_0_1)
+  @Test fun `Semeru 16`() = assertVariant(Semeru, RELEASE_SEMERU_16_0_2)
+  @Test fun `Temurin 17`() = assertVariant(Temurin, RELEASE_TEMURIN_17_0_1)
 
   private fun assertVariant(expectedVariant: JdkVersionDetector.Variant, releaseText: String, manifestText: String = "") {
     tempDir.newFile("release", releaseText.toByteArray())

@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class UnclearPrecedenceOfBinaryExpressionInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -75,6 +75,10 @@ class UnclearPrecedenceOfBinaryExpressionInspectionTest : KotlinLightCodeInsight
     fun `test plus range`() = doTest(
         "fun foo() = 1 + <caret>2..4",
         "fun foo() = (1 + 2)..4"
+    )
+
+    fun `test braces inside braces`() = doTest(
+        "fun foo() = ((1 + <caret>2))..4"
     )
 
     fun `test infixFun elvis`() = doTest(

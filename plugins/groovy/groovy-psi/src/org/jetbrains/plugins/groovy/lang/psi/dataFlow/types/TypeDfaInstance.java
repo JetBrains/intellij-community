@@ -1,97 +1,124 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentsInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
-import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
+import org.jetbrains.plugins.groovy.lang.resolve.api.PsiCallParameter;
 
-import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
-  private final Instruction[] myFlow;
+  private final GroovyControlFlow myFlow;
   private final DFAFlowInfo myFlowInfo;
   private final InferenceCache myCache;
   private final PsiManager myManager;
-  private final int lastInterestingInstructionIndex;
+  private final InitialTypeProvider myInitialTypeProvider;
 
-  TypeDfaInstance(Instruction @NotNull [] flow,
+  TypeDfaInstance(@NotNull GroovyControlFlow flow,
                   @NotNull DFAFlowInfo flowInfo,
                   @NotNull InferenceCache cache,
-                  @NotNull PsiManager manager) {
+                  @NotNull PsiManager manager,
+                  @NotNull InitialTypeProvider typeProvider) {
     myFlow = flow;
     myManager = manager;
     myFlowInfo = flowInfo;
     myCache = cache;
-    lastInterestingInstructionIndex = flowInfo.getInterestingInstructions().stream().mapToInt(Instruction::num).max().orElse(0);
+    myInitialTypeProvider = typeProvider;
   }
 
   @Override
-  public void fun(@NotNull final TypeDfaState state, @NotNull final Instruction instruction) {
-    if (instruction instanceof ReadWriteVariableInstruction) {
-      handleReadWriteVariable(state, (ReadWriteVariableInstruction)instruction);
+  public TypeDfaState fun(@NotNull final TypeDfaState state, @NotNull final Instruction instruction) {
+    TypeDfaState newState;
+    if (instruction.num() == 0) {
+      newState = handleStartInstruction();
+    }
+    else if (instruction instanceof ReadWriteVariableInstruction) {
+      newState = handleReadWriteVariable(state, (ReadWriteVariableInstruction)instruction);
     }
     else if (instruction instanceof MixinTypeInstruction) {
-      handleMixin(state, (MixinTypeInstruction)instruction);
+      newState = handleMixin(state, (MixinTypeInstruction)instruction);
     }
     else if (instruction instanceof ArgumentsInstruction) {
-      handleArguments(state, (ArgumentsInstruction)instruction);
+      newState = handleArguments(state, (ArgumentsInstruction)instruction);
     }
     else if (instruction instanceof NegatingGotoInstruction) {
-      handleNegation(state, (NegatingGotoInstruction)instruction);
+      newState = handleNegation(state, (NegatingGotoInstruction)instruction);
     }
-    else if (instruction.getElement() instanceof GrFunctionalExpression) {
-      handleFunctionalExpression(state, instruction);
+    else {
+      newState = state;
     }
+    myCache.publishDescriptor(newState, instruction);
+    return newState;
   }
 
-  private void handleMixin(@NotNull final TypeDfaState state, @NotNull final MixinTypeInstruction instruction) {
-    final VariableDescriptor descriptor = instruction.getVariableDescriptor();
-    if (descriptor == null) return;
+  private TypeDfaState handleStartInstruction() {
+    TypeDfaState state = TypeDfaState.EMPTY_STATE;
+    for (int descriptor : myFlowInfo.getInterestingDescriptors()) {
+      PsiType initialType = myInitialTypeProvider.initialType(descriptor);
+      if (initialType != null) {
+        state = state.withNewType(descriptor, DFAType.create(initialType));
+      }
+    }
+    return state;
+  }
 
-    updateVariableType(state, instruction, descriptor, () -> {
-      ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(myFlow);
+  private static boolean hasNoChanges(@NotNull TypeDfaState baseDfaState, @NotNull Int2ObjectMap<DFAType> newDfaTypes) {
+    var oldMap = baseDfaState.getRawVarTypes();
+    for (var entry : newDfaTypes.int2ObjectEntrySet()) {
+      if (!oldMap.containsKey(entry.getIntKey()) || !oldMap.get(entry.getIntKey()).equals(entry.getValue())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private TypeDfaState handleMixin(@NotNull final TypeDfaState state, @NotNull final MixinTypeInstruction instruction) {
+    final int descriptor = instruction.getVariableDescriptor();
+    if (descriptor == 0) return state;
+
+    return updateVariableType(state, instruction, descriptor, () -> {
+      ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(myFlow.getFlow());
       if (originalInstr != null) {
         assert !originalInstr.isWrite();
       }
 
-      DFAType original = state.getOrCreateVariableType(descriptor);
-      original.addMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
-      return original;
+      return state.getNotNullDFAType(descriptor).withNewMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
     });
   }
 
-  private void handleReadWriteVariable(@NotNull TypeDfaState state, @NotNull ReadWriteVariableInstruction instruction) {
+  private TypeDfaState handleReadWriteVariable(@NotNull TypeDfaState state, @NotNull ReadWriteVariableInstruction instruction) {
     final PsiElement element = instruction.getElement();
-    if (element == null) return;
-    VariableDescriptor descriptor = instruction.getDescriptor();
+    if (element == null) return state;
+    int descriptor = instruction.getDescriptor();
     if (instruction.isWrite()) {
-      updateVariableType(
+      return updateVariableType(
         state, instruction, descriptor,
         () -> {
           PsiType initializerType = TypeInferenceHelper.getInitializerType(element);
-          if (initializerType == null && descriptor instanceof ResolvedVariableDescriptor) {
-            GrVariable variable = ((ResolvedVariableDescriptor)descriptor).getVariable();
+          VariableDescriptor actualDescriptor = myFlow.getVarIndices()[descriptor];
+          if (initializerType == null &&
+              actualDescriptor instanceof ResolvedVariableDescriptor &&
+              TypeInferenceHelper.isSimpleEnoughForAugmenting(myFlow.getFlow())) {
+            GrVariable variable = ((ResolvedVariableDescriptor)actualDescriptor).getVariable();
             PsiType augmentedType = TypeAugmenter.Companion.inferAugmentedType(variable);
             return DFAType.create(augmentedType);
           }
@@ -101,19 +128,24 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         }
       );
     }
-  }
-
-  private void handleArguments(TypeDfaState state, ArgumentsInstruction instruction) {
-    for (Map.Entry<VariableDescriptor, Collection<Argument>> entry : instruction.getArguments().entrySet()) {
-      final VariableDescriptor descriptor = entry.getKey();
-      final Collection<Argument> arguments = entry.getValue();
-      handleArgument(state, instruction, descriptor, arguments);
+    else {
+      return state;
     }
   }
 
-  private void handleArgument(TypeDfaState state, ArgumentsInstruction instruction, VariableDescriptor descriptor, Collection<Argument> arguments) {
-    updateVariableType(state, instruction, descriptor, () -> {
-      final DFAType result = state.getOrCreateVariableType(descriptor);
+  private TypeDfaState handleArguments(TypeDfaState state, ArgumentsInstruction instruction) {
+    TypeDfaState newState = state;
+    for (Map.Entry<Integer, Collection<Argument>> entry : instruction.getArguments().entrySet()) {
+      final int descriptor = entry.getKey();
+      final Collection<Argument> arguments = entry.getValue();
+      newState = handleArgument(newState, instruction, descriptor, arguments);
+    }
+    return newState;
+  }
+
+  private TypeDfaState handleArgument(TypeDfaState state, ArgumentsInstruction instruction, int descriptorId, Collection<Argument> arguments) {
+    return updateVariableType(state, instruction, descriptorId, () -> {
+      DFAType result = state.getNotNullDFAType(descriptorId);
       final GroovyResolveResult[] results = instruction.getElement().multiResolve(false);
       for (GroovyResolveResult variant : results) {
         if (!(variant instanceof GroovyMethodResult)) continue;
@@ -121,7 +153,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
         if (candidate == null) continue;
 
-        ArgumentMapping mapping = candidate.getArgumentMapping();
+        ArgumentMapping<PsiCallParameter> mapping = candidate.getArgumentMapping();
         if (mapping == null) continue;
 
         for (Argument argument : arguments) {
@@ -129,125 +161,62 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
           if (parameterType == null) continue;
 
           PsiType typeToMixin = variant.getSubstitutor().substitute(parameterType);
-          result.addMixin(typeToMixin, null);
+          result = result.withNewMixin(typeToMixin, null);
         }
       }
       return result;
     });
   }
 
-  private void updateVariableType(@NotNull TypeDfaState state,
-                                  @NotNull Instruction instruction,
-                                  @NotNull VariableDescriptor descriptor,
-                                  @NotNull Computable<DFAType> computation) {
-    if (!myFlowInfo.getInterestingInstructions().contains(instruction)) {
-      state.removeBinding(descriptor);
-      return;
+  private TypeDfaState updateVariableType(@NotNull TypeDfaState state,
+                                          @NotNull Instruction instruction,
+                                          int descriptorId,
+                                          @NotNull Supplier<DFAType> computation) {
+    if (descriptorId == 0) {
+      return state;
     }
-    else {
-      state.restoreBinding(descriptor);
+    if (!myFlowInfo.getInterestingInstructions().contains(instruction)) {
+      return state.withRemovedBinding(descriptorId);
     }
 
-    DFAType type = myCache.getCachedInferredType(descriptor, instruction);
+    DFAType type = myCache.getCachedInferredType(descriptorId, instruction);
     if (type == null) {
-      if (myFlowInfo.getAcyclicInstructions().contains(instruction) && !myFlowInfo.getDependentOnSharedVariables().contains(instruction)) {
-        type = computation.compute();
+      if (myFlowInfo.getAcyclicInstructions().contains(instruction)) {
+        type = computation.get();
       }
       else {
-        type = TypeInferenceHelper.doInference(state.getBindings(), true, computation);
+        type = runWithoutCaching(state, computation);
       }
     }
 
-    DFAType existingDfaType = state.getVariableType(descriptor);
-    if (existingDfaType != null) {
-      type = type.addFlushingType(existingDfaType.getFlushingType(), myManager);
-    }
-    state.putType(descriptor, type);
+    return state.withNewType(descriptorId, type);
   }
 
-  private static void handleNegation(@NotNull TypeDfaState state, @NotNull NegatingGotoInstruction negation) {
-    for (Map.Entry<VariableDescriptor, DFAType> entry : state.getVarTypes().entrySet()) {
-      entry.setValue(entry.getValue().negate(negation));
-    }
+  private <T> T runWithoutCaching(@NotNull TypeDfaState state, Supplier<? extends T> computation) {
+    Map<VariableDescriptor, DFAType> unwrappedVariables = getCurrentVariableTypes(state);
+    return TypeInferenceHelper.doInference(unwrappedVariables, computation);
   }
 
-  private void handleFunctionalExpression(@NotNull TypeDfaState state, @NotNull Instruction instruction) {
-    if (!FunctionalExpressionFlowUtil.isNestedFlowProcessingAllowed()) {
-      return;
-    }
-    GrFunctionalExpression block = Objects.requireNonNull((GrFunctionalExpression)instruction.getElement());
-    if (CompileStaticUtil.isCompileStatic(block)) {
-      return;
-    }
-    GrControlFlowOwner blockFlowOwner = FunctionalExpressionFlowUtil.getControlFlowOwner(block);
-    if (blockFlowOwner == null) {
-      return;
-    }
-    if (!myFlowInfo.getInterestingInstructions().contains(instruction)) {
-      ControlFlowUtils.getForeignVariableDescriptors(blockFlowOwner).forEach(state::removeBinding);
-      return;
-    }
-    if (instruction.num() > lastInterestingInstructionIndex) {
-      return;
-    }
-    ControlFlowUtils.getForeignVariableDescriptors(blockFlowOwner).forEach(state::restoreBinding);
-    InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
-    Map<VariableDescriptor, DFAType> initialTypes = state.getVarTypes();
-    switch (kind) {
-      case IN_PLACE_ONCE:
-        handleClosureDFAResult(instruction, blockFlowOwner, initialTypes, state::putType);
-        break;
-      case IN_PLACE_UNKNOWN:
-        handleClosureDFAResult(instruction, blockFlowOwner, initialTypes, (descriptor, dfaType) -> {
-          DFAType existingType = state.getVariableType(descriptor);
-          if (existingType != null) {
-            DFAType mergedType = DFAType.create(dfaType, existingType, block.getManager());
-            state.putType(descriptor, mergedType);
-          }
-        });
-        break;
-      case UNKNOWN:
-        runWithCycleCheck(instruction, () -> {
-          for (VariableDescriptor descriptor : myFlowInfo.getInterestingDescriptors()) {
-            var initialTypesWithNullizedDescriptorType = new HashMap<VariableDescriptor, DFAType>(initialTypes);
-            initialTypesWithNullizedDescriptorType.putIfAbsent(descriptor, DFAType.create(null));
-            PsiType upperBoundByWrites = TypeDfaInstanceUtilKt.getLeastUpperBoundByAllWrites(blockFlowOwner, initialTypesWithNullizedDescriptorType, descriptor);
-            if (upperBoundByWrites != PsiType.NULL) {
-              DFAType existingType = state.getVariableType(descriptor);
-              if (existingType == null) existingType = DFAType.create(null);
-              DFAType flushedType = existingType.addFlushingType(upperBoundByWrites, myManager);
-              state.putType(descriptor, flushedType);
-            }
-          }
-          return null;
-        });
-    }
-  }
-
-  private void handleClosureDFAResult(@NotNull Instruction instruction,
-                                      @NotNull GrControlFlowOwner block,
-                                      @NotNull Map<VariableDescriptor, DFAType> initialTypes,
-                                      @NotNull BiConsumer<? super VariableDescriptor, ? super DFAType> typeConsumer) {
-    InferenceCache blockCache = TypeInferenceHelper.getInferenceCache(block);
-    Instruction[] blockFlow = block.getControlFlow();
-    Instruction lastBlockInstruction = blockFlow[blockFlow.length - 1];
-    runWithCycleCheck(instruction, () -> {
-      for (VariableDescriptor outerDescriptor : myFlowInfo.getInterestingDescriptors()) {
-        PsiType descriptorType = blockCache.getInferredType(outerDescriptor, lastBlockInstruction, false, initialTypes);
-        if (descriptorType != null) {
-          typeConsumer.accept(outerDescriptor, DFAType.create(descriptorType));
-        }
+  @NotNull
+  private Map<VariableDescriptor, DFAType> getCurrentVariableTypes(@NotNull TypeDfaState state) {
+    Map<VariableDescriptor, DFAType> unwrappedVariables = new HashMap<>();
+    for (var entry : state.getRawVarTypes().int2ObjectEntrySet()) {
+      if (!state.isProhibited(entry.getIntKey())) {
+        unwrappedVariables.put(myFlow.getVarIndices()[entry.getIntKey()], entry.getValue());
       }
-      return null;
-    });
+    }
+    return unwrappedVariables;
   }
 
-  private void runWithCycleCheck(@NotNull Instruction instruction, @NotNull Computable<?> action) {
-    if (myFlowInfo.getAcyclicInstructions().contains(instruction)) {
-      action.get();
+  private static TypeDfaState handleNegation(@NotNull TypeDfaState state, @NotNull NegatingGotoInstruction negation) {
+    TypeDfaState newState = state;
+    for (Int2ObjectMap.Entry<DFAType> entry : state.getRawVarTypes().int2ObjectEntrySet()) {
+      DFAType before = entry.getValue();
+      DFAType after = before.withNegated(negation);
+      if (before != after) {
+        newState = newState.withNewType(entry.getIntKey(), after);
+      }
     }
-    else {
-      TypeInferenceHelper.doInference(Collections.emptyMap(), false, action);
-    }
+    return newState;
   }
 }

@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +26,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   @NotNull private final VirtualFileList myFileList;
   private final boolean myDeletableFiles;
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected SelectFilesDialog(Project project,
                               @NotNull List<? extends VirtualFile> files,
                               @Nullable @NlsContexts.Label String prompt,
@@ -51,7 +49,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   }
 
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static SelectFilesDialog init(Project project,
                                        @NotNull List<? extends VirtualFile> originalFiles,
                                        @Nullable @NlsContexts.Label String prompt,

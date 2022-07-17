@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.problems.pass;
 
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -19,9 +18,18 @@ import static com.intellij.util.ObjectUtils.tryCast;
 class RelatedProblemTargetAdapter implements PsiElementUsageTarget, ItemPresentation {
 
   private final SmartPsiElementPointer<PsiElement> myPointer;
+  private final String myMemberText;
+  private final String myMemberLocation;
+  private final Icon myMemberIcon;
 
-  RelatedProblemTargetAdapter(@NotNull PsiElement element) {
+  RelatedProblemTargetAdapter(@NotNull PsiElement element,
+                              @Nullable String memberText,
+                              @Nullable String memberLocation,
+                              @Nullable Icon memberIcon) {
     myPointer = SmartPointerManager.createPointer(element);
+    myMemberText = memberText;
+    myMemberLocation = memberLocation;
+    myMemberIcon = memberIcon;
   }
 
   @Override
@@ -70,24 +78,16 @@ class RelatedProblemTargetAdapter implements PsiElementUsageTarget, ItemPresenta
 
   @Override
   public @Nullable String getPresentableText() {
-    ItemPresentation itemPresentation = getItemPresentation();
-    return itemPresentation == null ? null : itemPresentation.getPresentableText();
-  }
-
-  private @Nullable ItemPresentation getItemPresentation() {
-    NavigationItem navigationItem = tryCast(getElement(), NavigationItem.class);
-    return navigationItem == null ? null : navigationItem.getPresentation();
+    return myMemberText;
   }
 
   @Override
   public @Nullable String getLocationString() {
-    ItemPresentation itemPresentation = getItemPresentation();
-    return itemPresentation == null ? null : itemPresentation.getLocationString();
+    return myMemberLocation;
   }
 
   @Override
   public @Nullable Icon getIcon(boolean unused) {
-    ItemPresentation itemPresentation = getItemPresentation();
-    return itemPresentation == null ? null : itemPresentation.getIcon(unused);
+    return myMemberIcon;
   }
 }

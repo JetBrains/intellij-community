@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
-import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
@@ -61,12 +60,17 @@ class Credentials(@NlsSafe user: String?, @NlsSafe val password: OneTimeString? 
   override fun hashCode() = (userName?.hashCode() ?: 0) * 37 + (password?.hashCode() ?: 0)
 
   override fun toString() = "userName: $userName, password size: ${password?.length ?: 0}"
+
+  companion object {
+    val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
+    val CANNOT_UNLOCK_KEYCHAIN = Credentials(null, null as OneTimeString?)
+  }
 }
 
 /** @deprecated Use [CredentialAttributes] instead. */
 @Deprecated("Never use it in a new code.")
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-@Suppress("FunctionName", "DeprecatedCallableAddReplaceWith")
+@ApiStatus.ScheduledForRemoval
+@Suppress("DeprecatedCallableAddReplaceWith")
 fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAttributes(requestor.name, userName, requestor)
 
 @Contract("null -> false")

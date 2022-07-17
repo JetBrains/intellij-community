@@ -67,7 +67,7 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase 
       @NotNull
       public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
         return new JavaElementVisitor() {
-          @Override public void visitLiteralExpression(PsiLiteralExpression expression) {
+          @Override public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
             final String s = (String)expression.getValue();
             if (s.contains("a")) holder.registerProblem(expression, "Look ma! This String contains 'a'");
             if (s.contains("b")) holder.registerProblem(expression, "Look ma! This String contains 'b'");

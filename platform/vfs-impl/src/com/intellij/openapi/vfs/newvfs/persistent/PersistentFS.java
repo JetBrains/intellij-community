@@ -68,6 +68,7 @@ public abstract class PersistentFS extends ManagingFS {
   @ApiStatus.Internal
   public abstract ChildInfo findChildInfo(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem delegate);
 
+  @NotNull
   public abstract String getName(int id);
 
   public abstract long getLastRecordedLength(@NotNull VirtualFile file);

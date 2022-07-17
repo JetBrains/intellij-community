@@ -1,7 +1,0 @@
-{
-    "mainFile": "MainClass.kt",
-    "usages": [
-        "Usage.kt",
-        "JavaUsage.java"
-    ]
-}

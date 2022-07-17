@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,6 +20,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.OwnerOptional;
+import com.jetbrains.JBRFileDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +61,16 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
       .ifDialog(dialogConsumer)
       .ifFrame(frameConsumer)
       .ifNull(frameConsumer);
+
+    JBRFileDialog jbrDialog = JBRFileDialog.get(myFileDialog);
+    if (jbrDialog != null) {
+      int hints = jbrDialog.getHints();
+      if (myFileChooserDescriptor.isChooseFolders()) hints |= JBRFileDialog.SELECT_DIRECTORIES_HINT;
+      if (myFileChooserDescriptor.isChooseFiles() || myFileChooserDescriptor.isChooseJars() || myFileChooserDescriptor.isChooseJarContents()) {
+        hints |= JBRFileDialog.SELECT_FILES_HINT;
+      }
+      jbrDialog.setHints(hints);
+    }
   }
 
   private static @NlsContexts.DialogTitle String getChooserTitle(final FileChooserDescriptor descriptor) {
@@ -84,10 +95,9 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
     }
 
 
-    myFileDialog.setFilenameFilter((dir, name) -> {
-      File file = new File(dir, name);
-      return myFileChooserDescriptor.isFileSelectable(myHelper.fileToVirtualFile(file));
-    });
+    myFileDialog.setFilenameFilter(FileChooser.safeInvokeFilter((dir, name) -> {
+      return myFileChooserDescriptor.isFileSelectable(PathChooserDialogHelper.fileToCoreLocalVirtualFile(dir, name));
+    }, false));
 
     myFileDialog.setMultipleMode(myFileChooserDescriptor.isChooseMultiple());
 

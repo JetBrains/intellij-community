@@ -82,7 +82,7 @@ public final class StatementExtractor {
       parent = ObjectUtils.tryCast(parentElement, PsiExpression.class);
       if (parent == null) {
         String message = PsiTreeUtil.isAncestor(root, expression, false) ?
-                         "Expected to have expression parent" :
+                         "Expected to have expression parent, got " + parentElement.getClass() :
                          "Supplied root is not the expression ancestor";
         throw new RuntimeExceptionWithAttachments(message,
                                                   new Attachment("expression.txt", expression.getText()),
@@ -257,7 +257,7 @@ public final class StatementExtractor {
       PsiCodeBlock body = Objects.requireNonNull(copy.getBody());
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitExpressionStatement(PsiExpressionStatement statement) {
+        public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
           if (statement.getParent() instanceof PsiSwitchLabeledRuleStatement &&
               ((PsiSwitchLabeledRuleStatement)statement.getParent()).getEnclosingSwitchBlock() == copy) {
             process(statement);
@@ -265,14 +265,14 @@ public final class StatementExtractor {
         }
 
         @Override
-        public void visitYieldStatement(PsiYieldStatement statement) {
+        public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
           if (statement.getExpression() != null && statement.findEnclosingExpression() == copy) {
             process(statement);
           }
         }
 
         @Override
-        public void visitExpression(PsiExpression expression) {
+        public void visitExpression(@NotNull PsiExpression expression) {
           // Do not go into any expressions
         }
 

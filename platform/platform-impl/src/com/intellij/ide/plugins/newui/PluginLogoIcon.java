@@ -6,18 +6,18 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * @author Alexander Lobas
  */
 class PluginLogoIcon implements PluginLogoIconProvider {
-  static final Map<Icon, Icon> disabledIcons = ContainerUtil.createWeakMap(200);
+  static final Map<Icon, Icon> disabledIcons = new WeakHashMap<>(200);
 
   private final Icon myPluginLogo;
   private final Icon myPluginLogoError;
@@ -59,28 +59,18 @@ class PluginLogoIcon implements PluginLogoIconProvider {
 
   @NotNull
   private static Icon calculateDisabledIcon(@NotNull Icon icon, boolean base) {
-    if (icon instanceof IconLoader.LazyIcon) {
-      icon = ((IconLoader.LazyIcon)icon).retrieveIcon();
-    }
-
+    Icon i = icon instanceof IconLoader.LazyIcon ? ((IconLoader.LazyIcon)icon).retrieveIcon() : icon;
     synchronized (disabledIcons) {
-      Icon disabledIcon = disabledIcons.get(icon);
-      if (disabledIcon == null) {
-        if (base) {
-          disabledIcon = IconLoader.filterIcon(icon, () -> new UIUtil.GrayFilter(), null);
-        }
-        else {
-          disabledIcon = IconLoader.filterIcon(icon, () -> new UIUtil.GrayFilter(JBColor.isBright() ? 20 : 19, 0, 100), null);
-        }
-        disabledIcons.put(icon, disabledIcon);
-      }
-      return disabledIcon;
+      return disabledIcons.computeIfAbsent(i, __->
+        base
+             ? IconLoader.filterIcon(i, () -> new UIUtil.GrayFilter(), null)
+             : IconLoader.filterIcon(i, () -> new UIUtil.GrayFilter(JBColor.isBright() ? 20 : 19, 0, 100), null));
     }
   }
 
   @NotNull
   protected Icon getScaled2xIcon(@NotNull Icon icon) {
-    return IconUtil.scale(icon, null, 2f);
+    return IconUtil.scale(icon, null, 2.0f);
   }
 
   @NotNull

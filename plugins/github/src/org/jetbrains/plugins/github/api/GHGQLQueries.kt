@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
 object GHGQLQueries {
   const val findOrganizationTeams = "graphql/query/findOrganizationTeams.graphql"
   const val findRepository = "graphql/query/findRepository.graphql"
   const val getProtectionRules = "graphql/query/getProtectionRules.graphql"
-  const val commentBody = "graphql/query/commentBody.graphql"
   const val updateIssueComment = "graphql/query/updateIssueComment.graphql"
   const val deleteIssueComment = "graphql/query/deleteIssueComment.graphql"
   const val issueSearch = "graphql/query/issueSearch.graphql"
@@ -18,6 +17,9 @@ object GHGQLQueries {
   const val pullRequestReviewThreads = "graphql/query/pullRequestReviewThreads.graphql"
   const val pullRequestCommits = "graphql/query/pullRequestCommits.graphql"
   const val pullRequestMergeabilityData = "graphql/query/findPullRequestMergeability.graphql"
+  const val pullRequestFiles = "graphql/query/pullRequestFiles.graphql"
+  const val markFileAsViewed = "graphql/query/markFileAsViewed.graphql"
+  const val unmarkFileAsViewed = "graphql/query/unmarkFileAsViewed.graphql"
   const val createReview = "graphql/query/createReview.graphql"
   const val submitReview = "graphql/query/submitReview.graphql"
   const val updateReview = "graphql/query/updateReview.graphql"

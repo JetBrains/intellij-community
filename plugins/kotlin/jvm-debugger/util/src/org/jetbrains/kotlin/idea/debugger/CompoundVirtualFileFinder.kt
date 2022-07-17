@@ -24,6 +24,8 @@ class CompoundVirtualFileFinder(private val finders: List<VirtualFileFinder>) : 
         return null
     }
 
+    override fun findSourceOrBinaryVirtualFile(classId: ClassId): VirtualFile? = findVirtualFileWithHeader(classId)
+
     override fun findVirtualFileWithHeader(classId: ClassId): VirtualFile? {
         for (finder in finders) {
             finder.findVirtualFileWithHeader(classId)?.let { return it }

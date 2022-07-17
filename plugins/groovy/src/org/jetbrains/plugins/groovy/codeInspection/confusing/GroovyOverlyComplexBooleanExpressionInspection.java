@@ -23,7 +23,7 @@ import javax.swing.*;
 public class GroovyOverlyComplexBooleanExpressionInspection extends GroovyOverlyComplexBooleanExpressionInspectionBase {
 
   @Override
-  public JComponent createOptionsPanel() {
+  public JComponent createGroovyOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("overly.complex.boolean.expression.max.terms.option"),
                                               this, "m_limit");
   }

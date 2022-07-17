@@ -1,5 +1,7 @@
 // "Make 'Private' protected" "true"
-// ACTION: Make 'foo' private
+// ACTION: Convert receiver to parameter
+// ACTION: Introduce import alias
+// ACTION: Make 'Private' protected
 // ACTION: Make 'Private' public
 
 class Receiver<T>

@@ -8,6 +8,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -29,7 +30,7 @@ import com.intellij.util.ui.UIUtil;
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.KotlinBundle;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinFileType;
 import org.jetbrains.kotlin.idea.core.util.PhysicalFileSystemUtilsKt;
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings;
@@ -145,11 +146,6 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
         initializedCheckBoxesState = getCheckboxesState(true);
     }
 
-    @Override
-    protected void init() {
-        super.init();
-    }
-
     private final BitSet initializedCheckBoxesState;
     private BitSet getCheckboxesState(boolean applyDefaults) {
 
@@ -227,14 +223,13 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
         ((KotlinDestinationFolderComboBox) destinationFolderCB).setData(
                 myProject,
                 targetDirectory,
-                new Pass<String>() {
+                new Pass<>() {
                     @Override
-                    public void pass(String s) {
+                    public void pass(@NlsSafe String s) {
                         setErrorText(s);
                     }
                 },
-                classPackageChooser.getChildComponent(),
-                !freezeTargets
+                classPackageChooser.getChildComponent()
         );
     }
 
@@ -336,6 +331,11 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
             @Override
             public String getTargetPackage() {
                 return MoveKotlinTopLevelDeclarationsDialog.this.getTargetPackage();
+            }
+
+            @Override
+            protected boolean sourceRootsInTargetDirOnly() {
+                return !freezeTargets;
             }
         };
     }

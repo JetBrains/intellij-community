@@ -94,6 +94,11 @@ public class StatusBarWidgetsActionGroup extends ActionGroup {
       }
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     private @Nullable
     static StatusBarWidgetFactory getFactory(@NotNull AnActionEvent e) {
       Project project = e.getProject();

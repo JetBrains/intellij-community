@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.maven;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -17,89 +17,238 @@ import org.junit.runner.RunWith;
 @TestRoot("maven/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/maven-inspections")
-public class KotlinMavenInspectionTestGenerated extends AbstractKotlinMavenInspectionTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinMavenInspectionTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_01")
+    public static class _01 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("bothCompileAndTestCompileInTheSameExecution.xml")
+        public void testBothCompileAndTestCompileInTheSameExecution() throws Exception {
+            runTest("testData/maven-inspections/_01/bothCompileAndTestCompileInTheSameExecution.xml");
+        }
     }
 
-    @TestMetadata("bothCompileAndTestCompileInTheSameExecution.xml")
-    public void testBothCompileAndTestCompileInTheSameExecution() throws Exception {
-        runTest("testData/maven-inspections/bothCompileAndTestCompileInTheSameExecution.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_02")
+    public static class _02 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("dependencyWithNoExecution.xml")
+        public void testDependencyWithNoExecution() throws Exception {
+            runTest("testData/maven-inspections/_02/dependencyWithNoExecution.xml");
+        }
     }
 
-    @TestMetadata("dependencyWithNoExecution.xml")
-    public void testDependencyWithNoExecution() throws Exception {
-        runTest("testData/maven-inspections/dependencyWithNoExecution.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_03")
+    public static class _03 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("deprecatedJre.xml")
+        public void testDeprecatedJre() throws Exception {
+            runTest("testData/maven-inspections/_03/deprecatedJre.xml");
+        }
     }
 
-    @TestMetadata("deprecatedJre.xml")
-    public void testDeprecatedJre() throws Exception {
-        runTest("testData/maven-inspections/deprecatedJre.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_04")
+    public static class _04 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("deprecatedJreWithDependencyManagement.xml")
+        public void testDeprecatedJreWithDependencyManagement() throws Exception {
+            runTest("testData/maven-inspections/_04/deprecatedJreWithDependencyManagement.xml");
+        }
     }
 
-    @TestMetadata("deprecatedJreWithDependencyManagement.xml")
-    public void testDeprecatedJreWithDependencyManagement() throws Exception {
-        runTest("testData/maven-inspections/deprecatedJreWithDependencyManagement.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_05")
+    public static class _05 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("deprecatedKotlinxCoroutines.xml")
+        public void testDeprecatedKotlinxCoroutines() throws Exception {
+            runTest("testData/maven-inspections/_05/deprecatedKotlinxCoroutines.xml");
+        }
     }
 
-    @TestMetadata("deprecatedKotlinxCoroutines.xml")
-    public void testDeprecatedKotlinxCoroutines() throws Exception {
-        runTest("testData/maven-inspections/deprecatedKotlinxCoroutines.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_06")
+    public static class _06 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("deprecatedKotlinxCoroutinesNoError.xml")
+        public void testDeprecatedKotlinxCoroutinesNoError() throws Exception {
+            runTest("testData/maven-inspections/_06/deprecatedKotlinxCoroutinesNoError.xml");
+        }
     }
 
-    @TestMetadata("deprecatedKotlinxCoroutinesNoError.xml")
-    public void testDeprecatedKotlinxCoroutinesNoError() throws Exception {
-        runTest("testData/maven-inspections/deprecatedKotlinxCoroutinesNoError.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_07")
+    public static class _07 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ideAndMavenVersions.xml")
+        public void testIdeAndMavenVersions() throws Exception {
+            runTest("testData/maven-inspections/_07/ideAndMavenVersions.xml");
+        }
     }
 
-    @TestMetadata("ideAndMavenVersions.xml")
-    public void testIdeAndMavenVersions() throws Exception {
-        runTest("testData/maven-inspections/ideAndMavenVersions.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_08")
+    public static class _08 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ideAndMavenVersionsSuppression.xml")
+        public void testIdeAndMavenVersionsSuppression() throws Exception {
+            runTest("testData/maven-inspections/_08/ideAndMavenVersionsSuppression.xml");
+        }
     }
 
-    @TestMetadata("ideAndMavenVersionsSuppression.xml")
-    public void testIdeAndMavenVersionsSuppression() throws Exception {
-        runTest("testData/maven-inspections/ideAndMavenVersionsSuppression.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_09")
+    public static class _09 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("kotlinTestWithJunit.xml")
+        public void testKotlinTestWithJunit() throws Exception {
+            runTest("testData/maven-inspections/_09/kotlinTestWithJunit.xml");
+        }
     }
 
-    @TestMetadata("kotlinTestWithJunit.xml")
-    public void testKotlinTestWithJunit() throws Exception {
-        runTest("testData/maven-inspections/kotlinTestWithJunit.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_10")
+    public static class _10 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("missingDependencies.xml")
+        public void testMissingDependencies() throws Exception {
+            runTest("testData/maven-inspections/_10/missingDependencies.xml");
+        }
     }
 
-    @TestMetadata("missingDependencies.xml")
-    public void testMissingDependencies() throws Exception {
-        runTest("testData/maven-inspections/missingDependencies.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_11")
+    public static class _11 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("noExecutions.xml")
+        public void testNoExecutions() throws Exception {
+            runTest("testData/maven-inspections/_11/noExecutions.xml");
+        }
     }
 
-    @TestMetadata("noExecutions.xml")
-    public void testNoExecutions() throws Exception {
-        runTest("testData/maven-inspections/noExecutions.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_12")
+    public static class _12 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("oldVersionWithJre.xml")
+        public void testOldVersionWithJre() throws Exception {
+            runTest("testData/maven-inspections/_12/oldVersionWithJre.xml");
+        }
     }
 
-    @TestMetadata("oldVersionWithJre.xml")
-    public void testOldVersionWithJre() throws Exception {
-        runTest("testData/maven-inspections/oldVersionWithJre.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_13")
+    public static class _13 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("sameVersionPluginLibrary.xml")
+        public void testSameVersionPluginLibrary() throws Exception {
+            runTest("testData/maven-inspections/_13/sameVersionPluginLibrary.xml");
+        }
     }
 
-    @TestMetadata("sameVersionPluginLibrary.xml")
-    public void testSameVersionPluginLibrary() throws Exception {
-        runTest("testData/maven-inspections/sameVersionPluginLibrary.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_14")
+    public static class _14 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("sameVersionPluginLibrarySuppression.xml")
+        public void testSameVersionPluginLibrarySuppression() throws Exception {
+            runTest("testData/maven-inspections/_14/sameVersionPluginLibrarySuppression.xml");
+        }
     }
 
-    @TestMetadata("sameVersionPluginLibrarySuppression.xml")
-    public void testSameVersionPluginLibrarySuppression() throws Exception {
-        runTest("testData/maven-inspections/sameVersionPluginLibrarySuppression.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_15")
+    public static class _15 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("wrongJsExecution.xml")
+        public void testWrongJsExecution() throws Exception {
+            runTest("testData/maven-inspections/_15/wrongJsExecution.xml");
+        }
     }
 
-    @TestMetadata("wrongJsExecution.xml")
-    public void testWrongJsExecution() throws Exception {
-        runTest("testData/maven-inspections/wrongJsExecution.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_16")
+    public static class _16 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("wrongPhaseExecution.xml")
+        public void testWrongPhaseExecution() throws Exception {
+            runTest("testData/maven-inspections/_16/wrongPhaseExecution.xml");
+        }
     }
 
-    @TestMetadata("wrongPhaseExecution.xml")
-    public void testWrongPhaseExecution() throws Exception {
-        runTest("testData/maven-inspections/wrongPhaseExecution.xml");
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_17")
+    public static class _17 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ideAndMavenVersionsBackwardCompatibility.xml")
+        public void testIdeAndMavenVersionsBackwardCompatibility() throws Exception {
+            runTest("testData/maven-inspections/_17/ideAndMavenVersionsBackwardCompatibility.xml");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_18")
+    public static class _18 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ideAndMavenVersionsNoForwardCompatibility.xml")
+        public void testIdeAndMavenVersionsNoForwardCompatibility() throws Exception {
+            runTest("testData/maven-inspections/_18/ideAndMavenVersionsNoForwardCompatibility.xml");
+        }
     }
 }

@@ -51,7 +51,7 @@ public abstract class FrameworkBasedOptionsStep<T extends FrameworkSupportProvid
 
     myPanel = new JPanel(new BorderLayout(0, 4));
     myPanel.add(myConfigurable.getComponent(), BorderLayout.CENTER);
-    updateDataModel();
+    myFrameworkSupportModel.fireWizardStepUpdated();
   }
 
   protected abstract FrameworkSupportConfigurableBase createConfigurable(T provider, FrameworkSupportModelBase model);

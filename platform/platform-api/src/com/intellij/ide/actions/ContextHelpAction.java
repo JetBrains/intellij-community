@@ -47,7 +47,7 @@ public class ContextHelpAction extends AnAction implements DumbAware {
 
   @Nullable
   protected String getHelpId(DataContext dataContext) {
-    return myHelpID != null ? myHelpID : PlatformDataKeys.HELP_ID.getData(dataContext);
+    return myHelpID != null ? myHelpID : PlatformCoreDataKeys.HELP_ID.getData(dataContext);
   }
 
   @Override
@@ -66,5 +66,10 @@ public class ContextHelpAction extends AnAction implements DumbAware {
       presentation.setIcon(AllIcons.Actions.Help);
       presentation.setText(CommonBundle.getHelpButtonText());
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

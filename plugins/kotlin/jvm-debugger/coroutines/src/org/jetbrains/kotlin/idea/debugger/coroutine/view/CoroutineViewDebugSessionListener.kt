@@ -3,27 +3,27 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
 import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 class CoroutineViewDebugSessionListener(
     private val session: XDebugSession,
-    private val xCoroutineView: XCoroutineView
+    private val coroutineView: CoroutineView
 ) : XDebugSessionListener {
     val log by logger
 
     override fun sessionPaused() {
         val suspendContext = session.suspendContext ?: return requestClear()
-        xCoroutineView.alarm.cancel()
+        coroutineView.alarm.cancel()
         renew(suspendContext)
     }
 
     override fun sessionResumed() {
-        xCoroutineView.saveState()
+        coroutineView.saveState()
         val suspendContext = session.suspendContext ?: return requestClear()
         renew(suspendContext)
     }
@@ -34,7 +34,7 @@ class CoroutineViewDebugSessionListener(
     }
 
     override fun stackFrameChanged() {
-        xCoroutineView.saveState()
+        coroutineView.saveState()
     }
 
     override fun beforeSessionResume() {
@@ -48,16 +48,16 @@ class CoroutineViewDebugSessionListener(
     private fun renew(suspendContext: XSuspendContext) {
         if (suspendContext is SuspendContextImpl) {
             DebuggerUIUtil.invokeLater {
-                xCoroutineView.renewRoot(suspendContext)
+                coroutineView.renewRoot(suspendContext)
             }
         }
     }
 
     private fun requestClear() {
-        if (ApplicationManager.getApplication().isUnitTestMode) { // no delay in tests
-            xCoroutineView.resetRoot()
+        if (isUnitTestMode()) { // no delay in tests
+            coroutineView.resetRoot()
         } else {
-            xCoroutineView.alarm.cancelAndRequest()
+            coroutineView.alarm.cancelAndRequest()
         }
     }
 }

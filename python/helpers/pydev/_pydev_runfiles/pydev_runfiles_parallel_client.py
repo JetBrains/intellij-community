@@ -38,7 +38,7 @@ class ServerComm(threading.Thread):
     def __init__(self, job_id, server):
         self.notifications_queue = Queue()
         threading.Thread.__init__(self)
-        self.setDaemon(False) #Wait for all the notifications to be passed before exiting!
+        self.daemon = False #Wait for all the notifications to be passed before exiting!
         assert job_id is not None
         assert port is not None
         self.job_id = job_id

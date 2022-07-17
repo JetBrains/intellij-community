@@ -1,0 +1,18 @@
+package java11;
+
+public class TestDynamicConstantPoolEntry {
+   public static void main(String... var0) {
+      System.out.println("This class file contains constant pool entry of type CONSTANT_Dynamic, not used in the bytecode.");
+   }
+}
+
+class 'java11/TestDynamicConstantPoolEntry' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      4
+      3      4
+      5      4
+      8      5
+   }
+}
+
+Lines mapping:

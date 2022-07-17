@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.XmlInterner
+import com.intellij.util.xml.dom.XmlInterner
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
 import org.jetbrains.annotations.ApiStatus
@@ -11,11 +10,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Supplier
-
-private val unitTestWithBundledPlugins = java.lang.Boolean.getBoolean("idea.run.tests.with.bundled.plugins")
-
-private val LOG: Logger
-  get() = PluginManagerCore.getLogger()
 
 @ApiStatus.Internal
 class DescriptorListLoadingContext constructor(
@@ -46,8 +40,6 @@ class DescriptorListLoadingContext constructor(
     }
     private set
 
-  @JvmField var usePluginClassLoader = !PluginManagerCore.isUnitTestMode || unitTestWithBundledPlugins
-
   private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
 
   fun isPluginDisabled(id: PluginId): Boolean {
@@ -67,18 +59,18 @@ class DescriptorListLoadingContext constructor(
     get() = threadLocalXmlFactory.get()[0]!!.visitedFiles
 
   fun checkOptionalConfigShortName(configFile: String, descriptor: IdeaPluginDescriptor): Boolean {
-    val pluginId = descriptor.pluginId ?: return false
     val configNames = optionalConfigNames
     if (configNames == null || configFile.startsWith("intellij.")) {
       return false
     }
 
+    val pluginId = descriptor.pluginId
     val oldPluginId = configNames.put(configFile, pluginId)
     if (oldPluginId == null || oldPluginId == pluginId) {
       return false
     }
 
-    LOG.error("Optional config file with name $configFile already registered by $oldPluginId. " +
+    PluginManagerCore.getLogger().error("Optional config file with name $configFile already registered by $oldPluginId. " +
               "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
               "Current plugin: $descriptor.")
     return true

@@ -29,7 +29,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.Unit;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -201,9 +200,9 @@ public abstract class VcsVFSListener implements Disposable {
 
     private boolean isAnythingToProcess() {
       return withLock(PROCESSING_LOCK.readLock(), () -> !myAddedFiles.isEmpty() ||
-                                                                !myDeletedFiles.isEmpty() ||
-                                                                !myDeletedWithoutConfirmFiles.isEmpty() ||
-                                                                !myMovedFiles.isEmpty());
+                                                        !myDeletedFiles.isEmpty() ||
+                                                        !myDeletedWithoutConfirmFiles.isEmpty() ||
+                                                        !myMovedFiles.isEmpty());
     }
 
     @RequiresBackgroundThread
@@ -220,7 +219,8 @@ public abstract class VcsVFSListener implements Disposable {
 
       List<VcsException> exceptions = acquireExceptions();
       if (!exceptions.isEmpty()) {
-        AbstractVcsHelper.getInstance(myProject).showErrors(exceptions, VcsBundle.message("vcs.tab.title.vcs.name.operations.errors", myVcs.getDisplayName()));
+        AbstractVcsHelper.getInstance(myProject)
+          .showErrors(exceptions, VcsBundle.message("vcs.tab.title.vcs.name.operations.errors", myVcs.getDisplayName()));
       }
     }
 
@@ -385,8 +385,7 @@ public abstract class VcsVFSListener implements Disposable {
   /**
    * @deprecated Use {@link #VcsVFSListener(AbstractVcs)} followed by {@link #installListeners()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected VcsVFSListener(@NotNull Project project, @NotNull AbstractVcs vcs) {
     this(vcs);
     installListeners();
@@ -431,7 +430,7 @@ public abstract class VcsVFSListener implements Disposable {
   private boolean allowedAddition(@NotNull VFileEvent event) {
     if (myVcsFileListenerContextHelper.isAdditionContextEmpty()) return true;
 
-    return !myVcsFileListenerContextHelper.isAdditionIgnored(event.getFile());
+    return !myVcsFileListenerContextHelper.isAdditionIgnored(VcsUtil.getFilePath(event.getPath()));
   }
 
   @RequiresBackgroundThread
@@ -546,6 +545,7 @@ public abstract class VcsVFSListener implements Disposable {
 
   /**
    * Same as {@link #selectFilePathsToDelete} but for add operation
+   *
    * @param addFiles added files set
    * @return selected files or empty if {@link VcsShowConfirmationOption.Value#DO_NOTHING_SILENTLY}
    */
@@ -743,37 +743,38 @@ public abstract class VcsVFSListener implements Disposable {
       };
     }
   }
-    private class MyCommandAdapter implements CommandListener {
 
-      @Override
-      public void commandFinished(@NotNull CommandEvent event) {
-        if (myProject != event.getProject()) return;
+  private class MyCommandAdapter implements CommandListener {
 
-        /*
-        * Create file events cannot be filtered in afterVfsChange since VcsFileListenerContextHelper populated after actual file creation in PathsVerifier.CheckAdded.check
-        * So this commandFinished is the only way to get in sync with VcsFileListenerContextHelper to check if additions need to be filtered.
-        */
-        List<VFileEvent> events = ContainerUtil.filter(myEventsToProcess, e -> !(e instanceof VFileCreateEvent) || allowedAddition(e));
-        myEventsToProcess.clear();
+    @Override
+    public void commandFinished(@NotNull CommandEvent event) {
+      if (myProject != event.getProject()) return;
 
-        if (events.isEmpty() && !myProcessor.isAnythingToProcess()) return;
-
-        processEventsInBackground(events);
-      }
-
-      /**
-       * Not using modal progress here, because it could lead to some focus related assertion (e.g. "showing dialogs from popup" in com.intellij.ui.popup.tree.TreePopupImpl)
-       * Assume, that it is a safe to do all processing in background even if "Add to VCS" dialog may appear during such processing.
+      /*
+       * Create file events cannot be filtered in afterVfsChange since VcsFileListenerContextHelper populated after actual file creation in PathsVerifier.CheckAdded.check
+       * So this commandFinished is the only way to get in sync with VcsFileListenerContextHelper to check if additions need to be filtered.
        */
-      private void processEventsInBackground(List<VFileEvent> events) {
-        new Task.Backgroundable(myProject, VcsBundle.message("progress.title.version.control.processing.changed.files"), true) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            indicator.checkCanceled();
-            myProcessor.process(events);
-          }
-        }.queue();
-      }
+      List<VFileEvent> events = ContainerUtil.filter(myEventsToProcess, e -> !(e instanceof VFileCreateEvent) || allowedAddition(e));
+      myEventsToProcess.clear();
+
+      if (events.isEmpty() && !myProcessor.isAnythingToProcess()) return;
+
+      processEventsInBackground(events);
     }
+
+    /**
+     * Not using modal progress here, because it could lead to some focus related assertion (e.g. "showing dialogs from popup" in com.intellij.ui.popup.tree.TreePopupImpl)
+     * Assume, that it is a safe to do all processing in background even if "Add to VCS" dialog may appear during such processing.
+     */
+    private void processEventsInBackground(List<VFileEvent> events) {
+      new Task.Backgroundable(myProject, VcsBundle.message("progress.title.version.control.processing.changed.files"), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          indicator.checkCanceled();
+          myProcessor.process(events);
+        }
+      }.queue();
+    }
+  }
 }
 

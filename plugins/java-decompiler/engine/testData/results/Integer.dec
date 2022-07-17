@@ -1,0 +1,1649 @@
+package java.lang;
+
+import sun.misc.VM;
+
+public final class Integer extends Number implements Comparable<Integer> {
+   public static final int MIN_VALUE = -2147483648;
+   public static final int MAX_VALUE = 2147483647;
+   public static final Class<Integer> TYPE = Class.getPrimitiveClass("int");
+   static final char[] digits = new char[]{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
+   static final char[] DigitTens = new char[]{'0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '3', '3', '3', '3', '3', '3', '3', '3', '3', '3', '4', '4', '4', '4', '4', '4', '4', '4', '4', '4', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '6', '6', '6', '6', '6', '6', '6', '6', '6', '6', '7', '7', '7', '7', '7', '7', '7', '7', '7', '7', '8', '8', '8', '8', '8', '8', '8', '8', '8', '8', '9', '9', '9', '9', '9', '9', '9', '9', '9', '9'};
+   static final char[] DigitOnes = new char[]{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+   static final int[] sizeTable = new int[]{9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999, MAX_VALUE};
+   private final int value;
+   public static final int SIZE = 32;
+   public static final int BYTES = 4;
+   private static final long serialVersionUID = 1360826667806852920L;
+
+   public static String toString(int var0, int var1) {
+      if (var1 < 2 || var1 > 36) {// 131
+         var1 = 10;// 132
+      }
+
+      if (var1 == 10) {// 135
+         return toString(var0);// 136
+      } else {
+         char[] var2 = new char[33];// 139
+         boolean var3 = var0 < 0;// 140
+         int var4 = 32;// 141
+         if (!var3) {// 143
+            var0 = -var0;// 144
+         }
+
+         while(var0 <= -var1) {// 147
+            var2[var4--] = digits[-(var0 % var1)];// 148
+            var0 /= var1;// 149
+         }
+
+         var2[var4] = digits[-var0];// 151
+         if (var3) {// 153
+            --var4;// 154
+            var2[var4] = '-';
+         }
+
+         return new String(var2, var4, 33 - var4);// 157
+      }
+   }
+
+   public static String toUnsignedString(int var0, int var1) {
+      return Long.toUnsignedString(toUnsignedLong(var0), var1);// 187
+   }
+
+   public static String toHexString(int var0) {
+      return toUnsignedString0(var0, 4);// 233
+   }
+
+   public static String toOctalString(int var0) {
+      return toUnsignedString0(var0, 3);// 271
+   }
+
+   public static String toBinaryString(int var0) {
+      return toUnsignedString0(var0, 1);// 303
+   }
+
+   private static String toUnsignedString0(int var0, int var1) {
+      int var2 = 32 - numberOfLeadingZeros(var0);// 311
+      int var3 = Math.max((var2 + (var1 - 1)) / var1, 1);// 312
+      char[] var4 = new char[var3];// 313
+      formatUnsignedInt(var0, var1, var4, 0, var3);// 315
+      return new String(var4, true);// 318
+   }
+
+   static int formatUnsignedInt(int var0, int var1, char[] var2, int var3, int var4) {
+      int var5 = var4;// 331
+      int var6 = 1 << var1;// 332
+      int var7 = var6 - 1;// 333
+
+      do {
+         --var5;// 335
+         var2[var3 + var5] = digits[var0 & var7];
+         var0 >>>= var1;// 336
+      } while(var0 != 0 && var5 > 0);// 337
+
+      return var5;// 339
+   }
+
+   public static String toString(int var0) {
+      if (var0 == MIN_VALUE) {// 398
+         return "-2147483648";// 399
+      } else {
+         int var1 = var0 < 0 ? stringSize(-var0) + 1 : stringSize(var0);// 400
+         char[] var2 = new char[var1];// 401
+         getChars(var0, var1, var2);// 402
+         return new String(var2, true);// 403
+      }
+   }
+
+   public static String toUnsignedString(int var0) {
+      return Long.toString(toUnsignedLong(var0));// 421
+   }
+
+   static void getChars(int var0, int var1, char[] var2) {
+      int var5 = var1;// 435
+      byte var6 = 0;// 436
+      if (var0 < 0) {// 438
+         var6 = 45;// 439
+         var0 = -var0;// 440
+      }
+
+      int var3;
+      int var4;
+      while(var0 >= 65536) {// 444
+         var3 = var0 / 100;// 445
+         var4 = var0 - ((var3 << 6) + (var3 << 5) + (var3 << 2));// 447
+         var0 = var3;// 448
+         --var5;// 449
+         var2[var5] = DigitOnes[var4];
+         --var5;// 450
+         var2[var5] = DigitTens[var4];
+      }
+
+      do {
+         var3 = var0 * '쳍' >>> 19;// 456
+         var4 = var0 - ((var3 << 3) + (var3 << 1));// 457
+         --var5;// 458
+         var2[var5] = digits[var4];
+         var0 = var3;// 459
+      } while(var3 != 0);// 460
+
+      if (var6 != 0) {// 462
+         --var5;
+         var2[var5] = (char)var6;// 463
+      }
+
+   }// 465
+
+   static int stringSize(int var0) {
+      int var1;
+      for(var1 = 0; var0 > sizeTable[var1]; ++var1) {// 472 473
+      }
+
+      return var1 + 1;// 474
+   }
+
+   public static int parseInt(String var0, int var1) throws NumberFormatException {
+      if (var0 == null) {// 541
+         throw new NumberFormatException("null");// 542
+      } else if (var1 < 2) {// 545
+         throw new NumberFormatException("radix " + var1 + " less than Character.MIN_RADIX");// 546
+      } else if (var1 > 36) {// 550
+         throw new NumberFormatException("radix " + var1 + " greater than Character.MAX_RADIX");// 551
+      } else {
+         int var2 = 0;// 555
+         boolean var3 = false;// 556
+         int var4 = 0;// 557
+         int var5 = var0.length();
+         int var6 = -2147483647;// 558
+         if (var5 > 0) {// 562
+            char var9 = var0.charAt(0);// 563
+            if (var9 < '0') {// 564
+               if (var9 == '-') {// 565
+                  var3 = true;// 566
+                  var6 = MIN_VALUE;// 567
+               } else if (var9 != '+') {// 568
+                  throw NumberFormatException.forInputString(var0);// 569
+               }
+
+               if (var5 == 1) {// 571
+                  throw NumberFormatException.forInputString(var0);// 572
+               }
+
+               ++var4;// 573
+            }
+
+            int var8;
+            for(int var7 = var6 / var1; var4 < var5; var2 -= var8) {// 575 576 589
+               var8 = Character.digit(var0.charAt(var4++), var1);// 578
+               if (var8 < 0) {// 579
+                  throw NumberFormatException.forInputString(var0);// 580
+               }
+
+               if (var2 < var7) {// 582
+                  throw NumberFormatException.forInputString(var0);// 583
+               }
+
+               var2 *= var1;// 585
+               if (var2 < var6 + var8) {// 586
+                  throw NumberFormatException.forInputString(var0);// 587
+               }
+            }
+
+            return var3 ? var2 : -var2;// 594
+         } else {
+            throw NumberFormatException.forInputString(var0);// 592
+         }
+      }
+   }
+
+   public static int parseInt(String var0) throws NumberFormatException {
+      return parseInt(var0, 10);// 615
+   }
+
+   public static int parseUnsignedInt(String var0, int var1) throws NumberFormatException {
+      if (var0 == null) {// 663
+         throw new NumberFormatException("null");// 664
+      } else {
+         int var2 = var0.length();// 667
+         if (var2 > 0) {// 668
+            char var3 = var0.charAt(0);// 669
+            if (var3 == '-') {// 670
+               throw new NumberFormatException(String.format("Illegal leading minus sign on unsigned string %s.", var0));// 671 672
+            } else if (var2 <= 5 || var1 == 10 && var2 <= 9) {// 675
+               return parseInt(var0, var1);// 677
+            } else {
+               long var4 = Long.parseLong(var0, var1);// 679
+               if ((var4 & -4294967296L) == 0L) {// 680
+                  return (int)var4;// 681
+               } else {
+                  throw new NumberFormatException(String.format("String value %s exceeds range of unsigned int.", var0));// 683 684
+               }
+            }
+         } else {
+            throw NumberFormatException.forInputString(var0);// 690
+         }
+      }
+   }
+
+   public static int parseUnsignedInt(String var0) throws NumberFormatException {
+      return parseUnsignedInt(var0, 10);// 711
+   }
+
+   public static Integer valueOf(String var0, int var1) throws NumberFormatException {
+      return parseInt(var0, var1);// 740
+   }
+
+   public static Integer valueOf(String var0) throws NumberFormatException {
+      return parseInt(var0, 10);// 766
+   }
+
+   public static Integer valueOf(int var0) {
+      return var0 >= -128 && var0 <= Integer.IntegerCache.high ? Integer.IntegerCache.cache[var0 + 128] : new Integer(var0);// 830 831
+   }
+
+   public Integer(int var1) {
+      this.value = var1;// 850
+   }// 851
+
+   public Integer(String var1) throws NumberFormatException {
+      this.value = parseInt(var1, 10);// 867
+   }// 868
+
+   public byte byteValue() {
+      return (byte)this.value;// 876
+   }
+
+   public short shortValue() {
+      return (short)this.value;// 885
+   }
+
+   public int intValue() {
+      return this.value;// 893
+   }
+
+   public long longValue() {
+      return (long)this.value;// 903
+   }
+
+   public float floatValue() {
+      return (float)this.value;// 912
+   }
+
+   public double doubleValue() {
+      return (double)this.value;// 921
+   }
+
+   public String toString() {
+      return toString(this.value);// 935
+   }
+
+   public int hashCode() {
+      return hashCode(this.value);// 947
+   }
+
+   public static int hashCode(int var0) {
+      return var0;// 960
+   }
+
+   public boolean equals(Object var1) {
+      if (var1 instanceof Integer) {// 974
+         return this.value == (Integer)var1;// 975
+      } else {
+         return false;// 977
+      }
+   }
+
+   public static Integer getInteger(String var0) {
+      return getInteger(var0, (Integer)null);// 1011
+   }
+
+   public static Integer getInteger(String var0, int var1) {
+      Integer var2 = getInteger(var0, (Integer)null);// 1057
+      return var2 == null ? var1 : var2;// 1058
+   }
+
+   public static Integer getInteger(String var0, Integer var1) {
+      String var2 = null;// 1099
+
+      try {
+         var2 = System.getProperty(var0);// 1101
+      } catch (NullPointerException | IllegalArgumentException var4) {// 1102
+      }
+
+      if (var2 != null) {// 1104
+         try {
+            return decode(var2);// 1106
+         } catch (NumberFormatException var5) {// 1107
+         }
+      }
+
+      return var1;// 1110
+   }
+
+   public static Integer decode(String var0) throws NumberFormatException {
+      byte var1 = 10;// 1156
+      int var2 = 0;// 1157
+      boolean var3 = false;// 1158
+      if (var0.length() == 0) {// 1161
+         throw new NumberFormatException("Zero length string");// 1162
+      } else {
+         char var5 = var0.charAt(0);// 1163
+         if (var5 == '-') {// 1165
+            var3 = true;// 1166
+            ++var2;// 1167
+         } else if (var5 == '+') {// 1168
+            ++var2;// 1169
+         }
+
+         if (!var0.startsWith("0x", var2) && !var0.startsWith("0X", var2)) {// 1172
+            if (var0.startsWith("#", var2)) {// 1176
+               ++var2;// 1177
+               var1 = 16;// 1178
+            } else if (var0.startsWith("0", var2) && var0.length() > 1 + var2) {// 1180
+               ++var2;// 1181
+               var1 = 8;// 1182
+            }
+         } else {
+            var2 += 2;// 1173
+            var1 = 16;// 1174
+         }
+
+         if (!var0.startsWith("-", var2) && !var0.startsWith("+", var2)) {// 1185
+            Integer var4;
+            try {
+               var4 = valueOf(var0.substring(var2), var1);// 1189
+               var4 = var3 ? -var4 : var4;// 1190
+            } catch (NumberFormatException var8) {
+               String var7 = var3 ? "-" + var0.substring(var2) : var0.substring(var2);// 1195 1196
+               var4 = valueOf(var7, var1);// 1197
+            }
+
+            return var4;// 1199
+         } else {
+            throw new NumberFormatException("Sign character in wrong position");// 1186
+         }
+      }
+   }
+
+   public int compareTo(Integer var1) {
+      return compare(this.value, var1.value);// 1216
+   }
+
+   public static int compare(int var0, int var1) {
+      return var0 < var1 ? -1 : (var0 == var1 ? 0 : 1);// 1234
+   }
+
+   public static int compareUnsigned(int var0, int var1) {
+      return compare(var0 + MIN_VALUE, var1 + MIN_VALUE);// 1250
+   }
+
+   public static long toUnsignedLong(int var0) {
+      return (long)var0 & 4294967295L;// 1271
+   }
+
+   public static int divideUnsigned(int var0, int var1) {
+      return (int)(toUnsignedLong(var0) / toUnsignedLong(var1));// 1294
+   }
+
+   public static int remainderUnsigned(int var0, int var1) {
+      return (int)(toUnsignedLong(var0) % toUnsignedLong(var1));// 1311
+   }
+
+   public static int highestOneBit(int var0) {
+      var0 |= var0 >> 1;// 1348
+      var0 |= var0 >> 2;// 1349
+      var0 |= var0 >> 4;// 1350
+      var0 |= var0 >> 8;// 1351
+      var0 |= var0 >> 16;// 1352
+      return var0 - (var0 >>> 1);// 1353
+   }
+
+   public static int lowestOneBit(int var0) {
+      return var0 & -var0;// 1371
+   }
+
+   public static int numberOfLeadingZeros(int var0) {
+      if (var0 == 0) {// 1397
+         return 32;// 1398
+      } else {
+         int var1 = 1;// 1399
+         if (var0 >>> 16 == 0) {// 1400
+            var1 += 16;
+            var0 <<= 16;
+         }
+
+         if (var0 >>> 24 == 0) {// 1401
+            var1 += 8;
+            var0 <<= 8;
+         }
+
+         if (var0 >>> 28 == 0) {// 1402
+            var1 += 4;
+            var0 <<= 4;
+         }
+
+         if (var0 >>> 30 == 0) {
+            var1 += 2;
+            var0 <<= 2;// 1403
+         }
+
+         var1 -= var0 >>> 31;// 1404
+         return var1;// 1405
+      }
+   }
+
+   public static int numberOfTrailingZeros(int var0) {
+      if (var0 == 0) {// 1425
+         return 32;
+      } else {
+         int var2 = 31;// 1426
+         int var1 = var0 << 16;// 1427
+         if (var1 != 0) {
+            var2 -= 16;
+            var0 = var1;
+         }
+
+         var1 = var0 << 8;// 1428
+         if (var1 != 0) {
+            var2 -= 8;
+            var0 = var1;
+         }
+
+         var1 = var0 << 4;// 1429
+         if (var1 != 0) {
+            var2 -= 4;
+            var0 = var1;
+         }
+
+         var1 = var0 << 2;
+         if (var1 != 0) {
+            var2 -= 2;// 1430
+            var0 = var1;
+         }
+
+         return var2 - (var0 << 1 >>> 31);// 1431
+      }
+   }
+
+   public static int bitCount(int var0) {
+      var0 -= var0 >>> 1 & 1431655765;// 1446
+      var0 = (var0 & 858993459) + (var0 >>> 2 & 858993459);// 1447
+      var0 = var0 + (var0 >>> 4) & 252645135;// 1448
+      var0 += var0 >>> 8;// 1449
+      var0 += var0 >>> 16;// 1450
+      return var0 & 63;// 1451
+   }
+
+   public static int rotateLeft(int var0, int var1) {
+      return var0 << var1 | var0 >>> -var1;// 1475
+   }
+
+   public static int rotateRight(int var0, int var1) {
+      return var0 >>> var1 | var0 << -var1;// 1499
+   }
+
+   public static int reverse(int var0) {
+      var0 = (var0 & 1431655765) << 1 | var0 >>> 1 & 1431655765;// 1514
+      var0 = (var0 & 858993459) << 2 | var0 >>> 2 & 858993459;// 1515
+      var0 = (var0 & 252645135) << 4 | var0 >>> 4 & 252645135;// 1516
+      var0 = var0 << 24 | (var0 & '\uff00') << 8 | var0 >>> 8 & '\uff00' | var0 >>> 24;// 1517
+      return var0;// 1519
+   }
+
+   public static int signum(int var0) {
+      return var0 >> 31 | -var0 >>> 31;// 1533
+   }
+
+   public static int reverseBytes(int var0) {
+      return var0 >>> 24 | var0 >> 8 & '\uff00' | var0 << 8 & 16711680 | var0 << 24;// 1546
+   }
+
+   public static int sum(int var0, int var1) {
+      return var0 + var1;// 1562
+   }
+
+   public static int max(int var0, int var1) {
+      return Math.max(var0, var1);// 1576
+   }
+
+   public static int min(int var0, int var1) {
+      return Math.min(var0, var1);// 1590
+   }
+
+   private static class IntegerCache {
+      static final int low = -128;
+      static final int high;
+      static final Integer[] cache;
+
+      static {
+         int var0 = 127;// 787
+         String var1 = VM.getSavedProperty("java.lang.Integer.IntegerCache.high");// 788 789
+         int var2;
+         if (var1 != null) {// 790
+            try {
+               var2 = Integer.parseInt(var1);// 792
+               var2 = Math.max(var2, 127);// 793
+               var0 = Math.min(var2, 2147483518);// 795
+            } catch (NumberFormatException var4) {// 796
+            }
+         }
+
+         high = var0;// 800
+         cache = new Integer[high - -128 + 1];// 802
+         var2 = -128;// 803
+
+         for(int var3 = 0; var3 < cache.length; ++var3) {// 804
+            cache[var3] = new Integer(var2++);// 805
+         }
+
+         assert high >= 127;// 808
+
+      }// 809
+   }
+}
+
+class 'java/lang/Integer' {
+   method 'toString (II)Ljava/lang/String;' {
+      1      18
+      2      18
+      6      18
+      8      18
+      b      19
+      d      19
+      f      22
+      11      22
+      15      23
+      18      23
+      19      25
+      1d      25
+      1f      26
+      27      26
+      28      27
+      2a      27
+      2d      28
+      31      29
+      32      29
+      35      32
+      36      32
+      3c      33
+      3f      33
+      44      33
+      45      33
+      46      33
+      47      33
+      4b      34
+      52      37
+      56      37
+      57      37
+      58      37
+      5a      38
+      5e      39
+      63      40
+      65      40
+      6d      43
+      71      43
+      75      43
+   }
+
+   method 'toUnsignedString (II)Ljava/lang/String;' {
+      1      48
+      5      48
+      8      48
+   }
+
+   method 'toHexString (I)Ljava/lang/String;' {
+      1      52
+      2      52
+      5      52
+   }
+
+   method 'toOctalString (I)Ljava/lang/String;' {
+      1      56
+      2      56
+      5      56
+   }
+
+   method 'toBinaryString (I)Ljava/lang/String;' {
+      1      60
+      2      60
+      5      60
+   }
+
+   method 'toUnsignedString0 (II)Ljava/lang/String;' {
+      0      64
+      3      64
+      6      64
+      7      64
+      a      65
+      b      65
+      c      65
+      e      65
+      f      65
+      10      65
+      13      65
+      17      66
+      1d      67
+      1f      67
+      29      68
+      2d      68
+   }
+
+   method 'formatUnsignedInt (II[CII)I' {
+      2      72
+      4      73
+      6      73
+      7      73
+      b      74
+      c      74
+      d      74
+      11      77
+      16      78
+      17      78
+      1d      78
+      1e      78
+      1f      78
+      23      79
+      25      80
+      2a      80
+      2f      82
+   }
+
+   method 'toString (I)Ljava/lang/String;' {
+      1      86
+      3      86
+      6      87
+      8      87
+      a      89
+      e      89
+      f      89
+      12      89
+      13      89
+      18      89
+      1b      89
+      1f      90
+      23      91
+      2b      92
+      2f      92
+   }
+
+   method 'toUnsignedString (I)Ljava/lang/String;' {
+      1      97
+      4      97
+      7      97
+   }
+
+   method 'getChars (II[C)V' {
+      1      101
+      3      102
+      4      102
+      7      103
+      a      104
+      c      104
+      f      105
+      10      105
+      12      110
+      14      110
+      18      111
+      1a      111
+      1b      111
+      1e      112
+      20      112
+      22      112
+      23      112
+      24      112
+      26      112
+      27      112
+      28      112
+      29      112
+      2a      112
+      2d      113
+      2f      114
+      34      115
+      39      115
+      3a      115
+      3c      116
+      41      117
+      46      117
+      47      117
+      4c      121
+      4e      121
+      4f      121
+      51      121
+      52      121
+      55      122
+      56      122
+      58      122
+      59      122
+      5a      122
+      5b      122
+      5c      122
+      5f      123
+      64      124
+      69      124
+      6a      124
+      6c      125
+      6e      126
+      76      128
+      7a      129
+      81      130
+      82      133
+   }
+
+   method 'stringSize (I)I' {
+      0      137
+      1      137
+      3      137
+      7      137
+      8      137
+      c      140
+      d      140
+      e      140
+      f      137
+   }
+
+   method 'parseInt (Ljava/lang/String;I)I' {
+      1      144
+      8      145
+      d      145
+      f      146
+      10      146
+      1e      147
+      27      147
+      2c      147
+      32      147
+      34      148
+      36      148
+      44      149
+      4d      149
+      52      149
+      58      149
+      59      151
+      5a      151
+      5b      152
+      5c      152
+      5d      153
+      5e      153
+      61      154
+      64      154
+      66      155
+      68      155
+      6c      156
+      70      157
+      71      157
+      74      157
+      78      158
+      7a      158
+      7f      159
+      81      159
+      84      160
+      85      160
+      86      161
+      88      161
+      8f      162
+      91      162
+      95      163
+      98      163
+      9b      166
+      9c      166
+      a0      167
+      a3      167
+      a4      170
+      aa      174
+      ab      174
+      b1      174
+      b7      175
+      ba      175
+      be      175
+      c1      175
+      c5      176
+      c9      177
+      cc      177
+      d0      180
+      d4      181
+      d7      181
+      db      184
+      e1      185
+      e2      185
+      e6      186
+      e9      186
+      ee      174
+      f6      192
+      f9      192
+      fb      190
+      103      190
+      104      190
+   }
+
+   method 'parseInt (Ljava/lang/String;)I' {
+      1      198
+      3      198
+      6      198
+   }
+
+   method 'parseUnsignedInt (Ljava/lang/String;I)I' {
+      1      202
+      8      203
+      d      203
+      f      205
+      12      205
+      14      206
+      18      207
+      19      207
+      1c      207
+      1e      208
+      20      208
+      27      209
+      31      209
+      37      209
+      39      210
+      3a      210
+      3e      210
+      40      210
+      44      210
+      46      210
+      4b      211
+      4e      211
+      51      213
+      54      213
+      58      214
+      5b      214
+      5c      214
+      5d      214
+      5e      214
+      63      215
+      64      215
+      69      217
+      73      217
+      79      217
+      7b      221
+      7e      221
+   }
+
+   method 'parseUnsignedInt (Ljava/lang/String;)I' {
+      1      227
+      3      227
+      6      227
+   }
+
+   method 'valueOf (Ljava/lang/String;I)Ljava/lang/Integer;' {
+      2      231
+      5      231
+      8      231
+   }
+
+   method 'valueOf (Ljava/lang/String;)Ljava/lang/Integer;' {
+      1      235
+      3      235
+      6      235
+      9      235
+   }
+
+   method 'valueOf (I)Ljava/lang/Integer;' {
+      1      239
+      3      239
+      7      239
+      a      239
+      d      239
+      11      239
+      14      239
+      15      239
+   }
+
+   method '<init> (I)V' {
+      6      243
+      9      244
+   }
+
+   method '<init> (Ljava/lang/String;)V' {
+      6      247
+      8      247
+      b      247
+      e      248
+   }
+
+   method 'byteValue ()B' {
+      1      251
+      4      251
+      5      251
+   }
+
+   method 'shortValue ()S' {
+      1      255
+      4      255
+      5      255
+   }
+
+   method 'intValue ()I' {
+      1      259
+      4      259
+   }
+
+   method 'longValue ()J' {
+      1      263
+      4      263
+      5      263
+   }
+
+   method 'floatValue ()F' {
+      1      267
+      4      267
+      5      267
+   }
+
+   method 'doubleValue ()D' {
+      1      271
+      4      271
+      5      271
+   }
+
+   method 'toString ()Ljava/lang/String;' {
+      1      275
+      4      275
+      7      275
+   }
+
+   method 'hashCode ()I' {
+      1      279
+      4      279
+      7      279
+   }
+
+   method 'hashCode (I)I' {
+      1      283
+   }
+
+   method 'equals (Ljava/lang/Object;)Z' {
+      1      287
+      4      287
+      8      288
+      c      288
+      f      288
+      12      288
+      1a      288
+      1b      290
+      1c      290
+   }
+
+   method 'getInteger (Ljava/lang/String;)Ljava/lang/Integer;' {
+      1      295
+      2      295
+      5      295
+   }
+
+   method 'getInteger (Ljava/lang/String;I)Ljava/lang/Integer;' {
+      1      299
+      2      299
+      5      299
+      7      300
+      b      300
+      12      300
+   }
+
+   method 'getInteger (Ljava/lang/String;Ljava/lang/Integer;)Ljava/lang/Integer;' {
+      0      304
+      1      304
+      3      307
+      6      307
+      a      308
+      c      311
+      10      313
+      13      313
+      14      314
+      16      318
+   }
+
+   method 'decode (Ljava/lang/String;)Ljava/lang/Integer;' {
+      0      322
+      2      322
+      3      323
+      4      323
+      5      324
+      6      324
+      8      325
+      b      325
+      12      326
+      17      326
+      19      328
+      1a      328
+      1d      328
+      21      329
+      23      329
+      26      330
+      27      330
+      28      331
+      30      332
+      32      332
+      35      333
+      39      336
+      3c      336
+      3f      336
+      43      336
+      46      336
+      49      336
+      4c      345
+      4f      346
+      51      346
+      56      337
+      59      337
+      5c      337
+      5f      338
+      62      339
+      64      339
+      69      340
+      6c      340
+      6f      340
+      73      340
+      76      340
+      78      340
+      79      340
+      7c      341
+      7f      342
+      81      342
+      83      349
+      86      349
+      89      349
+      8d      349
+      90      349
+      93      349
+      9a      361
+      9f      361
+      a2      352
+      a6      352
+      a9      352
+      ac      353
+      b1      353
+      b4      353
+      b5      353
+      bd      353
+      c5      355
+      cf      355
+      d6      355
+      dc      355
+      e4      355
+      e7      354
+      ec      356
+      ef      356
+      f3      359
+   }
+
+   method 'compareTo (Ljava/lang/Integer;)I' {
+      1      367
+      5      367
+      8      367
+      b      367
+   }
+
+   method 'compare (II)I' {
+      2      371
+      5      371
+      b      371
+      e      371
+      12      371
+      13      371
+   }
+
+   method 'compareUnsigned (II)I' {
+      1      375
+      3      375
+      5      375
+      7      375
+      8      375
+      b      375
+   }
+
+   method 'toUnsignedLong (I)J' {
+      1      379
+      2      379
+      5      379
+      6      379
+   }
+
+   method 'divideUnsigned (II)I' {
+      1      383
+      5      383
+      8      383
+      9      383
+      a      383
+   }
+
+   method 'remainderUnsigned (II)I' {
+      1      387
+      5      387
+      8      387
+      9      387
+      a      387
+   }
+
+   method 'highestOneBit (I)I' {
+      2      391
+      3      391
+      5      391
+      8      392
+      9      392
+      b      392
+      e      393
+      f      393
+      11      393
+      14      394
+      16      394
+      18      394
+      1b      395
+      1d      395
+      1f      395
+      22      396
+      23      396
+      24      396
+      25      396
+   }
+
+   method 'lowestOneBit (I)I' {
+      2      400
+      3      400
+      4      400
+   }
+
+   method 'numberOfLeadingZeros (I)I' {
+      1      404
+      4      405
+      6      405
+      7      407
+      8      407
+      a      408
+      c      408
+      d      408
+      10      409
+      14      410
+      17      410
+      19      413
+      1b      413
+      1c      413
+      1f      414
+      23      415
+      26      415
+      28      418
+      2a      418
+      2b      418
+      2e      419
+      32      420
+      34      420
+      36      423
+      38      423
+      39      423
+      3c      424
+      40      425
+      42      425
+      45      428
+      47      428
+      49      428
+      4b      429
+   }
+
+   method 'numberOfTrailingZeros (I)I' {
+      1      434
+      4      435
+      6      435
+      7      437
+      9      437
+      b      438
+      d      438
+      e      438
+      10      439
+      14      440
+      17      440
+      19      441
+      1b      444
+      1d      444
+      1e      444
+      20      445
+      24      446
+      27      446
+      29      447
+      2b      450
+      2c      450
+      2d      450
+      2f      451
+      33      452
+      35      452
+      37      453
+      39      456
+      3a      456
+      3b      456
+      3d      457
+      41      458
+      43      458
+      45      459
+      48      462
+      49      462
+      4a      462
+      4c      462
+      4d      462
+      4e      462
+   }
+
+   method 'bitCount (I)I' {
+      2      467
+      3      467
+      4      467
+      6      467
+      8      467
+      a      468
+      c      468
+      e      468
+      f      468
+      10      468
+      12      468
+      13      468
+      14      468
+      17      469
+      18      469
+      19      469
+      1a      469
+      1c      469
+      1d      469
+      20      470
+      22      470
+      24      470
+      27      471
+      29      471
+      2b      471
+      2d      472
+      2f      472
+      30      472
+   }
+
+   method 'rotateLeft (II)I' {
+      2      476
+      5      476
+      6      476
+      7      476
+      8      476
+   }
+
+   method 'rotateRight (II)I' {
+      2      480
+      5      480
+      6      480
+      7      480
+      8      480
+   }
+
+   method 'reverse (I)I' {
+      1      484
+      3      484
+      4      484
+      5      484
+      7      484
+      8      484
+      9      484
+      b      484
+      c      484
+      d      484
+      f      485
+      11      485
+      12      485
+      13      485
+      15      485
+      16      485
+      17      485
+      19      485
+      1a      485
+      1b      485
+      1d      486
+      1f      486
+      20      486
+      21      486
+      23      486
+      24      486
+      25      486
+      27      486
+      28      486
+      29      486
+      2b      487
+      2d      487
+      2f      487
+      31      487
+      32      487
+      34      487
+      35      487
+      37      487
+      39      487
+      3a      487
+      3c      487
+      3d      487
+      3f      487
+      41      487
+      42      487
+      43      487
+      45      488
+   }
+
+   method 'signum (I)I' {
+      1      492
+      3      492
+      5      492
+      6      492
+      8      492
+      9      492
+      a      492
+   }
+
+   method 'reverseBytes (I)I' {
+      1      496
+      3      496
+      5      496
+      7      496
+      8      496
+      a      496
+      b      496
+      d      496
+      f      496
+      10      496
+      12      496
+      13      496
+      15      496
+      17      496
+      18      496
+      19      496
+   }
+
+   method 'sum (II)I' {
+      2      500
+      3      500
+   }
+
+   method 'max (II)I' {
+      2      504
+      5      504
+   }
+
+   method 'min (II)I' {
+      2      508
+      5      508
+   }
+}
+
+class 'java/lang/Integer$IntegerCache' {
+   method '<clinit> ()V' {
+      10      517
+      12      517
+      13      518
+      15      518
+      18      518
+      1a      520
+      1e      522
+      21      522
+      23      523
+      25      523
+      28      523
+      2a      524
+      2c      524
+      2f      524
+      33      525
+      35      529
+      38      530
+      3b      530
+      3d      530
+      3e      530
+      3f      530
+      43      530
+      46      531
+      48      531
+      49      533
+      4a      533
+      4c      533
+      4f      533
+      50      533
+      53      534
+      5c      534
+      62      534
+      63      533
+      6f      537
+      72      537
+      74      537
+      7f      539
+   }
+}
+
+Lines mapping:
+131 <-> 19
+132 <-> 20
+135 <-> 23
+136 <-> 24
+139 <-> 26
+140 <-> 27
+141 <-> 28
+143 <-> 29
+144 <-> 30
+147 <-> 33
+148 <-> 34
+149 <-> 35
+151 <-> 38
+153 <-> 39
+154 <-> 40
+157 <-> 44
+187 <-> 49
+233 <-> 53
+271 <-> 57
+303 <-> 61
+311 <-> 65
+312 <-> 66
+313 <-> 67
+315 <-> 68
+318 <-> 69
+331 <-> 73
+332 <-> 74
+333 <-> 75
+335 <-> 78
+336 <-> 80
+337 <-> 81
+339 <-> 83
+398 <-> 87
+399 <-> 88
+400 <-> 90
+401 <-> 91
+402 <-> 92
+403 <-> 93
+421 <-> 98
+435 <-> 102
+436 <-> 103
+438 <-> 104
+439 <-> 105
+440 <-> 106
+444 <-> 111
+445 <-> 112
+447 <-> 113
+448 <-> 114
+449 <-> 115
+450 <-> 117
+456 <-> 122
+457 <-> 123
+458 <-> 124
+459 <-> 126
+460 <-> 127
+462 <-> 129
+463 <-> 131
+465 <-> 134
+472 <-> 138
+473 <-> 138
+474 <-> 141
+541 <-> 145
+542 <-> 146
+545 <-> 147
+546 <-> 148
+550 <-> 149
+551 <-> 150
+555 <-> 152
+556 <-> 153
+557 <-> 154
+558 <-> 156
+562 <-> 157
+563 <-> 158
+564 <-> 159
+565 <-> 160
+566 <-> 161
+567 <-> 162
+568 <-> 163
+569 <-> 164
+571 <-> 167
+572 <-> 168
+573 <-> 171
+575 <-> 175
+576 <-> 175
+578 <-> 176
+579 <-> 177
+580 <-> 178
+582 <-> 181
+583 <-> 182
+585 <-> 185
+586 <-> 186
+587 <-> 187
+589 <-> 175
+592 <-> 193
+594 <-> 191
+615 <-> 199
+663 <-> 203
+664 <-> 204
+667 <-> 206
+668 <-> 207
+669 <-> 208
+670 <-> 209
+671 <-> 210
+672 <-> 210
+675 <-> 211
+677 <-> 212
+679 <-> 214
+680 <-> 215
+681 <-> 216
+683 <-> 218
+684 <-> 218
+690 <-> 222
+711 <-> 228
+740 <-> 232
+766 <-> 236
+787 <-> 518
+788 <-> 519
+789 <-> 519
+790 <-> 521
+792 <-> 523
+793 <-> 524
+795 <-> 525
+796 <-> 526
+800 <-> 530
+802 <-> 531
+803 <-> 532
+804 <-> 534
+805 <-> 535
+808 <-> 538
+809 <-> 540
+830 <-> 240
+831 <-> 240
+850 <-> 244
+851 <-> 245
+867 <-> 248
+868 <-> 249
+876 <-> 252
+885 <-> 256
+893 <-> 260
+903 <-> 264
+912 <-> 268
+921 <-> 272
+935 <-> 276
+947 <-> 280
+960 <-> 284
+974 <-> 288
+975 <-> 289
+977 <-> 291
+1011 <-> 296
+1057 <-> 300
+1058 <-> 301
+1099 <-> 305
+1101 <-> 308
+1102 <-> 309
+1104 <-> 312
+1106 <-> 314
+1107 <-> 315
+1110 <-> 319
+1156 <-> 323
+1157 <-> 324
+1158 <-> 325
+1161 <-> 326
+1162 <-> 327
+1163 <-> 329
+1165 <-> 330
+1166 <-> 331
+1167 <-> 332
+1168 <-> 333
+1169 <-> 334
+1172 <-> 337
+1173 <-> 346
+1174 <-> 347
+1176 <-> 338
+1177 <-> 339
+1178 <-> 340
+1180 <-> 341
+1181 <-> 342
+1182 <-> 343
+1185 <-> 350
+1186 <-> 362
+1189 <-> 353
+1190 <-> 354
+1195 <-> 356
+1196 <-> 356
+1197 <-> 357
+1199 <-> 360
+1216 <-> 368
+1234 <-> 372
+1250 <-> 376
+1271 <-> 380
+1294 <-> 384
+1311 <-> 388
+1348 <-> 392
+1349 <-> 393
+1350 <-> 394
+1351 <-> 395
+1352 <-> 396
+1353 <-> 397
+1371 <-> 401
+1397 <-> 405
+1398 <-> 406
+1399 <-> 408
+1400 <-> 409
+1401 <-> 414
+1402 <-> 419
+1403 <-> 426
+1404 <-> 429
+1405 <-> 430
+1425 <-> 435
+1426 <-> 438
+1427 <-> 439
+1428 <-> 445
+1429 <-> 451
+1430 <-> 459
+1431 <-> 463
+1446 <-> 468
+1447 <-> 469
+1448 <-> 470
+1449 <-> 471
+1450 <-> 472
+1451 <-> 473
+1475 <-> 477
+1499 <-> 481
+1514 <-> 485
+1515 <-> 486
+1516 <-> 487
+1517 <-> 488
+1519 <-> 489
+1533 <-> 493
+1546 <-> 497
+1562 <-> 501
+1576 <-> 505
+1590 <-> 509
+Not mapped:
+591
+780
+798
+832
+849
+866
+1103
+1191
+1198

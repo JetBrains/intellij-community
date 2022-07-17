@@ -224,6 +224,9 @@ public final class AddImportHelper {
         feeler = feeler.getNextSibling();
       }
       else if (PsiTreeUtil.instanceOf(feeler, OuterLanguageElement.class)) {
+        if (skippedOverStatements) {
+          break;
+        }
         feeler = feeler.getNextSibling();
         seeker = feeler;
       }
@@ -574,7 +577,7 @@ public final class AddImportHelper {
         final PsiElement element = insertParent.addBefore(newImport, getInsertPosition(insertParent, anchor, newImport, priority));
         PsiElement whitespace = element.getNextSibling();
         if (!(whitespace instanceof PsiWhiteSpace)) {
-          whitespace = PsiParserFacade.SERVICE.getInstance(file.getProject()).createWhiteSpaceFromText("  >>> ");
+          whitespace = PsiParserFacade.getInstance(file.getProject()).createWhiteSpaceFromText("  >>> ");
         }
         insertParent.addBefore(whitespace, element);
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.callMatcher;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UCallableReferenceExpression;
 
 import java.util.Collections;
 import java.util.Set;
@@ -45,6 +46,9 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
 
   @Contract(value = "null -> false", pure = true)
   boolean uCallMatches(@Nullable UCallExpression call);
+
+  @Contract(value = "null -> false", pure = true)
+  boolean uCallableReferenceMatches(@Nullable UCallableReferenceExpression reference);
 
   /**
    * Returns true if the supplied expression is (possibly parenthesized) method call which matches this matcher
@@ -95,6 +99,16 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       public boolean uCallMatches(@Nullable UCallExpression call) {
         for (CallMatcher m : matchers) {
           if (m.uCallMatches(call)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      @Override
+      public boolean uCallableReferenceMatches(@Nullable UCallableReferenceExpression reference) {
+        for (CallMatcher m : matchers) {
+          if (m.uCallableReferenceMatches(reference)) {
             return true;
           }
         }
@@ -163,7 +177,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
   }
 
   /**
-   * Matches given expression if its a call or a method reference returning a corresponding PsiReferenceExpression if match is successful.
+   * Matches given expression if it's a call or a method reference returning a corresponding PsiReferenceExpression if match is successful.
    *
    * @param expression expression to match
    * @return PsiReferenceExpression if match is successful, null otherwise
@@ -213,6 +227,12 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       public boolean uCallMatches(@Nullable UCallExpression call) {
         if (call == null || !filter.test(call.getSourcePsi())) return false;
         return CallMatcher.this.uCallMatches(call);
+      }
+
+      @Override
+      public boolean uCallableReferenceMatches(@Nullable UCallableReferenceExpression reference) {
+        if (reference == null || !filter.test(reference.getSourcePsi())) return false;
+        return CallMatcher.this.uCallableReferenceMatches(reference);
       }
 
       @Override
@@ -295,9 +315,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       String name = methodRef.getReferenceName();
       if (name == null || !myNames.contains(name)) return false;
       PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
-      if (!methodMatches(method)) return false;
-      PsiParameterList parameterList = method.getParameterList();
-      return parametersMatch(parameterList);
+      return methodMatches(method);
     }
 
     @Contract(value = "null -> false", pure = true)
@@ -329,7 +347,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
 
     @Override
     @Contract(value = "null -> false", pure = true)
-    public boolean methodMatches(PsiMethod method) {
+    public boolean methodMatches(@Nullable PsiMethod method) {
       if (method == null) return false;
       if (!myNames.contains(method.getName())) return false;
       PsiClass aClass = method.getContainingClass();
@@ -339,11 +357,22 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     }
 
     @Override
+    @Contract(value = "null -> false", pure = true)
     public boolean uCallMatches(@Nullable UCallExpression call) {
       if (call == null) return false;
       String name = call.getMethodName();
       if (name == null || !myNames.contains(name)) return false;
       return methodMatches(call.resolve());
+    }
+
+    @Override
+    @Contract(value = "null -> false", pure = true)
+    public boolean uCallableReferenceMatches(@Nullable UCallableReferenceExpression reference) {
+      if (reference == null) return false;
+      String name = reference.getCallableName();
+      if (!myNames.contains(name)) return false;
+      PsiMethod method = ObjectUtils.tryCast(reference.resolve(), PsiMethod.class);
+      return methodMatches(method);
     }
 
     @Override

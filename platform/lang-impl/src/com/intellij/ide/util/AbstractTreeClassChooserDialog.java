@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.icons.AllIcons;
@@ -12,6 +12,7 @@ import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -34,6 +35,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -281,7 +284,15 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
   private void handleSelectionChanged() {
     mySelectedClass = calcSelectedClass();
-    setOKActionEnabled(mySelectedClass != null && myClassFilter.isAccepted(mySelectedClass));
+    if (mySelectedClass == null) {
+      setOKActionEnabled(false);
+    } else {
+      T selectedClass =  mySelectedClass;
+      ReadAction
+        .nonBlocking(() -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> myClassFilter.isAccepted(selectedClass)))
+        .finishOnUiThread(getModalityState(), isAccepted -> setOKActionEnabled(mySelectedClass != null && isAccepted))
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
   }
 
   @Override

@@ -1,26 +1,28 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.PrefixMatcher
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
-import org.jetbrains.kotlin.idea.core.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
+import org.jetbrains.kotlin.idea.core.util.externalDescriptors
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.ShadowedDeclarationsFilter
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.externalDescriptors
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DataClassDescriptorResolver
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindExclude
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext.isTypeVariableType
+import org.jetbrains.kotlin.types.isError
+import org.jetbrains.kotlin.types.typeUtil.isNothing
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeSmartForCompiler
-import java.util.*
 
 data class ReferenceVariants(val imported: Collection<DeclarationDescriptor>, val notImportedExtensions: Collection<CallableDescriptor>)
 
@@ -38,8 +40,39 @@ class ReferenceVariantsCollector(
     private val bindingContext: BindingContext,
     private val importableFqNameClassifier: ImportableFqNameClassifier,
     private val configuration: CompletionSessionConfiguration,
-    private val runtimeReceiver: ExpressionReceiver? = null
+    private val allowExpectedDeclarations: Boolean,
+    private val runtimeReceiver: ExpressionReceiver? = null,
 ) {
+
+    companion object {
+        private fun KotlinType.contains(isThatType: KotlinType.() -> Boolean): Boolean {
+            if (isThatType()) return true
+            if (arguments.isEmpty() || arguments.firstOrNull()?.isStarProjection == true) return false
+            for (arg in arguments) {
+                if (arg.type.contains { isThatType() }) return true
+            }
+            return false
+        }
+
+        private fun DeclarationDescriptor.hasSubstitutionFailure(): Boolean {
+            val callable = this as? CallableDescriptor ?: return false
+            return callable.valueParameters.any {
+                it.type.contains { isNothing() } && !it.original.type.contains { isNothing() }
+                        || it.type.contains { isTypeVariableType() }
+                        || it.type.contains { isError }
+            }
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        private fun <T: DeclarationDescriptor> T.fixSubstitutionFailureIfAny(): T =
+            if (hasSubstitutionFailure()) original as T else this
+
+        private fun ReferenceVariants.fixDescriptors(): ReferenceVariants {
+            val importedFixed = imported.map { it.fixSubstitutionFailureIfAny() }
+            val notImportedFixed = notImportedExtensions.map { it.fixSubstitutionFailureIfAny() }
+            return ReferenceVariants(importedFixed, notImportedFixed)
+        }
+    }
 
     private data class FilterConfiguration internal constructor(
         val descriptorKindFilter: DescriptorKindFilter,
@@ -78,9 +111,9 @@ class ReferenceVariantsCollector(
         assert(!isCollectingFinished)
         val config = configuration(descriptorKindFilter)
 
-        val basic = collectBasicVariants(config)
+        val basic = collectBasicVariants(config).fixDescriptors()
         consumer(basic)
-        val extensions = collectExtensionVariants(config, basic)
+        val extensions = collectExtensionVariants(config, basic).fixDescriptors()
         consumer(extensions)
     }
 
@@ -190,8 +223,10 @@ class ReferenceVariantsCollector(
                 )
             }
 
-            val notImportedDeclarationsFilter =
-                shadowedDeclarationsFilter?.createNonImportedDeclarationsFilter<CallableDescriptor>(importedDeclarations = basicVariants.imported + extensionsVariants)
+            val notImportedDeclarationsFilter = shadowedDeclarationsFilter?.createNonImportedDeclarationsFilter<CallableDescriptor>(
+                importedDeclarations = basicVariants.imported + extensionsVariants,
+                allowExpectedDeclarations = allowExpectedDeclarations,
+            )
 
             val filteredImported = filterConfiguration.filterVariants(extensionsVariants + basicVariants.imported)
 

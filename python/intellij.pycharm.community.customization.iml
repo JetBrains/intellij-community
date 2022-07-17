@@ -9,5 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.pycharm.community.ide.impl" />
     <orderEntry type="library" name="tips-pycharm-community" level="project" />
+    <orderEntry type="module" module-name="intellij.jupyter.viewOnly" />
   </component>
 </module>

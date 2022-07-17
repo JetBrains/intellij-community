@@ -188,7 +188,7 @@ public class LocalSearchScope extends SearchScope {
 
   @Override
   public String toString() {
-    return Arrays.stream(myScope).map(String::valueOf).collect(Collectors.joining(",", "LocalSearchScope:", ""));
+    return Arrays.stream(myScope).map(String::valueOf).collect(Collectors.joining(", ", "LocalSearchScope: [", "]"));
   }
 
   @Override
@@ -235,9 +235,7 @@ public class LocalSearchScope extends SearchScope {
   private static PsiElement scopeElementsUnion(@NotNull PsiElement element1, @NotNull PsiElement element2) {
     if (PsiTreeUtil.isAncestor(element1, element2, false)) return element1;
     if (PsiTreeUtil.isAncestor(element2, element1, false)) return element2;
-    PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
-    if (commonParent == null) return null;
-    return commonParent;
+    return PsiTreeUtil.findCommonParent(element1, element2);
   }
 
   public boolean isInScope(@NotNull VirtualFile file) {

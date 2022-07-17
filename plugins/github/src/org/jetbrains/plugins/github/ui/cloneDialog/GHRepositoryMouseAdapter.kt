@@ -5,22 +5,24 @@ import com.intellij.ui.ListUtil
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.util.ui.UIUtil
 import java.awt.Cursor
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JList
 
 internal class GHRepositoryMouseAdapter(private val list: JList<*>) : MouseAdapter() {
-  private fun getRunnableAt(e: MouseEvent): Runnable? {
+  private fun getActionAt(e: MouseEvent): ActionListener? {
     val point = e.point
     val renderer = ListUtil.getDeepestRendererChildComponentAt(list, point)
     if (renderer !is SimpleColoredComponent) return null
     val tag = renderer.getFragmentTagAt(point.x)
-    return if (tag is Runnable) tag else null
+    return if (tag is ActionListener) tag else null
   }
 
   override fun mouseMoved(e: MouseEvent) {
-    val runnable = getRunnableAt(e)
-    if (runnable != null) {
+    val action = getActionAt(e)
+    if (action != null) {
       UIUtil.setCursor(list, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
     }
     else {
@@ -29,6 +31,6 @@ internal class GHRepositoryMouseAdapter(private val list: JList<*>) : MouseAdapt
   }
 
   override fun mouseClicked(e: MouseEvent) {
-    getRunnableAt(e)?.run()
+    getActionAt(e)?.actionPerformed(ActionEvent(e.source, e.id, "execute", e.modifiersEx))
   }
 }

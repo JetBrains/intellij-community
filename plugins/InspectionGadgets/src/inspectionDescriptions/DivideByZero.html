@@ -1,11 +1,10 @@
 <html>
 <body>
-<p>Reports division by zero or remainder by zero.</p>
-<p>In this case, users will get <code>Nan</code> for doubles or floats, and <code>ArithmeticException</code> for integers.
-  Note, that the divisor is not necessarily a zero literal, but the expression that is statically known to be evaluated as zero.
-  The fix suggests replacing division expression with the <code>NaN</code> constant for floating-point types.</p>
+Reports division by zero or remainder by zero.
+Such expressions will produce an <code>Infinity</code>, <code>-Infinity</code> or <code>NaN</code> result for doubles or floats,
+and will throw an <code>ArithmeticException</code> for integers.
+<p>When the expression has a <code>NaN</code> result, the fix suggests replacing the division expression with the <code>NaN</code> constant.
 <!-- tooltip end -->
-<p>
 
 </body>
 </html>

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -10,52 +10,62 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
+import com.intellij.ui.ChooserInterceptor;
+import com.intellij.ui.UiInterceptors;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceTest {
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceParameter/";
 
   public void testReplaceAll() {
-    doTest(introducer -> introducer.setReplaceAllOccurrences(true));
+    doTestReplaceAll();
   }
 
   public void testChainMethodCall() {
-    doTest(introducer -> introducer.setReplaceAllOccurrences(true));
+    doTestReplaceAll();
   }
 
   public void testReplaceAll1() {
-    doTest(introducer -> introducer.setReplaceAllOccurrences(true));
-  }
-
-  public void testReplaceOneLeaveParamToDelete() {
-    doTest(null);
-  }
-
-  public void testReplaceAllBrokenIdentifier() {
-    doTest(introducer -> {
-     type("ONE TWO");
-     introducer.setReplaceAllOccurrences(true);
-   });
+    doTestReplaceAll();
   }
 
   public void testReplaceAll2() {
-    doTest(introducer -> introducer.setReplaceAllOccurrences(true));
+    doTestReplaceAll();
   }
 
   public void testReplaceAll3() {
-    doTest(introducer -> introducer.setReplaceAllOccurrences(true));
+    doTestReplaceAll();
   }
 
   public void testReplaceAllMethodCalls() {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
     doTest(introducer -> {
      introducer.setReplaceAllOccurrences(true);
      type("string");
    });
   }
 
+  private void doTestReplaceAll() {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
+    doTest(introducer -> introducer.setReplaceAllOccurrences(true));
+  }
+  
+  public void testReplaceOneLeaveParamToDelete() {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace this occurrence only")));
+    doTest(null);
+  }
+  
   public void testParamNameEqMethodName() {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace this occurrence only")));
+    doTest(null);
+  }
+
+  public void testBlockScope() {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace 0 occurrences in 'if-then' block")));
     doTest(null);
   }
 
@@ -85,6 +95,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
       assert state != null;
       state.gotoEnd(false);
+      UIUtil.dispatchAllInvocationEvents();
       checkResultByFile(getBasePath() + name + "_after" + getExtension());
     }
     finally {
@@ -103,6 +114,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
   }
 
   public void testEscapePosition() {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace this occurrence only")));
     doTestEscape();
   }
 

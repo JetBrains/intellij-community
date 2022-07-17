@@ -4,6 +4,7 @@ package com.intellij.util;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.StatePreservingNavigatable;
 import org.jetbrains.annotations.Nullable;
@@ -69,16 +70,22 @@ public final class OpenSourceUtil {
   public static boolean navigate(boolean requestFocus, boolean tryNotToScroll, @Nullable Iterable<? extends Navigatable> navigatables) {
     if (navigatables == null) return false;
     Navigatable nonSourceNavigatable = null;
-    boolean alreadyNavigatedToSource = false;
+
+    int maxSourcesToNavigate = Registry.intValue("ide.source.file.navigation.limit", 100);
+    int navigatedSourcesCounter = 0;
     for (Navigatable navigatable : navigatables) {
-      if (navigateToSource(requestFocus, tryNotToScroll, navigatable)) {
-        alreadyNavigatedToSource = true;
+      if (maxSourcesToNavigate > 0 && navigatedSourcesCounter >= maxSourcesToNavigate) {
+        break;
       }
-      else if (!alreadyNavigatedToSource && nonSourceNavigatable == null && canNavigate(navigatable)) {
+
+      if (navigateToSource(requestFocus, tryNotToScroll, navigatable)) {
+        navigatedSourcesCounter++;
+      }
+      else if (navigatedSourcesCounter == 0 && nonSourceNavigatable == null && canNavigate(navigatable)) {
         nonSourceNavigatable = navigatable;
       }
     }
-    if (alreadyNavigatedToSource) return true;
+    if (navigatedSourcesCounter > 0) return true;
     if (nonSourceNavigatable == null) return false;
     nonSourceNavigatable.navigate(requestFocus);
     return true;

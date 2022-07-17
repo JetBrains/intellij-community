@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.options.BoundConfigurable
-import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle.message
@@ -12,15 +11,17 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel.ManageIgnoredOption.*
-import com.intellij.ui.components.Label
-import com.intellij.ui.layout.*
-import javax.swing.DefaultComboBoxModel
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toNullableProperty
 
-internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigurable(message("ignored.file.tab.title"),
-                                                                                      "project.propVCSSupport.Ignored.Files"), SearchableConfigurable {
-  internal var selectedManageIgnoreOption = getIgnoredOption()
-  internal var settings = VcsApplicationSettings.getInstance()
-  internal var projectSettings = VcsConfiguration.getInstance(project)
+internal class IgnoredSettingsPanel(private val project: Project) :
+  BoundSearchableConfigurable(message("ignored.file.tab.title"), "project.propVCSSupport.Ignored.Files") {
+
+  private var selectedManageIgnoreOption = getIgnoredOption()
+  private val settings = VcsApplicationSettings.getInstance()
+  private val projectSettings = VcsConfiguration.getInstance(project)
 
   override fun apply() {
     val modified = isModified
@@ -33,32 +34,29 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
 
   override fun createPanel() =
     panel {
-      titledRow(message("ignored.file.general.settings.title")) {
-        row {
-          cell {
-            Label(message("ignored.file.manage.policy.label"))()
-            comboBox(
-              DefaultComboBoxModel(arrayOf(AlwaysAsk,
-                                           AllProjectsManage,
-                                           CurrentProjectManage,
-                                           DoNotManageForCurrentProject,
-                                           DoNotManageForAllProject)),
-              ::selectedManageIgnoreOption
-            ).growPolicy(GrowPolicy.MEDIUM_TEXT)
-          }
+      group(message("ignored.file.general.settings.title")) {
+        row(message("ignored.file.manage.policy.label")) {
+          comboBox(listOf(AlwaysAsk,
+                           AllProjectsManage,
+                           CurrentProjectManage,
+                           DoNotManageForCurrentProject,
+                           DoNotManageForAllProject))
+            .bindItem(::selectedManageIgnoreOption.toNullableProperty())
         }
       }
-      titledRow(message("ignored.file.excluded.settings.title")) {
+      group(message("ignored.file.excluded.settings.title")) {
         row {
-          checkBox(message("ignored.file.excluded.to.ignored.label"), settings::MARK_EXCLUDED_AS_IGNORED)
+          checkBox(message("ignored.file.excluded.to.ignored.label"))
+            .bindSelected(settings::MARK_EXCLUDED_AS_IGNORED)
         }
         row {
-          checkBox(message("ignored.file.ignored.to.excluded.label"), projectSettings::MARK_IGNORED_AS_EXCLUDED)
+          checkBox(message("ignored.file.ignored.to.excluded.label"))
+            .bindSelected(projectSettings::MARK_IGNORED_AS_EXCLUDED)
         }
       }
     }
 
-  private fun updateIgnoredOption(option: ManageIgnoredOption?) {
+  private fun updateIgnoredOption(option: ManageIgnoredOption) {
     val applicationSettings = VcsApplicationSettings.getInstance()
     val propertiesComponent = PropertiesComponent.getInstance(project)
     when (option) {
@@ -116,6 +114,4 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
 
     override fun toString() = displayName
   }
-
-  override fun getId() = helpTopic!!
 }

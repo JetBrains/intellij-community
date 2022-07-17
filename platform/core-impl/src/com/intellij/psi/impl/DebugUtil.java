@@ -624,14 +624,14 @@ public final class DebugUtil {
   //<editor-fold desc="Deprecated stuff">
   /** @deprecated use {@link #performPsiModification} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   public static void startPsiModification(@Nullable String trace) {
     beginPsiModification(trace);
   }
 
   /** @deprecated use {@link #performPsiModification} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   public static void finishPsiModification() {
     endPsiModification();
   }

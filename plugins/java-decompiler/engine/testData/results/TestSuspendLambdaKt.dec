@@ -1,8 +1,8 @@
 package pkg;
 
 import kotlin.Metadata;
+import kotlin.Result;
 import kotlin.Unit;
-import kotlin.Result.Failure;
 import kotlin.coroutines.Continuation;
 import kotlin.coroutines.intrinsics.IntrinsicsKt;
 import kotlin.coroutines.jvm.internal.DebugMetadata;
@@ -51,17 +51,17 @@ public final class TestSuspendLambdaKt {
          @Nullable
          public final Object invokeSuspend(@NotNull Object result) {
             Object var3 = IntrinsicsKt.getCOROUTINE_SUSPENDED();
-            switch(this.label) {
-            case 0:
-               if (result instanceof Failure) {
-                  throw ((Failure)result).exception;
-               }
+            switch (this.label) {
+               case 0:
+                  if (result instanceof Result.Failure) {
+                     throw ((Result.Failure)result).exception;
+                  }
 
-               String var2 = "SL1";// 4
-               System.out.println(var2);
-               return Unit.INSTANCE;// 5
-            default:
-               throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
+                  String var2 = "SL1";// 4
+                  System.out.println(var2);
+                  return Unit.INSTANCE;// 5
+               default:
+                  throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
             }
          }
 

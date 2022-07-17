@@ -3,9 +3,18 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Provides a way to store additional configuration for a project. Plugins aren't supposed to use this class, they show use project-level
+ * <a href="https://plugins.jetbrains.com/docs/intellij/plugin-services.html">services</a> which implements {@link com.intellij.openapi.components.PersistentStateComponent}
+ * instead.
+ *
+ * <p>This class is used for some data which is historically stored as part of {@code ProjectRootManager} configuration in .idea/misc.xml file.</p>
+ */
+@ApiStatus.Internal
 public abstract class ProjectExtension {
   public void projectSdkChanged(@Nullable Sdk sdk) {
   }

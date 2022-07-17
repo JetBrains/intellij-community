@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -18,7 +18,7 @@ import org.editorconfig.language.util.EditorConfigIdentifierUtil
 class EditorConfigReferenceCorrectnessInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
     override fun visitPsiElement(element: PsiElement) {
-      element as? EditorConfigDescribableElement ?: return
+      if (element !is EditorConfigDescribableElement) return
       val descriptor = element.getDescriptor(false) as? EditorConfigReferenceDescriptor ?: return
       val reference = element.reference as? EditorConfigIdentifierReference ?: return
       if (reference.multiResolve(false).isNotEmpty()) return
@@ -29,7 +29,6 @@ class EditorConfigReferenceCorrectnessInspection : LocalInspectionTool() {
           .map { it.getDescriptor(false) as EditorConfigDeclarationDescriptor }
 
       if (sameTextDescriptors.isEmpty()) {
-        @Suppress("DialogTitleCapitalization")
         val message = EditorConfigBundle["inspection.reference.unresolved.message"]
         val possibleDescriptors = getDeclarationDescriptors(descriptor.id)
         holder.registerProblem(

@@ -7,17 +7,13 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 
-class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl, initializeVirtualFileLazily: Boolean) :
+class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl) :
   VirtualFileUrlImpl(id, manager), VirtualFilePointer {
   @Volatile
   private var file: VirtualFile? = null
 
   @Volatile
   private var timestampOfCachedFiles = -1L
-
-  init {
-    if (!initializeVirtualFileLazily) findVirtualFile()
-  }
 
   override fun getFile() = findVirtualFile()
   override fun isValid() = findVirtualFile() != null

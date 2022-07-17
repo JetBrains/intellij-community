@@ -17,7 +17,6 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.project.Project;
@@ -106,13 +105,13 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     }
 
     @Override
-    public void visitImportList(PsiImportList list) {
+    public void visitImportList(@NotNull PsiImportList list) {
       checkTopLevelSemicolons(list);
       super.visitImportList(list);
     }
 
     @Override
-    public void visitModule(PsiJavaModule module) {
+    public void visitModule(@NotNull PsiJavaModule module) {
       checkTopLevelSemicolons(module);
       super.visitModule(module);
     }
@@ -121,7 +120,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
       for (PsiElement sibling = element.getFirstChild(); sibling != null; sibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(sibling)) {
         if (sibling instanceof PsiErrorElement) return;
         if (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON)) {
-          registerError(sibling, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+          registerError(sibling);
         }
       }
     }
@@ -138,12 +137,12 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
           if (sibling instanceof PsiErrorElement) return;
           if (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON)) {
             if (semicolonSeen) {
-              registerError(sibling, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+              registerError(sibling);
             }
             else if (!ignoreAfterEnumConstants) {
               final PsiElement element = PsiTreeUtil.skipWhitespacesAndCommentsForward(sibling);
               if (PsiUtil.isJavaToken(element, JavaTokenType.RBRACE)) {
-                registerError(sibling, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+                registerError(sibling);
               }
             }
             semicolonSeen = true;
@@ -153,7 +152,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     }
 
     @Override
-    public void visitEmptyStatement(PsiEmptyStatement statement) {
+    public void visitEmptyStatement(@NotNull PsiEmptyStatement statement) {
       super.visitEmptyStatement(statement);
       final PsiElement parent = statement.getParent();
       if (parent instanceof PsiCodeBlock) {
@@ -161,18 +160,18 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
         if (semicolon == null) {
           return;
         }
-        registerError(semicolon, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+        registerError(semicolon);
       }
     }
 
     @Override
-    public void visitResourceList(final PsiResourceList resourceList) {
+    public void visitResourceList(final @NotNull PsiResourceList resourceList) {
       super.visitResourceList(resourceList);
       final PsiElement last = resourceList.getLastChild();
       if (PsiUtil.isJavaToken(last, JavaTokenType.RPARENTH)) {
         final PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(last);
         if (PsiUtil.isJavaToken(prev, JavaTokenType.SEMICOLON)) {
-          registerError(prev, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+          registerError(prev);
         }
       }
     }

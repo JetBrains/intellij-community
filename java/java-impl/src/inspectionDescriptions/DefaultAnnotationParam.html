@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports an annotation parameter assignment if it is assigned to its <code>default</code> value.
+Reports annotation parameters that are assigned to their <code>default</code> value.
 <p>Example:</p>
 <pre><code>
   @interface Test {
-      Class<?> expected() default Throwable.class;
+      Class&lt;?> expected() default Throwable.class;
   }
 
   @Test(expected = Throwable.class)

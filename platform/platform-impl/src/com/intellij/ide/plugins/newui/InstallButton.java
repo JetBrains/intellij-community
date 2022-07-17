@@ -54,11 +54,6 @@ public class InstallButton extends ColorButton {
     setWidth72(this);
   }
 
-  @Override
-  public void setEnabled(boolean b) {
-    super.setEnabled(b);
-  }
-
   public void setEnabled(boolean enabled, @Nullable @Nls String statusText) {
     super.setEnabled(enabled);
     if (enabled) {

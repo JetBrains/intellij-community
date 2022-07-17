@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -32,8 +31,7 @@ import static com.intellij.ide.util.newProjectWizard.AbstractProjectWizard.getNe
  * @deprecated Use {@link GradleStructureWizardStep} instead
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public class GradleModuleWizardStep extends ModuleWizardStep {
   private static final Icon WIZARD_ICON = null;
 

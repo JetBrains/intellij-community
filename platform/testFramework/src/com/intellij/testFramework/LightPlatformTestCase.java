@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
@@ -57,6 +57,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.project.TestProjectManager;
 import com.intellij.project.TestProjectManagerKt;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -90,7 +91,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
   private static Project ourProject;
   private static Module ourModule;
@@ -105,6 +105,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   static {
     PlatformTestUtil.registerProjectCleanup(LightPlatformTestCase::closeAndDeleteProject);
   }
+
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private LibraryTableTracker myLibraryTableTracker;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
@@ -237,7 +238,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       testAppManager.setDataProvider(this);
       LightProjectDescriptor descriptor = getProjectDescriptor();
-      doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable(), mySdkParentDisposable);
+      doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable(), mySdkParentDisposable, getTestName(false));
       InjectedLanguageManagerImpl.pushInjectors(getProject());
 
       myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(
@@ -259,7 +260,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   public static @NotNull Pair.NonNull<Project, Module> doSetup(@NotNull LightProjectDescriptor descriptor,
                                                                LocalInspectionTool @NotNull [] localInspectionTools,
-                                                               @NotNull Disposable parentDisposable, @NotNull Disposable sdkParentDisposable) {
+                                                               @NotNull Disposable parentDisposable,
+                                                               @NotNull Disposable sdkParentDisposable,
+                                                               @NotNull String name) {
     Application app = ApplicationManager.getApplication();
     Ref<Boolean> reusedProject = new Ref<>(true);
     app.invokeAndWait(() -> {
@@ -277,8 +280,15 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     });
 
     Project project = ourProject;
+    ((ProjectImpl)project).setLightProjectName(name);
     try {
-      PlatformTestUtil.openProject(project);
+      if (!((TestProjectManager)ProjectManagerEx.getInstanceEx()).openProject(project)) {
+        throw new IllegalStateException("openProject returned false");
+      }
+
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      }
     }
     catch (Throwable e) {
       setProject(null);
@@ -305,17 +315,20 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       InspectionsKt.configureInspections(localInspectionTools, project, parentDisposable);
 
       assertFalse(PsiManager.getInstance(project).isDisposed());
-      Boolean passed = null;
-      try {
-        passed = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
-      }
-      catch (Exception ignored) {
-      }
 
-      assertTrue("open: " + project.isOpen() +
-                 "; disposed:" + project.isDisposed() +
-                 "; startup passed:" + passed +
-                 "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()), project.isInitialized());
+      if (!project.isInitialized()) {
+        Boolean passed = null;
+        try {
+          passed = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
+        }
+        catch (Exception ignored) {
+        }
+
+        throw new AssertionError("open: " + project.isOpen() +
+                                 "; disposed:" + project.isDisposed() +
+                                 "; startup passed:" + passed +
+                                 "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()));
+      }
 
       CodeStyle.setTemporarySettings(project, CodeStyle.createTestSettings());
 
@@ -374,7 +387,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> {
         if (project != null) {
-          TestApplicationManagerKt.tearDownProjectAndApp(project);
+          TestApplicationManager.tearDownProjectAndApp(project);
         }
       },
       () -> {
@@ -428,13 +441,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   static void tearDownSourceRoot(@NotNull Project project) {
     WriteCommandAction.runWriteCommandAction(project, () -> {
-      if (ourSourceRoot != null) {
+      VirtualFile sourceRoot = ourSourceRoot;
+      if (sourceRoot == null) {
+        return;
+      }
+
+      for (VirtualFile child : sourceRoot.getChildren()) {
         try {
-          for (VirtualFile child : ourSourceRoot.getChildren()) {
-            child.delete(LightPlatformTestCase.class);
-          }
+          child.delete(LightPlatformTestCase.class);
         }
-        catch (IOException e) {
+        catch (IOException | IllegalStateException e) {
+          // TempFileSystem.deleteFile can throw not IOException but IllegalStateException
           //noinspection CallToPrintStackTrace
           e.printStackTrace();
         }
@@ -622,10 +639,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       if (ourPsiManager != null) {
         assertTrue(ourPsiManager.isDisposed());
       }
-    } finally {
+    }
+    finally {
       setProject(null);
       ourModule = null;
       ourPsiManager = null;
+      ourSourceRoot = null;
     }
   }
 

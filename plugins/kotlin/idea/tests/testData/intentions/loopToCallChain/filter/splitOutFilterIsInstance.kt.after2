@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'filterIsInstance<>().filterTo(){}'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().filterIsInstance<>().filterTo(){}'"
 fun foo(list: List<Any>, out: MutableList<String>){

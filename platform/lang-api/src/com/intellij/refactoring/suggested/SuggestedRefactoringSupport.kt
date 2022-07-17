@@ -27,19 +27,33 @@ interface SuggestedRefactoringSupport {
    * Note, that if Change Signature is supported then individual parameters must not be considered as declarations
    * for they are part of a bigger declaration.
    */
-  fun isDeclaration(psiElement: PsiElement): Boolean
+  @Deprecated(message = "Use isAnchor instead", replaceWith = ReplaceWith("isAnchor(psiElement)"))
+  @JvmDefault
+  fun isDeclaration(psiElement: PsiElement): Boolean = throw NotImplementedError("Will be removed")
 
   /**
-   * Returns "signature range" for a given declaration.
+   * Returns true, if given PsiElement is an anchor element where suggested refactoring can start.
+   *
+   * It could be either a declaration or a call-site if suggested refactoring from the call-site is supported.
+   *
+   * Note, that if Change Signature is supported then individual parameters must not be considered as anchors
+   * for they are part of a bigger anchor (method or function).
+   */
+  @Suppress("DEPRECATION")
+  @JvmDefault
+  fun isAnchor(psiElement: PsiElement): Boolean = isDeclaration(psiElement)
+
+  /**
+   * Returns "signature range" for a given anchor.
    *
    * Signature range is a range that contains all properties taken into account by Change Signature refactoring.
    * If only Rename refactoring is supported for the given declaration, the name identifier range must be returned.
    *
-   * Only PsiElement's that are classified as declarations by [isDeclaration] method must be passed to this method.
-   * @return signature range for the declaration, or *null* if declaration is considered unsuitable for refactoring
+   * Only PsiElement's that are classified as anchor by [isAnchor] method must be passed to this method.
+   * @return signature range for the anchor, or *null* if anchor is considered unsuitable for refactoring
    * (usually when it has syntax error).
    */
-  fun signatureRange(declaration: PsiElement): TextRange?
+  fun signatureRange(anchor: PsiElement): TextRange?
 
   /**
    * Returns range in the given file taken by imports (if supported by the language).
@@ -50,17 +64,21 @@ interface SuggestedRefactoringSupport {
   fun importsRange(psiFile: PsiFile): TextRange?
 
   /**
-   * Returns name range for a given declaration.
+   * Returns name range for a given anchor.
    *
-   * Only PsiElement's that are classified as declarations by [isDeclaration] method must be passed to this method.
-   * @return name range for the declaration, or *null* if declaration does not have a name.
+   * Only PsiElement's that are classified as anchors by [isAnchor] method must be passed to this method.
+   * @return name range for the anchor, or *null* if anchor does not have a name.
    */
-  fun nameRange(declaration: PsiElement): TextRange?
+  fun nameRange(anchor: PsiElement): TextRange?
 
+  /**
+   * Returns true if there's a syntax error within given anchor that prevents
+   * suggested refactoring from successful completion
+   */
   @JvmDefault
-  open fun hasSyntaxError(declaration: PsiElement): Boolean {
-    val signatureRange = signatureRange(declaration) ?: return true
-    return declaration.containingFile.hasErrorElementInRange(signatureRange)
+  fun hasSyntaxError(anchor: PsiElement): Boolean {
+    val signatureRange = signatureRange(anchor) ?: return true
+    return anchor.containingFile.hasErrorElementInRange(signatureRange)
   }
 
   /**
@@ -202,8 +220,8 @@ interface SuggestedRefactoringSupport {
   }
 }
 
-fun SuggestedRefactoringSupport.declarationByOffset(psiFile: PsiFile, offset: Int): PsiElement? {
+fun SuggestedRefactoringSupport.anchorByOffset(psiFile: PsiFile, offset: Int): PsiElement? {
   return psiFile.findElementAt(offset)
     ?.parents(true)
-    ?.firstOrNull { isDeclaration(it) }
+    ?.firstOrNull { isAnchor(it) }
 }

@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinProbablyNothingPropertyShortNam
 import org.jetbrains.kotlin.resolve.lazy.ProbablyNothingCallableNames
 
 class ProbablyNothingCallableNamesImpl(project: Project) : ProbablyNothingCallableNames {
-    private val functionNames = createCachedValue(project) { KotlinProbablyNothingFunctionShortNameIndex.getInstance().getAllKeys(project) }
-    private val propertyNames = createCachedValue(project) { KotlinProbablyNothingPropertyShortNameIndex.getInstance().getAllKeys(project) }
+    private val functionNames = createCachedValue(project) { KotlinProbablyNothingFunctionShortNameIndex.getAllKeys(project) }
+    private val propertyNames = createCachedValue(project) { KotlinProbablyNothingPropertyShortNameIndex.getAllKeys(project) }
 
     override fun functionNames(): Collection<String> = functionNames.value
     override fun propertyNames(): Collection<String> = propertyNames.value

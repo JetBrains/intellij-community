@@ -2,9 +2,11 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -28,6 +30,12 @@ public class ClientEditorManager {
   @NotNull
   public Stream<Editor> editors() {
     return myEditors.stream();
+  }
+
+  @NotNull
+  public Stream<Editor> editors(@NotNull Document document, @Nullable Project project) {
+    return editors()
+      .filter(editor -> editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject())));
   }
 
   public void editorCreated(@NotNull Editor editor) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions
 
 import com.intellij.ide.actions.CreateElementActionBase
@@ -7,9 +7,9 @@ import com.intellij.ide.actions.JavaCreateTemplateInPackageAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -37,8 +37,11 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.util.function.Consumer
 import java.util.function.Predicate
 
-class NewMessageBundleAction : CreateElementActionBase(), UpdateInBackground {
-  override fun invokeDialog(project: Project, directory: PsiDirectory, elementsConsumer: Consumer<Array<PsiElement>>) {
+class NewMessageBundleAction : CreateElementActionBase() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  override fun invokeDialog(project: Project, directory: PsiDirectory, elementsConsumer: Consumer<in Array<PsiElement>>) {
     val module = ModuleUtilCore.findModuleForPsiElement(directory) ?: return
     if (module.name.endsWith(".impl") && ModuleManager.getInstance(project).findModuleByName(module.name.removeSuffix(".impl")) != null) {
       Messages.showErrorDialog(project, DevKitBundle.message(
@@ -137,13 +140,12 @@ class NewMessageBundleAction : CreateElementActionBase(), UpdateInBackground {
     return DevKitBundle.message("action.DevKit.NewMessageBundle.error.title.cannot.create.new.message.bundle")
   }
 
-  override fun getActionName(directory: PsiDirectory?, newName: String?): String {
+  override fun getActionName(directory: PsiDirectory, newName: String): String {
     return DevKitBundle.message("action.DevKit.NewMessageBundle.action.name.create.new.message.bundle", newName)
   }
 }
 
-@Suppress("HardCodedStringLiteral")
-internal fun generateDefaultBundleName(module: Module): String {
+fun generateDefaultBundleName(module: Module): String {
   val nameWithoutPrefix = module.name.removePrefix("intellij.").removeSuffix(".impl")
   val commonGroupNames = listOf("platform", "vcs", "tools", "clouds")
   val commonPrefix = commonGroupNames.find { nameWithoutPrefix.startsWith("$it.") }

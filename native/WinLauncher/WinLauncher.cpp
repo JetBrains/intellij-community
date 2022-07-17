@@ -1,5 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -37,14 +38,6 @@ HANDLE hEvent;
 HANDLE hSingleInstanceWatcherThread;
 const int FILE_MAPPING_SIZE = 16000;
 
-#ifdef _M_X64
-bool need64BitJRE = true;
-#define BITS_STR "64-bit"
-#else
-bool need64BitJRE = false;
-#define BITS_STR "32-bit"
-#endif
-
 void TrimLine(char* line);
 
 static std::string EncodeWideACP(const std::wstring &str)
@@ -79,13 +72,11 @@ static bool IsValidJRE(const std::string& path)
 
 bool Is64BitJRE(const char* path)
 {
-  std::string cfgPath(path);
   std::string cfgJava9Path(path);
   std::string accessbridgeVersion(path);
-  cfgPath += "\\lib\\amd64\\jvm.cfg";
   cfgJava9Path += "\\lib\\jvm.cfg";
   accessbridgeVersion += "\\bin\\windowsaccessbridge-32.dll";
-  return FileExists(cfgPath) || (FileExists(cfgJava9Path) && !FileExists(accessbridgeVersion));
+  return FileExists(cfgJava9Path) && !FileExists(accessbridgeVersion);
 }
 
 bool FindValidJVM(const char* path)
@@ -93,18 +84,6 @@ bool FindValidJVM(const char* path)
   if (IsValidJRE(path))
   {
     strcpy_s(jvmPath, _MAX_PATH - 1, path);
-    return true;
-  }
-  char jrePath[_MAX_PATH];
-  strcpy_s(jrePath, path);
-  if (jrePath[strlen(jrePath) - 1] != '\\')
-  {
-    strcat_s(jrePath, "\\");
-  }
-  strcat_s(jrePath, _MAX_PATH - 1, "jre");
-  if (IsValidJRE(jrePath))
-  {
-    strcpy_s(jvmPath, jrePath);
     return true;
   }
   return false;
@@ -131,7 +110,7 @@ bool FindJVMInEnvVar(const char* envVarName, bool& result)
   {
     if (FindValidJVM(envVarValue))
     {
-      if (Is64BitJRE(jvmPath) != need64BitJRE) return false;
+      if (!Is64BitJRE(jvmPath)) return false;
       result = true;
     }
     else
@@ -247,31 +226,6 @@ bool FindJVMInRegistry()
   return false;
 }
 
-// The following code is taken from http://msdn.microsoft.com/en-us/library/ms684139(v=vs.85).aspx
-// and provides a backwards compatible way to check if this application is a 32-bit process running
-// on a 64-bit OS
-typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
-
-LPFN_ISWOW64PROCESS fnIsWow64Process;
-
-BOOL IsWow64()
-{
-  BOOL bIsWow64 = FALSE;
-
-  //IsWow64Process is not available on all supported versions of Windows.
-  //Use GetModuleHandle to get a handle to the DLL that contains the function
-  //and GetProcAddress to get a pointer to the function if available.
-
-  fnIsWow64Process = (LPFN_ISWOW64PROCESS) GetProcAddress(
-      GetModuleHandle(TEXT("kernel32")), "IsWow64Process");
-
-  if (NULL != fnIsWow64Process)
-  {
-    fnIsWow64Process(GetCurrentProcess(), &bIsWow64);
-  }
-  return bIsWow64;
-}
-
 bool LocateJVM()
 {
   bool result;
@@ -282,7 +236,7 @@ bool LocateJVM()
 
   if (FindJVMInSettings()) return true;
 
-  if (FindValidJVM(GetAdjacentDir(need64BitJRE ? "jbr" : "jbr-x86").c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
+  if (FindValidJVM(GetAdjacentDir("jbr").c_str()) && Is64BitJRE(jvmPath))
   {
     return true;
   }
@@ -298,19 +252,9 @@ bool LocateJVM()
   }
 
   std::string jvmError;
-  jvmError = "No JVM installation found. Please install a " BITS_STR " JDK.\n"
+  jvmError = "No JVM installation found. Please install a JDK.\n"
     "If you already have a JDK installed, define a JAVA_HOME variable in\n"
     "Computer > System Properties > System Settings > Environment Variables.";
-
-  if (IsWow64())
-  {
-    // If WoW64, this means we are running a 32-bit program on 64-bit Windows. This may explain
-    // why we couldn't locate the JVM.
-    jvmError += "\n\nNOTE: We have detected that you are running a 64-bit version of the "
-        "Windows operating system but are running the 32-bit executable. This "
-        "can prevent you from finding a 64-bit installation of Java. Consider running "
-        "the 64-bit version instead, if this is the problem you're encountering.";
-  }
 
   std::string error = LoadStdString(IDS_ERROR_LAUNCHING_APP);
   MessageBoxA(NULL, jvmError.c_str(), error.c_str(), MB_OK);
@@ -346,34 +290,6 @@ static bool LoadVMOptionsFile(const char* path, std::vector<std::string>& vmOpti
   return true;
 }
 
-std::string FindToolsJar()
-{
-  std::string baseToolsJarPath = jvmPath;
-  // remove trailing slash if any
-  size_t lastSlash = baseToolsJarPath.rfind('\\');
-  if (lastSlash == baseToolsJarPath.length() - 1)
-  {
-      baseToolsJarPath = baseToolsJarPath.substr(0, lastSlash);
-  }
-  // 1) look in the base dir
-  std::string toolsJarPath = baseToolsJarPath + "\\lib\\tools.jar";
-  if (FileExists(toolsJarPath))
-  {
-    return toolsJarPath;
-  }
-  // 2) look in the up dir
-  lastSlash = baseToolsJarPath.rfind('\\');
-  if (lastSlash != std::string::npos)
-  {
-    toolsJarPath = baseToolsJarPath.substr(0, lastSlash + 1) + "lib\\tools.jar";
-    if (FileExists(toolsJarPath))
-    {
-      return toolsJarPath;
-    }
-  }
-  return "";
-}
-
 std::string CollectLibJars(const std::string& jarList)
 {
   std::string libDir = GetAdjacentDir("lib");
@@ -405,19 +321,13 @@ std::string CollectLibJars(const std::string& jarList)
 std::string BuildClassPath()
 {
   std::string classpathLibs = LoadStdString(IDS_CLASSPATH_LIBS);
-  std::string result = CollectLibJars(classpathLibs);
+  return CollectLibJars(classpathLibs);
+}
 
-  if (LoadStdString(IDS_JDK_ONLY) == std::string("true"))
-  {
-    std::string toolsJar = FindToolsJar();
-    if (toolsJar.size() > 0)
-    {
-      result += ";";
-      result += toolsJar;
-    }
-  }
-
-  return result;
+std::string BuildBootClassPath()
+{
+  std::string classpathLibs = LoadStdString(IDS_BOOTCLASSPATH_LIBS);
+  return CollectLibJars(classpathLibs);
 }
 
 bool AddClassPathOptions(std::vector<std::string>& vmOptionLines)
@@ -425,6 +335,15 @@ bool AddClassPathOptions(std::vector<std::string>& vmOptionLines)
   std::string classPath = BuildClassPath();
   if (classPath.size() == 0) return false;
   vmOptionLines.push_back(std::string("-Djava.class.path=") + classPath);
+
+  return true;
+}
+
+bool AddBootClassPathOptions(std::vector<std::string>& vmOptionLines)
+{
+  std::string classPath = BuildBootClassPath();
+  if (classPath.size() == 0) return false;
+  vmOptionLines.push_back(std::string("-Xbootclasspath/a:") + classPath);
 
   return true;
 }
@@ -475,7 +394,7 @@ void (JNICALL jniExitHook)(jint code) {
 
 bool LoadVMOptions() {
   char bin_vmoptions[_MAX_PATH], buffer1[_MAX_PATH], buffer2[_MAX_PATH], *vmOptionsFile = NULL;
-  std::vector<std::string> lines;
+  std::vector<std::string> lines, user_lines;
 
   GetModuleFileNameA(NULL, bin_vmoptions, _MAX_PATH);
   strcat_s(bin_vmoptions, ".vmoptions");
@@ -485,58 +404,55 @@ bool LoadVMOptions() {
   if (GetEnvironmentVariableA(buffer1, buffer2, _MAX_PATH) != 0 && LoadVMOptionsFile(buffer2, lines)) {
     vmOptionsFile = buffer2;
   }
-
-  // 2. <IDE_HOME>.vmoptions (Toolbox) [+ <IDE_HOME>\bin\<exe_name>.vmoptions]
-  if (vmOptionsFile == NULL) {
+  else {
+    // 2. <IDE_HOME>\bin\<exe_name>.vmoptions ...
+    if (LoadVMOptionsFile(bin_vmoptions, lines)) {
+      vmOptionsFile = bin_vmoptions;
+    }
+    // ... [+ <IDE_HOME>.vmoptions (Toolbox) || <config_directory>\<exe_name>.vmoptions]
     strcpy_s(buffer1, _MAX_PATH, bin_vmoptions);
     char *ideHomeEnd = strrchr(buffer1, '\\') - 4;  // "bin\"
     strcpy_s(ideHomeEnd, _MAX_PATH - (ideHomeEnd - buffer1), ".vmoptions");
-    if (LoadVMOptionsFile(buffer1, lines)) {
+    if (LoadVMOptionsFile(buffer1, user_lines)) {
       vmOptionsFile = buffer1;
-      if (std::find(lines.begin(), lines.end(), std::string("-ea")) == lines.end()) {
-        std::vector<std::string> lines2;
-        if (LoadVMOptionsFile(bin_vmoptions, lines2)) {
-          lines.insert(lines.begin(), lines2.begin(), lines2.end());
-        }
+    }
+    else {
+      LoadStringA(hInst, IDS_VM_OPTIONS_PATH, buffer1, _MAX_PATH);
+      ExpandEnvironmentStringsA(buffer1, buffer2, _MAX_PATH);
+      char *exeParentEnd = strrchr(bin_vmoptions, '\\');
+      strcat_s(buffer2, exeParentEnd);
+      if (LoadVMOptionsFile(buffer2, user_lines)) {
+        vmOptionsFile = buffer2;
       }
     }
   }
 
-  // 3. <config_directory>\<exe_name>.vmoptions
-  if (vmOptionsFile == NULL) {
-    LoadStringA(hInst, IDS_VM_OPTIONS_PATH, buffer1, _MAX_PATH);
-    ExpandEnvironmentStringsA(buffer1, buffer2, _MAX_PATH);
-    char *exeParentEnd = strrchr(bin_vmoptions, '\\');
-    strcat_s(buffer2, exeParentEnd);
-    if (LoadVMOptionsFile(buffer2, lines)) {
-      vmOptionsFile = buffer2;
+  if (!user_lines.empty()) {
+    if (!lines.empty()) {
+      bool (*GC_lookup)(std::string &) = [](std::string &s){
+        return strncmp(s.c_str(), "-XX:+Use", 8) == 0 && strcmp(s.c_str() + s.length() - 2, "GC") == 0;
+      };
+      if (std::find_if(user_lines.begin(), user_lines.end(), GC_lookup) != user_lines.end()) {
+        lines.erase(std::remove_if(lines.begin(), lines.end(), GC_lookup), lines.end());
+      }
     }
-  }
-
-  // 4. <IDE_HOME>\bin\<exe_name>.vmoptions [+ <config_directory>\user.vmoptions]
-  if (vmOptionsFile == NULL) {
-    if (LoadVMOptionsFile(bin_vmoptions, lines)) {
-      vmOptionsFile = bin_vmoptions;
-    }
-    char *p = strrchr(buffer2, '\\');
-    strcpy_s(p, _MAX_PATH - (p - buffer2), "\\user.vmoptions");
-    if (LoadVMOptionsFile(buffer2, lines)) {
-      vmOptionsFile = buffer2;
-    }
+    lines.insert(lines.end(), user_lines.begin(), user_lines.end());
   }
 
   if (vmOptionsFile != NULL) {
     lines.push_back(std::string("-Djb.vmOptionsFile=") + vmOptionsFile);
   }
   else {
-    wchar_t *title = NULL;
-    if (LoadStringW(hInst, IDS_ERROR_LAUNCHING_APP, (LPWSTR)(&title), 0) != 0) {
-      MessageBoxW(NULL, L"Cannot find VM options file", title, MB_OK);
+    wchar_t *titleBuf = NULL;
+    int len = LoadStringW(hInst, IDS_ERROR_LAUNCHING_APP, (LPWSTR)(&titleBuf), 0);
+    if (len != 0) {
+      std::wstring title(titleBuf, len);
+      MessageBoxW(NULL, L"Cannot find VM options file", title.c_str(), MB_OK);
     }
   }
 
   AddClassPathOptions(lines);
-
+  AddBootClassPathOptions(lines);
   AddPredefinedVMOptions(lines);
 
   vmOptionCount = (int)lines.size() + 1;
@@ -574,7 +490,7 @@ bool LoadJVMLibrary()
     std::string jvmError = "Failed to load JVM DLL ";
     jvmError += dllName.c_str();
     jvmError += "\n"
-        "If you already have a " BITS_STR " JDK installed, define a JAVA_HOME variable in "
+        "If you already have a JDK installed, define a JAVA_HOME variable in "
         "Computer > System Properties > System Settings > Environment Variables.";
     std::string error = LoadStdString(IDS_ERROR_LAUNCHING_APP);
     MessageBoxA(NULL, jvmError.c_str(), error.c_str(), MB_OK);
@@ -658,7 +574,7 @@ static JNIEnv* CreateJVM()
     std::stringstream buf;
     std::string jvmError = getErrorMessage(result);
     if (jvmError == "") {
-        jvmError = "If you already have a " BITS_STR " JDK installed, define a JAVA_HOME variable in \n";
+        jvmError = "If you already have a JDK installed, define a JAVA_HOME variable in \n";
         jvmError += "Computer > System Properties > System Settings > Environment Variables.\n";
     }
 
@@ -871,6 +787,10 @@ void SendCommandLineToFirstInstance(int response_id)
 
 int CheckSingleInstance()
 {
+  if (LoadStdString(IDS_INSTANCE_ACTIVATION) != std::string("true")) {
+    return -1;
+  }
+
   char moduleFileName[_MAX_PATH];
   GetModuleFileNameA(NULL, moduleFileName, _MAX_PATH - 1);
   for (char *p = moduleFileName; *p; p++)
@@ -910,14 +830,38 @@ int CheckSingleInstance()
     // Creating mapping for exitCode transmission
     HANDLE hResultFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE, resultFileName.c_str());
 
-    SendCommandLineToFirstInstance(response_id);
-    CloseHandle(hFileMapping);
-    CloseHandle(hEvent);
-
-    // Lock wait for the response
     std::string responseEventName = std::string("IntelliJLauncherEvent.") + std::to_string(static_cast<long long>(response_id));
     HANDLE hResponseEvent = CreateEventA(NULL, FALSE, FALSE, responseEventName.c_str());
-    WaitForSingleObject(hResponseEvent, INFINITE);
+
+    SendCommandLineToFirstInstance(response_id);
+    CloseHandle(hFileMapping);
+
+    // It is theoretically possible for this code to spin forever in a loop.
+    //
+    // There's a race condition when the process we talked to in SendCommandLineToFirstInstance was terminated, another
+    // one started, took over the file mapping, but has no idea about our command (because we only send it once).
+    //
+    // For now, this problem is unresolved, though it should very rarely happen in practice.
+    const DWORD waitTimeoutMs = 1000;
+    while (WaitForSingleObject(hResponseEvent, waitTimeoutMs) == WAIT_TIMEOUT)
+    {
+      // Check if the file mapping still exists outside the current process:
+      hFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
+      if (!hFileMapping)
+      {
+        // Means the mapping was abandoned by the initial process we observed. So, we should take over.
+        hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE,
+          mappingName.c_str());
+        CloseHandle(hResultFileMapping);
+        CloseHandle(hResponseEvent);
+        return -1;
+      }
+
+      // Ok, the mapping still exists, so the process is still alive. Proceed to spin.
+      CloseHandle(hFileMapping);
+    }
+
+    CloseHandle(hEvent);
     CloseHandle(hResponseEvent);
 
     // Read the exitCode

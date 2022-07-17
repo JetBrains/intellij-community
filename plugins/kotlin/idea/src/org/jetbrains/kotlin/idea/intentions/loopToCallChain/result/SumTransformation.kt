@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
@@ -99,10 +101,11 @@ abstract class SumTransformationBase(
                 return TransformationMatch.Result(sumTransformation, mapTransformation)
             }
 
+            val apiVersion = statement.languageVersionSettings.apiVersion
             val sumByFunctionName = when (sumType) {
-                SupportedType.INT -> "sumBy"
+                SupportedType.INT -> if (apiVersion < ApiVersion.KOTLIN_1_4) "sumBy" else "sumOf"
 
-                SupportedType.DOUBLE -> "sumByDouble"
+                SupportedType.DOUBLE -> if (apiVersion < ApiVersion.KOTLIN_1_4) "sumByDouble" else "sumOf"
 
                 else -> {
                     val mapTransformation = MapTransformation(state.outerLoop, state.inputVariable, null, byExpression, mapNotNull = false)

@@ -21,6 +21,7 @@ import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -311,12 +312,27 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   private static boolean shouldQualify(@NotNull PsiField field, @Nullable PsiReference context) {
     if ((context instanceof PsiReferenceExpression && !((PsiReferenceExpression)context).isQualified()) || 
         (context instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)context).isQualified())) {
-      PsiVariable target = JavaPsiFacade.getInstance(context.getElement().getProject()).getResolveHelper()
+      PsiElement element = context.getElement();
+      if (isEnumInSwitch(field, element)) return false;
+      PsiVariable target = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper()
         .resolveReferencedVariable(field.getName(), (PsiElement)context);
       return !field.getManager().areElementsEquivalent(target, field) &&
              !field.getManager().areElementsEquivalent(target, CompletionUtil.getOriginalOrSelf(field));
     }
     return false;
+  }
+
+  private static boolean isEnumInSwitch(@NotNull PsiField field, PsiElement element) {
+    if (!(field instanceof PsiEnumConstant) || !(element.getParent() instanceof PsiCaseLabelElementList)) return false;
+    PsiClass enumClass = field.getContainingClass();
+    PsiSwitchLabelStatementBase label = ObjectUtils.tryCast(element.getParent().getParent(), PsiSwitchLabelStatementBase.class);
+    if (label == null || enumClass == null) return false;
+    PsiSwitchBlock block = label.getEnclosingSwitchBlock();
+    if (block == null) return false;
+    PsiExpression expression = block.getExpression();
+    if (expression == null) return false;
+    PsiType type = expression.getType();
+    return type instanceof PsiClassType && enumClass.getManager().areElementsEquivalent(enumClass, ((PsiClassType)type).resolve());
   }
 
   private static void qualifyFieldReference(InsertionContext context, PsiField field) {

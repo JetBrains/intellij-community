@@ -1,9 +1,27 @@
 <html>
 <body>
 Reports <a href="https://en.wikipedia.org/wiki/Law_of_Demeter">Law of Demeter</a> violations.
-<p>The Law of Demeter specifies a style guideline: never call a method on an object you got from another call.
+<p>The Law of Demeter is not really a law, but specifies a style guideline: never call a method on an object received from another call.
 The code that follows this guideline is easier to maintain, adapt, and refactor, has less coupling between methods, less duplication,
-  and better information hiding. On the other hand, you might need to write many wrapper methods to meet this guideline.</p>
+  and better information hiding. On the other hand, you may need to write many wrapper methods to meet this guideline.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  boolean pay(Customer c, Invoice invoice) {
+    int dollars = c.getWallet().getDollars(); // violation
+    if (dollars >= invoice.getAmount()) {
+      Wallet w = c.getWallet();
+      w.subtract(invoice.getAmount()); // violation
+      return true;
+    }
+    return false;
+  }
+</code></pre>
+The above example might be better implemented as a method <code>payInvoice(Invoice invoice)</code> in <code>Customer</code>.
+<p><b>Example:</b></p>
+<pre><code>
+  Engine engine = car.getEngine();
+  int cylinders = engine.getNumberOfCylinders();
+</code></pre>
 <!-- tooltip end -->
 <p>
 </body>

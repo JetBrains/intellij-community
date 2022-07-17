@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -116,7 +116,8 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
     if (overriddenMethod.isDeprecated() && myForRemoval == isForRemovalAttributeSet(overriddenMethod)) {
       String description = JavaErrorBundle.message(myForRemoval ? "overrides.marked.for.removal.method" : "overrides.deprecated.method",
                                                    getPresentableName(aClass));
-      myHolder.registerProblem(methodNameElement, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
+      boolean forRemoval = myHighlightType == ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL;
+      myHolder.registerProblem(methodNameElement, getDescription(description, forRemoval, myHighlightType), myHighlightType);
     }
   }
 

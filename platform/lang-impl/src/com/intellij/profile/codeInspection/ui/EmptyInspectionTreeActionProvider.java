@@ -7,10 +7,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * An extension point to add actions in the 'Create an inspection…' link dropdown (Preferences | Editor | Inspections).
+ * It appears when no inspections are found by search.
+ */
 public abstract class EmptyInspectionTreeActionProvider {
   public static final ExtensionPointName<EmptyInspectionTreeActionProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.emptyInspectionTreeActionProvider");
 
+  /**
+   * Returns additional actions for creating inspections.
+   */
   @NotNull
   public abstract List<AnAction> getActions(SingleInspectionProfilePanel panel);
 }

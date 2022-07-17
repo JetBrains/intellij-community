@@ -1,27 +1,14 @@
-/*
- * Copyright 2006-2007 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,21 +19,19 @@ public class LawOfDemeterInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean ignoreLibraryCalls = true;
 
-  private static final Key<Integer> key =
-    Key.create("LawOfDemeterInspection");
-
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "law.of.demeter.problem.descriptor");
+    boolean isMethodCall = (Boolean)infos[0];
+    return isMethodCall
+           ? InspectionGadgetsBundle.message("law.of.demeter.problem.descriptor")
+           : InspectionGadgetsBundle.message("law.of.demeter.field.problem.descriptor");
   }
 
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "law.of.demeter.ignore.library.calls.option"), this,
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("law.of.demeter.ignore.library.calls.option"), this,
                                           "ignoreLibraryCalls");
   }
 
@@ -57,79 +42,93 @@ public class LawOfDemeterInspection extends BaseInspection {
 
   private class LawOfDemeterVisitor extends BaseInspectionVisitor {
 
-    private static final int threshold = 2;
-
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (ignoreLibraryCalls &&
-          LibraryUtil.callOnLibraryMethod(expression)) {
+      final PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
+      if (qualifier == null) {
         return;
       }
-      expression.putUserData(key, Integer.valueOf(1));
-      checkParents(expression, Integer.valueOf(1));
-    }
-
-    public void checkParents(PsiExpression expression, Integer count) {
-      final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiLocalVariable) {
-        final Integer localCount = expression.getUserData(key);
-        parent.putUserData(key, localCount);
+      if (!isCallToSuspiciousMethod(expression)) {
+        return;
       }
-      else if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression =
-          (PsiAssignmentExpression)parent;
-        final PsiExpression lhs = assignmentExpression.getLExpression();
-        if (!(lhs instanceof PsiReferenceExpression)) {
-          return;
-        }
-        final PsiReferenceExpression referenceExpression =
-          (PsiReferenceExpression)lhs;
-        final PsiElement element = referenceExpression.resolve();
-        if (!(element instanceof PsiLocalVariable)) {
-          return;
-        }
-        final Integer localCount = expression.getUserData(key);
-        element.putUserData(key, localCount);
-      }
-      else if (parent instanceof PsiReferenceExpression) {
-        final PsiElement grandParent = parent.getParent();
-        if (!(grandParent instanceof PsiMethodCallExpression)) {
-          return;
-        }
-        final PsiMethodCallExpression methodCallExpression =
-          (PsiMethodCallExpression)grandParent;
-        final Integer userData = grandParent.getUserData(key);
-        if (userData == null) {
-          return;
-        }
-        final int localCount = userData.intValue();
-        final int newCount = localCount + count.intValue();
-        if (newCount == threshold) {
-          registerMethodCallError(methodCallExpression);
-        }
-        grandParent.putUserData(key, Integer.valueOf(newCount));
-        checkParents(methodCallExpression, count);
+      if (violatesLawOfDemeter(qualifier)) {
+        registerMethodCallError(expression, Boolean.TRUE);
       }
     }
 
     @Override
-    public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
-      final PsiElement parent = expression.getParent();
-      if (!(parent instanceof PsiReferenceExpression)) {
+      if (expression.getParent() instanceof PsiMethodCallExpression) {
         return;
       }
-      final PsiElement element = expression.resolve();
-      if (!(element instanceof PsiLocalVariable)) {
+      final PsiExpression qualifier = expression.getQualifierExpression();
+      if (qualifier == null) {
         return;
       }
-      final Integer count = element.getUserData(key);
-      if (count != null) {
-        checkParents(expression, count);
+      final PsiElement nameElement = expression.getReferenceNameElement();
+      if (nameElement == null) {
+        return;
       }
+      if (violatesLawOfDemeter(qualifier)) {
+        registerError(nameElement, Boolean.FALSE);
+      }
+    }
+
+    private boolean isCallToSuspiciousMethod(PsiMethodCallExpression expression) {
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null || MethodUtils.isFactoryMethod(method)) {
+        return false;
+      }
+      if (ignoreLibraryCalls && method instanceof PsiCompiledElement) {
+        return false;
+      }
+      if (method.getContainingFile() == expression.getContainingFile()) {
+        // consider code in the same file a "friend"
+        return false;
+      }
+      final PsiType type = method.getReturnType();
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+      if (method.getContainingClass() == aClass) {
+        return false;
+      }
+      return true;
+    }
+
+    public boolean violatesLawOfDemeter(PsiExpression expression) {
+      final PsiElement qualifier = PsiUtil.skipParenthesizedExprUp(expression);
+      if (qualifier instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
+        final PsiElement target = referenceExpression.resolve();
+        if (target instanceof PsiParameter) {
+          return false;
+        }
+        else if (target instanceof PsiField) {
+          final PsiField field = (PsiField)target;
+          if (field.hasModifierProperty(PsiModifier.STATIC)) {
+            return false;
+          }
+          else if (field.getContainingFile() == expression.getContainingFile()) {
+            return false;
+          }
+          else if (ignoreLibraryCalls && field instanceof PsiCompiledElement) {
+            return false;
+          }
+          return true;
+        }
+        else if (target instanceof PsiLocalVariable) {
+          final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, (PsiVariable)target);
+          return violatesLawOfDemeter(definition);
+        }
+      }
+      else if (qualifier instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)qualifier;
+        if (isCallToSuspiciousMethod(methodCallExpression)) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 }

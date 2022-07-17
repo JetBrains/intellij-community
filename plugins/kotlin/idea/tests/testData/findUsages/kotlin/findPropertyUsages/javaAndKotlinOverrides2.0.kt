@@ -24,3 +24,5 @@ open class D : A<String>("") {
 }
 
 open class E<T>(override var foo: T) : A<T>(foo)
+
+// FIR_COMPARISON

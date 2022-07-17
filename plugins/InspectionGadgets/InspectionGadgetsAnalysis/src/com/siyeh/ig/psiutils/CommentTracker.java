@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.lang.ASTFactory;
@@ -392,7 +392,7 @@ public final class CommentTracker {
     List<PsiElement> trailingComments = new SmartList<>();
     List<PsiElement> comments = grabCommentsBefore(PsiTreeUtil.lastChild(expression));
     if (!comments.isEmpty()) {
-      PsiParserFacade parser = PsiParserFacade.SERVICE.getInstance(expression.getProject());
+      PsiParserFacade parser = PsiParserFacade.getInstance(expression.getProject());
       for (PsiElement comment : comments) {
         PsiElement prev = comment.getPrevSibling();
         if (prev instanceof PsiWhiteSpace) {
@@ -457,7 +457,7 @@ public final class CommentTracker {
         if (nextSibling instanceof PsiWhiteSpace) {
           target.add(nextSibling);
         } else {
-          target.add(PsiParserFacade.SERVICE.getInstance(target.getProject()).createWhiteSpaceFromText("\n"));
+          target.add(PsiParserFacade.getInstance(target.getProject()).createWhiteSpaceFromText("\n"));
         }
       }
       StreamEx.ofReversed(suffix).forEach(target::add);

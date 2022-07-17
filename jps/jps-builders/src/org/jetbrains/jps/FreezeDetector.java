@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 public class FreezeDetector {
   private static final Logger LOG = Logger.getInstance(FreezeDetector.class);
@@ -18,12 +16,10 @@ public class FreezeDetector {
   private static final long EXPECTED_DELTA_MS = SLEEP_INTERVAL_MS + 2 * 1000L;
   
   private volatile boolean myStopped;
-  private final Future<?> myFuture;
   private long myPeriodBegin = -1L;
   private final List<TimeRange> myPeriods = Collections.synchronizedList(new ArrayList<>());
 
-  public FreezeDetector(ExecutorService executor) {
-    myFuture = executor.submit(() -> runDetectLoop());
+  public FreezeDetector() {
   }
 
   public static final class TimeRange {
@@ -36,9 +32,14 @@ public class FreezeDetector {
     }
   }
 
+  public void start() {
+    final Thread thread = new Thread(() -> runDetectLoop(), "FreezeDetector Thread");
+    thread.setDaemon(true);
+    thread.start();
+  }
+  
   public void stop() {
     myStopped = true;
-    myFuture.cancel(true);
   }
 
   public long getAdjustedDuration(final long begin, final long end) {
@@ -52,10 +53,6 @@ public class FreezeDetector {
       }
     }
     return duration;
-  }
-
-  public List<TimeRange> getFreezePeriods() {
-    return Collections.unmodifiableList(myPeriods);
   }
 
   @SuppressWarnings("BusyWait")

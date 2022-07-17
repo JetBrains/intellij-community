@@ -5,6 +5,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -116,10 +117,17 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction {
   }
 
   @Override
-  public @Nullable IntentionAction getFileModifierForPreview(@NotNull PsiFile target) {
-    LocalQuickFix result = ObjectUtils.tryCast(myFix.getFileModifierForPreview(target), LocalQuickFix.class);
-    if (result == null) return null;
-    ProblemDescriptor descriptor = myDescriptor.getDescriptorForPreview(target);
-    return new QuickFixWrapper(descriptor, result);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
+                                                       @NotNull Editor editor,
+                                                       @NotNull PsiFile file) {
+    ProblemDescriptor descriptorForPreview;
+    try {
+      descriptorForPreview = myDescriptor.getDescriptorForPreview(file);
+    }
+    catch (Exception e) {
+      throw new RuntimeException("Cannot create preview descriptor for quickfix " + myFix.getFamilyName() + " (" + myFix.getClass() + ")",
+                                 e);
+    }
+    return myFix.generatePreview(project, descriptorForPreview);
   }
 }

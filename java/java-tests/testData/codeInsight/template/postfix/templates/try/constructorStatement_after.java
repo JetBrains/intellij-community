@@ -3,7 +3,7 @@ public class Foo {
       try {
           new Object()
       } catch (Exception e) {
-          e.printStackTrace();
+          throw new RuntimeException(e);
       }
   }
 }

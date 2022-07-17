@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
@@ -96,7 +96,7 @@ public final class NotificationCollector {
     List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     data.add(NOTIFICATION_PLACE.with(notificationPlace));
     if (action instanceof NotificationAction.Simple) {
-      Object actionInstance = ((NotificationAction.Simple)action).getActionInstance();
+      Object actionInstance = ((NotificationAction.Simple)action).getDelegate();
       PluginInfo info = PluginInfoDetectorKt.getPluginInfo(actionInstance.getClass());
       String actionId = info.isSafeToReport() ? actionInstance.getClass().getName() : ActionsCollectorImpl.DEFAULT_ID;
       data.add(ActionsEventLogGroup.ACTION_ID.with(actionId));
@@ -134,7 +134,9 @@ public final class NotificationCollector {
                                                                     @Nullable String displayId) {
     ArrayList<EventPair<?>> data = new ArrayList<>();
     data.add(ID.with(id));
-    data.add(ADDITIONAL.with(new ObjectEventData(NOTIFICATION_ID.with(Strings.isNotEmpty(displayId) ? displayId : UNKNOWN))));
+    if (Strings.isNotEmpty(displayId)) {
+      data.add(ADDITIONAL.with(new ObjectEventData(NOTIFICATION_ID.with(displayId))));
+    }
     data.add(NOTIFICATION_GROUP_ID.with(Strings.isNotEmpty(groupId) ? groupId : UNKNOWN));
     PluginInfo pluginInfo = getPluginInfo(groupId);
     if (pluginInfo != null) {
@@ -171,14 +173,18 @@ public final class NotificationCollector {
   }
 
   static final class NotificationGroupValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "notification_group".equals(ruleId);
+    public String getRuleId() {
+      return "notification_group";
     }
 
     @Override
     protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      if (UNKNOWN.equals(data)) return ValidationResultType.ACCEPTED;
+      if (UNKNOWN.equals(data)) {
+        return ValidationResultType.ACCEPTED;
+      }
+
       NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup(data);
       if (group != null && getPluginInfoById(group.getPluginId()).isDevelopedByJetBrains()) {
         return ValidationResultType.ACCEPTED;
@@ -188,9 +194,10 @@ public final class NotificationCollector {
   }
 
   static final class NotificationIdValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "notification_display_id".equals(ruleId);
+    public String getRuleId() {
+      return "notification_display_id";
     }
 
     @Override
@@ -206,7 +213,7 @@ public final class NotificationCollector {
   }
 
   public enum NotificationPlace {
-    BALLOON, EVENT_LOG, TOOL_WINDOW,
+    BALLOON, ACTION_CENTER, EVENT_LOG, TOOL_WINDOW,
   }
 
   public enum NotificationSeverity {

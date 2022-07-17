@@ -24,8 +24,10 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiPrecedenceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -44,22 +46,18 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
     if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;
 
     // first line.
-    if (!(elementAtStartLineEnd instanceof PsiJavaToken)) return -1;
-    PsiJavaToken lastFirstLineToken = (PsiJavaToken)elementAtStartLineEnd;
-    if (lastFirstLineToken.getTokenType() != JavaTokenType.SEMICOLON) return -1;
-    if (!(lastFirstLineToken.getParent() instanceof PsiLocalVariable)) return -1;
-    PsiLocalVariable var = (PsiLocalVariable)lastFirstLineToken.getParent();
+    if (!PsiUtil.isJavaToken(elementAtStartLineEnd, JavaTokenType.SEMICOLON)) return -1;
+    PsiLocalVariable var = ObjectUtils.tryCast(elementAtStartLineEnd.getParent(), PsiLocalVariable.class);
+    if (var == null) return -1;
 
     if (!(var.getParent() instanceof PsiDeclarationStatement)) return -1;
     PsiDeclarationStatement decl = (PsiDeclarationStatement)var.getParent();
     if (decl.getDeclaredElements().length > 1) return -1;
 
     //second line.
-    if (!(elementAtNextLineStart instanceof PsiJavaToken)) return -1;
-    PsiJavaToken firstNextLineToken = (PsiJavaToken)elementAtNextLineStart;
-    if (firstNextLineToken.getTokenType() != JavaTokenType.IDENTIFIER) return -1;
-    if (!(firstNextLineToken.getParent() instanceof PsiReferenceExpression)) return -1;
-    PsiReferenceExpression ref = (PsiReferenceExpression)firstNextLineToken.getParent();
+    if (!PsiUtil.isJavaToken(elementAtNextLineStart, JavaTokenType.IDENTIFIER)) return -1;
+    if (!(elementAtNextLineStart.getParent() instanceof PsiReferenceExpression)) return -1;
+    PsiReferenceExpression ref = (PsiReferenceExpression)elementAtNextLineStart.getParent();
     PsiElement refResolved = ref.resolve();
 
     PsiManager psiManager = ref.getManager();

@@ -347,7 +347,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   /**
    * @deprecated use {@link RemoteConnectionBuilder}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static RemoteConnection createDebugParameters(final JavaParameters parameters,
                                                        GenericDebuggerRunnerSettings settings,
                                                        boolean checkValidity)

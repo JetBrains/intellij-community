@@ -24,6 +24,7 @@ public final class SlowOperations {
   public static final String RENDERING = "rendering";
   public static final String GENERIC = "generic";
   public static final String FAST_TRACK = "  fast track  ";
+  public static final String RESET = "  reset  ";
 
   private static int ourAlwaysAllow = -1;
   private static @NotNull FList<@NotNull String> ourStack = FList.emptyList();
@@ -51,7 +52,8 @@ public final class SlowOperations {
    *   </li>
    *   <li>
    *     {@code AnAction#update}, {@code ActionGroup#getChildren}, and {@code ActionGroup#canBePerformed} should be either fast
-   *     or moved to background thread using {@link com.intellij.openapi.actionSystem.UpdateInBackground} marker interface.
+   *     or moved to background thread by returning {@link com.intellij.openapi.actionSystem.ActionUpdateThread#BGT} in
+   *     {@code AnAction#getActionUpdateThread}.
    *   </li>
    *   <li>
    *     {@code AnAction#actionPerformed} shall be explicitly coded not to block the UI thread.
@@ -86,6 +88,9 @@ public final class SlowOperations {
       return;
     }
     for (String activity : ourStack) {
+      if (RESET.equals(activity)) {
+        break;
+      }
       if (!Registry.is("ide.slow.operations.assertion." + activity, true)) {
         return;
       }
@@ -102,6 +107,9 @@ public final class SlowOperations {
   public static boolean isInsideActivity(@NotNull String activityName) {
     EDT.assertIsEdt();
     for (String activity : ourStack) {
+      if (RESET.equals(activity)) {
+        break;
+      }
       if (activityName == activity) {
         return true;
       }
@@ -109,7 +117,8 @@ public final class SlowOperations {
     return false;
   }
 
-  private static boolean isAlwaysAllowed() {
+  @ApiStatus.Internal
+  public static boolean isAlwaysAllowed() {
     if (ourAlwaysAllow == 1) {
       return true;
     }

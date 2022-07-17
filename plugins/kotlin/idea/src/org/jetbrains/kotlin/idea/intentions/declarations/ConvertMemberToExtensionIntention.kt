@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.intentions.declarations
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -18,21 +17,23 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.idea.refactoring.withExpectedActuals
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.actualsForExpected
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 private val LOG = Logger.getInstance(ConvertMemberToExtensionIntention::class.java)
@@ -270,7 +271,7 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
     }
 
     private fun askIfExpectedIsAllowed(file: KtFile): Boolean {
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             return file.allChildren.any { it is PsiComment && it.text.trim() == "// ALLOW_EXPECT_WITHOUT_ACTUAL" }
         }
 
@@ -308,8 +309,16 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
         val classParams = classElement.typeParameters
         if (classParams.isEmpty()) return null
         val allTypeParameters = classParams + member.typeParameters
-        val text = allTypeParameters.joinToString(",", "<", ">") { it.text }
+        val text = allTypeParameters.joinToString(",", "<", ">") { it.textWithoutVariance() }
         return KtPsiFactory(member).createDeclaration<KtFunction>("fun $text foo()").typeParameterList
+    }
+
+    private fun KtTypeParameter.textWithoutVariance(): String {
+        if (variance == Variance.INVARIANT) return text
+        val copied = this.copy() as KtTypeParameter
+        copied.modifierList?.getModifier(KtTokens.OUT_KEYWORD)?.delete()
+        copied.modifierList?.getModifier(KtTokens.IN_KEYWORD)?.delete()
+        return copied.text
     }
 
     companion object {

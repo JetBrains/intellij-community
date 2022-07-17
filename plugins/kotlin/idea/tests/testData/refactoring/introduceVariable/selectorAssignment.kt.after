@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 class Foo(var bar: Bar)
 class Bar(var baz: Int)
 

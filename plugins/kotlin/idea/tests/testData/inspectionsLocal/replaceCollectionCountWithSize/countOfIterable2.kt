@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(iterable: Iterable<String>?) {
     iterable?.<caret>count()

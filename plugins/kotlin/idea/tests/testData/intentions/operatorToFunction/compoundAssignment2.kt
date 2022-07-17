@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 interface C {
     operator fun get(p: String): MutableList<Int>
 }

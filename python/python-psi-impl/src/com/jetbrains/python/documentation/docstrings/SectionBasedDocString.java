@@ -148,7 +148,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   /**
    * Used to parse e.g. optional function signature at the beginning of NumPy-style docstring
    *
-   * @return first line from which to star parsing remaining sections
+   * @return first line from which to start parsing remaining sections
    */
   protected int parseHeader(int startLine) {
     return startLine;

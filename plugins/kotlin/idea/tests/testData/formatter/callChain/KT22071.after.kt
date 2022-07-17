@@ -19,9 +19,11 @@ abstract class TemplateGroupBase : TemplateGroup {
                 when {
                     it.returnType.isSubtypeOf(typeMemberTemplate) ->
                         yield(it.call(this) as MemberTemplate)
+
                     it.returnType.isSubtypeOf(typeIterableOfMemberTemplates) ->
                         @Suppress("UNCHECKED_CAST")
                         yieldAll(it.call(this) as Iterable<MemberTemplate>)
+
                     else ->
                         error("Member $it violates naming convention")
                 }
@@ -39,7 +41,8 @@ abstract class TemplateGroupBase : TemplateGroup {
 
     companion object {
         private val typeMemberTemplate = MemberTemplate::class.createType()
-        private val typeIterableOfMemberTemplates = Iterable::class.createType(arguments = listOf(KTypeProjection.invariant(typeMemberTemplate)))
+        private val typeIterableOfMemberTemplates =
+            Iterable::class.createType(arguments = listOf(KTypeProjection.invariant(typeMemberTemplate)))
     }
 
 }

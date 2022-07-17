@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryUtil;
@@ -11,6 +11,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessors;
 import com.intellij.openapi.util.Computable;
@@ -45,6 +46,7 @@ public abstract class MoveFilesOrDirectoriesDialog extends RefactoringDialog {
   private JLabel myNameLabel;
   private TextFieldWithHistoryWithBrowseButton myTargetDirectoryField;
   private JCheckBox myCbSearchForReferences;
+  private boolean isDumb;
 
   public MoveFilesOrDirectoriesDialog(@NotNull Project project, PsiElement @NotNull [] psiElements, PsiDirectory initialTargetDirectory) {
     super(project, true, true);
@@ -118,8 +120,12 @@ public abstract class MoveFilesOrDirectoriesDialog extends RefactoringDialog {
 
     String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
 
-    myCbSearchForReferences = new NonFocusableCheckBox(RefactoringBundle.message("search.for.references"));
-    myCbSearchForReferences.setSelected(RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE);
+    isDumb = DumbService.isDumb(myProject);
+    myCbSearchForReferences = new NonFocusableCheckBox(isDumb ?
+                                                       RefactoringBundle.message("search.for.references.dumb.mode") :
+                                                       RefactoringBundle.message("search.for.references"));
+    myCbSearchForReferences.setSelected(!isDumb && RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE);
+    myCbSearchForReferences.setEnabled(!isDumb);
 
     return FormBuilder.createFormBuilder().addComponent(myNameLabel)
       .addLabeledComponent(RefactoringBundle.message("move.files.to.directory.label"), myTargetDirectoryField, UIUtil.LARGE_VGAP)
@@ -140,7 +146,12 @@ public abstract class MoveFilesOrDirectoriesDialog extends RefactoringDialog {
 
   public static boolean isOpenInEditorProperty() {
     return !ApplicationManager.getApplication().isUnitTestMode() &&
-           PropertiesComponent.getInstance().getBoolean(MOVE_FILES_OPEN_IN_EDITOR, true);
+           PropertiesComponent.getInstance().getBoolean(MOVE_FILES_OPEN_IN_EDITOR, false);
+  }
+
+  @Override
+  protected boolean isOpenInEditorEnabledByDefault() {
+    return false;
   }
 
   @Override
@@ -156,14 +167,16 @@ public abstract class MoveFilesOrDirectoriesDialog extends RefactoringDialog {
   @Override
   protected void doAction() {
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_KEYS, myTargetDirectoryField.getChildComponent().getText());
-    RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE = myCbSearchForReferences.isSelected();
+    if (!isDumb) {
+      RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE = myCbSearchForReferences.isSelected();
+    }
 
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       String directoryName = myTargetDirectoryField.getChildComponent().getText().replace(File.separatorChar, '/');
       PsiDirectory directory = DirectoryUtil.findLongestExistingDirectory(PsiManager.getInstance(myProject), directoryName);
-      PsiDirectory targetDirectory = 
-        directory == null || !CommonRefactoringUtil.checkReadOnlyStatus(myProject, Collections.singletonList(directory), false) 
-        ? null 
+      PsiDirectory targetDirectory =
+        directory == null || !CommonRefactoringUtil.checkReadOnlyStatus(myProject, Collections.singletonList(directory), false)
+        ? null
         : ApplicationManager.getApplication().runWriteAction((Computable<PsiDirectory>)() -> {
         try {
           return DirectoryUtil.mkdirs(PsiManager.getInstance(myProject), directoryName);

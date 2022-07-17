@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.*;
@@ -114,7 +114,9 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     panel.add(new JLabel(myRenamer.getDialogDescription()), BorderLayout.CENTER);
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAction(createRenameSelectedAction()).setAsSecondary(true);
-    panel.add(ActionManager.getInstance().createActionToolbar("AutoRenaming", actionGroup, true).getComponent(), BorderLayout.EAST);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("AutoRenaming", actionGroup, true);
+    toolbar.setTargetComponent(myTable);
+    panel.add(toolbar.getComponent(), BorderLayout.EAST);
     final Box box = Box.createHorizontalBox();
     box.add(panel);
     box.add(Box.createHorizontalGlue());
@@ -197,7 +199,9 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     myPanelForPreview.add(myUsagePreviewPanel, BorderLayout.CENTER);
     myUsagePreviewPanel.updateLayout(null);
     myPanelForPreview.add(myUsageFileLabel, BorderLayout.NORTH);
-    mySplitPane.setDividerLocation(0.5);
+    double top = mySplitPane.getTopComponent().getPreferredSize().getHeight();
+    double bottom = mySplitPane.getBottomComponent().getPreferredSize().getHeight();
+    mySplitPane.setDividerLocation(top / (top + bottom));
 
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
 

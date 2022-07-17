@@ -4,7 +4,6 @@ package com.intellij.codeInsight.hint;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
@@ -14,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * Interface to create hints for particular clients. Take a look at {@link com.intellij.openapi.client.ClientSession}
@@ -26,6 +26,10 @@ public interface ClientHintManager {
     return ApplicationManager.getApplication().getService(ClientHintManager.class);
   }
 
+  static @NotNull List<ClientHintManager> getAllInstances() {
+    return ApplicationManager.getApplication().getServices(ClientHintManager.class, true);
+  }
+
   boolean canShowQuestionAction(QuestionAction action);
 
   void setRequestFocusForNextHint(boolean requestFocus);
@@ -34,20 +38,14 @@ public interface ClientHintManager {
 
   boolean hasShownHintsThatWillHideByOtherHint(boolean willShowTooltip);
 
-  void showEditorHint(LightweightHint hint,
-                      Editor editor,
-                      @HintManager.PositionFlags short constraint,
-                      @HintManager.HideFlags int flags,
-                      int timeout,
-                      boolean reviveOnEditorChange);
-
   void showEditorHint(@NotNull LightweightHint hint,
                       @NotNull Editor editor,
+                      @NotNull HintHint hintInfo,
                       @NotNull Point p,
                       @HintManager.HideFlags int flags,
                       int timeout,
                       boolean reviveOnEditorChange,
-                      HintHint hintInfo);
+                      @Nullable Runnable onHintHidden);
 
   void showHint(@NotNull JComponent component, @NotNull RelativePoint p, int flags, int timeout, @Nullable Runnable onHintHidden);
 
@@ -57,18 +55,12 @@ public interface ClientHintManager {
 
   Point getHintPosition(@NotNull LightweightHint hint, @NotNull Editor editor, @HintManager.PositionFlags short constraint);
 
-  void showErrorHint(@NotNull Editor editor, @NotNull @HintText String text, short position);
-
-  void showInformationHint(@NotNull Editor editor,
-                           @NotNull JComponent component,
-                           @HintManager.PositionFlags short position,
-                           @Nullable Runnable onHintHidden);
-
   void showQuestionHint(@NotNull Editor editor,
                         @NotNull Point p,
                         int offset1,
                         int offset2,
                         @NotNull LightweightHint hint,
+                        int flags,
                         @NotNull QuestionAction action,
                         @HintManager.PositionFlags short constraint);
 

@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -200,6 +201,10 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
       return PyUnionType.union(collect);
     }
+    if (parent instanceof PyExceptPart && ((PyExceptPart)parent).isStar() &&
+        LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON311)) {
+      return PyClassTypeImpl.createTypeByQName(this, "ExceptionGroup", false);
+    }
     PyType iterType = getTypeFromIteration(context);
     if (iterType != null) {
       return iterType;
@@ -243,18 +248,15 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   private static PyType getWithItemVariableType(@NotNull PyWithItem item, @NotNull TypeEvalContext context) {
     final PyExpression withExpression = item.getExpression();
-    if (withExpression != null) {
-      final PyType withType = context.getType(withExpression);
-      final PyWithStatement withStatement = PsiTreeUtil.getParentOfType(item, PyWithStatement.class);
-      final boolean isAsync = withStatement != null && withStatement.isAsync();
+    final PyType withType = context.getType(withExpression);
+    final PyWithStatement withStatement = PsiTreeUtil.getParentOfType(item, PyWithStatement.class);
+    final boolean isAsync = withStatement != null && withStatement.isAsync();
 
-      return PyTypeUtil
-        .toStream(withType)
-        .select(PyClassType.class)
-        .map(t -> getEnterTypeFromPyClass(withExpression, t, isAsync, context))
-        .collect(PyTypeUtil.toUnion());
-    }
-    return null;
+    return PyTypeUtil
+      .toStream(withType)
+      .select(PyClassType.class)
+      .map(t -> getEnterTypeFromPyClass(withExpression, t, isAsync, context))
+      .collect(PyTypeUtil.toUnion());
   }
 
   @Nullable
@@ -265,7 +267,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     final PyClass cls = withType.getPyClass();
     final PyFunction enter = cls.findMethodByName(isAsync ? PyNames.AENTER : PyNames.ENTER, true, context);
     if (enter != null) {
-      final PyType enterType = enter.getCallType(withExpression, Collections.emptyMap(), context);
+      final PyType enterType = getContextSensitiveType(enter, context, withExpression);
       if (enterType != null) {
         return isAsync ? Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(enterType)) : enterType;
       }
@@ -446,7 +448,19 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   public static PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,
                                                @Nullable PyExpression source) {
-    return function.getCallType(source, Collections.emptyMap(), context);
+    return function.getCallType(source, buildArgumentsToParametersMap(source, function, context), context);
+  }
+
+  @NotNull
+  private static Map<PyExpression, PyCallableParameter> buildArgumentsToParametersMap(@Nullable PyExpression receiver,
+                                                                                      @NotNull PyCallable callable,
+                                                                                      @NotNull TypeEvalContext context) {
+    if (receiver == null) return Collections.emptyMap();
+
+    final PyCallableParameter firstParameter = ContainerUtil.getFirstItem(callable.getParameters(context));
+    if (firstParameter == null || !firstParameter.isSelf()) return Collections.emptyMap();
+
+    return Map.of(receiver, firstParameter);
   }
 
   @Nullable
@@ -653,18 +667,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
   @Override
   public ItemPresentation getPresentation() {
-    return new PyElementPresentation(this) {
-      @Nullable
-      @Override
-      public String getLocationString() {
-        final PyClass containingClass = getContainingClass();
-        final String packageForFile = getPackageForFile(getContainingFile());
-        if (containingClass != null && packageForFile != null) {
-          return String.format("(%s in %s)", containingClass.getName(), packageForFile);
-        }
-        return super.getLocationString();
-      }
-    };
+    return new PyElementPresentation(this);
   }
 
   @Nullable

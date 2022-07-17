@@ -17,15 +17,13 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.psi.PsiReferenceProvider;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  *
  * @author Dmitry Avdeev
  * @deprecated use PsiReferenceProvider instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public abstract class PsiReferenceProviderBase extends PsiReferenceProvider {
 
 }

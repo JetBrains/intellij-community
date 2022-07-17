@@ -64,8 +64,11 @@ sealed class GithubApiRequestExecutor {
 
     @Throws(IOException::class, ProcessCanceledException::class)
     override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
-      if (service<GHRequestExecutorBreaker>().isRequestsShouldFail) error(
-        "Request failure was triggered by user action. This a pretty long description of this failure that should resemble some long error which can go out of bounds.")
+      check(!service<GHRequestExecutorBreaker>().isRequestsShouldFail) {
+        "Request failure was triggered by user action. This a pretty long description of this failure that should resemble some long error which can go out of bounds."
+      }
+      service<GHEServerVersionChecker>().checkVersionSupported(request.url)
+
       indicator.checkCanceled()
       return createRequestBuilder(request)
         .tuner { connection ->
@@ -134,6 +137,7 @@ sealed class GithubApiRequestExecutor {
         is GithubApiRequest.Delete -> {
           if (request.body == null) HttpRequests.delete(request.url) else HttpRequests.delete(request.url, request.bodyMimeType)
         }
+
         else -> throw UnsupportedOperationException("${request.javaClass} is not supported")
       }
         .connectTimeout(githubSettings.connectionTimeout)
@@ -162,6 +166,7 @@ sealed class GithubApiRequestExecutor {
           }
           else GithubAuthenticationException("Request response: " + (jsonError?.presentableError ?: errorText ?: statusLine))
         }
+
         else -> {
           if (jsonError != null) {
             GithubStatusCodeException("$statusLine - ${jsonError.presentableError}", jsonError, connection.responseCode)

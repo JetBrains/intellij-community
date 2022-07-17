@@ -24,14 +24,4 @@ public final class SvnBundle extends DynamicBundle {
   public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
-
-  /**
-   * @deprecated use {@link #message(String, Object...)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public static @Nls String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
-    return message(key);
-  }
 }

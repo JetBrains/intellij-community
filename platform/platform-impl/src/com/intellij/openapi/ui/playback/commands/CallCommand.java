@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.playback.commands;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -24,7 +25,7 @@ public class CallCommand extends AbstractCommand {
   }
 
   @Override
-  protected Promise<Object> _execute(final PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     final String cmd = getText().substring(PREFIX.length()).trim();
     final int open = cmd.indexOf("(");
     if (open == -1) {

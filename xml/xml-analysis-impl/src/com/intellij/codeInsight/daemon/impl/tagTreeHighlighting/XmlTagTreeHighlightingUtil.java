@@ -54,7 +54,7 @@ public final class XmlTagTreeHighlightingUtil {
     return true;
   }
 
-  private static boolean hasXmlViewProvider(@NotNull PsiFile file) {
+  public static boolean hasXmlViewProvider(@NotNull PsiFile file) {
     for (PsiFile f : file.getViewProvider().getAllFiles()) {
       if (f instanceof XmlFile) {
         return true;

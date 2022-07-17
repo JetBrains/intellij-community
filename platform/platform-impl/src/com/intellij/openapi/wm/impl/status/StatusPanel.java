@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ClipboardSynchronizer;
-import com.intellij.ide.IdeBundle;
 import com.intellij.notification.EventLog;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -25,6 +23,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +46,6 @@ class StatusPanel extends JPanel {
   private boolean myAfterClick;
   private Alarm myLogAlarm;
   private Action myCopyAction;
-  private Action myClearAction;
   private final TextPanel myTextPanel = new TextPanel() {
     @Override
     protected String getTextForPreferredSize() {
@@ -110,12 +108,6 @@ class StatusPanel extends JPanel {
           JBPopupMenu menu = new JBPopupMenu();
           menu.add(new JBMenuItem(myCopyAction));
 
-          if (myClearAction == null) {
-            myClearAction = createClearAction();
-          }
-          if (myClearAction != null) {
-            menu.add(new JBMenuItem(myClearAction));
-          }
           JBPopupMenu.showByEvent(e, menu);
         }
       }
@@ -139,25 +131,6 @@ class StatusPanel extends JPanel {
       @Override
       public boolean isEnabled() {
         return !getText().isEmpty();
-      }
-    };
-  }
-
-  private Action createClearAction() {
-    Project project = getActiveProject();
-    if (project == null) {
-      return null;
-    }
-    return new AbstractAction(IdeBundle.message("clear.event.log.action", IdeBundle.message("toolwindow.stripe.Event_Log")),
-                              AllIcons.Actions.GC) {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        EventLog.doClear(project);
-      }
-
-      @Override
-      public boolean isEnabled() {
-        return EventLog.isClearAvailable(project);
       }
     };
   }
@@ -237,6 +210,7 @@ class StatusPanel extends JPanel {
     myTextPanel.setText(text);
   }
 
+  @Nls
   public String getText() {
     return myTextPanel.getText();
   }

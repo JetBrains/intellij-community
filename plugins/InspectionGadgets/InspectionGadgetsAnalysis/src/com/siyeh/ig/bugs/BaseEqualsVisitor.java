@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -43,7 +46,7 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
                                                                                PREDICATE_NEGATE);
 
   @Override
-  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+  public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
     super.visitMethodReferenceExpression(expression);
     if (!OBJECT_EQUALS.methodReferenceMatches(expression) && !STATIC_EQUALS.methodReferenceMatches(expression)) {
       return;
@@ -180,10 +183,25 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
     }
     final PsiType leftType = getType(expression1);
     final PsiType rightType = getType(expression2);
-    if (leftType != null && rightType != null) checkTypes(expression.getMethodExpression(), leftType, rightType);
+    if (leftType != null && rightType != null) {
+      if (!checkTypes(expression.getMethodExpression(), leftType, rightType)) {
+        CommonDataflow.DataflowResult dfa = CommonDataflow.getDataflowResult(expression);
+        if (dfa != null) {
+          Project project = getCurrentFile().getProject();
+          PsiType refinedLeftType =
+            leftType instanceof PsiPrimitiveType ? leftType : TypeConstraint.fromDfType(dfa.getDfType(expression1)).getPsiType(project);
+          PsiType refinedRightType =
+            rightType instanceof PsiPrimitiveType ? rightType : TypeConstraint.fromDfType(dfa.getDfType(expression2)).getPsiType(project);
+          if (refinedLeftType != null && refinedRightType != null &&
+              (!refinedLeftType.equals(leftType) || !refinedRightType.equals(rightType))) {
+            checkTypes(expression.getMethodExpression(), refinedLeftType, refinedRightType);
+          }
+        }
+      }
+    }
   }
 
-  private static PsiType getType(PsiExpression expression) {
+  protected static PsiType getType(PsiExpression expression) {
     if (!(expression instanceof PsiNewExpression)) {
       return expression.getType();
     }
@@ -192,5 +210,11 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
     return anonymousClass != null ? anonymousClass.getBaseClassType() : expression.getType();
   }
 
-  abstract void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType);
+  /**
+   * @param expression anchor to report error
+   * @param leftType   left type
+   * @param rightType  right type
+   * @return true if error is reported due to incompatible types
+   */
+  abstract boolean checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType);
 }

@@ -70,11 +70,10 @@ private fun Converter.convertImport(fqName: FqName, ref: PsiJavaCodeReferenceEle
 
 private fun Converter.convertStaticImportOnDemand(fqName: FqName, target: PsiElement?): List<String> {
     when (target) {
-        is KtLightClassForFacade -> return listOf(target.fqName.parent().render() + ".*")
+        is KtLightClassForFacade -> return listOf(target.facadeClassFqName.parent().render() + ".*")
 
         is KtLightClass -> {
-            val kotlinOrigin = target.kotlinOrigin
-            val importFromObject = when (kotlinOrigin) {
+            val importFromObject = when (val kotlinOrigin = target.kotlinOrigin) {
                 is KtObjectDeclaration -> kotlinOrigin
                 is KtClass -> kotlinOrigin.getCompanionObjects().singleOrNull()
                 else -> null
@@ -110,8 +109,7 @@ private fun convertStaticExplicitImport(fqName: FqName, target: PsiElement?): Li
             fqName.shortName()
 
         if (nameToImport != null) {
-            val originParent = kotlinOrigin?.parent
-            when (originParent) {
+            when (val originParent = kotlinOrigin?.parent) {
                 is KtFile -> { // import of function or property accessor from file facade
                     return listOf(originParent.packageFqName.child(nameToImport).render())
                 }
@@ -130,7 +128,7 @@ private fun convertStaticExplicitImport(fqName: FqName, target: PsiElement?): Li
 
 private fun convertNonStaticImport(fqName: FqName, isOnDemand: Boolean, target: PsiElement?): List<String> {
     when (target) {
-        is KtLightClassForFacade -> return listOf(target.fqName.parent().render() + ".*")
+        is KtLightClassForFacade -> return listOf(target.facadeClassFqName.parent().render() + ".*")
 
         is KtLightClass -> {
             if (!isOnDemand) {

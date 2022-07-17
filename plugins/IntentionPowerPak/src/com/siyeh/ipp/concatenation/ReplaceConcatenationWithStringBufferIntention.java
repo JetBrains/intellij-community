@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,15 +29,15 @@ import org.jetbrains.annotations.NotNull;
 public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedIntention {
 
   @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("replace.concatenation.with.string.buffer.intention.family.name");
+  }
+
+  @Override
   protected String getTextForElement(PsiElement element) {
-    if (PsiUtil.isLanguageLevel5OrHigher(element)) {
-      return IntentionPowerPackBundle.message(
-        "replace.concatenation.with.string.builder.intention.name");
-    }
-    else {
-      return IntentionPowerPackBundle.message(
-        "replace.concatenation.with.string.buffer.intention.name");
-    }
+    return PsiUtil.isLanguageLevel5OrHigher(element)
+           ? IntentionPowerPackBundle.message("replace.concatenation.with.string.builder.intention.name")
+           : IntentionPowerPackBundle.message("replace.concatenation.with.string.buffer.intention.name");
   }
 
   @Override

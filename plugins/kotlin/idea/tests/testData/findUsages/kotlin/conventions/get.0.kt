@@ -4,6 +4,7 @@
 class B(val n: Int) {
     operator fun <caret>get(i: Int) = ""
     operator fun set(i: Int, s: String) {}
+    class Key
 }
 
 fun test() {
@@ -12,3 +13,10 @@ fun test() {
     val b = B(2)
     b[3] = "a"
 }
+
+typealias DescriptorData = C<B.Key>
+
+class C<T>
+
+// FIR_COMPARISON
+// IGNORE_FIR_LOG

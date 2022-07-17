@@ -8,11 +8,11 @@ import org.jetbrains.annotations.Nullable;
 public interface LocalFileProvider {
   /** @deprecated use {@link com.intellij.openapi.vfs.newvfs.ArchiveFileSystem#getLocalByEntry(VirtualFile)} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   VirtualFile getLocalVirtualFileFor(@Nullable VirtualFile entryVFile);
 
   /** @deprecated use {@code ArchiveFileSystem.findFileByPath(path)} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   VirtualFile findLocalVirtualFileByPath(@NotNull String path);
 }

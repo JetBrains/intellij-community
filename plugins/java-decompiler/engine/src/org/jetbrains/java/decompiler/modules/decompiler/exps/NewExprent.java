@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -15,13 +15,10 @@ import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericClassDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class NewExprent extends Exprent {
   private InvocationExprent constructor;
@@ -45,8 +42,8 @@ public class NewExprent extends Exprent {
 
     anonymous = false;
     lambda = false;
-    if (newType.type == CodeConstants.TYPE_OBJECT && newType.arrayDim == 0) {
-      ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value);
+    if (newType.getType() == CodeConstants.TYPE_OBJECT && newType.getArrayDim() == 0) {
+      ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.getValue());
       if (node != null && (node.type == ClassNode.CLASS_ANONYMOUS || node.type == ClassNode.CLASS_LAMBDA)) {
         anonymous = true;
         if (node.type == ClassNode.CLASS_LAMBDA) {
@@ -68,23 +65,23 @@ public class NewExprent extends Exprent {
 
   @Override
   public VarType getExprType() {
-    return anonymous ? DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value).anonymousClassType : newType;
+    return anonymous ? DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.getValue()).anonymousClassType : newType;
   }
 
   @Override
   public CheckTypesResult checkExprTypeBounds() {
     CheckTypesResult result = new CheckTypesResult();
 
-    if (newType.arrayDim != 0) {
+    if (newType.getArrayDim() != 0) {
       for (Exprent dim : lstDims) {
         result.addMinTypeExprent(dim, VarType.VARTYPE_BYTECHAR);
         result.addMaxTypeExprent(dim, VarType.VARTYPE_INT);
       }
 
-      if (newType.arrayDim == 1) {
+      if (newType.getArrayDim() == 1) {
         VarType leftType = newType.decreaseArrayDim();
         for (Exprent element : lstArrayElements) {
-          result.addMinTypeExprent(element, VarType.getMinTypeInFamily(leftType.typeFamily));
+          result.addMinTypeExprent(element, VarType.getMinTypeInFamily(leftType.getTypeFamily()));
           result.addMaxTypeExprent(element, leftType);
         }
       }
@@ -100,7 +97,7 @@ public class NewExprent extends Exprent {
   public List<Exprent> getAllExprents() {
     List<Exprent> lst = new ArrayList<>();
 
-    if (newType.arrayDim != 0) {
+    if (newType.getArrayDim() != 0) {
       lst.addAll(lstDims);
       lst.addAll(lstArrayElements);
     }
@@ -109,7 +106,7 @@ public class NewExprent extends Exprent {
       if (constructor != null) { // should be true only for a lambda expression with a virtual content method
         lst.add(constructor);
       }
-      lst.addAll(this.constructor.getLstParameters());
+      lst.addAll(this.constructor.getParameters());
     }
 
     return lst;
@@ -141,7 +138,7 @@ public class NewExprent extends Exprent {
     TextBuffer buf = new TextBuffer();
 
     if (anonymous) {
-      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value);
+      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.getValue());
 
       boolean selfReference = DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE) == child;
 
@@ -150,7 +147,7 @@ public class NewExprent extends Exprent {
         String enclosing = null;
 
         if (!lambda && constructor != null) {
-          enclosing = getQualifiedNewInstance(child.anonymousClassType.value, constructor.getLstParameters(), indent, tracer);
+          enclosing = getQualifiedNewInstance(child.anonymousClassType.getValue(), constructor.getParameters(), indent, tracer);
           if (enclosing != null) {
             buf.append(enclosing).append('.');
           }
@@ -161,9 +158,9 @@ public class NewExprent extends Exprent {
         if (selfReference) {
           buf.append("<anonymous constructor>");
         } else {
-          String typename = ExprProcessor.getCastTypeName(child.anonymousClassType);
+          String typename = ExprProcessor.getCastTypeName(child.anonymousClassType, Collections.emptyList());
           if (enclosing != null) {
-            ClassNode anonymousNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(child.anonymousClassType.value);
+            ClassNode anonymousNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(child.anonymousClassType.getValue());
             if (anonymousNode != null) {
               typename = anonymousNode.simpleName;
             }
@@ -175,14 +172,14 @@ public class NewExprent extends Exprent {
           GenericClassDescriptor descriptor = ClassWriter.getGenericClassDescriptor(child.classStruct);
           if (descriptor != null) {
             if (descriptor.superinterfaces.isEmpty()) {
-              buf.append(GenericMain.getGenericCastTypeName(descriptor.superclass));
+              buf.append(GenericMain.getGenericCastTypeName(descriptor.superclass, Collections.emptyList()));
             }
             else {
               if (descriptor.superinterfaces.size() > 1 && !lambda) {
                 DecompilerContext.getLogger().writeMessage("Inconsistent anonymous class signature: " + child.classStruct.qualifiedName,
                                                            IFernflowerLogger.Severity.WARN);
               }
-              buf.append(GenericMain.getGenericCastTypeName(descriptor.superinterfaces.get(0)));
+              buf.append(GenericMain.getGenericCastTypeName(descriptor.superinterfaces.get(0), Collections.emptyList()));
             }
           }
           else {
@@ -194,11 +191,11 @@ public class NewExprent extends Exprent {
       buf.append('(');
 
       if (!lambda && constructor != null) {
-        List<Exprent> parameters = constructor.getLstParameters();
+        List<Exprent> parameters = constructor.getParameters();
         List<VarVersionPair> mask = child.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, constructor.getStringDescriptor()).synthParameters;
         if (mask == null) {
           InvocationExprent superCall = child.superInvocation;
-          mask = ExprUtil.getSyntheticParametersMask(superCall.getClassname(), superCall.getStringDescriptor(), parameters.size());
+          mask = ExprUtil.getSyntheticParametersMask(superCall.getClassName(), superCall.getStringDescriptor(), parameters.size());
         }
 
         int start = enumConst ? 2 : 0;
@@ -250,12 +247,12 @@ public class NewExprent extends Exprent {
       }
       buf.append('}');
     }
-    else if (newType.arrayDim == 0) {
+    else if (newType.getArrayDim() == 0) {
       if (!enumConst) {
         String enclosing = null;
 
         if (constructor != null) {
-          enclosing = getQualifiedNewInstance(newType.value, constructor.getLstParameters(), indent, tracer);
+          enclosing = getQualifiedNewInstance(newType.getValue(), constructor.getParameters(), indent, tracer);
           if (enclosing != null) {
             buf.append(enclosing).append('.');
           }
@@ -263,9 +260,9 @@ public class NewExprent extends Exprent {
 
         buf.append("new ");
 
-        String typename = ExprProcessor.getTypeName(newType);
+        String typename = ExprProcessor.getTypeName(newType, Collections.emptyList());
         if (enclosing != null) {
-          ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value);
+          ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.getValue());
           if (newNode != null) {
             typename = newNode.simpleName;
           }
@@ -277,8 +274,8 @@ public class NewExprent extends Exprent {
       }
 
       if (constructor != null) {
-        List<Exprent> parameters = constructor.getLstParameters();
-        List<VarVersionPair> mask = ExprUtil.getSyntheticParametersMask(constructor.getClassname(), constructor.getStringDescriptor(), parameters.size());
+        List<Exprent> parameters = constructor.getParameters();
+        List<VarVersionPair> mask = ExprUtil.getSyntheticParametersMask(constructor.getClassName(), constructor.getStringDescriptor(), parameters.size());
 
         int start = enumConst ? 2 : 0;
         if (!enumConst || start < parameters.size()) {
@@ -290,7 +287,8 @@ public class NewExprent extends Exprent {
               Exprent expr = parameters.get(i);
               VarType leftType = constructor.getDescriptor().params[i];
 
-              if (i == parameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL && probablySyntheticParameter(leftType.value)) {
+              if (i == parameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL && probablySyntheticParameter(
+                leftType.getValue())) {
                 break;  // skip last parameter of synthetic constructor call
               }
 
@@ -327,16 +325,16 @@ public class NewExprent extends Exprent {
       // if there is just one element of Object[] type it needs to be casted to resolve ambiguity
       if (lstArrayElements.size() == 1) {
         VarType elementType = lstArrayElements.get(0).getExprType();
-        if (elementType.type == CodeConstants.TYPE_OBJECT && elementType.value.equals("java/lang/Object") && elementType.arrayDim >= 1) {
+        if (elementType.getType() == CodeConstants.TYPE_OBJECT && elementType.getValue().equals("java/lang/Object") && elementType.getArrayDim() >= 1) {
           buf.prepend("(Object)");
         }
       }
     }
     else {
-      buf.append("new ").append(ExprProcessor.getTypeName(newType));
+      buf.append("new ").append(ExprProcessor.getTypeName(newType, Collections.emptyList()));
 
       if (lstArrayElements.isEmpty()) {
-        for (int i = 0; i < newType.arrayDim; i++) {
+        for (int i = 0; i < newType.getArrayDim(); i++) {
           buf.append('[');
           if (i < lstDims.size()) {
             buf.append(lstDims.get(i).toJava(indent, tracer));
@@ -345,7 +343,7 @@ public class NewExprent extends Exprent {
         }
       }
       else {
-        for (int i = 0; i < newType.arrayDim; i++) {
+        for (int i = 0; i < newType.getArrayDim(); i++) {
           buf.append("[]");
         }
 
@@ -431,11 +429,11 @@ public class NewExprent extends Exprent {
     if (!(o instanceof NewExprent)) return false;
 
     NewExprent ne = (NewExprent)o;
-    return InterpreterUtil.equalObjects(newType, ne.getNewType()) &&
-           InterpreterUtil.equalLists(lstDims, ne.getLstDims()) &&
-           InterpreterUtil.equalObjects(constructor, ne.getConstructor()) &&
+    return Objects.equals(newType, ne.newType) &&
+           Objects.equals(lstDims, ne.lstDims) &&
+           Objects.equals(constructor, ne.constructor) &&
            directArrayInit == ne.directArrayInit &&
-           InterpreterUtil.equalLists(lstArrayElements, ne.getLstArrayElements());
+           Objects.equals(lstArrayElements, ne.lstArrayElements);
   }
 
   public InvocationExprent getConstructor() {

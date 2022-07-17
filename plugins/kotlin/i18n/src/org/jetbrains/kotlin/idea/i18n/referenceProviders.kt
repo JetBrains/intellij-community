@@ -11,13 +11,15 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceProvider
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.util.ProcessingContext
+import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.kotlin.base.fe10.analysis.findAnnotation
+import org.jetbrains.kotlin.base.fe10.analysis.getStringValue
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
@@ -26,8 +28,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPlain
-import org.jetbrains.kotlin.resolve.calls.callUtil.getParentResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getParentResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.ExpressionValueArgument
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
@@ -37,21 +39,19 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 private val PROPERTY_KEY = FqName(AnnotationUtil.PROPERTY_KEY)
 private val PROPERTY_KEY_RESOURCE_BUNDLE = Name.identifier(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER)
 
-private fun AnnotationDescriptor.getBundleName(): String? {
-    return allValueArguments[PROPERTY_KEY_RESOURCE_BUNDLE]?.value as? String
-}
-
-private fun DeclarationDescriptor.getBundleNameByAnnotation(): String? {
-    return annotations.findAnnotation(PROPERTY_KEY)?.getBundleName()
+private fun Annotated.getBundleNameByAnnotation(): String? {
+    return findAnnotation<PropertyKey>()?.getStringValue(PropertyKey::resourceBundle)
 }
 
 private fun KtExpression.getBundleNameByContext(): String? {
     val expression = KtPsiUtil.safeDeparenthesize(this)
     val parent = expression.parent
 
-    (parent as? KtProperty)?.let { return it.resolveToDescriptorIfAny()?.getBundleNameByAnnotation() }
+    if (parent is KtProperty) {
+        return parent.resolveToDescriptorIfAny()?.getBundleNameByAnnotation()
+    }
 
-    val bindingContext = expression.analyze(BodyResolveMode.PARTIAL)
+    val bindingContext = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
     val resolvedCall = if (parent is KtQualifiedExpression && expression == parent.receiverExpression) {
         parent.selectorExpression.getResolvedCall(bindingContext)
     } else {
@@ -60,7 +60,7 @@ private fun KtExpression.getBundleNameByContext(): String? {
     val callable = resolvedCall.resultingDescriptor
 
     if ((resolvedCall.extensionReceiver as? ExpressionReceiver)?.expression == expression) {
-        return callable.extensionReceiverParameter?.annotations?.findAnnotation(PROPERTY_KEY)?.getBundleName()
+        return callable.extensionReceiverParameter?.getBundleNameByAnnotation()
     }
 
     return resolvedCall.valueArguments.entries

@@ -4,6 +4,7 @@ package com.intellij.ui.tabs.impl.singleRow;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.ui.tabs.impl.TabLayout;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -14,13 +15,19 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   public static final int DEADZONE_FOR_DECLARE_TAB_HIDDEN = 10;
   private int myScrollOffset = 0;
   private boolean myScrollSelectionInViewPending = false;
+  private final boolean myWithScrollBar;
 
   public ScrollableSingleRowLayout(final JBTabsImpl tabs) {
+    this(tabs, false);
+  }
+
+  public ScrollableSingleRowLayout(final JBTabsImpl tabs, boolean isWithScrollBar) {
     super(tabs);
+    myWithScrollBar = isWithScrollBar;
   }
 
   @Override
-  int getScrollOffset() {
+  public int getScrollOffset() {
     return myScrollOffset;
   }
 
@@ -46,7 +53,11 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
       myScrollOffset = 0;
     }
     else {
-      myScrollOffset = Math.max(0, Math.min(myScrollOffset, data.requiredLength - data.toFitLength + getStrategy().getMoreRectAxisSize()));
+      int max = data.requiredLength - data.toFitLength + getMoreRectAxisSize();
+      if (getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
+        max += getStrategy().getEntryPointAxisSize();
+      }
+      myScrollOffset = Math.max(0, Math.min(myScrollOffset, max));
     }
   }
 
@@ -79,7 +90,10 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
           scroll(offset);
         }
         else {
-          final int maxLength = passInfo.toFitLength - getStrategy().getMoreRectAxisSize();
+          int maxLength = passInfo.toFitLength - getMoreRectAxisSize();
+          if (getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
+            maxLength -= getStrategy().getEntryPointAxisSize();
+          }
           if (offset + length > maxLength) {
             // left side should be always visible
             if (length < maxLength) {
@@ -116,9 +130,9 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
 
   @Override
   protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length) {
-    if (data.requiredLength > data.toFitLength && !label.isPinned()) {
+    if (data.requiredLength > data.toFitLength && !(label.isPinned() && TabLayout.showPinnedTabsSeparately())) {
       length = getStrategy().getLengthIncrement(label.getPreferredSize());
-      final int moreRectSize = getStrategy().getMoreRectAxisSize();
+      final int moreRectSize = getMoreRectAxisSize();
       if (data.position + length > data.toFitLength - moreRectSize) {
         final int clippedLength = getStrategy().drawPartialOverflowTabs()
                                   ? data.toFitLength - data.position - moreRectSize : 0;
@@ -152,5 +166,15 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
       i--;
     }
     return null;
+  }
+
+  private int getMoreRectAxisSize() {
+    if (isWithScrollBar()) return 0;
+    return getStrategy().getMoreRectAxisSize();
+  }
+
+  @Override
+  public boolean isWithScrollBar() {
+    return myWithScrollBar;
   }
 }

@@ -68,6 +68,7 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
             GHCommitCheckSuiteConclusion.NEUTRAL -> successfulChecks++
             GHCommitCheckSuiteConclusion.SKIPPED -> successfulChecks++
             GHCommitCheckSuiteConclusion.STALE -> failedChecks++
+            GHCommitCheckSuiteConclusion.STARTUP_FAILURE -> failedChecks++
             GHCommitCheckSuiteConclusion.SUCCESS -> successfulChecks++
             GHCommitCheckSuiteConclusion.TIMED_OUT -> failedChecks++
             null -> failedChecks++

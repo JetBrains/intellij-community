@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 'i' is never used
 fun foo(b: Boolean) {
     <caret>if (b)
         bar(1) // comment1

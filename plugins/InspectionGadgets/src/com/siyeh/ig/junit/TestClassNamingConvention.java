@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.naming.NamingConvention;
 import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
@@ -33,7 +34,7 @@ public class TestClassNamingConvention extends NamingConvention<PsiClass> {
 
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new NamingConventionBean("[A-Z][A-Za-z\\d]*Test(s|Case)?|Test[A-Z][A-Za-z\\d]*", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
+    return new NamingConventionBean("[A-Z][A-Za-z\\d]*Test(s|Case)?|Test[A-Z][A-Za-z\\d]*|IT(.*)|(.*)IT(Case)?", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
   }
 
   @Override
@@ -43,7 +44,12 @@ public class TestClassNamingConvention extends NamingConvention<PsiClass> {
 
   @Override
   public boolean isApplicable(PsiClass member) {
-    if (member instanceof PsiTypeParameter) return false;
+    if (member instanceof PsiTypeParameter) {
+      return false;
+    }
+    if (!member.hasModifierProperty(PsiModifier.STATIC) && member.getContainingClass() != null) {
+      return false;
+    }
     TestFramework framework = TestFrameworks.detectFramework(member);
     return framework instanceof JavaTestFramework && framework.isTestClass(member) && !((JavaTestFramework)framework).isSuiteClass(member);
   }

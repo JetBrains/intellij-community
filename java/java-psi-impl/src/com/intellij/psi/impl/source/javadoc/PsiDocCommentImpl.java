@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -138,7 +139,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
   @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     boolean needToAddNewline = false;
-    if (first == last && first.getElementType() == DOC_TAG) {
+    if (last.getElementType() == DOC_TAG && first.getElementType() == DOC_TAG) {
       if (anchor == null) {
         anchor = getLastChildNode(); // this is a '*/'
         ASTNode prevBeforeWS = TreeUtil.skipElementsBack(anchor.getTreePrev(), TokenSet.WHITE_SPACE);
@@ -195,16 +196,19 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
         addNewLineToTag((CompositeElement)first, getContainingFile(), getManager());
       }
       else {
-        removeEndingAsterisksFromTag((CompositeElement)first);
+        removeEndingAsterisksFromTagIfNeeded((CompositeElement)first);
       }
     }
 
     return first;
   }
 
-  private static void removeEndingAsterisksFromTag(CompositeElement tag) {
+  private static void removeEndingAsterisksFromTagIfNeeded(CompositeElement tag) {
     ASTNode current = tag.getLastChildNode();
     while (current != null && current.getElementType() == DOC_COMMENT_DATA) {
+      if (current instanceof PsiDocToken) {
+        return;
+      }
       current = current.getTreePrev();
     }
     if (current != null && current.getElementType() == DOC_COMMENT_LEADING_ASTERISKS) {
@@ -218,6 +222,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
       }
     }
   }
+
 
   private static boolean nodeIsNextAfterAsterisks(@NotNull ASTNode node) {
     ASTNode current = TreeUtil.findSiblingBackward(node, DOC_COMMENT_LEADING_ASTERISKS);

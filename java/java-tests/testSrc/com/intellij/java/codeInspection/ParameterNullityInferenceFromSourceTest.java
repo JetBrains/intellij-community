@@ -152,6 +152,21 @@ public class ParameterNullityInferenceFromSourceTest extends LightJavaCodeInsigh
                   "}");
   }
 
+  public void testSwitchWithPattern() {
+    assertNullity("-",
+                  "void test(String r) {\n" +
+                  "        switch (r) {\n" +
+                  "            case null:\n" +
+                  "                break;\n" +
+                  "        }\n" +
+                  "    }");
+  }
+
+  public void testSwitchExpression() {
+    assertNullity("+",
+                  "int test(String s) { return switch(s) {case \"x\"->1;default ->2;}} ");
+  }
+
   public void testUseConfiguredNullityAnnotation() {
     PsiClass clazz = myFixture.addClass("final class Foo { void foo(String s) { s.hashCode(); } }");
     PsiParameter parameter = clazz.getMethods()[0].getParameterList().getParameters()[0];

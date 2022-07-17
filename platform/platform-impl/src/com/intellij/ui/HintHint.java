@@ -15,12 +15,14 @@
  */
 package com.intellij.ui;
 
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -146,8 +148,13 @@ public class HintHint {
     return getTooltipManager().isOwnBorderAllowed(myAwtTooltip);
   }
 
+  @NotNull
   public Color getBorderColor() {
     return myBorderColor != null ? myBorderColor : JBUI.CurrentTheme.Tooltip.borderColor();
+  }
+
+  public boolean isBorderColorSet() {
+    return myBorderColor != null;
   }
 
   public Insets getBorderInsets() {
@@ -219,6 +226,12 @@ public class HintHint {
     myTextFg = component.getForeground();
     myTextBg = component.getBackground();
     myFont = component.getFont();
+    if (component instanceof HintUtil.HintLabel) {
+      HintHint componentHintLabel = ((HintUtil.HintLabel)component).getHintHint();
+      if (componentHintLabel != null) {
+        setBorderColor(componentHintLabel.getBorderColor());
+      }
+    }
   }
 
   public HintHint setTextFg(Color textFg) {

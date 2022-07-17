@@ -10,21 +10,21 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.unwrapBlockOrParenthesis
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.hasNoSideEffects
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 
 class ConstantConditionIfInspection : AbstractKotlinInspection() {
 
@@ -42,8 +42,15 @@ class ConstantConditionIfInspection : AbstractKotlinInspection() {
 
     companion object {
         private fun KtIfExpression.getConditionConstantValueIfAny(): Boolean? {
+            var expr = condition
+            while (expr is KtParenthesizedExpression) {
+                expr = expr.expression
+            }
+            if (expr !is KtConstantExpression) return null
             val context = condition?.analyze(BodyResolveMode.PARTIAL_WITH_CFA) ?: return null
-            return condition?.constantBooleanValue(context)
+            val type = expr.getType(context) ?: return null
+            val constant = ConstantExpressionEvaluator.getConstant(expr, context)?.toConstantValue(type) ?: return null
+            return constant.value as? Boolean
         }
 
         private fun collectFixes(
@@ -114,51 +121,15 @@ class ConstantConditionIfInspection : AbstractKotlinInspection() {
             val parent = ifExpression.parent
             if (parent.node.elementType == KtNodeTypes.ELSE) {
                 (parent.parent as? KtIfExpression)?.elseKeyword?.delete()
+                parent.delete()
             }
+
             ifExpression.delete()
         }
     }
 }
 
 private fun KtIfExpression.branch(thenBranch: Boolean) = if (thenBranch) then else `else`
-
-private fun KtExpression.constantBooleanValue(context: BindingContext): Boolean? {
-    val enumEntriesComparison = enumEntriesComparison()
-    if (enumEntriesComparison != null) {
-        return enumEntriesComparison
-    }
-    if (anyDescendantOfType<KtNameReferenceExpression> { true }) return null
-    val type = getType(context) ?: return null
-    val constantValue = ConstantExpressionEvaluator.getConstant(this, context)?.toConstantValue(type)
-    return constantValue?.value as? Boolean
-}
-
-private fun KtExpression.enumEntriesComparison(): Boolean? {
-    if (this !is KtBinaryExpression) return null
-    val leftEnumEntry = left?.enumEntry() ?: return null
-    val rightEnumEntry = right?.enumEntry() ?: return null
-
-    val leftEnum = leftEnumEntry.containingClass() ?: return null
-    val rightEnum = rightEnumEntry.containingClass() ?: return null
-    if (leftEnum != rightEnum) return null
-
-    val enumEntries = leftEnum.body?.getChildrenOfType<KtEnumEntry>() ?: return null
-    val leftIndex = enumEntries.indexOf(leftEnumEntry)
-    val rightIndex = enumEntries.indexOf(rightEnumEntry)
-    return when (operationToken) {
-        KtTokens.EQEQ -> leftIndex == rightIndex
-        KtTokens.GT -> leftIndex > rightIndex
-        KtTokens.GTEQ -> leftIndex >= rightIndex
-        KtTokens.LT -> leftIndex < rightIndex
-        KtTokens.LTEQ -> leftIndex <= rightIndex
-        KtTokens.EXCLEQ -> leftIndex != rightIndex
-        else -> null
-    }
-}
-
-private fun KtExpression.enumEntry(): KtEnumEntry? {
-    return ((this as? KtDotQualifiedExpression)?.selectorExpression ?: this).mainReference?.resolve() as? KtEnumEntry
-}
 
 fun KtExpression.replaceWithBranch(branch: KtExpression, isUsedAsExpression: Boolean, keepBraces: Boolean = false) {
     val caretModel = findExistingEditor()?.caretModel

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun test(list: List<Int>) {
     val single: Int = list.asSequence().filter { it > 1 }.single()

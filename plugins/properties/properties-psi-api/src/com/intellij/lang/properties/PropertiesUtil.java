@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,7 +12,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -19,37 +19,33 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PropertiesUtil {
   private static final Pattern LOCALE_PATTERN = Pattern.compile("(_[a-zA-Z]{2,8}(_[a-zA-Z]{2}|[0-9]{3})?(_[\\w\\-]+)?)\\.[^_]+$");
-  public static final Set<Character> BASE_NAME_BORDER_CHAR = ContainerUtil.newHashSet('-', '_', '.');
+  public static final Set<Character> BASE_NAME_BORDER_CHAR = Set.of('-', '_', '.');
   public static final Locale DEFAULT_LOCALE = new Locale("", "", "");
 
-  private static final SoftLazyValue<Set<String>> LOCALES_LANGUAGE_CODES = new SoftLazyValue<>() {
-    @NotNull
-    @Override
-    protected Set<String> compute() {
-      final HashSet<String> locales =
-        new HashSet<>(ContainerUtil.flatten(ContainerUtil.map(Locale.getAvailableLocales(),
-                                                              locale -> {
-                                                                final ArrayList<String> languages =
-                                                                  ContainerUtil.newArrayList(locale.getLanguage());
-                                                                try {
-                                                                  languages.add(locale.getISO3Language());
-                                                                }
-                                                                catch (MissingResourceException ignored) {
-                                                                  // if ISO3 language is not found for existed locale then exception is thrown anyway
-                                                                }
-                                                                return languages;
-                                                              })));
-      locales.addAll(ContainerUtil.newArrayList(Locale.getISOLanguages()));
-      return locales;
-    }
-  };
-
+  private static final Supplier<Set<String>> LOCALES_LANGUAGE_CODES = NotNullLazyValue.softLazy(() -> {
+    final HashSet<String> locales =
+      new HashSet<>(ContainerUtil.flatten(ContainerUtil.map(Locale.getAvailableLocales(),
+                                                            locale -> {
+                                                              final ArrayList<String> languages =
+                                                                ContainerUtil.newArrayList(locale.getLanguage());
+                                                              try {
+                                                                languages.add(locale.getISO3Language());
+                                                              }
+                                                              catch (MissingResourceException ignored) {
+                                                                // if ISO3 language is not found for existed locale then exception is thrown anyway
+                                                              }
+                                                              return languages;
+                                                            })));
+    locales.addAll(ContainerUtil.newArrayList(Locale.getISOLanguages()));
+    return locales;
+  });
 
   public static boolean containsProperty(final ResourceBundle resourceBundle, final String propertyName) {
     for (PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
@@ -106,7 +102,7 @@ public class PropertiesUtil {
           final String[] splitted = matchResult.group(1).split("_");
           if (splitted.length > 1) {
             final String langCode = splitted[1];
-            if (!LOCALES_LANGUAGE_CODES.getValue().contains(langCode)) {
+            if (!LOCALES_LANGUAGE_CODES.get().contains(langCode)) {
               matchIndex = matchResult.start(1) + 1;
               continue;
             }
@@ -222,7 +218,7 @@ public class PropertiesUtil {
   }
 
   public static boolean hasDefaultLanguage(Locale locale) {
-    return LOCALES_LANGUAGE_CODES.getValue().contains(locale.getLanguage());
+    return LOCALES_LANGUAGE_CODES.get().contains(locale.getLanguage());
   }
 
   @NotNull

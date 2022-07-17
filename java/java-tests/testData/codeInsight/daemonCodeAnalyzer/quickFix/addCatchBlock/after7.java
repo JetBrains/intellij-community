@@ -11,9 +11,9 @@ class Test {
     void m() {
         try (MyResource r = new MyResource()) {
         } catch (E1 e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         } catch (E2 e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 }

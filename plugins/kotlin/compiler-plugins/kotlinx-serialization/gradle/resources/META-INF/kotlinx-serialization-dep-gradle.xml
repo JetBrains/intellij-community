@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.kotlinxSerialization.KotlinSerializationGradleImportHandler"/>
-  </extensions>
-</idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.slicer
 
@@ -29,7 +29,7 @@ data class ArgumentSliceProducer private constructor(
         parameterDescriptor.containingDeclaration.isExtension
     )
 
-    override fun produce(usage: UsageInfo, mode: KotlinSliceAnalysisMode, parent: SliceUsage): Collection<SliceUsage>? {
+    override fun produce(usage: UsageInfo, mode: KotlinSliceAnalysisMode, parent: SliceUsage): Collection<SliceUsage> {
         val element = usage.element ?: return emptyList()
         val argumentExpression = extractArgumentExpression(element) ?: return emptyList()
         return listOf(KotlinSliceUsage(argumentExpression, parent, mode, forcedExpressionMode = true))

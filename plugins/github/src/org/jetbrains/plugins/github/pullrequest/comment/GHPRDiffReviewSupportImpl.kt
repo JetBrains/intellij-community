@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment
 
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
@@ -18,21 +19,25 @@ import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRSimpleOneside
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRTwosideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRUnifiedDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangeDiffData
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import com.intellij.collaboration.ui.SingleValueModel
 import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 import java.util.function.Function
 import kotlin.properties.Delegates.observable
 
 class GHPRDiffReviewSupportImpl(private val project: Project,
                                 private val reviewDataProvider: GHPRReviewDataProvider,
-                                private val diffData: GHPRChangeDiffData,
+                                private val detailsDataProvider: GHPRDetailsDataProvider,
                                 private val avatarIconsProvider: GHAvatarIconsProvider,
+                                private val repositoryDataService: GHPRRepositoryDataService,
+                                private val diffData: GHPRChangeDiffData,
                                 private val currentUser: GHUser)
   : GHPRDiffReviewSupport {
 
@@ -70,10 +75,14 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
     loadReviewThreads(viewer)
 
     val createCommentParametersHelper = GHPRCreateDiffCommentParametersHelper(diffData.commitSha, diffData.filePath, diffData.linesMapper)
+    val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
+                                                           viewer, repositoryDataService.remoteCoordinates.repository,
+                                                           reviewDataProvider,
+                                                           detailsDataProvider)
     val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project,
-                                                                      reviewDataProvider,
-                                                                      createCommentParametersHelper,
-                                                                      avatarIconsProvider, currentUser)
+                                                                      reviewDataProvider, avatarIconsProvider,
+                                                                      createCommentParametersHelper, suggestedChangesHelper,
+                                                                      currentUser)
     val cumulative = diffData is GHPRChangeDiffData.Cumulative
     when (viewer) {
       is SimpleOnesideDiffViewer ->

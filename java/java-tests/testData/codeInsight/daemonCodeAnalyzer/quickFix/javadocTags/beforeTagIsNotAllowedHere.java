@@ -1,5 +1,4 @@
-// "Fix all 'Declaration has Javadoc problems' problems in file" "true"
-
+// "Fix all 'Javadoc declaration problems' problems in file" "true"
 /**
  * @throws NullPointerException description
  * @exception NullPointerException description

@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 package Test.SubTest.AnotherTest
 
 open class TestClass {
@@ -14,3 +16,4 @@ class A() : Test.SubTest.AnotherTest.<caret> {
 // EXIST: TestClass
 // ABSENT: globalFun
 // ABSENT: globalProp
+// FIR_COMPARISON

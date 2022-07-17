@@ -28,9 +28,9 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.util.*
 
 internal class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
-  data class Grouping(val childClass: ClassDefinition,
-                      val parentClass: ClassDefinition?,
-                      val rootClass: ClassDefinition)
+  data class ClassGrouping(val childClass: ClassDefinition,
+                           val parentClass: ClassDefinition?,
+                           val rootClass: ClassDefinition)
 
   class InstanceStats {
     private val parentIds = LongArrayList()
@@ -64,76 +64,24 @@ internal class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
 
     nav.goToStaticField("com.intellij.openapi.util.Disposer", "ourTree")
     assert(!nav.isNull())
-    nav.goToInstanceField("com.intellij.openapi.util.ObjectTree", "myObject2NodeMap")
-    nav.goToInstanceField("it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap", "value")
+    nav.goToInstanceField("com.intellij.openapi.util.ObjectTree", "myRootNode")
+    val rootObjectNodeIds:LongList = getObjectNodeChildrenIds(nav)
 
-    val groupingToObjectStats = HashMap<Grouping, InstanceStats>()
+    val groupingToObjectStats = HashMap<ClassGrouping, InstanceStats>()
     val maxTreeDepth = 200
     val tooDeepObjectClasses = HashSet<ClassDefinition>()
-    nav.getReferencesCopy().forEach {
-      if (it == 0L) {
-        return@forEach
-      }
-
-      nav.goTo(it)
-      val objectNodeParentId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myParent")
-      val objectNodeObjectId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myObject")
-      nav.goTo(objectNodeParentId)
-
-      val parentId =
-        if (nav.isNull())
-          0L
-        else
-          nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myObject")
-
-      val parentClass =
-        if (parentId == 0L)
-          null
-        else {
-          nav.goTo(parentId)
-          nav.getClass()
-        }
-
-      nav.goTo(objectNodeObjectId)
-      val objectClass = nav.getClass()
-
-      val rootClass: ClassDefinition
-      val rootId: Long
-
-      if (parentId == 0L) {
-        rootClass = objectClass
-        rootId = objectNodeObjectId
-      }
-      else {
-        var rootObjectNodeId = objectNodeParentId
-        var rootObjectId: Long
-        var iterationCount = 0
-        do {
-          nav.goTo(rootObjectNodeId)
-          rootObjectNodeId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myParent")
-          rootObjectId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myObject")
-          iterationCount++
-        }
-        while (rootObjectNodeId != 0L && iterationCount < maxTreeDepth)
-
-        if (iterationCount >= maxTreeDepth) {
-          tooDeepObjectClasses.add(objectClass)
-          rootId = parentId
-          rootClass = parentClass!!
-        }
-        else {
-          nav.goTo(rootObjectId)
-          rootId = rootObjectId
-          rootClass = nav.getClass()
-        }
-      }
-
-      groupingToObjectStats
-        .getOrPut(Grouping(objectClass, parentClass, rootClass)) { InstanceStats() }
-        .registerObject(parentId, rootId)
+    for (i in 0 until rootObjectNodeIds.size) {
+      val rootObjectNodeId = rootObjectNodeIds.getLong(i)
+      nav.goTo(rootObjectNodeId)
+      if (nav.isNull()) continue
+      val rootObjectId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myObject")
+      val rootObjectClass = nav.getClassForObjectId(rootObjectId)
+      nav.goTo(rootObjectNodeId)
+      visitObjectTreeRecursively(nav, rootObjectNodeId, 0L, null, rootObjectId, rootObjectClass,
+                                 tooDeepObjectClasses, maxTreeDepth, 0, groupingToObjectStats)
     }
 
-    TruncatingPrintBuffer(400, 0, result::appendln).use { buffer ->
+    TruncatingPrintBuffer(400, 0, result::appendLine).use { buffer ->
       groupingToObjectStats
         .entries
         .asSequence()
@@ -142,8 +90,8 @@ internal class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
         .forEach { (rootClass, entries) ->
           buffer.println("Root: ${rootClass.name}")
           TruncatingPrintBuffer(100, 0, buffer::println).use { buffer ->
-            entries.forEach { (mapping, groupedObjects) ->
-              printDisposerTreeReportLine(buffer, mapping, groupedObjects)
+            entries.forEach { (classGrouping, instanceStats) ->
+              printDisposerTreeReportLine(buffer, classGrouping, instanceStats)
             }
           }
           buffer.println()
@@ -151,23 +99,79 @@ internal class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
     }
 
     if (tooDeepObjectClasses.size > 0) {
-      result.appendln("Skipped analysis of objects too deep in disposer tree:")
+      result.appendLine("Skipped analysis of objects too deep in disposer tree:")
       tooDeepObjectClasses.forEach {
-        result.appendln(" * ${nav.classStore.getShortPrettyNameForClass(it)}")
+        result.appendLine(" * ${nav.classStore.getShortPrettyNameForClass(it)}")
       }
     }
 
     return result.toString()
   }
 
+  // list of ids of ObjectNodes stored in the current ObjectNode.myChildren
+  private fun getObjectNodeChildrenIds(nav: ObjectNavigator): LongList {
+    nav.goToInstanceField("com.intellij.openapi.util.ObjectNode", "myChildren")
+    if (nav.getClass().name == Collections.emptyList<Any>().javaClass.name) {
+      // no children
+      return LongList.of()
+    }
+    else {
+      nav.goToInstanceField("com.intellij.util.SmartList", "myElem")
+      if (nav.isNull()) return LongList.of()
+      if (nav.getClass().isArray()) {
+        return nav.getReferencesCopy()
+      }
+      else {
+        // myElem is ObjectNode
+        return LongList.of(nav.id)
+      }
+    }
+  }
+
+  // visit ObjectTree starting with the ObjectNode pointed to by currentNodeId,
+  // descending recursively through the "ObjectNode.myChildren" references,
+  // gathering statistics into "groupingToObjectStats" along the way
+  private fun visitObjectTreeRecursively(nav: ObjectNavigator,
+                                         currentNodeId: Long,
+                                         parentObjectId: Long,
+                                         parentObjectClass: ClassDefinition?,
+                                         rootObjectId: Long,
+                                         rootObjectClass: ClassDefinition,
+                                         tooDeepObjectClasses: HashSet<ClassDefinition>,
+                                         maxTreeDepth: Int,
+                                         currentTreeDepth: Int,
+                                         groupingToObjectStats: HashMap<ClassGrouping, InstanceStats>) {
+    nav.goTo(currentNodeId)
+    if (nav.isNull()) return
+    val currentObjectId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myObject")
+    val currentObjectClass = nav.getClassForObjectId(currentObjectId)
+
+    groupingToObjectStats
+      .getOrPut(ClassGrouping(currentObjectClass, parentObjectClass, rootObjectClass)) { InstanceStats() }
+      .registerObject(parentObjectId, rootObjectId)
+
+    if (currentTreeDepth >= maxTreeDepth) {
+      tooDeepObjectClasses.add(currentObjectClass)
+      return
+    }
+
+    nav.goTo(currentNodeId)
+    val childrenNodeIds = getObjectNodeChildrenIds(nav)
+    for (i in 0 until childrenNodeIds.size) {
+      val childNodeId = childrenNodeIds.getLong(i)
+      visitObjectTreeRecursively(nav, childNodeId, currentObjectId, currentObjectClass, rootObjectId, rootObjectClass,
+                                 tooDeepObjectClasses, maxTreeDepth, currentTreeDepth + 1, groupingToObjectStats)
+    }
+  }
+
   private fun printDisposerTreeReportLine(buffer: TruncatingPrintBuffer,
-                                          mapping: Grouping,
-                                          groupedObjects: InstanceStats) {
-    val (sourceClass, parentClass, rootClass) = mapping
+                                          classGrouping: ClassGrouping,
+                                          instanceStats: InstanceStats) {
+    val (sourceClass, parentClass, rootClass) = classGrouping
     val nav = analysisContext.navigator
 
-    val objectCount = groupedObjects.objectCount()
-    val parentCount = groupedObjects.parentCount()
+    val objectCount = instanceStats.objectCount()
+    val parentCount = instanceStats.parentCount()
 
     // Ignore 1-1 mappings
     if (parentClass != null && objectCount == parentCount)
@@ -179,7 +183,7 @@ internal class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
     }
     else {
       val parentClassName = nav.classStore.getShortPrettyNameForClass(parentClass)
-      val rootCount = groupedObjects.rootCount()
+      val rootCount = instanceStats.rootCount()
       if (rootClass != parentClass || rootCount != parentCount) {
         parentString = "<-- $parentCount $parentClassName [...] $rootCount"
       }

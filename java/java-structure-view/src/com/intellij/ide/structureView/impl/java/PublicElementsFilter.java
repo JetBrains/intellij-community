@@ -29,7 +29,7 @@ public class PublicElementsFilter implements Filter{
   @Override
   public boolean isVisible(TreeElement treeNode) {
     if (treeNode instanceof JavaClassTreeElementBase) {
-      return ((JavaClassTreeElementBase)treeNode).isPublic();
+      return ((JavaClassTreeElementBase<?>)treeNode).isPublic();
     }
     else {
       return true;

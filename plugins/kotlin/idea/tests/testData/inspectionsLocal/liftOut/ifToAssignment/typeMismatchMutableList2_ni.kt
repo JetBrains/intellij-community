@@ -2,7 +2,7 @@
 // PROBLEM: none
 // ERROR: Type mismatch: inferred type is List<{Comparable<*> & Number}> but MutableList<Int> was expected
 // ERROR: Val cannot be reassigned
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun test(b: Boolean) {
     val list = mutableListOf<Int>()

@@ -2,10 +2,12 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.project.DumbService.isDumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
@@ -32,19 +34,19 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     return handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
   }
 
-  suspend fun executeDefault(checker: suspend () -> CheckinHandler.ReturnResult) {
-    var result = CheckinHandler.ReturnResult.CANCEL
+  suspend fun executeDefault(checker: suspend () -> CommitChecksResult) {
+    var result: CommitChecksResult = CommitChecksResult.ExecutionError
     try {
       result = checkCommit(checker)
       processExecuteDefaultChecksResult(result)
     }
     finally {
-      if (result != CheckinHandler.ReturnResult.COMMIT) endExecution()
+      if (!result.shouldCommit) endExecution()
     }
   }
 
-  private suspend fun checkCommit(checker: suspend () -> CheckinHandler.ReturnResult): CheckinHandler.ReturnResult {
-    var result = CheckinHandler.ReturnResult.CANCEL
+  private suspend fun checkCommit(checker: suspend () -> CommitChecksResult): CommitChecksResult {
+    var result: CommitChecksResult = CommitChecksResult.ExecutionError
 
     fireBeforeCommitChecksStarted()
     try {
@@ -57,37 +59,64 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     return result
   }
 
-  suspend fun runMetaHandlers(indicator: ProgressIndicator) =
-    commitHandlers
-      .filterIsInstance<CheckinMetaHandler>()
-      .reversed() // to have the same order as when wrapping meta handlers into each other
-      .forEach { runMetaHandler(it, indicator) }
-
-  private suspend fun runMetaHandler(metaHandler: CheckinMetaHandler, indicator: ProgressIndicator) {
-    if (metaHandler is CommitCheck<*>) {
-      runCommitCheck(metaHandler, indicator)
-    }
-    else {
-      suspendCancellableCoroutine<Unit> { continuation ->
-        val handlerCall = wrapWithCommitMetaHandler(metaHandler) { continuation.resume(Unit) }
-        handlerCall.run()
+  suspend fun runMetaHandlers(metaHandlers: List<CheckinMetaHandler>, commitProgressUi: CommitProgressUi, indicator: ProgressIndicator) {
+    // reversed to have the same order as when wrapping meta handlers into each other
+    for (metaHandler in metaHandlers.reversed()) {
+      if (metaHandler is CommitCheck<*>) {
+        runCommitCheck(metaHandler, commitProgressUi, indicator)
+      }
+      else {
+        suspendCancellableCoroutine<Unit> { continuation ->
+          val handlerCall = wrapWithCommitMetaHandler(metaHandler) { continuation.resume(Unit) }
+          handlerCall.run()
+        }
       }
     }
   }
 
-  fun runHandlers(executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    val handlers = commitHandlers.filterNot { it is CommitCheck<*> }
-    return runBeforeCommitHandlersChecks(executor, handlers)
+  suspend fun runCommitChecks(commitChecks: List<CommitCheck<*>>,
+                              commitProgressUi: CommitProgressUi,
+                              indicator: ProgressIndicator): Boolean {
+    for (commitCheck in commitChecks) {
+      val success = runCommitCheck(commitCheck, commitProgressUi, indicator)
+      if (!success) return false
+    }
+    return true
   }
 
-  suspend fun <P : CommitProblem> runCommitCheck(commitCheck: CommitCheck<P>, indicator: ProgressIndicator): P? {
-    if (!commitCheck.isEnabled()) return null.also { LOG.debug("Commit check disabled $commitCheck") }
-    if (isDumb(project) && !isDumbAware(commitCheck)) return null.also { LOG.debug("Skipped commit check in dumb mode $commitCheck") }
+  /**
+   * @return true if there are no errors and commit shall proceed
+   */
+  private suspend fun <P : CommitProblem> runCommitCheck(commitCheck: CommitCheck<P>,
+                                                         commitProgressUi: CommitProgressUi,
+                                                         indicator: ProgressIndicator): Boolean {
+    if (!commitCheck.isEnabled()) return true.also { LOG.debug("Commit check disabled $commitCheck") }
+    if (isDumb(project) && !isDumbAware(commitCheck)) return true.also { LOG.debug("Skipped commit check in dumb mode $commitCheck") }
 
     LOG.debug("Running commit check $commitCheck")
     indicator.checkCanceled()
     indicator.text = ""
     indicator.text2 = ""
-    return commitCheck.runCheck(indicator)
+
+    try {
+      val problem = commitCheck.runCheck(indicator)
+      problem?.let { commitProgressUi.addCommitCheckFailure(it.text) { commitCheck.showDetails(it) } }
+      return problem == null
+    }
+    catch (e: Throwable) {
+      // Do not report error on cancellation
+      // DO report error if someone threw PCE for no reason, ex: IDEA-234006
+      if (e is ProcessCanceledException && indicator.isCanceled) throw e
+      LOG.warn(Throwable(e))
+
+      val err = e.message
+      val message = when {
+        err.isNullOrBlank() -> VcsBundle.message("before.checkin.error.unknown")
+        else -> VcsBundle.message("before.checkin.error.unknown.details", err)
+      }
+      commitProgressUi.addCommitCheckFailure(message, null)
+
+      return false
+    }
   }
 }

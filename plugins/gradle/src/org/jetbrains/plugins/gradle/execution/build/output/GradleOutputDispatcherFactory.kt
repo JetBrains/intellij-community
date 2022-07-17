@@ -22,7 +22,7 @@ import java.lang.reflect.Proxy
 import java.util.concurrent.CompletableFuture
 
 class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
-  override val externalSystemId: Any? = GradleConstants.SYSTEM_ID
+  override val externalSystemId = GradleConstants.SYSTEM_ID
 
   override fun create(
     buildId: Any,

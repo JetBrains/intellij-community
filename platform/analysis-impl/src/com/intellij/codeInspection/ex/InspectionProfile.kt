@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeInspection.InspectionProfile
@@ -52,7 +52,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
     return initialized
   }
 
-  override abstract fun getDisplayName(): String
+  abstract override fun getDisplayName(): String
 
   protected val pathMacroManager: PathMacroManager
     get() {
@@ -71,7 +71,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
   }
 
   /**
-   * If you need to enable multiple tools, please use [.modifyProfile]
+   * If you need to enable multiple tools, please use [InspectionProfileImpl.modifyProfile].
    */
   @JvmOverloads
   fun setToolEnabled(toolShortName: String, enabled: Boolean, project: Project? = null, fireEvents: Boolean = true) {

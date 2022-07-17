@@ -11,4 +11,5 @@ fun foo() {
     JavaClassInvoke.INSTANCE()
     JavaClassInvoke.AnotherOther.INSTANCE()
     JavaClassInvoke.JavaOther.INSTANCE()
+    JavaClassInvoke.AnotherOther::class.java
 }

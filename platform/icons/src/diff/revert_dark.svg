@@ -1,7 +1,13 @@
-<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
-  <g fill="none" fill-rule="evenodd">
-    <path fill="#AFB1B3" d="M1.41342712,3.59632034 L4.24264069,6.42553391 L3.53553391,7.13264069 L1.70974346e-14,3.59710678 L3.53553391,0.06 L4.24264069,0.767106781 L1.41342712,3.59632034 Z" transform="translate(0 .9)"/>
-    <path fill="#AFB1B3" d="M5,11 L8,11 C9.65685425,11 11,9.65685425 11,8 C11,6.34314575 9.65685425,5 8,5 L1,5 L1,4 L8,4 C10.209139,4 12,5.790861 12,8 C12,10.209139 10.209139,12 8,12 L5,12 L5,11 Z"/>
-  </g>
+<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="revert_dark" clip-path="url(#clip0_0_7139)">
+<g id="Group">
+<path id="Combined Shape" fill-rule="evenodd" clip-rule="evenodd" d="M4.24264 0.667106L3.53553 -0.0400009L0 3.49553L0.000786424 3.49632L0 3.49711L3.53553 7.03264L4.24264 6.32553L1.41343 3.49632L4.24264 0.667106Z" fill="#AFB1B3"/>
+<path id="Combined Shape_2" fill-rule="evenodd" clip-rule="evenodd" d="M1 3H8C10.2091 3 12 4.79086 12 7C12 9.20914 10.2091 11 8 11H5V10H8C9.65685 10 11 8.65685 11 7C11 5.34315 9.65685 4 8 4H1V3Z" fill="#AFB1B3"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_0_7139">
+<rect width="12" height="12" fill="white"/>
+</clipPath>
+</defs>
 </svg>

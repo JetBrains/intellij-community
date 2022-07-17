@@ -32,7 +32,7 @@ internal abstract class CreatePropertyActionBase(
     if (!PsiNameHelper.getInstance(project).isIdentifier(accessorName)) return false
 
     val (propertyName: String, propertyKind: PropertyKind) = doGetPropertyInfo() ?: return false
-    if (propertyName == null || propertyName.isEmpty() || propertyKind == null) return false
+    if (propertyName.isNullOrEmpty() || propertyKind == null) return false
 
     // check parameters count
     when (propertyKind) {

@@ -42,7 +42,7 @@ public class FieldAccessNotGuardedInspection extends AbstractBaseJavaLocalInspec
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
       if (parent instanceof PsiSynchronizedStatement) {
         return;

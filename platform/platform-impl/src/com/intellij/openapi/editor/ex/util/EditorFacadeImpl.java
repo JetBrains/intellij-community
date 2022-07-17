@@ -3,8 +3,8 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.formatting.FormatConstants;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataContextWrapper;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -14,9 +14,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -25,12 +23,13 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.MathUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
+
+import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
 @ApiStatus.Internal
 public class EditorFacadeImpl extends EditorFacade {
@@ -185,7 +184,7 @@ public class EditorFacadeImpl extends EditorFacade {
    *                       2. The second element holds added symbols number;
    */
   private static void emulateEnter(@NotNull final Editor editor, @NotNull Project project, int[] shifts) {
-    final DataContext dataContext = prepareContext(editor.getComponent(), project);
+    DataContext dataContext = prepareContext(project, editor);
     int caretOffset = editor.getCaretModel().getOffset();
     Document document = editor.getDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
@@ -369,52 +368,18 @@ public class EditorFacadeImpl extends EditorFacade {
   }
 
   @NotNull
-  private static DataContext prepareContext(@NotNull Component component, @NotNull final Project project) {
+  private static DataContext prepareContext(@NotNull Project project, @NotNull Editor editor) {
     // There is a possible case that formatting is performed from project view and editor is not opened yet. The problem is that
     // its data context doesn't contain information about project then. So, we explicitly support that here (see IDEA-72791).
-    final DataContext baseDataContext = DataManager.getInstance().getDataContext(component);
-    return new DelegatingDataContext(baseDataContext) {
+    Project editorProject = editor.getProject();
+    DataContext context = EditorUtil.getEditorDataContext(editor);
+    if (editorProject != null) return context;
+    return new DataContextWrapper(context) {
       @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        Object result = baseDataContext.getData(dataId);
-        if (result == null && CommonDataKeys.PROJECT.is(dataId)) {
-          result = project;
-        }
-        return result;
+      public @Nullable Object getRawCustomData(@NotNull String dataId) {
+        if (PROJECT.is(dataId)) return project;
+        return null;
       }
     };
-  }
-
-  private static class DelegatingDataContext implements DataContext, UserDataHolder {
-
-    private final DataContext myDataContextDelegate;
-    private final UserDataHolder myDataHolderDelegate;
-
-    DelegatingDataContext(DataContext delegate) {
-      myDataContextDelegate = delegate;
-      if (delegate instanceof UserDataHolder) {
-        myDataHolderDelegate = (UserDataHolder)delegate;
-      }
-      else {
-        myDataHolderDelegate = null;
-      }
-    }
-
-    @Override
-    public Object getData(@NotNull @NonNls String dataId) {
-      return myDataContextDelegate.getData(dataId);
-    }
-
-    @Override
-    public <T> T getUserData(@NotNull Key<T> key) {
-      return myDataHolderDelegate == null ? null : myDataHolderDelegate.getUserData(key);
-    }
-
-    @Override
-    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-      if (myDataHolderDelegate != null) {
-        myDataHolderDelegate.putUserData(key, value);
-      }
-    }
   }
 }

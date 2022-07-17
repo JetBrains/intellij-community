@@ -6,13 +6,14 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.languageVersionSettings
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.instance
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.js.analyze.TopDownAnalyzerFacadeForJS.analyzeFiles
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.config.JsConfig
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.resolve.CompilerEnvironment
 import java.io.File
 import java.lang.reflect.Field
 
@@ -25,7 +26,7 @@ abstract class AbstractDiagnosticMessageJsTest : AbstractDiagnosticMessageTest()
             this.languageVersionSettings = languageVersionSettings
         }
 
-        return analyzeFiles(listOf(file), JsConfig(project, configuration))
+        return analyzeFiles(listOf(file), JsConfig(project, configuration, CompilerEnvironment))
     }
 
     override val testDataDirectory: File
@@ -36,7 +37,7 @@ abstract class AbstractDiagnosticMessageJsTest : AbstractDiagnosticMessageTest()
     }
 
     private fun jsStdlib(): List<String> {
-        val stdlibPath = instance.kotlinStdlibJs
+        val stdlibPath = KotlinArtifacts.kotlinStdlibJs
         return listOf(stdlibPath.absolutePath)
     }
 }

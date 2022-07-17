@@ -55,8 +55,8 @@ public abstract class AbstractExternalSystemConfigurable<
   @Nullable private ExternalSystemSettingsControl<ProjectSettings> myActiveProjectSettingsControl;
 
   private PaintAwarePanel  myComponent;
-  private JBList           myProjectsList;
-  private DefaultListModel myProjectsModel;
+  private JBList<String>           myProjectsList;
+  private DefaultListModel<String> myProjectsModel;
 
   protected AbstractExternalSystemConfigurable(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
     myProject = project;
@@ -100,7 +100,6 @@ public abstract class AbstractExternalSystemConfigurable<
     return manager.getSettingsProvider().fun(myProject);
   }
 
-  @SuppressWarnings("unchecked")
   private void prepareProjectSettings(@NotNull SystemSettings s) {
     List<ProjectSettings> settings = new ArrayList<>(s.getLinkedProjectsSettings());
     if (settings.isEmpty()) {
@@ -114,8 +113,8 @@ public abstract class AbstractExternalSystemConfigurable<
 
     OnePixelSplitter splitter = new OnePixelSplitter(false, .16f);
 
-    myProjectsModel = new DefaultListModel();
-    myProjectsList = new JBList(myProjectsModel);
+    myProjectsModel = new DefaultListModel<>();
+    myProjectsList = new JBList<>(myProjectsModel);
     myProjectsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     JBScrollPane scrollPane = new JBScrollPane(myProjectsList);
@@ -141,7 +140,7 @@ public abstract class AbstractExternalSystemConfigurable<
       myProjectsModel.addElement(getProjectName(setting.getExternalProjectPath()));
       myProjectSettingsControls.add(control);
       if (control instanceof AbstractExternalProjectSettingsControl<?>) {
-        ((AbstractExternalProjectSettingsControl)control).setCurrentProject(myProject);
+        ((AbstractExternalProjectSettingsControl<?>)control).setCurrentProject(myProject);
       }
       control.showUi(false);
     }
@@ -242,7 +241,7 @@ public abstract class AbstractExternalSystemConfigurable<
       systemSettings.setLinkedProjectsSettings(projectSettings);
       for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
         if(control instanceof AbstractExternalProjectSettingsControl) {
-          ((AbstractExternalProjectSettingsControl)control).updateInitialSettings();
+          ((AbstractExternalProjectSettingsControl<?>)control).updateInitialSettings();
         }
       }
       if (mySystemSettingsControl != null) {

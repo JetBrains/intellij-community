@@ -7,7 +7,6 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.gradle</depends>
-  <depends>com.intellij.externalSystem.dependencyUpdater</depends>
   <depends>org.jetbrains.idea.gradle.dsl</depends>
   <extensions defaultExtensionNs="com.intellij">
     <externalSystem.dependencyModifier implementation="org.jetbrains.plugins.gradle.dsl.GradleDependencyModificator"/>

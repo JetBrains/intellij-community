@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
   static ProgressManager ourInstance = CachedSingletonsRegistry.markCachedField(ProgressManager.class);
@@ -32,6 +33,14 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     return result;
   }
 
+  /**
+   * @return ProgressManager or null if not yet initialized
+   */
+  @ApiStatus.Internal
+  @Nullable
+  public static ProgressManager getInstanceOrNull() {
+    return ourInstance;
+  }
   public abstract boolean hasProgressIndicator();
   public abstract boolean hasModalProgressIndicator();
   public abstract boolean hasUnsafeProgressIndicator();
@@ -84,7 +93,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   }
 
   /**
-   * Runs the specified operation in non-cancellable manner synchronously on the same thread were it was called.
+   * Runs the specified operation in non-cancellable manner synchronously on the same thread where it was called.
    *
    * @see ProgressManager#computeInNonCancelableSection(ThrowableComputable)
    * @param runnable the operation to execute
@@ -92,7 +101,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
 
   /**
-   * Runs the specified operation and return its result in non-cancellable manner synchronously on the same thread were it was called.
+   * Runs the specified operation and return its result in non-cancellable manner synchronously on the same thread where it was called.
    *
    * @see ProgressManager#executeNonCancelableSection(Runnable)
    * @param computable the operation to execute
@@ -164,32 +173,11 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param process          the operation to execute.
    * @param successRunnable  a callback to be called in Swing UI thread upon normal termination of the process.
    * @param canceledRunnable a callback to be called in Swing UI thread if the process have been canceled by the user.
-   * @deprecated use {@link #run(Task)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
-                                                            @NotNull @ProgressTitle String progressTitle,
-                                                            @NotNull Runnable process,
-                                                            @Nullable Runnable successRunnable,
-                                                            @Nullable Runnable canceledRunnable);
-
-  /**
-   * Runs a specified {@code process} in a background thread and shows a progress dialog, which can be made non-modal by pressing
-   * background button. Upon successful termination of the process a {@code successRunnable} will be called in Swing UI thread and
-   * {@code canceledRunnable} will be called if terminated on behalf of the user by pressing either cancel button, while running in
-   * a modal state or stop button if running in background.
-   *
-   * @param project          the project in the context of which the operation is executed.
-   * @param progressTitle    the title of the progress window.
-   * @param process          the operation to execute.
-   * @param successRunnable  a callback to be called in Swing UI thread upon normal termination of the process.
-   * @param canceledRunnable a callback to be called in Swing UI thread if the process have been canceled by the user.
    * @param option           progress indicator behavior controller.
    * @deprecated use {@link #run(Task)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                             @NotNull @ProgressTitle String progressTitle,
                                                             @NotNull Runnable process,
@@ -270,11 +258,17 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   /**
    * Performs the given computation while giving more priority to the current thread
-   * (by forcing all other non-prioritized threads to sleep a bit whenever they call {@link #checkCanceled()}.<p></p>
+   * (by forcing all other non-prioritized threads to sleep a bit whenever they call {@link #checkCanceled()}).<p></p>
    *
    * This is intended for relatively short (expected to be under 10 seconds) background activities that the user is waiting for
    * (e.g. code navigation), and which shouldn't be slowed down by CPU-intensive background tasks like highlighting or indexing.
    */
   @ApiStatus.Internal
   public abstract <T, E extends Throwable> T computePrioritized(@NotNull ThrowableComputable<T, E> computable) throws E;
+
+  /**
+   * Makes {@link #getProgressIndicator()} return {@code null} within {@code computable}.
+   */
+  @ApiStatus.Internal
+  public abstract <X> X silenceGlobalIndicator(@NotNull Supplier<? extends X> computable);
 }

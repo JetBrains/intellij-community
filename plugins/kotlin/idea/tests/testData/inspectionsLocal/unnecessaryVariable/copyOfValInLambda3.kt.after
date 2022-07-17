@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun findCredentials() = 1
 
 fun println(i: Int) {}

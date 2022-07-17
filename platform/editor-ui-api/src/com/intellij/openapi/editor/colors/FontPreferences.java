@@ -53,6 +53,13 @@ public class FontPreferences {
     return DEFAULT_FONT_SIZE;
   }
 
+  /**
+   * Floating-point version of {@link #getSize(String)}
+   */
+  public float getSize2D(@NotNull String fontFamily) {
+    return getSize(fontFamily);
+  }
+
   public void copyTo(@NotNull FontPreferences preferences) {
   }
 
@@ -69,6 +76,16 @@ public class FontPreferences {
   }
 
   /**
+   * @deprecated use {@link #getFallbackName(String, EditorColorsScheme)} instead
+   */
+  @Nullable
+  @NlsSafe
+  @Deprecated
+  public static String getFallbackName(@NotNull String fontName, int fontSize, @Nullable EditorColorsScheme fallbackScheme) {
+    return getFallbackName(fontName, fallbackScheme);
+  }
+
+  /**
    * There is a possible case that particular font family is not available at particular environment (e.g. Monaco under *nix).
    * However, java environment tries to mask that via 'Dialog' fonts, i.e. when we try to create font like
    * {@code new Font("Monaco", style, size)}, it creates a font object which has font family "Monaco" but is a "Dialog" font.
@@ -76,15 +93,14 @@ public class FontPreferences {
    * That's why we have a special check for such a situation.
    *
    * @param fontName        font family name to check
-   * @param fontSize        target font size
    * @param fallbackScheme  colors scheme to use for fallback fonts retrieval (if necessary);
    * @return                fallback font family to use if font family with the given name is not registered at current environment;
    *                        {@code null} if font family with the given name is registered at the current environment
    */
   @Nullable
   @NlsSafe
-  public static String getFallbackName(@NotNull String fontName, int fontSize, @Nullable EditorColorsScheme fallbackScheme) {
-    Font plainFont = new Font(fontName, Font.PLAIN, fontSize);
+  public static String getFallbackName(@NotNull String fontName, @Nullable EditorColorsScheme fallbackScheme) {
+    Font plainFont = new Font(fontName, Font.PLAIN, DEFAULT_FONT_SIZE);
     if (plainFont.getFamily().equals("Dialog") && !("Dialog".equals(fontName) || fontName.startsWith("Dialog."))) {
       return fallbackScheme == null ? DEFAULT_FONT_NAME : fallbackScheme.getEditorFontName();
     }

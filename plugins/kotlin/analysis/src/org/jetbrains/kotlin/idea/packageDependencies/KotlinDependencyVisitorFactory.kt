@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.packageDependencies
 
 import com.intellij.packageDependencies.DependenciesBuilder
 import com.intellij.packageDependencies.DependencyVisitorFactory
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiImportStatement
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 
@@ -31,9 +31,9 @@ class KotlinDependencyVisitorFactory : DependencyVisitorFactory() {
             }
         }
 
-        fun visitImportStatement(statement: PsiImportStatement?) {
+        override fun visitImportDirective(importDirective: KtImportDirective) {
             if (!myOptions.skipImports()) {
-                visitElement(statement!!)
+                visitElement(importDirective)
             }
         }
     }

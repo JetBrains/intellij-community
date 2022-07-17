@@ -4,7 +4,7 @@ package com.intellij.execution.services;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.navigationToolbar.NavBarBorder;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.application.Application;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
@@ -135,6 +135,7 @@ class ServiceViewTreeUi implements ServiceViewUi {
     }
     ActionToolbar serviceActionToolbar = myServiceActionToolbar;
     if (serviceActionToolbar != null) {
+      ((ActionToolbarImpl)serviceActionToolbar).clearPresentationCache();
       serviceActionToolbar.updateActionsImmediately();
     }
     ApplicationManager.getApplication().invokeLater(() -> {

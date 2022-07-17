@@ -24,15 +24,19 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.InjectedDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.EditorDataProvider;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -62,37 +66,40 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (CARET.is(dataId)) {
       return caret;
     }
-    if (PSI_FILE.is(dataId)) {
-      return getPsiFile(e, file);
-    }
     if (IDE_VIEW.is(dataId)) {
-      Project project = e.getProject();
-      PsiFile psiFile = project == null ? null : PsiManager.getInstance(project).findFile(file);
-      PsiDirectory psiDirectory = psiFile == null ? null : psiFile.getParent();
-      if (psiDirectory != null && (psiDirectory.isPhysical() || ApplicationManager.getApplication().isUnitTestMode())) {
-        return new IdeView() {
-
-          @Override
-          public void selectElement(final PsiElement element) {
-            NavigationUtil.activateFileWithPsiElement(element);
-          }
-
-          @Override
-          public PsiDirectory @NotNull [] getDirectories() {
-            return new PsiDirectory[]{psiDirectory};
-          }
-
-          @Override
-          public PsiDirectory getOrChooseDirectory() {
-            return psiDirectory;
-          }
-        };
-      }
+      return getIdeView(e, file);
     }
-    if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
       return Collections.<DataProvider>singletonList(o -> getSlowData(o, e, caret));
     }
     return null;
+  }
+
+  private static @Nullable IdeView getIdeView(@NotNull Editor e, @NotNull VirtualFile file) {
+    Project project = e.getProject();
+    if (project == null) return null;
+    VirtualFileSystem fs = file.getFileSystem();
+    boolean nonPhysical = fs instanceof NonPhysicalFileSystem || fs instanceof TempFileSystemMarker;
+    if (nonPhysical && !ApplicationManager.getApplication().isUnitTestMode()) return null;
+    return new IdeView() {
+
+      @Override
+      public void selectElement(PsiElement element) {
+        NavigationUtil.activateFileWithPsiElement(element);
+      }
+
+      @Override
+      public PsiDirectory @NotNull [] getDirectories() {
+        PsiDirectory psiDirectory = getOrChooseDirectory();
+        return psiDirectory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[]{psiDirectory};
+      }
+
+      @Override
+      public PsiDirectory getOrChooseDirectory() {
+        VirtualFile parent = !file.isValid() ? null : file.getParent();
+        return parent == null ? null : PsiManager.getInstance(project).findDirectory(parent);
+      }
+    };
   }
 
   @Nullable
@@ -144,6 +151,9 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
       InjectedCaret injectedCaret = querySlowInjectedCaret(e, caret);
       return injectedCaret == null ? null : getLanguageAtCurrentPositionInEditor(injectedCaret, psiFile);
     }
+    if (MODULE.is(dataId)) {
+      return project == null ? null : ModuleUtilCore.findModuleForFile(file, project);
+    }
     if (LANGUAGE.is(dataId)) {
       PsiFile psiFile = getPsiFile(e, file);
       if (psiFile == null) return null;
@@ -155,7 +165,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
       addIfNotNull(set, injectedLanguage);
       Language language = (Language)getSlowData(LANGUAGE.getName(), e, caret);
       addIfNotNull(set, language);
-      PsiFile psiFile = (PsiFile)getData(PSI_FILE.getName(), e, caret);
+      PsiFile psiFile = (PsiFile)getSlowData(PSI_FILE.getName(), e, caret);
       if (psiFile != null) {
         addIfNotNull(set, psiFile.getViewProvider().getBaseLanguage());
       }

@@ -1,6 +1,8 @@
 package com.intellij.grazie.text;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,7 +23,7 @@ import java.util.function.Function;
  * This object is immutable (as long as the underlying PSI stays intact).
  */
 @ApiStatus.NonExtendable
-public interface TextContent extends CharSequence {
+public interface TextContent extends CharSequence, UserDataHolderEx {
 
   /** The domain of all underlying PSI elements */
   TextDomain getDomain();
@@ -106,16 +108,52 @@ public interface TextContent extends CharSequence {
   TextContent markUnknown(TextRange rangeInText);
 
   /**
+   * @return a copy of this TextContent with the given ranges excluded.
+   * This is equivalent to calling {@link #excludeRange} or {@link #markUnknown} for the ranges in reversed order, but works faster.
+   * Note: the ranges contain natural language text offsets, not PSI ones.
+   * They should not overlap and should be sorted.
+   */
+  @Contract(pure = true)
+  TextContent excludeRanges(List<Exclusion> ranges);
+
+  /**
+   * @return the part of this text inside the corresponding range, or {@code null} if the result is empty
+   */
+  default @Nullable TextContent subText(TextRange range) {
+    if (range.isEmpty()) return null;
+    return excludeRange(new TextRange(range.getEndOffset(), length())).excludeRange(new TextRange(0, range.getStartOffset()));
+  }
+
+  /**
    * @return whether the given PSI file text range has non-empty intersection with any fragment covered by this text content.
    */
+  @Contract(pure = true)
   boolean intersectsRange(TextRange rangeInFile);
+
+  /**
+   * @return all sub-ranges of {@code rangeInFile} which this text maps into; the same as the intersections of {@code rangeInFile} and {@link #getRangesInFile()}.
+   * Empty ranges are also included.
+   */
+  @Contract(pure = true)
+  default List<TextRange> intersection(TextRange rangeInFile) {
+    return ContainerUtil.mapNotNull(getRangesInFile(), r -> r.intersection(rangeInFile));
+  }
 
   /**
    * @return a copy of this text content with all leading and trailing whitespace characters removed
    * (as in {@link Character#isWhitespace(int)} and {@link Character#isSpaceChar(char)}),
    * or {@code null} if the text consists only of whitespace.
    */
+  @Contract(pure = true)
   @Nullable TextContent trimWhitespace();
+
+  /** For each line of the text, remove the prefix consisting of the given characters. */
+  @Contract(pure = true)
+  TextContent removeIndents(Set<Character> indentChars);
+
+  /** For each line of the text, remove the suffix consisting of the given characters. */
+  @Contract(pure = true)
+  TextContent removeLineSuffixes(Set<Character> suffixChars);
 
   enum TextDomain {
     /** String literals of a programming language */
@@ -174,18 +212,32 @@ public interface TextContent extends CharSequence {
 
   /**
    * @return a concatenation of several text contents (which must have the same domains)
-   * with a single synthetic space character inserted between each pair of adjacent components.
+   * with a single synthetic ' ' character inserted between each pair of adjacent components.
+   * @deprecated use {@link #joinWithWhitespace(char, List)}
    */
   @Nullable
+  @Deprecated
   static TextContent joinWithWhitespace(List<? extends @NotNull TextContent> components) {
+    return joinWithWhitespace(' ', components);
+  }
+
+  /**
+   * @return a concatenation of several text contents (which must have the same domains)
+   * with the given whitespace character inserted between each pair of adjacent components.
+   */
+  @Nullable
+  static TextContent joinWithWhitespace(char whitespace, List<? extends @NotNull TextContent> components) {
+    if (!Character.isWhitespace(whitespace)) {
+      throw new IllegalArgumentException("Whitespace expected, got " + StringUtil.escapeStringCharacters(String.valueOf(whitespace)));
+    }
     if (components.isEmpty()) return null;
     if (components.size() == 1) return components.get(0);
 
-    return new TextContentImpl(commonDomain(components),
-      StreamEx.of(components)
-        .map(c -> ((TextContentImpl) c).tokens)
-        .intersperse(Collections.singletonList(TextContentImpl.WS_TOKEN))
-        .toFlatList(Function.identity()));
+    TextContentImpl.WSTokenInfo wsToken = new TextContentImpl.WSTokenInfo(whitespace);
+    return new TextContentImpl(commonDomain(components), StreamEx.of(components)
+      .map(c -> ((TextContentImpl) c).tokens)
+      .intersperse(Collections.singletonList(wsToken))
+      .toFlatList(Function.identity()));
   }
 
   private static TextDomain commonDomain(List<? extends TextContent> components) {
@@ -194,5 +246,31 @@ public interface TextContent extends CharSequence {
       throw new IllegalArgumentException("Joined TextContents should share the same domain");
     }
     return domain;
+  }
+
+  /** An object representing the range to pass to either {@link #excludeRange} or {@link #markUnknown(TextRange)} */
+  class Exclusion {
+    public final int start, end;
+    public final boolean markUnknown;
+
+    public Exclusion(int start, int end, boolean markUnknown) {
+      if (start > end) throw new IllegalArgumentException(start + ">" + end);
+      this.start = start;
+      this.end = end;
+      this.markUnknown = markUnknown;
+    }
+
+    @Override
+    public String toString() {
+      return "(" + (markUnknown ? "?" : "") + start + "," + end + ")";
+    }
+
+    public static Exclusion markUnknown(TextRange range) {
+      return new Exclusion(range.getStartOffset(), range.getEndOffset(), true);
+    }
+
+    public static Exclusion exclude(TextRange range) {
+      return new Exclusion(range.getStartOffset(), range.getEndOffset(), false);
+    }
   }
 }

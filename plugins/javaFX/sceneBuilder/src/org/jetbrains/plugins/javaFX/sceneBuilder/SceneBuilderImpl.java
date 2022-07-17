@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.sceneBuilder;// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import com.intellij.openapi.application.ReadAction;
@@ -69,7 +69,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   private Object myListener;
   private Object mySelectionListener;
   private List<List<SelectionNode>> mySelectionState;
-  @NotNull protected final ClassLoader myParentClassLoader;
+  protected final @NotNull ClassLoader myParentClassLoader;
 
   public SceneBuilderImpl(URL url, Project project, EditorCallback editorCallback, @NotNull ClassLoader loader) {
     myFileURL = url;
@@ -145,8 +145,8 @@ public class SceneBuilderImpl implements SceneBuilder {
     if (myProject.isDisposed()) {
       return Collections.emptyList();
     }
-    final PsiClass nodeClass = JavaPsiFacade.getInstance(myProject)
-      .findClass("javafx.scene.Node", GlobalSearchScope.allScope(myProject));
+     PsiClass nodeClass = JavaPsiFacade.getInstance(myProject).findClass("javafx.scene.Node", GlobalSearchScope.allScope(myProject));
+
     if (nodeClass == null) {
       return Collections.emptyList();
     }
@@ -406,7 +406,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   }
 
   @NotNull
-  private static Map<String, BuiltinComponent> loadBuiltinComponents(Predicate<String> psiClassExists) {
+  private static Map<String, BuiltinComponent> loadBuiltinComponents(Predicate<? super String> psiClassExists) {
     final Map<String, BuiltinComponent> components = new HashMap<>();
     for (LibraryItem item : JavaFXPlatformHelper.getBuiltinLibraryItems()) {
       final Ref<String> refQualifiedName = new Ref<>();

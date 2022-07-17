@@ -62,6 +62,8 @@ public class YAMLSearchEverywhereTest extends BasePlatformTestCase {
     for (String request : requests) {
       addRequestToResult(builder, request);
       ContributorSearchResult<YAMLKeyNavigationItem> result = contributor.search(request, new MockProgressIndicator(), 15);
+      ContributorSearchResult<YAMLKeyNavigationItem> result2 = contributor.search(request, new MockProgressIndicator(), 15);
+      assertEquals(result2.getItems(), result.getItems());
       for (YAMLKeyNavigationItem item : result.getItems()) {
         item.navigate(true);
         PsiElement element = myFixture.getElementAtCaret();

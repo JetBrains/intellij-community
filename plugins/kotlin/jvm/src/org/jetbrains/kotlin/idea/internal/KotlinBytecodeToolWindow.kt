@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
@@ -24,11 +25,12 @@ import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.core.KotlinCompilerIde
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.InfinitePeriodicalTask
 import org.jetbrains.kotlin.idea.util.LongRunningReadTask
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.join
 import java.awt.BorderLayout
@@ -66,7 +68,7 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
             }
 
             val file = location.kFile
-            return if (file == null || !ProjectRootsUtil.isInProjectSource(file)) {
+            return if (file == null || !RootKindFilter.projectSources.matches(file)) {
                 null
             } else location
 
@@ -190,15 +192,17 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
         enableInline = JCheckBox(KotlinJvmBundle.message("checkbox.text.inline"), true)
         enableOptimization = JCheckBox(KotlinJvmBundle.message("checkbox.text.optimization"), true)
         enableAssertions = JCheckBox(KotlinJvmBundle.message("checkbox.text.assertions"), true)
-        jvmTargets = ComboBox(JvmTarget.values().map { it.description }.toTypedArray())
-        jvmTargets.selectedItem = JvmTarget.DEFAULT.description
+        jvmTargets = ComboBox(JvmTarget.supportedValues().map { it.description }.toTypedArray())
+        @NlsSafe
+        val description = JvmTarget.DEFAULT.description
+        jvmTargets.selectedItem = description
         ir = JCheckBox(KotlinJvmBundle.message("checkbox.text.ir"), false)
         optionPanel.add(enableInline)
         optionPanel.add(enableOptimization)
         optionPanel.add(enableAssertions)
         optionPanel.add(ir)
 
-        optionPanel.add(JLabel("Target:"))
+        optionPanel.add(JLabel(KotlinJvmBundle.message("bytecode.toolwindow.label.target")))
         optionPanel.add(jvmTargets)
 
         InfinitePeriodicalTask(

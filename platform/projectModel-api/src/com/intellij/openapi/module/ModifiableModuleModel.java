@@ -10,7 +10,6 @@ import org.jetbrains.annotations.SystemIndependent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Map;
 
 /**
  * Represents the model for the list of modules in a project, or a temporary copy
@@ -56,14 +55,6 @@ public interface ModifiableModuleModel {
   default Module newNonPersistentModule(@NotNull String moduleName, @NotNull String moduleTypeId) {
     throw new UnsupportedOperationException();
   }
-
-  /**
-   * @deprecated use {@link #newModule(String, String)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  Module newModule(@NotNull String filePath, @NotNull String moduleTypeId, @Nullable Map<String, String> options);
 
   /**
    * Loads a module from an .iml file with the specified path and adds it to the project.

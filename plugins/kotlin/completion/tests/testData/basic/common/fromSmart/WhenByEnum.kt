@@ -12,6 +12,6 @@ fun foo(e: E) {
     }
 }
 
-// EXIST: { lookupString:"B", itemText:"E.B", tailText:" (<root>)", typeText:"E" }
-// EXIST: { lookupString:"C", itemText:"E.C", tailText:" (<root>)", typeText:"E" }
+// EXIST: { lookupString:"B", itemText:"E.B", tailText:" (<root>)", typeText:"E", icon: "org/jetbrains/kotlin/idea/icons/enumKotlin.svg"}
+// EXIST: { lookupString:"C", itemText:"E.C", tailText:" (<root>)", typeText:"E", icon: "org/jetbrains/kotlin/idea/icons/enumKotlin.svg"}
 // ABSENT: A

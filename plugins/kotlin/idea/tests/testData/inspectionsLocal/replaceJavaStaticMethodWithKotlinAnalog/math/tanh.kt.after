@@ -1,7 +1,7 @@
 import kotlin.math.tanh
 
-// WITH_RUNTIME
-// WITH_RUNTIME
+// WITH_STDLIB
+// WITH_STDLIB
 fun test(x: Double) {
     tanh(x)
 }

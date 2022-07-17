@@ -70,7 +70,7 @@ public class ReturnOfInnerClassInspection extends BaseInspection {
   private  class ReturnOfInnerClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReturnStatement(PsiReturnStatement statement) {
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(statement.getReturnValue());
       if (expression == null) {

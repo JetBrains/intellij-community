@@ -31,16 +31,19 @@ import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-public class ResizeableMappedFile implements Forceable {
+public class ResizeableMappedFile implements Forceable, Closeable {
   private static final Logger LOG = Logger.getInstance(ResizeableMappedFile.class);
 
   private static final boolean truncateOnClose = SystemProperties.getBooleanProperty("idea.resizeable.file.truncate.on.close", false);
@@ -67,6 +70,10 @@ public class ResizeableMappedFile implements Forceable {
     ensureParentDirectoryExists();
     myInitialSize = initialSize;
     myLastWrittenLogicalSize = myLogicalSize = readLength();
+  }
+
+  public boolean isNativeBytesOrder() {
+    return myStorage.isNativeBytesOrder();
   }
 
   public void clear() throws IOException {
@@ -220,16 +227,33 @@ public class ResizeableMappedFile implements Forceable {
   }
 
   public byte get(long index) throws IOException {
-    return myStorage.get(index);
+    return get(index, true);
   }
 
-  public void get(long index, byte[] dst, int offset, int length) throws IOException {
-    myStorage.get(index, dst, offset, length);
+  public byte get(long index, boolean checkAccess) throws IOException {
+    return myStorage.get(index, checkAccess);
+  }
+
+  public void get(long index, byte[] dst, int offset, int length, boolean checkAccess) throws IOException {
+    myStorage.get(index, dst, offset, length, checkAccess);
   }
 
   public void put(long index, byte[] src, int offset, int length) throws IOException {
     ensureSize(index + length);
     myStorage.put(index, src, offset, length);
+  }
+
+  public void put(long index, @NotNull ByteBuffer buffer) throws IOException {
+    ensureSize(index + (buffer.limit() - buffer.position()));
+    myStorage.putBuffer(index, buffer);
+  }
+
+  public void setLogicalSize(long logicalSize) {
+    myLogicalSize = logicalSize;
+  }
+
+  public long getLogicalSize() {
+    return myLogicalSize;
   }
 
   public void close() throws IOException {
@@ -265,6 +289,11 @@ public class ResizeableMappedFile implements Forceable {
   public <R> @NotNull R readInputStream(@NotNull ThrowableNotNullFunction<? super InputStream, R, ? extends IOException> consumer)
     throws IOException {
     return myStorage.readInputStream(consumer);
+  }
+
+  public <R> @NotNull R readChannel(@NotNull ThrowableNotNullFunction<? super ReadableByteChannel, R, ? extends IOException> consumer)
+    throws IOException {
+    return myStorage.readChannel(consumer);
   }
 
   public void lockRead() {

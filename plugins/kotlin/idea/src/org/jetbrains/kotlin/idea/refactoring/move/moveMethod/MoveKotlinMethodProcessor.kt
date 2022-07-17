@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.refactoring.move.moveMethod
 
 import com.intellij.ide.util.EditorHelper
+import com.intellij.java.JavaBundle
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
@@ -12,15 +13,13 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
-import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
-import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.refactoring.move.*
@@ -28,7 +27,7 @@ import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.KotlinMoveTar
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveConflictChecker
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.Mover
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.projectScope
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.getFactoryForImplicitReceiverWithSubtypeOf
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
@@ -37,7 +36,7 @@ import org.jetbrains.kotlin.name.tail
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.isAncestorOf
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.utils.getImplicitReceiversHierarchy
@@ -57,7 +56,7 @@ class MoveKotlinMethodProcessor(
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
         return MoveMultipleElementsViewDescriptor(
-            arrayOf(method), (targetClassOrObject.fqName ?: UsageViewBundle.message("default.package.presentable.name")).toString()
+            arrayOf(method), (targetClassOrObject.fqName ?: JavaBundle.message("default.package.presentable.name")).toString()
         )
     }
 
@@ -130,11 +129,11 @@ class MoveKotlinMethodProcessor(
             return factory.createExpression(receiverText)
         }
 
-        fun escalateTargetVariableVisibilityIfNeeded(where: DeclarationDescriptor?) {
+        fun escalateTargetVariableVisibilityIfNeeded(where: DeclarationDescriptor?, languageVersionSettings: LanguageVersionSettings) {
             if (where == null || targetVariableIsMethodParameter()) return
             val targetDescriptor = targetVariable.resolveToDescriptorIfAny() as? DeclarationDescriptorWithVisibility
                 ?: return
-            if (!DescriptorVisibilities.isVisibleIgnoringReceiver(targetDescriptor, where) && method.manager.isInProject(targetVariable)) {
+            if (!DescriptorVisibilityUtils.isVisibleIgnoringReceiver(targetDescriptor, where, languageVersionSettings) && method.manager.isInProject(targetVariable)) {
                 targetVariable.setVisibility(KtTokens.PUBLIC_KEYWORD)
             }
         }
@@ -143,7 +142,10 @@ class MoveKotlinMethodProcessor(
             when (expression) {
                 is KtNameReferenceExpression -> {
                     val callExpression = expression.parent as? KtCallExpression ?: return
-                    escalateTargetVariableVisibilityIfNeeded(callExpression.containingNonLocalDeclaration()?.resolveToDescriptorIfAny())
+                    escalateTargetVariableVisibilityIfNeeded(
+                        callExpression.containingNonLocalDeclaration()?.resolveToDescriptorIfAny(),
+                        callExpression.getResolutionFacade().languageVersionSettings
+                    )
 
                     val oldReceiver = callExpression.getQualifiedExpressionForSelector()?.receiverExpression
                         ?: expression.getImplicitReceiver()
@@ -280,7 +282,7 @@ class MoveKotlinMethodProcessor(
 
     private fun targetVariableIsMethodParameter(): Boolean = targetVariable is KtParameter && !targetVariable.hasValOrVar()
 
-    override fun getCommandName(): String = KotlinBundle.message("text.move.method")
+    override fun getCommandName(): String = KotlinBundle.message("title.move.method")
 }
 
 internal fun getThisClassesToMembers(method: KtNamedFunction) = traverseOuterInstanceReferences(method)

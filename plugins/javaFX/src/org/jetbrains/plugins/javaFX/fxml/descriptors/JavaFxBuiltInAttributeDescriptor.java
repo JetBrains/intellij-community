@@ -113,11 +113,6 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
       return psiClass.isEnum() ? psiClass : null;
     }
 
-    @Override
-    protected boolean isConstant(PsiField field) {
-      return field instanceof PsiEnumConstant;
-    }
-
     @Nullable
     @Override
     protected String validateAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {

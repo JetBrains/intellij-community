@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints.settings
 
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -42,7 +43,7 @@ class Diff(val added: Set<String>, val removed: Set<String>) {
   }
 }
 
-@State(name = "ParameterNameHintsSettings", storages = [(Storage("parameter.hints.xml"))])
+@State(name = "ParameterNameHintsSettings", storages = [(Storage("parameter.hints.xml"))], category = SettingsCategory.CODE)
 class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   private val removedPatterns = hashMapOf<String, Set<String>>()
   private val addedPatterns = hashMapOf<String, Set<String>>()

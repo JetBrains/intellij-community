@@ -5,12 +5,12 @@ public class TestConstType {
    private char zero = 0;
 
    public void setLineBreak(char os) {
-      switch(os) {// 8
-      case 'u':
-         this.lineBreak = '\r';// 10
-         break;// 11
-      case 'w':
-         this.lineBreak = '\n';// 14
+      switch (os) {// 8
+         case 'u':
+            this.lineBreak = '\r';// 10
+            break;// 11
+         case 'w':
+            this.lineBreak = '\n';// 14
       }
 
    }// 17
@@ -74,24 +74,24 @@ public class TestConstType {
 
    public int getTypeMaxValue(char type) {
       int maxValue;
-      switch(type) {// 85
-      case 'B':
-         maxValue = 127;// 90
-         break;// 91
-      case 'C':
-         maxValue = 65535;// 99
-         break;// 100
-      case 'S':
-         maxValue = 32767;// 96
-         break;// 97
-      case 'X':
-         maxValue = 128;// 87
-         break;// 88
-      case 'Y':
-         maxValue = 32768;// 93
-         break;// 94
-      default:
-         maxValue = 2147483647;// 102
+      switch (type) {// 85
+         case 'B':
+            maxValue = 127;// 90
+            break;// 91
+         case 'C':
+            maxValue = 65535;// 99
+            break;// 100
+         case 'S':
+            maxValue = 32767;// 96
+            break;// 97
+         case 'X':
+            maxValue = 128;// 87
+            break;// 88
+         case 'Y':
+            maxValue = 32768;// 93
+            break;// 94
+         default:
+            maxValue = 2147483647;// 102
       }
 
       return maxValue;// 104

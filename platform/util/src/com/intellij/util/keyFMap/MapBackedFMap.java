@@ -1,56 +1,42 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
+final class MapBackedFMap extends Int2ObjectOpenHashMap<Object> implements KeyFMap {
   private MapBackedFMap(@NotNull MapBackedFMap oldMap, final int keyToExclude) {
     super(oldMap.size());
-    oldMap.forEachEntry((key, val) -> {
+
+    oldMap.int2ObjectEntrySet().fastForEach(entry -> {
+      int key = entry.getIntKey();
       if (key != keyToExclude) {
-        put(key, val);
+        put(key, entry.getValue());
       }
       assert key >= 0 : key;
-      return true;
     });
     assert size() > ArrayBackedFMap.ARRAY_THRESHOLD;
   }
+
   private MapBackedFMap(@NotNull MapBackedFMap oldMap, int newKey, @NotNull Object newValue) {
     super(oldMap.size() + 1);
-    oldMap.forEachEntry((key, val) -> {
-      put(key, val);
-      return true;
-    });
+
+    putAll(oldMap);
     put(newKey, newValue);
     assert size() > ArrayBackedFMap.ARRAY_THRESHOLD;
   }
 
   MapBackedFMap(int @NotNull [] keys, int newKey, @NotNull Object @NotNull [] values, @NotNull Object newValue) {
     super(keys.length + 1);
+
     for (int i = 0; i < keys.length; i++) {
       int key = keys[i];
-      Object value = values[i];
-      put(key, value);
+      put(key, values[i]);
       assert key >= 0 : key;
     }
     put(newKey, newValue);
@@ -65,8 +51,7 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
     assert keyCode >= 0 : key;
     //noinspection unchecked
     V oldValue = (V)get(keyCode);
-    if (value == oldValue) return this;
-    return new MapBackedFMap(this, keyCode, value);
+    return value == oldValue ? this : new MapBackedFMap(this, keyCode, value);
   }
 
   @NotNull
@@ -78,7 +63,7 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
       return this;
     }
     if (oldSize == ArrayBackedFMap.ARRAY_THRESHOLD + 1) {
-      int[] keys = keys();
+      int[] keys = keySet().toIntArray();
       int[] newKeys = ArrayUtil.remove(keys, ArrayUtil.indexOf(keys, keyCode));
       Arrays.sort(newKeys);
       Object[] newValues = new Object[newKeys.length];
@@ -99,37 +84,47 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
   }
 
   @Override
-  public Key @NotNull [] getKeys() {
-    return ArrayBackedFMap.getKeysByIndices(keys());
+  public Key<?> @NotNull [] getKeys() {
+    return ArrayBackedFMap.getKeysByIndices(keySet().toIntArray());
   }
 
   @Override
   public int getValueIdentityHashCode() {
-    final int[] hash = {0};
-    forEachEntry((key, value) -> {
-      hash[0] = (hash[0] * 31 + key) * 31 + System.identityHashCode(value);
-      return true;
-    });
-    return hash[0];
+    int hash = 0;
+    ObjectIterator<Entry<Object>> iterator = int2ObjectEntrySet().fastIterator();
+    while (iterator.hasNext()) {
+      Entry<Object> entry = iterator.next();
+      int key = entry.getIntKey();
+      hash = (hash * 31 + key) * 31 + System.identityHashCode(entry.getValue());
+    }
+    return hash;
   }
 
   @Override
   public boolean equalsByReference(@NotNull KeyFMap other) {
-    if(other == this) return true;
-    if (!(other instanceof MapBackedFMap) || other.size() != size()) return false;
-    final MapBackedFMap map = (MapBackedFMap)other;
-    return forEachEntry((key, value) -> map.get(key) == value);
+    if (other == this) {
+      return true;
+    }
+    if (!(other instanceof MapBackedFMap) || other.size() != size()) {
+      return false;
+    }
+
+    MapBackedFMap map = (MapBackedFMap)other;
+    ObjectIterator<Entry<Object>> iterator = int2ObjectEntrySet().fastIterator();
+    while (iterator.hasNext()) {
+      Entry<Object> next = iterator.next();
+      if (map.get(next.getIntKey()) != next.getValue()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
   public String toString() {
-    final StringBuilder s = new StringBuilder();
-    forEachEntry(new TIntObjectProcedure<Object>() {
-      @Override
-      public boolean execute(int key, Object value) {
-        s.append(s.length() == 0 ? "" : ", ").append(Key.getKeyByIndex(key)).append(" -> ").append(value);
-        return true;
-      }
+    StringBuilder s = new StringBuilder();
+    int2ObjectEntrySet().fastForEach(entry -> {
+      s.append(s.length() == 0 ? "" : ", ").append(Key.getKeyByIndex(entry.getIntKey())).append(" -> ").append(entry.getValue());
     });
     return "[" + s + "]";
   }

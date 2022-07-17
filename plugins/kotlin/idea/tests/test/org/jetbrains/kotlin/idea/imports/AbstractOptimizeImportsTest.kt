@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.AbstractImportsTest
 import org.jetbrains.kotlin.idea.test.KotlinStdJSProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class AbstractOptimizeImportsTest : AbstractImportsTest() {
     override fun doTest(file: KtFile): String {

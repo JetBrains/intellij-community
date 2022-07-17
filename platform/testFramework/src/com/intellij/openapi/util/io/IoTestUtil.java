@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -57,7 +58,7 @@ public final class IoTestUtil {
     return filterParts(Charset.forName(forEncoding).newEncoder()::canEncode);
   }
 
-  private static String filterParts(Predicate<String> predicate) {
+  private static String filterParts(@NotNull Predicate<? super String> predicate) {
     return StringUtil.nullize(Stream.of(UNICODE_PARTS).filter(predicate).collect(Collectors.joining("_")));
   }
 
@@ -174,7 +175,11 @@ public final class IoTestUtil {
     assertTrue(new File(junction).delete());
   }
 
-  public static @NotNull File createSubst(@NotNull String target) {
+  /**
+   * (Windows-only)
+   * creates "subst" drive for target, perform some tests on it and deletes it
+   */
+  public static void performTestOnWindowsSubst(@NotNull String target, @NotNull Consumer<? super @NotNull File> createdSubstTester) {
     assertTrue(SystemInfo.isWindows);
     File targetFile = new File(target);
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
@@ -182,11 +187,17 @@ public final class IoTestUtil {
     runCommand("subst", substRoot, targetFile.getPath());
     File rootFile = new File(substRoot + "\\");
     assertTrue("target=" + targetFile + ", subst=" + rootFile, rootFile.isDirectory());
-    return rootFile;
+
+    try {
+      createdSubstTester.accept(rootFile);
+    }
+    finally {
+      runCommand("subst", StringUtil.trimEnd(substRoot, '\\'), "/d");
+    }
   }
 
-  public static void deleteSubst(@NotNull String substRoot) {
-    runCommand("subst", StringUtil.trimEnd(substRoot, "\\"), "/d");
+  public static void createFifo(@NotNull String path) {
+    runCommand("mkfifo", path);
   }
 
   private static char getFirstFreeDriveLetter() {
@@ -262,7 +273,7 @@ public final class IoTestUtil {
     }
   }
 
-  public static @NotNull File createTestJar(@NotNull File jarFile, @NotNull Collection<Pair<String, byte[]>> namesAndContents) {
+  public static @NotNull File createTestJar(@NotNull File jarFile, @NotNull Collection<? extends Pair<String, byte[]>> namesAndContents) {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       for (Pair<String, byte[]> p : namesAndContents) {
         String name = p.first;

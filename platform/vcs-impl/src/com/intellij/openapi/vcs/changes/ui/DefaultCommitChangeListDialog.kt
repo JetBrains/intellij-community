@@ -12,8 +12,9 @@ import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.addBorder
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
-import com.intellij.vcs.commit.*
 import com.intellij.vcs.commit.NonModalCommitPromoter
+import com.intellij.vcs.commit.SingleChangeListCommitWorkflow
+import com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi
 import com.intellij.vcs.commit.getDisplayedPaths
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -30,10 +31,9 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
   init {
     LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
 
-    val branchComponent = CurrentBranchComponent(browser.viewer).apply {
-      Disposer.register(this@DefaultCommitChangeListDialog, this)
-      pathsProvider = { getDisplayedPaths() }
-    }
+    val branchComponent = CurrentBranchComponent(browser.viewer, pathsProvider = { getDisplayedPaths() })
+    Disposer.register(this, branchComponent)
+
     addBorder(branchComponent, emptyRight(16))
     browserBottomPanel.add(branchComponent)
 

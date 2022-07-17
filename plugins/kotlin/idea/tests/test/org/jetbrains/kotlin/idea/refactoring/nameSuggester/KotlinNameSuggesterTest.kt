@@ -3,18 +3,18 @@
 package org.jetbrains.kotlin.idea.refactoring.nameSuggester
 
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.util.ElementKind
 import org.jetbrains.kotlin.idea.refactoring.IntroduceRefactoringException
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -76,14 +76,16 @@ class KotlinNameSuggesterTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testStringIntMap() = doTest()
 
+    fun testIterable() = doTest()
+
     private fun doTest() {
         try {
             myFixture.configureByFile(getTestName(false) + ".kt")
             val file = myFixture.file as KtFile
             val expectedResultText = KotlinTestUtils.getLastCommentInFile(file)
 
-            selectElement(myFixture.editor, file, listOf(CodeInsightUtils.ElementKind.EXPRESSION)) {
-                val names = KotlinNameSuggester
+            selectElement(myFixture.editor, file, ElementKind.EXPRESSION) {
+                val names = Fe10KotlinNameSuggester
                     .suggestNamesByExpressionAndType(
                         it as KtExpression,
                         null,

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.Disposable;
@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,34 +49,19 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
-                                @NotNull InvokeAfterUpdateMode mode,
-                                String title,
-                                Consumer<? super VcsDirtyScopeManager> dirtyScopeManager,
-                                ModalityState state) {
-    afterUpdate.run();
-  }
-
-  @Override
   public boolean areChangeListsEnabled() {
     return true;
   }
 
   @Override
   public int getChangeListsNumber() {
-    return getChangeListsCopy().size();
-  }
-
-  @NotNull
-  @Override
-  public List<LocalChangeList> getChangeListsCopy() {
-    return new ArrayList<>(myChangeLists.values());
+    return getChangeLists().size();
   }
 
   @NotNull
   @Override
   public List<LocalChangeList> getChangeLists() {
-    return getChangeListsCopy();
+    return new ArrayList<>(myChangeLists.values());
   }
 
   @NotNull
@@ -348,7 +332,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
+  public @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
     MockChangeList changeList = new MockChangeList(name);
     myChangeLists.put(name, changeList);
     return changeList;

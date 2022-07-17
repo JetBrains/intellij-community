@@ -458,8 +458,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     presentation.setErrorMessage(errorMessage);
     presentation.setIcon(icon);
     lineBreakpoint.setCustomizedPresentation(presentation);
-    myLineBreakpointManager.queueBreakpointUpdate(breakpoint);
-    fireBreakpointPresentationUpdated(breakpoint, null);
+    myLineBreakpointManager.queueBreakpointUpdate(breakpoint, () -> fireBreakpointPresentationUpdated(breakpoint, null));
   }
 
   @NotNull
@@ -507,7 +506,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       return false;
     }
 
-    BreakpointState defaultState = ((XBreakpointBase)defaultBreakpoint).getState();
+    BreakpointState defaultState = ((XBreakpointBase<?, ?, ?>)defaultBreakpoint).getState();
     return statesAreDifferent(state, defaultState, false);
   }
 
@@ -696,7 +695,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     }
 
     boolean isRestorable() {
-      return !(myBreakpoint instanceof XLineBreakpointImpl) || ((XLineBreakpointImpl)myBreakpoint).getFile() != null;
+      return !(myBreakpoint instanceof XLineBreakpointImpl) || ((XLineBreakpointImpl<?>)myBreakpoint).getFile() != null;
     }
 
     @Nullable

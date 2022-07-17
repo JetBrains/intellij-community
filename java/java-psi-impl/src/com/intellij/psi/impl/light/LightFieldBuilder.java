@@ -50,6 +50,15 @@ public class LightFieldBuilder extends LightVariableBuilder<LightFieldBuilder> i
   }
 
   @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitField(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+  @Override
   public void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException {
     myInitializer = initializer;
   }

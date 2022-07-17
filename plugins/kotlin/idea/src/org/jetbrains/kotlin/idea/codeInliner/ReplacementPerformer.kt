@@ -6,9 +6,14 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.idea.base.psi.canDropCurlyBrackets
+import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.dropCurlyBrackets
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
@@ -200,8 +205,8 @@ internal class ExpressionReplacementPerformer(
 
         // simplify "${x}" to "$x"
         val templateEntry = resultExpression?.parent as? KtBlockStringTemplateEntry
-        if (templateEntry?.canDropBraces() == true) {
-            return templateEntry.dropBraces().expression
+        if (templateEntry != null && templateEntry.canDropCurlyBrackets()) {
+            return templateEntry.dropCurlyBrackets().expression
         }
 
         return resultExpression ?: range.last as? KtExpression
@@ -251,10 +256,8 @@ internal class ExpressionReplacementPerformer(
         val runAfterReplacement = this.replaced(runExpression)
         val ktLambdaArgument = runAfterReplacement.lambdaArguments[0]
         return ktLambdaArgument.getLambdaExpression()?.bodyExpression?.statements?.singleOrNull()
-            ?: throw KotlinExceptionWithAttachments("cant get body expression for $ktLambdaArgument").withAttachment(
-                "ktLambdaArgument",
-                ktLambdaArgument.text
-            )
+            ?: throw KotlinExceptionWithAttachments("cant get body expression for $ktLambdaArgument")
+                .withPsiAttachment("ktLambdaArgument", ktLambdaArgument)
     }
 
     private fun KtExpression.replaceWithBlock(): KtExpression = withElementToBeReplacedPreserved {

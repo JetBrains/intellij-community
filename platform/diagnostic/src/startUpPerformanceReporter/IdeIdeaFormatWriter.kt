@@ -1,15 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.ThreadNameManager
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.psi.tree.IElementType
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
@@ -29,7 +30,8 @@ import java.util.concurrent.TimeUnit
 
 internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityImpl>>,
                                    private val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
-                                   threadNameManager: ThreadNameManager) : IdeaFormatWriter(activities, threadNameManager, StartUpPerformanceReporter.VERSION) {
+                                   threadNameManager: ThreadNameManager) : IdeaFormatWriter(activities, threadNameManager,
+                                                                                            StartUpPerformanceReporter.VERSION) {
   val publicStatMetrics = Object2IntOpenHashMap<String>()
 
   init {
@@ -72,6 +74,10 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
       writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stats.getValue("resourceLoadingTime")))
       writer.writeNumberField("count", stats.getValue("resourceRequests"))
     }
+    writer.obj("langLoading") {
+      val allTypes = IElementType.enumerate(IElementType.TRUE)
+      writer.writeNumberField("elementTypeCount", allTypes.size)
+    }
 
     writeServiceStats(writer)
     writeIcons(writer)
@@ -99,13 +105,6 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
     return stats
   }
 
-  override fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, writer: JsonGenerator) {
-    if (item.name == "bootstrap" || item.name == "app initialization") {
-      publicStatMetrics.put(item.name, TimeUnit.NANOSECONDS.toMillis(duration).toInt())
-    }
-    super.writeItemTimeInfo(item, duration, offset, writer)
-  }
-
   override fun writeTotalDuration(writer: JsonGenerator, end: Long, timeOffset: Long): Long {
     val totalDurationActual = super.writeTotalDuration(writer, end, timeOffset)
     publicStatMetrics.put("totalDuration", totalDurationActual.toInt())
@@ -117,8 +116,18 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
       StartUpMeasurer.doAddPluginCost(it, item.category?.name ?: "unknown", ownOrTotalDuration, pluginCostMap)
     }
 
-    if (fieldName == "prepareAppInitActivities" && item.name == "splash initialization") {
-      publicStatMetrics.put("splash", TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt())
+    if (fieldName == "items") {
+      when (val itemName = item.name) {
+        "splash initialization" -> {
+          publicStatMetrics["splash"] = TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt()
+        }
+        "bootstrap", "app initialization" -> {
+          publicStatMetrics[itemName] = TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt()
+        }
+        "project frame initialization" -> {
+          publicStatMetrics["projectFrameVisible"] = TimeUnit.NANOSECONDS.toMillis(item.start - StartUpMeasurer.getStartTime()).toInt()
+        }
+      }
     }
   }
 }
@@ -155,11 +164,11 @@ private fun writeServiceStats(writer: JsonGenerator) {
   val component = StatItem("component")
   val service = StatItem("service")
 
-  val plugins = PluginManagerCore.getLoadedPlugins(null).sortedBy { it.pluginId }
-  for (plugin in plugins) {
-    service.app += (plugin as IdeaPluginDescriptorImpl).appContainerDescriptor.services?.size ?: 0
-    service.project += plugin.projectContainerDescriptor.services?.size ?: 0
-    service.module += plugin.moduleContainerDescriptor.services?.size ?: 0
+  val pluginSet = PluginManagerCore.getPluginSet()
+  for (plugin in pluginSet.getEnabledModules()) {
+    service.app += plugin.appContainerDescriptor.services.size
+    service.project += plugin.projectContainerDescriptor.services.size
+    service.module += plugin.moduleContainerDescriptor.services.size
 
     component.app += plugin.appContainerDescriptor.components?.size ?: 0
     component.project += plugin.projectContainerDescriptor.components?.size ?: 0
@@ -167,7 +176,7 @@ private fun writeServiceStats(writer: JsonGenerator) {
   }
 
   writer.obj("stats") {
-    writer.writeNumberField("plugin", plugins.size)
+    writer.writeNumberField("plugin", pluginSet.enabledPlugins.size)
     for (statItem in listOf(component, service)) {
       writer.obj(statItem.name) {
         writer.writeNumberField("app", statItem.app)
@@ -178,8 +187,12 @@ private fun writeServiceStats(writer: JsonGenerator) {
   }
 
   writer.array("plugins") {
-    for (plugin in plugins) {
+    for (plugin in pluginSet.enabledPlugins) {
       val classLoader = plugin.pluginClassLoader as? PluginAwareClassLoader ?: continue
+      if (classLoader.loadedClassCount == 0L) {
+        continue
+      }
+
       writer.obj {
         writer.writeStringField("id", plugin.pluginId.idString)
         writer.writeNumberField("classCount", classLoader.loadedClassCount)

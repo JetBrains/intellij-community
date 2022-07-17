@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.wsl;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -143,7 +143,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
     MyProcessHandler handler = vm.handler;
     if (handler == null) {
       if (vm.startAttemptCount.incrementAndGet() > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
-        notifyOnFailure(vm.name, IdeCoreBundle.message("watcher.bailed.out.10x", vm.name), null);
+        notifyOnFailure(vm.name, IdeCoreBundle.message("watcher.bailed.out.10x"), null);
         return;
       }
 
@@ -156,7 +156,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
       catch (IOException e) {
         vm.logger.error(e);
         vm.startAttemptCount.set(MAX_PROCESS_LAUNCH_ATTEMPT_COUNT);
-        notifyOnFailure(vm.name, IdeCoreBundle.message("watcher.failed.to.start", vm.name), null);
+        notifyOnFailure(vm.name, IdeCoreBundle.message("watcher.failed.to.start"), null);
         return;
       }
     }

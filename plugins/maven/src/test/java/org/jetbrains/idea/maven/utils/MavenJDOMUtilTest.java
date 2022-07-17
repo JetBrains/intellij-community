@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
-import org.jetbrains.idea.maven.MavenTestCase;
+import com.intellij.maven.testFramework.MavenTestCase;
 
 import java.io.IOException;
 

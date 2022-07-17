@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +63,8 @@ public class LineStatusMarkerPopupPanel extends JPanel {
 
     JComponent toolbarPanel = JBUI.Panels.simplePanel(toolbarComponent);
     Border outsideToolbarBorder = JBUI.Borders.customLine(getBorderColor(), 1, 1, isEditorVisible ? 0 : 1, 1);
-    Border insideToolbarBorder = JBUI.Borders.empty(1, 5);
+    JBInsets insets = JBUI.insets("VersionControl.MarkerPopup.borderInsets", JBInsets.create(1, 5));
+    Border insideToolbarBorder = JBUI.Borders.empty(insets);
     toolbarPanel.setBorder(BorderFactory.createCompoundBorder(outsideToolbarBorder, insideToolbarBorder));
 
     if (additionalInfo != null) {
@@ -164,12 +166,15 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, flags, -1, false, new HintHint(editor, point));
 
     ApplicationManager.getApplication().getMessageBus().connect(childDisposable)
-      .subscribe(EditorHintListener.TOPIC, (project, newHint, newHintFlags) -> {
-        // Ex: if popup re-shown by ToggleByWordDiffAction
-        if (newHint.getComponent() instanceof LineStatusMarkerPopupPanel) {
-          LineStatusMarkerPopupPanel newPopupPanel = (LineStatusMarkerPopupPanel)newHint.getComponent();
-          if (newPopupPanel.getEditor().equals(editor)) {
-            hint.hide();
+      .subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
+        @Override
+        public void hintShown(Project project, @NotNull LightweightHint newHint, int flags) {
+          // Ex: if popup re-shown by ToggleByWordDiffAction
+          if (newHint.getComponent() instanceof LineStatusMarkerPopupPanel) {
+            LineStatusMarkerPopupPanel newPopupPanel = (LineStatusMarkerPopupPanel)newHint.getComponent();
+            if (newPopupPanel.getEditor().equals(editor)) {
+              hint.hide();
+            }
           }
         }
       });
@@ -202,13 +207,6 @@ public class LineStatusMarkerPopupPanel extends JPanel {
       uEditor.getSettings().setUseTabCharacter(editor.getSettings().isUseTabCharacter(editor.getProject()));
     });
 
-    DataManager.registerDataProvider(field, data -> {
-      if (CommonDataKeys.HOST_EDITOR.is(data)) {
-        return field.getEditor();
-      }
-      return null;
-    });
-
     return field;
   }
 
@@ -233,7 +231,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
 
   @NotNull
   public static Color getBorderColor() {
-    return new JBColor(Gray._206, Gray._75);
+    return JBColor.namedColor("VersionControl.MarkerPopup.borderColor", new JBColor(Gray._206, Gray._75));
   }
 
   @NotNull
@@ -278,16 +276,34 @@ public class LineStatusMarkerPopupPanel extends JPanel {
   }
 
   public static void installMasterEditorWordHighlighters(@NotNull Editor editor,
-                                                         int currentStartOffset,
+                                                         int startLine,
+                                                         int endLine,
                                                          @NotNull List<? extends DiffFragment> wordDiff,
                                                          @NotNull Disposable parentDisposable) {
-    final List<RangeHighlighter> highlighters = new ArrayList<>();
+    TextRange currentTextRange = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine);
+
+    DiffDrawUtil.setupLayeredRendering(editor, startLine, endLine,
+                                       DiffDrawUtil.LAYER_PRIORITY_LST, parentDisposable);
+
+    int currentStartOffset = currentTextRange.getStartOffset();
+    List<RangeHighlighter> highlighters = new ArrayList<>();
+
+    highlighters.addAll(
+      new DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, TextDiffType.MODIFIED)
+        .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_LST)
+        .withIgnored(true)
+        .withHideStripeMarkers(true)
+        .withHideGutterMarkers(true)
+        .done());
+
     for (DiffFragment fragment : wordDiff) {
       int currentStart = currentStartOffset + fragment.getStartOffset2();
       int currentEnd = currentStartOffset + fragment.getEndOffset2();
       TextDiffType type = getDiffType(fragment);
 
-      highlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type));
+      highlighters.addAll(new DiffDrawUtil.InlineHighlighterBuilder(editor, currentStart, currentEnd, type)
+                            .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_LST)
+                            .done());
     }
 
     Disposer.register(parentDisposable, () -> highlighters.forEach(RangeMarker::dispose));

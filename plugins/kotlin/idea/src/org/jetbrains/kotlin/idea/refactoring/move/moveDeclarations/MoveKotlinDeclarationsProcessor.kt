@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
 
+import com.intellij.ide.IdeDeprecatedMessagesBundle
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.util.EditorHelper
 import com.intellij.openapi.project.Project
@@ -11,6 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.move.MoveCallback
@@ -21,7 +23,6 @@ import com.intellij.refactoring.util.NonCodeUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
-import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.usageView.UsageViewUtil
 import com.intellij.util.IncorrectOperationException
@@ -33,18 +34,19 @@ import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.util.projectScope
+import org.jetbrains.kotlin.idea.base.util.restrictByFileType
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendantsToWaitingSet
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.deleteSingle
-import org.jetbrains.kotlin.idea.core.quoteIfNeeded
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinClassHandler
-import org.jetbrains.kotlin.idea.search.projectScope
-import org.jetbrains.kotlin.idea.search.restrictByFileType
-import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -71,7 +73,9 @@ interface Mover : (KtNamedDeclaration, KtElement) -> KtNamedDeclaration {
                 val container = originalElement.containingClassOrObject
                 if (container is KtObjectDeclaration &&
                     container.isCompanion() &&
-                    container.declarations.singleOrNull() == originalElement
+                    container.declarations.singleOrNull() == originalElement &&
+                    KotlinFindUsagesHandlerFactory(container.project).createFindUsagesHandler(container, false)
+                        .findReferencesToHighlight(container, LocalSearchScope(container.containingFile)).isEmpty()
                 ) {
                     container.deleteSingle()
                 } else {
@@ -121,7 +125,7 @@ private object ElementHashingStrategy : HashingStrategy<PsiElement> {
         if (e1 is KtLightDeclaration<*, *> && e2 is KtLightDeclaration<*, *>) {
             return e1.kotlinOrigin == e2.kotlinOrigin && e1.name == e2.name
         }
-        return e1 == e2
+        return false
     }
 
     override fun hashCode(e: PsiElement?): Int {
@@ -159,8 +163,8 @@ class MoveKotlinDeclarationsProcessor(
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
         val targetContainerFqName = descriptor.moveTarget.targetContainerFqName?.let {
-            if (it.isRoot) UsageViewBundle.message("default.package.presentable.name") else it.asString()
-        } ?: UsageViewBundle.message("default.package.presentable.name")
+            if (it.isRoot) IdeDeprecatedMessagesBundle.message("default.package.presentable.name") else it.asString()
+        } ?: IdeDeprecatedMessagesBundle.message("default.package.presentable.name")
         return MoveMultipleElementsViewDescriptor(elementsToMove.toTypedArray(), targetContainerFqName)
     }
 
@@ -217,7 +221,7 @@ class MoveKotlinDeclarationsProcessor(
                         } else null
                     }
 
-                val name = lightElement.getKotlinFqName()?.quoteIfNeeded()?.asString()
+              val name = lightElement.kotlinFqName?.quoteIfNeeded()?.asString()
                 if (name != null) {
                     fun searchForKotlinNameUsages(results: ArrayList<UsageInfo>) {
                         TextOccurrencesUtil.findNonCodeUsages(
@@ -401,5 +405,5 @@ class MoveKotlinDeclarationsProcessor(
         }
     }
 
-    override fun getCommandName(): String = KotlinBundle.message("text.move.declarations")
+    override fun getCommandName(): String = KotlinBundle.message("command.move.declarations")
 }

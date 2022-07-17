@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -16,6 +17,7 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.intellij.lang.annotations.Pattern;
@@ -24,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ParenthesesUtils.getParentSkipParentheses;
@@ -37,19 +37,24 @@ public class ForCanBeForeachInspection extends BaseInspection {
   public boolean ignoreUntypedCollections;
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
-    return new ForCanBeForeachFix(ignoreUntypedCollections);
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+    boolean indexed = (boolean)infos[0];
+    if (indexed) {
+      return new InspectionGadgetsFix[]{
+        new ForCanBeForeachFix(ignoreUntypedCollections),
+        new DelegatingFix(new SetInspectionOptionFix(this, "REPORT_INDEXED_LOOP",
+                                                     InspectionGadgetsBundle.message("for.can.be.foreach.fix.no.indexed"), false))
+      };
+    }
+    return new InspectionGadgetsFix[]{new ForCanBeForeachFix(ignoreUntypedCollections)};
   }
 
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel =
-      new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message(
-      "for.can.be.foreach.option"), "REPORT_INDEXED_LOOP");
-    panel.addCheckbox(InspectionGadgetsBundle.message(
-      "for.can.be.foreach.option2"), "ignoreUntypedCollections");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("for.can.be.foreach.option"), "REPORT_INDEXED_LOOP");
+    panel.addCheckbox(InspectionGadgetsBundle.message("for.can.be.foreach.option2"), "ignoreUntypedCollections");
     return panel;
   }
 
@@ -466,8 +471,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "for.can.be.foreach.problem.descriptor");
+    return InspectionGadgetsBundle.message("for.can.be.foreach.problem.descriptor");
   }
 
   @Override
@@ -599,7 +603,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
   @NotNull
   private static String getVariableReferenceText(PsiReferenceExpression reference, PsiVariable variable, PsiElement context) {
     final String text = reference.getText();
-    final PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(context.getProject());
+    final PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(context.getProject());
     PsiExpression qualifier = reference.getQualifierExpression();
     while(qualifier != null) {
       if(!(qualifier instanceof PsiReferenceExpression)) return text;
@@ -635,8 +639,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
         @NonNls final String methodName = methodExpression.getReferenceName();
         if (HardcodedMethodConstants.NEXT.equals(methodName)) {
           final PsiExpression qualifier = methodExpression.getQualifierExpression();
-          if (ExpressionUtils.isReferenceTo(qualifier, iterator)
-              && !isInsidePsiStatements(methodExpression, Arrays.asList(PsiTryStatement.class, PsiLoopStatement.class))) {
+          if (ExpressionUtils.isReferenceTo(qualifier, iterator) && isExecutedExactlyOnce(expression)) {
             numCallsToIteratorNext++;
             return;
           }
@@ -646,7 +649,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (iteratorUsed || numCallsToIteratorNext > 1) return;
       super.visitReferenceExpression(expression);
       if (ExpressionUtils.isReferenceTo(expression, iterator)) {
@@ -659,16 +662,37 @@ public class ForCanBeForeachInspection extends BaseInspection {
       return numCallsToIteratorNext == 1 && !iteratorUsed;
     }
 
-    private boolean isInsidePsiStatements(@NotNull PsiExpression methodExpression, @NotNull List<Class<? extends PsiStatement>> psiStatements) {
-      PsiElement parent = methodExpression.getParent();
-      while (parent != null) {
-        if (parent.equals(context)) return false;
-        final PsiElement p = parent;
-        if (psiStatements.stream().anyMatch(ps -> ps.isInstance(p))) return true;
-        if (parent instanceof PsiFile) return false;
-        parent = parent.getParent();
+    private boolean isExecutedExactlyOnce(@NotNull PsiElement element) {
+      PsiElement parent = element.getParent();
+      while (parent != null && parent != context) {
+        if (parent instanceof PsiForStatement) {
+          if (element != ((PsiForStatement)parent).getInitialization()) return false;
+        }
+        else if (parent instanceof PsiLoopStatement) return false;
+        else if (parent instanceof PsiTryStatement) {
+          if (element != ((PsiTryStatement)parent).getFinallyBlock()) return false;
+        }
+        else if (parent instanceof PsiIfStatement) {
+          if (element != ((PsiIfStatement)parent).getCondition()) return false;
+        }
+        else if (parent instanceof PsiConditionalExpression) {
+          if (element != ((PsiConditionalExpression)parent).getCondition()) return false;
+        }
+        else if (parent instanceof PsiSwitchBlock) {
+          if (element != ((PsiSwitchBlock)parent).getExpression()) return false;
+        }
+        else if (parent instanceof PsiPolyadicExpression) {
+          PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+          IElementType tokenType = polyadicExpression.getOperationTokenType();
+          if (polyadicExpression.getOperands()[0] != element &&
+              (JavaTokenType.ANDAND == tokenType || JavaTokenType.OROR == tokenType)) return false;
+        }
+        else if (parent instanceof PsiLambdaExpression) return false;
+        else if (parent instanceof PsiClass) return false;
+        element = parent;
+        parent = element.getParent();
       }
-      return false;
+      return true;
     }
   }
 
@@ -893,9 +917,11 @@ public class ForCanBeForeachInspection extends BaseInspection {
     @Override
     public void visitForStatement(@NotNull PsiForStatement forStatement) {
       super.visitForStatement(forStatement);
-      if (isArrayLoopStatement(forStatement) || isCollectionLoopStatement(forStatement, ignoreUntypedCollections) ||
-          REPORT_INDEXED_LOOP && isIndexedListLoopStatement(forStatement, ignoreUntypedCollections)) {
-        registerStatementError(forStatement);
+      if (isArrayLoopStatement(forStatement) || isCollectionLoopStatement(forStatement, ignoreUntypedCollections)) {
+        registerStatementError(forStatement, false);
+      }
+      else if (REPORT_INDEXED_LOOP && isIndexedListLoopStatement(forStatement, ignoreUntypedCollections)) {
+        registerStatementError(forStatement, true);
       }
     }
   }

@@ -4,8 +4,8 @@ package com.intellij.compiler.actions;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -24,21 +24,21 @@ import java.util.List;
 
 public class CompileAction extends CompileActionBase {
 
-  private final boolean isForFiles;
-  private final String bundleKey;
+  private final boolean myIsForFiles;
+  private final String myBundleKey;
 
   public CompileAction() {
     this(false, IdeActions.ACTION_COMPILE);
   }
 
   protected CompileAction(boolean forFiles, String key) {
-    isForFiles = forFiles;
-    bundleKey = key;
+    myIsForFiles = forFiles;
+    myBundleKey = key;
   }
 
   @Override
   protected void doAction(DataContext dataContext, Project project) {
-    final Module module = dataContext.getData(LangDataKeys.MODULE_CONTEXT);
+    Module module = dataContext.getData(LangDataKeys.MODULE_CONTEXT);
     if (module != null) {
       ProjectTaskManager.getInstance(project).rebuild(module);
     }
@@ -47,8 +47,13 @@ public class CompileAction extends CompileActionBase {
       if (files.length > 0) {
         ProjectTaskManager.getInstance(project).compile(files);
       }
+      else {
+        module = dataContext.getData(PlatformCoreDataKeys.MODULE); // fallback to any module available from the context
+        if (module != null) {
+          ProjectTaskManager.getInstance(project).rebuild(module);
+        }
+      }
     }
-
   }
 
   @Override
@@ -59,7 +64,7 @@ public class CompileAction extends CompileActionBase {
       return;
     }
 
-    presentation.setText(ActionsBundle.actionText(bundleKey));
+    presentation.setText(ActionsBundle.actionText(myBundleKey));
     presentation.setVisible(true);
 
     Project project = e.getProject();
@@ -68,11 +73,18 @@ public class CompileAction extends CompileActionBase {
       return;
     }
 
-    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
-    final Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
     boolean forFiles = false;
-
-    final VirtualFile[] files = getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
+    Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
+    final VirtualFile[] files;
+    if (module != null) {
+      files = VirtualFile.EMPTY_ARRAY;
+    }
+    else {
+      files = getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
+      if (files.length == 0) {
+        module = e.getData(PlatformCoreDataKeys.MODULE); // fallback to any module available from the context
+      }
+    }
     if (module == null && files.length == 0) {
       presentation.setEnabled(false);
       presentation.setVisible(!ActionPlaces.isPopupPlace(e.getPlace()));
@@ -109,8 +121,7 @@ public class CompileAction extends CompileActionBase {
         forFiles = true;
         final VirtualFile file = files[0];
         FileType fileType = file.getFileType();
-        if (CompilerManager.getInstance(project).isCompilableFileType(fileType) ||
-            compilerConfiguration.isCompilableResourceFile(project, file)) {
+        if (CompilerManager.getInstance(project).isCompilableFileType(fileType) || CompilerConfiguration.getInstance(project).isCompilableResourceFile(project, file)) {
           elementDescription = "'" + file.getName() + "'";
         }
         else {
@@ -133,12 +144,12 @@ public class CompileAction extends CompileActionBase {
     }
 
     presentation.setText(createPresentationText(elementDescription), true);
-    presentation.setEnabledAndVisible(forFiles == isForFiles);
+    presentation.setEnabledAndVisible(forFiles == myIsForFiles);
   }
 
   private @NlsSafe String createPresentationText(String elementDescription) {
     StringBuilder buffer = new StringBuilder(40);
-    buffer.append(ActionsBundle.actionText(bundleKey)).append(" ");
+    buffer.append(ActionsBundle.actionText(myBundleKey)).append(" ");
     int length = elementDescription.length();
     if (length > 50) {
       if (StringUtil.startsWithChar(elementDescription, '\'')) {

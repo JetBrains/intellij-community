@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -10,7 +10,6 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl.createDebuggerContext
-import com.intellij.debugger.impl.OutputChecker
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.io.FileUtil
@@ -22,19 +21,16 @@ import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentFactory
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompiler
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinter
 import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinterDelegate
 import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findStringWithPrefixes
+import org.jetbrains.kotlin.idea.test.KotlinBaseTest
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
-import org.jetbrains.kotlin.test.InTextDirectivesUtils.findStringWithPrefixes
-import org.jetbrains.kotlin.test.KotlinBaseTest
-import org.jetbrains.kotlin.test.TargetBackend
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.tree.TreeNode
@@ -59,6 +55,9 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
 
     private var isMultipleBreakpointsTest = false
     private var isFrameTest = false
+
+    override fun fragmentCompilerBackend() =
+        FragmentCompilerBackend.JVM
 
     private val exceptions = ConcurrentHashMap<String, Throwable>()
 
@@ -92,8 +91,13 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
     }
 
     override fun tearDown() {
-        exceptions.clear()
-        super.tearDown()
+        try {
+            exceptions.clear()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
     }
 
     private fun performSingleBreakpointTest(data: EvaluationTestData) {
@@ -137,9 +141,11 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
             return
         }
 
-        processStackFrameOnPooledThread {
-            val result = FramePrinter(suspendContext).print(this)
-            print(result, ProcessOutputTypes.SYSTEM)
+        processStackFramesOnPooledThread {
+            for (stackFrame in this) {
+                val result = FramePrinter(suspendContext).print(stackFrame)
+                print(result, ProcessOutputTypes.SYSTEM)
+            }
             suspendContext.invokeInManagerThread(completion)
         }
     }
@@ -165,11 +171,6 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
 
         val contextElement = ContextUtil.getContextElement(debuggerContext)!!
 
-        evaluationContext.debugProcess.putUserData(
-            CodeFragmentCompiler.KOTLIN_EVALUATOR_FRAGMENT_COMPILER_BACKEND,
-            fragmentCompilerBackend()
-        )
-
         assert(KotlinCodeFragmentFactory().isContextAccepted(contextElement)) {
             val text = runReadAction { contextElement.text }
             "KotlinCodeFragmentFactory should be accepted for context element otherwise default evaluator will be called. " +
@@ -188,7 +189,6 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
                         this@AbstractKotlinEvaluateExpressionTest.project
                     )
                 }
-                    ?: throw AssertionError("Cannot create an Evaluator for Evaluate Expression")
 
                 val value = evaluator.evaluate(evaluationContext)
                 val actualResult = value.asValue().asString()
@@ -232,22 +232,10 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
         }
     }
 
-    override fun initOutputChecker(): OutputChecker {
-        return KotlinOutputChecker(
-            getTestDataPath(),
-            testAppPath,
-            appOutputPath,
-            targetBackend(),
-            getExpectedOutputFile()
-        )
-    }
-
     override fun throwExceptionsIfAny() {
+        super.throwExceptionsIfAny()
         if (exceptions.isNotEmpty()) {
-            val outputFile = getExpectedOutputFile()
-            val isIgnored = outputFile.exists() && InTextDirectivesUtils.isIgnoredTarget(targetBackend(), outputFile)
-
-            if (!isIgnored) {
+            if (!isTestIgnored()) {
                 for (exc in exceptions.values) {
                     exc.printStackTrace()
                 }

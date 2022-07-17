@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -53,7 +53,7 @@ public abstract class StatusText {
 
     public Fragment() {
       myComponent.setOpaque(false);
-      myComponent.setFont(UIUtil.getLabelFont());
+      myComponent.setFont(StartupUiUtil.getLabelFont());
     }
   }
 
@@ -315,7 +315,9 @@ public abstract class StatusText {
     return fragment;
   }
 
-  public @NotNull StatusText appendSecondaryText(@NotNull @NlsContexts.StatusText String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
+  public @NotNull StatusText appendSecondaryText(@NotNull @NlsContexts.StatusText String text,
+                                                 @NotNull SimpleTextAttributes attrs,
+                                                 @Nullable ActionListener listener) {
     return appendText(true, 1, text, attrs, listener);
   }
 
@@ -341,8 +343,9 @@ public abstract class StatusText {
   }
 
   public void paint(Component owner, Graphics g) {
-    if (!isStatusVisible()) return;
-
+    if (!isStatusVisible()) {
+      return;
+    }
     if (owner == myOwner) {
       doPaintStatusText(g, getTextComponentBound());
     }
@@ -373,8 +376,12 @@ public abstract class StatusText {
     if (isPrimary && mySecondaryColumn.fragments.isEmpty()) {
       return new Point(bounds.x + (bounds.width - myPrimaryColumn.preferredSize.width) / 2, bounds.y);
     }
-    if (isPrimary) return new Point(bounds.x, bounds.y);
-    return new Point(bounds.x + bounds.width - mySecondaryColumn.preferredSize.width, bounds.y);
+    else if (isPrimary) {
+      return new Point(bounds.x, bounds.y);
+    }
+    else {
+      return new Point(bounds.x + bounds.width - mySecondaryColumn.preferredSize.width, bounds.y);
+    }
   }
 
   private void doPaintStatusText(@NotNull Graphics g, @NotNull Rectangle bounds) {

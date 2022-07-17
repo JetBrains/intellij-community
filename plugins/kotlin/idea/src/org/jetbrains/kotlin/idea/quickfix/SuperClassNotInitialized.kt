@@ -3,22 +3,29 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.core.moveCaret
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -52,7 +59,8 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
         val containingPackage = superClass.classId?.packageFqName
         val inSamePackage = containingPackage != null && containingPackage == classDescriptor.classId?.packageFqName
         val constructors = superClass.constructors.filter {
-            it.isVisible(classDescriptor) && (superClass.modality != Modality.SEALED || inSamePackage && classDescriptor.visibility != DescriptorVisibilities.LOCAL)
+          it.isVisible(classDescriptor, delegator.getResolutionFacade().languageVersionSettings) &&
+                    (superClass.modality != Modality.SEALED || inSamePackage && classDescriptor.visibility != DescriptorVisibilities.LOCAL)
         }
         if (constructors.isEmpty() && (!superClass.isExpect || superClass.kind != ClassKind.CLASS)) {
             return emptyList() // no accessible constructor
@@ -126,11 +134,11 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
                 baseClass.createPrimaryConstructorIfAbsent()
             }
 
-            if (putCaretIntoParenthesis) {
+            if (putCaretIntoParenthesis && newSpecifier.isPhysical) {
                 if (editor != null) {
                     val offset = newSpecifier.valueArgumentList!!.leftParenthesis!!.endOffset
                     editor.moveCaret(offset)
-                    if (!ApplicationManager.getApplication().isUnitTestMode) {
+                    if (!isUnitTestMode()) {
                         ShowParameterInfoHandler.invoke(project, editor, file, offset - 1, null, true)
                     }
                 }
@@ -141,19 +149,18 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
     private class AddParametersFix(
         element: KtSuperTypeEntry,
         classDeclaration: KtClass,
-        parametersToAdd: Collection<KtParameter>,
+        private val parametersToAdd: Collection<KtParameter>, // non-physical parameter, no pointer is necessary
         private val argumentText: String,
-        private val text: String
+        @Nls private val text: String
     ) : KotlinQuickFixAction<KtSuperTypeEntry>(element) {
         private val classDeclarationPointer = classDeclaration.createSmartPointer()
-        private val parametersToAddPointers = parametersToAdd.map { it.createSmartPointer() }
 
         companion object {
             fun create(
                 element: KtSuperTypeEntry,
                 classDeclaration: KtClass,
                 superConstructor: ConstructorDescriptor,
-                text: String
+                @Nls text: String
             ): AddParametersFix? {
                 val superParameters = superConstructor.valueParameters
                 assert(superParameters.isNotEmpty())
@@ -205,7 +212,6 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {
             val element = element ?: return
             val classDeclaration = classDeclarationPointer.element ?: return
-            val parametersToAdd = parametersToAddPointers.map { it.element ?: return }
             val factory = KtPsiFactory(project)
 
             val typeRefsToShorten = ArrayList<KtTypeReference>()
@@ -220,6 +226,18 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
             element.replace(delegatorCall)
 
             ShortenReferences.DEFAULT.process(typeRefsToShorten)
+        }
+
+        override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
+            val clazz = classDeclarationPointer.element ?: return null
+            val element = element ?: return null
+            return AddParametersFix(
+                PsiTreeUtil.findSameElementInCopy(element, target),
+                PsiTreeUtil.findSameElementInCopy(clazz, target),
+                parametersToAdd,
+                argumentText,
+                text
+            )
         }
     }
 }

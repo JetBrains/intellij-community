@@ -3,13 +3,15 @@ package com.intellij.ui.mac;
 
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.AWTEventListener;
 
 public final class MacGestureSupportInstaller {
-  public static void installOnComponent(@NotNull JComponent component) {
+  public static void installOnComponent(@NotNull JComponent component, @Nullable AWTEventListener listener) {
     try {
-      new MacGestureSupportForEditor(component);
+      new MacGestureSupportForEditor(component, listener);
     }
     catch (Throwable t) {
       Logger.getInstance(MacGestureSupportInstaller.class).warn("macOS gesture support failed", t);

@@ -7,12 +7,11 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import training.learn.CourseManager
 import training.statistic.FeatureUsageStatisticConsts.MODULE_NAME
 
-private class IdeFeaturesTrainerModuleRuleValidator : CustomValidationRule() {
-  override fun acceptRuleId(ruleId: String?): Boolean = (ruleId == MODULE_NAME)
+class IdeFeaturesTrainerModuleRuleValidator : CustomValidationRule() {
+  override fun getRuleId(): String = MODULE_NAME
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    return if (CourseManager.instance.modules
-        .firstOrNull { it.name == data } != null)
+    return if (CourseManager.instance.modules.any { it.id == data && !CourseManager.instance.isModuleExternal(it) })
       ValidationResultType.ACCEPTED
     else
       ValidationResultType.REJECTED

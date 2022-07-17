@@ -3,19 +3,21 @@
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.debugger.NoDataException;
-import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.CompoundPositionManager;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.PositionManagerImpl;
+import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -29,6 +31,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ThreeState;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
@@ -36,20 +40,21 @@ import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class GroovyPositionManager implements PositionManager {
+public class GroovyPositionManager extends PositionManagerEx {
   private static final Logger LOG = Logger.getInstance(PositionManagerImpl.class);
 
   private final DebugProcess myDebugProcess;
@@ -83,13 +88,95 @@ public class GroovyPositionManager implements PositionManager {
     }
   }
 
+  @Override
+  public ThreeState evaluateCondition(@NotNull EvaluationContext context,
+                                      @NotNull StackFrameProxyImpl frame,
+                                      @NotNull Location location,
+                                      @NotNull String expression) {
+    return ThreeState.UNSURE;
+  }
+
+  @Override
+  public @Nullable XStackFrame createStackFrame(@NotNull StackFrameDescriptorImpl descriptor) {
+    if (isInGroovyFile(descriptor.getLocation()) != ThreeState.YES) {
+      return null;
+    }
+    return new GroovyStackFrame(descriptor, true);
+  }
+
+  private static ThreeState isInGroovyFile(@Nullable Location location) {
+    if (location != null) {
+      var refType = location.declaringType();
+      try {
+        String safeName = refType.sourceName();
+        FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(safeName);
+        if (fileType == UnknownFileType.INSTANCE) {
+          return ThreeState.UNSURE;
+        }
+        if (fileType instanceof LanguageFileType) {
+          LanguageFileType languageFileType = (LanguageFileType)fileType;
+          if (languageFileType.getLanguage() == GroovyLanguage.INSTANCE) {
+            return ThreeState.YES;
+          }
+        }
+      } catch (AbsentInformationException ignore) {
+      }
+    }
+    return ThreeState.NO;
+  }
+
   @Nullable
   private static GroovyPsiElement findReferenceTypeSourceImage(SourcePosition position) {
     PsiFile file = position.getFile();
     if (!(file instanceof GroovyFileBase)) return null;
     PsiElement element = file.findElementAt(position.getOffset());
     if (element == null) return null;
-    return PsiTreeUtil.getParentOfType(element, GrFunctionalExpression.class, GrTypeDefinition.class);
+    return getEnclosingPsiForElement(element);
+  }
+
+  /**
+   * In Groovy, there are some transformations performed before compiling or interpreting the source code.
+   * <br>
+   * First, all closures and lambdas are transformed to a local class extending {@code groovy.lang.Closure}. Therefore, code inside closures
+   * does not correspond to the class of the methods where the closure is defined.
+   * <br>
+   * Second, there is no such thing as a "switch expression".
+   * The following
+   * <code>
+   * <pre>
+   * switch(10) {
+   *   case 20 -> 30
+   *   case 30 -> {
+   *      40
+   *   }
+   * }
+   * </pre>
+   * </code>
+   * is transformed to
+   * <code>
+   * <pre>
+   * { ->
+   *   switch(10) {
+   *     case 20: return 30
+   *     case 30: return {->
+   *        return 40
+   *     }()
+   *   }
+   * }()
+   * </pre>
+   * </code>
+   * So the code inside switch expressions corresponds to a separate local class too.
+   */
+  private static GroovyPsiElement getEnclosingPsiForElement(PsiElement element) {
+    while (true) {
+      GroovyPsiElement parent = PsiTreeUtil.getParentOfType(element, GrSwitchExpression.class, GrFunctionalExpression.class, GrTypeDefinition.class);
+      if (!(parent instanceof GrSwitchElement && PsiUtil.isPlainSwitchStatement((GrSwitchElement)parent))) {
+        return parent;
+      } else {
+        element = parent;
+      }
+    }
+
   }
 
   @Nullable
@@ -202,6 +289,10 @@ public class GroovyPositionManager implements PositionManager {
   @Override
   public SourcePosition getSourcePosition(@Nullable final Location location) throws NoDataException {
     if (location == null) throw NoDataException.INSTANCE;
+    if (isInGroovyFile(location) == ThreeState.NO) throw NoDataException.INSTANCE;
+
+    int lineNumber = calcLineIndex(location);
+    if (lineNumber < 0) throw NoDataException.INSTANCE;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("getSourcePosition: " + location);
@@ -209,8 +300,6 @@ public class GroovyPositionManager implements PositionManager {
     PsiFile psiFile = getPsiFileByLocation(getDebugProcess().getProject(), location);
     if (psiFile == null) throw NoDataException.INSTANCE;
 
-    int lineNumber = calcLineIndex(location);
-    if (lineNumber < 0) throw NoDataException.INSTANCE;
     return SourcePosition.createFromLine(psiFile, lineNumber);
   }
 
@@ -396,6 +485,9 @@ public class GroovyPositionManager implements PositionManager {
   @NotNull
   @Override
   public Set<? extends FileType> getAcceptedFileTypes() {
-    return ourFileTypes;
+    var result = new HashSet<FileType>();
+    ScriptPositionManagerHelper.EP_NAME.forEachExtensionSafe(ext -> result.addAll(ext.getAcceptedFileTypes()));
+    result.addAll(ourFileTypes);
+    return result;
   }
 }

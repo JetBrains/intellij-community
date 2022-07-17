@@ -1,5 +1,5 @@
 interface Runnable {
-  void run() {}
+  void run();
 }
 
 class A {
@@ -18,7 +18,7 @@ class A {
   }
 }
 
-class Bar extends Runnable {
+abstract class Bar implements Runnable {
   Bar() {
     run();
   }

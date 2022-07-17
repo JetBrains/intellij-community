@@ -16,6 +16,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ public abstract class PyClassRefactoringHandler implements RefactoringActionHand
       }
     }
     if (element1 == null || element2 == null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.introduce.selection.error"), getTitle(),
+      CommonRefactoringUtil.showErrorHint(project, editor, PyPsiBundle.message("refactoring.introduce.selection.error"), getTitle(),
                                           "members.pull.up");
       return;
     }

@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -16,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.render.RendererPanelsUtils;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
@@ -26,14 +28,28 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
-public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting{
+public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
+                                                         AutoCompletionContributor, PossibleSlowContributor{
   private final AbstractGotoSEContributor myDelegate;
 
   public PSIPresentationBgRendererWrapper(AbstractGotoSEContributor delegate) { myDelegate = delegate; }
+
+  @Override
+  public List<AutoCompletionCommand> getAutocompleteItems(String pattern, int caretPosition) {
+    return myDelegate instanceof AutoCompletionContributor
+           ? ((AutoCompletionContributor)myDelegate).getAutocompleteItems(pattern, caretPosition)
+           : Collections.emptyList();
+  }
+
+  @Override
+  public boolean isSlow() {
+    return PossibleSlowContributor.checkSlow(myDelegate);
+  }
 
   public static SearchEverywhereContributor<Object> wrapIfNecessary(AbstractGotoSEContributor delegate) {
     if (Registry.is("psi.element.list.cell.renderer.background")) {
@@ -65,7 +81,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
   }
 
   private static FoundItemDescriptor<Object> element2presentation(FoundItemDescriptor<Object> elementDescriptor,
-                                                                  Function<PsiElement, TargetPresentation> presentationCalculator) {
+                                                                  Function<? super PsiElement, ? extends TargetPresentation> presentationCalculator) {
     if (elementDescriptor.getItem() instanceof PsiElement) {
       PsiElement psi = (PsiElement)elementDescriptor.getItem();
       TargetPresentation presentation = presentationCalculator.apply(psi);
@@ -121,19 +137,25 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
       Color bgColor = isSelected ? UIUtil.getListSelectionBackground(true) : presentation.getBackgroundColor();
       setBackground(bgColor);
 
-      JLabel locationLabel = StringUtil.isNotEmpty(presentation.getLocationText())
-                             ? new JLabel(presentation.getLocationText(), presentation.getLocationIcon(), SwingConstants.RIGHT)
-                             : null;
-      if (locationLabel != null) {
+      JLabel locationLabel;
+      if (StringUtil.isNotEmpty(presentation.getLocationText())) {
+        locationLabel = new JLabel(presentation.getLocationText(), presentation.getLocationIcon(), SwingConstants.RIGHT);
         locationLabel.setHorizontalTextPosition(SwingConstants.LEFT);
+        locationLabel.setIconTextGap(RendererPanelsUtils.getIconTextGap());
         locationLabel.setForeground(isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
         add(locationLabel, BorderLayout.EAST);
+      }
+      else {
+        locationLabel = null;
       }
 
       ColoredListCellRenderer<Object> leftRenderer = new ColoredListCellRenderer<>() {
         @Override
         protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          //noinspection UseDPIAwareInsets
+          setIpad(new Insets(0, 0, 0, getIpad().right)); // Border of top panel is used for around insets of renderer
           setIcon(presentation.getIcon());
+          setIconTextGap(RendererPanelsUtils.getIconTextGap());
           SimpleTextAttributes nameAttributes = presentation.getPresentableTextAttributes() != null
                                                 ? SimpleTextAttributes.fromTextAttributes(presentation.getPresentableTextAttributes())
                                                 : new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, null);
@@ -320,7 +342,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
   public static PsiElement toPsi(Object o) {
     if (o instanceof PsiElement) return (PsiElement)o;
     if (o instanceof PsiItemWithPresentation) return ((PsiItemWithPresentation)o).getItem();
-
+    if (o instanceof PsiElementNavigationItem) return ((PsiElementNavigationItem) o).getTargetElement();
     return null;
   }
 }

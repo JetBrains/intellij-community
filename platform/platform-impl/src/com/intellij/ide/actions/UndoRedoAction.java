@@ -35,9 +35,14 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
+    FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
     UndoManager undoManager = getUndoManager(editor, dataContext);
 
     myActionInProgress = true;
@@ -53,7 +58,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
+    FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
     UndoManager undoManager = getUndoManager(editor, dataContext);
     if (undoManager == null) {
       presentation.setEnabled(false);
@@ -68,7 +73,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
   }
 
   private UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
-    Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (component instanceof JTextComponent && !UIUtil.isClientPropertyTrue(component, IGNORE_SWING_UNDO_MANAGER)) {
       return SwingUndoManagerWrapper.fromContext(dataContext);
     }
@@ -78,7 +83,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
       rootPane = UIUtil.getRootPane(component);
       popup = rootPane != null ? (JBPopup)rootPane.getClientProperty(JBPopup.KEY) : null;
       boolean modalPopup = popup != null && popup.isModalContext();
-      boolean modalContext = Boolean.TRUE.equals(PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext));
+      boolean modalContext = Boolean.TRUE.equals(PlatformCoreDataKeys.IS_MODAL_CONTEXT.getData(dataContext));
       if (modalPopup || modalContext) {
         return SwingUndoManagerWrapper.fromContext(dataContext);
       }
@@ -115,7 +120,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
 
     @Nullable
     static UndoManager fromContext(DataContext dataContext) {
-      javax.swing.undo.UndoManager swingUndoManager = UIUtil.getUndoManager(PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext));
+      javax.swing.undo.UndoManager swingUndoManager = UIUtil.getUndoManager(PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext));
       return swingUndoManager != null ? new SwingUndoManagerWrapper(swingUndoManager) : null;
     }
 

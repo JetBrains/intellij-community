@@ -1,0 +1,15 @@
+// "Add 'abstract fun foo()' to 'I'" "true"
+annotation class A(vararg val names: String)
+annotation class B(val i: Int)
+
+interface I {
+    @A("x", "y")
+    @B(1)
+    fun foo()
+}
+
+class C : I {
+    @A("x", "y")
+    @B(1)
+    override fun foo() {}
+}

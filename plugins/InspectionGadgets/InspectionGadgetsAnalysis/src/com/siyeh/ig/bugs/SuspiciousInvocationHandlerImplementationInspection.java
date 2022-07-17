@@ -47,7 +47,7 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         if (INVOKE.methodMatches(method)) {
           check(method);
         }
@@ -66,7 +66,7 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
       }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression lambda) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {
         if (lambda.getParameterList().getParametersCount() != 3) return;
         PsiType type = lambda.getFunctionalInterfaceType();
         if (!InheritanceUtil.isInheritor(type, HANDLER_CLASS)) return;

@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -125,16 +126,21 @@ public final class RemoveRedundantArgumentsFix implements IntentionAction {
     if (!candidate.isStaticsScopeCorrect()) return;
     PsiMethod method = (PsiMethod)candidate.getElement();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
-    if (method != null && BaseIntentionAction.canModify(method)) {
-      QuickFixAction
-        .registerQuickFixAction(highlightInfo, fixRange, new RemoveRedundantArgumentsFix(method, arguments.getExpressions(), substitutor));
+    if (method == null || !BaseIntentionAction.canModify(arguments)) return;
+    if (method.isConstructor() && arguments.getParent() instanceof PsiMethodCallExpression &&
+        ((PsiMethodCallExpression)arguments.getParent()).getMethodExpression().textMatches("this") &&
+        PsiTreeUtil.isAncestor(method, arguments, true)) {
+      // Avoid creating recursive constructor call
+      return;
     }
+    QuickFixAction
+      .registerQuickFixAction(highlightInfo, fixRange, new RemoveRedundantArgumentsFix(method, arguments.getExpressions(), substitutor));
   }
 
   @Override
   public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     return new RemoveRedundantArgumentsFix(
-      PsiTreeUtil.findSameElementInCopy(myTargetMethod, target),
+      myTargetMethod,
       ContainerUtil.map2Array(myArguments, PsiExpression.class, arg -> PsiTreeUtil.findSameElementInCopy(arg, target)),
       mySubstitutor);
   }

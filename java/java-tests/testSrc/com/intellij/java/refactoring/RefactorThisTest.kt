@@ -193,8 +193,7 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     val group = DefaultActionGroup()
     val dataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(editor.component))
     action.fillActions(project, group, dataContext)
-    return Utils.expandActionGroup(false, group, PresentationFactory(), dataContext,
-                                   ActionPlaces.REFACTORING_QUICKLIST)
+    return Utils.expandActionGroup(group, PresentationFactory(), dataContext, ActionPlaces.REFACTORING_QUICKLIST)
   }
 
 }

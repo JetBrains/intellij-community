@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
@@ -7,9 +7,7 @@ import com.intellij.configurationStore.StateStorageManager
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.idea.preloadServices
 import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.PersistentStateComponent
@@ -18,11 +16,12 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectExImpl
+import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
-import com.intellij.serviceContainer.executeRegisterTask
+import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.util.messages.MessageBus
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -34,7 +33,6 @@ abstract class ClientSessionImpl(
   final override val clientId: ClientId,
   protected val sharedComponentManager: ClientAwareComponentManager
 ) : ComponentManagerImpl(null, false), ClientSession {
-
   override val isLocal = clientId.isLocal
 
   override val isLightServiceSupported = false
@@ -45,28 +43,27 @@ abstract class ClientSessionImpl(
   }
 
   fun registerServices() {
-    registerComponents(
-      PluginManagerCore.getLoadedPlugins(null),
-      ApplicationManager.getApplication(),
-      null,
-      null
-    )
+    registerComponents()
   }
 
-  fun preloadServices() {
+  @OptIn(DelicateCoroutinesApi::class)
+  fun preloadServices(syncScope: CoroutineScope) {
     assert(containerState.get() == ContainerState.PRE_INIT)
-    preloadServices(
-      PluginManagerCore.getLoadedPlugins(null),
-      container = this,
-      activityPrefix = "client ",
-      onlyIfAwait = false
-    ).join()
+    val exceptionHandler = CoroutineExceptionHandler { _, exception ->
+      LOG.error(exception)
+    }
+    this.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                         activityPrefix = "client ",
+                         syncScope = syncScope + exceptionHandler,
+                         asyncScope = GlobalScope + exceptionHandler,
+                         onlyIfAwait = false
+    )
     assert(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
 
-  override fun instantiateService(service: ServiceDescriptor) {
+  override fun preloadService(service: ServiceDescriptor) {
     ClientId.withClientId(clientId) {
-      super.instantiateService(service)
+      super.preloadService(service)
     }
   }
 
@@ -79,14 +76,14 @@ abstract class ClientSessionImpl(
   /**
    * only per-client services are supported (no components, extensions, listeners)
    */
-  override fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>,
+  override fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  listenerCallbacks: List<Runnable>?) {
-    for (mainPlugin in plugins) {
-      executeRegisterTask(mainPlugin) { pluginDescriptor ->
-        val containerDescriptor = getContainerDescriptor(pluginDescriptor)
-        registerServices(containerDescriptor.services, pluginDescriptor)
+                                  listenerCallbacks: MutableList<in Runnable>?) {
+    for (rootModule in modules) {
+      registerServices(getContainerDescriptor(rootModule).services, rootModule)
+      executeRegisterTaskForOldContent(rootModule) { module ->
+        registerServices(getContainerDescriptor(module).services, module)
       }
     }
   }
@@ -108,7 +105,7 @@ abstract class ClientSessionImpl(
       val sessionsManager = sharedComponentManager.getService(ClientSessionsManager::class.java)
       val localSession = sessionsManager?.getSession(ClientId.localId) as? ClientSessionImpl
 
-      if (localSession?.doGetService(serviceClass, createIfNeeded, fallbackToShared = false) != null) {
+      if (localSession?.doGetService(serviceClass, createIfNeeded = true, fallbackToShared = false) != null) {
         LOG.error("$serviceClass is registered only for client=\"local\", " +
                   "please provide a guest-specific implementation, or change to client=\"all\"")
         return null
@@ -149,6 +146,9 @@ class ClientSessionComponentStore : IComponentStore {
     }
   }
 
+  override fun unloadComponent(component: Any) {
+  }
+
   override fun initPersistencePlainComponent(component: Any, key: String) {
   }
 
@@ -170,6 +170,12 @@ class ClientSessionComponentStore : IComponentStore {
 
   override fun removeComponent(name: String) {
   }
+
+  override fun clearCaches() {
+  }
+
+  override fun release() {
+  }
 }
 
 @ApiStatus.Internal
@@ -189,9 +195,8 @@ open class ClientAppSessionImpl(
 @ApiStatus.Internal
 open class ClientProjectSessionImpl(
   clientId: ClientId,
-  final override val project: ProjectExImpl,
+  final override val project: ProjectImpl,
 ) : ClientSessionImpl(clientId, project), ClientProjectSession {
-
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.projectContainerDescriptor
   }

@@ -43,8 +43,14 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return isVisible(e.getDataContext());
@@ -61,12 +67,12 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
     presentation.setEnabled(isVisible(dc) && isEnabled(dc));
   }
 
-  private boolean isVisible(final DataContext dc) {
+  private static boolean isVisible(final DataContext dc) {
     final Project project = CommonDataKeys.PROJECT.getData(dc);
     return (project != null) && (UpdateInfoTree.LABEL_BEFORE.getData(dc) != null) && (UpdateInfoTree.LABEL_AFTER.getData(dc) != null);
   }
 
-  private boolean isEnabled(final DataContext dc) {
+  private static boolean isEnabled(final DataContext dc) {
     final Iterable<Pair<FilePath, FileStatus>> iterable = UpdateInfoTree.UPDATE_VIEW_FILES_ITERABLE.getData(dc);
     return iterable != null;
   }
@@ -111,10 +117,10 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
     @NotNull private final FilePath myFilePath;
 
     MyDiffRequestProducer(@Nullable Project project,
-                                 @NotNull Label before,
-                                 @NotNull Label after,
-                                 @NotNull FilePath filePath,
-                                 @NotNull FileStatus fileStatus) {
+                          @NotNull Label before,
+                          @NotNull Label after,
+                          @NotNull FilePath filePath,
+                          @NotNull FileStatus fileStatus) {
       myProject = project;
       myBefore = before;
       myAfter = after;
@@ -176,6 +182,22 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
       catch (IOException e) {
         throw new DiffRequestProducerException(VcsBundle.message("update.can.t.load.content"), e);
       }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MyDiffRequestProducer producer = (MyDiffRequestProducer)o;
+      return myBefore.equals(producer.myBefore) &&
+             myAfter.equals(producer.myAfter) &&
+             myFileStatus.equals(producer.myFileStatus) &&
+             myFilePath.equals(producer.myFilePath);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myBefore, myAfter, myFileStatus, myFilePath);
     }
   }
 

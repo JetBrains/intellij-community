@@ -1,7 +1,10 @@
 import sys
 from _typeshed import StrOrBytesPath
 from types import SimpleNamespace
-from typing import Optional, Sequence
+from typing import Sequence
+
+if sys.version_info >= (3, 9):
+    CORE_VENV_DEPS: tuple[str, ...]
 
 class EnvBuilder:
     system_site_packages: bool
@@ -9,7 +12,7 @@ class EnvBuilder:
     symlinks: bool
     upgrade: bool
     with_pip: bool
-    prompt: Optional[str]
+    prompt: str | None
 
     if sys.version_info >= (3, 9):
         def __init__(
@@ -19,7 +22,7 @@ class EnvBuilder:
             symlinks: bool = ...,
             upgrade: bool = ...,
             with_pip: bool = ...,
-            prompt: Optional[str] = ...,
+            prompt: str | None = ...,
             upgrade_deps: bool = ...,
         ) -> None: ...
     else:
@@ -30,8 +33,9 @@ class EnvBuilder:
             symlinks: bool = ...,
             upgrade: bool = ...,
             with_pip: bool = ...,
-            prompt: Optional[str] = ...,
+            prompt: str | None = ...,
         ) -> None: ...
+
     def create(self, env_dir: StrOrBytesPath) -> None: ...
     def clear_directory(self, path: StrOrBytesPath) -> None: ...  # undocumented
     def ensure_directories(self, env_dir: StrOrBytesPath) -> SimpleNamespace: ...
@@ -55,7 +59,7 @@ if sys.version_info >= (3, 9):
         clear: bool = ...,
         symlinks: bool = ...,
         with_pip: bool = ...,
-        prompt: Optional[str] = ...,
+        prompt: str | None = ...,
         upgrade_deps: bool = ...,
     ) -> None: ...
 
@@ -66,7 +70,7 @@ else:
         clear: bool = ...,
         symlinks: bool = ...,
         with_pip: bool = ...,
-        prompt: Optional[str] = ...,
+        prompt: str | None = ...,
     ) -> None: ...
 
-def main(args: Optional[Sequence[str]] = ...) -> None: ...
+def main(args: Sequence[str] | None = ...) -> None: ...

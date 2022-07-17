@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupElementRenderer;
@@ -26,24 +25,24 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.icons.RowIcon;
+import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.HashSet;
 import java.util.List;
@@ -68,13 +67,30 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   private static final Key<Font> CUSTOM_TYPE_FONT = Key.create("CustomLookupElementTypeFont");
 
   public static final Color BACKGROUND_COLOR =
-    new JBColor(() -> Objects.requireNonNullElse(EditorColorsUtil.getGlobalOrDefaultColor(LOOKUP_COLOR),
+    JBColor.lazy(() -> Objects.requireNonNullElse(EditorColorsUtil.getGlobalOrDefaultColor(LOOKUP_COLOR),
                                                  JBColor.namedColor("CompletionPopup.background",
                                                                     new JBColor(new Color(235, 244, 254), JBColor.background()))));
   public static final Color MATCHED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.matchForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
   public static final Color SELECTED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionBackground", new JBColor(0xc5dffc, 0x113a5c));
   public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveBackground", new JBColor(0xE0E0E0, 0x515457));
   private static final Color NON_FOCUSED_MASK_COLOR = JBColor.namedColor("CompletionPopup.nonFocusedMask", Gray._0.withAlpha(0));
+
+  private static Insets selectionInnerInsets() {
+    return JBUI.insets("CompletionPopup.selectionInnerInsets", JBUI.insets(2));
+  }
+
+  static Insets bodyInsets() {
+    return JBUI.insets("CompletionPopup.Body.insets", JBUI.insets(4));
+  }
+
+  private static Insets selectionInsets() {
+    Insets innerInsets = selectionInnerInsets();
+    Insets bodyInsets = bodyInsets();
+    //noinspection UseDPIAwareInsets
+    return new Insets(innerInsets.top, innerInsets.left + bodyInsets.left, innerInsets.bottom, innerInsets.right + bodyInsets.right);
+  }
+
+  public static final SimpleTextAttributes REGULAR_MATCHED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, MATCHED_FOREGROUND_COLOR);
 
   private final LookupImpl myLookup;
 
@@ -88,7 +104,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   private int myMaxWidth = -1;
   private volatile int myLookupTextWidth = 50;
   private final Object myWidthLock = ObjectUtils.sentinel("lookup width lock");
-  private final SingleAlarm myLookupWidthUpdateAlarm;
+  private final Runnable myLookupWidthUpdater;
   private final boolean myShrinkLookup;
 
   private final AsyncRendering myAsyncRendering;
@@ -102,16 +118,19 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
     myLookup = lookup;
     myNameComponent = new MySimpleColoredComponent();
+    myNameComponent.setOpaque(false);
     myNameComponent.setIconTextGap(JBUIScale.scale(4));
     myNameComponent.setIpad(JBUI.insetsLeft(1));
     myNameComponent.setMyBorder(null);
 
     myTailComponent = new MySimpleColoredComponent();
-    myTailComponent.setIpad(JBUI.emptyInsets());
+    myTailComponent.setOpaque(false);
+    myTailComponent.setIpad(JBInsets.emptyInsets());
     myTailComponent.setBorder(JBUI.Borders.emptyRight(10));
 
     myTypeLabel = new MySimpleColoredComponent();
-    myTypeLabel.setIpad(JBUI.emptyInsets());
+    myTypeLabel.setOpaque(false);
+    myTypeLabel.setIpad(JBInsets.emptyInsets());
     myTypeLabel.setBorder(JBUI.Borders.emptyRight(10));
 
     myPanel = new LookupPanel();
@@ -123,9 +142,20 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     myBoldMetrics = myLookup.getTopLevelEditor().getComponent().getFontMetrics(myBoldFont);
     myAsyncRendering = new AsyncRendering(myLookup);
 
-    myLookupWidthUpdateAlarm = new SingleAlarm(this::updateLookupWidthFromVisibleItems,
-                                               ApplicationManager.getApplication().isUnitTestMode() ? 0 : 50, lookup, Alarm.ThreadToUse.SWING_THREAD,
-                                               ModalityState.stateForComponent(editorComponent));
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // Avoid delay in unit tests
+      myLookupWidthUpdater = () -> ApplicationManager.getApplication().invokeLater(this::updateLookupWidthFromVisibleItems);
+    } else {
+      SingleAlarm alarm = new SingleAlarm(this::updateLookupWidthFromVisibleItems, 50, lookup, Alarm.ThreadToUse.SWING_THREAD,
+                                          ModalityState.stateForComponent(editorComponent));
+      myLookupWidthUpdater = () -> {
+        synchronized (alarm) {
+          if (!alarm.isDisposed()) {
+            alarm.request();
+          }
+        }
+      };
+    }
 
     myShrinkLookup = Registry.is("ide.lookup.shrink");
   }
@@ -145,8 +175,8 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     }
 
     myIsSelected = isSelected;
-    final Color background = nonFocusedSelection ? SELECTED_NON_FOCUSED_BACKGROUND_COLOR :
-                             isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
+    myPanel.setSelectionColor(nonFocusedSelection ? SELECTED_NON_FOCUSED_BACKGROUND_COLOR :
+                              isSelected ? SELECTED_BACKGROUND_COLOR : null);
 
     int allowedWidth = list.getWidth() - calcSpacing(myNameComponent, myEmptyIcon) - calcSpacing(myTailComponent, null) - calcSpacing(myTypeLabel, null);
 
@@ -159,7 +189,6 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     }
 
     myNameComponent.clear();
-    myNameComponent.setBackground(background);
 
     Color itemColor = presentation.getItemTextForeground();
     allowedWidth -= setItemTextLabel(item, itemColor, presentation, allowedWidth);
@@ -171,15 +200,11 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     final Color grayedForeground = getGrayedForeground(isSelected);
     myTypeLabel.clear();
     if (allowedWidth > 0) {
-      allowedWidth -= setTypeTextLabel(item, background, grayedForeground, presentation, isSelected ? getMaxWidth() : allowedWidth, isSelected, nonFocusedSelection,
+      allowedWidth -= setTypeTextLabel(item, grayedForeground, presentation, isSelected ? getMaxWidth() : allowedWidth, isSelected, nonFocusedSelection,
               getRealFontMetrics(item, false, CUSTOM_TYPE_FONT));
-    }
-    else {
-      myTypeLabel.setBackground(background);
     }
 
     myTailComponent.clear();
-    myTailComponent.setBackground(background);
     if (isSelected || allowedWidth >= 0) {
       setTailTextLabel(isSelected, presentation, grayedForeground, isSelected ? getMaxWidth() : allowedWidth, nonFocusedSelection,
               getRealFontMetrics(item, false, CUSTOM_TAIL_FONT));
@@ -258,7 +283,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
                                 Color foreground,
                                 int allowedWidth,
                                 boolean nonFocusedSelection, FontMetrics fontMetrics) {
-    int style = getStyle(false, presentation.isStrikeout(), false, false);
+    int style = getStyle(presentation.isStrikeout(), false, false);
 
     for (LookupElementPresentation.TextFragment fragment : presentation.getTailFragments()) {
       if (allowedWidth < 0) {
@@ -334,7 +359,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
     Font customItemFont = getCustomFont(item, bold, CUSTOM_NAME_FONT);
     myNameComponent.setFont(customItemFont != null ? customItemFont : bold ? myBoldFont : myNormalFont);
-    int style = getStyle(bold, presentation.isStrikeout(), presentation.isItemTextUnderlined(), presentation.isItemTextItalic());
+    int style = getStyle(presentation.isStrikeout(), presentation.isItemTextUnderlined(), presentation.isItemTextItalic());
 
     final FontMetrics metrics = getRealFontMetrics(item, bold, CUSTOM_NAME_FONT);
     final String name = trimLabelText(presentation.getItemText(), allowedWidth, metrics);
@@ -354,8 +379,8 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   @SimpleTextAttributes.StyleAttributeConstant
-  private static int getStyle(boolean bold, boolean strikeout, boolean underlined, boolean italic) {
-    int style = bold ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN;
+  private static int getStyle(boolean strikeout, boolean underlined, boolean italic) {
+    int style = SimpleTextAttributes.STYLE_PLAIN;
     if (strikeout) {
       style |= SimpleTextAttributes.STYLE_STRIKEOUT;
     }
@@ -392,7 +417,6 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   private int setTypeTextLabel(LookupElement item,
-                               final Color background,
                                Color foreground,
                                final LookupElementPresentation presentation,
                                int allowedWidth,
@@ -409,8 +433,6 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     }
 
     myTypeLabel.append(labelText);
-
-    myTypeLabel.setBackground(background);
     myTypeLabel.setForeground(getTypeTextColor(item, foreground, presentation, selected, nonFocusedSelection));
     myTypeLabel.setIconOnTheRight(presentation.isTypeIconRightAligned());
     return used;
@@ -535,11 +557,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   void scheduleUpdateLookupWidthFromVisibleItems(){
-    synchronized (myLookupWidthUpdateAlarm) {
-      if (!myLookupWidthUpdateAlarm.isDisposed()) {
-        myLookupWidthUpdateAlarm.request();
-      }
-    }
+    myLookupWidthUpdater.run();
   }
 
   void itemAdded(@NotNull LookupElement element, @NotNull LookupElementPresentation fastPresentation) {
@@ -586,7 +604,14 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   private static int calculateWidth(LookupElementPresentation presentation, FontMetrics normalMetrics, FontMetrics boldMetrics) {
-    int result = 0;
+    int result;
+    if (ExperimentalUI.isNewUI()) {
+      Insets insets = selectionInsets();
+      result = insets.left + insets.right;
+    }
+    else {
+      result = 0;
+    }
     result += getStringWidth(presentation.getItemText(), presentation.isItemTextBold() ? boldMetrics : normalMetrics);
     result += getStringWidth(presentation.getTailText(), normalMetrics);
     final String typeText = presentation.getTypeText();
@@ -615,10 +640,18 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     }
   }
 
-  private class LookupPanel extends JPanel {
+  private class LookupPanel extends SelectablePanel {
     boolean myUpdateExtender;
     LookupPanel() {
-      super(new BorderLayout());
+      setLayout(new BorderLayout());
+      setBackground(BACKGROUND_COLOR);
+      if (ExperimentalUI.isNewUI()) {
+        Insets bodyInsets = bodyInsets();
+        setBorder(new EmptyBorder(selectionInsets()));
+        //noinspection UseDPIAwareInsets
+        setSelectionInsets(new Insets(0, bodyInsets.left, 0, bodyInsets.right));
+        setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
+      }
     }
 
     public void setUpdateExtender(boolean updateExtender) {

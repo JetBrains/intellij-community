@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
@@ -19,25 +19,26 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableB
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.toLibraryRootType
 import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
 import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.referrers
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryPropertiesEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 internal class LibraryModifiableModelBridgeImpl(
   private val originalLibrary: LibraryBridgeImpl,
   private val originalLibrarySnapshot: LibraryStateSnapshot,
-  diff: WorkspaceEntityStorageBuilder,
-  private val targetBuilder: WorkspaceEntityStorageDiffBuilder?,
+  diff: MutableEntityStorage,
+  private val targetBuilder: MutableEntityStorage?,
   cacheStorageResult: Boolean = true
 ) : LegacyBridgeModifiableBase(diff, cacheStorageResult), LibraryModifiableModelBridge, RootProvider {
 
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(originalLibrary.project)
-  private var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
+  private var entityId = originalLibrarySnapshot.libraryEntity.persistentId
   private var reloadKind = false
 
   private val currentLibraryValue = CachedValue { storage ->
@@ -73,8 +74,8 @@ internal class LibraryModifiableModelBridgeImpl(
       error("Library named $name already exists")
     }
 
-    entityId = entity.persistentId().copy(name = name)
-    diff.modifyEntity(ModifiableLibraryEntity::class.java, entity) {
+    entityId = entity.persistentId.copy(name = name)
+    diff.modifyEntity(entity) {
       this.name = name
     }
 
@@ -114,31 +115,47 @@ internal class LibraryModifiableModelBridgeImpl(
     if (isChanged) originalLibrary.entityId = entityId
   }
 
-  private fun update(updater: ModifiableLibraryEntity.() -> Unit) {
-    diff.modifyEntity(ModifiableLibraryEntity::class.java, currentLibrary.libraryEntity, updater)
+  private fun update(updater: LibraryEntity.Builder.() -> Unit) {
+    diff.modifyEntity(currentLibrary.libraryEntity, updater)
   }
 
-  private fun updateProperties(updater: ModifiableLibraryPropertiesEntity.() -> Unit) {
+  private fun updateProperties(libraryType: String, propertiesXmlTag: String? = null) {
     val entity = currentLibrary.libraryEntity
 
-    val referrers = entity.referrers(LibraryPropertiesEntity::library).toList()
-    if (referrers.isEmpty()) {
-      diff.addEntity(ModifiableLibraryPropertiesEntity::class.java, entity.entitySource) {
+    val properties = entity.libraryProperties
+    if (properties == null) {
+      diff.addEntity(LibraryPropertiesEntity(entity.entitySource, libraryType) {
         library = entity
-        updater()
-      }
+        if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
+      })
     }
     else {
-      diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, referrers.first(), updater)
-      referrers.drop(1).forEach { diff.removeEntity(it) }
+      diff.modifyEntity(properties) {
+        this.libraryType = libraryType
+        if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
+      }
     }
   }
 
   override fun isChanged(): Boolean {
     if (!originalLibrarySnapshot.libraryEntity.hasEqualProperties(currentLibrary.libraryEntity)) return true
-    val p1 = originalLibrarySnapshot.libraryEntity.getCustomProperties()
-    val p2 = currentLibrary.libraryEntity.getCustomProperties()
+    val p1 = originalLibrarySnapshot.libraryEntity.libraryProperties
+    val p2 = currentLibrary.libraryEntity.libraryProperties
     return !(p1 == null && p2 == null || p1 != null && p2 != null && p1.hasEqualProperties(p2))
+  }
+
+  private fun LibraryEntity.hasEqualProperties(another: LibraryEntity): Boolean {
+    if (this.tableId != another.tableId) return false
+    if (this.name != another.name) return false
+    if (this.roots != another.roots) return false
+    if (this.excludedRoots != another.excludedRoots) return false
+    return true
+  }
+
+  private fun LibraryPropertiesEntity.hasEqualProperties(another: LibraryPropertiesEntity): Boolean {
+    if (this.libraryType != another.libraryType) return false
+    if (this.propertiesXmlTag != another.propertiesXmlTag) return false
+    return true
   }
 
   override fun addJarDirectory(url: String, recursive: Boolean) =
@@ -263,11 +280,7 @@ internal class LibraryModifiableModelBridgeImpl(
       return
     }
 
-    updateProperties {
-      libraryType = kind.kindId
-      propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, properties)
-    }
-
+    updateProperties(kind.kindId, serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, properties))
     if (assertChangesApplied && currentLibrary.properties != properties) {
       error("setProperties: properties are not equal after changing")
     }
@@ -278,9 +291,7 @@ internal class LibraryModifiableModelBridgeImpl(
 
     if (kind == type) return
 
-    updateProperties {
-      libraryType = type.kindId
-    }
+    updateProperties(type.kindId)
 
     if (assertChangesApplied && currentLibrary.kind?.kindId != type.kindId) {
       error("setKind: expected kindId ${type.kindId}, but got ${currentLibrary.kind?.kindId}. Original kind: ${originalLibrarySnapshot.kind?.kindId}")
@@ -363,7 +374,7 @@ internal class LibraryModifiableModelBridgeImpl(
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx = throw UnsupportedOperationException()
 
-  override fun getSource(): Library? = originalLibrary
+  override fun getSource(): Library = originalLibrary
 
   override fun getTable(): LibraryTable = originalLibrarySnapshot.libraryTable
 

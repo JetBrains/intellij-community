@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
@@ -20,6 +19,7 @@ import org.jetbrains.kotlin.idea.refactoring.canRefactor
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorage
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.qualifiedClassNameForRendering
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -90,7 +90,7 @@ class KotlinPullUpHandler : AbstractPullPushMembersHandler(
         val memberInfoStorage = KotlinMemberInfoStorage(classOrObject)
         val members = memberInfoStorage.getClassMemberInfos(classOrObject)
 
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             val helper = dataContext?.getData(PULL_UP_TEST_HELPER_KEY) as TestHelper
             val selectedMembers = helper.adjustMembers(members)
             val targetClass = helper.chooseSuperClass(superClasses)

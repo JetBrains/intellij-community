@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.analysis.AnalysisScope
@@ -9,30 +9,26 @@ import com.intellij.codeInspection.ex.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.profile.codeInspection.BaseInspectionProfileManager
-import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests
-import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.mapSmart
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 
+@TestOnly
 fun configureInspections(tools: Array<InspectionProfileEntry>,
                          project: Project,
                          parentDisposable: Disposable): InspectionProfileImpl {
   val toolSupplier = InspectionToolsSupplier.Simple(tools.mapSmart { InspectionToolRegistrar.wrapTool(it) })
   Disposer.register(parentDisposable, toolSupplier)
-  val profile = InspectionProfileImpl(UUID.randomUUID().toString(), toolSupplier,
-                                      InspectionProfileManager.getInstance() as BaseInspectionProfileManager)
+  val profile = InspectionProfileImpl(UUID.randomUUID().toString(), toolSupplier, null)
   val profileManager = ProjectInspectionProfileManager.getInstance(project)
   // we don't restore old project profile because in tests it must be in any case null - app default profile
   Disposer.register(parentDisposable, Disposable {
     profileManager.deleteProfile(profile)
     profileManager.setCurrentProfile(null)
-    clearAllToolsIn(BASE_PROFILE)
   })
 
   profileManager.addProfile(profile)
@@ -62,22 +58,6 @@ fun createGlobalContextForTool(scope: AnalysisScope,
   }
 }
 
-private val myToolField = ReflectionUtil.findField(InspectionToolWrapper::class.java, InspectionProfileEntry::class.java, "myTool")
-
-private fun clearAllToolsIn(profile: InspectionProfileImpl) {
-  if (!profile.wasInitialized()) {
-    return
-  }
-
-  for (state in profile.allTools) {
-    val wrapper = state.tool
-    if (wrapper.extension != null) {
-      // make it not initialized
-      ReflectionUtil.resetField(wrapper, myToolField)
-    }
-  }
-}
-
 fun ProjectInspectionProfileManager.createProfile(localInspectionTool: LocalInspectionTool, disposable: Disposable): InspectionProfileImpl {
   return configureInspections(arrayOf(localInspectionTool), project, disposable)
 }
@@ -102,7 +82,10 @@ fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*,
     if (existingWrapper == null || existingWrapper.isInitialized != toolWrapper.isInitialized || toolWrapper.isInitialized && toolWrapper.tool !== existingWrapper.tool) {
       profile.addTool(project, toolWrapper, null)
       profile.enableTool(shortName, project)
-      Disposer.register(disposable, Disposable { profile.removeTool(toolWrapper) })
+      Disposer.register(disposable, Disposable {
+        profile.removeTool(toolWrapper)
+        HighlightDisplayKey.unregister(shortName)
+      })
     }
     else {
       profile.enableTool(shortName, project)
@@ -117,6 +100,7 @@ fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*,
   IdeaTestExecutionPolicy.current()?.inspectionToolEnabled(project, toolWrapper, disposable)
 }
 
+@TestOnly
 inline fun <T> runInInitMode(runnable: () -> T): T {
   val old = InspectionProfileImpl.INIT_INSPECTIONS
   try {

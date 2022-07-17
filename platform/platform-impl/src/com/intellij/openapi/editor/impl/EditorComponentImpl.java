@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.CutProvider;
@@ -8,10 +8,7 @@ import com.intellij.ide.PasteProvider;
 import com.intellij.ide.actions.UndoRedoAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
@@ -48,8 +45,9 @@ import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
@@ -94,9 +92,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       public Point magnify(double scale, Point at) {
         if (myEditor.isDisposed()) return at;
         VisualPosition magnificationPosition = myEditor.xyToVisualPosition(at);
-        double currentSize = myEditor.getColorsScheme().getEditorFontSize();
-        int defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
-        myEditor.setFontSize(Math.max((int)(currentSize * scale), defaultFontSize));
+        float currentSize = myEditor.getColorsScheme().getEditorFontSize2D();
+        float defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
+        myEditor.setFontSize(Math.max((float)(currentSize * scale), defaultFontSize));
 
         return myEditor.visualPositionToXY(magnificationPosition);
       }
@@ -220,9 +218,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   @Override
-  public ActionCallback type(final String text) {
-    final ActionCallback result = new ActionCallback();
-    UIUtil.invokeLaterIfNeeded(() -> myEditor.type(text).notify(result));
+  public ActionCallback type(String text) {
+    ActionCallback result = new ActionCallback();
+    EdtInvocationManager.invokeLaterIfNeeded(() -> myEditor.type(text).notify(result));
     return result;
   }
 
@@ -257,7 +255,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     Project project = myEditor.getProject();
     if (project != null) {
-      EditorsSplitters.stopOpenFilesActivity(project);
+      EditorsSplitters.Companion.stopOpenFilesActivity(project);
     }
   }
 
@@ -355,7 +353,17 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   @Override
   public AccessibleContext getAccessibleContext() {
     if (accessibleContext == null) {
-      accessibleContext = new AccessibleEditorComponentImpl();
+      accessibleContext = new AccessibleContextDelegateWithContextMenu(new AccessibleEditorComponentImpl()) {
+        @Override
+        protected void doShowContextMenu() {
+          ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, EditorComponentImpl.this.getEditor().getContentComponent(), null, true);
+        }
+
+        @Override
+        protected Container getDelegateParent() {
+          return getParent();
+        }
+      };
     }
     return accessibleContext;
   }
@@ -1016,13 +1024,13 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     @Override
     public AccessibleText getAccessibleText() {
-      if (Disposer.isDisposed(myEditor.getDisposable())) return null;
+      if (myEditor.isDisposed()) return null;
       return this;
     }
 
     @Override
     public AccessibleEditableText getAccessibleEditableText() {
-      if (Disposer.isDisposed(myEditor.getDisposable())) return null;
+      if (myEditor.isDisposed()) return null;
       return this;
     }
 

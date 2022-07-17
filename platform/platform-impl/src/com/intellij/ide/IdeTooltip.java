@@ -154,7 +154,7 @@ public class IdeTooltip extends ComparableObject.Impl {
     return this;
   }
 
-  void setTipComponent(JComponent tipComponent) {
+  protected void setTipComponent(JComponent tipComponent) {
     myTipComponent = tipComponent;
   }
 

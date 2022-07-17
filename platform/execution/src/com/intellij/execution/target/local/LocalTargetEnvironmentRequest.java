@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target.local;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.PtyCommandLineOptions;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.value.TargetValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,7 +20,6 @@ public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest 
   private Volume myDefaultVolume;
   private final Map<String, LocalDownloadVolume> myDownloadRoots = new LinkedHashMap<>();
   private final Map<String, LocalUploadVolume> myUploadRoots = new LinkedHashMap<>();
-  private PtyCommandLineOptions myPtyOptions;
 
   public LocalTargetEnvironmentRequest() {
     super();
@@ -99,7 +98,7 @@ public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest 
 
   @NotNull
   @Override
-  public LocalTargetEnvironment prepareEnvironment(@NotNull TargetProgressIndicator progressIndicator) {
+  public LocalTargetEnvironment prepareEnvironment(@NotNull TargetProgressIndicator progressIndicator) throws ExecutionException {
     LocalTargetEnvironment environment = new LocalTargetEnvironment(this);
     environmentPrepared(environment, progressIndicator);
     return environment;
@@ -116,14 +115,6 @@ public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest 
 
   public void setParentEnvironmentType(@NotNull GeneralCommandLine.ParentEnvironmentType parentEnvironmentType) {
     myParentEnvironmentType = parentEnvironmentType;
-  }
-
-  public @Nullable PtyCommandLineOptions getPtyOptions() {
-    return myPtyOptions;
-  }
-
-  public void setPtyOptions(@Nullable PtyCommandLineOptions ptyOptions) {
-    myPtyOptions = ptyOptions;
   }
 
   private static class LocalUploadVolume implements TargetEnvironmentRequest.Volume {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -35,7 +35,6 @@ import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,8 +55,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   private final boolean myInheritFontFromLaF;
 
   /** @deprecated Use {@link EditorTextFieldCellRenderer#EditorTextFieldCellRenderer(Project, Language, Disposable)}*/
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   protected EditorTextFieldCellRenderer(@Nullable Project project, @Nullable FileType fileType, @NotNull Disposable parent) {
     this(project, fileType == null ? null : LanguageUtil.getFileTypeLanguage(fileType), true, parent);
   }
@@ -180,7 +178,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
                                 : colorsScheme.getDefaultBackground());
       if (inheritFontFromLaF) {
         ((EditorImpl)editor).setUseEditorAntialiasing(false);
-        Font font = UIUtil.getLabelFont();
+        Font font = StartupUiUtil.getLabelFont();
         colorsScheme.setEditorFontName(font.getFontName());
         colorsScheme.setEditorFontSize(font.getSize());
       }
@@ -265,8 +263,9 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     private static final char RETURN_SYMBOL = '\u23ce';
 
     private final StringBuilder myDocumentTextBuilder = new StringBuilder();
-    private final boolean myAppendEllipsis;
+    private boolean myAppendEllipsis;
     private final char myReturnSymbol;
+    private boolean myForceSingleLine;
 
     private Dimension myPreferredSize;
 
@@ -278,23 +277,42 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
 
     public AbbreviatingRendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF, boolean appendEllipsis) {
-      this(project, language, inheritFontFromLaF, appendEllipsis, RETURN_SYMBOL);
+      this(project, language, inheritFontFromLaF, appendEllipsis, false);
     }
 
     public AbbreviatingRendererComponent(Project project,
                                          @Nullable Language language,
                                          boolean inheritFontFromLaF,
                                          boolean appendEllipsis,
+                                         boolean forceSingleLine) {
+      this(project, language, inheritFontFromLaF, appendEllipsis, forceSingleLine, RETURN_SYMBOL);
+    }
+
+    public AbbreviatingRendererComponent(Project project,
+                                         @Nullable Language language,
+                                         boolean inheritFontFromLaF,
+                                         boolean appendEllipsis,
+                                         boolean forceSingleLine,
                                          char returnSymbol) {
       super(project, language, inheritFontFromLaF);
       myAppendEllipsis = appendEllipsis;
       myReturnSymbol = returnSymbol;
+      myForceSingleLine = forceSingleLine;
     }
 
     @Override
     public void setText(String text) {
       myRawText = text;
       myPreferredSize = null;
+    }
+
+    public void setForceSingleLine(boolean forceSingleLine) {
+      myForceSingleLine = forceSingleLine;
+      myPreferredSize = null;
+    }
+
+    public void setAppendEllipsis(boolean appendEllipsis) {
+      myAppendEllipsis = appendEllipsis;
     }
 
     @Override
@@ -309,8 +327,17 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
         }
 
         FontMetrics fontMetrics = ((EditorImpl)getEditor()).getFontMetrics(myTextAttributes != null ? myTextAttributes.getFontType() : Font.PLAIN);
-        int preferredHeight = getEditor().getLineHeight() * Math.max(1, linesCount);
-        int preferredWidth = fontMetrics.charWidth('m') * maxLineLength;
+
+        int preferredHeight;
+        int preferredWidth;
+        if (myForceSingleLine) {
+          preferredHeight = getEditor().getLineHeight();
+          preferredWidth = fontMetrics.charWidth('m') * myRawText.length();
+        }
+        else {
+          preferredHeight = getEditor().getLineHeight() * Math.max(1, linesCount);
+          preferredWidth = fontMetrics.charWidth('m') * maxLineLength;
+        }
 
         Insets insets = getInsets();
         if (insets != null) {
@@ -333,10 +360,9 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       FontMetrics fontMetrics = ((EditorImpl)getEditor()).getFontMetrics(myTextAttributes != null ? myTextAttributes.getFontType() : Font.PLAIN);
       Insets insets = getInsets();
       int maxLineWidth = getWidth() - (insets != null ? insets.left + insets.right : 0);
-
       myDocumentTextBuilder.setLength(0);
 
-      boolean singleLineMode = getHeight() / (float)getEditor().getLineHeight() < 1.1f;
+      boolean singleLineMode = myForceSingleLine || getHeight() / (float)getEditor().getLineHeight() < 1.1f;
       if (singleLineMode) {
         appendAbbreviated(myDocumentTextBuilder, myRawText, 0, myRawText.length(), fontMetrics, maxLineWidth, true, myAppendEllipsis,
                           myReturnSymbol);

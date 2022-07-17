@@ -5,16 +5,19 @@ package org.jetbrains.kotlin.idea.inspections.collections
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
-import org.jetbrains.kotlin.types.TypeUtils
+import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
+import org.jetbrains.kotlin.resolve.calls.util.getType
 
 class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
     override val uselessFqNames = mapOf(
@@ -37,12 +40,12 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         val newName = conversion.replacementName
 
         val safeExpression = expression as? KtSafeQualifiedExpression
-        val notNullType = expression.receiverExpression.getType(context)?.let { TypeUtils.isNullableType(it) } == false
+        val notNullType = expression.receiverExpression.isNotNullType(context)
         val defaultRange =
             TextRange(expression.operationTokenNode.startOffset, calleeExpression.endOffset).shiftRight(-expression.startOffset)
         if (newName != null && (notNullType || safeExpression != null)) {
             val fixes = listOf(RenameUselessCallFix(newName)) + listOfNotNull(safeExpression?.let {
-                IntentionWrapper(ReplaceWithDotCallFix(safeExpression), safeExpression.containingKtFile)
+                IntentionWrapper(ReplaceWithDotCallFix(safeExpression))
             })
             val descriptor = holder.manager.createProblemDescriptor(
                 expression,
@@ -68,9 +71,17 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
                 safeExpression.operationTokenNode.psi,
                 KotlinBundle.message("this.call.is.useless.with"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                IntentionWrapper(ReplaceWithDotCallFix(safeExpression), safeExpression.containingKtFile)
+                IntentionWrapper(ReplaceWithDotCallFix(safeExpression))
             )
         }
+    }
+
+    private fun KtExpression.isNotNullType(context: BindingContext): Boolean {
+        val type = getType(context) ?: return false
+        val dataFlowValueFactory = getResolutionFacade().dataFlowValueFactory
+        val dataFlowValue = dataFlowValueFactory.createDataFlowValue(this, type, context, findModuleDescriptor())
+        val stableNullability = context.getDataFlowInfoBefore(this).getStableNullability(dataFlowValue)
+        return !stableNullability.canBeNull()
     }
 }
 

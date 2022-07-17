@@ -76,10 +76,10 @@ public class StaticImportResolveProcessor implements PsiScopeProcessor, NameHint
     return myName;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getHint(@NotNull final Key<T> hintKey) {
     if (hintKey == NameHint.KEY) {
-      //noinspection unchecked
       return (T)this;
     }
     return null;

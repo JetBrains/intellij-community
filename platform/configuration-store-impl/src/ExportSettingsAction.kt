@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.AbstractBundle
@@ -10,6 +10,7 @@ import com.intellij.ide.actions.ImportSettingsFilenameFilter
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.io.StringWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -50,6 +50,10 @@ open class ExportSettingsAction : AnAction(), DumbAware {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = true
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -113,7 +117,7 @@ fun exportSettings(exportableItems: Set<ExportableItem>,
                    storageManager: StateStorageManagerImpl = getAppStorageManager()) {
   val filter = HashSet<String>()
   Compressor.Zip(out)
-    .nioFilter { entryName, _ -> filter.add(entryName) }
+    .filter { entryName, _ -> filter.add(entryName) }
     .use { zip ->
       for (item in exportableItems) {
         if (item.fileSpec.isDirectory) {
@@ -151,11 +155,12 @@ data class ExportableItem(val fileSpec: FileSpec,
 data class LocalExportableItem(val file: Path, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
 
 fun exportInstalledPlugins(zip: Compressor) {
-  val plugins = PluginManagerCore.getLoadedPlugins().asSequence().filter { !it.isBundled }.map { it.pluginId }.toList()
-  if (plugins.isNotEmpty()) {
-    val buffer = StringWriter()
-    PluginManagerCore.writePluginsList(plugins, buffer)
-    zip.addFile(PluginManager.INSTALLED_TXT, buffer.toString().toByteArray())
+  val pluginIds = PluginManagerCore.getLoadedPlugins()
+    .asSequence()
+    .filterNot { it.isBundled }
+    .joinToString("\n") { it.pluginId.idString }
+  if (pluginIds.isNotEmpty()) {
+    zip.addFile(PluginManager.INSTALLED_TXT, pluginIds.toByteArray())
   }
 }
 
@@ -319,7 +324,7 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
 private fun messageOrDefault(classLoader: ClassLoader, bundleName: String, @Nls defaultName: String): String {
   try {
     return AbstractBundle.messageOrDefault(
-      DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader), "exportable.$defaultName.presentable.name", defaultName)
+      DynamicBundle.getResourceBundle(classLoader, bundleName), "exportable.$defaultName.presentable.name", defaultName)
   }
   catch (e: MissingResourceException) {
     LOG.warn("Missing bundle ${bundleName} at ${classLoader}: ${e.message}")

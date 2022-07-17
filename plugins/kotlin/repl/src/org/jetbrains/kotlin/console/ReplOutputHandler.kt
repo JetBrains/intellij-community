@@ -6,6 +6,7 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.cli.common.repl.replNormalizeLineBreaks
 import org.jetbrains.kotlin.cli.common.repl.replUnescapeLineBreaks
 import org.jetbrains.kotlin.console.actions.logError
@@ -74,7 +75,7 @@ class ReplOutputHandler(
             RUNTIME_ERROR -> outputProcessor.printRuntimeError("${content.trim()}\n")
             INTERNAL_ERROR -> outputProcessor.printInternalErrorMessage(content)
             SUCCESS -> runner.commandHistory.lastUnprocessedEntry()?.entryText?.let { runner.successfulLine(it) }
-            null -> logError(ReplOutputHandler::class.java, "Unexpected output type:\n$outputType")
+            else -> logError(ReplOutputHandler::class.java, "Unexpected output type:\n$outputType")
         }
 
         if (outputType in setOf(SUCCESS, COMPILE_ERROR, INTERNAL_ERROR, RUNTIME_ERROR, READLINE_END)) {
@@ -86,6 +87,10 @@ class ReplOutputHandler(
         if (!isBuildInfoChecked) {
             outputProcessor.printBuildInfoWarningIfNeeded()
             isBuildInfoChecked = true
+        }
+        // there are several INITIAL_PROMPT messages, the 1st starts with `Welcome to Kotlin version ...`
+        if (content.startsWith("Welcome")) {
+            outputProcessor.printUserOutput(KotlinIdeaReplBundle.message("repl.is.in.experimental.stage") + "\n")
         }
         outputProcessor.printInitialPrompt(content)
     }

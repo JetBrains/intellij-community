@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.script
 
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.ArgumentElement
@@ -7,12 +7,13 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statem
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.tree
 import java.util.function.Consumer
 
-@Suppress("MemberVisibilityCanBePrivate", "unused")
 abstract class AbstractScriptElementBuilder : ScriptElementBuilder {
 
   override fun newLine() = NewLineElement
   override fun ScriptElement?.ln() = if (this == null || this is BlockElement && isEmpty()) null else newLine()
 
+  override fun int(value: Int) = IntElement(value)
+  override fun boolean(value: Boolean) = BooleanElement(value)
   override fun string(value: String) = StringElement(value)
 
   override fun list(elements: List<Expression>) = ListElement(elements)
@@ -24,12 +25,19 @@ abstract class AbstractScriptElementBuilder : ScriptElementBuilder {
 
   override fun assign(name: String, value: Expression) = AssignElement(name, value)
   override fun assign(name: String, value: String) = assign(name, string(value))
+  override fun assign(name: String, value: Int) = assign(name, int(value))
+  override fun assign(name: String, value: Boolean) = assign(name, boolean(value))
 
   override fun assignIfNotNull(name: String, expression: Expression?) = expression?.let { assign(name, it) }
   override fun assignIfNotNull(name: String, value: String?) = value?.let { assign(name, it) }
 
   override fun plusAssign(name: String, value: Expression) = PlusAssignElement(name, value)
   override fun plusAssign(name: String, value: String) = plusAssign(name, string(value))
+
+  override fun property(name: String, value: Expression) = PropertyElement(name, value)
+  override fun property(name: String, value: String) = property(name, string(value))
+  override fun property(name: String, value: Int) = property(name, int(value))
+  override fun property(name: String, value: Boolean) = property(name, boolean(value))
 
   override fun call(name: Expression, arguments: List<ArgumentElement>) = CallElement(name, arguments)
   override fun call(name: String, arguments: List<ArgumentElement>) = call(code(name), arguments)

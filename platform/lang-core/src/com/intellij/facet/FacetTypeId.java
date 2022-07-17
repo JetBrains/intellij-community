@@ -2,7 +2,6 @@
 
 package com.intellij.facet;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 public final class FacetTypeId<F extends Facet> {
@@ -11,8 +10,7 @@ public final class FacetTypeId<F extends Facet> {
   /**
    * @deprecated use {@link FacetTypeId#FacetTypeId(String)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public FacetTypeId() {
     this("unknown");
   }

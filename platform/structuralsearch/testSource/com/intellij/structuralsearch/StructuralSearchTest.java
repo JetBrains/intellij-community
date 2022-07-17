@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -300,6 +300,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("match literal by value", 1, findMatchesCount(s3, "32"));
     assertEquals("match char with substitution", 3, findMatchesCount(s3, "\\''_x\\'"));
     assertEquals("string literal should not match char", 0, findMatchesCount(s3, "\"a\""));
+
+    String s4 = "class X {" +
+                "  String s = \"\\n\";" +
+                "  String t = \" \";" +
+                "  String u = \" \";" +
+                "  String v = \"\";" +
+                "}";
+    assertEquals("match empty string", 1, findMatchesCount(s4, "\"\""));
+    assertEquals("match space", 2, findMatchesCount(s4, "\" \""));
   }
 
   public void testCovariantArraySearch() {
@@ -1884,6 +1893,27 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find SuppressWarnings annotations", 2, findMatchesCount(source6, "@SuppressWarnings"));
     assertEquals("Find SuppressWarnings annotations", 2, findMatchesCount(source6, "@SuppressWarnings(value='_any)"));
     assertEquals("Find annotation with 3 value array initializer", 1, findMatchesCount(source6, "@SuppressWarnings({'_value{3,3} })"));
+
+    String source7 = "class X {" +
+                     "    @interface Annotation {\n" +
+                     "        String[] value() default {};\n" +
+                     "    }\n" +
+                     "    @Annotation(\"Hello\")\n" +
+                     "    static void singleValue() {}\n" +
+                     "    @Annotation({\"Hello\"})\n" +
+                     "    static void multiValue() {}\n" +
+                     "    @Annotation(value = \"Hello\")\n" +
+                     "    static void explicitSingleValue() {}\n" +
+                     "    @Annotation(value = {\"Hello\"})\n" +
+                     "    static void explicitMultiValue() {}\n" +
+                     "    @Annotation({\"Hello\", \"World\"})\n" +
+                     "    static void different() {}\n" +
+                     "    @Annotation(\"Bye!\")\n" +
+                     "    static void end() {}\n" +
+                     "}";
+    assertEquals("Find all equivalent annotations", 4, findMatchesCount(source7, "@Annotation(\"Hello\")"));
+    assertEquals("Find all annotations with a specific value", 5, findMatchesCount(source7, "@Annotation({\"Hello\", '_O*})"));
+    assertEquals("Find all annotations", 6, findMatchesCount(source7, "@Annotation('_V)"));
   }
 
   public void testBoxingAndUnboxing() {
@@ -2008,6 +2038,20 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "}}";
     assertEquals("Find static methods within expr type hierarchy", 3,
                  findMatchesCount(s1, "'_Instance:[regex( *A )].'_Method:[regex( foo )] ( '_Params* )"));
+
+    String s2 = "import static java.lang.String.valueOf;" +
+                "class A {" +
+                "  void x() {" +
+                "    valueOf(1);" +
+                "  }" +
+                "}" +
+                "class B {" +
+                "  void x() {" +
+                "    valueOf(1);" +
+                "  }" +
+                "  void valueOf(int i) {}" +
+                "}";
+    assertEquals("matching implicit class qualifier within hierarchy", 1, findMatchesCount(s2, "'_Q?:*Object .'_m:valueOf ('_a)"));
   }
 
   public void testFindClassesWithinHierarchy() {
@@ -2145,7 +2189,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     //noinspection AnonymousInnerClassMayBeStatic
     file.acceptChildren(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitVariable(final PsiVariable variable) {
+      @Override public void visitVariable(final @NotNull PsiVariable variable) {
         super.visitVariable(variable);
         vars.add(variable);
       }
@@ -2458,13 +2502,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "  }" +
                     "}";
 
-    String pattern1 = "() -> {}";
+    String pattern1 = "() -> '_body";
     assertEquals("should find lambdas", 4, findMatchesCount(source, pattern1));
 
-    String pattern2 = "(int '_a) -> {}";
+    String pattern2 = "(int '_a) -> '_body";
     assertEquals("should find lambdas with specific parameter type", 1, findMatchesCount(source, pattern2));
 
-    String pattern3 = "('_a{0,0})->{}";
+    String pattern3 = "('_a{0,0})->'_body";
     assertEquals("should find lambdas without any parameters", 2, findMatchesCount(source, pattern3));
 
     String pattern4 = "()->System.out.println()";
@@ -2540,6 +2584,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                       "    '_statements*;\n" +
                       "})";
     assertEquals("match lambda body correctly", 1, findMatchesCount(source4, pattern9));
+
+    String source5 = "class X {" +
+                     "  void x() {" +
+                     "    Runnable r = () -> {};" +
+                     "  }" +
+                     "}";
+    String pattern10 = "() -> '_B";
+    assertEquals("match empty lambda expression body", 1, findMatchesCount(source5, pattern10));
   }
 
   public void testFindDefaultMethods() {

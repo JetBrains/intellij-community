@@ -1,0 +1,30 @@
+UFile (package = ) [public final class LambdaExpressionFunctionalInterfaceTypeKt {...]
+    UClass (name = LambdaExpressionFunctionalInterfaceTypeKt) [public final class LambdaExpressionFunctionalInterfaceTypeKt {...}]
+        UMethod (name = streamMap) [public static final fun streamMap() : void {...}]
+            UBlockExpression [{...}] : PsiType:Stream<String>
+                UQualifiedReferenceExpression [java.util.stream.Stream.of(1, 2).map({ var it: int ->...})] : PsiType:Stream<String>
+                    UQualifiedReferenceExpression [java.util.stream.Stream.of(1, 2)] : PsiType:Stream<Integer>
+                        UQualifiedReferenceExpression [java.util.stream.Stream]
+                            UQualifiedReferenceExpression [java.util.stream]
+                                UQualifiedReferenceExpression [java.util]
+                                    USimpleNameReferenceExpression (identifier = java) [java]
+                                    USimpleNameReferenceExpression (identifier = util) [util]
+                                USimpleNameReferenceExpression (identifier = stream) [stream]
+                            USimpleNameReferenceExpression (identifier = Stream) [Stream]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [of(1, 2)] : PsiType:Stream<Integer>
+                            UIdentifier (Identifier (of)) [UIdentifier (Identifier (of))]
+                            USimpleNameReferenceExpression (identifier = of, resolvesTo = null) [of] : PsiType:Stream<Integer>
+                            ULiteralExpression (value = 1) [1] : PsiType:int
+                            ULiteralExpression (value = 2) [2] : PsiType:int
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [map({ var it: int ->...})] : PsiType:Stream<String>
+                        UIdentifier (Identifier (map)) [UIdentifier (Identifier (map))]
+                        USimpleNameReferenceExpression (identifier = map, resolvesTo = null) [map] : PsiType:Stream<String>
+                        ULambdaExpression [{ var it: int ->...}] : PsiType:Function1<? super Integer, ? extends String>
+                            UParameter (name = it) [var it: int]
+                            UBlockExpression [{...}]
+                                UReturnExpression [return it.toString()]
+                                    UQualifiedReferenceExpression [it.toString()] : PsiType:String
+                                        USimpleNameReferenceExpression (identifier = it) [it] : PsiType:int
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : PsiType:String
+                                            UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
+                                            USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] : PsiType:String

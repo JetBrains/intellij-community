@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,7 +23,7 @@ import java.util.Objects;
 /**
  * @author ven
  */
-public final class BringVariableIntoScopeFix implements IntentionAction {
+public final class BringVariableIntoScopeFix implements IntentionAction, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(BringVariableIntoScopeFix.class);
   private final @NotNull PsiReferenceExpression myUnresolvedReference;
   private final @NotNull PsiLocalVariable myOutOfScopeVariable;
@@ -49,15 +50,15 @@ public final class BringVariableIntoScopeFix implements IntentionAction {
       PsiLocalVariable myOutOfScopeVariable;
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {}
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {}
 
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         //Don't look inside expressions
       }
 
       @Override
-      public void visitLocalVariable(PsiLocalVariable variable) {
+      public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
         if (referenceName.equals(variable.getName())) {
           myOutOfScopeVariable = variable;
           variableCount++;
@@ -71,6 +72,8 @@ public final class BringVariableIntoScopeFix implements IntentionAction {
     container.accept(visitor);
 
     if (visitor.variableCount != 1 || visitor.myOutOfScopeVariable instanceof PsiResourceVariable) return null;
+    // E.g., reference in annotation
+    if (PsiTreeUtil.isAncestor(visitor.myOutOfScopeVariable, unresolvedReference, true)) return null;
     return new BringVariableIntoScopeFix(unresolvedReference, visitor.myOutOfScopeVariable);
   }
 
@@ -120,6 +123,10 @@ public final class BringVariableIntoScopeFix implements IntentionAction {
     PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(manager.getProject()).createStatementFromText("int i = 0", null);
     PsiVariable variable = (PsiVariable)newDeclaration.getDeclaredElements()[0].replace(outOfScopeVariable);
     if (variable.getInitializer() != null) {
+      PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null && typeElement.isInferredType()) {
+        PsiTypesUtil.replaceWithExplicitType(typeElement);
+      }
       variable.getInitializer().delete();
     }
 

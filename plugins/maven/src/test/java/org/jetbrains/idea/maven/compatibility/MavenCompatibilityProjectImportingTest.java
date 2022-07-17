@@ -1,9 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.compatibility;
 
+import com.intellij.maven.testFramework.MavenImportingTestCase;
+import com.intellij.maven.testFramework.MavenWrapperTestFixture;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.junit.After;
 import org.junit.Assume;
@@ -154,9 +155,9 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
                   "</modules>");
 
     waitForReadingCompletion();
-    assertModules("project", "module1");
+    assertModules("project", mn("project", "module1"));
 
-    assertModuleLibDep("module1", "Maven: junit:junit:4.0");
+    assertModuleLibDep(mn("project", "module1"), "Maven: junit:junit:4.0");
   }
 
   @Test
@@ -194,9 +195,9 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
                   "</modules>");
 
     waitForReadingCompletion();
-    assertModules("project", "module1");
+    assertModules("project", mn("project", "module1"));
 
-    assertModuleLibDep("module1", "Maven: junit:junit:4.0");
+    assertModuleLibDep(mn("project", "module1"), "Maven: junit:junit:4.0");
 
       /*myWrapperTestFixture.tearDown();
       myWrapperTestFixture.setUp();*/
@@ -229,7 +230,7 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
                   "<module>module1</module>" +
                   "</modules>");
     waitForReadingCompletion();
-    assertModuleLibDep("module1", "Maven: junit:junit:4.1");
+    assertModuleLibDep(mn("project", "module1"), "Maven: junit:junit:4.1");
   }
 
   @Test
@@ -257,6 +258,6 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
                   "    </properties>");
     waitForReadingCompletion();
 
-    assertModules("project", "module1");
+    assertModules("project", mn("project", "module1"));
   }
 }

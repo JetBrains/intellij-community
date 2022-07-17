@@ -3,12 +3,15 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +26,9 @@ public class IntroduceVariableErrorFixAction extends LocalQuickFixAndIntentionAc
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    new IntroduceVariableHandler().invoke(project, editor, (PsiExpression)startElement);
+    RefactoringActionHandler handler = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE).getIntroduceVariableHandler();
+    assert handler != null;
+    ((JavaIntroduceVariableHandlerBase)handler).invoke(project, editor, (PsiExpression)startElement);
   }
 
   @Override

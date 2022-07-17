@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty

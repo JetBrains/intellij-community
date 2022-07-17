@@ -16,7 +16,7 @@ public class ShLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
   public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(settings, modelSettings, getLanguage().getID()) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
         return new ShCodeStylePanel(settings, modelSettings);
       }
     };
@@ -51,7 +51,7 @@ public class ShLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
 
   @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new ShCodeStyleSettings(settings);
   }
 

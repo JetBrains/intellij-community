@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.descriptors.*
@@ -16,12 +17,11 @@ import org.jetbrains.kotlin.idea.util.fuzzyReturnType
 import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
 import org.jetbrains.kotlin.resolve.calls.util.getValueParametersCountFromFunctionType
 import org.jetbrains.kotlin.types.KotlinType
-import java.util.*
 
 class InsertHandlerProvider(
     private val callType: CallType<*>,
     private val editor: Editor,
-    expectedInfosCalculator: () -> Collection<ExpectedInfo>
+    expectedInfosCalculator: () -> Collection<ExpectedInfo>,
 ) {
     private val expectedInfos by lazy(LazyThreadSafetyMode.NONE) { expectedInfosCalculator() }
 
@@ -50,10 +50,17 @@ class InsertHandlerProvider(
             is FunctionDescriptor -> {
                 when (callType) {
                     CallType.DEFAULT, CallType.DOT, CallType.SAFE, CallType.SUPER_MEMBERS -> {
+                        if (!EditorSettingsExternalizable.getInstance().isInsertParenthesesAutomatically) {
+                            return KotlinFunctionInsertHandler.OnlyName(callType)
+                        }
                         val needTypeArguments = needTypeArguments(descriptor)
                         val parameters = descriptor.valueParameters
+                        val functionName = descriptor.name
                         when (parameters.size) {
-                            0 -> createNormalFunctionInsertHandler(editor, callType, needTypeArguments, inputValueArguments = false, argumentsOnly = argumentsOnly)
+                            0 -> {
+                                createNormalFunctionInsertHandler(editor, callType, functionName, needTypeArguments,
+                                    inputValueArguments = false, argumentsOnly = argumentsOnly)
+                            }
 
                             1 -> {
                                 if (callType != CallType.SUPER_MEMBERS) { // for super call we don't suggest to generate "super.foo { ... }" (seems to be non-typical use)
@@ -70,10 +77,10 @@ class InsertHandlerProvider(
                                     }
                                 }
 
-                                createNormalFunctionInsertHandler(editor, callType, inputTypeArguments = needTypeArguments, inputValueArguments = true, argumentsOnly = argumentsOnly)
+                                createNormalFunctionInsertHandler(editor, callType, functionName, inputTypeArguments = needTypeArguments, inputValueArguments = true, argumentsOnly = argumentsOnly)
                             }
 
-                            else -> createNormalFunctionInsertHandler(editor, callType, needTypeArguments, inputValueArguments = true, argumentsOnly = argumentsOnly)
+                            else -> createNormalFunctionInsertHandler(editor, callType, functionName, needTypeArguments, inputValueArguments = true, argumentsOnly = argumentsOnly)
                         }
                     }
 
@@ -92,7 +99,7 @@ class InsertHandlerProvider(
         }
     }
 
-    private fun needTypeArguments(function: FunctionDescriptor): Boolean {
+    fun needTypeArguments(function: FunctionDescriptor): Boolean {
         if (function.typeParameters.isEmpty()) return false
 
         val originalFunction = function.original

@@ -1,37 +1,39 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmElement
-import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
+import com.intellij.lang.jvm.actions.AnnotationAttributeValueRequest.NestedAnnotation
+import com.intellij.lang.jvm.actions.AnnotationAttributeValueRequest.StringValue
 import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair.pair
 import com.intellij.psi.*
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import junit.framework.TestCase
+import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.idea.search.allScope
+import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.uast.toUElement
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
+class CommonIntentionActionsTest : BasePlatformTestCase() {
     private class SimpleMethodRequest(
         project: Project,
         private val methodName: String,
         private val modifiers: Collection<JvmModifier> = emptyList(),
         private val returnType: ExpectedTypes = emptyList(),
         private val annotations: Collection<AnnotationRequest> = emptyList(),
-        @Suppress("MissingRecentApi") parameters: List<ExpectedParameter> = emptyList(),
+        parameters: List<ExpectedParameter> = emptyList(),
         private val targetSubstitutor: JvmSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
     ) : CreateMethodRequest {
         private val expectedParameters = parameters
@@ -44,7 +46,6 @@ class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
 
         override fun getAnnotations() = annotations
 
-        @Suppress("MissingRecentApi")
         override fun getExpectedParameters(): List<ExpectedParameter> = expectedParameters
 
         override fun getReturnType() = returnType
@@ -203,10 +204,9 @@ class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
     }
 
     fun testAddJavaAnnotationValue() {
-
-        myFixture.addFileToProject(
+        myFixture.addJavaFileToProject(
             "pkg/myannotation/JavaAnnotation.java", """
-            package pkg.myannotation
+            package pkg.myannotation;
 
             public @interface JavaAnnotation {
                 String value();
@@ -246,12 +246,150 @@ class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
         )
     }
 
+    fun testAddJavaAnnotationArrayValue() {
+        myFixture.addJavaFileToProject(
+            "pkg/myannotation/JavaAnnotation.java", """
+            package pkg.myannotation;
+
+            public @interface JavaAnnotation {
+                String[] value();
+                int param() default 0;
+            }
+        """.trimIndent()
+        )
+
+        myFixture.configureByText(
+            "foo.kt", """class Foo {
+                        |   fun bar(){}
+                        |   fun baz(){}
+                        |}""".trim().trimMargin()
+        )
+
+        myFixture.launchAction(
+            createAddAnnotationActions(
+                myFixture.findElementByText("bar", KtModifierListOwner::class.java).toLightElements().single() as PsiMethod,
+                annotationRequest(
+                    "pkg.myannotation.JavaAnnotation",
+                    arrayAttribute("value", listOf(StringValue("foo1"), StringValue("foo2"), StringValue("foo3"))),
+                    intAttribute("param", 2)
+                )
+            ).single()
+        )
+        myFixture.launchAction(
+            createAddAnnotationActions(
+                myFixture.findElementByText("baz", KtModifierListOwner::class.java).toLightElements().single() as PsiMethod,
+                annotationRequest(
+                    "pkg.myannotation.JavaAnnotation",
+                    intAttribute("param", 2),
+                    arrayAttribute("value", listOf(StringValue("foo1"), StringValue("foo2"), StringValue("foo3")))
+                )
+            ).single()
+        )
+        myFixture.checkResult(
+            """import pkg.myannotation.JavaAnnotation
+                |
+                |class Foo {
+                |   @JavaAnnotation("foo1", "foo2", "foo3", param = 2)
+                |   fun bar(){}
+                |   @JavaAnnotation(param = 2, value = ["foo1", "foo2", "foo3"])
+                |   fun baz(){}
+                |}""".trim().trimMargin(), true
+        )
+    }
+
+    fun testAddJavaAnnotationArrayValueWithNestedAnnotations() {
+        myFixture.addJavaFileToProject(
+            "pkg/myannotation/NestedJavaAnnotation.java", """
+            package pkg.myannotation;
+
+            public @interface NestedJavaAnnotation {
+                String[] value();
+                int nestedParam() default 0;
+            }
+        """.trimIndent()
+        )
+
+        myFixture.addJavaFileToProject(
+            "pkg/myannotation/JavaAnnotation.java", """
+            package pkg.myannotation;
+
+            public @interface JavaAnnotation {
+                NestedJavaAnnotation[] value();
+                int param() default 0;
+            }
+        """.trimIndent()
+        )
+
+        myFixture.configureByText(
+            "foo.kt", """class Foo {
+                        |   fun bar(){}
+                        |   fun baz(){}
+                        |}""".trim().trimMargin()
+        )
+
+        myFixture.launchAction(
+            createAddAnnotationActions(
+                myFixture.findElementByText("bar", KtModifierListOwner::class.java).toLightElements().single() as PsiMethod,
+                annotationRequest(
+                    "pkg.myannotation.JavaAnnotation",
+                    arrayAttribute(
+                        "value", listOf(
+                            NestedAnnotation(annotationRequest(
+                                "pkg.myannotation.NestedJavaAnnotation",
+                                arrayAttribute("value", listOf(StringValue("foo11"), StringValue("foo12"), StringValue("foo13"))),
+                                intAttribute("nestedParam", 1)
+                            )),
+                            NestedAnnotation(annotationRequest(
+                                "pkg.myannotation.NestedJavaAnnotation",
+                                intAttribute("nestedParam", 2),
+                                arrayAttribute("value", listOf(StringValue("foo21"), StringValue("foo22"), StringValue("foo23")))
+                            )),
+                        )
+                    ),
+                    intAttribute("param", 3)
+                )
+            ).single()
+        )
+        myFixture.launchAction(
+            createAddAnnotationActions(
+                myFixture.findElementByText("baz", KtModifierListOwner::class.java).toLightElements().single() as PsiMethod,
+                annotationRequest(
+                    "pkg.myannotation.JavaAnnotation",
+                    intAttribute("param", 1),
+                    arrayAttribute(
+                        "value", listOf(
+                            NestedAnnotation(annotationRequest(
+                                "pkg.myannotation.NestedJavaAnnotation",
+                                arrayAttribute("value", listOf(StringValue("foo11"), StringValue("foo12"), StringValue("foo13"))),
+                                intAttribute("nestedParam", 2)
+                            )),
+                            NestedAnnotation(annotationRequest(
+                                "pkg.myannotation.NestedJavaAnnotation",
+                                intAttribute("nestedParam", 3),
+                                arrayAttribute("value", listOf(StringValue("foo21"), StringValue("foo22"), StringValue("foo23")))
+                            )),
+                        )
+                    )
+                )
+            ).single()
+        )
+        myFixture.checkResult(
+            """import pkg.myannotation.JavaAnnotation
+                |import pkg.myannotation.NestedJavaAnnotation
+                |
+                |class Foo {
+                |   @JavaAnnotation(NestedJavaAnnotation("foo11", "foo12", "foo13", nestedParam = 1), NestedJavaAnnotation(nestedParam = 2, value = ["foo21", "foo22", "foo23"]), param = 3)
+                |   fun bar(){}
+                |   @JavaAnnotation(param = 1, value = [NestedJavaAnnotation("foo11", "foo12", "foo13", nestedParam = 2), NestedJavaAnnotation(nestedParam = 3, value = ["foo21", "foo22", "foo23"])])
+                |   fun baz(){}
+                |}""".trim().trimMargin(), true
+        )
+    }
 
     fun testAddJavaAnnotationOnFieldWithoutTarget() {
-
-        myFixture.addFileToProject(
+        myFixture.addJavaFileToProject(
             "pkg/myannotation/JavaAnnotation.java", """
-            package pkg.myannotation
+            package pkg.myannotation;
 
             import java.lang.annotation.ElementType;
             import java.lang.annotation.Retention;
@@ -300,10 +438,9 @@ class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
 
 
     fun testAddJavaAnnotationOnField() {
-
-        myFixture.addFileToProject(
+        myFixture.addJavaFileToProject(
             "pkg/myannotation/JavaAnnotation.java", """
-            package pkg.myannotation
+            package pkg.myannotation;
 
             import java.lang.annotation.ElementType;
             import java.lang.annotation.Retention;
@@ -347,6 +484,240 @@ class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
             "KtUltraLightMethodForSourceDeclaration -> org.jetbrains.annotations.NotNull," +
                     " KtUltraLightFieldForSourceDeclaration -> pkg.myannotation.JavaAnnotation, org.jetbrains.annotations.NotNull",
             annotationsString(myFixture.findElementByText("bar", KtModifierListOwner::class.java))
+        )
+    }
+
+    fun testChangeMethodType() {
+        myFixture.configureByText(
+            "foo.kt", """class Foo {
+                        |   fun <caret>bar(){}
+                        |}""".trim().trimMargin()
+        )
+
+        val method = myFixture.findElementByText("bar", KtNamedFunction::class.java).toLightElements().single() as JvmMethod
+        val typeRequest = typeRequest("String", emptyList())
+        myFixture.launchAction(createChangeTypeActions(method, typeRequest).single())
+
+        myFixture.checkResult(
+            """class Foo {
+              |   fun <caret>bar(): String {}
+              |}""".trim().trimMargin(), true
+        )
+    }
+
+    fun testChangeMethodTypeToTypeWithAnnotations() {
+        myFixture.configureByText(
+            "foo.kt", """class Foo {
+                        |   fun <caret>bar(){}
+                        |}""".trim().trimMargin()
+        )
+
+        myFixture.addKotlinFileToProject(
+            "pkg/myannotation/annotations.kt", """
+            package pkg.myannotation
+
+            @Target(AnnotationTarget.TYPE)
+            annotation class MyAnno
+        """.trimIndent()
+        )
+
+        val method = myFixture.findElementByText("bar", KtNamedFunction::class.java).toLightElements().single() as JvmMethod
+        val typeRequest = typeRequest("String", listOf(annotationRequest("pkg.myannotation.MyAnno")))
+        myFixture.launchAction(createChangeTypeActions(method, typeRequest).single())
+
+        myFixture.checkResult(
+            """
+              |import pkg.myannotation.MyAnno
+              |
+              |class Foo {
+              |   fun <caret>bar(): @MyAnno String {}
+              |}""".trim().trimMargin(), true
+        )
+    }
+
+    fun testChangeMethodTypeRemoveAnnotations() {
+        myFixture.addKotlinFileToProject(
+            "pkg/myannotation/annotations.kt", """
+            package pkg.myannotation
+
+            @Target(AnnotationTarget.TYPE)
+            annotation class MyAnno
+        """.trimIndent()
+        )
+
+        myFixture.configureByText(
+            "foo.kt", """
+                |import pkg.myannotation.MyAnno
+                |
+                |class Foo {
+                |   fun <caret>bar(): @MyAnno String {}
+                |}""".trim().trimMargin()
+        )
+
+        val method = myFixture.findElementByText("bar", KtNamedFunction::class.java).toLightElements().single() as JvmMethod
+        val typeRequest = typeRequest(null, emptyList())
+        myFixture.launchAction(createChangeTypeActions(method, typeRequest).single())
+
+        myFixture.checkResult(
+            """
+              |import pkg.myannotation.MyAnno
+              |
+              |class Foo {
+              |   fun <caret>bar(): String {}
+              |}""".trim().trimMargin(), true
+        )
+    }
+
+    fun testChangeMethodTypeChangeAnnotationsOnly() {
+        myFixture.addKotlinFileToProject(
+            "pkg/myannotation/annotations.kt", """
+            package pkg.myannotation
+
+            @Target(AnnotationTarget.TYPE)
+            annotation class MyAnno
+            
+            @Target(AnnotationTarget.TYPE)
+            annotation class MyOtherAnno
+        """.trimIndent()
+        )
+
+        myFixture.configureByText(
+            "foo.kt", """
+                |import pkg.myannotation.MyAnno
+                |
+                |class Foo {
+                |   fun <caret>bar(): @MyAnno String {}
+                |}""".trim().trimMargin()
+        )
+
+        val method = myFixture.findElementByText("bar", KtNamedFunction::class.java).toLightElements().single() as JvmMethod
+        val typeRequest = typeRequest(null, listOf(annotationRequest("pkg.myannotation.MyOtherAnno")))
+        myFixture.launchAction(createChangeTypeActions(method, typeRequest).single())
+
+        myFixture.checkResult(
+            """
+              |import pkg.myannotation.MyAnno
+              |import pkg.myannotation.MyOtherAnno
+              |
+              |class Foo {
+              |   fun <caret>bar(): @MyOtherAnno String {}
+              |}""".trim().trimMargin(), true
+        )
+    }
+
+    fun testChangeMethodTypeAddJavaAnnotation() {
+        myFixture.addJavaFileToProject(
+            "pkg/myannotation/JavaAnnotation.java", """
+            package pkg.myannotation;
+
+            import java.lang.annotation.ElementType;
+            import java.lang.annotation.Target;
+
+            @Target(ElementType.TYPE)
+            public @interface JavaAnnotation {}
+        """.trimIndent()
+        )
+
+        myFixture.addKotlinFileToProject(
+            "pkg/myannotation/annotations.kt", """
+            package pkg.myannotation
+
+            @Target(AnnotationTarget.TYPE)
+            annotation class MyOtherAnno
+        """.trimIndent()
+        )
+
+        myFixture.configureByText(
+            "foo.kt", """
+                |import pkg.myannotation.MyOtherAnno
+                |
+                |class Foo {
+                |   fun <caret>bar(): @MyOtherAnno String {}
+                |}""".trim().trimMargin()
+        )
+
+        val method = myFixture.findElementByText("bar", KtNamedFunction::class.java).toLightElements().single() as JvmMethod
+        val typeRequest = typeRequest(
+            null,
+            listOf(annotationRequest("pkg.myannotation.JavaAnnotation"), annotationRequest("pkg.myannotation.MyOtherAnno"))
+        )
+        myFixture.launchAction(createChangeTypeActions(method, typeRequest).single())
+
+        myFixture.checkResult(
+            """
+              |import pkg.myannotation.JavaAnnotation
+              |import pkg.myannotation.MyOtherAnno
+              |
+              |class Foo {
+              |   fun <caret>bar(): @JavaAnnotation @MyOtherAnno String {}
+              |}""".trim().trimMargin(), true
+        )
+    }
+
+    fun testChangeMethodTypeWithComments() {
+        myFixture.addKotlinFileToProject(
+            "pkg/myannotation/annotations.kt", """
+            package pkg.myannotation
+
+            @Target(AnnotationTarget.TYPE)
+            annotation class MyAnno
+            
+            @Target(AnnotationTarget.TYPE)
+            annotation class MyOtherAnno
+        """.trimIndent()
+        )
+
+        myFixture.configureByText(
+            "foo.kt", """
+                |import pkg.myannotation.MyOtherAnno
+                |
+                |class Foo {
+                |   fun <caret>bar(): @MyOtherAnno /*1*/ String {}
+                |}""".trim().trimMargin()
+        )
+
+        val method = myFixture.findElementByText("bar", KtNamedFunction::class.java).toLightElements().single() as JvmMethod
+        val typeRequest = typeRequest(null, listOf(annotationRequest("pkg.myannotation.MyAnno")))
+        myFixture.launchAction(createChangeTypeActions(method, typeRequest).single())
+
+        myFixture.checkResult(
+            """
+              |import pkg.myannotation.MyAnno
+              |import pkg.myannotation.MyOtherAnno
+              |
+              |class Foo {
+              |   fun <caret>bar(): /*1*/@MyAnno String {}
+              |}""".trim().trimMargin(), true
+        )
+    }
+
+    fun testChangeMethodTypeToJavaType() {
+        myFixture.addJavaFileToProject(
+            "pkg/mytype/MyType.java", """
+            package pkg.mytype;
+
+            public class MyType {}
+        """.trimIndent()
+        )
+
+        myFixture.configureByText(
+            "foo.kt", """
+                |class Foo {
+                |   fun <caret>bar() {}
+                |}""".trim().trimMargin()
+        )
+
+        val method = myFixture.findElementByText("bar", KtNamedFunction::class.java).toLightElements().single() as JvmMethod
+        val typeRequest = typeRequest("pkg.mytype.MyType", emptyList())
+        myFixture.launchAction(createChangeTypeActions(method, typeRequest).single())
+
+        myFixture.checkResult(
+            """
+              |import pkg.mytype.MyType
+              |
+              |class Foo {
+              |   fun <caret>bar(): MyType {}
+              |}""".trim().trimMargin(), true
         )
     }
 
@@ -680,6 +1051,114 @@ class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
         )
     }
 
+    fun testGetMethodHasParameters() {
+        myFixture.configureByText(
+            "foo.kt", """
+        |class Foo<caret> {
+        |    fun bar() {}
+        |}
+        """.trim().trimMargin()
+        )
+
+        myFixture.launchAction(
+            createMethodActions(
+                myFixture.atCaret(),
+                SimpleMethodRequest(
+                    project,
+                    methodName = "getBaz",
+                    modifiers = listOf(JvmModifier.PUBLIC),
+                    returnType = expectedTypes(PsiType.getTypeByName("java.lang.String", project, project.allScope())),
+                    parameters = expectedParams(PsiType.getTypeByName("java.lang.String", project, project.allScope()))
+                )
+            ).findWithText("Add method 'getBaz' to 'Foo'")
+        )
+        myFixture.checkResult(
+            """
+        |class Foo {
+        |    fun bar() {}
+        |    fun getBaz(param0: String): String {
+        |        TODO("Not yet implemented")
+        |    }
+        |}
+        """.trim().trimMargin(), true
+        )
+    }
+
+    fun testSetMethodHasStringReturnType() {
+        myFixture.configureByText(
+            "foo.kt", """
+        |class Foo<caret> {
+        |    fun bar() {}
+        |}
+        """.trim().trimMargin()
+        )
+
+        myFixture.launchAction(
+            createMethodActions(
+                myFixture.atCaret(),
+                SimpleMethodRequest(
+                    project,
+                    methodName = "setBaz",
+                    modifiers = listOf(JvmModifier.PUBLIC),
+                    returnType = expectedTypes(PsiType.getTypeByName("java.lang.String", project, project.allScope())),
+                    parameters = expectedParams(PsiType.getTypeByName("java.lang.String", project, project.allScope()))
+                )
+            ).findWithText("Add method 'setBaz' to 'Foo'")
+        )
+        myFixture.checkResult(
+            """
+        |class Foo {
+        |    fun bar() {}
+        |    fun setBaz(param0: String): String {
+        |        TODO("Not yet implemented")
+        |    }
+        |}
+        """.trim().trimMargin(), true
+        )
+    }
+
+
+    fun testSetMethodHasTwoParameters() {
+        myFixture.configureByText(
+            "foo.kt", """
+        |class Foo<caret> {
+        |    fun bar() {}
+        |}
+        """.trim().trimMargin()
+        )
+
+        myFixture.launchAction(
+            createMethodActions(
+                myFixture.atCaret(),
+                SimpleMethodRequest(
+                    project,
+                    methodName = "setBaz",
+                    modifiers = listOf(JvmModifier.PUBLIC),
+                    returnType = expectedTypes(PsiType.VOID),
+                    parameters = expectedParams(
+                        PsiType.getTypeByName("java.lang.String", project, project.allScope()),
+                        PsiType.getTypeByName("java.lang.String", project, project.allScope())
+                    )
+                )
+            ).findWithText("Add method 'setBaz' to 'Foo'")
+        )
+        myFixture.checkResult(
+            """
+        |class Foo {
+        |    fun bar() {}
+        |    fun setBaz(param0: String, param1: String) {
+        |
+        |    }
+        |}
+        """.trim().trimMargin(), true
+        )
+    }
+
+    private fun CodeInsightTestFixture.addJavaFileToProject(relativePath: String, @Language("JAVA") fileText: String) =
+        this.addFileToProject(relativePath, fileText)
+
+    private fun CodeInsightTestFixture.addKotlinFileToProject(relativePath: String, @Language("kotlin") fileText: String) =
+        this.addFileToProject(relativePath, fileText)
 
     private fun expectedTypes(vararg psiTypes: PsiType) = psiTypes.map { expectedType(it) }
 
@@ -694,6 +1173,8 @@ class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
     ) : CreateFieldRequest {
         override fun getTargetSubstitutor(): JvmSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
 
+        override fun getAnnotations(): Collection<AnnotationRequest> = emptyList()
+
         override fun getModifiers(): Collection<JvmModifier> = modifiers
 
         override fun isConstant(): Boolean = false
@@ -704,13 +1185,14 @@ class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
         override fun getFieldName(): String = name
 
         override fun isValid(): Boolean = true
+
+        override fun getInitializer(): JvmValue? = null
     }
 
 }
 
 internal inline fun <reified T : JvmElement> CodeInsightTestFixture.atCaret() = elementAtCaret.toUElement() as T
 
-@Suppress("MissingRecentApi")
 private class TestModifierRequest(private val _modifier: JvmModifier, private val shouldBePresent: Boolean) : ChangeModifierRequest {
     override fun shouldBePresent(): Boolean = shouldBePresent
     override fun isValid(): Boolean = true

@@ -1,4 +1,5 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Parameter 'i' is never used
 fun foo(i: Int) {}
 
 fun test(s: String) {

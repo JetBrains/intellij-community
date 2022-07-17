@@ -66,7 +66,7 @@ public final class GenericValueReferenceProvider extends PsiReferenceProvider {
       }
     }
     if (references.length > 0) {
-      if (converter instanceof EnumConverter && !((EnumConverter)converter).isExhaustive()) {
+      if (converter instanceof EnumConverter && !((EnumConverter<?>)converter).isExhaustive()) {
         // will be handled by core XML
         return PsiReference.EMPTY_ARRAY;
       }

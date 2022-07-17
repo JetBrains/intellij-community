@@ -19,11 +19,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.ui.TitledSeparator;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
@@ -36,7 +34,7 @@ import java.util.Map;
 
 public final class UpdateCopyrightAction extends BaseAnalysisAction {
   public static final String UPDATE_EXISTING_COPYRIGHTS = "update.existing.copyrights";
-  private JCheckBox myUpdateExistingCopyrightsCb;
+  private UpdateCopyrightAdditionalUi myUi;
 
   private UpdateCopyrightAction() {
     super(UpdateCopyrightProcessor.TITLE, UpdateCopyrightProcessor.TITLE);
@@ -80,7 +78,7 @@ public final class UpdateCopyrightAction extends BaseAnalysisAction {
     if ((files == null || files.length != 1) &&
              LangDataKeys.MODULE_CONTEXT.getData(context) == null &&
              LangDataKeys.MODULE_CONTEXT_ARRAY.getData(context) == null &&
-             PlatformDataKeys.PROJECT_CONTEXT.getData(context) == null) {
+             PlatformCoreDataKeys.PROJECT_CONTEXT.getData(context) == null) {
       final PsiElement[] elems = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context);
       if (elems != null) {
         boolean copyrightEnabled = false;
@@ -101,18 +99,15 @@ public final class UpdateCopyrightAction extends BaseAnalysisAction {
 
   @Override
   protected @NotNull JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
-    final JPanel panel = new JPanel(new VerticalFlowLayout());
-    panel.add(new TitledSeparator());
-    myUpdateExistingCopyrightsCb = new JCheckBox(CopyrightBundle.message("checkbox.text.update.existing.copyrights"),
-                                                 PropertiesComponent.getInstance().getBoolean(UPDATE_EXISTING_COPYRIGHTS, true));
-    panel.add(myUpdateExistingCopyrightsCb);
-    return panel;
+    myUi = new UpdateCopyrightAdditionalUi();
+    myUi.getUpdateExistingCopyrightsCb().setSelected(PropertiesComponent.getInstance().getBoolean(UPDATE_EXISTING_COPYRIGHTS, true));
+    return myUi.getPanel();
   }
 
   @Override
   protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
-    PropertiesComponent.getInstance().setValue(UPDATE_EXISTING_COPYRIGHTS, String.valueOf(myUpdateExistingCopyrightsCb.isSelected()), "true");
-    Task.Backgroundable task = new UpdateCopyrightTask(project, scope, myUpdateExistingCopyrightsCb.isSelected(), PerformInBackgroundOption.ALWAYS_BACKGROUND);
+    PropertiesComponent.getInstance().setValue(UPDATE_EXISTING_COPYRIGHTS, String.valueOf(myUi.getUpdateExistingCopyrightsCb().isSelected()), "true");
+    Task.Backgroundable task = new UpdateCopyrightTask(project, scope, myUi.getUpdateExistingCopyrightsCb().isSelected(), PerformInBackgroundOption.ALWAYS_BACKGROUND);
     ProgressManager.getInstance().run(task);
   }
 

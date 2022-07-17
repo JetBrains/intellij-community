@@ -61,8 +61,8 @@ class JavaOccurrencesLesson
 
     task("Find") {
       text(JavaLessonsBundle.message("java.find.occurrences.invoke.find", code("cellphone"), action(it)))
-      triggerByUiComponentAndHighlight(false, false) { _: SearchTextArea -> true }
-      restoreIfModifiedOrMoved()
+      triggerUI().component { _: SearchTextArea -> true }
+      restoreIfModifiedOrMoved(sample)
       test { actions(it) }
     }
     task("FindNext") {
@@ -102,4 +102,9 @@ class JavaOccurrencesLesson
     }
     text(JavaLessonsBundle.message("java.find.occurrences.note.about.cyclic", action("FindNext"), action("FindPrevious")))
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(JavaLessonsBundle.message("java.find.help.link"),
+         LessonUtil.getHelpLink("finding-and-replacing-text-in-file.html")),
+  )
 }

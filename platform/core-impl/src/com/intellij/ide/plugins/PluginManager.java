@@ -1,16 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,9 +19,13 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.AbstractList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @Service
 public final class PluginManager {
@@ -34,24 +39,6 @@ public final class PluginManager {
   private PluginManager() {}
 
   /**
-   * @deprecated Use {@link DisabledPluginsState#addDisablePluginListener} directly
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void addDisablePluginListener(@NotNull Runnable listener) {
-    DisabledPluginsState.addDisablePluginListener(listener);
-  }
-
-  /**
-   * @deprecated Use {@link DisabledPluginsState#removeDisablePluginListener} directly
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void removeDisablePluginListener(@NotNull Runnable listener) {
-    DisabledPluginsState.removeDisablePluginListener(listener);
-  }
-
-  /**
    * @return file with list of once installed plugins if it exists, null otherwise
    */
   public static @Nullable Path getOnceInstalledIfExists() {
@@ -63,7 +50,7 @@ public final class PluginManager {
    * @deprecated In a plugin code simply throw error or log using {@link Logger#error(Throwable)}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static void processException(@NotNull Throwable t) {
     try {
       Class<?> aClass = PluginManager.class.getClassLoader().loadClass("com.intellij.ide.plugins.StartupAbortedException");
@@ -92,16 +79,32 @@ public final class PluginManager {
     return PluginManagerCore.isPluginInstalled(id);
   }
 
+  public static @Nullable PluginDescriptor getPluginByClass(@NotNull Class<?> aClass) {
+    ClassLoader loader = aClass.getClassLoader();
+    return loader instanceof PluginAwareClassLoader ? ((PluginAwareClassLoader)loader).getPluginDescriptor() : null;
+  }
+
+  /**
+   * @deprecated Use {@link #getPluginByClass}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @Nullable PluginId getPluginByClassName(@NotNull String className) {
-    return PluginManagerCore.getPluginByClassName(className);
+    return getPluginByClassNameAsNoAccessToClass(className);
+  }
+
+  /**
+   * Use only if {@link Class} is not available.
+   */
+  @ApiStatus.Internal
+  public static @Nullable PluginId getPluginByClassNameAsNoAccessToClass(@NotNull String className) {
+    PluginDescriptor result = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(className);
+    PluginId id = result == null ? null : result.getPluginId();
+    return (id == null || PluginManagerCore.CORE_ID.equals(id)) ? null : id;
   }
 
   public static @NotNull List<? extends IdeaPluginDescriptor> getLoadedPlugins() {
     return PluginManagerCore.getLoadedPlugins();
-  }
-
-  public @Nullable PluginId getPluginOrPlatformByClassName(@NotNull String className) {
-    return PluginManagerCore.getPluginOrPlatformByClassName(className);
   }
 
   /**
@@ -109,7 +112,7 @@ public final class PluginManager {
    * {@link DisabledPluginsState#disabledPlugins()} to get an unmodifiable collection of all disabled plugins (rarely needed).
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull List<String> getDisabledPlugins() {
     Set<PluginId> list = DisabledPluginsState.disabledPlugins();
     return new AbstractList<String>() {
@@ -144,37 +147,28 @@ public final class PluginManager {
   }
 
   /**
-   * @deprecated Use {@link DisabledPluginsState#enablePluginsById(Collection, boolean)}
+   * @deprecated Use {@link PluginManagerCore#enablePlugin(PluginId)}
    */
   @Deprecated
   public static boolean enablePlugin(@NotNull String id) {
     return PluginManagerCore.enablePlugin(PluginId.getId(id));
   }
 
-  /**
-   * Consider using {@link DisabledPluginsState#enablePluginsById(Collection, boolean)}.
-   */
   public boolean enablePlugin(@NotNull PluginId id) {
     return PluginManagerCore.enablePlugin(id);
   }
 
+  /**
+   * @deprecated Use own logger.
+   */
+  @Deprecated
   @ApiStatus.Internal
   public static @NotNull Logger getLogger() {
     return PluginManagerCore.getLogger();
   }
 
   public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
-    List<IdeaPluginDescriptorImpl> result = PluginManagerCore.getLoadedPlugins(null);
-    for (IdeaPluginDescriptor plugin : result) {
-      if (id.equals(plugin.getPluginId())) {
-        return plugin;
-      }
-    }
-    return null;
-  }
-
-  public boolean hideImplementationDetails() {
-    return !Registry.is("plugins.show.implementation.details");
+    return PluginManagerCore.getPluginSet().findEnabledPlugin(id);
   }
 
   public @NotNull Disposable createDisposable(@NotNull Class<?> requestor) {
@@ -218,5 +212,15 @@ public final class PluginManager {
 
     Matcher matcher = EXPLICIT_BIG_NUMBER_PATTERN.matcher(build);
     return matcher.matches() ? (matcher.group(1) + ".*") : build;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Stream<IdeaPluginDescriptorImpl> getVisiblePlugins(boolean showImplementationDetails) {
+    ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
+    return PluginManagerCore.getPluginSet()
+      .allPlugins
+      .stream()
+      .filter(descriptor -> !applicationInfo.isEssentialPlugin(descriptor.getPluginId()))
+      .filter(descriptor -> showImplementationDetails || !descriptor.isImplementationDetail());
   }
 }

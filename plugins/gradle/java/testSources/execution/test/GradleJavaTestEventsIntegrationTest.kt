@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test
 
 import com.intellij.openapi.externalSystem.model.task.*
@@ -6,16 +6,17 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskEx
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.runAll
+import com.intellij.testFramework.common.runAll
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Condition
 import org.jetbrains.plugins.gradle.GradleManager
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
+import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 
@@ -173,10 +174,10 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
     else {
       assertThat(testListener.eventLog)
         .contains(
-          "<descriptor name='testFail' className='my.pack.AClassTest' />",
-          "<descriptor name='testSuccess' className='my.pack.AClassTest' />")
+          "<descriptor name='testFail' displayName='testFail' className='my.pack.AClassTest' />",
+          "<descriptor name='testSuccess' displayName='testSuccess' className='my.pack.AClassTest' />")
         .doesNotContain(
-          "<descriptor name='testSuccess' className='my.otherpack.AClassTest' />")
+          "<descriptor name='testSuccess' displayName='testSuccess' className='my.otherpack.AClassTest' />")
         .doesNotContain(
           "Attempt to resolve configuration too early")
     }
@@ -214,9 +215,9 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
                                        testListener)
 
     assertThat(testListener.eventLog)
-      .contains("<descriptor name='testSuccess' className='my.otherpack.AClassTest' />")
-      .doesNotContain("<descriptor name='testFail' className='my.pack.AClassTest' />",
-                      "<descriptor name='testSuccess' className='my.pack.AClassTest' />")
+      .contains("<descriptor name='testSuccess' displayName='testSuccess' className='my.otherpack.AClassTest' />")
+      .doesNotContain("<descriptor name='testFail' displayName='testFail' className='my.pack.AClassTest' />",
+                      "<descriptor name='testSuccess' displayName='testSuccess' className='my.pack.AClassTest' />")
   }
 
   private fun `test events use display name`() {
@@ -243,8 +244,13 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
         .contains("my.otherpack.ADisplayNamedTest\$successful_test()" to "successful test")
     }
     else {
-      assertThat(testListener.eventLog)
-        .contains("<descriptor name='successful test' className='my.otherpack.ADisplayNamedTest' />")
+      if (GradleVersionComparator(currentGradleVersion).isOrGreaterThan("4.10.3")) {
+        assertThat(testListener.eventLog)
+          .contains("<descriptor name='successful_test()' displayName='successful test' className='my.otherpack.ADisplayNamedTest' />")
+      } else {
+        assertThat(testListener.eventLog)
+          .contains("<descriptor name='successful test' displayName='successful test' className='my.otherpack.ADisplayNamedTest' />")
+      }
     }
 
   }

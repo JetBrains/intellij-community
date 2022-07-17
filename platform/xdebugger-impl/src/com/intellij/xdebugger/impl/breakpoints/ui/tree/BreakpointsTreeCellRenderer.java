@@ -40,7 +40,7 @@ class BreakpointsTreeCellRenderer  {
       breakpoint.setupRenderer(renderer, project, selected);
     }
     else if (value instanceof BreakpointsGroupNode) {
-      XBreakpointGroup group = ((BreakpointsGroupNode)value).getGroup();
+      XBreakpointGroup group = ((BreakpointsGroupNode<?>)value).getGroup();
       renderer.setIcon(group.getIcon(expanded));
       if (group instanceof XBreakpointCustomGroup && ((XBreakpointCustomGroup)group).isDefault()) {
         renderer.append(group.getName(), SIMPLE_CELL_ATTRIBUTES_BOLD);

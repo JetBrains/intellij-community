@@ -2,10 +2,11 @@
 
 package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.refactoring.classMembers.DependencyMemberInfoModel
 import com.intellij.refactoring.classMembers.MemberInfoBase
 import com.intellij.refactoring.classMembers.MemberInfoModel
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.utils.ifEmpty
@@ -16,11 +17,13 @@ class KotlinInterfaceDependencyMemberInfoModel<T : KtNamedDeclaration, M : Membe
     init {
         setTooltipProvider { memberInfo ->
             val dependencies = myMemberDependencyGraph.getDependenciesOf(memberInfo.member).ifEmpty { return@setTooltipProvider null }
-            buildString {
+            @NlsSafe
+            val text = buildString {
                 append(KotlinBundle.message("interface.member.dependency.required.by.interfaces", dependencies.size))
                 append(" ")
                 dependencies.joinTo(this) { it.name ?: "" }
             }
+            text
         }
     }
 

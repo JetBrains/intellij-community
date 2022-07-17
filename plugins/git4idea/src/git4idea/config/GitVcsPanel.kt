@@ -10,34 +10,32 @@ import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsEnvCustomizer
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
-import com.intellij.ui.*
+import com.intellij.ui.EnumComboBoxModel
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.fields.ExpandableTextField
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.VcsExecutablePathSelector
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
@@ -46,6 +44,7 @@ import com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
+import git4idea.config.GitExecutableSelectorPanel.Companion.createGitExecutableSelectorRow
 import git4idea.config.gpg.GpgSignConfigurableRow.Companion.createGpgSignRow
 import git4idea.i18n.GitBundle.message
 import git4idea.index.canEnableStagingArea
@@ -53,8 +52,6 @@ import git4idea.index.enableStagingArea
 import git4idea.repo.GitRepositoryManager
 import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
-import org.jetbrains.annotations.CalledInAny
-import java.awt.Color
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import javax.swing.border.Border
@@ -95,183 +92,42 @@ internal class GitVcsPanel(private val project: Project) :
   BoundCompositeConfigurable<UnnamedConfigurable>(message("settings.git.option.group"), "project.propVCSSupport.VCSs.Git"),
   SearchableConfigurable {
 
-  private val projectSettings by lazy { GitVcsSettings.getInstance(project) }
+  private val projectSettings get() = GitVcsSettings.getInstance(project)
 
-  @Volatile
-  private var versionCheckRequested = false
-
-  private val currentUpdateInfoFilterProperties = MyLogProperties(project.service<GitUpdateProjectInfoLogProperties>())
-
-  private val pathSelector: VcsExecutablePathSelector by lazy {
-    VcsExecutablePathSelector(GitVcs.NAME, disposable!!, object : VcsExecutablePathSelector.ExecutableHandler {
-      override fun patchExecutable(executable: String): String? {
-        return GitExecutableDetector.patchExecutablePath(executable)
-      }
-
-      override fun testExecutable(executable: String) {
-        testGitExecutable(executable)
-      }
-    })
+  private fun Panel.branchUpdateInfoRow() {
+    row(message("settings.explicitly.check")) {
+      comboBox(EnumComboBoxModel(GitIncomingCheckStrategy::class.java))
+        .bindItem({
+                    projectSettings.incomingCheckStrategy
+                  },
+                  { selectedStrategy ->
+                    projectSettings.incomingCheckStrategy = selectedStrategy as GitIncomingCheckStrategy
+                    if (!project.isDefault) {
+                      GitBranchIncomingOutgoingManager.getInstance(project).updateIncomingScheduling()
+                    }
+                  })
+    }.enabledIf(AdvancedSettingsPredicate("git.update.incoming.outgoing.info", disposable!!))
   }
 
-  private fun testGitExecutable(pathToGit: String) {
-    val modalityState = ModalityState.stateForComponent(pathSelector.mainPanel)
-    val errorNotifier = InlineErrorNotifierFromSettings(
-      GitExecutableInlineComponent(pathSelector.errorComponent, modalityState, null),
-      modalityState, disposable!!
-    )
-
-    object : Task.Modal(project, message("git.executable.version.progress.title"), true) {
-      private lateinit var gitVersion: GitVersion
-
-      override fun run(indicator: ProgressIndicator) {
-        val executableManager = GitExecutableManager.getInstance()
-        val executable = executableManager.getExecutable(pathToGit)
-        executableManager.dropVersionCache(executable)
-        gitVersion = executableManager.identifyVersion(executable)
+  private fun Panel.protectedBranchesRow() {
+    row(message("settings.protected.branched")) {
+      val sharedSettings = gitSharedSettings(project)
+      val protectedBranchesField =
+        ExpandableTextFieldWithReadOnlyText(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER)
+      if (sharedSettings.isSynchronizeBranchProtectionRules) {
+        protectedBranchesField.readOnlyText = ParametersListUtil.COLON_LINE_JOINER.`fun`(sharedSettings.additionalProhibitedPatterns)
       }
-
-      override fun onThrowable(error: Throwable) {
-        val problemHandler = findGitExecutableProblemHandler(project)
-        problemHandler.showError(error, errorNotifier)
-      }
-
-      override fun onSuccess() {
-        if (gitVersion.isSupported) {
-          errorNotifier.showMessage(message("git.executable.version.is", gitVersion.presentation))
-        }
-        else {
-          showUnsupportedVersionError(project, gitVersion, errorNotifier)
-        }
-      }
-    }.queue()
-  }
-
-  private inner class InlineErrorNotifierFromSettings(inlineComponent: InlineComponent,
-                                                      private val modalityState: ModalityState,
-                                                      disposable: Disposable) :
-    InlineErrorNotifier(inlineComponent, modalityState, disposable) {
-    @CalledInAny
-    override fun showError(text: String, description: String?, fixOption: ErrorNotifier.FixOption?) {
-      if (fixOption is ErrorNotifier.FixOption.Configure) {
-        super.showError(text, description, null)
-      }
-      else {
-        super.showError(text, description, fixOption)
-      }
+      cell(protectedBranchesField)
+        .horizontalAlign(HorizontalAlign.FILL)
+        .bind<List<String>>(
+          { ParametersListUtil.COLON_LINE_PARSER.`fun`(it.text) },
+          { component, value -> component.text = ParametersListUtil.COLON_LINE_JOINER.`fun`(value) },
+          MutableProperty(
+            { sharedSettings.forcePushProhibitedPatterns },
+            { sharedSettings.forcePushProhibitedPatterns = it })
+        )
     }
-
-    override fun resetGitExecutable() {
-      super.resetGitExecutable()
-      GitExecutableManager.getInstance().getDetectedExecutable(project) // populate cache
-      invokeAndWaitIfNeeded(modalityState) {
-        resetPathSelector()
-      }
-    }
-  }
-
-  private fun getCurrentExecutablePath(): String? = pathSelector.currentPath?.takeIf { it.isNotBlank() }
-
-  private fun RowBuilder.gitExecutableRow() = row {
-    pathSelector.mainPanel(growX)
-      .onReset {
-        resetPathSelector()
-      }
-      .onIsModified {
-        val projectSettingsPathToGit = projectSettings.pathToGit
-        val currentPath = getCurrentExecutablePath()
-        if (pathSelector.isOverridden) {
-          currentPath != projectSettingsPathToGit
-        }
-        else {
-          currentPath != applicationSettings.savedPathToGit || projectSettingsPathToGit != null
-        }
-      }
-      .onApply {
-        val executablePathOverridden = pathSelector.isOverridden
-        val currentPath = getCurrentExecutablePath()
-        if (executablePathOverridden) {
-          projectSettings.pathToGit = currentPath
-        }
-        else {
-          applicationSettings.setPathToGit(currentPath)
-          projectSettings.pathToGit = null
-        }
-
-        validateExecutableOnceAfterClose()
-        VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
-      }
-  }
-
-  private fun resetPathSelector() {
-    val projectSettingsPathToGit = projectSettings.pathToGit
-    val detectedExecutable = try {
-      GitExecutableManager.getInstance().getDetectedExecutable(project)
-    }
-    catch (e: ProcessCanceledException) {
-      GitExecutableDetector.getDefaultExecutable()
-    }
-    pathSelector.reset(applicationSettings.savedPathToGit,
-                       projectSettingsPathToGit != null,
-                       projectSettingsPathToGit,
-                       detectedExecutable)
-  }
-
-  /**
-   * Special method to check executable after it has been changed through settings
-   */
-  private fun validateExecutableOnceAfterClose() {
-    if (versionCheckRequested) return
-    versionCheckRequested = true
-
-    runInEdt(ModalityState.NON_MODAL) {
-      versionCheckRequested = false
-
-      runBackgroundableTask(message("git.executable.version.progress.title"), project, true) {
-        GitExecutableManager.getInstance().testGitExecutableVersionValid(project)
-      }
-    }
-  }
-
-  private fun RowBuilder.branchUpdateInfoRow() {
-    row {
-      cell {
-        label(message("settings.explicitly.check") + " ")
-        comboBox(
-          EnumComboBoxModel(GitIncomingCheckStrategy::class.java),
-          {
-            projectSettings.incomingCheckStrategy
-          },
-          { selectedStrategy ->
-            projectSettings.incomingCheckStrategy = selectedStrategy as GitIncomingCheckStrategy
-            if (!project.isDefault) {
-              GitBranchIncomingOutgoingManager.getInstance(project).updateIncomingScheduling()
-            }
-          })
-      }
-      enableIf(AdvancedSettingsPredicate("git.update.incoming.outgoing.info", disposable!!))
-    }
-  }
-
-  private fun RowBuilder.protectedBranchesRow() {
-    row {
-      cell {
-        label(message("settings.protected.branched"))
-        val sharedSettings = gitSharedSettings(project)
-        val protectedBranchesField =
-          ExpandableTextFieldWithReadOnlyText(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER)
-        if (sharedSettings.isSynchronizeBranchProtectionRules) {
-          protectedBranchesField.readOnlyText = ParametersListUtil.COLON_LINE_JOINER.`fun`(sharedSettings.additionalProhibitedPatterns)
-        }
-        protectedBranchesField(growX)
-          .withBinding<List<String>>(
-            { ParametersListUtil.COLON_LINE_PARSER.`fun`(it.text) },
-            { component, value -> component.text = ParametersListUtil.COLON_LINE_JOINER.`fun`(value) },
-            PropertyBinding(
-              { sharedSettings.forcePushProhibitedPatterns },
-              { sharedSettings.forcePushProhibitedPatterns = it })
-          )
-      }
+    indent {
       row {
         checkBox(synchronizeBranchProtectionRules(project))
       }
@@ -285,11 +141,11 @@ internal class GitVcsPanel(private val project: Project) :
   }
 
   override fun createPanel(): DialogPanel = panel {
-    gitExecutableRow()
-    titledRow(message("settings.commit.group.title")) {
+    createGitExecutableSelectorRow(project, disposable!!)
+    group(message("settings.commit.group.title")) {
       row {
         checkBox(cdEnableStagingArea)
-          .enableIf(StagingAreaAvailablePredicate(project, disposable!!))
+          .enabledIf(StagingAreaAvailablePredicate(project, disposable!!))
       }
       row {
         checkBox(cdWarnAboutCrlf(project))
@@ -303,103 +159,89 @@ internal class GitVcsPanel(private val project: Project) :
       createGpgSignRow(project, disposable!!)
     }
 
-    titledRow(message("settings.push.group.title")) {
+    group(message("settings.push.group.title")) {
       row {
         checkBox(cdAutoUpdateOnPush(project))
       }
+      lateinit var previewPushOnCommitAndPush: Cell<JBCheckBox>
       row {
-        val previewPushOnCommitAndPush = checkBox(cdShowCommitAndPushDialog(project))
+        previewPushOnCommitAndPush = checkBox(cdShowCommitAndPushDialog(project))
+      }
+      indent {
         row {
           checkBox(cdHidePushDialogForNonProtectedBranches(project))
-            .enableIf(previewPushOnCommitAndPush.selected)
+            .enabledIf(previewPushOnCommitAndPush.selected)
         }
       }
       protectedBranchesRow()
     }
 
-    titledRow(message("settings.update.group.title")) {
-      row {
-        cell {
-          label(message("settings.update.method"))
-          comboBox(
-            CollectionComboBoxModel(getUpdateMethods()),
-            { projectSettings.updateMethod },
-            { projectSettings.updateMethod = it!! },
-            renderer = SimpleListCellRenderer.create<UpdateMethod>("", UpdateMethod::getName)
-          )
-        }
-      }
-      row {
-        cell {
-          label(message("settings.clean.working.tree"))
-          buttonGroup({ projectSettings.saveChangesPolicy }, { projectSettings.saveChangesPolicy = it }) {
-            GitSaveChangesPolicy.values().forEach { saveSetting ->
-              radioButton(saveSetting.text, saveSetting)
-            }
+    group(message("settings.update.group.title")) {
+      buttonsGroup {
+        row(message("settings.update.method")) {
+          getUpdateMethods().forEach { saveSetting ->
+            radioButton(saveSetting.methodName, saveSetting)
           }
-        }
-      }
-      row {
-        checkBox(cdAutoUpdateOnPush(project))
+        }.layout(RowLayout.INDEPENDENT)
+      }.bind({ projectSettings.updateMethod }, { projectSettings.updateMethod = it })
+      buttonsGroup {
+        row(message("settings.clean.working.tree")) {
+          GitSaveChangesPolicy.values().forEach { saveSetting ->
+            radioButton(saveSetting.text, saveSetting)
+          }
+        }.layout(RowLayout.INDEPENDENT)
+      }.bind({ projectSettings.saveChangesPolicy }, { projectSettings.saveChangesPolicy = it })
+      if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
+        updateProjectInfoFilter()
       }
     }
 
     if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
       row {
-        checkBox(cdSyncBranches(project)).applyToComponent {
-          toolTipText = DvcsBundle.message("sync.setting.description", GitVcs.DISPLAY_NAME.get())
-        }
+        checkBox(cdSyncBranches(project))
+          .gap(RightGap.SMALL)
+        contextHelp(DvcsBundle.message("sync.setting.description", GitVcs.DISPLAY_NAME.get()))
       }
     }
     branchUpdateInfoRow()
     row {
-      val previewPushOnCommitAndPush = checkBox(cdShowCommitAndPushDialog(project))
-      row {
-        checkBox(cdHidePushDialogForNonProtectedBranches(project))
-          .enableIf(previewPushOnCommitAndPush.selected)
-      }
-    }
-    row {
       checkBox(cdOverrideCredentialHelper)
     }
     for (configurable in configurables) {
-      appendDslConfigurableRow(configurable)
-    }
-
-    if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
-      updateProjectInfoFilter()
+      appendDslConfigurable(configurable)
     }
   }
 
-  private fun RowBuilder.updateProjectInfoFilter() {
-    row {
-      cell {
-        val storedProperties = project.service<GitUpdateProjectInfoLogProperties>()
-        val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toSet()
-        val model = VcsLogClassicFilterUi.FileFilterModel(roots, currentUpdateInfoFilterProperties, null)
-        val component = object : StructureFilterPopupComponent(currentUpdateInfoFilterProperties, model, VcsLogColorManagerImpl(roots)) {
-          override fun shouldDrawLabel(): Boolean = false
-          override fun shouldIndicateHovering(): Boolean = false
-          override fun getDefaultSelectorForeground(): Color = UIUtil.getLabelForeground()
-          override fun createUnfocusedBorder(): Border {
-            return FilledRoundedBorder(JBColor.namedColor("Component.borderColor", Gray.xBF), ARC_SIZE, 1)
-          }
-        }.initUi()
+  private fun Panel.updateProjectInfoFilter() {
+    val currentUpdateInfoFilterProperties = MyLogProperties(project.service())
+    row(message("settings.filter.update.info")) {
+      val storedProperties = project.service<GitUpdateProjectInfoLogProperties>()
+      val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toSet()
+      val model = VcsLogClassicFilterUi.FileFilterModel(roots, currentUpdateInfoFilterProperties, null)
+      val component = object : StructureFilterPopupComponent(currentUpdateInfoFilterProperties, model, VcsLogColorManagerImpl(roots)) {
+        override fun shouldDrawLabel(): Boolean = false
+        override fun shouldIndicateHovering(): Boolean = false
 
-        label(message("settings.filter.update.info") + " ")
+        override fun getEmptyFilterValue(): String {
+          return ALL_ACTION_TEXT.get()
+        }
 
-        component()
-          .onIsModified {
-            storedProperties.getFilterValues(STRUCTURE_FILTER.name) != currentUpdateInfoFilterProperties.structureFilter
-          }
-          .onApply {
-            storedProperties.saveFilterValues(STRUCTURE_FILTER.name, currentUpdateInfoFilterProperties.structureFilter)
-          }
-          .onReset {
-            currentUpdateInfoFilterProperties.structureFilter = storedProperties.getFilterValues(STRUCTURE_FILTER.name)
-            model.updateFilterFromProperties()
-          }
-      }
+        override fun createUnfocusedBorder(): Border {
+          return FilledRoundedBorder(JBColor.namedColor("Component.borderColor", Gray.xBF), ARC_SIZE, BORDER_SIZE, true)
+        }
+      }.initUi()
+
+      cell(component)
+        .onIsModified {
+          storedProperties.getFilterValues(STRUCTURE_FILTER.name) != currentUpdateInfoFilterProperties.structureFilter
+        }
+        .onApply {
+          storedProperties.saveFilterValues(STRUCTURE_FILTER.name, currentUpdateInfoFilterProperties.structureFilter)
+        }
+        .onReset {
+          currentUpdateInfoFilterProperties.structureFilter = storedProperties.getFilterValues(STRUCTURE_FILTER.name)
+          model.updateFilterFromProperties()
+        }
     }
   }
 

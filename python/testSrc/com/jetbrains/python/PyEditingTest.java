@@ -897,6 +897,121 @@ public class PyEditingTest extends PyTestCase {
     doTypingTest('\n');
   }
 
+  // PY-42200
+  public void testParenthesizedWithItemsEnterBeforeExistingItem() {
+    doTestEnter("with (<caret>foo() as baz,\n" +
+                "      foo() as bar\n" +
+                "):\n" +
+                "    pass",
+                "with (\n" +
+                "    foo() as baz,\n" +
+                "      foo() as bar\n" +
+                "):\n" +
+                "    pass");
+
+    doTestEnter("with (\n" +
+                "    foo() as baz,<caret>foo() as bar\n" +
+                "):\n" +
+                "    pass",
+                "with (\n" +
+                "    foo() as baz,\n" +
+                "    foo() as bar\n" +
+                "):\n" +
+                "    pass");
+
+    doTestEnter("with (foo() as baz,<caret>foo() as bar):\n" +
+                "    pass",
+                "with (foo() as baz,\n" +
+                "      foo() as bar):\n" +
+                "    pass");
+  }
+
+  // PY-42200
+  public void testParenthesizedWithItemsEnterBeforeClosingParenthesis() {
+    doTestEnter("with (foo(), \n" +
+                "      foo()<caret>):\n" +
+                "     pass",
+                "with (foo(), \n" +
+                "      foo()\n" +
+                "      <caret>):\n" +
+                "     pass");
+
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = false;
+    doTestEnter("with (\n" +
+                "    foo() as baz,\n" +
+                "    foo() as bar<caret>):\n" +
+                "    pass",
+                "with (\n" +
+                "    foo() as baz,\n" +
+                "    foo() as bar\n" +
+                "):\n" +
+                "    pass");
+
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTestEnter("with (\n" +
+                "    foo() as baz,\n" +
+                "    foo() as bar<caret>):\n" +
+                "    pass",
+                "with (\n" +
+                "    foo() as baz,\n" +
+                "    foo() as bar\n" +
+                "    ):\n" +
+                "    pass");
+  }
+
+  // PY-42200
+  public void testParenthesizedWithItemsEnterBeforeNonExistingItem() {
+    doTestEnter("with (foo(),<caret>\n" +
+                "      bar()):\n" +
+                "    pass",
+                "with (foo(),\n" +
+                "      <caret>\n" +
+                "      bar()):\n" +
+                "    pass");
+
+    doTestEnter("with (\n" +
+                "    foo(),<caret>\n" +
+                "    bar()\n" +
+                "):\n" +
+                "    pass",
+                "with (\n" +
+                "    foo(),\n" +
+                "    <caret>\n" +
+                "    bar()\n" +
+                "):\n" +
+                "    pass");
+  }
+
+  // PY-42200
+  public void testParenthesizedWithItemsEnterBeforeComment() {
+    doTestEnter("with (\n" +
+                "    foo(),<caret># comment\n" +
+                "    bar()\n" +
+                "):\n" +
+                "    pass",
+                "with (\n" +
+                "    foo(),\n" +
+                "    <caret># comment\n" +
+                "    bar()\n" +
+                "):\n" +
+                "    pass");
+
+    doTestEnter("with (foo(),<caret># comment\n" +
+                "      bar()):\n" +
+                "    pass",
+                "with (foo(),\n" +
+                "      <caret># comment\n" +
+                "      bar()):\n" +
+                "    pass");
+  }
+
+  // PY-42200
+  public void testParenthesizedWithItemsEnterBeforeStatementList() {
+    doTestEnter("with (foo(), foo()):<caret>",
+                "with (foo(), foo()):\n" +
+                "    <caret>");
+  }
+
   @NotNull
   private PyCodeStyleSettings getPythonCodeStyleSettings() {
     return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);

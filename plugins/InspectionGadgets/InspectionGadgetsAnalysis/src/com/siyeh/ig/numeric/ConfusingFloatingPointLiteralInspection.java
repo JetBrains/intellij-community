@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ConfusingFloatingPointLiteralInspection extends BaseInspection {
+public class ConfusingFloatingPointLiteralInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreScientificNotation = false;
@@ -55,9 +56,7 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    if (ignoreScientificNotation) {
-      node.addContent(new Element("option").setAttribute("name", "ignoreScientificNotation").setAttribute("value", "true"));
-    }
+    writeBooleanOption(node, "ignoreScientificNotation", false);
   }
 
   @Override

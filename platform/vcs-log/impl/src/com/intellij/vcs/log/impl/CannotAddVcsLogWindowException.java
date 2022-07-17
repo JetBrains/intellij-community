@@ -2,9 +2,10 @@
 package com.intellij.vcs.log.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CannotAddVcsLogWindowException extends RuntimeException {
-  public CannotAddVcsLogWindowException(@NotNull String message) {
-    super(message);
+  public CannotAddVcsLogWindowException(@NotNull String message, @Nullable Throwable cause) {
+    super(message, cause);
   }
 }

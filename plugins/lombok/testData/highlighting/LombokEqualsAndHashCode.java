@@ -8,7 +8,7 @@ public class LombokEqualsAndHashCode {
   }
 
   @Data
-  @EqualsAndHashCode(callSuper = true, doNotUseGetters = true)
+  @EqualsAndHashCode(callSuper = true, doNotUseGetters = true, of = {})
   static class Child1 extends Parent {
     private float f;
   }

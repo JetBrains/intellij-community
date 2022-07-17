@@ -23,7 +23,7 @@ class KotlinClassTooltipLinkHandler : TooltipLinkHandler() {
             module?.let { GlobalSearchScope.moduleScope(it) } ?: GlobalSearchScope.allScope(project)
         }
         // Non-JVM classes cannot be found with Java PSI Facade
-        val aClassElement = KotlinFullClassNameIndex.getInstance().get(qualifiedName, project, scope).firstOrNull()
+        val aClassElement = KotlinFullClassNameIndex.get(qualifiedName, project, scope).firstOrNull()
             ?: javaPsiFacade.findClass(qualifiedName, scope)
             ?: return false
         NavigationUtil.activateFileWithPsiElement(aClassElement)

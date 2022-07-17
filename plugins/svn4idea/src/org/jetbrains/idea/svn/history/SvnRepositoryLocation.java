@@ -15,7 +15,7 @@ public final class SvnRepositoryLocation implements RepositoryLocation {
   @Nullable private final Url myRepositoryUrl;
   @Nullable private final FilePath myRoot;
 
-  public SvnRepositoryLocation(final String url) {
+  public SvnRepositoryLocation(@NotNull String url) {
     myUrl = null;
     myUrlValue = url;
     myRepositoryUrl = null;
@@ -38,7 +38,7 @@ public final class SvnRepositoryLocation implements RepositoryLocation {
   }
 
   @Override
-  public String toPresentableString() {
+  public @NotNull String toPresentableString() {
     return myUrlValue;
   }
 

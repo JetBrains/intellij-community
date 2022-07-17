@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'toSet()'"
 // IS_APPLICABLE_2: false
 import java.util.HashSet

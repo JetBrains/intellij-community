@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
@@ -54,6 +54,8 @@ public abstract class CreateClassActionBase extends Intention {
         return GroovyBundle.message("create.interface.text", referenceName);
       case ANNOTATION:
         return GroovyBundle.message("create.annotation.text", referenceName);
+      case RECORD:
+        return GroovyBundle.message("create.record.text", referenceName);
       default:
         return "";
     }

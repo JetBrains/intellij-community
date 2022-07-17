@@ -2,6 +2,7 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -10,6 +11,7 @@ import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +33,7 @@ final class ActivateNavigationBarAction extends AnAction implements DumbAware {
       return;
     }
 
-    IdeRootPaneNorthExtension navBar = ideRootPane.findByName(NavBarRootPaneExtension.NAV_BAR);
+    IdeRootPaneNorthExtension navBar = ideRootPane.findByName(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
     if (navBar == null) {
       return;
     }
@@ -48,5 +50,10 @@ final class ActivateNavigationBarAction extends AnAction implements DumbAware {
     UISettings settings = UISettings.getInstance();
     final boolean enabled = project != null && settings.getShowNavigationBar() && !settings.getPresentationMode();
     e.getPresentation().setEnabled(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

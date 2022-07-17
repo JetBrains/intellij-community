@@ -19,7 +19,7 @@ class OneToAbstractMany<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBas
     if (connectionId == null) {
       connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ABSTRACT_MANY, true)
     }
-    return thisRef.snapshot.extractOneToAbstractManyChildren(connectionId!!, thisRef.id.asParent())
+    return thisRef.snapshot.extractOneToAbstractManyChildren(connectionId!!, thisRef)
   }
 }
 
@@ -34,7 +34,7 @@ class MutableOneToAbstractMany<Parent : WorkspaceEntityBase, Child : WorkspaceEn
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ABSTRACT_MANY, true)
     }
-    return thisRef.diff.extractOneToAbstractManyChildren(connectionId!!, thisRef.id.asParent())
+    return thisRef.diff!!.extractOneToAbstractManyChildren(connectionId!!, thisRef)
   }
 
   override fun setValue(thisRef: ModifParent, property: KProperty<*>, value: Sequence<Child>) {
@@ -44,6 +44,6 @@ class MutableOneToAbstractMany<Parent : WorkspaceEntityBase, Child : WorkspaceEn
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ABSTRACT_MANY, true)
     }
-    thisRef.diff.updateOneToAbstractManyChildrenOfParent(connectionId!!, thisRef.id.asParent(), value)
+    thisRef.diff!!.updateOneToAbstractManyChildrenOfParent(connectionId!!, thisRef, value)
   }
 }

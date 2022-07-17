@@ -14,7 +14,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemDependent;
@@ -22,7 +21,7 @@ import org.jetbrains.annotations.SystemDependent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-@State(name = "GeneralSettings", storages = @Storage(GeneralSettings.IDE_GENERAL_XML), category = ComponentCategory.SYSTEM)
+@State(name = "GeneralSettings", storages = @Storage(GeneralSettings.IDE_GENERAL_XML), category = SettingsCategory.SYSTEM)
 public final class GeneralSettings implements PersistentStateComponent<GeneralSettings> {
   public static final String IDE_GENERAL_XML = "ide.general.xml";
 
@@ -36,7 +35,6 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   public static final String PROP_INACTIVE_TIMEOUT = "inactiveTimeout";
   public static final String PROP_SUPPORT_SCREEN_READERS = "supportScreenReaders";
 
-  public static final String SCREEN_READERS_DETECTED_PROPERTY = "ide.support.screenreaders.detected";
   public static final String SUPPORT_SCREEN_READERS = "ide.support.screenreaders.enabled";
   private static final Boolean SUPPORT_SCREEN_READERS_OVERRIDDEN = getSupportScreenReadersOverridden();
 
@@ -47,7 +45,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   private String myBrowserPath = BrowserUtil.getDefaultAlternativeBrowserPath();
   private boolean myShowTipsOnStartup = Boolean.parseBoolean(System.getProperty(SHOW_TIPS_ON_STARTUP_DEFAULT_VALUE_PROPERTY, "true"));
   private boolean myReopenLastProject = true;
-  private boolean mySupportScreenReaders = ObjectUtils.chooseNotNull(SUPPORT_SCREEN_READERS_OVERRIDDEN, Boolean.getBoolean(SCREEN_READERS_DETECTED_PROPERTY));
+  private boolean mySupportScreenReaders = ObjectUtils.chooseNotNull(SUPPORT_SCREEN_READERS_OVERRIDDEN, false);
   private boolean mySyncOnFrameActivation = true;
   private boolean mySaveOnFrameDeactivation = true;
   private boolean myAutoSaveIfInactive = false;  // If true the IDE automatically saves files if it is inactive for some seconds
@@ -58,7 +56,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
   private boolean myShowWelcomeScreen = true;
-  private int myConfirmOpenNewProject = PlatformUtils.isPyCharmDs() ? OPEN_PROJECT_SAME_WINDOW_ATTACH : OPEN_PROJECT_ASK;
+  private int myConfirmOpenNewProject = PlatformUtils.isDataSpell() ? OPEN_PROJECT_SAME_WINDOW_ATTACH : OPEN_PROJECT_ASK;
   private ProcessCloseConfirmation myProcessCloseConfirmation = ProcessCloseConfirmation.ASK;
   private String myDefaultProjectDirectory = "";
 
@@ -218,8 +216,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
    * @deprecated unused
    */
   @Transient
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean isConfirmExtractFiles() {
     return true;
   }
@@ -227,9 +224,8 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   /**
    * @deprecated unused
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void setConfirmExtractFiles(@SuppressWarnings("unused") boolean value) { }
+  @Deprecated(forRemoval = true)
+  public void setConfirmExtractFiles(boolean value) { }
 
   public boolean isConfirmExit() {
     return myConfirmExit;

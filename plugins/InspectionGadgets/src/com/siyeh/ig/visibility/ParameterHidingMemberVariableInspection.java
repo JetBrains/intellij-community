@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,7 +102,8 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
         return;
       }
       final PsiMethod method = (PsiMethod)declarationScope;
-      if (m_ignoreForConstructors && method.isConstructor()) {
+      if (method.isConstructor() &&
+          (m_ignoreForConstructors || JavaPsiRecordUtil.isCanonicalConstructor(method))) {
         return;
       }
       if (m_ignoreForAbstractMethods) {
@@ -125,35 +125,12 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
           return;
         }
       }
-      final PsiClass aClass = checkFieldName(variable, method);
+      final PsiClass aClass = LocalVariableHidingMemberVariableInspection
+        .findSurroundingClassWithHiddenField(variable, m_ignoreInvisibleFields, m_ignoreStaticMethodParametersHidingInstanceFields);
       if (aClass == null) {
         return;
       }
       registerVariableError(variable, aClass);
-    }
-
-    @Nullable
-    private PsiClass checkFieldName(PsiVariable variable, PsiMethod method) {
-      final String variableName = variable.getName();
-      if (variableName == null) {
-        return null;
-      }
-      PsiClass aClass = ClassUtils.getContainingClass(method);
-      while (aClass != null) {
-        final PsiField field = aClass.findFieldByName(variableName, true);
-        if (field != null &&
-            JavaPsiRecordUtil.getComponentForField(field) == null &&
-            (!m_ignoreStaticMethodParametersHidingInstanceFields ||
-             field.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.STATIC)) &&
-            (!m_ignoreInvisibleFields || ClassUtils.isFieldVisible(field, aClass))) {
-          return aClass;
-        }
-        if (aClass.hasModifierProperty(PsiModifier.STATIC) && m_ignoreStaticMethodParametersHidingInstanceFields) {
-          return null;
-        }
-        aClass = ClassUtils.getContainingClass(aClass);
-      }
-      return null;
     }
   }
 }

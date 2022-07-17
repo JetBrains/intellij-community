@@ -7,8 +7,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.keymap.Keymap
-import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
 import training.dsl.TaskContext
@@ -41,19 +39,6 @@ class LessonManager {
     externalTestActionsExecutor ?: createNamedSingleThreadExecutor("TestLearningPlugin")
   }
 
-  init {
-    val connect = ApplicationManager.getApplication().messageBus.connect()
-    connect.subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
-      override fun activeKeymapChanged(keymap: Keymap?) {
-        learnPanel?.lessonMessagePane?.redrawMessages()
-      }
-
-      override fun shortcutChanged(keymap: Keymap, actionId: String) {
-        learnPanel?.lessonMessagePane?.redrawMessages()
-      }
-    })
-  }
-
   internal fun clearCurrentLesson() {
     currentLesson = null
   }
@@ -62,7 +47,7 @@ class LessonManager {
     val learnPanel = learnPanel ?: error("No learn panel")
     initLesson(null, lesson)
     learnPanel.scrollToNewMessages = false
-    OpenPassedContext(project).apply(lesson.lessonContent)
+    OpenPassedContext(project, lesson).apply(lesson.fullLessonContent)
     learnPanel.scrollRectToVisible(Rectangle(0, 0, 1, 1))
     learnPanel.makeNextButtonSelected()
     learnPanel.learnToolWindow.showGotItAboutRestart()
@@ -73,18 +58,19 @@ class LessonManager {
     currentLessonExecutor = lessonExecutor
   }
 
-  internal fun lessonIsRunning(): Boolean = currentLessonExecutor?.hasBeenStopped?.not() ?: false
+  fun lessonIsRunning(): Boolean = currentLessonExecutor?.hasBeenStopped?.not() ?: false
 
   fun stopLesson() = stopLesson(false)
 
   private fun stopLesson(lessonPassed: Boolean) {
     shownRestoreNotification = null
     currentLessonExecutor?.takeIf { !it.hasBeenStopped }?.let {
-      it.lesson.onStop(it.project, lessonPassed)
       it.stopLesson()
       currentLessonExecutor = null
     }
-    LearningUiHighlightingManager.clearHighlights()
+    if (!lessonPassed) {  // highlights already cleared in case of passed lesson
+      LearningUiHighlightingManager.clearHighlights()
+    }
   }
 
   private fun initLesson(editor: Editor?, cLesson: Lesson) {
@@ -92,15 +78,10 @@ class LessonManager {
     stopLesson()
     currentLesson = cLesson
     learnPanel.reinitMe(cLesson)
-
-    learnPanel.setLessonName(cLesson.name)
-    val module = cLesson.module
-    val moduleName = module.name
-    learnPanel.setModuleName(moduleName)
-    if (cLesson.existedFile == null) {
+    if (cLesson.sampleFilePath == null) {
       clearEditor(editor)
     }
-    LearningUiManager.activeToolWindow?.scrollToTheStart()
+    learnPanel.scrollToTheStart()
   }
 
   fun addMessage(@Language("HTML") text: String,
@@ -127,6 +108,14 @@ class LessonManager {
 
   fun removeMessage(index: Int) {
     learnPanel?.removeMessage(index)
+  }
+
+  fun removeMessageAndRepaint(index: Int) {
+    learnPanel?.let {
+      it.removeMessage(index)
+      it.lessonMessagePane.redrawMessages()
+      it.adjustMessagesArea()
+    }
   }
 
   fun messagesNumber(): Int = learnPanel?.messagesNumber() ?: 0

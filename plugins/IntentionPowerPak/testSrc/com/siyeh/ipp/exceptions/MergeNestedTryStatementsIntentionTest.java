@@ -72,7 +72,7 @@ public class MergeNestedTryStatementsIntentionTest extends IPPTestCase {
       "}");
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed", "TryWithIdenticalCatches"})
   public void testOldStyle() {
     doTest(
       "import java.io.*;\n" +

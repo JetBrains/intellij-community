@@ -1,9 +1,10 @@
 // "Create function 'synchronized'" "false"
-// ACTION: Converts the assignment statement to an expression
 // ACTION: Convert expression to 'Int'
+// ACTION: Converts the assignment statement to an expression
+// ACTION: Do not show implicit receiver and parameter hints
 // ACTION: Round using roundToInt()
 // ERROR: Type mismatch: inferred type is Float but Int was expected
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun test() {
     var value = 0

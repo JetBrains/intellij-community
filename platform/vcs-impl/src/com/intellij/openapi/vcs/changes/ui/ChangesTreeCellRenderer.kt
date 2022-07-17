@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.ui.CellRendererPanel
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate
+import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
@@ -14,7 +16,7 @@ import javax.accessibility.AccessibleRole
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 
-open class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeRenderer) : CellRendererPanel(), TreeCellRenderer {
+open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNodeRenderer) : CellRendererPanel(), TreeCellRenderer {
   private val component = ThreeStateCheckBox()
 
   init {
@@ -40,8 +42,7 @@ open class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeR
     tree as ChangesTree
     value as ChangesBrowserNode<*>
 
-    background = null
-    isSelected = selected
+    customize(this, selected)
 
     textRenderer.apply {
       isOpaque = false
@@ -67,7 +68,11 @@ open class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeR
     val accessibleComponent = component as? Accessible ?: return super.getAccessibleContext()
 
     if (accessibleContext == null) {
-      accessibleContext = object : AccessibleContextDelegate(accessibleComponent.accessibleContext) {
+      accessibleContext = object : AccessibleContextDelegateWithContextMenu(accessibleComponent.accessibleContext) {
+        override fun doShowContextMenu() {
+          ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true)
+        }
+
         override fun getDelegateParent(): Container? = parent
 
         override fun getAccessibleName(): String? {
@@ -92,4 +97,11 @@ open class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeR
   override fun getPreferredSize(): Dimension = layout.preferredLayoutSize(this)
 
   override fun getToolTipText(): String? = textRenderer.toolTipText
+
+  companion object {
+    fun customize(panel: CellRendererPanel, selected: Boolean) {
+      panel.background = null
+      panel.isSelected = selected
+    }
+  }
 }

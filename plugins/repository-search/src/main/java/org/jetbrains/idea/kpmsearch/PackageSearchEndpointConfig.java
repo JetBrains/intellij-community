@@ -6,14 +6,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface PackageSearchEndpointConfig {
-  @Nullable
-  String getFullTextUrl();
+  @Nullable String getFullTextUrl();
 
-  @Nullable
-  String getSuggestUrl();
+  @Nullable String getSuggestUrl();
 
-  @NotNull
-  default String getUserAgent() {
+  default @NotNull String getUserAgent() {
     return ApplicationNamesInfo.getInstance().getProductName() + "/" + ApplicationInfo.getInstance().getFullVersion();
   }
 

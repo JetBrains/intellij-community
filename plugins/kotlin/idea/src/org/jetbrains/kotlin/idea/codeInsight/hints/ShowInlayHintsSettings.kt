@@ -2,17 +2,20 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
+import com.intellij.codeInsight.hints.SettingsKey
+import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
-class ShowInlayHintsSettings : AnAction("Hints Settings...") {
+class ShowInlayHintsSettings(private val providerKey: SettingsKey<*>) : AnAction(KotlinBundle.message("action.hints.settings.text")) {
     override fun actionPerformed(e: AnActionEvent) {
-        val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+        val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
         val fileLanguage = file.language
-        CompatibleInlayHintsConfigurable.showSettingsDialogForLanguage(
+        InlayHintsConfigurable.showSettingsDialogForLanguage(
             file.project,
             fileLanguage
-        )
+        ) { it.id == providerKey.id }
     }
 }

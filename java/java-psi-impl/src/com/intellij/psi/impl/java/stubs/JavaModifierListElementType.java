@@ -36,7 +36,7 @@ class JavaModifierListElementType extends JavaStubElementType<PsiModifierListStu
   }
 
   @Override
-  public @NotNull PsiModifierListStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
+  public @NotNull PsiModifierListStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     return new PsiModifierListStubImpl(parentStub, RecordUtil.packModifierList(tree, node));
   }
 

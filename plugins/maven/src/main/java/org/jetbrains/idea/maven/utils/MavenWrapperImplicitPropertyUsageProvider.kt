@@ -10,11 +10,11 @@ private class MavenWrapperImplicitPropertyUsageProvider : ImplicitPropertyUsageP
   override fun isUsed(property: Property): Boolean {
     val file = property.containingFile.virtualFile
     return nameEqual(file, "maven-wrapper.properties") && nameEqual(file?.parent, "wrapper")
-           && nameEqual(file?.parent?.parent, ".mvn");
+           && nameEqual(file?.parent?.parent, ".mvn")
   }
 
   private fun nameEqual(file: VirtualFile?, name: String): Boolean {
-    if (file == null) return false;
+    if (file == null) return false
     return Comparing.equal(file.name, name, file.isCaseSensitive)
   }
 }

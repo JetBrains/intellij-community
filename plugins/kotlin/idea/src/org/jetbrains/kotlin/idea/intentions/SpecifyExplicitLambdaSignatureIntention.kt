@@ -6,11 +6,13 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtParameterList
@@ -24,7 +26,7 @@ open class SpecifyExplicitLambdaSignatureIntention : SelfTargetingOffsetIndepend
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtLambdaExpression): Boolean {
         if (element.functionLiteral.arrow != null && element.valueParameters.all { it.typeReference != null }) return false
-        val functionDescriptor = element.analyze(BodyResolveMode.PARTIAL)[BindingContext.FUNCTION, element.functionLiteral] ?: return false
+        val functionDescriptor = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)[BindingContext.FUNCTION, element.functionLiteral] ?: return false
         return functionDescriptor.valueParameters.none { it.type.isError }
     }
 
@@ -70,8 +72,9 @@ open class SpecifyExplicitLambdaSignatureIntention : SelfTargetingOffsetIndepend
         fun applyWithParameters(element: KtLambdaExpression, parameterString: String) {
             val psiFactory = KtPsiFactory(element)
             val functionLiteral = element.functionLiteral
-            val newParameterList = psiFactory.createLambdaParameterListIfAny(parameterString)
-            runWriteAction {
+            val newParameterList =
+                (psiFactory.createExpression("{ $parameterString -> }") as KtLambdaExpression).functionLiteral.valueParameterList
+            runWriteActionIfPhysical(element) {
                 functionLiteral.setParameterListIfAny(psiFactory, newParameterList)
                 ShortenReferences.DEFAULT.process(element.valueParameters)
             }

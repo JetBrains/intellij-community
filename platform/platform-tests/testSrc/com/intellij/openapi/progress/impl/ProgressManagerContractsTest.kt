@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.idea.TestFor
@@ -7,10 +7,10 @@ import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
-import org.junit.Ignore
 import java.util.concurrent.atomic.AtomicInteger
 
 class ProgressManagerContractsTest : LightPlatformTestCase() {
@@ -141,7 +141,7 @@ class ProgressManagerContractsTest : LightPlatformTestCase() {
     val taskCompleted = AtomicInteger(0)
 
     //we start a BACKGROUNDABLE task
-    object : Task.Backgroundable(project, "mock", true) {
+    object : Task.Backgroundable(project, "Mock", true) {
       override fun run(indicator: ProgressIndicator) {
         // ensure the messages queue is flushed
         ApplicationManager.getApplication().invokeAndWait {
@@ -185,17 +185,7 @@ class ProgressManagerContractsTest : LightPlatformTestCase() {
     UIUtil.dispatchAllInvocationEvents()
   }
 
-  private inline fun <Y> runWithGuiTasksMode(action: () -> Y): Y {
-    val key = "intellij.progress.task.ignoreHeadless"
-    val prev = System.setProperty(key, "true")
-    try {
-      return action()
-    } finally {
-      if (prev != null) {
-        System.setProperty(key, prev)
-      } else {
-        System.clearProperty(key)
-      }
-    }
+  private fun runWithGuiTasksMode(action: () -> Unit) {
+    PlatformTestUtil.withSystemProperty<Nothing>("intellij.progress.task.ignoreHeadless", "true", action)
   }
 }

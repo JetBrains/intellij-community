@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic
 
@@ -17,14 +17,12 @@ import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionHand
 import org.jetbrains.kotlin.idea.completion.test.handlers.CompletionHandlerTestBase
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
-import org.jetbrains.kotlin.idea.perf.Stats
-import org.jetbrains.kotlin.idea.perf.performanceTest
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
-import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
-import org.jetbrains.kotlin.idea.testFramework.commitAllDocuments
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
+import org.jetbrains.kotlin.idea.perf.util.OutputConfig
+import org.jetbrains.kotlin.idea.performance.tests.utils.commitAllDocuments
+import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.testFramework.Stats
+import org.jetbrains.kotlin.idea.testFramework.performanceTest
 import org.jetbrains.kotlin.utils.addToStdlib.indexOfOrNull
 import java.io.File
 
@@ -32,8 +30,8 @@ import java.io.File
  * inspired by @see AbstractCompletionHandlerTests
  */
 abstract class AbstractPerformanceCompletionHandlerTests(
-    private val defaultCompletionType: CompletionType,
-    private val note: String = ""
+    protected val defaultCompletionType: CompletionType,
+    protected val note: String = ""
 ) : CompletionHandlerTestBase() {
 
     companion object {
@@ -43,12 +41,16 @@ abstract class AbstractPerformanceCompletionHandlerTests(
 
     protected open val statsPrefix = "completion"
 
-    private fun stats(): Stats {
-        val suffix = "${defaultCompletionType.toString().toLowerCase()}${if (note.isNotEmpty()) "-$note" else ""}"
+    protected fun stats(): Stats {
+        val suffix = "${defaultCompletionType.toString().lowercase()}${if (note.isNotEmpty()) "-$note" else ""}"
         return statsMap.computeIfAbsent(suffix) {
-            Stats("$statsPrefix-$suffix")
+            Stats("$statsPrefix-$suffix", outputConfig = outputConfig(), profilerConfig = profilerConfig())
         }
     }
+
+    protected open fun profilerConfig(): ProfilerConfig = ProfilerConfig()
+
+    protected open fun outputConfig(): OutputConfig = OutputConfig()
 
     override fun tearDown() {
         runAll(
@@ -58,7 +60,7 @@ abstract class AbstractPerformanceCompletionHandlerTests(
     }
 
     protected open fun doPerfTest(unused: String) {
-        val testPath = testPath()
+        val testPath = dataFilePath(fileName())
         setUpFixture(testPath)
 
         configureCodeStyleAndRun(project) {
@@ -114,7 +116,7 @@ abstract class AbstractPerformanceCompletionHandlerTests(
         completionChars: String
     ) {
         performanceTest<Unit, Unit> {
-            name(testName())
+            name(name())
             stats(stats())
             setUp {
                 setUpFixture(testPath)
@@ -130,7 +132,7 @@ abstract class AbstractPerformanceCompletionHandlerTests(
         }
     }
 
-    private fun testName(): String {
+    private fun name(): String {
         val javaClass = this.javaClass
         val testName = getTestName(false)
         return if (javaClass.isMemberClass) {
@@ -140,7 +142,7 @@ abstract class AbstractPerformanceCompletionHandlerTests(
         }
     }
 
-    private fun perfTestCore(
+    protected fun perfTestCore(
         completionType: CompletionType,
         time: Int,
         lookupString: String?,

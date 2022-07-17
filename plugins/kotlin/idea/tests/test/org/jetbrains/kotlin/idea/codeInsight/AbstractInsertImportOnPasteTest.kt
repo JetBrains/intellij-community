@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -7,11 +7,11 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.AbstractCopyPasteTest
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
 
 abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
     private val TODO_INVESTIGATE_DIRECTIVE = "// TODO: Investigation is required"
@@ -27,7 +27,7 @@ abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
     }
 
     private fun doTestAction(cutOrCopy: String, unused: String) {
-        val testFile = testDataFile()
+        val testFile = dataFile()
         val testFileText = FileUtil.loadFile(testFile, true)
         val testFileName = testFile.name
 
@@ -47,7 +47,7 @@ abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
         KotlinCopyPasteReferenceProcessor.declarationsToImportSuggested = emptyList()
         ReviewAddedImports.importsToBeReviewed = emptyList()
 
-        val importsToBeDeletedFile = testDataFile(testFileName.replace(".kt", ".imports_to_delete"))
+        val importsToBeDeletedFile = dataFile(testFileName.replace(".kt", ".imports_to_delete"))
         ReviewAddedImports.importsToBeDeleted = if (importsToBeDeletedFile.exists()) {
             importsToBeDeletedFile.readLines()
         } else {
@@ -66,7 +66,7 @@ abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
         }
 
         val namesToImportDump = KotlinCopyPasteReferenceProcessor.declarationsToImportSuggested.joinToString("\n")
-        KotlinTestUtils.assertEqualsToFile(testDataFile(testFileName.replace(".kt", ".expected.names")), namesToImportDump)
+        KotlinTestUtils.assertEqualsToFile(dataFile(testFileName.replace(".kt", ".expected.names")), namesToImportDump)
         assertEquals(namesToImportDump, ReviewAddedImports.importsToBeReviewed.joinToString("\n"))
 
         val resultFile = myFixture.file as KtFile
@@ -74,6 +74,6 @@ abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
             resultFile.text
         else
             resultFile.dumpTextWithErrors()
-        KotlinTestUtils.assertEqualsToFile(testDataFile(testFileName.replace(".kt", ".expected.kt")), resultText)
+        KotlinTestUtils.assertEqualsToFile(dataFile(testFileName.replace(".kt", ".expected.kt")), resultText)
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -60,5 +60,13 @@ public interface TextAnnotationGutterProvider {
    */
   default boolean useMargin() {
     return true;
+  }
+
+  default int getLeftMargin() {
+    return -1;
+  }
+
+  interface Filler extends TextAnnotationGutterProvider {
+    int getWidth();
   }
 }

@@ -9,9 +9,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.components.JBScrollPane;
@@ -183,11 +181,6 @@ public final class EditorEmbeddedComponentManager {
     }
 
     @Override
-    public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {
-      // No need to do anything there. Components are rendered directly by the RepaintManager.
-    }
-
-    @Override
     public void paint(Graphics g) {
       Graphics2D g2d = (Graphics2D)g;
       Composite old = g2d.getComposite();
@@ -318,7 +311,7 @@ public final class EditorEmbeddedComponentManager {
     }
 
     private void setup() {
-      EditorUtil.disposeWithEditor(myEditor, this);
+      Disposer.register(((EditorImpl)myEditor).getDisposable(), this);
       myEditor.getFoldingModel().addListener(new FoldingListener() {
         @Override
         public void onFoldProcessingEnd() {

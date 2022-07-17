@@ -76,21 +76,21 @@ public class r {
 
          while(true) {
             var10007 = var4[var10006];
-            switch(var1 % 5) {
-            case 0:
-               var10008 = 27;
-               break;
-            case 1:
-               var10008 = 25;
-               break;
-            case 2:
-               var10008 = 44;
-               break;
-            case 3:
-               var10008 = 100;
-               break;
-            default:
-               var10008 = 100;
+            switch (var1 % 5) {
+               case 0:
+                  var10008 = 27;
+                  break;
+               case 1:
+                  var10008 = 25;
+                  break;
+               case 2:
+                  var10008 = 44;
+                  break;
+               case 3:
+                  var10008 = 100;
+                  break;
+               default:
+                  var10008 = 100;
             }
 
             var4[var10006] = (char)(var10007 ^ var10008);
@@ -134,21 +134,21 @@ public class r {
 
       while(true) {
          var10007 = var4[var10006];
-         switch(var1 % 5) {
-         case 0:
-            var10008 = 27;
-            break;
-         case 1:
-            var10008 = 25;
-            break;
-         case 2:
-            var10008 = 44;
-            break;
-         case 3:
-            var10008 = 100;
-            break;
-         default:
-            var10008 = 100;
+         switch (var1 % 5) {
+            case 0:
+               var10008 = 27;
+               break;
+            case 1:
+               var10008 = 25;
+               break;
+            case 2:
+               var10008 = 44;
+               break;
+            case 3:
+               var10008 = 100;
+               break;
+            default:
+               var10008 = 100;
          }
 
          var4[var10006] = (char)(var10007 ^ var10008);

@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.newStructureView;
 
-import com.intellij.ide.CopyPasteDelegator;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.PsiCopyPasteManager;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement;
@@ -53,6 +51,7 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -68,15 +67,13 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView.Scrollable {
+public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView {
   private static final Logger LOG = Logger.getInstance(StructureViewComponent.class);
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
@@ -177,7 +174,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject, this);
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, myTree);
 
-    setToolbar(createToolbar());
+    if (!ExperimentalUI.isNewUI()) {
+      showToolbar();
+    }
     setupTree();
   }
 
@@ -190,7 +189,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return true;
   }
 
-  @Override
+  /**
+   * Returns the editor whose structure is displayed in the structure view.
+   *
+   * @return the editor linked to the structure view.
+   */
   public FileEditor getFileEditor() {
     return myFileEditor;
   }
@@ -199,7 +202,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return ((StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject)).getState();
   }
 
-  public void showToolbar() {
+  protected final void showToolbar() {
     setToolbar(createToolbar());
   }
 
@@ -331,48 +334,96 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   @NotNull
   protected ActionGroup createActionGroup() {
     DefaultActionGroup result = new DefaultActionGroup();
+    List<AnAction> sorters = getSortActions();
+    if (sorters.size() > 0) {
+      result.addAll(sorters);
+      result.addSeparator();
+    }
+
+    addGroupByActions(result);
+
+    result.addAll(getFilterActions());
+
+    if (showScrollToFromSourceActions()) {
+      result.addSeparator();
+      result.addAll(addNavigationActions());
+    }
+    return result;
+  }
+
+  @ApiStatus.Internal
+  public final DefaultActionGroup getDotsActions() {
+    DefaultActionGroup result = new DefaultActionGroup();
+    result.addAll(addExpandCollapseActions());
+    List<AnAction> navigationActions = addNavigationActions();
+    if (!navigationActions.isEmpty()) {
+      result.addSeparator();
+      result.addAll(navigationActions);
+    }
+    return result;
+  }
+
+  @ApiStatus.Internal
+  public final DefaultActionGroup getViewActions() {
+    DefaultActionGroup result = new DefaultActionGroup(IdeBundle.message("group.view.options"), null, AllIcons.Actions.GroupBy);
+    result.setPopup(true);
+    result.addSeparator(StructureViewBundle.message("structureview.subgroup.sort"));
+    result.addAll(getSortActions());
+    result.addSeparator(StructureViewBundle.message("structureview.subgroup.filter"));
+    result.addAll(getFilterActions());
+    result.addSeparator(StructureViewBundle.message("structureview.subgroup.group"));
+    addGroupByActions(result);
+    return result;
+  }
+
+  private @NotNull List<AnAction> getSortActions() {
+    List<AnAction> result = new ArrayList<>();
     Sorter[] sorters = myTreeModel.getSorters();
     for (final Sorter sorter : sorters) {
       if (sorter.isVisible()) {
         result.add(new TreeActionWrapper(sorter, this));
       }
     }
-    if (sorters.length > 0) {
-      result.addSeparator();
-    }
+    return result;
+  }
 
-    addGroupByActions(result);
-
-    Filter[] filters = myTreeModel.getFilters();
-    for (Filter filter : filters) {
-      result.add(new TreeActionWrapper(filter, this));
+  private @NotNull List<AnAction> getFilterActions() {
+    List<AnAction> result = new ArrayList<>();
+    for (Filter filter : myTreeModel.getFilters()) {
+      result.add(new TreeActionWrapper(filter, StructureViewComponent.this));
     }
     if (myTreeModel instanceof ProvidingTreeModel) {
-      final Collection<NodeProvider> providers = ((ProvidingTreeModel)myTreeModel).getNodeProviders();
-      for (NodeProvider provider : providers) {
-        result.add(new TreeActionWrapper(provider, this));
+      for (NodeProvider<?> provider : ((ProvidingTreeModel)myTreeModel).getNodeProviders()) {
+        result.add(new TreeActionWrapper(provider, StructureViewComponent.this));
       }
     }
+    return result;
+  }
 
+  private @NotNull List<AnAction> addNavigationActions() {
+    List<AnAction> result = new ArrayList<>();
     if (showScrollToFromSourceActions()) {
-      result.addSeparator();
-
       result.add(myAutoScrollToSourceHandler.createToggleAction());
       result.add(myAutoScrollFromSourceHandler.createToggleAction());
     }
     return result;
   }
 
+  @ApiStatus.Internal
+  public final @NotNull List<AnAction> addExpandCollapseActions() {
+    List<AnAction> result = new ArrayList<>();
+    CommonActionsManager commonActionManager = CommonActionsManager.getInstance();
+    result.add(commonActionManager.createExpandAllHeaderAction(getTree()));
+    result.add(commonActionManager.createCollapseAllHeaderAction(getTree()));
+    return result;
+  }
+
+
   protected void addGroupByActions(@NotNull DefaultActionGroup result) {
     Grouper[] groupers = myTreeModel.getGroupers();
     for (Grouper grouper : groupers) {
       result.add(new TreeActionWrapper(grouper, this));
     }
-  }
-
-  public Promise<AbstractTreeNode<?>> expandPathToElement(Object element) {
-    return expandSelectFocusInner(element, false, false)
-      .then(p -> TreeUtil.getLastUserObject(AbstractTreeNode.class, p));
   }
 
   @NotNull
@@ -394,7 +445,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       Object userObject = unwrapNavigatable(last);
       Object value = unwrapValue(last);
       if (Comparing.equal(value, element) ||
-          userObject instanceof AbstractTreeNode && ((AbstractTreeNode)userObject).canRepresent(element)) {
+          userObject instanceof AbstractTreeNode && ((AbstractTreeNode<?>)userObject).canRepresent(element)) {
         return TreeVisitor.Action.INTERRUPT;
       }
       if (value instanceof PsiElement && element instanceof PsiElement) {
@@ -656,7 +707,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       return PsiUtilCore.toPsiElementArray(getSelectedValues().filter(PsiElement.class).toList());
     }
-    if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       return myFileEditor;
     }
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
@@ -679,7 +730,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         return selectedElements[0];
       }
     }
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return getHelpID();
     }
     if (CommonDataKeys.PROJECT.is(dataId)) {
@@ -716,31 +767,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   public String getHelpID() {
     return HelpID.STRUCTURE_VIEW;
   }
-
-  @Override
-  public Dimension getCurrentSize() {
-    return getTree().getSize();
-  }
-
-  @Override
-  public void setReferenceSizeWhileInitializing(Dimension size) {
-    //_setRefSize(size);
-    //
-    //if (size != null) {
-    //  todo com.intellij.ui.tree.AsyncTreeModelTest.invokeWhenProcessingDone() //
-    //  myAbstractTreeBuilder.getReady(this).doWhenDone(() -> _setRefSize(null));
-    //}
-  }
-
-  //private void _setRefSize(Dimension size) {
-  //  JTree tree = getTree();
-  //  tree.setPreferredSize(size);
-  //  tree.setMinimumSize(size);
-  //  tree.setMaximumSize(size);
-  //
-  //  tree.revalidate();
-  //  tree.repaint();
-  //}
 
   private static int getMinimumExpandDepth(@NotNull StructureViewModel structureViewModel) {
     final StructureViewModel.ExpandInfoProvider provider =

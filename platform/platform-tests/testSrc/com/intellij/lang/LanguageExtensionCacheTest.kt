@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang
 
 import com.intellij.codeInsight.completion.CompletionExtension
@@ -10,36 +10,33 @@ import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLanguage
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.registerExtension
 import com.intellij.util.KeyedLazyInstance
-import java.util.*
 
 class LanguageExtensionCacheTest : LightPlatformTestCase() {
   private val myExtensionPointName = ExtensionPointName<KeyedLazyInstance<String>>("testLangExt")
   private val myCompletionExtensionPointName = ExtensionPointName<KeyedLazyInstance<String>>("testCompletionExt")
   private val myExtensionPointXML = """
-<extensionPoint qualifiedName="$myExtensionPointName" beanClass="com.intellij.lang.LanguageExtensionPoint">
-  <with attribute="implementationClass" implements="java.lang.String"/>
-</extensionPoint>
-"""
+      <extensionPoint qualifiedName="$myExtensionPointName" beanClass="com.intellij.lang.LanguageExtensionPoint">
+        <with attribute="implementationClass" implements="java.lang.String"/>
+      </extensionPoint>
+      """.trimIndent()
   private val myCompletionExtensionPointXML = """
-<extensionPoint qualifiedName="$myCompletionExtensionPointName" beanClass="com.intellij.lang.LanguageExtensionPoint">
-  <with attribute="implementationClass" implements="java.lang.String"/>
-</extensionPoint>
-"""
+      <extensionPoint qualifiedName="$myCompletionExtensionPointName" beanClass="com.intellij.lang.LanguageExtensionPoint">
+        <with attribute="implementationClass" implements="java.lang.String"/>
+      </extensionPoint>
+      """.trimIndent()
 
   private val descriptor = DefaultPluginDescriptor(PluginId.getId(""), javaClass.classLoader)
   private lateinit var area: ExtensionsAreaImpl
   private lateinit var extension: LanguageExtension<String>
   private lateinit var completionExtension: CompletionExtension<String>
-
 
   override fun setUp() {
     super.setUp()
@@ -55,11 +52,10 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
 
   private fun registerExtension(extensionPointName: ExtensionPointName<KeyedLazyInstance<String>>,
                                 languageID: String,
-                                implementationFqn: String
-  ): Disposable {
+                                implementationFqn: String): Disposable {
     val disposable = Disposer.newDisposable(testRootDisposable, "registerExtension")
-    val languageExtensionPoint = LanguageExtensionPoint<String>(languageID, implementationFqn, PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!)
-    ApplicationManager.getApplication().registerExtension(extensionPointName, languageExtensionPoint, disposable)
+    val ep = LanguageExtensionPoint<String>(languageID, implementationFqn, PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!)
+    ApplicationManager.getApplication().registerExtension(extensionPointName, ep, disposable)
     return disposable
   }
 
@@ -91,15 +87,12 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
 
   private fun registerLanguageDialect(parentDisposable: Disposable): Language {
     val language: Language = object : Language(PlainTextLanguage.INSTANCE, "PlainTextDialect" + getTestName(false)) {
-      override fun getDisplayName(): String = "uniq blah-blah" + System.identityHashCode(this)
+      override fun getDisplayName(): String = "unique blah-blah" + System.identityHashCode(this)
     }
-    val plainTextDialectFileType = object: MockLanguageFileType(language, "xxxx") {
-      override fun getDescription(): String {
-        return "blah-blah" + System.identityHashCode(this)
-      }
+    val plainTextDialectFileType = object: MockLanguageFileType(language, "x_x_x_x") {
+      override fun getDescription(): String = "blah-blah" + System.identityHashCode(this)
     }
-    FileTypeManager.getInstance().registerFileType(plainTextDialectFileType)
-    Disposer.register(parentDisposable, Disposable { FileTypeManagerEx.getInstanceEx().unregisterFileType(plainTextDialectFileType) })
+    (FileTypeManager.getInstance() as FileTypeManagerImpl).registerFileType(plainTextDialectFileType, listOf(), parentDisposable, descriptor)
     return plainTextDialectFileType.language
   }
 

@@ -37,6 +37,8 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
   private static Path ourOutputRoot;
   private Path myModuleOutputDir;
 
+  protected static final String SOURCES_DIRECTORY_NAME = "src";
+
   public ExecutionTestCase() {
     setTimeout(300000); //30 seconds
   }
@@ -98,7 +100,7 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
     super.setUpModule();
     ApplicationManager.getApplication().runWriteAction(() -> {
       final String modulePath = getTestAppPath();
-      final String srcPath = modulePath + File.separator + "src";
+      final String srcPath = modulePath + File.separator + SOURCES_DIRECTORY_NAME;
       VirtualFile moduleDir = LocalFileSystem.getInstance().findFileByPath(modulePath.replace(File.separatorChar, '/'));
       VirtualFile srcDir = LocalFileSystem.getInstance().findFileByPath(srcPath.replace(File.separatorChar, '/'));
 

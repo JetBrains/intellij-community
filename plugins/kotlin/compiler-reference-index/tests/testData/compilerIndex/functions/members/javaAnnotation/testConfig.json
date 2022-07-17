@@ -1,0 +1,10 @@
+{
+    "mainFile": "JAnn.java",
+    "usages": [
+        "ExplicitParameter.java",
+        "ImplicitParameter.java",
+        "JAnn.java",
+        "Usage.java",
+        "Usage.kt"
+    ]
+}

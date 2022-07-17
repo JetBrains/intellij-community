@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.IdeaTestFixtureFactoryImpl;
@@ -8,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.function.Predicate;
 
 /**
  * This is to be provided by the test framework and not by plugin authors.
@@ -38,10 +41,20 @@ public abstract class IdeaTestFixtureFactory {
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name, @Nullable Path projectPath, boolean isDirectoryBasedProject);
 
   @NotNull
-  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder();
+  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@NotNull String projectName);
 
   @NotNull
-  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor);
+  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor,
+                                                                                       @NotNull String projectName);
+  /**
+   * @deprecated Use {@link #createLightFixtureBuilder(LightProjectDescriptor, String)} instead
+   */
+  @Deprecated
+  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor) {
+    String message = "Use createLightFixtureBuilder(LightProjectDescriptor, String) instead";
+    Logger.getInstance(IdeaTestFixtureFactory.class).warn(new RuntimeException(message));
+    return createLightFixtureBuilder(projectDescriptor, message);
+  }
 
   @NotNull
   public abstract CodeInsightTestFixture createCodeInsightFixture(@NotNull IdeaProjectTestFixture projectFixture);
@@ -54,4 +67,7 @@ public abstract class IdeaTestFixtureFactory {
 
   @NotNull
   public abstract BareTestFixture createBareFixture();
+
+  @NotNull
+  public abstract SdkTestFixture createSdkFixture(@NotNull SdkType sdkType, @NotNull Predicate<String> versionFilter);
 }

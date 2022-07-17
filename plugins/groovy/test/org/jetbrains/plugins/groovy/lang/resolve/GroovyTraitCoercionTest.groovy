@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.codeInsight.completion.CompletionType
@@ -44,7 +44,7 @@ class Foo implements I {
   }
 
   void 'test types: `as` and chained `as`'() {
-    testExpressionTypes([
+    doTestExpressionTypes([
       'new Foo() as T1'        : 'Foo as T1',
       'new Foo() as T2'        : 'Foo as T2',
       '(new Foo() as T1) as T2': 'Foo as T1, T2',
@@ -53,7 +53,7 @@ class Foo implements I {
   }
 
   void 'test types: `withTraits()` and chained `withTraits()`'() {
-    testExpressionTypes([
+    doTestExpressionTypes([
       'new Foo().withTraits(T1)'               : 'Foo as T1',
       'new Foo().withTraits(T2)'               : 'Foo as T2',
       'new Foo().withTraits(T1).withTraits(T2)': 'Foo as T1, T2',
@@ -62,7 +62,7 @@ class Foo implements I {
   }
 
   void 'test types: remove duplicates'() {
-    testExpressionTypes([
+    doTestExpressionTypes([
       '(new Foo() as T1) as T1'                : 'Foo as T1',
       '(new Foo() as T1).withTraits(T1)'       : 'Foo as T1',
       'new Foo().withTraits(T2) as T2'         : 'Foo as T2',
@@ -71,7 +71,7 @@ class Foo implements I {
   }
 
   void 'test types: mixed `as` and `withTraits()`'() {
-    testExpressionTypes([
+    doTestExpressionTypes([
       '(new Foo() as T1).withTraits(T2)': 'Foo as T1, T2',
       '(new Foo() as T2).withTraits(T1)': 'Foo as T2, T1',
       'new Foo().withTraits(T1) as T2'  : 'Foo as T1, T2',
@@ -80,19 +80,19 @@ class Foo implements I {
   }
 
   void 'test types: with two traits'() {
-    testExpressionTypes(
+    doTestExpressionTypes(
       'new Foo().withTraits(T1, T2)': 'Foo as T1, T2'
     )
   }
 
   void 'test types: traits duplicates and order'() {
-    testExpressionTypes(
+    doTestExpressionTypes(
       '(new Foo() as T1).withTraits(T2, T1)': 'Foo as T2, T1'
     )
   }
 
   void 'test `as` operator'() {
-    testResolveContainingClass([
+    doTestResolveContainingClass([
       '(new Foo() as T1).fo<caret>o()'        : 'T1',
       '(new Foo() as T1).ba<caret>r()'        : 'T1',
       '(new Foo() as T1).some<caret>Method()' : 'Foo',
@@ -103,7 +103,7 @@ class Foo implements I {
   }
 
   void 'test `withTraits()`'() {
-    testResolveContainingClass([
+    doTestResolveContainingClass([
       'new Foo().withTraits(T1).fo<caret>o()'               : 'T1',
       'new Foo().withTraits(T1).ba<caret>r()'               : 'T1',
       'new Foo().withTraits(T1).withTraits(T2).fo<caret>o()': 'T2',
@@ -112,7 +112,7 @@ class Foo implements I {
   }
 
   void 'test duplicates and order'() {
-    testResolveContainingClass([
+    doTestResolveContainingClass([
       '(new Foo() as T1).withTraits(T2, T1).fo<caret>o()': 'T1'
     ])
   }
@@ -134,18 +134,18 @@ class Foo implements I {
     }).asType(expressionType)
   }
 
-  def testExpressionType(String expressionString, String typeString) {
+  def doTestExpressionType(String expressionString, String typeString) {
     configureByExpression(expressionString).with { GrExpression expression ->
       assert expression.type: expression.getText()
       assert expression.type.internalCanonicalText == typeString: "$expression.text: $expression.type.internalCanonicalText == $typeString"
     }
   }
 
-  def testExpressionTypes(Map<String, String> data) {
-    data.each this.&testExpressionType
+  def doTestExpressionTypes(Map<String, String> data) {
+    data.each this.&doTestExpressionType
   }
 
-  def testResolveContainingClass(Map<String, String> data) {
+  def doTestResolveContainingClass(Map<String, String> data) {
     data.each { k, v ->
       assert resolveByText(k, GrMethod).containingClass == fixture.findClass(v)
     }

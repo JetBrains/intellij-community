@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 inline fun run (p: () -> Unit) {}
 
 fun foo() = run {

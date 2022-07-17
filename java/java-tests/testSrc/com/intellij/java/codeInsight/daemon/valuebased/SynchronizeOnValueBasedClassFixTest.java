@@ -1,14 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.valuebased;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.valuebased.SynchronizeOnValueBasedClassInspection;
-import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_16;
 
 public class SynchronizeOnValueBasedClassFixTest extends LightQuickFixParameterizedTestCase {
 
@@ -22,8 +19,4 @@ public class SynchronizeOnValueBasedClassFixTest extends LightQuickFixParameteri
     return new LocalInspectionTool[]{ new SynchronizeOnValueBasedClassInspection() };
   }
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_16;
-  }
 }

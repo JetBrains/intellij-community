@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
@@ -124,6 +124,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
         return "testprovider"
       }
 
+      @NotNull
       @Override
       Collection<OptionDescription> getOptions() {
         return options
@@ -312,11 +313,14 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
       "tab placement"
     ]
 
+    def errors = []
     patterns.forEach { String pattern ->
       def elements = ChooseByNameTest.calcContributorElements(contributor, pattern)
-      assert elements.any { matchedValue -> isNavigableOption(((MatchedValue)matchedValue).value)
+      if (!elements.any { matchedValue -> isNavigableOption(((MatchedValue)matchedValue).value) }) {
+        errors += "Failure for pattern '$pattern' - $elements"
       }
     }
+    assert errors.isEmpty()
   }
 
   private static boolean isNavigableOption(Object o) {
@@ -410,7 +414,11 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     return createMatchedAction(project, createAction(text), pattern, mode, isAvailable)
   }
 
-  static MatchedValue createMatchedAction(Project project, AnAction action, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
+  static MatchedValue createMatchedAction(Project project,
+                                          AnAction action,
+                                          String pattern,
+                                          MatchMode mode = MatchMode.NAME,
+                                          boolean isAvailable = true) {
     def model = new GotoActionModel(project, null, null)
     def wrapper = new ActionWrapper(action, null, mode, model) {
       @Override
@@ -418,7 +426,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
         return isAvailable
       }
     }
-    new MatchedValue(wrapper, pattern)
+    new MatchedValue(wrapper, pattern, GotoActionModel.MatchedValueType.ACTION)
   }
 
   private static AnAction createAction(String text, String description = null) {
@@ -450,7 +458,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
 
   private static MatchedValue matchedOption(String text, String pattern) {
-    return new MatchedValue(new OptionDescription(text), pattern)
+    return new MatchedValue(new OptionDescription(text), pattern, GotoActionModel.MatchedValueType.OPTION)
   }
 
   private static MatchedValue matchedBooleanOption(String text, String pattern) {
@@ -464,7 +472,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
       void setOptionState(boolean enabled) {
       }
     }
-    return new MatchedValue(option, pattern)
+    return new MatchedValue(option, pattern, GotoActionModel.MatchedValueType.OPTION)
   }
 
   static SearchEverywhereContributor<?> createActionContributor(Project project, Disposable parentDisposable) {

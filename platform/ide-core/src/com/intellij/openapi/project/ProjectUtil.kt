@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProjectUtil")
 package com.intellij.openapi.project
 
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -35,7 +36,6 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.*
-import java.util.function.Consumer
 import javax.swing.JComponent
 
 val NOTIFICATIONS_SILENT_MODE = Key.create<Boolean>("NOTIFICATIONS_SILENT_MODE")
@@ -63,7 +63,7 @@ fun calcRelativeToProjectPath(file: VirtualFile,
          else displayUrlRelativeToProject(file, url, project, includeFilePath, keepModuleAlwaysOnTheLeft)
 }
 
-fun guessProjectForFile(file: VirtualFile?): Project? = ProjectLocator.getInstance().guessProjectForFile(file)
+fun guessProjectForFile(file: VirtualFile): Project? = ProjectLocator.getInstance().guessProjectForFile(file)
 
 /**
  * guessProjectForFile works incorrectly - even if file is config (idea config file) first opened project will be returned
@@ -84,7 +84,7 @@ fun guessProjectForContentFile(file: VirtualFile,
 
 fun isProjectOrWorkspaceFile(file: VirtualFile): Boolean = ProjectCoreUtil.isProjectOrWorkspaceFile(file)
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "This method is an unreliable hack, find another way to locate a project instance.")
 fun guessCurrentProject(component: JComponent?): Project {
   var project: Project? = null
@@ -100,6 +100,9 @@ fun guessCurrentProject(component: JComponent?): Project {
 }
 
 fun currentOrDefaultProject(project: Project?): Project = project ?: ProjectManager.getInstance().defaultProject
+
+val Project.modules: Array<Module>
+  get() = ModuleManager.getInstance(this).modules
 
 inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() -> T): T {
   val model = ModuleManager.getInstance(this).modifiableModel
@@ -119,16 +122,23 @@ fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
   }
 }
 
+private val BASE_DIRECTORY_SUGGESTER_EP_NAME = ExtensionPointName.create<BaseDirectorySuggester>("com.intellij.baseDirectorySuggester")
+
 /**
  *  Tries to guess the "main project directory" of the project.
  *
  *  There is no strict definition of what is a project directory, since a project can contain multiple modules located in different places,
  *  and the `.idea` directory can be located elsewhere (making the popular [Project.getBaseDir] method not applicable to get the "project
- *  directory"). This method should be preferred, although it can't provide perfect accuracy either.
+ *  directory"). This method should be preferred, although it can't provide perfect accuracy either. So its results shouldn't be used for
+ *  real actions as is, user should be able to review and change it. For example, it can be used as a default selection in a file chooser.
  */
 fun Project.guessProjectDir() : VirtualFile? {
   if (isDefault) {
     return null
+  }
+  val customBaseDir = BASE_DIRECTORY_SUGGESTER_EP_NAME.extensions().map { it.suggestBaseDirectory(this) }.filter(Objects::nonNull).findFirst().orElse(null)
+  if (customBaseDir != null) {
+    return customBaseDir
   }
 
   val modules = ModuleManager.getInstance(this).modules
@@ -142,8 +152,8 @@ fun Project.guessProjectDir() : VirtualFile? {
  *
  * There is no such thing as "base directory" for a module in IntelliJ project model. A module may have multiple content roots, or not have
  * content roots at all. The module configuration file (.iml) may be located far away from the module files or doesn't exist at all. So this
- * method tries to suggest some directory which is related to the module but due to its heuristics nature its result shouldn't be used for
- * real actions as is, user should be able to review and change it. For example it can be used as a default selection in a file chooser.
+ * method tries to suggest some directory which is related to the module but due to its heuristic nature its result shouldn't be used for
+ * real actions as is, user should be able to review and change it. For example, it can be used as a default selection in a file chooser.
  */
 fun Module.guessModuleDir(): VirtualFile? {
   val contentRoots = rootManager.contentRoots.filter { it.isDirectory }
@@ -172,7 +182,7 @@ private fun getProjectCacheFileName(presentableUrl: String?,
     isForceNameUse || presentableUrl == null -> projectName
     else -> {
       // lower case here is used for cosmetic reasons (develar - discussed with jeka - leave it as it was, user projects will not have long names as in our tests
-      PathUtilRt.getFileName(presentableUrl).toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
+      PathUtilRt.getFileName(presentableUrl).lowercase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
   }
   return doGetProjectFileName(presentableUrl, sanitizeFileName(name, truncateIfNeeded = false), hashSeparator, extensionWithDot)
@@ -248,16 +258,6 @@ fun runWhenProjectOpened(project : Project, handler: Runnable) {
 }
 
 /**
- * Add one-time first projectOpened listener.
- */
-@JvmOverloads
-fun runWhenProjectOpened(project: Project? = null, handler: Consumer<Project>) {
-  runWhenProjectOpened(project) {
-    handler.accept(it)
-  }
-}
-
-/**
  * Add one-time projectOpened listener.
  */
 inline fun runWhenProjectOpened(project: Project? = null, crossinline handler: (project: Project) -> Unit) {
@@ -283,5 +283,5 @@ inline fun processOpenedProjects(processor: (Project) -> Unit) {
 }
 
 fun isNotificationSilentMode(project: Project?): Boolean {
-  return ApplicationManager.getApplication().isHeadlessEnvironment || NOTIFICATIONS_SILENT_MODE[project, false]
+  return ApplicationManager.getApplication().isHeadlessEnvironment || NOTIFICATIONS_SILENT_MODE.get(project, false)
 }

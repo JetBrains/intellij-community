@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
@@ -13,6 +13,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -78,6 +80,11 @@ public class MockApplication extends MockComponentManager implements Application
   @Override
   public boolean isEAP() {
     return false;
+  }
+
+  @Override
+  public CoroutineScope getCoroutineScope() {
+    return GlobalScope.INSTANCE;
   }
 
   @Override
@@ -267,6 +274,7 @@ public class MockApplication extends MockComponentManager implements Application
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state) {
   }
 
+  @Deprecated
   @Override
   @NotNull
   public ModalityInvokator getInvokator() {

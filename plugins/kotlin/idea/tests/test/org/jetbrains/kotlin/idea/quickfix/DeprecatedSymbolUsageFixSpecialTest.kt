@@ -5,14 +5,14 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
-import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWith
+import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWithData
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 @TestRoot("idea/tests")
@@ -37,7 +37,7 @@ class DeprecatedSymbolUsageFixSpecialTest : KotlinLightCodeInsightFixtureTestCas
         val element = file.findElementAt(offset)
         val nameExpression = element!!.parents.firstIsInstance<KtSimpleNameExpression>()
         val fix = ActionUtil.underModalProgress(project, "") {
-            DeprecatedSymbolUsageFix(nameExpression, ReplaceWith(pattern, emptyList(), false))
+            DeprecatedSymbolUsageFix(nameExpression, ReplaceWithData(pattern, emptyList(), false))
         }
 
         project.executeWriteCommand("") {

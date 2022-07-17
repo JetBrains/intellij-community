@@ -3,16 +3,16 @@ package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-@State(name = "GradleSystemSettings", storages = @Storage("gradle.settings.xml"))
+@State(name = "GradleSystemSettings", storages = @Storage(value = "gradle.settings.xml", roamingType = RoamingType.DISABLED))
 public class GradleSystemSettings implements PersistentStateComponent<GradleSystemSettings.MyState> {
 
   @Nullable private String myServiceDirectoryPath;
@@ -41,9 +41,8 @@ public class GradleSystemSettings implements PersistentStateComponent<GradleSyst
   /**
    * @deprecated use GradleSettings#getServiceDirectoryPath()
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public String getServiceDirectoryPath() {
     return myServiceDirectoryPath;
   }
@@ -51,8 +50,7 @@ public class GradleSystemSettings implements PersistentStateComponent<GradleSyst
   /**
    * @deprecated use GradleSettings#setServiceDirectoryPath(java.lang.String)
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public void setServiceDirectoryPath(@Nullable String newPath) {
     myServiceDirectoryPath = newPath;
   }
@@ -70,8 +68,7 @@ public class GradleSystemSettings implements PersistentStateComponent<GradleSyst
    * @see GradleSettings#isOfflineWork
    * @deprecated this settings parameter must be a project level
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public boolean isOfflineWork() {
     return false;
   }

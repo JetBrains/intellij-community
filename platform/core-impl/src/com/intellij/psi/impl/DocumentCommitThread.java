@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +28,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
-import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -68,6 +67,9 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
                                    @NotNull FileViewProvider cachedViewProvider) {
     assert !isDisposed : "already disposed";
     if (!project.isInitialized()) return;
+    if (documentManager.myProject != project) {
+      throw new IllegalArgumentException("Wrong project: "+project+"; expected: "+documentManager.myProject);
+    }
 
     assert cachedViewProvider.isEventSystemEnabled() : "Asynchronous commit is only supported for physical PSI" +
                                                        ", document=" + document +
@@ -88,14 +90,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     assert !isDisposed;
 
     if (!project.isInitialized() && !project.isDefault()) {
-      @NonNls String s = project + "; Disposed: "+project.isDisposed()+"; Open: "+project.isOpen();
-      try {
-        Disposer.dispose(project);
-      }
-      catch (Throwable ignored) {
-        // do not fill log with endless exceptions
-      }
-      throw new RuntimeException(s);
+      throw new IllegalArgumentException("Must not call sync commit with unopened project: "+ project + "; Disposed: " + project.isDisposed() + "; Open: " + project.isOpen());
     }
 
     PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
@@ -118,7 +113,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
       finishProcessors.add(handleCommitWithoutPsi(task, documentManager));
     }
     else {
-      // while we were messing around transferring things to background thread, the viewprovider can become obsolete
+      // while we were messing around transferring things to background thread, the ViewProvider can become obsolete
       // when e.g. virtual file was renamed. store new provider to retain it from GC
       task.cachedViewProvider = viewProvider;
 
@@ -176,15 +171,20 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
   }
 
   @TestOnly
-  // NB: failures applying EDT tasks are not handled - i.e. failed documents are added back to the queue and the method returns
+  // NB: failures applying EDT tasks are not handled - i.e., failed documents are added back to the queue and the method returns
   public void waitForAllCommits(long timeout, @NotNull TimeUnit timeUnit) throws ExecutionException, InterruptedException, TimeoutException {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      while (!((BoundedTaskExecutor)executor).isEmpty()) {
+        ((BoundedTaskExecutor)executor).waitAllTasksExecuted(timeout, timeUnit);
+      }
+      return;
+    }
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    EdtInvocationManager.dispatchAllInvocationEvents();
+    EDT.dispatchAllInvocationEvents();
     while (!((BoundedTaskExecutor)executor).isEmpty()) {
       ((BoundedTaskExecutor)executor).waitAllTasksExecuted(timeout, timeUnit);
-      EdtInvocationManager.dispatchAllInvocationEvents();
+      EDT.dispatchAllInvocationEvents();
     }
   }
 
@@ -244,7 +244,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     }
   }
 
-  // returns runnable to execute under write action in AWT to finish the commit
+  // returns runnable to execute under the write action in AWT to finish the commit
   @NotNull
   private static BooleanRunnable doCommit(@NotNull CommitTask task,
                                           @NotNull PsiFile file,

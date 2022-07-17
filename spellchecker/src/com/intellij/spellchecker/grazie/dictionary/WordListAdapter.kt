@@ -1,34 +1,39 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.grazie.dictionary
 
-import com.intellij.grazie.speller.lists.WordList
-import com.intellij.grazie.speller.utils.Distances
+import ai.grazie.nlp.similarity.Levenshtein
+import ai.grazie.spell.lists.WordList
 
 internal class WordListAdapter : WordList, EditableWordListAdapter() {
-  override fun contains(word: String): Boolean {
-    return dictionaries.values.any { it.contains(word) ?: false } || traversable.contains(word)
+  fun isAlien(word: String): Boolean {
+    return dictionaries.values.all { it.contains(word) == null } && !aggregator.contains(word)
   }
 
-  override fun isAlien(word: String): Boolean {
-    return dictionaries.values.all { it.contains(word) == null } && traversable.isAlien(word)
-  }
-
-  override fun suggest(word: String, distance: Int): Sequence<String> = sequence {
-    for (dictionary in dictionaries.values) {
-      val set = HashSet<String>()
-      dictionary.consumeSuggestions(word) {
-        val cur = Distances.levenshtein.distance(word, it, distance + 1)
-        if (cur <= distance) {
-          set.add(it)
-        }
-      }
-      yieldAll(set)
+  override fun contains(word: String, caseSensitive: Boolean): Boolean {
+    val inDictionary = if (caseSensitive) {
+      dictionaries.values.any { it.contains(word) ?: false }
+    } else {
+      val lowered = word.lowercase()
+      // NOTE: dictionary may not contain lowercase form, but may contain any form in a different case
+      // current dictionary interface does not support caseSensitive
+      dictionaries.values.any { (it.contains(word) ?: false) || it.contains(lowered) ?: false }
     }
 
-    yieldAll(traversable.suggest(word, distance))
-  }.distinct()
+    return inDictionary || aggregator.contains(word, caseSensitive)
+  }
 
-  override fun prefix(prefix: String): Sequence<String> = sequence {
-    yieldAll(traversable.prefix(prefix))
+  override fun suggest(word: String): LinkedHashSet<String> {
+    val result = LinkedHashSet<String>()
+    for (dictionary in dictionaries.values) {
+      dictionary.consumeSuggestions(word) {
+        val distance = Levenshtein.distance(word, it, SimpleWordList.MAX_LEVENSHTEIN_DISTANCE + 1)
+        if (distance <= SimpleWordList.MAX_LEVENSHTEIN_DISTANCE) {
+          result.add(it)
+        }
+      }
+    }
+
+    result.addAll(aggregator.suggest(word))
+    return result
   }
 }

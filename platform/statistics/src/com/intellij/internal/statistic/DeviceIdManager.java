@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic;
 
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -30,7 +30,7 @@ public final class DeviceIdManager {
   /**
    * @deprecated Use {@link DeviceIdManager#getOrGenerateId(DeviceIdToken, String)} with purpose specific id
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static String getOrGenerateId() {
     try {
       return getOrGenerateId(null, UNDEFINED);
@@ -71,7 +71,7 @@ public final class DeviceIdManager {
       if (token == null) {
         throw new InvalidDeviceIdTokenException("Cannot access base device id from unknown class");
       }
-      else if (!PluginInfoDetectorKt.getPluginInfo(token.getClass()).getType().isPlatformOrJetBrainsBundled()) {
+      else if (!PluginInfoDetectorKt.isPlatformOrJetBrainsBundled(token.getClass())) {
         throw new InvalidDeviceIdTokenException("Cannot access base device id from " + token.getClass().getName());
       }
     }

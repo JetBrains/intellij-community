@@ -27,7 +27,6 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.indexing.DumbModeAccessType
-import com.intellij.util.indexing.FileBasedIndex
 
 /**
  * @author Pavel.Dolgov
@@ -50,9 +49,10 @@ class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() 
 
   fun testDeclaredAnnotationsByType() = doTest(0, "Foo.class", "Bar.class")
 
+  @NeedsIndex.SmartMode(reason = "Ordering requires smart mode")
   fun testConstructor() {
     addConstructors()
-    doTest(3, "Construct()", "Construct(int n)", "Construct(java.lang.String s)", "Construct(int n,java.lang.String s)")
+    doTest(1, "Construct()", "Construct(int n,java.lang.String s)", "Construct(int n)", "Construct(java.lang.String s)")
   }
 
   fun testDeclaredConstructor() {
@@ -110,8 +110,7 @@ fun lookupFirstItemsTexts(lookupItems: List<LookupElement?>, maxSize: Int): List
   // see JavaReflectionParametersCompletionTest.testConstructor and JavaReflectionParametersCompletionTest.testDeclaredConstructor
   DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable<List<String>, RuntimeException> {
     lookupItems.subList(0, Math.min(lookupItems.size, maxSize)).map {
-      val obj = it?.`object`
-      when (obj) {
+      when (val obj = it?.`object`) {
         is PsiMethod -> {
           obj.name + obj.parameterList.parameters.map { it.type.canonicalText + " " + it.name }
             .joinToString(",", prefix = "(", postfix = ")")

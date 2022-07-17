@@ -29,9 +29,6 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
     if (file.isDirectory()) {
       final ContentIterator iterator = fileOrDir -> {
         myEventMerger.recordFileEvent(fileOrDir, onlyContentDependent);
-        if (VfsEventsMerger.LOG != null) {
-          VfsEventsMerger.LOG.info("Build indexes for " + file + "; onlyContentDependent = " + onlyContentDependent);
-        }
         return true;
       };
 
@@ -46,9 +43,6 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
     ProgressManager.checkCanceled();
     if (file instanceof VirtualFileWithId) {
       id2File.put(((VirtualFileWithId)file).getId(), file);
-    }
-    if (VfsEventsMerger.LOG != null) {
-      VfsEventsMerger.LOG.info("Invalidating indexes for " + file + "; removed");
     }
     return !file.isDirectory() || FileBasedIndexImpl.isMock(file) || ManagingFS.getInstance().wereChildrenAccessed(file);
   }

@@ -57,6 +57,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private static final String LOCAL_VERSION = "0.1";
   public static final String TEMP_VAR_PREFIX = "__py_debug_temp_var_";
+  public static final String TYPE_RENDERERS_TEMP_VAR_PREFIX = "__py_debug_user_type_renderers_temp_var_";
 
   private static final SecureRandom ourRandom = new SecureRandom();
 
@@ -172,8 +173,8 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public XValueChildrenList loadFrame(final String threadId, final String frameId) throws PyDebuggerException {
-    return executeCommand(new GetFrameCommand(this, threadId, frameId)).getVariables();
+  public XValueChildrenList loadFrame(final String threadId, final String frameId, GROUP_TYPE groupType) throws PyDebuggerException {
+    return executeCommand(new GetFrameCommand(this, threadId, frameId, groupType)).getVariables();
   }
 
   @Override
@@ -281,10 +282,14 @@ public class RemoteDebugger implements ProcessDebugger {
       LOG.error("Top parent is null");
       return;
     }
+    String tempName = topVar.getTempName();
+    if (tempName != null) {
+      return;
+    }
     if (!myDebugProcess.canSaveToTemp(topVar.getName())) {
       return;
     }
-    if (myTempVars.contains(threadId, frameId, topVar.getTempName())) {
+    if (myTempVars.contains(threadId, frameId, tempName)) {
       return;
     }
 
@@ -516,6 +521,12 @@ public class RemoteDebugger implements ProcessDebugger {
   public void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line) {
     final RemoveBreakpointCommand command =
       new RemoveBreakpointCommand(this, typeId, file, line);
+    execute(command);
+  }
+
+  @Override
+  public void setUserTypeRenderers(@NotNull List<@NotNull PyUserTypeRenderer> renderers) {
+    final SetUserTypeRenderersCommand command = new SetUserTypeRenderersCommand(this, renderers);
     execute(command);
   }
 

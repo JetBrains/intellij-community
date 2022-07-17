@@ -1,3 +1,4 @@
+// AFTER-WARNING: Variable 'foo' is never used
 class Outer {
     class Middle {
         class Inner {

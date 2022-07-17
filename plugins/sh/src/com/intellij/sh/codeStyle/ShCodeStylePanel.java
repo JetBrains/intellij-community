@@ -97,7 +97,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Nullable
   @Override
-  protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(ShLanguage.INSTANCE, null, null);
     return HighlighterFactory.createHighlighter(highlighter, scheme);
   }
@@ -115,7 +115,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(@NotNull CodeStyleSettings settings) {
     CommonCodeStyleSettings.IndentOptions indentOptions = settings.getLanguageIndentOptions(ShLanguage.INSTANCE);
     indentOptions.INDENT_SIZE = myIndentField.getValue();
     indentOptions.TAB_SIZE = myTabField.getValue();
@@ -157,7 +157,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected void resetImpl(CodeStyleSettings settings) {
+  protected void resetImpl(@NotNull CodeStyleSettings settings) {
     CommonCodeStyleSettings.IndentOptions indentOptions = settings.getLanguageIndentOptions(ShLanguage.INSTANCE);
     myIndentField.setValue(indentOptions.INDENT_SIZE);
     myTabField.setValue(indentOptions.TAB_SIZE);

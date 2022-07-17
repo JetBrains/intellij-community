@@ -19,7 +19,6 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -110,7 +109,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
   private class UnnecessaryToStringCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       if (!isRedundantToString(call)) return;
       final PsiReferenceExpression methodExpression = call.getMethodExpression();
       PsiElement referenceNameElement = methodExpression.getReferenceNameElement();
@@ -121,7 +120,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
           NullabilityUtil.getExpressionNullability(qualifier, true) != Nullability.NOT_NULL) {
         return;
       }
-      registerError(referenceNameElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL, qualifier.isPhysical() ? null : qualifier.getText());
+      registerError(referenceNameElement, qualifier.isPhysical() ? null : qualifier.getText());
     }
   }
 

@@ -1,9 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.foundation;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Library;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 
 /**
  * @author spleaner
@@ -25,8 +23,6 @@ public interface FoundationLibrary extends Library {
 
   long CFStringConvertIANACharSetNameToEncoding(ID encodingName);
   long CFStringConvertEncodingToNSStringEncoding(long cfEncoding);
-
-  ID CGWindowListCreateImage(Foundation.NSRect screenBounds, int windowOption, ID windowID, int imageOption);
 
   void CFRetain(ID cfTypeRef);
   void CFRelease(ID cfTypeRef);

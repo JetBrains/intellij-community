@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 // WITH_MESSAGE: "Removed 1 import"
 package ppp
 

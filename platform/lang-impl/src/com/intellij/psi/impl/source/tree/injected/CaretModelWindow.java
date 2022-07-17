@@ -14,15 +14,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 class CaretModelWindow implements CaretModel {
   private final CaretModel myDelegate;
   private final EditorEx myHostEditor;
   private final EditorWindow myEditorWindow;
-  private final Map<Caret, InjectedCaret> myInjectedCaretMap = new WeakHashMap<>();
+  private final Map<Caret, InjectedCaret> myInjectedCaretMap = new HashMap<>(); // guarded by myInjectedCaretMap
 
   CaretModelWindow(@NotNull CaretModel delegate, @NotNull EditorWindow editorWindow) {
     myDelegate = delegate;
@@ -192,12 +192,7 @@ class CaretModelWindow implements CaretModel {
       return null;
     }
     synchronized (myInjectedCaretMap) {
-      InjectedCaret injectedCaret = myInjectedCaretMap.get(caret);
-      if (injectedCaret == null) {
-        injectedCaret = new InjectedCaret(myEditorWindow, caret);
-        myInjectedCaretMap.put(caret, injectedCaret);
-      }
-      return injectedCaret;
+      return myInjectedCaretMap.computeIfAbsent(caret, c->new InjectedCaret(myEditorWindow, c));
     }
   }
 

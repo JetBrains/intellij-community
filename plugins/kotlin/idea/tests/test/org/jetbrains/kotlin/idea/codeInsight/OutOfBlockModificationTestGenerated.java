@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -26,6 +26,11 @@ public class OutOfBlockModificationTestGenerated extends AbstractOutOfBlockModif
     @TestMetadata("Comment.kt")
     public void testComment() throws Exception {
         runTest("testData/codeInsight/outOfBlock/Comment.kt");
+    }
+
+    @TestMetadata("ErrorOnFunReturnTypeInFun.kt")
+    public void testErrorOnFunReturnTypeInFun() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/ErrorOnFunReturnTypeInFun.kt");
     }
 
     @TestMetadata("FunBlock.kt")
@@ -253,6 +258,26 @@ public class OutOfBlockModificationTestGenerated extends AbstractOutOfBlockModif
         runTest("testData/codeInsight/outOfBlock/InObjectPrivatePropertyType.kt");
     }
 
+    @TestMetadata("InPackage.kt")
+    public void testInPackage() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/InPackage.kt");
+    }
+
+    @TestMetadata("InPackage2.kt")
+    public void testInPackage2() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/InPackage2.kt");
+    }
+
+    @TestMetadata("InPackage3.kt")
+    public void testInPackage3() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/InPackage3.kt");
+    }
+
+    @TestMetadata("InPackage4.kt")
+    public void testInPackage4() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/InPackage4.kt");
+    }
+
     @TestMetadata("InPrimaryConstructor.kt")
     public void testInPrimaryConstructor() throws Exception {
         runTest("testData/codeInsight/outOfBlock/InPrimaryConstructor.kt");
@@ -343,6 +368,11 @@ public class OutOfBlockModificationTestGenerated extends AbstractOutOfBlockModif
         runTest("testData/codeInsight/outOfBlock/InUninitializedPropertyAccessor.kt");
     }
 
+    @TestMetadata("InWhenCondition.kt")
+    public void testInWhenCondition() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/InWhenCondition.kt");
+    }
+
     @TestMetadata("InfixFunWhitespace.kt")
     public void testInfixFunWhitespace() throws Exception {
         runTest("testData/codeInsight/outOfBlock/InfixFunWhitespace.kt");
@@ -361,6 +391,16 @@ public class OutOfBlockModificationTestGenerated extends AbstractOutOfBlockModif
     @TestMetadata("InitBlockInObject.kt")
     public void testInitBlockInObject() throws Exception {
         runTest("testData/codeInsight/outOfBlock/InitBlockInObject.kt");
+    }
+
+    @TestMetadata("InnerClassInnerMethod.kt")
+    public void testInnerClassInnerMethod() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/InnerClassInnerMethod.kt");
+    }
+
+    @TestMetadata("JavaInPackage.java")
+    public void testJavaInPackage() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/JavaInPackage.java");
     }
 
     @TestMetadata("LocalFunWithBody.kt")
@@ -428,9 +468,24 @@ public class OutOfBlockModificationTestGenerated extends AbstractOutOfBlockModif
         runTest("testData/codeInsight/outOfBlock/StringInSuperConstroctorCall.kt");
     }
 
+    @TestMetadata("Suppression.kt")
+    public void testSuppression() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/Suppression.kt");
+    }
+
     @TestMetadata("Uncomment.kt")
     public void testUncomment() throws Exception {
         runTest("testData/codeInsight/outOfBlock/Uncomment.kt");
+    }
+
+    @TestMetadata("UnsignedIntInFun.kt")
+    public void testUnsignedIntInFun() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/UnsignedIntInFun.kt");
+    }
+
+    @TestMetadata("UnsignedIntProperty.kt")
+    public void testUnsignedIntProperty() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/UnsignedIntProperty.kt");
     }
 
     @TestMetadata("WholeFileChanged.kt")

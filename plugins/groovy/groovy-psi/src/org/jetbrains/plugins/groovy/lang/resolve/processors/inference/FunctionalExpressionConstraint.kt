@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
@@ -24,12 +25,20 @@ class FunctionalExpressionConstraint(private val expression: GrFunctionalExpress
       if (returnType == null || returnType == PsiType.VOID) {
         return true
       }
-      constraints.add(TypeConstraint(parameters[0], returnType, expression))
+      constraints.add(TypeConstraint(unwrapWildcard(parameters[0]), returnType, expression))
     }
     else {
       val closureType = expression.type as? GroovyClosureType ?: return true
       constraints += processSAMConversion(leftType, closureType, expression)
     }
     return true
+  }
+
+  private fun unwrapWildcard(type: PsiType): PsiType {
+    if (type is PsiWildcardType && type.isExtends) {
+      return type.extendsBound
+    } else {
+      return type
+    }
   }
 }

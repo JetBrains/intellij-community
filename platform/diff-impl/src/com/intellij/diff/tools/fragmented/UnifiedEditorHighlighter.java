@@ -121,7 +121,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
   @NotNull
   @Override
   public HighlighterIterator createIterator(int startOffset) {
-    int index = Collections.binarySearch(myPieces, new Element(startOffset, 0, null, null), Comparator.comparingInt(Element::getStart));
+    int index = Collections.binarySearch(myPieces, new Element(startOffset, 0, null, TextAttributes.ERASE_MARKER), Comparator.comparingInt(Element::getStart));
     // index: (-insertion point - 1), where insertionPoint is the index of the first element greater than the key
     // and we need index of the first element that is less or equal (floorElement)
     if (index < 0) index = Math.max(-index - 2, 0);
@@ -196,26 +196,26 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
     private final IElementType myElementType;
     private final TextAttributes myAttributes;
 
-    private Element(int start, int end, IElementType elementType, TextAttributes attributes) {
+    private Element(int start, int end, IElementType elementType, @NotNull TextAttributes attributes) {
       myStart = start;
       myEnd = end;
       myElementType = elementType;
       myAttributes = attributes;
     }
 
-    public int getStart() {
+    int getStart() {
       return myStart;
     }
 
-    public int getEnd() {
+    int getEnd() {
       return myEnd;
     }
 
-    public IElementType getElementType() {
+    IElementType getElementType() {
       return myElementType;
     }
 
-    public TextAttributes getAttributes() {
+    @NotNull TextAttributes getAttributes() {
       return myAttributes;
     }
   }

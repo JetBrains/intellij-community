@@ -20,4 +20,9 @@ public class PyAsPatternImpl extends PyElementImpl implements PyAsPattern {
   public @NotNull PyPattern getPattern() {
     return findNotNullChildByClass(PyPattern.class);
   }
+
+  @Override
+  public boolean isIrrefutable() {
+    return getPattern().isIrrefutable();
+  }
 }

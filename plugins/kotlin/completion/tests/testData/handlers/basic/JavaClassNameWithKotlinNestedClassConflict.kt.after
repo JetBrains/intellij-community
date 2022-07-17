@@ -1,0 +1,10 @@
+package one
+
+class Outer {
+    class JavaClass
+    fun t(n: one.JavaClass) {
+    }
+}
+
+// ELEMENT: JavaClass
+// TAIL_TEXT: " (one)"

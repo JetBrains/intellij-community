@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +70,7 @@ public final class LazyInitializer {
    * @deprecated Use {@link #create(Supplier)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public abstract static class NullableValue<T> {
     @SuppressWarnings("unchecked")
     private volatile T value = (T)UNINITIALIZED_VALUE;
@@ -109,6 +111,7 @@ public final class LazyInitializer {
    * @deprecated Use {@link #create(Supplier)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static abstract class NotNullValue<T> extends NullableValue<T> implements Supplier<T> {
     public NotNullValue() {
     }

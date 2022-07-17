@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers
 
 import com.intellij.icons.AllIcons
@@ -6,6 +22,7 @@ import com.intellij.ui.components.JBLabel
 import com.jetbrains.packagesearch.intellij.plugin.looksLikeGradleVariable
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageOperations
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
 import net.miginfocom.swing.MigLayout
@@ -41,13 +58,12 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
         background = bgColor
 
         val viewModel = checkNotNull(value as? UiPackageModel<*>)
-        val hasVersionsToChooseFrom = viewModel.packageModel.getAvailableVersions(onlyStable).isNotEmpty()
-        val labelText = when (value) {
-            is UiPackageModel.Installed -> versionMessage(value.packageModel, onlyStable)
-            is UiPackageModel.SearchResult -> value.selectedVersion.displayName
-            else -> throw IllegalArgumentException("The value is expected to be a VersionViewModel, but wasn't.")
+        val labelText = when (viewModel) {
+            is UiPackageModel.Installed -> versionMessage(viewModel.packageModel, viewModel.packageOperations)
+            is UiPackageModel.SearchResult -> viewModel.selectedVersion.displayName
         }
 
+        val hasVersionsToChooseFrom = viewModel.sortedVersions.isNotEmpty()
         val labelComponent = if (hasVersionsToChooseFrom) {
             JBComboBoxLabel().apply {
                 icon = AllIcons.General.LinkDropTriangle
@@ -66,9 +82,9 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
     }
 
     @Nls
-    private fun versionMessage(packageModel: PackageModel.Installed, onlyStable: Boolean): String {
+    private fun versionMessage(packageModel: PackageModel.Installed, packageOperations: PackageOperations): String {
         val installedVersions = packageModel.usageInfo.asSequence()
-            .map { it.version }
+            .map { it.getResolvedVersionOrFallback() }
             .distinct()
             .sorted()
             .joinToString { if (looksLikeGradleVariable(it)) "[${it.displayName}]" else it.displayName }
@@ -79,11 +95,10 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
         return buildString {
             append(installedVersions)
 
-            if (packageModel.canBeUpgraded(onlyStable)) {
-                val latestAvailableVersion = packageModel.getLatestAvailableVersion(onlyStable)
-                    ?: return@buildString
+            if (packageOperations.canUpgradePackage) {
+                val upgradeVersion = packageOperations.targetVersion ?: return@buildString
                 append(" → ")
-                append(latestAvailableVersion.displayName)
+                append(upgradeVersion.displayName)
             }
         }
     }

@@ -27,7 +27,7 @@ fun DvcsBranchSettings.isGroupingEnabled(key: GroupingKey): Boolean {
 fun DvcsBranchSettings.setGrouping(key: GroupingKey, state: Boolean) {
   if (state) groupingKeyIds.add(key.id) else groupingKeyIds.remove(key.id)
 
-  intIncrementModificationCount();
+  intIncrementModificationCount()
 }
 
 enum class GroupingKey(val id: @NonNls String,

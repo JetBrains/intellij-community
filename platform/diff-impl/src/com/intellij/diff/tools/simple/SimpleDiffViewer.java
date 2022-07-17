@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
@@ -6,10 +6,12 @@ import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.impl.ui.DifferencesLabel;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
+import com.intellij.diff.tools.util.side.TwosideContentPanel;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
 import com.intellij.diff.util.*;
@@ -46,12 +48,12 @@ import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
-public class SimpleDiffViewer extends TwosideTextDiffViewer {
+public class SimpleDiffViewer extends TwosideTextDiffViewer implements DifferencesLabel.DifferencesCounter {
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
-  @NotNull private final StatusPanel myStatusPanel;
+  @NotNull protected final StatusPanel myStatusPanel;
 
-  @NotNull private final SimpleDiffModel myModel = new SimpleDiffModel(this);
+  @NotNull protected final SimpleDiffModel myModel = new SimpleDiffModel(this);
 
   @NotNull private final MyFoldingModel myFoldingModel;
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
@@ -65,7 +67,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     mySyncScrollable = new MySyncScrollable();
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myStatusPanel = new MyStatusPanel();
-    myFoldingModel = new MyFoldingModel(getProject(), getEditors(), this);
+    myFoldingModel = new MyFoldingModel(getProject(), getEditors(), myContentPanel, this);
 
     myModifierProvider = new ModifierProvider();
 
@@ -168,6 +170,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull
   public FoldingModelSupport getFoldingModel() {
     return myFoldingModel;
+  }
+
+  boolean needAlignChanges() {
+    return Boolean.TRUE.equals(myRequest.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF))
+           || getTextSettings().isEnableAligningChangesMode();
   }
 
   @NotNull
@@ -355,6 +362,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     return myStatusPanel;
   }
 
+  @Override
+  public int getTotalDifferences() {
+    return getNonSkippedDiffChanges().size();
+  }
+
   @NotNull
   public KeyboardModifierListener getModifierProvider() {
     return myModifierProvider;
@@ -376,7 +388,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   //
 
   boolean isDiffForLocalChanges() {
-    boolean isLastWithLocal = DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL.get(myContext, false);
+    boolean isLastWithLocal = DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, myContext);
     return isLastWithLocal && !isEditable(Side.LEFT) && isEditable(Side.RIGHT);
   }
 
@@ -606,8 +618,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     if (!change.isValid()) return;
     Side outputSide = sourceSide.other();
 
-    DiffUtil.applyModification(getEditor(outputSide).getDocument(), change.getStartLine(outputSide), change.getEndLine(outputSide),
-                               getEditor(sourceSide).getDocument(), change.getStartLine(sourceSide), change.getEndLine(sourceSide));
+    boolean isLocalChangeRevert = sourceSide == Side.LEFT && isDiffForLocalChanges();
+    TextDiffViewerUtil.applyModification(getEditor(outputSide).getDocument(),
+                                         change.getStartLine(outputSide), change.getEndLine(outputSide),
+                                         getEditor(sourceSide).getDocument(),
+                                         change.getStartLine(sourceSide), change.getEndLine(sourceSide),
+                                         isLocalChangeRevert);
 
     myModel.destroyChange(change);
   }
@@ -688,7 +704,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private class MySyncScrollable extends BaseSyncScrollable {
     @Override
     public boolean isSyncScrollEnabled() {
-      return getTextSettings().isEnableSyncScroll();
+      return getTextSettings().isEnableSyncScroll() || getTextSettings().isEnableAligningChangesMode();
+    }
+
+    @Override
+    public boolean forceSyncVerticalScroll() {
+      return needAlignChanges();
     }
 
     @NotNull
@@ -709,7 +730,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
-  private class MyDividerPainter implements DiffSplitter.Painter, DiffDividerDrawUtil.DividerPaintable {
+  private class MyDividerPainter implements DiffSplitter.Painter {
     @DirtyUI
     @Override
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
@@ -718,22 +739,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       gg.setColor(DiffDrawUtil.getDividerColor(getEditor1()));
       gg.fill(gg.getClipBounds());
 
-      DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), getEditor1(), getEditor2(), this);
-
+      myModel.paintPolygons(gg, divider);
       myFoldingModel.paintOnDivider(gg, divider);
 
       gg.dispose();
-    }
-
-    @Override
-    public void process(@NotNull Handler handler) {
-      for (SimpleDiffChange diffChange : getDiffChanges()) {
-        if (!handler.processExcludable(diffChange.getStartLine(Side.LEFT), diffChange.getEndLine(Side.LEFT),
-                                       diffChange.getStartLine(Side.RIGHT), diffChange.getEndLine(Side.RIGHT),
-                                       diffChange.getDiffType(), diffChange.isExcluded(), diffChange.isSkipped())) {
-          return;
-        }
-      }
     }
   }
 
@@ -741,14 +750,19 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Nullable
     @Override
     protected String getMessage() {
-      if (myTextDiffProvider.isHighlightingDisabled()) {
-        return DiffBundle.message("diff.highlighting.disabled.text");
-      }
-      List<SimpleDiffChange> allChanges = myModel.getAllChanges();
-      return DiffUtil.getStatusText(allChanges.size(),
-                                    ContainerUtil.count(allChanges, it -> it.isExcluded()),
-                                    myModel.isContentsEqual());
+      return getStatusTextMessage();
     }
+  }
+
+  @Nullable
+  protected @Nls String getStatusTextMessage() {
+    if (myTextDiffProvider.isHighlightingDisabled()) {
+      return DiffBundle.message("diff.highlighting.disabled.text");
+    }
+    List<SimpleDiffChange> allChanges = myModel.getAllChanges();
+    return DiffUtil.getStatusText(allChanges.size(),
+                                  ContainerUtil.count(allChanges, it -> it.isExcluded()),
+                                  myModel.isContentsEqual());
   }
 
   public class ModifierProvider extends KeyboardModifierListener {
@@ -764,9 +778,19 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   private static class MyFoldingModel extends FoldingModelSupport {
     private final MyPaintable myPaintable = new MyPaintable(0, 1);
+    private final TwosideContentPanel myContentPanel;
 
-    MyFoldingModel(@Nullable Project project, @NotNull List<? extends EditorEx> editors, @NotNull Disposable disposable) {
+    MyFoldingModel(@Nullable Project project,
+                   @NotNull List<? extends EditorEx> editors,
+                   @NotNull TwosideContentPanel contentPanel,
+                   @NotNull Disposable disposable) {
       super(project, editors.toArray(new EditorEx[0]), disposable);
+      myContentPanel = contentPanel;
+    }
+
+    @Override
+    protected void repaintSeparators() {
+      myContentPanel.repaint();
     }
 
     @Nullable

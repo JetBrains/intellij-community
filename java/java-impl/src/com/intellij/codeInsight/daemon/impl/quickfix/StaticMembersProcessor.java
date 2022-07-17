@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -102,16 +102,17 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
         //methods in interfaces must have explicit static modifier or they are not static;
         return true;
       }
-    }
 
-    if (myAddStaticImport) {
-      if (!PsiUtil.isFromDefaultPackage(member)) {
+      if (myAddStaticImport) {
+        if (!PsiUtil.isFromDefaultPackage(member)) {
+          mySuggestions.putValue(containingClass, member);
+        }
+      }
+      else if (myInDefaultPackage || !PsiUtil.isFromDefaultPackage(member)) {
         mySuggestions.putValue(containingClass, member);
       }
     }
-    else if (myInDefaultPackage || !PsiUtil.isFromDefaultPackage(member)) {
-      mySuggestions.putValue(containingClass, member);
-    }
+
     return processCondition();
   }
 

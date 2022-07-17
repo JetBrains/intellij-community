@@ -20,10 +20,6 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  public static final String TYPE_HIERARCHY_TYPE = "Class {0}";
-  public static final String SUBTYPES_HIERARCHY_TYPE = "Subtypes of {0}";
-  public static final String SUPERTYPES_HIERARCHY_TYPE = "Supertypes of {0}";
-
   private boolean myIsInterface;
 
   private final MyDeleteProvider myDeleteElementProvider = new MyDeleteProvider();
@@ -67,9 +63,9 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   @Override
   protected @NotNull Map<String, Supplier<String>> getPresentableNameMap() {
     HashMap<String, Supplier<String>> map = new HashMap<>();
-    map.put(TYPE_HIERARCHY_TYPE, TypeHierarchyBrowserBase::getTypeHierarchyType);
-    map.put(SUBTYPES_HIERARCHY_TYPE, TypeHierarchyBrowserBase::getSubtypesHierarchyType);
-    map.put(SUPERTYPES_HIERARCHY_TYPE, TypeHierarchyBrowserBase::getSupertypesHierarchyType);
+    map.put(getTypeHierarchyType(), TypeHierarchyBrowserBase::getTypeHierarchyType);
+    map.put(getSubtypesHierarchyType(), TypeHierarchyBrowserBase::getSubtypesHierarchyType);
+    map.put(getSupertypesHierarchyType(), TypeHierarchyBrowserBase::getSupertypesHierarchyType);
     return map;
   }
 

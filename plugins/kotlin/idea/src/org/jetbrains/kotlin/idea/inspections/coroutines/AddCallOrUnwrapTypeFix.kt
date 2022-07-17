@@ -2,12 +2,13 @@
 
 package org.jetbrains.kotlin.idea.inspections.coroutines
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -22,6 +23,7 @@ class AddCallOrUnwrapTypeFix(
     val functionName: String,
     val typeName: String,
     val shouldMakeSuspend: Boolean,
+    @SafeFieldForPreview
     val simplify: (KtExpression) -> Unit
 ) : LocalQuickFix {
     override fun getName(): String =

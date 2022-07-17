@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeHighlighting;
 
 import com.intellij.icons.AllIcons;
@@ -16,7 +16,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.ColorizeProxyIcon;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,11 +45,13 @@ public class HighlightDisplayLevel {
 
   private static final TextAttributesKey DO_NOT_SHOW_KEY = TextAttributesKey.createTextAttributesKey("DO_NOT_SHOW");
   public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, EmptyIcon.ICON_0);
+  
+  public static final HighlightDisplayLevel CONSIDERATION_ATTRIBUTES = new HighlightDisplayLevel(HighlightSeverity.TEXT_ATTRIBUTES, EmptyIcon.ICON_0);
+
   /**
    * @deprecated use {@link #WEAK_WARNING} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final HighlightDisplayLevel INFO = new HighlightDisplayLevel(HighlightSeverity.INFO, createIconByKey(DO_NOT_SHOW_KEY));
 
   public static final HighlightDisplayLevel WEAK_WARNING =
@@ -71,7 +72,7 @@ public class HighlightDisplayLevel {
     }
   };
 
-  private Pair<Icon, Icon> myIconPair = new Pair<>(null, null);
+  private Pair<Icon, Icon> myIconPair = new Pair<>(EmptyIcon.ICON_16, EmptyIcon.ICON_16);
   private final HighlightSeverity mySeverity;
 
   @Nullable
@@ -88,7 +89,7 @@ public class HighlightDisplayLevel {
     return null;
   }
 
-  public static HighlightDisplayLevel find(HighlightSeverity severity) {
+  public static HighlightDisplayLevel find(@NotNull HighlightSeverity severity) {
     return ourMap.get(severity);
   }
 
@@ -116,12 +117,14 @@ public class HighlightDisplayLevel {
     return mySeverity.getName();
   }
 
+  @NotNull
   public Icon getIcon() {
-    return myIconPair.first;
+    return myIconPair.first != null ? myIconPair.first : EmptyIcon.ICON_16;
   }
 
+  @NotNull
   public Icon getOutlineIcon() {
-    return myIconPair.second;
+    return myIconPair.second != null ? myIconPair.second : EmptyIcon.ICON_16;
   }
 
   @NotNull

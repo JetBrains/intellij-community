@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -47,6 +47,7 @@ import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProviderBase;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -151,7 +152,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
   protected JComponent addChooser(JComponent component) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(component);
-    panel.setBackground(new JBColor(() -> component.getBackground()));
+    panel.setBackground(JBColor.lazy(() -> component.getBackground()));
     panel.addToRight(myLanguageChooser);
     return panel;
   }
@@ -189,7 +190,12 @@ public abstract class XDebuggerEditorBase implements Expandable {
   public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
     if (mySourcePosition != sourcePosition) {
       mySourcePosition = sourcePosition;
-      setExpression(getExpression());
+      XExpression expression = getExpression();
+      // for empty expression we reset the language from the source position
+      if (XDebuggerUtilImpl.isEmptyExpression(expression) && expression.getLanguage() != null) {
+        expression = XExpressionImpl.changeLanguage(expression, null);
+      }
+      setExpression(expression);
     }
   }
 
@@ -556,8 +562,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
         actions.add(new AnAction(language.getDisplayName(), null, language.getAssociatedFileType().getIcon()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            XExpression currentExpression = getExpression();
-            setExpression(new XExpressionImpl(currentExpression.getExpression(), language, currentExpression.getCustomInfo()));
+            setExpression(XExpressionImpl.changeLanguage(getExpression(), language));
             requestFocusInEditor();
           }
         });
@@ -573,7 +578,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     void requestUpdate(Language currentLanguage) {
       ReadAction.nonBlocking(() -> getSupportedLanguages())
         .inSmartMode(myProject)
-        .finishOnUiThread(ModalityState.defaultModalityState(), languages -> {
+        .finishOnUiThread(ModalityState.any(), languages -> {
           boolean many = languages.size() > 1;
           myLanguages = languages;
 

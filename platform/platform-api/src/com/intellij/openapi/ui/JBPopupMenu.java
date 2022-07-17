@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
@@ -7,14 +7,10 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.TimerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +44,7 @@ public class JBPopupMenu extends JPopupMenu {
     myLayout = new MyLayout(this);
     setLayout(myLayout);
     setLightWeightPopupEnabled(false);
+    setOpaque(false);
   }
 
   @Override
@@ -93,7 +90,7 @@ public class JBPopupMenu extends JPopupMenu {
     // Let's show it somewhere, and once it's shown, move it to the desired location.
     menu.show(component, 0, 0);
     UiNotifyConnector.doWhenFirstShown(menu, () -> {
-      Window window = UIUtil.getWindow(menu);
+      Window window = ComponentUtil.getWindow(menu);
       if (window == null) {
         LOG.error("Cannot find window for menu popup " + menu + ", " + menu.isShowing());
       }
@@ -289,9 +286,11 @@ public class JBPopupMenu extends JPopupMenu {
       int y = -myShift + insets.top;
       for (Component component : components) {
         if (!component.isVisible()) {
+          String place = target instanceof PlaceProvider ? ((PlaceProvider)target).getPlace() : null;
           String itemText = component instanceof AbstractButton ?
                             "\"" + ((AbstractButton)component).getText() + "\"" : component.getClass().getName();
-          LOG.error("Invisible menu item " + itemText);
+          LOG.error("Invisible menu item " + itemText + (place != null ? " in '" + place + "'" : "") +
+                    " ("  + component.getClass().getName() + " in " + target.getClass().getName() + ")");
           continue;
         }
         int height = component.getPreferredSize().height;

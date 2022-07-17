@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.favoritesTreeView;
 
@@ -12,6 +12,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -25,13 +26,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
+public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider implements AbstractUrlFavoriteConverter {
   @Override
   public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
@@ -52,7 +54,7 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
           if (directories.length > 0) {
             final VirtualFile firstDir = directories[0].getVirtualFile();
             final boolean isLibraryRoot = ProjectRootsUtil.isLibraryRoot(firstDir, project);
-            final PackageElement packageElement = new PackageElement(LangDataKeys.MODULE.getData(context), psiPackage, isLibraryRoot);
+            final PackageElement packageElement = new PackageElement(PlatformCoreDataKeys.MODULE.getData(context), psiPackage, isLibraryRoot);
             result.add(new PackageElementNode(project, packageElement, viewSettings));
           }
         }
@@ -169,12 +171,17 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
+    var context = createBookmarkContext(project, url, moduleName);
+    return context == null ? null : new Object[]{context};
+  }
+
+  @Override
+  public @Nullable Object createBookmarkContext(@NotNull Project project, @NotNull String url, @Nullable String moduleName) {
     final Module module = moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null;
     // module can be null if 'show module' turned off
     final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(url);
     if (aPackage == null) return null;
-    PackageElement packageElement = new PackageElement(module, aPackage, false);
-    return new Object[]{packageElement};
+    return new PackageElement(module, aPackage, false);
   }
 
   @Override

@@ -58,6 +58,8 @@ public class SearchModelTest extends BasePlatformTestCase {
     Assert.assertEquals("Adding 'more' item", expectedItems, actualItems);
 
     // adding after freeze -----------------------------------------------------------------------
+    model.clearMoreItems();
+    model.freezeElements();
     model.addElements(Arrays.asList(
       new SearchEverywhereFoundElementInfo("item_360", 300, STUB_CONTRIBUTOR_3),
       new SearchEverywhereFoundElementInfo("item_100", 100, STUB_CONTRIBUTOR_1),
@@ -66,7 +68,7 @@ public class SearchModelTest extends BasePlatformTestCase {
 
     actualItems = model.getItems();
     expectedItems = Arrays.asList("item_370", "item_340", "item_300", "item_280_1", "item_280_2", "item_280_3", "item_250",
-                                  "item_160", "item_130", "item_360", "item_220", "item_100", SearchListModel.MORE_ELEMENT);
+                                  "item_160", "item_130", "item_360", "item_220", "item_100");
     Assert.assertEquals("Adding to existing items after freeze", expectedItems, actualItems);
 
     // expiring results -----------------------------------------------------------------------

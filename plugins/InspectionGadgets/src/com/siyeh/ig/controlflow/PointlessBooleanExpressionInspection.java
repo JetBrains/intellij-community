@@ -16,11 +16,13 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -36,21 +38,13 @@ import javax.swing.*;
 import java.util.*;
 import java.util.function.Supplier;
 
-public class PointlessBooleanExpressionInspection extends BaseInspection {
+public class PointlessBooleanExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
   private enum BooleanExpressionKind {
     USELESS, USELESS_WITH_SIDE_EFFECTS, UNKNOWN
   }
 
-  static final Set<IElementType> booleanTokens = new HashSet<>();
-  static {
-    booleanTokens.add(JavaTokenType.ANDAND);
-    booleanTokens.add(JavaTokenType.AND);
-    booleanTokens.add(JavaTokenType.OROR);
-    booleanTokens.add(JavaTokenType.OR);
-    booleanTokens.add(JavaTokenType.XOR);
-    booleanTokens.add(JavaTokenType.EQEQ);
-    booleanTokens.add(JavaTokenType.NE);
-  }
+  static final TokenSet booleanTokens = TokenSet.create(JavaTokenType.ANDAND, JavaTokenType.AND, JavaTokenType.OROR,
+                                                        JavaTokenType.OR, JavaTokenType.XOR, JavaTokenType.EQEQ, JavaTokenType.NE);
 
   @SuppressWarnings("PublicField")
   public boolean m_ignoreExpressionsContainingConstants = true;
@@ -419,19 +413,19 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
   private class PointlessBooleanExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       checkExpression(expression);
     }
@@ -590,7 +584,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       final PsiElement target = expression.resolve();
       if (target instanceof PsiVariable && ((PsiVariable)target).hasModifierProperty(PsiModifier.FINAL) &&
           ((PsiVariable)target).hasInitializer()) {

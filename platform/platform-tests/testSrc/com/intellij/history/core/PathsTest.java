@@ -16,9 +16,8 @@
 
 package com.intellij.history.core;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.junit.Assume;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -102,7 +101,7 @@ public class PathsTest extends LocalHistoryTestCase {
 
   @Test
   public void testWindowsPathsSplitting() {
-    Assume.assumeTrue(SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
     testPathSplit("relative/folder/file.txt", "relative", "folder", "file.txt");
     testPathSplit("C:/Users/user/folder/file.txt", "C:", "Users", "user", "folder", "file.txt");
     testPathSplit("//wsl$/Distro/home/user/folder/file.txt", "//wsl$/Distro", "home", "user", "folder", "file.txt");
@@ -113,7 +112,7 @@ public class PathsTest extends LocalHistoryTestCase {
 
   @Test
   public void testUnixPathsSplitting() {
-    Assume.assumeTrue(SystemInfo.isUnix);
+    IoTestUtil.assumeUnix();
     testPathSplit("relative/folder/file.txt", "relative", "folder", "file.txt");
     testPathSplit("/home/user/folder/file.txt", "/", "home", "user", "folder", "file.txt");
     testPathSplit("/home/user/folder", "/", "home", "user", "folder");

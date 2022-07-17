@@ -350,22 +350,6 @@
         <xs:documentation>deprecated</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute type="xs:string" name="size32">
-      <xs:annotation>
-        <xs:documentation>
-          Path to a 32x32 png file with the product icon. <strong>Deprecated: use 'svg' attribute instead.</strong>
-        </xs:documentation>
-        <xs:documentation>deprecated</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute type="xs:string" name="size128" >
-      <xs:annotation>
-        <xs:documentation>
-          Path to a 128x128 png file with the product icon. <strong>Deprecated: use 'svg' attribute instead.</strong>
-        </xs:documentation>
-        <xs:documentation>deprecated</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
     <xs:attribute type="xs:string" name="ico">
       <xs:annotation>
         <xs:documentation>
@@ -373,14 +357,14 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute type="xs:string" name="svg">
+    <xs:attribute type="xs:string" name="svg" use="required">
       <xs:annotation>
         <xs:documentation>
           Path to an svg file with the product icon.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute type="xs:string" name="svg-small">
+    <xs:attribute type="xs:string" name="svg-small" use="required">
       <xs:annotation>
         <xs:documentation>
           Path to an svg file with a simplified version of the product icon which looks good when shown as 16x16 image. The file must be
@@ -470,15 +454,14 @@
   <xs:complexType name="whatsNewUrlType">
     <xs:attribute type="xs:anyURI" name="url" use="required">
       <xs:annotation>
-        <xs:documentation>An URL for the "Help | What's New" action. See also 'eligibility' attribute.</xs:documentation>
+        <xs:documentation>An URL for the "Help | What's New" action. See also 'show-on-update' attribute.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute type="whatsNewEligibilityType" name="eligibility">
+    <xs:attribute type="xs:boolean" name="show-on-update">
       <xs:annotation>
         <xs:documentation>
-          Set to 'embed' to show the URL in the built-in (CEF) browser (the page must be optimized accordingly).
-          Set to 'auto' to automatically show the URL in an editor tab after a major upgrade (implies 'embed').
-          When missing, the URL will be opened in an external browser.
+          Set to 'true' to automatically show the URL in an editor tab after a major upgrade.
+          If the built-in (CEF) browser is not available, the IDE will display a notification instead.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -526,7 +509,7 @@
   </xs:complexType>
   <xs:complexType name="zendeskFormType">
     <xs:sequence>
-      <xs:element name="field" type="zendeskFieldType" maxOccurs="unbounded"/>
+      <xs:element name="field" type="zendeskFieldType" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
     <xs:attribute type="xs:string" name="url" use="required"/>
     <xs:attribute type="xs:string" name="zendesk-form-id"/>

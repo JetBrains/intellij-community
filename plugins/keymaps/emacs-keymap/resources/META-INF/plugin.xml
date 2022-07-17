@@ -1,0 +1,14 @@
+<idea-plugin>
+<name>Emacs Keymap</name>
+<id>com.intellij.plugins.emacskeymap</id>
+<vendor>JetBrains</vendor>
+<category>Keymap</category>
+<description>
+  Emacs keymap for all IntelliJ-based IDEs.
+  Use this plugin if Emacs keymap is not pre-installed in your IDE.
+</description>
+<depends>com.intellij.modules.lang</depends>
+<extensions defaultExtensionNs="com.intellij">
+    <bundledKeymap file="Emacs.xml"/>
+</extensions>
+</idea-plugin>

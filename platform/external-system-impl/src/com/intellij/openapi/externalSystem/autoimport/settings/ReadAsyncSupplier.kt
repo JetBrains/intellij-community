@@ -11,7 +11,7 @@ import java.util.concurrent.Executor
 class ReadAsyncSupplier<R>(
   private val supplier: () -> R,
   private val shouldKeepTasksAsynchronous: () -> Boolean,
-  private val equality: Array<out Any>?,
+  private val equality: Array<out Any>,
   private val backgroundExecutor: Executor
 ) : AsyncSupplier<R> {
   override fun supply(consumer: (R) -> Unit, parentDisposable: Disposable) {
@@ -19,7 +19,7 @@ class ReadAsyncSupplier<R>(
       var readAction = ReadAction.nonBlocking(supplier)
         .expireWith(parentDisposable)
         .finishOnUiThread(ModalityState.defaultModalityState(), consumer)
-      if (equality != null) {
+      if (equality.isNotEmpty()) {
         readAction = readAction.coalesceBy(*equality)
       }
       readAction.submit(backgroundExecutor)
@@ -33,7 +33,7 @@ class ReadAsyncSupplier<R>(
     private var shouldKeepTasksAsynchronous: () -> Boolean =
       CoreProgressManager::shouldKeepTasksAsynchronous
 
-    private var equality: Array<out Any>? = null
+    private var equality: Array<out Any> = emptyArray()
 
     fun shouldKeepTasksAsynchronous(provider: () -> Boolean) = apply {
       shouldKeepTasksAsynchronous = provider

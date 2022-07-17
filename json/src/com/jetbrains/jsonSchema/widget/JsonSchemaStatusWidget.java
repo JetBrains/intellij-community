@@ -21,9 +21,11 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts.StatusBarText;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,8 +65,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   private final AtomicReference<Pair<VirtualFile, Boolean>> mySuppressInfoRef = new AtomicReference<>();
 
-  private VirtualFile myLastUpdatedFile;
-  private WidgetState mySchemaWidgetState;
+  private volatile Pair<WidgetState, VirtualFile> myLastWidgetStateAndFilePair;
   private ProgressIndicator myCurrentProgress;
 
   JsonSchemaStatusWidget(@NotNull Project project) {
@@ -132,7 +133,54 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   @Override
   public void update(@Nullable Runnable finishUpdate) {
     mySuppressInfoRef.set(null);
-    super.update(finishUpdate);
+
+    if (getUpdateAlarm().isDisposed()) return;
+    VirtualFile file = getSelectedFile();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      scheduleComponentUpdate(file, finishUpdate);
+    }
+    else {
+      ReadAction.nonBlocking(() -> scheduleComponentUpdate(file, finishUpdate))
+        .expireWith(getUpdateAlarm())
+        .withDocumentsCommitted(myProject)
+        .coalesceBy(this, file)
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
+  }
+
+  private void scheduleComponentUpdate(VirtualFile file, @Nullable Runnable finishUpdate) {
+    WidgetState state = getWidgetState(file);
+    getUpdateAlarm().cancelAllRequests();
+    getUpdateAlarm().addRequest(() -> {
+      if (state == WidgetState.NO_CHANGE) {
+        return;
+      }
+
+      if (state == WidgetState.NO_CHANGE_MAKE_VISIBLE) {
+        getComponent().setVisible(true);
+        return;
+      }
+
+      if (state == WidgetState.HIDDEN) {
+        getComponent().setVisible(false);
+        return;
+      }
+      if (isDisposed()) return;
+
+      getComponent().setVisible(true);
+      actionEnabled = state.isActionEnabled() && isEnabledForFile(file);
+      getComponent().setEnabled(actionEnabled);
+      updateComponent(state);
+
+      if (myStatusBar != null && !getComponent().isValid()) {
+        myStatusBar.updateWidget(ID());
+      }
+
+      if (finishUpdate != null) {
+        finishUpdate.run();
+      }
+      afterVisibleUpdate(state);
+    }, 200, ModalityState.any());
   }
 
   private static WidgetStatus getWidgetStatus(@NotNull Project project, @NotNull VirtualFile file) {
@@ -149,14 +197,18 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     return WidgetStatus.ENABLED;
   }
 
-  @NotNull
   @Override
-  protected WidgetState getWidgetState(@Nullable VirtualFile file) {
+  protected @NotNull WidgetState getWidgetState(@Nullable VirtualFile file) {
+    Pair<WidgetState, VirtualFile> lastStateAndFilePair = myLastWidgetStateAndFilePair;
+    WidgetState widgetState = calcWidgetState(file, Pair.getFirst(lastStateAndFilePair), Pair.getSecond(lastStateAndFilePair));
+    myLastWidgetStateAndFilePair = new Pair<>(widgetState, file);
+    return widgetState;
+  }
+
+  private @NotNull WidgetState calcWidgetState(@Nullable VirtualFile file,
+                                               @Nullable WidgetState lastWidgetState,
+                                               @Nullable VirtualFile lastFile) {
     Pair<VirtualFile, Boolean> suppressInfo = mySuppressInfoRef.getAndSet(null);
-    WidgetState schemaWidgetState = mySchemaWidgetState;
-    mySchemaWidgetState = null;
-    VirtualFile lastUpdatedFile = myLastUpdatedFile;
-    myLastUpdatedFile = file;
     if (myCurrentProgress != null && !myCurrentProgress.isCanceled()) {
       myCurrentProgress.cancel();
     }
@@ -183,7 +235,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
         scheduleSuppressCheck(file, myCurrentProgress);
 
         // show 'loading' only when switching between files and previous state was not hidden, otherwise the widget will "jump"
-        if (!Comparing.equal(lastUpdatedFile, file) && schemaWidgetState != null && schemaWidgetState != WidgetState.HIDDEN) {
+        if (!Comparing.equal(lastFile, file) && lastWidgetState != null && lastWidgetState != WidgetState.HIDDEN) {
           return new WidgetState(JsonBundle.message("schema.widget.checking.state.tooltip"),
                                  JsonBundle.message("schema.widget.checking.state.text",
                                                     isJsonFile ? JsonBundle.message("schema.widget.prefix.json.files")
@@ -199,12 +251,10 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       }
     }
 
-    WidgetState state = doGetWidgetState(file, isJsonFile);
-    mySchemaWidgetState = state;
-    return state;
+    return doGetWidgetState(file, isJsonFile);
   }
 
-  private WidgetState doGetWidgetState(@NotNull VirtualFile file, boolean isJsonFile) {
+  private @NotNull WidgetState doGetWidgetState(@NotNull VirtualFile file, boolean isJsonFile) {
     JsonSchemaService service = getService();
     if (service == null) {
       return getNoSchemaState();
@@ -413,18 +463,20 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Nullable
   @Override
-  protected ListPopup createPopup(DataContext context) {
-    final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
-    if (virtualFile == null) return null;
+  protected ListPopup createPopup(@NotNull DataContext context) {
+    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
+    if (file == null) return null;
 
     Project project = getProject();
-    WidgetState popupState = mySchemaWidgetState;
-    if (!(popupState instanceof MyWidgetState) || !virtualFile.equals(myLastUpdatedFile)) return null;
-
-    JsonSchemaService service = getService();
-    if (service == null) return null;
-
-    return JsonSchemaStatusPopup.createPopup(service, project, virtualFile, ((MyWidgetState)popupState).isWarning());
+    Pair<WidgetState, VirtualFile> lastWidgetStateAndFilePair = myLastWidgetStateAndFilePair;
+    WidgetState lastWidgetState = Pair.getFirst(lastWidgetStateAndFilePair);
+    if (lastWidgetState instanceof MyWidgetState && file.equals(Pair.getSecond(lastWidgetStateAndFilePair))) {
+      JsonSchemaService service = getService();
+      if (service != null) {
+        return JsonSchemaStatusPopup.createPopup(service, project, file, ((MyWidgetState)lastWidgetState).isWarning());
+      }
+    }
+    return null;
   }
 
   @Override

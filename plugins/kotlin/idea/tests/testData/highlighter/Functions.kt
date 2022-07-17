@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun <info textAttributesKey="KOTLIN_FUNCTION_DECLARATION">global</info>() {
     fun <info textAttributesKey="KOTLIN_FUNCTION_DECLARATION">inner</info>() {
 

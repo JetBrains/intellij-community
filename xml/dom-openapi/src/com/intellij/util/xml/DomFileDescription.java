@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -14,7 +14,6 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentInstanceMap;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,40 +60,14 @@ public class DomFileDescription<T> {
   }
 
   /**
-   * Register an implementation class to provide additional functionality for DOM elements.
+   * Map namespace key, call from {@link #initializeFileDescription()}.
    *
-   * @param domElementClass     interface class.
-   * @param implementationClass abstract implementation class.
-   * @see #initializeFileDescription()
-   * @deprecated use dom.implementation extension point instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final <Dom extends DomElement> void registerImplementation(Class<Dom> domElementClass, Class<? extends Dom> implementationClass) {
-    myImplementations.put(domElementClass, implementationClass);
-  }
-
-  /**
    * @param namespaceKey namespace identifier
+   * @param namespaces   XML namespace or DTD public or system id value for the given namespaceKey
    * @see Namespace
-   * @param policy function that takes XML file root tag and returns (maybe empty) list of possible namespace URLs or DTD public ids. This
-   * function shouldn't use DOM since it may be not initialized for the file at the moment
-   * @deprecated use {@link #registerNamespacePolicy(String, String...)} or override {@link #getAllowedNamespaces(String, XmlFile)} instead
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected final void registerNamespacePolicy(String namespaceKey, NotNullFunction<XmlTag,List<String>> policy) {
-    myNamespacePolicies.put(namespaceKey, policy);
-  }
-
-  /**
-   * @param namespaceKey namespace identifier
-   * @see Namespace
-   * @param namespaces XML namespace or DTD public or system id value for the given namespaceKey
    */
   public final void registerNamespacePolicy(String namespaceKey, final String... namespaces) {
-    registerNamespacePolicy(namespaceKey, new ConstantFunction<>(Arrays.asList(namespaces)));
+    myNamespacePolicies.put(namespaceKey, new ConstantFunction<>(Arrays.asList(namespaces)));
   }
 
   /**
@@ -127,8 +100,7 @@ public class DomFileDescription<T> {
    * index is rebuilt correctly.
    * @deprecated use "domVersion" attribute of {@code com.intellij.dom.fileMetaData} extension instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public int getVersion() {
     return myRootTagName.hashCode();
   }

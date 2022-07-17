@@ -29,7 +29,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,10 +61,10 @@ public final class CompletionInitializationUtil {
 
   @ApiStatus.Internal
   public static CompletionInitializationContextImpl runContributorsBeforeCompletion(Editor editor,
-                                                                                     PsiFile psiFile,
-                                                                                     int invocationCount,
-                                                                                     @NotNull Caret caret,
-                                                                                     CompletionType completionType) {
+                                                                                    PsiFile psiFile,
+                                                                                    int invocationCount,
+                                                                                    @NotNull Caret caret,
+                                                                                    CompletionType completionType) {
     final Ref<CompletionContributor> current = Ref.create(null);
     CompletionInitializationContextImpl context =
       new CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount) {
@@ -108,24 +107,16 @@ public final class CompletionInitializationUtil {
                                     initContext.getEditor(), indicator);
   }
 
-  public static Supplier<OffsetsInFile> insertDummyIdentifier(CompletionInitializationContext initContext, CompletionProcessEx indicator) {
+  public static Supplier<? extends OffsetsInFile> insertDummyIdentifier(CompletionInitializationContext initContext, CompletionProcessEx indicator) {
     OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
     final Consumer<Supplier<Disposable>> registerDisposable = supplier -> indicator.registerChildDisposable(supplier);
 
-    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable, false);
+    return doInsertDummyIdentifier(initContext, topLevelOffsets, false, registerDisposable);
   }
 
-  //need for code with me
-  public static Supplier<OffsetsInFile> insertDummyIdentifier(CompletionInitializationContext initContext, OffsetsInFile topLevelOffsets, Disposable parentDisposable, Boolean noWriteLock) {
-    final Consumer<Supplier<Disposable>> registerDisposable = supplier -> Disposer.register(parentDisposable, supplier.get());
-
-    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable, noWriteLock);
-  }
-
-  private static Supplier<OffsetsInFile> doInsertDummyIdentifier(CompletionInitializationContext initContext,
+  private static Supplier<? extends OffsetsInFile> doInsertDummyIdentifier(CompletionInitializationContext initContext,
                                                                  OffsetsInFile topLevelOffsets,
-                                                                 Consumer<Supplier<Disposable>> registerDisposable,
-                                                                 Boolean noWriteLock) {
+                                                                 boolean noWriteLock, Consumer<? super Supplier<Disposable>> registerDisposable) {
 
     CompletionAssertions.checkEditorValid(initContext.getEditor());
     if (initContext.getDummyIdentifier().isEmpty()) {
@@ -152,22 +143,22 @@ public final class CompletionInitializationUtil {
     //kskrygan: this check is non-relevant for CWM (quick doc and other features work separately)
     //and we are trying to avoid useless write locks during completion
     return skipWriteLockIfNeeded(noWriteLock, () -> {
-      registerDisposable.accept(() -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier));
+      registerDisposable.accept((Supplier<Disposable>)() -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier));
       OffsetsInFile copyOffsets = apply.get();
 
-      registerDisposable.accept(() -> copyOffsets.getOffsets());
+      registerDisposable.accept((Supplier<Disposable>)() -> copyOffsets.getOffsets());
 
       return copyOffsets;
     });
   }
 
-  private static Supplier<OffsetsInFile> skipWriteLockIfNeeded(Boolean skipWriteLock, Supplier<OffsetsInFile> toWrap) {
-    if (skipWriteLock)
+  private static Supplier<? extends OffsetsInFile> skipWriteLockIfNeeded(boolean skipWriteLock, Supplier<? extends OffsetsInFile> toWrap) {
+    if (skipWriteLock) {
       return toWrap;
-    else
-      return () -> WriteAction.compute(() -> {
-        return toWrap.get();
-      });
+    }
+    else {
+      return () -> WriteAction.compute(() -> toWrap.get());
+    }
   }
 
   public static OffsetsInFile toInjectedIfAny(PsiFile originalFile, OffsetsInFile hostCopyOffsets) {
@@ -255,7 +246,7 @@ public final class CompletionInitializationUtil {
     return insertedElement;
   }
 
-  private static PsiFile obtainFileCopy(PsiFile file, Boolean forbidCaching) {
+  private static PsiFile obtainFileCopy(PsiFile file, boolean forbidCaching) {
     final VirtualFile virtualFile = file.getVirtualFile();
     boolean mayCacheCopy = !forbidCaching && file.isPhysical() &&
                            // we don't want to cache code fragment copies even if they appear to be physical

@@ -1,2 +1,2 @@
 // MODE: local_variable
-fun foo() { val (i<# [:  [jar://kotlin-stdlib-sources.jar!/kotlin/Primitives.kt:21054]Int] #>, s<# [:  [jar://kotlin-stdlib-sources.jar!/kotlin/String.kt:618]String] #>) = 1 to "" }
+fun foo() { val (i<# [:  [jar://kotlin-stdlib-sources.jar!/kotlin/Primitives.kt:21362]Int] #>, s<# [:  [jar://kotlin-stdlib-sources.jar!/kotlin/String.kt:618]String] #>) = 1 to "" }

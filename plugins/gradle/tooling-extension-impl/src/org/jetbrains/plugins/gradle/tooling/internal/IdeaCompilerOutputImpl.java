@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.tooling.internal;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.plugins.gradle.model.ExtIdeaCompilerOutput;
 
 import java.io.File;
@@ -23,6 +24,7 @@ import java.io.File;
  * @deprecated to be removed in 2020.1
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public class IdeaCompilerOutputImpl implements ExtIdeaCompilerOutput {
   private File myMainClassesDir;
   private File myMainResourcesDir;

@@ -5,8 +5,8 @@ import com.intellij.json.JsonLexer;
 import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
 import com.intellij.psi.tree.TokenSet;
 
-import static com.intellij.json.JsonParserDefinition.JSON_COMMENTARIES;
-import static com.intellij.json.JsonParserDefinition.JSON_LITERALS;
+import static com.intellij.json.JsonTokenSets.JSON_COMMENTARIES;
+import static com.intellij.json.JsonTokenSets.JSON_LITERALS;
 
 /**
  * @author Mikhail Golubev

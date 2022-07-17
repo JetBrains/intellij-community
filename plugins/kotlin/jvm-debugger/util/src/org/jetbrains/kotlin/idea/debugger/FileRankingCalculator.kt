@@ -11,17 +11,14 @@ import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.DiagnosticUtils
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
+import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.LOW
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.MAJOR
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.MINOR
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.NORMAL
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.ZERO
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes2
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes3
-import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.varargParameterPosition
@@ -214,7 +211,10 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
                 val containingClass = elementAt.getParentOfType<KtClassOrObject>(false) ?: return LOW
                 return rankingForClass(containingClass, className, location.virtualMachine())
             } else {
-                val containingFunctionLiteral = findFunctionLiteralOnLine(elementAt) ?: return LOW
+                val containingFunctionLiteral =
+                    findFunctionLiteralOnLine(elementAt)
+                        ?: findAnonymousFunctionInParent(elementAt)
+                        ?: return LOW
 
                 val containingCallable = findNonLocalCallableParent(containingFunctionLiteral) ?: return LOW
                 when (containingCallable) {
@@ -284,6 +284,14 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
             }
         }
 
+        return null
+    }
+
+    private fun findAnonymousFunctionInParent(element: PsiElement): KtNamedFunction? {
+        val parentFun = element.getParentOfType<KtNamedFunction>(false)
+        if (parentFun != null && parentFun.isFunctionalExpression()) {
+            return parentFun
+        }
         return null
     }
 

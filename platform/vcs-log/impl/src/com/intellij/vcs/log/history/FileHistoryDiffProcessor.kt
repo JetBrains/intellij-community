@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
+import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.CacheDiffRequestProcessor
 import com.intellij.diff.requests.NoDiffRequest
@@ -10,8 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 
 internal class FileHistoryDiffProcessor(project: Project,
@@ -22,7 +21,6 @@ internal class FileHistoryDiffProcessor(project: Project,
     DiffPreviewUpdateProcessor {
 
   init {
-    myContentPanel.border = IdeBorderFactory.createBorder(SideBorder.TOP)
     Disposer.register(disposable, this)
   }
 
@@ -42,6 +40,8 @@ internal class FileHistoryDiffProcessor(project: Project,
   override fun refresh(fromModelRefresh: Boolean) {
     updateRequest()
   }
+
+  override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean = true
 
   override fun getFastLoadingTimeMillis(): Int {
     return 10

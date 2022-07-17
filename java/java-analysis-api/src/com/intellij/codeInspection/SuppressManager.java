@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection;
 
@@ -21,7 +21,7 @@ public abstract class SuppressManager implements BatchSuppressManager, Inspectio
 
   @Override
   public SuppressQuickFix @NotNull [] createBatchSuppressActions(@NotNull HighlightDisplayKey key) {
-    return BatchSuppressManager.SERVICE.getInstance().createBatchSuppressActions(key);
+    return BatchSuppressManager.getInstance().createBatchSuppressActions(key);
   }
 
   public abstract SuppressIntentionAction @NotNull [] createSuppressActions(@NotNull HighlightDisplayKey key);

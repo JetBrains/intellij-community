@@ -2,6 +2,7 @@
 package com.intellij.json.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -11,7 +12,8 @@ import org.jetbrains.annotations.Nullable;
 
 @State(
   name = "JsonEditorOptions",
-  storages = @Storage("editor.xml")
+  storages = @Storage("editor.xml"),
+  category = SettingsCategory.CODE
 )
 public class JsonEditorOptions implements PersistentStateComponent<JsonEditorOptions> {
   public boolean COMMA_ON_ENTER = true;

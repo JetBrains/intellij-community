@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -14,6 +14,9 @@ public interface InputValidatorEx extends InputValidator {
   @Nullable
   String getErrorText(@NonNls String inputString);
 
+  /**
+   * @return {@code true} iff there are no errors
+   */
   @Override
   default boolean checkInput(String inputString) {
     return getErrorText(inputString) == null;

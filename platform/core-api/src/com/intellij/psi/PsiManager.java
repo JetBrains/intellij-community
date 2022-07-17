@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -115,15 +116,27 @@ public abstract class PsiManager extends UserDataHolderBase {
    * Notifies the PSI manager that a batch operation sequentially processing multiple files
    * is starting. Memory occupied by cached PSI trees is released more eagerly during such a
    * batch operation.
+   * @deprecated Use {@link #runInBatchFilesMode(Computable)}
    */
+  @Deprecated
   public abstract void startBatchFilesProcessingMode();
 
   /**
    * Notifies the PSI manager that a batch operation sequentially processing multiple files
    * is finishing. Memory occupied by cached PSI trees is released more eagerly during such a
    * batch operation.
+   * @deprecated Use {@link #runInBatchFilesMode(Computable)}
    */
+  @Deprecated
   public abstract void finishBatchFilesProcessingMode();
+
+  /**
+   * Notifies the PSI manager that the batch operation {@code runnable}
+   * (which usually sequentially processes multiple files)
+   * is started and perform this operation.
+   * Memory occupied by cached PSI trees is released more eagerly during batch operations.
+   */
+  public abstract <T> T runInBatchFilesMode(@NotNull Computable<T> runnable);
 
   /**
    * Checks if the PSI manager has been disposed, and the PSI for this project can no longer be used.

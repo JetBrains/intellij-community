@@ -1,21 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UClass;
 
 import java.util.Objects;
 
 public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImplicitConstructor {
   RefImplicitConstructorImpl(@NotNull RefClass ownerClass) {
     super(JavaAnalysisBundle.message("inspection.reference.implicit.constructor.name", ownerClass.getName()), ownerClass);
+    setInitialized(true);
   }
 
   @Override
@@ -24,23 +21,11 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
   }
 
   @Override
-  public void buildReferences() {
-    getRefManager().fireBuildReferences(this);
-  }
+  public void buildReferences() {}
 
   @Override
   public boolean isSuspicious() {
     return ((RefClassImpl)getOwnerClass()).isSuspicious();
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    if (isValid()) {
-      RefClass ownerClass = getOwnerClass();
-      return JavaAnalysisBundle.message("inspection.reference.implicit.constructor.name", ownerClass.getName());
-    }
-    return super.getName();
   }
 
   @Override
@@ -50,28 +35,18 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
 
   @Override
   public boolean isValid() {
-    return ReadAction.compute(getOwnerClass()::isValid).booleanValue();
+    return getOwnerClass().isValid();
   }
 
   @NotNull
   @Override
-  public String getAccessModifier() {
+  public synchronized String getAccessModifier() {
     return getOwnerClass().getAccessModifier();
   }
 
   @Override
   public void setAccessModifier(String am) {
     RefJavaUtil.getInstance().setAccessModifier(getOwnerClass(), am);
-  }
-
-  @Override
-  public PsiModifierListOwner getElement() {
-    return Objects.requireNonNull(getOwnerClass()).getElement();
-  }
-
-  @Override
-  public UClass getUastElement() {
-    return (UClass)super.getUastElement();
   }
 
   @Nullable
@@ -87,7 +62,7 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
   }
 
   @Override
-  protected void initialize() {
+  protected synchronized void initialize() {
     throw new AssertionError("Should not be called!");
   }
 }

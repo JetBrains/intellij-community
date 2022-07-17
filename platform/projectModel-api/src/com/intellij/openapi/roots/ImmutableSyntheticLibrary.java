@@ -12,11 +12,11 @@ import java.util.*;
 
 @ApiStatus.Internal
 class ImmutableSyntheticLibrary extends SyntheticLibrary {
-
   private final List<VirtualFile> mySourceRoots;
   private final List<VirtualFile> myBinaryRoots;
   private final Set<VirtualFile> myExcludedRoots;
   private final Condition<? super VirtualFile> myExcludeCondition;
+  private final int hashCode;
 
   ImmutableSyntheticLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
                             @NotNull List<? extends VirtualFile> binaryRoots,
@@ -26,6 +26,7 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
     myBinaryRoots = immutableOrEmptyList(binaryRoots);
     myExcludedRoots = ContainerUtil.unmodifiableOrEmptySet(excludedRoots);
     myExcludeCondition = excludeCondition;
+    hashCode = 31*(31*sourceRoots.hashCode() + binaryRoots.hashCode())+excludedRoots.hashCode();
   }
 
   @NotNull
@@ -60,13 +61,12 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
     if (!mySourceRoots.equals(library.getSourceRoots())) return false;
     if (!myBinaryRoots.equals(library.getBinaryRoots())) return false;
     if (!myExcludedRoots.equals(library.getExcludedRoots())) return false;
-    if (!Objects.equals(myExcludeCondition, library.getExcludeFileCondition())) return false;
-    return true;
+    return Objects.equals(myExcludeCondition, library.getExcludeFileCondition());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(mySourceRoots, myBinaryRoots, myExcludedRoots, myExcludeCondition);
+    return hashCode;
   }
 
   @NotNull

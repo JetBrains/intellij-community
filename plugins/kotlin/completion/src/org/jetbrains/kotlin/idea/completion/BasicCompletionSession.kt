@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.openapi.module.Module
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.*
@@ -17,22 +18,22 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.analysis.analyzeInContext
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
-import org.jetbrains.kotlin.idea.completion.handlers.createKeywordConstructLookupElement
-import org.jetbrains.kotlin.idea.completion.smart.ExpectedInfoMatch
-import org.jetbrains.kotlin.idea.completion.smart.SMART_COMPLETION_ITEM_PRIORITY_KEY
-import org.jetbrains.kotlin.idea.completion.smart.SmartCompletion
-import org.jetbrains.kotlin.idea.completion.smart.SmartCompletionItemPriority
+import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHandlerProvider
+import org.jetbrains.kotlin.idea.completion.keywords.createLookups
+import org.jetbrains.kotlin.idea.completion.smart.*
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
+import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.core.NotPropertiesService
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
+import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -270,10 +271,10 @@ class BasicCompletionSession(
                 callTypeAndReceiver.callType.descriptorKindFilter.kindMask.and(DescriptorKindFilter.PACKAGES_MASK) != 0
             ) {
                 //TODO: move this code somewhere else?
-                val packageNames = PackageIndexUtil.getSubPackageFqNames(FqName.ROOT, searchScope, project, prefixMatcher.asNameFilter())
-                    .toMutableSet()
+                val packageNames = KotlinPackageIndexUtils.getSubPackageFqNames(FqName.ROOT, searchScope, prefixMatcher.asNameFilter())
+                    .toHashSet()
 
-                if (TargetPlatformDetector.getPlatform(parameters.originalFile as KtFile).isJvm()) {
+                if ((parameters.originalFile as KtFile).platform.isJvm()) {
                     JavaPsiFacade.getInstance(project).findPackage("")?.getSubPackages(searchScope)?.forEach { psiPackage ->
                         val name = psiPackage.name
                         if (Name.isValidIdentifier(name!!)) {
@@ -355,9 +356,18 @@ class BasicCompletionSession(
                     }
 
                     if (shouldCompleteExtensionsFromObjects) {
+                        val receiverKotlinTypes = receiverTypes.map { it.type }
+
                         staticMembersCompletion.completeObjectMemberExtensionsFromIndices(
-                            indicesHelper(false),
-                            receiverTypes.map { it.type },
+                            indicesHelper(mayIncludeInaccessible = false),
+                            receiverKotlinTypes,
+                            callTypeAndReceiver,
+                            collector
+                        )
+
+                        staticMembersCompletion.completeExplicitAndInheritedMemberExtensionsFromIndices(
+                            indicesHelper(mayIncludeInaccessible = false),
+                            receiverKotlinTypes,
                             callTypeAndReceiver,
                             collector
                         )
@@ -399,30 +409,39 @@ class BasicCompletionSession(
                     else
                         prefixMatcher
 
-                    addClassesFromIndex(classKindFilter, prefixMatcher)
+                    addClassesFromIndex(
+                        kindFilter = classKindFilter,
+                        prefixMatcher = prefixMatcher,
+                        completionParameters = parameters,
+                        indicesHelper = indicesHelper(true),
+                        classifierDescriptorCollector = {
+                            collector.addElement(basicLookupElementFactory.createLookupElement(it), notImported = true)
+                        },
+                        javaClassCollector = {
+                            collector.addElement(basicLookupElementFactory.createLookupElementForJavaClass(it), notImported = true)
+                        }
+                    )
                 }
             } else if (callTypeAndReceiver is CallTypeAndReceiver.DOT) {
                 val qualifier = bindingContext[BindingContext.QUALIFIER, callTypeAndReceiver.receiver]
                 if (qualifier != null) return
                 val receiver = callTypeAndReceiver.receiver as? KtSimpleNameExpression ?: return
-                val helper = indicesHelper(false)
                 val descriptors = mutableListOf<ClassifierDescriptorWithTypeParameters>()
                 val fullTextPrefixMatcher = object : PrefixMatcher(receiver.getReferencedName()) {
                     override fun prefixMatches(name: String): Boolean = name == prefix
                     override fun cloneWithPrefix(prefix: String): PrefixMatcher = throw UnsupportedOperationException("Not implemented")
                 }
 
-                AllClassesCompletion(
-                    parameters = parameters.withPosition(receiver, receiver.startOffset),
-                    kotlinIndicesHelper = helper,
-                    prefixMatcher = fullTextPrefixMatcher,
-                    resolutionFacade = resolutionFacade,
+                addClassesFromIndex(
                     kindFilter = { true },
-                    includeTypeAliases = true,
-                    includeJavaClassesNotToBeUsed = configuration.javaClassesNotToBeUsed,
-                ).collect({ descriptors += it }, { descriptors.addIfNotNull(it.resolveToDescriptor(resolutionFacade)) })
+                    prefixMatcher = fullTextPrefixMatcher,
+                    completionParameters = parameters.withPosition(receiver, receiver.startOffset),
+                    indicesHelper = indicesHelper(false),
+                    classifierDescriptorCollector = { descriptors += it },
+                    javaClassCollector = { descriptors.addIfNotNull(it.resolveToDescriptor(resolutionFacade)) },
+                )
 
-                val foundDescriptors = mutableSetOf<DeclarationDescriptor>()
+                val foundDescriptors = HashSet<DeclarationDescriptor>()
                 val classifiers = descriptors.asSequence().filter {
                     it.kind == ClassKind.OBJECT ||
                             it.kind == ClassKind.ENUM_CLASS ||
@@ -448,9 +467,16 @@ class BasicCompletionSession(
                     )
 
                     val rvCollector = ReferenceVariantsCollector(
-                        rvHelper, indicesHelper(true), prefixMatcher,
-                        nameExpression, callTypeAndReceiver, resolutionFacade, newContext,
-                        importableFqNameClassifier, configuration
+                        referenceVariantsHelper = rvHelper,
+                        indicesHelper = indicesHelper(true),
+                        prefixMatcher = prefixMatcher,
+                        nameExpression = nameExpression,
+                        callTypeAndReceiver = callTypeAndReceiver,
+                        resolutionFacade = resolutionFacade,
+                        bindingContext = newContext,
+                        importableFqNameClassifier = importableFqNameClassifier,
+                        configuration = configuration,
+                        allowExpectedDeclarations = allowExpectedDeclarations,
                     )
 
                     val receiverTypes = detectReceiverTypes(newContext, nameExpression, callTypeAndReceiver)
@@ -549,6 +575,11 @@ class BasicCompletionSession(
     private val KEYWORDS_ONLY = object : CompletionKind {
         override val descriptorKindFilter: DescriptorKindFilter? get() = null
 
+        private val keywordCompletion = KeywordCompletion(object : KeywordCompletion.LanguageVersionSettingProvider {
+            override fun getLanguageVersionSetting(element: PsiElement) = element.languageVersionSettings
+            override fun getLanguageVersionSetting(module: Module) = module.languageVersionSettings
+        })
+
         override fun doComplete() {
             val keywordsToSkip = HashSet<String>()
             val keywordValueConsumer = object : KeywordValues.Consumer {
@@ -587,11 +618,18 @@ class BasicCompletionSession(
                 isJvmModule
             )
 
-            val isUseSiteAnnotationTarget = position.prevLeaf()?.node?.elementType == KtTokens.AT
-            KeywordCompletion.complete(expression ?: position, resultSet.prefixMatcher, isJvmModule) { lookupElement ->
-                when (val keyword = lookupElement.lookupString) {
-                    in keywordsToSkip -> return@complete
+            keywordCompletion.complete(expression ?: position, resultSet.prefixMatcher, isJvmModule) { lookupElement ->
+                val keyword = lookupElement.lookupString
+                if (keyword in keywordsToSkip) return@complete
 
+                val completionKeywordHandler = DefaultCompletionKeywordHandlerProvider.getHandlerForKeyword(keyword)
+                if (completionKeywordHandler != null) {
+                    val lookups = completionKeywordHandler.createLookups(parameters, expression, lookupElement, project)
+                    collector.addElements(lookups)
+                    return@complete
+                }
+
+                when (keyword) {
                     // if "this" is parsed correctly in the current context - insert it and all this@xxx items
                     "this" -> {
                         if (expression != null) {
@@ -615,12 +653,6 @@ class BasicCompletionSession(
                         }
                     }
 
-                    "break", "continue" -> {
-                        if (expression != null) {
-                            collector.addElements(breakOrContinueExpressionItems(expression, keyword))
-                        }
-                    }
-
                     "override" -> {
                         collector.addElement(lookupElement)
 
@@ -633,39 +665,15 @@ class BasicCompletionSession(
                         }
                     }
 
-                    "get" -> {
-                        collector.addElement(lookupElement)
-
-                        if (!isUseSiteAnnotationTarget) {
-                            collector.addElement(createKeywordConstructLookupElement(project, keyword, "val v:Int get()=caret"))
-                            collector.addElement(
-                                createKeywordConstructLookupElement(
-                                    project,
-                                    keyword,
-                                    "val v:Int get(){caret}",
-                                    trimSpacesAroundCaret = true
-                                )
-                            )
+                    "suspend", "out", "in" -> {
+                        if (position.isInsideKtTypeReference) {
+                            // aforementioned keyword modifiers are rarely needed in the type references and
+                            // most of the time can be quickly prefix-selected by typing the corresponding letter.
+                            // We mark them as low-priority, so they do not shadow actual types
+                            lookupElement.keywordProbability = KeywordProbability.LOW
                         }
-                    }
 
-                    "set" -> {
                         collector.addElement(lookupElement)
-
-                        if (!isUseSiteAnnotationTarget) {
-                            collector.addElement(createKeywordConstructLookupElement(project, keyword, "var v:Int set(value)=caret"))
-                            collector.addElement(
-                                createKeywordConstructLookupElement(
-                                    project,
-                                    keyword,
-                                    "var v:Int set(value){caret}",
-                                    trimSpacesAroundCaret = true
-                                )
-                            )
-                        }
-                    }
-
-                    "contract" -> {
                     }
 
                     else -> collector.addElement(lookupElement)
@@ -733,6 +741,7 @@ class BasicCompletionSession(
             else -> false
         }
 
+        //workaround to avoid false-positive: KTIJ-19892
         override fun addWeighers(sorter: CompletionSorter): CompletionSorter = if (shouldCompleteParameterNameAndType())
             sorter.weighBefore("prefix", VariableOrParameterNameWithTypeCompletion.Weigher)
         else
@@ -793,40 +802,23 @@ class BasicCompletionSession(
         }
     }
 
-    private fun referenceScope(declaration: KtNamedDeclaration): KtElement? = when (val parent = declaration.parent) {
-        is KtParameterList -> parent.parent as KtElement
-        is KtClassBody -> {
-            val classOrObject = parent.parent as KtClassOrObject
-            if (classOrObject is KtObjectDeclaration && classOrObject.isCompanion()) {
-                classOrObject.containingClassOrObject
-            } else {
-                classOrObject
-            }
-        }
-
-        is KtFile -> parent
-        is KtBlockExpression -> parent
-        else -> null
-    }
-
-    private fun addClassesFromIndex(kindFilter: (ClassKind) -> Boolean, prefixMatcher: PrefixMatcher) {
-        val classifierDescriptorCollector = { descriptor: ClassifierDescriptorWithTypeParameters ->
-            collector.addElement(basicLookupElementFactory.createLookupElement(descriptor), notImported = true)
-        }
-
-        val javaClassCollector = { javaClass: PsiClass ->
-            collector.addElement(basicLookupElementFactory.createLookupElementForJavaClass(javaClass), notImported = true)
-        }
-
+    private fun addClassesFromIndex(
+        kindFilter: (ClassKind) -> Boolean,
+        prefixMatcher: PrefixMatcher,
+        completionParameters: CompletionParameters,
+        indicesHelper: KotlinIndicesHelper,
+        classifierDescriptorCollector: (ClassifierDescriptorWithTypeParameters) -> Unit,
+        javaClassCollector: (PsiClass) -> Unit,
+    ) {
         AllClassesCompletion(
-            parameters = parameters,
-            kotlinIndicesHelper = indicesHelper(true),
+            parameters = completionParameters,
+            kotlinIndicesHelper = indicesHelper,
             prefixMatcher = prefixMatcher,
             resolutionFacade = resolutionFacade,
             kindFilter = kindFilter,
             includeTypeAliases = true,
             includeJavaClassesNotToBeUsed = configuration.javaClassesNotToBeUsed,
-        ).collect(classifierDescriptorCollector, javaClassCollector)
+        ).collect({ processWithShadowedFilter(it, classifierDescriptorCollector) }, javaClassCollector)
     }
 
     private fun addReferenceVariantElements(lookupElementFactory: LookupElementFactory, descriptorKindFilter: DescriptorKindFilter) {

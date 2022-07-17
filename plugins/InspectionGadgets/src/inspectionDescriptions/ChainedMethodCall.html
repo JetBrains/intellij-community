@@ -1,22 +1,31 @@
 <html>
 <body>
 Reports method calls whose target is another method call.
+The quick-fix suggests to introduce a local variable.
 <p><b>Example:</b></p>
-<pre>
-  class X { Y foo() { return new Y(); } }
-  class Y { X bar() { return new X(); } }
-
-  void foo() {
-    Y y = new X().foo(); // Chained method call
+<pre><code>
+  class X {
+    int foo(File f) {
+      return f.getName().length();
+    }
   }
-</pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class X {
+    int foo(File f) {
+      final String name = f.getName();
+      return name.length();
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>Use the inspection options to toggle warnings for the following cases:</p>
 <ul>
   <li>
     <p>
       chained method calls in field initializers,
-      for instance, <code>private Y y = new X().foo();</code>
+      for instance, <code>private final int i = new Random().nextInt();</code>
     </p>
   </li>
   <li>

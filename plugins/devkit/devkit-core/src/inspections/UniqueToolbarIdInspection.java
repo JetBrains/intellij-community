@@ -17,7 +17,7 @@ public class UniqueToolbarIdInspection extends DevKitInspectionBase {
   protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         PsiMethod method = expression.resolveMethod();
         if (method != null && "createActionToolbar".equals(method.getName())) {
           PsiClass aClass = method.getContainingClass();

@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi;
 
 import com.google.common.collect.FluentIterable;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -190,7 +191,7 @@ public final class PsiQuery<T extends PsiElement> {
     }
 
     public PsiFilter(@NotNull final Class<? extends T> aClass) {
-      this(aClass, o -> true);
+      this(aClass, Predicates.alwaysTrue());
     }
 
     @NotNull

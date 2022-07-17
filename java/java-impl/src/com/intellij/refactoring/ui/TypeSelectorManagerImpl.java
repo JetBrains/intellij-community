@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeUtil;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -17,8 +18,9 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,7 +179,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private PsiType[] getTypesForMain() {
     final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(myMainOccurrence, false, myOccurrenceClassProvider, false);
     final ArrayList<PsiType> allowedTypes = new ArrayList<>();
-    RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
+    CommonJavaRefactoringUtil.processSuperTypes(getDefaultType(), new CommonJavaRefactoringUtil.SuperTypeVisitor() {
       @Override
       public void visitType(PsiType aType) {
         checkIfAllowed(aType);
@@ -228,7 +230,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     }
 
     final ArrayList<PsiType> allowedTypes = new ArrayList<>();
-    RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
+    CommonJavaRefactoringUtil.processSuperTypes(getDefaultType(), new CommonJavaRefactoringUtil.SuperTypeVisitor() {
       @Override
       public void visitType(PsiType aType) {
         checkIfAllowed(aType);
@@ -358,7 +360,12 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
   public static void typeSelected(@NotNull final PsiType type, @Nullable final PsiType defaultType) {
     if (defaultType == null) return;
-    StatisticsManager.getInstance().incUseCount(new StatisticsInfo(getStatsKey(defaultType), serialize(type)));
+    ReadAction.nonBlocking(() -> {
+      return type.isValid() && defaultType.isValid() ? new StatisticsInfo(getStatsKey(defaultType), serialize(type)) : null;
+    }).finishOnUiThread(ModalityState.NON_MODAL, stat -> {
+      if (stat == null) return;
+      StatisticsManager.getInstance().incUseCount(stat);
+    }).submit(NonUrgentExecutor.getInstance());
   }
 
   private static @NonNls String getStatsKey(final PsiType defaultType) {

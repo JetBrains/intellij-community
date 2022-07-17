@@ -13,6 +13,7 @@ import org.jetbrains.plugins.textmate.TextMateBundle;
 import org.jetbrains.plugins.textmate.TextMateService;
 
 import javax.swing.*;
+import java.util.List;
 
 public class TextMateSettingsUI implements ConfigurableUi<TextMateSettings>, Disposable {
   private final TextMateBundlesListPanel myBundlesListPanel;
@@ -30,8 +31,9 @@ public class TextMateSettingsUI implements ConfigurableUi<TextMateSettings>, Dis
     if (state == null) {
       state = new TextMateSettings.TextMateSettingsState();
     }
+    List<BundleConfigBean> newBundles = state.getBundles();
     settings.loadState(state);
-    if (myBundlesListPanel.isModified(state.getBundles())) {
+    if (myBundlesListPanel.isModified(newBundles)) {
       state.setBundles(myBundlesListPanel.getState());
       ProgressManager.getInstance().run(new Task.Backgroundable(null, TextMateBundle.message("textmate.loading.bundles.title"), false,
                                                                 PerformInBackgroundOption.ALWAYS_BACKGROUND) {

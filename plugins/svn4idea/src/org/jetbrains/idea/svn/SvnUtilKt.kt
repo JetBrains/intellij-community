@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn
 
 import com.intellij.ide.util.DelegatingProgressIndicator
@@ -15,8 +15,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.stream.Collectors.toList
 
 internal fun putWcDbFilesToVfs(infos: Collection<RootUrlInfo>) {
-  if (!SvnVcs.ourListenToWcDb) return
-
   val wcDbFiles = infos.stream()
     .filter { it.format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) }
     .filter { NestedCopyType.switched != it.type }

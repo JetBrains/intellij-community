@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
 import java.nio.file.Path
@@ -45,13 +45,10 @@ internal fun findCommitsToSync(context: Context) {
   }
 }
 
-internal fun Map<Path, Collection<CommitInfo>>.commitMessage(): String {
-  return entries.joinToString("\n\n") { entry ->
-    entry.value.joinToString("\n") {
-      "'${it.subject}' from ${it.hash.substring(0..8)}"
-    } + " from ${getOriginUrl(entry.key)}"
+internal fun Map<Path, Collection<CommitInfo>>.commitMessage(): String =
+  values.flatten().joinToString(separator = "\n\n") {
+    it.subject + "\n" + "https://jetbrains.team/p/ij/repositories/IntelliJIcons/revision/${it.hash}"
   }
-}
 
 internal fun commitAndPush(context: Context) {
   if (context.iconsCommitsToSync.isEmpty()) {
@@ -167,8 +164,9 @@ internal fun notifySlackChannel(message: String, context: Context, success: Bool
   val text = "*${context.devRepoName}* $reaction\n${message.replace("\"", "\\\"")}\n$build"
   val body = """{ "text": "$text" }"""
   val response = try {
-    post(CHANNEL_WEB_HOOK, body)
-  } catch (e: Exception) {
+    post(CHANNEL_WEB_HOOK, body, mediaType = null)
+  }
+  catch (e: Exception) {
     log("Post of '$body' has failed")
     throw e
   }

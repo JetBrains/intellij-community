@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.actions.ShowCommitOptionsAction
 import com.intellij.openapi.vcs.changes.InclusionListener
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.JBColor
@@ -88,7 +87,7 @@ abstract class NonModalCommitPanel(
   protected fun fireInclusionChanged() = inclusionEventDispatcher.multicaster.inclusionChanged()
 
   override fun startBeforeCommitChecks() = Unit
-  override fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult) = Unit
+  override fun endBeforeCommitChecks(result: CommitChecksResult) = Unit
 
   override fun dispose() = Unit
 
@@ -115,11 +114,13 @@ abstract class NonModalCommitPanel(
     withPreferredHeight(85)
   }
 
-  private fun getButtonPanelBorder(): Border =
-    EmptyBorder(0, scale(3), (scale(6) - commitActionsPanel.getBottomInset()).coerceAtLeast(0), 0)
+  private fun getButtonPanelBorder(): Border {
+    return EmptyBorder(0, scale(3), (scale(6) - commitActionsPanel.getBottomInset()).coerceAtLeast(0), 0)
+  }
 
-  private fun getButtonPanelBackground() =
-    JBColor { (commitMessage.editorField.editor as? EditorEx)?.backgroundColor ?: getTreeBackground() }
+  private fun getButtonPanelBackground(): JBColor? {
+    return JBColor.lazy { (commitMessage.editorField.editor as? EditorEx)?.backgroundColor ?: getTreeBackground() }
+  }
 
   override fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext) {
     val commitOptionsPanel = CommitOptionsPanel { actionName }.apply {
@@ -139,6 +140,15 @@ abstract class NonModalCommitPanel(
     val commitOptionsPopup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(commitOptionsPanel, focusComponent)
       .setRequestFocus(true)
+      .addListener(object : JBPopupListener {
+        override fun beforeShown(event: LightweightWindowEvent) {
+          options.restoreState()
+        }
+
+        override fun onClosed(event: LightweightWindowEvent) {
+          options.saveState()
+        }
+      })
       .createPopup()
 
     showCommitOptions(commitOptionsPopup, isFromToolbar, dataContext)

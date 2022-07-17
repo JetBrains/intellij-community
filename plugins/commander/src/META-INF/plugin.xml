@@ -30,7 +30,7 @@
 
     <group id="ImagesCommanderActions2">
       <reference id="Images.ShowThumbnails"/>
-      <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="AddToFavorites"/>
+      <add-to-group anchor="last" group-id="CommanderPopupMenu"/>
     </group>
   </actions>
 </idea-plugin>

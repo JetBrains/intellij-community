@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -16,16 +17,27 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Bas Leijdekkers
  */
 public class DanglingJavadocInspection extends BaseInspection {
 
+  public boolean ignoreCopyright = true;
+
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("dangling.javadoc.problem.descriptor");
+  }
+
+  @Override
+  public @Nullable JComponent createOptionsPanel() {
+    return InspectionOptionsPanel.singleCheckBox(this, InspectionGadgetsBundle.message("dangling.javadoc.ignore.copyright.option"),
+                                                 "ignoreCopyright");
   }
 
   @Override
@@ -96,10 +108,10 @@ public class DanglingJavadocInspection extends BaseInspection {
     return new DanglingJavadocVisitor();
   }
 
-  private static class DanglingJavadocVisitor extends BaseInspectionVisitor {
+  private class DanglingJavadocVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitDocComment(PsiDocComment comment) {
+    public void visitDocComment(@NotNull PsiDocComment comment) {
       super.visitDocComment(comment);
       if (comment.getOwner() != null || TemplateLanguageUtil.isInsideTemplateFile(comment)) {
         return;
@@ -107,6 +119,9 @@ public class DanglingJavadocInspection extends BaseInspection {
       if (JavaDocUtil.isInsidePackageInfo(comment) &&
           PsiTreeUtil.skipWhitespacesAndCommentsForward(comment) instanceof PsiPackageStatement &&
           "package-info.java".equals(comment.getContainingFile().getName())) {
+        return;
+      }
+      if (ignoreCopyright && comment.getPrevSibling() == null && comment.getParent() instanceof PsiFile) {
         return;
       }
       registerError(comment.getFirstChild());

@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.HashSet;
 
 public class MavenExplicitProfiles implements Serializable {
-  public static final MavenExplicitProfiles NONE = new MavenExplicitProfiles(Collections.<String>emptySet());
+  public static final MavenExplicitProfiles NONE = new MavenExplicitProfiles(Collections.emptySet());
 
   private final Collection<String> myEnabledProfiles;
   private final Collection<String> myDisabledProfiles;
@@ -18,7 +18,7 @@ public class MavenExplicitProfiles implements Serializable {
   }
 
   public MavenExplicitProfiles(Collection<String> enabledProfiles) {
-    this(enabledProfiles, Collections.<String>emptySet());
+    this(enabledProfiles, Collections.emptySet());
   }
 
   public Collection<String> getEnabledProfiles() {

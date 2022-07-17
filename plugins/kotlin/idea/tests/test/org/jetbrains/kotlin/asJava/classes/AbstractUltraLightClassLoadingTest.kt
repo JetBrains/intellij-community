@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.io.File
 
 abstract class AbstractUltraLightClassLoadingTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -20,7 +20,7 @@ abstract class AbstractUltraLightClassLoadingTest : KotlinLightCodeInsightFixtur
     open fun doTest(testDataPath: String) {
         val testDataFile = File(testDataPath)
         val sourceText = testDataFile.readText()
-        InTextDirectivesUtils.checkIfMuted(sourceText);
+        InTextDirectivesUtils.checkIfMuted(sourceText)
 
         withCustomCompilerOptions(sourceText, project, module) {
             val file = myFixture.addFileToProject(testDataFile.name, sourceText) as KtFile

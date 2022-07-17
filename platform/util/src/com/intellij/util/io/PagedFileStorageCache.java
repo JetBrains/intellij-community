@@ -4,66 +4,56 @@ package com.intellij.util.io;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.ByteBuffer;
-
 @ApiStatus.Internal
 class PagedFileStorageCache {
-  private static final int UNKNOWN_PAGE = -1;
+  private volatile CachedBuffer myLastBuffer;
+  private volatile CachedBuffer myLastBuffer2;
+  private volatile CachedBuffer myLastBuffer3;
 
-  private int myLastPage = UNKNOWN_PAGE;
-  private int myLastPage2 = UNKNOWN_PAGE;
-  private int myLastPage3 = UNKNOWN_PAGE;
-  private DirectBufferWrapper myLastBuffer;
-  private DirectBufferWrapper myLastBuffer2;
-  private DirectBufferWrapper myLastBuffer3;
-  private int myLastChangeCount;
-  private int myLastChangeCount2;
-  private int myLastChangeCount3;
-  
-  synchronized void clear() {
-    myLastPage = UNKNOWN_PAGE;
-    myLastPage2 = UNKNOWN_PAGE;
-    myLastPage3 = UNKNOWN_PAGE;
+  private static class CachedBuffer {
+    private final DirectBufferWrapper myWrapper;
+    private final long myLastPage;
+
+    private CachedBuffer(DirectBufferWrapper wrapper, long page) {
+      myWrapper = wrapper;
+      myLastPage = page;
+    }
+  }
+
+  void clear() {
     myLastBuffer = null;
     myLastBuffer2 = null;
     myLastBuffer3 = null;
   }
 
   @Nullable
-  synchronized DirectBufferWrapper getPageFromCache(long page, int mappingChangeCount) {
-    if (myLastPage == page) {
-      if (!myLastBuffer.isReleased() && myLastChangeCount == mappingChangeCount) {
-        return myLastBuffer;
-      }
-    } else if (myLastPage2 == page) {
-      if (!myLastBuffer2.isReleased() && myLastChangeCount2 == mappingChangeCount) {
-        return myLastBuffer2;
-      }
-    } else if (myLastPage3 == page) {
-      if (!myLastBuffer3.isReleased() && myLastChangeCount3 == mappingChangeCount) {
-        return myLastBuffer3;
-      }
+  DirectBufferWrapper getPageFromCache(long page) {
+    DirectBufferWrapper buffer;
+
+    buffer = fromCache(myLastBuffer, page);
+    if (buffer != null) return buffer;
+
+    buffer = fromCache(myLastBuffer2, page);
+    if (buffer != null) return buffer;
+
+    buffer = fromCache(myLastBuffer3, page);
+    return buffer;
+  }
+
+  @Nullable
+  private static DirectBufferWrapper fromCache(CachedBuffer lastBuffer, long page) {
+    if (lastBuffer != null && !lastBuffer.myWrapper.isReleased() &&
+        lastBuffer.myLastPage == page) {
+      return lastBuffer.myWrapper;
     }
     return null;
   }
 
-  synchronized void updateCache(long page, DirectBufferWrapper byteBufferWrapper, int mappingChangeCount) {
-    if (myLastPage != page) {
-      myLastPage3 = myLastPage2;
+  /* race */ void updateCache(long page, DirectBufferWrapper byteBufferWrapper) {
+    if (myLastBuffer != null && myLastBuffer.myLastPage != page) {
       myLastBuffer3 = myLastBuffer2;
-      myLastChangeCount3 = myLastChangeCount2;
-
-      myLastPage2 = myLastPage;
       myLastBuffer2 = myLastBuffer;
-      myLastChangeCount2 = myLastChangeCount;
-
-      myLastBuffer = byteBufferWrapper;
-      myLastPage = (int)page; // TODO long page
     }
-    else {
-      myLastBuffer = byteBufferWrapper;
-    }
-
-    myLastChangeCount = mappingChangeCount;
+    myLastBuffer = new CachedBuffer(byteBufferWrapper, page);
   }
 }

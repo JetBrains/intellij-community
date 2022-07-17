@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
+import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
@@ -1158,8 +1159,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   private void showDiffEditorResults(final Collection<Change> changes, String sourceTitle, String targetTitle) {
     final String title = message("repository.browser.compare.title", sourceTitle, targetTitle);
     SwingUtilities.invokeLater(() -> {
-      final ChangeListViewerDialog dlg = new ChangeListViewerDialog(getRepositoryBrowser(), myProject, changes);
-      dlg.markChangesInAir(true);
+      LoadingCommittedChangeListPanel panel = new LoadingCommittedChangeListPanel(myProject);
+      panel.markChangesInAir(true);
+      panel.setChanges(changes, null);
+
+      final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, getRepositoryBrowser(), panel);
       dlg.setTitle(title);
       dlg.show();
     });

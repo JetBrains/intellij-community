@@ -1,18 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.metadata.storage
 
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
-import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesInMemoryStorage
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
+import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesInMemoryStorage
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import org.assertj.core.api.Assertions.assertThat
 
 internal class CompositeValidationRulesStorageTest : ValidationRulesBaseStorageTest() {
 
   override fun tearDown() {
-    super.tearDown()
-    ValidationRulesInMemoryStorage.eventsValidators.clear()
+    try {
+      ValidationRulesInMemoryStorage.eventsValidators.clear()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun testGetGroupRulesFromTest() {

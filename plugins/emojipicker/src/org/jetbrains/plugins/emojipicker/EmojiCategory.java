@@ -8,8 +8,7 @@ import javax.swing.*;
 import java.io.Serializable;
 import java.util.List;
 
-
-public class EmojiCategory implements Serializable {
+public final class EmojiCategory implements Serializable {
   @NonNls private final String myId;
   private final List<Emoji> myEmoji;
   private transient Icon myIcon;
@@ -31,7 +30,7 @@ public class EmojiCategory implements Serializable {
   public Icon getIcon() {
     Icon icon = myIcon;
     if (icon == null) {
-      myIcon = icon = IconLoader.getIcon("/icons/categories/" + myId + ".svg", EmojiCategory.class);
+      myIcon = icon = IconLoader.getIcon("/icons/categories/" + myId + ".svg", EmojiCategory.class.getClassLoader());
     }
     return icon;
   }

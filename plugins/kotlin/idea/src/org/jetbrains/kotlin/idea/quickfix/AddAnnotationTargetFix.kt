@@ -14,24 +14,24 @@ import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.WRONG_ANNOTATION_TARGET
 import org.jetbrains.kotlin.diagnostics.Errors.WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.AnnotationChecker
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.EMPTY
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.T_CLASSIFIER
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.T_CONSTRUCTOR
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.T_EXPRESSION
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.T_LOCAL_VARIABLE
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.T_MEMBER_FUNCTION
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.T_MEMBER_PROPERTY
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.T_VALUE_PARAMETER_WITHOUT_VAL
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.BindingTraceContext
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
+import org.jetbrains.kotlin.resolve.*
+import org.jetbrains.kotlin.resolve.AnnotationTargetLists.EMPTY
+import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_CLASSIFIER
+import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_CONSTRUCTOR
+import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_EXPRESSION
+import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_LOCAL_VARIABLE
+import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_MEMBER_FUNCTION
+import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_MEMBER_PROPERTY
+import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_VALUE_PARAMETER_WITHOUT_VAL
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFixAction<KtAnnotationEntry>(annotationEntry) {
 
@@ -48,7 +48,9 @@ class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFi
         if (requiredAnnotationTargets.isEmpty()) return
 
         val psiFactory = KtPsiFactory(annotationEntry)
-        annotationClass.addAnnotationTargets(requiredAnnotationTargets, psiFactory)
+        annotationClass.runOnExpectAndAllActuals(useOnSelf = true) {
+            it.safeAs<KtClass>()?.addAnnotationTargets(requiredAnnotationTargets, psiFactory)
+        }
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
@@ -97,7 +99,7 @@ private fun KtAnnotationEntry.getRequiredAnnotationTargets(annotationClass: KtCl
         .toList()
 }
 
-private fun getActualTargetList(annotated: PsiTarget): AnnotationChecker.Companion.TargetList {
+private fun getActualTargetList(annotated: PsiTarget): AnnotationTargetList {
     return when (annotated) {
         is PsiClass -> T_CLASSIFIER
         is PsiMethod ->

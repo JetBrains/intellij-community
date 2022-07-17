@@ -87,13 +87,13 @@ public class UndoHelper {
     startListeningDocuments();
   }
 
-  public final void removeWatchedDocument(final Document document) {
+  public final void removeWatchedDocument(@NotNull Document document) {
     stopListeningDocuments();
     myCurrentDocuments.remove(document);
     startListeningDocuments();
   }
 
-  public final Document @NotNull [] getDocuments() {
+  final @NotNull Document @NotNull [] getDocuments() {
     return myCurrentDocuments.toArray(Document.EMPTY_ARRAY);
   }
 

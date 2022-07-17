@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -6,22 +6,17 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.config.LanguageFeature.ArrayLiteralsInAnnotations
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.intentions.isArrayOfMethod
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.intentions.isArrayOfFunction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class ReplaceArrayOfWithLiteralInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = callExpressionVisitor(fun(expression) {
-        if (!expression.languageVersionSettings.supportsFeature(ArrayLiteralsInAnnotations) &&
-            !ApplicationManager.getApplication().isUnitTestMode
-        ) return
-
         val calleeExpression = expression.calleeExpression as? KtNameReferenceExpression ?: return
 
         when (val parent = expression.parent) {
@@ -39,7 +34,7 @@ class ReplaceArrayOfWithLiteralInspection : AbstractKotlinInspection() {
             else -> return
         }
 
-        if (!expression.isArrayOfMethod()) return
+        if (!expression.isArrayOfFunction()) return
         val calleeName = calleeExpression.getReferencedName()
         holder.registerProblem(
             calleeExpression,

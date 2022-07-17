@@ -5,7 +5,7 @@ import com.intellij.build.events.impl.*
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentsManager
 import com.intellij.execution.wsl.WSLUtil
-import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
@@ -83,13 +83,13 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     val libs = File(homePath, "lib")
     if (!libs.isDirectory) {
       if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
-        log.info("Gradle sdk check failed for the path '$homePath'. Reason: it doesn't have a child directory named 'lib'")
+        LOG.info("Gradle sdk check failed for the path '$homePath'. Reason: it doesn't have a child directory named 'lib'")
       }
       return false
     }
     val found = findGradleJar(libs.listFiles()) != null
     if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
-      log.info("Gradle home check ${if (found) "passed" else "failed"} for the path '$homePath'")
+      LOG.info("Gradle home check ${if (found) "passed" else "failed"} for the path '$homePath'")
     }
     return found
   }
@@ -112,13 +112,21 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       sdkInfo = use(project) { provider.nonblockingResolveGradleJvmInfo(it, externalProjectPath, gradleJvm) }
     }
 
-    if (sdkInfo !is SdkInfo.Resolved) throw jdkConfigurationException("gradle.jvm.is.invalid")
-    val homePath = sdkInfo.homePath ?: throw jdkConfigurationException("gradle.jvm.is.invalid")
+    if (sdkInfo !is SdkInfo.Resolved) {
+      LOG.warn("Gradle JVM ($gradleJvm) isn't resolved: $sdkInfo")
+      throw jdkConfigurationException("gradle.jvm.is.invalid")
+    }
+    val homePath = sdkInfo.homePath ?: run {
+      LOG.warn("No Gradle JVM ($gradleJvm) home path: $sdkInfo")
+      throw jdkConfigurationException("gradle.jvm.is.invalid")
+    }
     checkForWslJdkOnWindows(homePath, externalProjectPath, task)
     if (!JdkUtil.checkForJdk(homePath)) {
       if (JdkUtil.checkForJre(homePath)) {
+        LOG.warn("Gradle JVM ($gradleJvm) is JRE instead JDK: $sdkInfo")
         throw jdkConfigurationException("gradle.jvm.is.jre")
       }
+      LOG.warn("Invalid Gradle JVM ($gradleJvm) home path: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
     return sdkInfo
@@ -126,8 +134,8 @@ class LocalGradleExecutionAware : GradleExecutionAware {
 
   private fun checkForWslJdkOnWindows(homePath: String, externalProjectPath: String, task: ExternalSystemTask) {
     if (WSLUtil.isSystemCompatible() &&
-        WslDistributionManager.isWslPath(homePath) &&
-        !WslDistributionManager.isWslPath(externalProjectPath)) {
+        WslPath.isWslUncPath(homePath) &&
+        !WslPath.isWslUncPath(externalProjectPath)) {
       val isResolveProjectTask = task is ExternalSystemResolveProjectTask
       val message = GradleBundle.message("gradle.incorrect.jvm.wslJdk.on.win.issue.description")
       throw BuildIssueException(IncorrectGradleJdkIssue(externalProjectPath, homePath, message, isResolveProjectTask))
@@ -177,7 +185,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     taskNotificationListener: ExternalSystemTaskNotificationListener
   ): Sdk? {
     if (ApplicationManager.getApplication().isDispatchThread) {
-      log.error("Do not perform synchronous wait for sdk downloading in EDT - causes deadlock.")
+      LOG.error("Do not perform synchronous wait for sdk downloading in EDT - causes deadlock.")
       throw jdkConfigurationException("gradle.jvm.is.being.resolved.error")
     }
 
@@ -260,7 +268,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       if (filesInfo.isNotEmpty()) {
         filesInfo.setLength(filesInfo.length - 1)
       }
-      log.info("Gradle sdk check fails. " +
+      LOG.info("Gradle sdk check fails. " +
                "Reason: no one of the given files matches gradle JAR pattern (${GradleInstallationManager.GRADLE_JAR_FILE_PATTERN}). " +
                "Files: $filesInfo")
     }
@@ -268,7 +276,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
   }
 
   companion object {
-    private val log = logger<LocalGradleExecutionAware>()
+    private val LOG = logger<LocalGradleExecutionAware>()
     const val LOCAL_TARGET_TYPE_ID = "local"
   }
 }

@@ -27,7 +27,7 @@ import java.awt.event.MouseListener;
 import static com.intellij.laf.win10.WinIntelliJTextBorder.MINIMUM_HEIGHT;
 import static com.intellij.laf.win10.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 
-public class WinIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
+public final class WinIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
   private MouseListener hoverListener;
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})

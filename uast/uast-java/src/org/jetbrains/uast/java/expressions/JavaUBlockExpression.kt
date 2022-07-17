@@ -16,10 +16,12 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiBlockStatement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UBlockExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 
+@ApiStatus.Internal
 class JavaUBlockExpression(
   override val sourcePsi: PsiBlockStatement,
   givenParent: UElement?

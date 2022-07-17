@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -16,10 +17,12 @@ import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IJSwingUtilities;
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +50,7 @@ public final class PyConsoleUtil {
   };
 
 
-  static final Key<PythonConsoleData> PYTHON_CONSOLE_DATA = Key.create("python-console-data");
+  public static final Key<PythonConsoleData> PYTHON_CONSOLE_DATA = Key.create("python-console-data");
 
   private PyConsoleUtil() {
   }
@@ -167,6 +170,7 @@ public final class PyConsoleUtil {
 
       @Override
       public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setVisible(false);
         Editor editor = consoleView.getConsoleEditor();
         if (LookupManager.getActiveLookup(editor) != null) {
           e.getPresentation().setEnabled(false);
@@ -179,9 +183,7 @@ public final class PyConsoleUtil {
       }
     };
 
-    runCompletions
-      .registerCustomShortcutSet(KeyEvent.VK_TAB, 0, consoleView.getConsoleEditor().getComponent());
-    runCompletions.getTemplatePresentation().setVisible(false);
+    runCompletions.registerCustomShortcutSet(KeyEvent.VK_TAB, 0, consoleView.getConsoleEditor().getComponent());
     return runCompletions;
   }
 
@@ -208,6 +210,7 @@ public final class PyConsoleUtil {
 
       @Override
       public void update(@NotNull final AnActionEvent e) {
+        e.getPresentation().setVisible(false);
         boolean enabled = false;
         EditorEx consoleEditor = consoleView.getConsoleEditor();
         if (IJSwingUtilities.hasFocus(consoleEditor.getComponent())) {
@@ -223,7 +226,6 @@ public final class PyConsoleUtil {
 
     anAction.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK, consoleView.getConsoleEditor().getComponent());
     anAction.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK, consoleView.getHistoryViewer().getComponent());
-    anAction.getTemplatePresentation().setVisible(false);
     return anAction;
   }
 
@@ -231,27 +233,12 @@ public final class PyConsoleUtil {
     return new ScrollToTheEndToolbarAction(editor);
   }
 
-  private static class ConsoleDataContext implements DataContext {
-    private final DataContext myOriginalDataContext;
-    private final PythonConsoleView myConsoleView;
-
-    ConsoleDataContext(DataContext dataContext, PythonConsoleView consoleView) {
-      myOriginalDataContext = dataContext;
-      myConsoleView = consoleView;
-    }
-
-    @Nullable
-    @Override
-    public Object getData(@NotNull String dataId) {
-      if (CommonDataKeys.EDITOR.is(dataId)) {
-        return myConsoleView.getEditor();
-      }
-      return myOriginalDataContext.getData(dataId);
-    }
-  }
-
-  private static AnActionEvent createActionEvent(@NotNull AnActionEvent e, PythonConsoleView consoleView) {
-    return e.withDataContext(new ConsoleDataContext(e.getDataContext(), consoleView));
+  private static @NotNull AnActionEvent createActionEvent(@NotNull AnActionEvent e, @NotNull PythonConsoleView consoleView) {
+    DataContext dataContext = SimpleDataContext.builder()
+      .setParent(e.getDataContext())
+      .add(CommonDataKeys.EDITOR, consoleView.getEditor())
+      .build();
+    return e.withDataContext(dataContext);
   }
 
   public static AnAction createPrintAction(PythonConsoleView consoleView) {
@@ -270,6 +257,17 @@ public final class PyConsoleUtil {
         printAction.actionPerformed(createActionEvent(e, consoleView));
       }
     };
+  }
+
+  public static boolean isCommandQueueEnabled(Project project) {
+    return PyConsoleOptions.getInstance(project).isCommandQueueEnabled();
+  }
+
+  public static boolean isCommandQueueEmpty(@Nullable ConsoleCommunication communication) {
+    if (communication != null) {
+      return ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).isEmpty(communication);
+    }
+    return true;
   }
 }
 

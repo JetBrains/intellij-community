@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
@@ -11,7 +12,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -40,31 +40,29 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
-/**
- * @author Alexander Lobas
- */
-public class ListPluginComponent extends JPanel {
+public final class ListPluginComponent extends JPanel {
   public static final Color DisabledColor = JBColor.namedColor("Plugins.disabledForeground", new JBColor(0xB1B1B1, 0x696969));
   public static final Color GRAY_COLOR = JBColor.namedColor("Label.infoForeground", new JBColor(Gray._120, Gray._135));
   public static final Color SELECTION_COLOR = JBColor.namedColor("Plugins.lightSelectionBackground", new JBColor(0xEDF6FE, 0x464A4D));
   public static final Color HOVER_COLOR = JBColor.namedColor("Plugins.hoverBackground", new JBColor(0xEDF6FE, 0x464A4D));
 
-  private static final Ref<Boolean> HANDLE_FOCUS_ON_SELECTION = Ref.create(Boolean.TRUE);
+  private static final Ref<Boolean> HANDLE_FOCUS_ON_SELECTION = new Ref<>(Boolean.TRUE);
 
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
   private final boolean myIsAllowed;
   private @NotNull IdeaPluginDescriptor myPlugin;
+  private final @NotNull PluginsGroup myGroup;
   private boolean myOnlyUpdateMode;
   public IdeaPluginDescriptor myUpdateDescriptor;
 
   private final JLabel myNameComponent = new JLabel();
   private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo);
   private final BaselineLayout myLayout = new BaselineLayout();
-  protected JButton myRestartButton;
-  protected InstallButton myInstallButton;
-  protected JButton myUpdateButton;
+  JButton myRestartButton;
+  InstallButton myInstallButton;
+  JButton myUpdateButton;
   private JComponent myEnableDisableButton;
   private JCheckBox myChooseUpdateButton;
   private JComponent myAlignButton;
@@ -79,13 +77,15 @@ public class ListPluginComponent extends JPanel {
   private ErrorComponent myErrorComponent;
   private OneLineProgressIndicator myIndicator;
   private EventHandler myEventHandler;
-  protected @NotNull EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
+  @NotNull private EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
 
   public ListPluginComponent(@NotNull MyPluginModel pluginModel,
                              @NotNull IdeaPluginDescriptor plugin,
+                             @NotNull PluginsGroup group,
                              @NotNull LinkListener<Object> searchListener,
                              boolean marketplace) {
     myPlugin = plugin;
+    myGroup = group;
     myPluginModel = pluginModel;
     mySearchListener = searchListener;
     myMarketplace = marketplace;
@@ -124,6 +124,8 @@ public class ListPluginComponent extends JPanel {
     }
     updateColors(EventHandler.SelectionType.NONE);
   }
+
+  @NotNull PluginsGroup getGroup() { return myGroup; }
 
   @NotNull EventHandler.SelectionType getSelection() {
     return mySelection;
@@ -184,11 +186,11 @@ public class ListPluginComponent extends JPanel {
       myInstallButton.setButtonColors(false);
       myInstallButton.setEnabled(true, IdeBundle.message("plugin.status.not.allowed.but.enabled"));
       myInstallButton.setText(IdeBundle.message("plugin.status.not.allowed.but.enabled"));
-      myInstallButton.setToolTipText(IdeBundle.message("plugin.status.not.allowed.tooltip"));
+      myInstallButton.setToolTipText(IdeBundle.message("plugin.status.not.allowed.tooltip.but.enabled"));
       myInstallButton.setBorderColor(JBColor.red);
       myInstallButton.setTextColor(JBColor.red);
       myInstallButton.addActionListener(e -> {
-        myPluginModel.setEnabledState(List.of(myPlugin), PluginEnableDisableAction.globally(false));
+        myPluginModel.disable(List.of(myPlugin));
         setupNotAllowedMarkerButton();
       });
     }
@@ -206,7 +208,8 @@ public class ListPluginComponent extends JPanel {
         myInstallButton
           .addActionListener(
             e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
-        myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null,
+        myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null &&
+                                   !InstalledPluginsState.getInstance().wasInstalledWithoutRestart(myPlugin.getPluginId()),
                                    IdeBundle.message("plugin.status.installed"));
         ColorButton.setWidth72(myInstallButton);
       }
@@ -224,8 +227,8 @@ public class ListPluginComponent extends JPanel {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {
-          if (PluginEnabler.isPerProjectEnabled() &&
-              !Registry.is("ide.plugins.per.project.use.checkboxes", false)) {
+          if (DynamicPluginEnabler.isPerProjectEnabled() &&
+              !RegistryManager.getInstance().is("ide.plugins.per.project.use.checkboxes")) {
             myEnableDisableButton = SelectionBasedPluginModelAction.createGearButton(
               action -> createEnableDisableAction(action, List.of(this)),
               () -> createUninstallAction(List.of(this))
@@ -235,8 +238,15 @@ public class ListPluginComponent extends JPanel {
           }
           else {
             myEnableDisableButton = createEnableDisableButton(
-              __ -> myPluginModel.setEnabledState(List.of(myPlugin),
-                                                  PluginEnableDisableAction.globally(myPluginModel.getState(myPlugin).isDisabled()))
+              __ -> {
+                List<IdeaPluginDescriptor> descriptors = List.of(myPlugin);
+                if (myPluginModel.getState(myPlugin).isDisabled()) {
+                  myPluginModel.enable(descriptors);
+                }
+                else {
+                  myPluginModel.disable(descriptors);
+                }
+              }
             );
           }
 
@@ -460,8 +470,13 @@ public class ListPluginComponent extends JPanel {
           }
         }
 
-        myUpdateLicensePanel
-          .setText(IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or"), true, false);
+        String message;
+        if (myUpdateDescriptor instanceof PluginNode && ((PluginNode)myUpdateDescriptor).getTags().contains(Tags.Freemium.name())) {
+          message = IdeBundle.message("label.next.plugin.version.is.freemium");
+        } else {
+          message = IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or");
+        }
+        myUpdateLicensePanel.setText(message, true, false);
         myUpdateLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
         myUpdateLicensePanel.setVisible(true);
       }
@@ -487,13 +502,13 @@ public class ListPluginComponent extends JPanel {
     eventHandler.addAll(this);
   }
 
-  protected void updateColors(@NotNull EventHandler.SelectionType type) {
+  void updateColors(@NotNull EventHandler.SelectionType type) {
     updateColors(GRAY_COLOR, type == EventHandler.SelectionType.NONE
                              ? PluginManagerConfigurable.MAIN_BG_COLOR
                              : (type == EventHandler.SelectionType.HOVER ? HOVER_COLOR : SELECTION_COLOR));
   }
 
-  protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
+  private void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
     setBackground(background);
 
     Color nameForeground = null;
@@ -583,7 +598,7 @@ public class ListPluginComponent extends JPanel {
     }
   }
 
-  protected void updateIcon(boolean errors, boolean disabled) {
+  private void updateIcon(boolean errors, boolean disabled) {
     myIconComponent.setIcon(myPluginModel.getIcon(myPlugin, false, errors, disabled));
   }
 
@@ -859,18 +874,18 @@ public class ListPluginComponent extends JPanel {
     }
   }
 
-  protected void fullRepaint() {
+  private void fullRepaint() {
     Container parent = getParent();
     parent.doLayout();
     parent.revalidate();
     parent.repaint();
   }
 
-  public final @NotNull IdeaPluginDescriptor getPluginDescriptor() {
+  public @NotNull IdeaPluginDescriptor getPluginDescriptor() {
     return myPlugin;
   }
 
-  public final void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+  public void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     myPlugin = plugin;
   }
 
@@ -1034,7 +1049,8 @@ public class ListPluginComponent extends JPanel {
       x += iconSize.width + myHGap.get();
       y += JBUIScale.scale(2);
 
-      int calcNameWidth = calculateNameWidth();
+      int width20 = JBUIScale.scale(20);
+      int calcNameWidth = Math.max(width20, calculateNameWidth());
       Dimension nameSize = myNameComponent.getPreferredSize();
       int baseline = y + myNameComponent.getBaseline(nameSize.width, nameSize.height);
 
@@ -1046,21 +1062,36 @@ public class ListPluginComponent extends JPanel {
       int width = getWidth();
 
       if (myProgressComponent == null) {
+        int nextX = x + nameSize.width + myHOffset.get();
+
         if (myTagComponent != null) {
-          setBaselineBounds(x + nameSize.width + myHOffset.get(), baseline, myTagComponent, myTagComponent.getPreferredSize());
+          Dimension size = myTagComponent.getPreferredSize();
+          setBaselineBounds(nextX, baseline, myTagComponent, size);
+          nextX += size.width;
         }
 
         int lastX = width - insets.right;
 
-        for (int i = myButtonComponents.size() - 1; i >= 0; i--) {
-          Component component = myButtonComponents.get(i);
-          if (!component.isVisible()) {
-            continue;
+        if (calcNameWidth > width20) {
+          for (int i = myButtonComponents.size() - 1; i >= 0; i--) {
+            Component component = myButtonComponents.get(i);
+            if (!component.isVisible()) {
+              continue;
+            }
+            Dimension size = component.getPreferredSize();
+            lastX -= size.width;
+            setBaselineBounds(lastX, baseline, component, size);
+            lastX -= myButtonOffset.get();
           }
-          Dimension size = component.getPreferredSize();
-          lastX -= size.width;
-          setBaselineBounds(lastX, baseline, component, size);
-          lastX -= myButtonOffset.get();
+        }
+        else {
+          for (JComponent component : myButtonComponents) {
+            if (component.isVisible()) {
+              Dimension size = component.getPreferredSize();
+              setBaselineBounds(nextX, baseline, component, size);
+              nextX += size.width + myButtonOffset.get();
+            }
+          }
         }
       }
       else {

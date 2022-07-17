@@ -1,12 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
-import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
 import com.intellij.util.containers.ContainerUtil
 
 open class RecentProjectListActionProvider {
@@ -15,12 +18,41 @@ open class RecentProjectListActionProvider {
     fun getInstance() = service<RecentProjectListActionProvider>()
   }
 
+  internal fun collectProjects(withOpened: Boolean = true): List<RecentProjectTreeItem> {
+    val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
+    val openedPaths = ProjectUtilCore.getOpenProjects().mapNotNull { openProject ->
+      recentProjectManager.getProjectPath(openProject)
+    }.toSet()
+    val allRecentProjectPaths = if (withOpened) {
+      LinkedHashSet(recentProjectManager.getRecentPaths())
+    }
+    else {
+      LinkedHashSet(recentProjectManager.getRecentPaths()).apply { removeAll(openedPaths) }
+    }
+
+    val duplicates = getDuplicateProjectNames(openedPaths, allRecentProjectPaths)
+    val groups = recentProjectManager.groups.sortedWith(ProjectGroupComparator(allRecentProjectPaths))
+    val projectGroups =  groups.map { projectGroup ->
+      val children = projectGroup.projects.map { recentProject ->
+        createRecentProject(recentProject, duplicates, projectGroup)
+      }
+      allRecentProjectPaths.removeAll(projectGroup.projects.toSet())
+      return@map ProjectsGroupItem(projectGroup, children)
+    }
+
+    val projectsWithoutGroups =  allRecentProjectPaths.map { recentProject ->
+      createRecentProject(recentProject, duplicates, null)
+    }
+
+    return ContainerUtil.concat(projectGroups, projectsWithoutGroups)
+  }
+
   @JvmOverloads
   open fun getActions(addClearListItem: Boolean = false, useGroups: Boolean = false): List<AnAction> {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
     val paths = LinkedHashSet(recentProjectManager.getRecentPaths())
     val openedPaths = mutableSetOf<String>()
-    for (openProject in ProjectUtil.getOpenProjects()) {
+    for (openProject in ProjectUtilCore.getOpenProjects()) {
       recentProjectManager.getProjectPath(openProject)?.let {
         openedPaths.add(it)
       }
@@ -30,25 +62,7 @@ open class RecentProjectListActionProvider {
     val duplicates = getDuplicateProjectNames(openedPaths, paths)
     val groups = recentProjectManager.groups.toMutableList()
     if (useGroups) {
-      val projectPaths = paths.toMutableList()
-      groups.sortWith(object : Comparator<ProjectGroup> {
-        override fun compare(o1: ProjectGroup, o2: ProjectGroup): Int {
-          val ind1 = getGroupIndex(o1)
-          val ind2 = getGroupIndex(o2)
-          return if (ind1 == ind2) StringUtil.naturalCompare(o1.name, o2.name) else ind1 - ind2
-        }
-
-        private fun getGroupIndex(group: ProjectGroup): Int {
-          var index = Integer.MAX_VALUE
-          for (path in group.projects) {
-            val i = projectPaths.indexOf(path)
-            if (i in 0 until index) {
-              index = i
-            }
-          }
-          return index
-        }
-      })
+      groups.sortWith(ProjectGroupComparator(paths))
 
       for (group in groups) {
         paths.removeAll(group.projects)
@@ -76,9 +90,7 @@ open class RecentProjectListActionProvider {
       val children = mutableListOf<AnAction>()
       for (path in group.projects) {
         val action = createOpenAction(path!!, duplicates)
-        if (action is ReopenProjectAction) {
-          action.setProjectGroup(group)
-        }
+        action.setProjectGroup(group)
         children.add(action)
         if (addClearListItem && children.size >= RecentProjectsManagerBase.MAX_PROJECTS_IN_MAIN_MENU) {
           break
@@ -92,8 +104,7 @@ open class RecentProjectListActionProvider {
   }
 
   // for Rider
-  @Suppress("MemberVisibilityCanBePrivate")
-  protected open fun createOpenAction(path: String, duplicates: Set<String>): AnAction {
+  protected open fun createOpenAction(path: String, duplicates: Set<String>): ReopenProjectAction {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
     var displayName = recentProjectManager.getDisplayName(path)
     val projectName = recentProjectManager.getProjectName(path)
@@ -106,6 +117,16 @@ open class RecentProjectListActionProvider {
     // on USB-sticks or flash-cards, and it will be nice to have them in the list
     // when USB device or SD-card is mounted
     return ReopenProjectAction(path, projectName, displayName)
+  }
+
+  private fun createRecentProject(path: String, duplicates: Set<String>, projectGroup: ProjectGroup?): RecentProjectItem {
+    val reopenProjectAction = createOpenAction(path, duplicates)
+    return RecentProjectItem(
+      reopenProjectAction.projectPath,
+      reopenProjectAction.projectName,
+      reopenProjectAction.projectNameToDisplay ?: "",
+      projectGroup
+    )
   }
 
   /**
@@ -127,5 +148,24 @@ open class RecentProjectListActionProvider {
       }
     }
     return duplicates
+  }
+
+  private class ProjectGroupComparator(private val projectPaths: Set<String>) : Comparator<ProjectGroup> {
+    override fun compare(o1: ProjectGroup, o2: ProjectGroup): Int {
+      val ind1 = getGroupIndex(o1)
+      val ind2 = getGroupIndex(o2)
+      return if (ind1 == ind2) StringUtil.naturalCompare(o1.name, o2.name) else ind1 - ind2
+    }
+
+    private fun getGroupIndex(group: ProjectGroup): Int {
+      var index = Integer.MAX_VALUE
+      for (path in group.projects) {
+        val i = projectPaths.indexOf(path)
+        if (i in 0 until index) {
+          index = i
+        }
+      }
+      return index
+    }
   }
 }

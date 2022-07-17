@@ -39,10 +39,7 @@ SET JVM_ARGS=%ACC% %REQUIRED_IDEA_JVM_ARGS%
 SET OLD_PATH=%PATH%
 SET PATH=%IDEA_HOME%\bin;%PATH%
 
-SET CLASS_PATH=%IDEA_HOME%\lib\bootstrap.jar
-SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\util.jar
-SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\jdom.jar
-SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\log4j.jar
+SET CLASS_PATH=%IDEA_HOME%\lib\util.jar
 SET CLASS_PATH=%CLASS_PATH%;%IDEA_JDK%\lib\tools.jar
 
 :: ---------------------------------------------------------------------

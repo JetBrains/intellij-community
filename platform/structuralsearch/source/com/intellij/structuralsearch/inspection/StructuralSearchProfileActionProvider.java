@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -98,7 +98,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
       final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
       inspection.removeConfigurationsWithUuid(UUID.fromString(shortName));
-      profile.removeTool(shortName);
+      profile.removeTool(selectedTool);
       profile.setModified(true);
       InspectionProfileUtil.fireProfileChanged(profile);
     }
@@ -125,7 +125,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final Configuration configuration = dialog.getConfiguration();
       if (!createNewInspection(configuration, context.getProject(), profile)) return;
 
-      myPanel.selectInspectionTool(configuration.getUuid().toString());
+      myPanel.selectInspectionTool(configuration.getShortName());
     }
   }
 
@@ -159,7 +159,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   private static void addInspectionToProfile(@NotNull Project project,
                                              @NotNull InspectionProfileImpl profile,
                                              @NotNull Configuration configuration) {
-    final String shortName = configuration.getUuid().toString();
+    final String shortName = configuration.getShortName();
     final InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(shortName, project);
     if (toolWrapper != null) {
       // already added
@@ -187,7 +187,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     private final JTextField mySuppressIdTextField;
 
     InspectionDataDialog(Project project, @NotNull SSBasedInspection inspection, @NotNull Configuration configuration, boolean newInspection) {
-      super(null);
+      super((Project)null);
       myInspection = inspection;
 
       myConfiguration = configuration;
@@ -240,7 +240,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
         }
         else {
           final HighlightDisplayKey key = HighlightDisplayKey.findById(suppressId);
-          if (key != null && key != HighlightDisplayKey.find(myConfiguration.getUuid().toString())) {
+          if (key != null && key != HighlightDisplayKey.find(myConfiguration.getShortName())) {
             warnings.add(new ValidationInfo(SSRBundle.message("suppress.id.in.use.warning", suppressId), mySuppressIdTextField));
           }
           else {

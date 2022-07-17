@@ -45,7 +45,7 @@ private fun addToExistingListElement(item: ExportableItem,
                                      itemToContainingListElement: MutableMap<ExportableItem, ComponentElementProperties>,
                                      fileToItem: Map<FileSpec, List<ExportableItem>>): Boolean {
   val list = fileToItem[item.fileSpec]
-  if (list == null || list.isEmpty()) {
+  if (list.isNullOrEmpty()) {
     return false
   }
 

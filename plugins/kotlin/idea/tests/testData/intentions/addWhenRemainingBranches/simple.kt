@@ -1,5 +1,5 @@
-// WITH_RUNTIME
-
+// WITH_STDLIB
+// AFTER-WARNING: 'when' is exhaustive so 'else' is redundant here
 enum class Entry {
     FOO, BAR, BAZ
 }

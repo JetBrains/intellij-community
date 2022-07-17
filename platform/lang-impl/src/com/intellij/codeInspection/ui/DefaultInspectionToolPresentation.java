@@ -18,7 +18,7 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
 
   @NotNull protected GlobalInspectionContextImpl myContext;
 
-  public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
+  public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper<?,?> toolWrapper, @NotNull GlobalInspectionContextImpl context) {
     super(toolWrapper, context);
     myContext = context;
   }
@@ -73,7 +73,7 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
 
   @Override
   @Nullable
-  public QuickFix findQuickFixes(@NotNull final CommonProblemDescriptor problemDescriptor,
+  public QuickFix<?> findQuickFixes(@NotNull final CommonProblemDescriptor problemDescriptor,
                                  RefEntity entity,
                                  final String hint) {
     InspectionProfileEntry tool = getToolWrapper().getTool();

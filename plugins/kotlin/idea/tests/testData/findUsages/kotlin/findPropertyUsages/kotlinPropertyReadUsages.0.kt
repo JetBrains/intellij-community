@@ -1,6 +1,5 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtProperty
 // OPTIONS: usages, skipWrite
-// FIR_IGNORE
 package server
 
 open class A<T> {
@@ -18,3 +17,4 @@ open class B : A<String>() {
             super<A>.foo = value
         }
 }
+// FIR_COMPARISON

@@ -83,7 +83,7 @@ public class HtmlToSimpleColoredComponentConverter {
         String tagName = t.toString();
         SimpleTextAttributes attributesByTag = myStyleTagHandler.calcAttributes(t, a);
         if (attributesByTag != null) {
-          SimpleTextAttributes newAttributes = merge(attributesByTag, attributesStack.peek());
+          SimpleTextAttributes newAttributes = merge( attributesStack.peek(), attributesByTag);
           attributesStack.push(tagName, newAttributes);
         }
       }

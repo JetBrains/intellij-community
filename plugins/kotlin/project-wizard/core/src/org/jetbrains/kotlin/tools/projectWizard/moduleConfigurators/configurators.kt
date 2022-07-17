@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
 
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.*
@@ -28,7 +29,7 @@ interface JvmModuleConfigurator : ModuleConfiguratorWithTests {
             KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.target.jvm.version"),
             GenerationPhase.PROJECT_GENERATION
         ) {
-            description = KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.target.jvm.version.description")
+            tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.target.jvm.version.tooltip")
             defaultValue = value(TargetJvmVersion.JVM_1_8)
             filter = { _, targetJvmVersion ->
                 // we need to make sure that kotlin compiler supports this target
@@ -43,6 +44,7 @@ interface JvmModuleConfigurator : ModuleConfiguratorWithTests {
             KotlinNewProjectWizardBundle.message("module.configurator.tests.setting.framework"),
             neededAtPhase = GenerationPhase.PROJECT_GENERATION
         ) {
+            tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.target.jvm.test.framework.tooltip")
             filter = filter@{ reference, kotlinTestFramework ->
                 val module = getModule(reference) ?: return@filter false
                 val configurator = module.configurator
@@ -100,6 +102,7 @@ enum class TargetJvmVersion(@NonNls val value: String) : DisplayableSettingItem 
     JVM_16("16");
 
     override val text: String
+        @NlsSafe
         get() = value
 }
 
@@ -143,7 +146,7 @@ object JvmSinglePlatformModuleConfigurator : JvmModuleConfigurator,
 
     override val canContainSubModules = true
 
-    override fun createKotlinPluginIR(configurationData: ModulesToIrConversionData, module: Module): KotlinBuildSystemPluginIR? =
+    override fun createKotlinPluginIR(configurationData: ModulesToIrConversionData, module: Module): KotlinBuildSystemPluginIR =
         KotlinBuildSystemPluginIR(
             KotlinBuildSystemPluginIR.Type.jvm,
             version = configurationData.kotlinVersion
@@ -182,6 +185,7 @@ object JvmSinglePlatformModuleConfigurator : JvmModuleConfigurator,
                 BuildSystemType.Maven -> {
                     +MavenPropertyIR("kotlin.compiler.jvmTarget", targetVersionValue)
                 }
+                else -> {}
             }
         }
 

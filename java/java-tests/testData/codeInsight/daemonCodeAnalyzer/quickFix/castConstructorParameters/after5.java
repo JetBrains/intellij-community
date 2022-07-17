@@ -1,4 +1,4 @@
-// "Cast parameter to 'GeneralTest.B'" "true"
+// "Cast argument to 'B'" "true"
 import java.util.*;
 class GeneralTest {
     static class B {

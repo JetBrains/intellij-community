@@ -5,6 +5,6 @@ package com.intellij.codeInsight.lookup;
 /**
  * @deprecated Use {@link LookupListener} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class LookupAdapter implements LookupListener {
 }

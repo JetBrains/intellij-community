@@ -17,16 +17,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.*
 import com.intellij.util.DocumentUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 import org.junit.rules.TestName
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
@@ -209,6 +207,9 @@ class EditorEmbeddedComponentManagerTest {
 
   @Test
   fun `viewport resize`() = edt {
+    if (SystemInfo.isMac && UsefulTestCase.IS_UNDER_TEAMCITY) {
+      throw AssumptionViolatedException("For unclear reason, this test doesn't work on macOS on CI")
+    }
     val panel = JPanel()
     panel.preferredSize = Dimension(500, 10)
     add(2, panel)

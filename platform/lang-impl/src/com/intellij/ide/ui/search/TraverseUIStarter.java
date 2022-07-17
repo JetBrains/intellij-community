@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -93,6 +94,9 @@ public final class TraverseUIStarter implements ApplicationStarter {
     }
     catch (Throwable e) {
       System.out.println("Searchable options index builder failed");
+      try {
+        Logger.getInstance(getClass()).error("Searchable options index builder failed", e);
+      } catch (Throwable ignored) {}
       e.printStackTrace();
       System.exit(-1);
     }
@@ -183,6 +187,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
         output = moduleDir.resolve("search/" + module + '.' + SearchableOptionsRegistrar.getSearchableOptionsXmlName());
       }
       JDOMUtil.write(entry.getValue(), output);
+      System.out.println("Output written to " + output);
     }
 
     for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {

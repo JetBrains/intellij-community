@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
@@ -6,6 +6,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.*;
 
 public interface GroovyStubElementTypes {
   GrClassDefinitionElementType CLASS_TYPE_DEFINITION = GroovyElementTypes.CLASS_TYPE_DEFINITION;
+  GrRecordDefinitionElementType RECORD_TYPE_DEFINITION = GroovyElementTypes.RECORD_TYPE_DEFINITION;
   GrInterfaceDefinitionElementType INTERFACE_TYPE_DEFINITION = GroovyElementTypes.INTERFACE_TYPE_DEFINITION;
   GrEnumDefinitionElementType ENUM_TYPE_DEFINITION = GroovyElementTypes.ENUM_TYPE_DEFINITION;
   GrAnnotationDefinitionElementType ANNOTATION_TYPE_DEFINITION = GroovyElementTypes.ANNOTATION_TYPE_DEFINITION;
@@ -20,6 +21,7 @@ public interface GroovyStubElementTypes {
 
   GrImplementsClauseElementType IMPLEMENTS_CLAUSE = GroovyElementTypes.IMPLEMENTS_CLAUSE;
   GrExtendsClauseElementType EXTENDS_CLAUSE = GroovyElementTypes.EXTENDS_CLAUSE;
+  GrPermitsClauseElementType PERMITS_CLAUSE = GroovyElementTypes.PERMITS_CLAUSE;
 
   GrPackageDefinitionElementType PACKAGE_DEFINITION = GroovyElementTypes.PACKAGE_DEFINITION;
 

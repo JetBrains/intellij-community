@@ -1,26 +1,28 @@
 <html>
 <body>
-<p>Reports exceptions that are declared in a method's signature but never thrown by the method itself or its implementations and derivatives.</p>
-<p>The inspection ignores methods related to the serialization, for example methods <code>readObject()</code> or <code>writeObject()</code>.</p>
+Reports exceptions that are declared in a method's signature but never thrown by the method itself or its implementations and overriding methods.
+<p>The inspection ignores methods related to serialization, for example the methods <code>readObject()</code> and <code>writeObject()</code>.</p>
 <p><b>Example:</b></p>
 <pre><code>
   void method() throws InterruptedException {
     System.out.println();
   }
 </code></pre>
-<p>The quick-fix removes unnecessary exceptions from the declaration and normalizes the redundant <code>try</code>-<code>catch</code> statements:</p>
-<pre>
+<p>The quick-fix removes unnecessary exceptions from the declaration and normalizes redundant <code>try</code>-<code>catch</code> statements:</p>
+<pre><code>
   void method() {
     System.out.println();
   }
-</pre>
+</code></pre>
 <p>
-  <b>Note:</b> Some exceptions might not be reported during in-editor highlighting.
-  For performance reasons, a non-private method is checked only when its name rarely occurs in the project.
-  To see all results, run the inspection by selecting  <b>Analyze | Inspect Code...</b> or <b>Analyze | Run Inspection by Name...</b> from the main menu.
+  <b>Note:</b> Some exceptions may not be reported during in-editor highlighting for performance reasons.
+  To see all results, run the inspection by selecting  <b>Code | Inspect Code</b> or <b>Code | Analyze Code | Run Inspection by Name</b> from the main menu.
 </p>
 <!-- tooltip end -->
-<p>Use the <b>Ignore exceptions thrown by entry points methods</b> option to ignore exceptions thrown by entry points methods.
-  Entry points methods are configured the following inspection: <b>Editor | Inspections | Java | Declaration redundancy | Unused declaration</b>.</p>
+<p>Use the <b>Ignore exceptions thrown by entry point methods</b> option to not report exceptions thrown by
+  for example <code>main()</code> methods.
+  Entry point methods can be configured in the settings of the
+  <a href="settings://Errors?Unused%20Declaration%20entry%20point">Java | Declaration redundancy | Unused declaration</a> inspection.
+  <br><br></p>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
@@ -32,6 +32,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -258,7 +259,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
         }
       }
     }
-    String result = StringUtil.convertLineSeparators(b.toString(), "\n", offsets);
+    String result = Strings.convertLineSeparators(b.toString(), "\n", offsets);
     return Pair.create(result, offsets[0]);
   }
 
@@ -281,7 +282,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
 
       @Override
       public Insets getInsets() {
-        return JBUI.emptyInsets();
+        return JBInsets.emptyInsets();
       }
     };
     button.setLook(ActionButtonLook.INPLACE_LOOK);

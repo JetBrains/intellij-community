@@ -16,9 +16,12 @@ import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -85,7 +88,7 @@ class SaveFacetsTest {
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
         val moduleEntity = it.entities(ModuleEntity::class.java).single()
-        it.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+        it.modifyEntity(moduleEntity) {
           dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency, ModuleDependencyItem.InheritedSdkDependency)
         }
       }

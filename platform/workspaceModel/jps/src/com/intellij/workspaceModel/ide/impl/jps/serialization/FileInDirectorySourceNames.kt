@@ -6,11 +6,11 @@ import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 
 /**
  * This class is used to reuse [JpsFileEntitySource.FileInDirectory] instances when project is synchronized with JPS files after loading
@@ -31,8 +31,12 @@ class FileInDirectorySourceNames private constructor(entitiesBySource: Map<Entit
       }
       if (type != null && entityName != null) {
         val fileName = when {
-          type == ModuleEntity::class.java && (source as? JpsImportedEntitySource)?.storedExternally == true -> "$entityName.xml"
+          // At external storage libs and artifacts store in its own file and at [JpsLibrariesExternalFileSerializer]/[JpsArtifactEntitiesSerializer]
+          // we can distinguish them only by directly entity name
+          (type == LibraryEntity::class.java || type == ArtifactEntity::class.java) && (source as? JpsImportedEntitySource)?.storedExternally == true -> entityName
+          // Module file stored at external and internal modules.xml has .iml file extension
           type == ModuleEntity::class.java -> "$entityName.iml"
+          // In internal store (i.e. under `.idea` folder) each library or artifact has its own file, and we can distinguish them only by file name
           else -> FileUtil.sanitizeFileName(entityName) + ".xml"
         }
         sourcesMap[type to fileName] = getInternalFileSource(source) as JpsFileEntitySource.FileInDirectory
@@ -45,7 +49,7 @@ class FileInDirectorySourceNames private constructor(entitiesBySource: Map<Entit
     mainEntityToSource[entityClass to fileName]
 
   companion object {
-    fun from(storage: WorkspaceEntityStorage) = FileInDirectorySourceNames(
+    fun from(storage: EntityStorage) = FileInDirectorySourceNames(
       storage.entitiesBySource { getInternalFileSource(it) is JpsFileEntitySource.FileInDirectory }
     )
 

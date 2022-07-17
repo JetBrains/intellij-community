@@ -16,6 +16,10 @@ public interface ProjectTemplate {
 
   ProjectTemplate[] EMPTY_ARRAY = new ProjectTemplate[0];
 
+  default String getId() {
+    return getClass().getSimpleName();
+  }
+
   @NotNull
   @NlsContexts.Label
   String getName();

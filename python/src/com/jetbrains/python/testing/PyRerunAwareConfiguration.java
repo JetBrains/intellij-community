@@ -16,24 +16,37 @@
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * {@link AbstractPythonTestRunConfiguration} that handles failed test rerun by itself
  *
  * @author Ilya.Kazakevich
  */
-@FunctionalInterface
 public interface PyRerunAwareConfiguration {
+
+  /**
+   * Lunched each time user clicks "rerun". Must return new test specs.
+   * <p>
+   * <i>To be deprecated. The part of the legacy implementation based on
+   * {@link com.intellij.execution.configurations.GeneralCommandLine}.</i>
+   */
+  @NotNull
+  List<String> getTestSpecsForRerun(@NotNull GlobalSearchScope scope, @NotNull List<Pair<Location<?>, AbstractTestProxy>> locations);
 
   /**
    * Lunched each time user clicks "rerun". Must return new test specs.
    */
   @NotNull
-  List<String> getTestSpecsForRerun(@NotNull GlobalSearchScope scope, @NotNull List<Pair<Location<?>, AbstractTestProxy>> locations);
+  List<Function<TargetEnvironment, String>> getTestSpecsForRerun(@NotNull TargetEnvironmentRequest request,
+                                                                 @NotNull GlobalSearchScope scope,
+                                                                 @NotNull List<Pair<Location<?>, AbstractTestProxy>> locations);
 }

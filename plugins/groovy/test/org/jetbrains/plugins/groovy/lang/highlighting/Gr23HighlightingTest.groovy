@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -22,7 +22,7 @@ class Gr23HighlightingTest extends GrHighlightingTestBase {
   }
 
   void assertScript(String text) {
-    testHighlighting("import groovy.transform.CompileStatic\nimport groovy.transform.stc.ClosureParams\n" + text)
+    doTestHighlighting("import groovy.transform.CompileStatic\nimport groovy.transform.stc.ClosureParams\n" + text)
   }
 
   void shouldFailWithMessages(String text) {
@@ -260,7 +260,7 @@ def test() {
   }
 
   void testTrait1() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait X {
   void foo() {}
 }
@@ -268,7 +268,7 @@ trait X {
   }
 
   void testTrait2() {
-    testHighlighting('''
+    doTestHighlighting('''
 interface A {}
 trait X implements A {
   void foo() {}
@@ -277,7 +277,7 @@ trait X implements A {
   }
 
   void testTrait3() {
-    testHighlighting('''
+    doTestHighlighting('''
 class A {}
 trait X extends <error descr="Only traits are expected here">A</error> {
   void foo() {}
@@ -286,7 +286,7 @@ trait X extends <error descr="Only traits are expected here">A</error> {
   }
 
   void testTrait4() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait A {}
 trait X extends A {
   void foo() {}
@@ -295,12 +295,12 @@ trait X extends A {
   }
 
   void testTraitExtendsList() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait B extends <error descr="Only traits are expected here">HashMap</error> {}''')
   }
 
   void testIncIsNotAllowedInTraits() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait C {
   def x = 5
   def foo() {
@@ -311,7 +311,7 @@ trait C {
   }
 
   void testTraitAsAnonymous() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait T {}
 
 new <error descr="Anonymous classes from traits are available since Groovy 2.5.2">T</error>(){}
@@ -319,7 +319,7 @@ new <error descr="Anonymous classes from traits are available since Groovy 2.5.2
   }
 
   void testAbstractMethodsInTrait() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait T {
   def foo() {}
   def <error descr="Not abstract method should have body">bar</error>()
@@ -330,7 +330,7 @@ trait T {
   }
 
   void testTraitImplementsInterfaceMethod() {
-    testHighlighting('''
+    doTestHighlighting('''
 interface A {def foo()}
 trait B implements A { def foo() {}}
 class C implements B {}
@@ -338,14 +338,14 @@ class C implements B {}
   }
 
   void 'test not implemented trait method'() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait T {abstract def foo()}
 <error descr="Method 'foo' is not implemented">class C implements T</error> {}
 ''')
   }
 
   void 'test not implemented interface method with trait in hierarchy'() {
-    testHighlighting('''
+    doTestHighlighting('''
 interface T {def foo()}
 trait X implements T {}
 <error descr="Method 'foo' is not implemented">class C implements X</error> {}
@@ -353,11 +353,11 @@ trait X implements T {}
   }
 
   void 'test trait methods cannot be protected'(){
-    testHighlighting('trait T {<error descr="Trait methods are not allowed to be protected">protected</error> foo(){}}')
+    doTestHighlighting('trait T {<error descr="Trait methods are not allowed to be protected">protected</error> foo(){}}')
   }
 
   void 'test trait can implement numerous traits'() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait A{}
 trait B{}
 
@@ -370,7 +370,7 @@ trait G implements A, B {}
   }
 
   void 'test trait with generic method no errors'() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait TraitGenericMethod {
     def <X> X bar(X x) { x }
 }
@@ -379,7 +379,7 @@ class ConcreteClassOfTraitGenericMethod implements TraitGenericMethod {}
   }
 
   void 'test generic trait with generic method no errors'() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait GenericTraitGenericMethod<X> {
     public <T> T bar(T a) { a }
 }
@@ -389,7 +389,7 @@ class GenericClassGenericTraitGenericMethod<Y> implements GenericTraitGenericMet
   }
 
   void 'test generic trait no errors'() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait GenericTrait<X> {
     def X bar(X a) { a }
 }
@@ -399,22 +399,22 @@ class ConcreteClassGenericTrait implements GenericTrait<String> {}
   }
 
   void 'test abstract method with default parameters in abstract class'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 abstract class A { abstract foo(x, y = 3) }
 <error descr="Method 'foo' is not implemented">class B extends A</error> {}
 '''
-    testHighlighting '''\
+    doTestHighlighting '''\
 abstract class A { abstract foo(x, y = 3) }
 class B extends A { def foo(x,y) {} }
 '''
   }
 
   void 'test abstract method with default parameters in trait'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 trait A { abstract foo(x, y = 3) }
 <error descr="Method 'foo' is not implemented">class B implements A</error> {}
 '''
-    testHighlighting '''\
+    doTestHighlighting '''\
 trait A { abstract foo(x, y = 3) }
 class B implements A { def foo(x,y) {} }
 '''
@@ -447,7 +447,7 @@ class C implements T {
   }
 
   void 'test trait method usages'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 trait T {
     def getFoo() {}
 }
@@ -459,7 +459,7 @@ new A().foo
   }
 
   void 'test no exception on super reference in trait without supertypes'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 trait SimpleTrait {
   void foo() {
     super.<warning descr="Cannot resolve symbol 'foo'">foo</warning>()
@@ -469,7 +469,7 @@ trait SimpleTrait {
   }
 
   void 'test spread argument highlight'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import groovy.transform.CompileStatic
 
 @CompileStatic

@@ -40,6 +40,9 @@ public interface GitBranchUiHandler {
   @NotNull
   ProgressIndicator getProgressIndicator();
 
+  void notifyError(@NotNull @NlsContexts.NotificationTitle String title,
+                   @NotNull @NlsContexts.NotificationContent String message);
+
   boolean notifyErrorWithRollbackProposal(@NotNull @NlsContexts.DialogTitle String title,
                                           @NotNull @NlsContexts.DialogMessage String message,
                                           @NotNull @NlsContexts.Label String rollbackProposal);
@@ -106,6 +109,7 @@ public interface GitBranchUiHandler {
   DeleteRemoteBranchDecision confirmRemoteBranchDeletion(@NotNull List<String> branchNames,
                                                          @NotNull Collection<String> trackingBranches,
                                                          @NotNull Collection<GitRepository> repositories);
+
   enum DeleteRemoteBranchDecision {
     CANCEL,
     DELETE,

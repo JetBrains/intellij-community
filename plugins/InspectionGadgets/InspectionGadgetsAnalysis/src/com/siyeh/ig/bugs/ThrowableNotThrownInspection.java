@@ -59,7 +59,7 @@ public class ThrowableNotThrownInspection extends BaseInspection {
   private static class ThrowableResultOfMethodCallIgnoredVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       if (!isIgnoredThrowable(expression)) {
         return;
@@ -68,7 +68,7 @@ public class ThrowableNotThrownInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!isIgnoredThrowable(expression)) {
         return;

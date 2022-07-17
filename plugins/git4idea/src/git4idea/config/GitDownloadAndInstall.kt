@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -9,6 +9,7 @@ import com.google.common.io.Files
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.HttpRequests
 import git4idea.i18n.GitBundle
 import org.tukaani.xz.XZInputStream
@@ -17,6 +18,14 @@ import java.io.File
 
 private const val feedUrl = "https://download.jetbrains.com/jdk/feed/v1/gits.json.xz"
 private val LOG = Logger.getInstance("#git4idea.config.GitDownloadAndInstall")
+
+fun downloadAndInstallGit(project: Project, onSuccess: () -> Unit = {}) {
+  val errorNotifier = NotificationErrorNotifier(project)
+  when {
+    SystemInfo.isWindows -> WindowsExecutableProblemHandler(project).downloadAndInstall(errorNotifier, onSuccess)
+    SystemInfo.isMac -> MacExecutableProblemHandler(project).downloadAndInstall(errorNotifier, onSuccess)
+  }
+}
 
 internal data class GitInstaller(
   val os: String,

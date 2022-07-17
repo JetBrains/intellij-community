@@ -35,20 +35,19 @@ import static java.util.Collections.emptyMap;
  * <p>NB: works with {@link File}, i.e. reads from disk. Consider using caching.
  * Throws a {@link RepoStateException} in the case of incorrect Git file format.</p>
  */
-class GitRepositoryReader {
+public class GitRepositoryReader {
 
   private static final Logger LOG = Logger.getInstance(GitRepositoryReader.class);
 
-  @NotNull private final File          myHeadFile;       // .git/HEAD
-  @NotNull private final File          myRefsHeadsDir;   // .git/refs/heads/
-  @NotNull private final File          myRefsRemotesDir; // .git/refs/remotes/
-  @NotNull private final File          myPackedRefsFile; // .git/packed-refs
+  @NotNull private final File myHeadFile;       // .git/HEAD
+  @NotNull private final File myRefsHeadsDir;   // .git/refs/heads/
+  @NotNull private final File myRefsRemotesDir; // .git/refs/remotes/
+  @NotNull private final File myPackedRefsFile; // .git/packed-refs
   @NotNull private final GitRepositoryFiles myGitFiles;
 
   GitRepositoryReader(@NotNull GitRepositoryFiles gitFiles) {
     myGitFiles = gitFiles;
     myHeadFile = gitFiles.getHeadFile();
-    DvcsUtil.assertFileExists(myHeadFile, ".git/HEAD file not found at " + myHeadFile);
     myRefsHeadsDir = gitFiles.getRefsHeadsFile();
     myRefsRemotesDir = gitFiles.getRefsRemotesFile();
     myPackedRefsFile = gitFiles.getPackedRefsPath();
@@ -77,7 +76,7 @@ class GitRepositoryReader {
       currentRevision = null;
     }
     if (currentBranch == null && currentRevision == null) {
-      LOG.error("Couldn't identify neither current branch nor current revision. .git/HEAD content: [" + headInfo.content + "]");
+      LOG.warn("Couldn't identify neither current branch nor current revision. .git/HEAD content: [" + headInfo.content + "]");
       LOG.debug("Dumping files in .git/refs/, and the content of .git/packed-refs. Debug enabled: " + LOG.isDebugEnabled());
       logDebugAllRefsFiles();
     }
@@ -247,7 +246,8 @@ class GitRepositoryReader {
   @NotNull
   private Map<String, String> readBranchRefsFromFiles() {
     try {
-      Map<String, String> result = new HashMap<>(readPackedBranches()); // reading from packed-refs first to overwrite values by values from unpacked refs
+      // reading from packed-refs first to overwrite values by values from unpacked refs
+      Map<String, String> result = new HashMap<>(readPackedBranches());
       result.putAll(readFromBranchFiles(myRefsHeadsDir, REFS_HEADS_PREFIX));
       result.putAll(readFromBranchFiles(myRefsRemotesDir, REFS_REMOTES_PREFIX));
       result.remove(REFS_REMOTES_PREFIX + GitUtil.ORIGIN_HEAD);
@@ -255,7 +255,7 @@ class GitRepositoryReader {
     }
     catch (Throwable e) {
       logDebugAllRefsFiles();
-      LOG.error("Error reading refs from files", e);
+      LOG.warn("Error reading refs from files", e);
       return emptyMap();
     }
   }
@@ -268,17 +268,32 @@ class GitRepositoryReader {
     for (Map.Entry<String, Hash> entry : data.entrySet()) {
       String refName = entry.getKey();
       Hash hash = entry.getValue();
-      if (refName.startsWith(REFS_HEADS_PREFIX)) {
-        localBranches.put(new GitLocalBranch(refName), hash);
+
+      GitBranch branch = parseBranchRef(remotes, refName);
+      if (branch instanceof GitLocalBranch) {
+        localBranches.put((GitLocalBranch)branch, hash);
       }
-      else if (refName.startsWith(REFS_REMOTES_PREFIX)) {
-        remoteBranches.put(parseRemoteBranch(refName, remotes), hash);
+      else if (branch instanceof GitRemoteBranch) {
+        remoteBranches.put((GitRemoteBranch)branch, hash);
       }
       else {
-        LOG.warn("Unexpected ref format: " + refName);
+        LOG.warn(String.format("Unexpected ref format: %s, %s", refName, branch));
       }
     }
     return Pair.create(localBranches, remoteBranches);
+  }
+
+  @Nullable
+  public static GitBranch parseBranchRef(@NotNull Collection<GitRemote> remotes, String refName) {
+    if (refName.startsWith(REFS_HEADS_PREFIX)) {
+      return new GitLocalBranch(refName);
+    }
+    else if (refName.startsWith(REFS_REMOTES_PREFIX)) {
+      return parseRemoteBranch(refName, remotes);
+    }
+    else {
+      return null;
+    }
   }
 
   @Nullable
@@ -297,17 +312,17 @@ class GitRepositoryReader {
       if (!file.isDirectory() && !isHidden(file)) {
         String relativePath = FileUtil.getRelativePath(refsRootDir, file);
         if (relativePath != null) {
-         String branchName = prefix + FileUtil.toSystemIndependentName(relativePath);
-         boolean isBranchNameValid = GitRefNameValidator.getInstance().checkInput(branchName);
-         if (isBranchNameValid) {
-           String hash = loadHashFromBranchFile(file);
-           if (hash != null) {
-             result.put(branchName, hash);
-           }
-           else {
-             couldNotLoadFile.set(true);
-           }
-         }
+          String branchName = prefix + FileUtil.toSystemIndependentName(relativePath);
+          boolean isBranchNameValid = GitRefNameValidator.getInstance().checkInput(branchName);
+          if (isBranchNameValid) {
+            String hash = loadHashFromBranchFile(file);
+            if (hash != null) {
+              result.put(branchName, hash);
+            }
+            else {
+              couldNotLoadFile.set(true);
+            }
+          }
         }
       }
       return true;
@@ -340,7 +355,8 @@ class GitRepositoryReader {
         branchName = stdName.substring(slash + 1);
         remote = GitUtil.findRemoteByName(remotes, remoteName);
         slash = stdName.indexOf('/', slash + 1);
-      } while(remote == null && slash >= 0);
+      }
+      while (remote == null && slash >= 0);
 
       if (remote == null) {
         // user may remove the remote section from .git/config, but leave remote refs untouched in .git/refs/remotes
@@ -359,7 +375,7 @@ class GitRepositoryReader {
       headContent = DvcsUtil.tryLoadFile(myHeadFile, CharsetToolkit.UTF8);
     }
     catch (RepoStateException e) {
-      LOG.error(e);
+      LOG.warn(e);
       return new HeadInfo(false, null);
     }
 
@@ -371,7 +387,7 @@ class GitRepositoryReader {
     if (target != null) {
       return new HeadInfo(true, target);
     }
-    LOG.error(new RepoStateException("Invalid format of the .git/HEAD file: [" + headContent + "]")); // including "refs/tags/v1"
+    LOG.warn(new RepoStateException("Invalid format of the .git/HEAD file: [" + headContent + "]")); // including "refs/tags/v1"
     return new HeadInfo(false, null);
   }
 

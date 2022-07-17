@@ -46,7 +46,11 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
 
         val name = e.name ?: return@visitMembers true
 
-        if (name == PyNames.CALL) {
+
+        if (name == PyNames.CLASS_GETITEM) {
+          return@visitMembers true
+        }
+        else if (name == PyNames.CALL) {
           result.add(Pair(e, resolveImplicitlyInvokedMethods(subclass, null, resolveContext)))
         }
         else {

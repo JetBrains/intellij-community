@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CO
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CodeFieldProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.LocalVariableProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ReferenceExpressionClassProcessor
+import org.jetbrains.plugins.groovy.transformations.inline.getHierarchicalInlineTransformationPerformer
 
 class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: PsiScopeProcessor) {
 
@@ -50,6 +51,8 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
     }
     if (processNonCode) {
       if (!ResolveUtil.processCategoryMembers(place, processor, initialState)) return false
+      val macroPerformer = getHierarchicalInlineTransformationPerformer(place)
+      if (macroPerformer != null && !macroPerformer.processResolve(processor, initialState, place)) return false
     }
     return true
   }
@@ -150,6 +153,10 @@ internal fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
     if (localVariable != null) {
       return localVariable
     }
+    val macroResult = resolveInInlineTransformation(this)
+    if (macroResult != null) {
+      return macroResult
+    }
   }
 
   if (parent !is GrMethodCall) {
@@ -219,4 +226,9 @@ private fun PsiElement.resolveQualifiedType(name: String, qualifier: GrReference
   val processor = ReferenceExpressionClassProcessor(name, this)
   classQualifier.processDeclarations(processor, ResolveState.initial(), null, this)
   return processor.result
+}
+
+private fun resolveInInlineTransformation(psiElement: PsiElement) : ElementResolveResult<PsiElement>? {
+  val handler = getHierarchicalInlineTransformationPerformer(psiElement) ?: return null
+  return handler.computeStaticReference(psiElement)
 }

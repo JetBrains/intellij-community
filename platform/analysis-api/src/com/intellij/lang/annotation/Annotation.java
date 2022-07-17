@@ -93,8 +93,10 @@ public final class Annotation implements Segment {
    * @param message     the description of the annotation (shown in the status bar or by "View | Error Description" action)
    * @param tooltip     the tooltip for the annotation (shown when hovering the mouse in the gutter bar)
    * @see AnnotationHolder#newAnnotation
+   * @deprecated use {@link AnnotationHolder#newAnnotation} instead
    */
   @ApiStatus.Internal
+  @Deprecated
   public Annotation(int startOffset,
                     int endOffset,
                     @NotNull HighlightSeverity severity,

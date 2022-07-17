@@ -2,8 +2,9 @@ package com.intellij.completion.ml.ranker.local.randomforest
 
 import com.intellij.completion.ml.ranker.local.DecisionFunctionWithLanguages
 import com.intellij.completion.ml.ranker.local.LocalZipModelProvider
-import com.intellij.completion.ml.ranker.local.ZipModelMetadataReader
+import com.intellij.completion.ml.ranker.local.ZipCompletionRankingModelMetadataReader
 import com.intellij.internal.ml.FeaturesInfo
+import com.intellij.internal.ml.models.local.LocalRandomForestModel
 import java.util.zip.ZipFile
 
 class LocalRandomForestProvider : LocalZipModelProvider {
@@ -16,7 +17,7 @@ class LocalRandomForestProvider : LocalZipModelProvider {
   }
 
   override fun loadModel(file: ZipFile): DecisionFunctionWithLanguages {
-    val reader = ZipModelMetadataReader(file)
+    val reader = ZipCompletionRankingModelMetadataReader(file)
     val modelText = reader.resourceContent(MODEL_FILE)
     val metadata = FeaturesInfo.buildInfo(reader)
     val decisionFunction = LocalRandomForestModel.loadModel(modelText, metadata)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options
 
 import com.intellij.openapi.application.PathMacroContributor
@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 @State(
   name = "PathMacrosImpl",
-  storages = [Storage(value = PathVariablesSerializer.STORAGE_FILE_NAME, roamingType = RoamingType.DISABLED)],
+  storages = [Storage(value = PathVariablesSerializer.STORAGE_FILE_NAME, roamingType = RoamingType.DISABLED, usePathMacroManager = false)],
   useLoadedStateAsExisting = false,
   reportStatistic = false,
 )
@@ -28,8 +28,6 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
   private var macros: Map<String, String> = emptyMap()
   private val modificationStamp = AtomicLong()
   private val ignoredMacros = ContainerUtil.createLockFreeCopyOnWriteList<String>()
-
-  private var userMacroMapCache: Map<String, String>? = null
 
   companion object {
     @JvmStatic
@@ -133,7 +131,6 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
 
   private fun userMacroModified() {
     modificationStamp.incrementAndGet()
-    userMacroMapCache = null
   }
 
   override fun getState(): Element? {

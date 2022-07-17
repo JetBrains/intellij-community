@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(b: Boolean) {
     val list = mutableListOf<Int>()
     <caret>if (b) {

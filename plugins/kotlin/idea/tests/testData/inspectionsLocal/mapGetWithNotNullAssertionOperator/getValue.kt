@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(map: Map<Int, String>) {
     val s = map.getValue(1)!!<caret>
 }

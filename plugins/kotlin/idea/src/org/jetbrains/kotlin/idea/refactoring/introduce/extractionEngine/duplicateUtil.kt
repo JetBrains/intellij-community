@@ -5,22 +5,21 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.find.FindManager
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler
 import com.intellij.ui.ReplacePromptDialog
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.refactoring.introduce.getPhysicalTextRange
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiRange
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 fun KotlinPsiRange.highlight(project: Project, editor: Editor): RangeHighlighter? {
     val textRange = getPhysicalTextRange()
@@ -63,7 +62,7 @@ fun processDuplicates(
         duplicateReplacers.keys.first().preview(project, editor)
     }
 
-    val answer = if (ApplicationManager.getApplication()!!.isUnitTestMode) {
+    val answer = if (isUnitTestMode()) {
         Messages.YES
     } else {
         Messages.showYesNoDialog(
@@ -88,12 +87,12 @@ fun processDuplicates(
     duplicateReplacersLoop@
     for ((i, entry) in duplicateReplacers.entries.withIndex()) {
         val (pattern, replacer) = entry
-        if (!pattern.isValid()) continue
+        if (!pattern.isValid) continue
 
         val highlighter = pattern.preview(project, editor)
-        if (!ApplicationManager.getApplication()!!.isUnitTestMode) {
+        if (!isUnitTestMode()) {
             if (size > 1 && !showAll) {
-                val promptDialog = ReplacePromptDialog(false, RefactoringBundle.message("process.duplicates.title", i + 1, size), project)
+                val promptDialog = ReplacePromptDialog(false, JavaRefactoringBundle.message("process.duplicates.title", i + 1, size), project)
                 promptDialog.show()
                 when (promptDialog.exitCode) {
                     FindManager.PromptResult.ALL -> showAll = true

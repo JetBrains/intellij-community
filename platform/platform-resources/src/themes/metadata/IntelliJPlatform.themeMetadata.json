@@ -3,56 +3,66 @@
   "fixed": false,
   "ui": [
     {
-      "key": "BookmarkIcon.background",
+      "key": "Banner.warningBackground",
+      "description": "The background of banners (experimental UI only)"
+    },
+    {
+      "key": "Bookmark.iconBackground",
       "description": "The background of the default bookmark icon."
     },
     {
-      "key": "MnemonicIcon.foreground",
+      "key": "Bookmark.Mnemonic.iconForeground",
       "description": "The text color on the bookmark icon with mnemonic."
     },
     {
-      "key": "MnemonicIcon.background",
-      "description": "The background of the bookmark icon with mnemonic."
+      "key": "Bookmark.Mnemonic.iconBackground",
+      "description": "The background of the bookmark icon with mnemonic.",
+      "deprecated": true
     },
     {
-      "key": "MnemonicIcon.borderColor",
-      "description": "The border color of the bookmark icon with mnemonic."
+      "key": "Bookmark.Mnemonic.iconBorderColor",
+      "description": "The border color of the bookmark icon with mnemonic.",
+      "deprecated": true
     },
     {
-      "key": "AvailableMnemonic.foreground",
+      "key": "BookmarkMnemonicAvailable.buttonForeground",
       "description": "The button text color for the not assigned bookmark mnemonic."
     },
     {
-      "key": "AvailableMnemonic.background",
+      "key": "BookmarkMnemonicAvailable.buttonBackground",
       "description": "The button background for the not assigned bookmark mnemonic."
     },
     {
-      "key": "AvailableMnemonic.borderColor",
+      "key": "BookmarkMnemonicAvailable.borderColor",
       "description": "The button border color for the not assigned bookmark mnemonic."
     },
     {
-      "key": "AssignedMnemonic.foreground",
+      "key": "BookmarkMnemonicAssigned.buttonForeground",
       "description": "The button text color for the already assigned bookmark mnemonic."
     },
     {
-      "key": "AssignedMnemonic.background",
+      "key": "BookmarkMnemonicAssigned.buttonBackground",
       "description": "The button background for the already assigned bookmark mnemonic."
     },
     {
-      "key": "AssignedMnemonic.borderColor",
+      "key": "BookmarkMnemonicAssigned.borderColor",
       "description": "The button border color for the already assigned bookmark mnemonic."
     },
     {
-      "key": "CurrentMnemonic.foreground",
+      "key": "BookmarkMnemonicCurrent.buttonForeground",
       "description": "The button text color for the currently selected bookmark mnemonic."
     },
     {
-      "key": "CurrentMnemonic.background",
+      "key": "BookmarkMnemonicCurrent.buttonBackground",
       "description": "The button background for the currently selected bookmark mnemonic."
     },
     {
-      "key": "CurrentMnemonic.borderColor",
+      "key": "BookmarkMnemonicCurrent.borderColor",
       "description": "The button border color for the currently selected bookmark mnemonic."
+    },
+    {
+      "key": "Breakpoint.iconHoverAlpha",
+      "description": "Transparency for breakpoint icon which pops up while hovering the gutter. A float in [0.0, 1.0]"
     },
     {
       "key": "BigSpinner.background",
@@ -71,9 +81,34 @@
       "description": "Combo box drop-down menu. Format: \"top, left, bottom, right, hex\", e.g. “1,1,1,1,FFFFFF\". Size in pixels"
     },
     {
+      "key": "CompletionPopup.Advertiser.background",
+      "description": "CompletionPopup advertiser background (experimental UI only)",
+      "since": "2022.2"
+    },
+    {
+      "key": "CompletionPopup.Advertiser.foreground",
+      "description": "CompletionPopup advertiser foreground (experimental UI only)",
+      "since": "2022.2"
+    },
+    {
+      "key": "CompletionPopup.Advertiser.fontSizeOffset",
+      "description": "CompletionPopup advertiser font size offset (experimental UI only)",
+      "since": "2022.2"
+    },
+    {
+      "key": "CompletionPopup.Advertiser.borderInsets",
+      "description": "CompletionPopup advertiser border insets (experimental UI only)",
+      "since": "2022.2"
+    },
+    {
       "key": "CompletionPopup.background",
       "deprecated": true,
       "description": "Uses Documentation popup color from editor color scheme instead"
+    },
+    {
+      "key": "CompletionPopup.Body.insets",
+      "description": "Insets around body  (experimental UI only). If bottom panel with advertiser is visible then bottom inset is not applied",
+      "since": "2022.2"
     },
     {
       "key": "CompletionPopup.infoForeground",
@@ -124,6 +159,16 @@
       "key": "CompletionPopup.selectionInfoForeground",
       "description": "Not used, selection foreground doesn't change",
       "deprecated": true
+    },
+    {
+      "key": "CompletionPopup.selectionInnerInsets",
+      "description": "Inner insets in selection line (experimental UI only)",
+      "since": "2022.2"
+    },
+    {
+      "key": "ContextHelp.fontSizeOffset",
+      "description": "Font size offset for comments (usually gray description text under components)",
+      "since": "2022.1"
     },
     {
       "key": "Counter.background",
@@ -177,6 +222,16 @@
     {
       "key": "Debugger.Variables.errorMessageForeground",
       "since": "2019.2"
+    },
+    {
+      "key": "Debugger.Variables.typeForeground",
+      "description": "Value type text color",
+      "since": "2022.2"
+    },
+    {
+      "key": "Debugger.EvaluateExpression.background",
+      "description": "Background color of the evaluate expression field embedded into the variables view",
+      "since": "2022.2"
     },
     {
       "key": "DefaultTabs.background",
@@ -239,6 +294,18 @@
       "key": "Editor.shortcutForeground"
     },
     {
+      "key": "Editor.SearchField.borderInsets",
+      "description": "Additional insets around editor search/replace fields in Experimental UI"
+    },
+    {
+      "key": "Editor.SearchField.background",
+      "description": "Editor inplace search/replace fields background color"
+    },
+    {
+      "key": "Editor.Toolbar.borderColor",
+      "description": "Editor header component border"
+    },
+    {
       "key": "EditorTabs.background",
       "description": "Background under all tabs in the editor. If value isn't specified the value of DefaultTabs.background will be used",
       "since": "2019.2"
@@ -296,6 +363,11 @@
     {
       "key": "EditorTabs.tabInsets",
       "description": "Inner insets around each editor tab"
+    },
+    {
+      "key": "EditorPane.splitBorder",
+      "description": "Separator color for editor split mode",
+      "since": "2022.2"
     },
     {
       "key": "FileColor.Blue",
@@ -481,6 +553,46 @@
       "deprecated": true
     },
     {
+      "key": "IconBadge.borderWidth",
+      "since": "2022.1",
+      "description": "Badge border width, assuming that it is for a 20x20 icon"
+    },
+    {
+      "key": "IconBadge.dotRadius",
+      "since": "2022.1",
+      "description": "Badge radius, assuming that it is for a 20x20 icon"
+    },
+    {
+      "key": "IconBadge.dotX",
+      "since": "2022.1",
+      "description": "Badge X-position, assuming that it is for a 20x20 icon"
+    },
+    {
+      "key": "IconBadge.dotY",
+      "since": "2022.1",
+      "description": "Badge Y-position, assuming that it is for a 20x20 icon"
+    },
+    {
+      "key": "IconBadge.errorBackground",
+      "since": "2022.1",
+      "description": "Badge color indicating the error status"
+    },
+    {
+      "key": "IconBadge.warningBackground",
+      "since": "2022.1",
+      "description": "Badge color indicating the warning status"
+    },
+    {
+      "key": "IconBadge.infoBackground",
+      "since": "2022.1",
+      "description": "Badge color indicating the info status"
+    },
+    {
+      "key": "IconBadge.successBackground",
+      "since": "2022.1",
+      "description": "Badge color indicating the success status"
+    },
+    {
       "key": "InformationHint.borderColor"
     },
     {
@@ -541,6 +653,31 @@
       "description": "Color of the text in notification balloon"
     },
     {
+      "key": "Notification.linkForeground",
+      "description": "Color of link actions in the notification."
+    },
+    {
+      "key": "Notification.arc",
+      "description": "Notification border corners radius"
+    },
+    {
+      "key": "Notification.borderInsets",
+      "description": "Top/Left/Bottom/Right insets of the notification"
+    },
+    {
+      "key": "Notification.iconOffsetSize",
+      "description": "Width/HorizontalOffset: Width for icon component, HorizontalOffset horizontal X for start icon"
+    },
+    {
+      "key": "Notification.titleContentInset"
+    },
+    {
+      "key": "Notification.contentActionsInset"
+    },
+    {
+      "key": "Notification.titleActionsInset"
+    },
+    {
       "key": "Notification.MoreButton.background",
       "description": "The \"# more\" area in a notification. Appears when there are several notifications of the same type"
     },
@@ -549,6 +686,15 @@
     },
     {
       "key": "Notification.MoreButton.innerBorderColor"
+    },
+    {
+      "key": "Notification.Button.foreground"
+    },
+    {
+      "key": "Notification.Button.background"
+    },
+    {
+      "key": "Notification.Button.borderColor"
     },
     {
       "key": "Notification.ToolWindow.errorBackground",
@@ -577,6 +723,19 @@
     },
     {
       "key": "Notification.ToolWindow.warningForeground"
+    },
+    {
+      "key": "NotificationsToolwindow.newNotification.background"
+    },
+    {
+      "key": "NotificationsToolwindow.newNotification.hoverBackground"
+    },
+    {
+      "key": "NotificationsToolwindow.Notification.hoverBackground"
+    },
+    {
+      "key" : "OnePixelDivider.background",
+      "description": "One pixel divider color"
     },
     {
       "key": "Panel.mouseShortcutBackground",
@@ -660,10 +819,11 @@
       "description": "A background of a hovered plugin row."
     },
     {
-      "key": "Plugins.SearchField.background"
+      "key": "Plugins.borderColor",
+      "description": "Use it to set the border for the search field and the border between the left and right sides."
     },
     {
-      "key": "Plugins.SearchField.borderColor"
+      "key": "Plugins.SearchField.background"
     },
     {
       "key": "Plugins.SectionHeader.background",
@@ -690,6 +850,26 @@
       "key": "Plugins.tagForeground"
     },
     {
+      "key": "ComplexPopup.Header.background",
+      "description": "Complex popup (like Find in Files) header background (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "ComplexPopup.Header.insets",
+      "description": "Complex popup header insets (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "ComplexPopup.TextField.borderInsets",
+      "description": "Text fields (like search, replace) border insets (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "ComplexPopup.TextField.inputInsets",
+      "description": "Text fields input insets (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
       "key": "Popup.Advertiser.background",
       "description": "The hint text area at the bottom of a popup"
     },
@@ -705,11 +885,76 @@
       "key": "Popup.Advertiser.foreground"
     },
     {
+      "key": "Popup.Body.bottomInsetNoAd",
+      "description": "Popup body bottom inset if there is no advertiser (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.Body.bottomInsetBeforeAd",
+      "description": "Popup body bottom inset before advertiser (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.Body.topInsetNoHeader",
+      "description": "Popup body top inset if there is no header (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.Header.activeForeground",
+      "description": "Text color in popup header when focused",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.Header.inactiveForeground",
+      "description": "Text color in popup header when not focused",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.Header.insets",
+      "description": "Header insets (experimental UI only), default value is \"12,10,10,10\"",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.SearchField.borderInsets",
+      "description": "Search field border insets (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.SearchField.inputInsets",
+      "description": "Search field input insets (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.background",
+      "description": "Popup background (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.borderWidth",
+      "description": "Popup border width",
+      "since": "2022.1"
+    },
+    {
       "key": "Popup.innerBorderColor"
     },
     {
       "key": "Popup.paintBorder",
       "description": "On Mac, the popup border is not visible by default. Set to true to make it visible"
+    },
+    {
+      "key": "Popup.Selection.arc",
+      "description": "Selection border corners radius in selection (experimental UI only)",
+      "since": "2022.2"
+    },
+    {
+      "key": "Popup.Selection.innerInsets",
+      "description": "Inner insets in selection line (experimental UI only). Top and bottom values are ignored",
+      "since": "2022.2"
+    },
+    {
+      "key": "Popup.Selection.leftRightInset",
+      "description": "Left and right inset in selection line (experimental UI only)",
+      "since": "2022.2"
     },
     {
       "key": "Popup.separatorColor",
@@ -718,6 +963,14 @@
     {
       "key": "Popup.separatorForeground",
       "description": "Text over the separator line in lists"
+    },
+    {
+      "key": "Popup.separatorInsets",
+      "description": "Insets around separator line (experimental UI only)"
+    },
+    {
+      "key": "Popup.separatorLabelInsets",
+      "description": "Insets around separator label (experimental UI only)"
     },
     {
       "key": "ProgressBar.failedColor",
@@ -732,6 +985,12 @@
     },
     {
       "key": "ProgressBar.passedEndColor"
+    },
+    {
+      "key": "ProgressBar.warningColor"
+    },
+    {
+      "key": "ProgressBar.warningEndColor"
     },
     {
       "key": "SearchEverywhere.Advertiser.background",
@@ -756,6 +1015,11 @@
       "description": "Section header text"
     },
     {
+      "key": "SearchEverywhere.List.settingsBackground",
+      "description": "Background of settings in search everywhere results",
+      "since": "2022.2"
+    },
+    {
       "key": "SearchEverywhere.SearchField.background"
     },
     {
@@ -777,12 +1041,27 @@
       "since": "2019.1"
     },
     {
+      "key": "SearchField.errorForeground",
+      "description": "Search field foreground of not found entries",
+      "since": "2022.1"
+    },
+    {
       "key": "SearchMatch.endBackground",
       "description": "The yellow rectangle under the search match text"
     },
     {
       "key": "SearchOption.selectedBackground",
       "description": "Button background to highlight chosen search option"
+    },
+    {
+      "key": "SearchOption.selectedPressedBackground",
+      "description": "Button background to highlight selected pressed search option (experimental UI only)",
+      "since": "2022.3"
+    },
+    {
+      "key": "SearchOption.selectedHoveredBackground",
+      "description": "Button background to highlight selected hovered search option (experimental UI only)",
+      "since": "2022.3"
     },
     {
       "key": "SearchMatch.startBackground"
@@ -839,6 +1118,11 @@
       "key": "List.hoverInactiveBackground",
       "since": "2020.3",
       "description": "A background of a hovered row in an unfocused list if hover is allowed."
+    },
+    {
+      "key": "TabbedPane.tabSelectionArc",
+      "since": "2022.2",
+      "description": "Selection border corners radius of TabbedPane underline"
     },
     {
       "key": "Tree.hoverBackground",
@@ -928,9 +1212,44 @@
       "key": "ToggleButton.onForeground"
     },
     {
+      "key": "SegmentedButton.selectedStartBorderColor",
+      "description": "Gradient top color of a selected button border in segmented button",
+      "since": "2022.1"
+    },
+    {
+      "key": "SegmentedButton.selectedButtonColor",
+      "description": "Color of non-focused selected button in segmented button",
+      "since": "2022.1"
+    },
+    {
+      "key": "SegmentedButton.focusedSelectedButtonColor",
+      "description": "Color of focused selected button in segmented button",
+      "since": "2022.1"
+    },
+    {
+      "key": "SegmentedButton.selectedEndBorderColor",
+      "description": "Gradient bottom color of a selected button border in segmented button",
+      "since": "2022.1"
+    },
+    {
+      "key": "ToolBar.horizontalToolbarInsets",
+      "description": "Default insets for horizontal action toolbars",
+      "since": "2022.1"
+    },
+    {
+      "key": "ToolBar.verticalToolbarInsets",
+      "description": "Default insets for vertical action toolbars",
+      "since": "2022.1"
+    },
+    {
       "key": "ToolTip.infoForeground",
       "description": "\"Inspection Info\" text in inspection error tooltips",
       "since": "2019.2"
+    },
+    {
+      "key": "ToolTip.linkForeground",
+      "description": "Link text in foreground color in tooltips",
+      "since": "2022.2"
     },
     {
       "key": "ToolTip.shortcutForeground",
@@ -977,6 +1296,10 @@
       "description": "Inactive tool window header"
     },
     {
+      "key": "ToolWindow.Header.padding",
+      "since": "2021.3"
+    },
+    {
       "key": "ToolWindow.HeaderCloseButton.background"
     },
     {
@@ -1016,6 +1339,14 @@
     {
       "key": "ToolWindow.HeaderTab.underlinedTabInactiveBackground",
       "since": "2019.2"
+    },
+    {
+      "key": "ToolWindow.HeaderTab.padding",
+      "since": "2021.3"
+    },
+    {
+      "key": "ToolWindow.background",
+      "since": "2021.3"
     },
     {
       "key": "Tooltip.separatorColor",
@@ -1130,6 +1461,29 @@
       "since": "2020.3"
     },
     {
+      "key": "VersionControl.Log.Commit.selectionBackground",
+      "description": "Background color for the commit selection in the Version Control | Log tab"
+    },
+    {
+      "key": "VersionControl.Log.Commit.selectionInactiveBackground",
+      "description": "Background color for the commit selection in the unfocused Version Control | Log tab"
+    },
+    {
+      "key": "VersionControl.Log.Commit.selectionForeground",
+      "description": "Foreground color for the commit selection in the Version Control | Log tab",
+      "since": "2022.2"
+    },
+    {
+      "key": "VersionControl.Log.Commit.selectionInactiveForeground",
+      "description": "Foreground color for the commit selection in the unfocused Version Control | Log tab",
+      "since": "2022.2"
+    },
+    {
+      "key": "VersionControl.Log.Commit.rowHeight",
+      "description": "Height of row in the Version Control | Log tab (experimental UI only)",
+      "since": "2022.2"
+    },
+    {
       "key": "VersionControl.RefLabel.backgroundBase",
       "description": "Reference label background base color",
       "since": "2019.1"
@@ -1143,6 +1497,16 @@
       "key": "VersionControl.RefLabel.foreground",
       "description": "Reference label text color",
       "since": "2019.1"
+    },
+    {
+      "key": "VersionControl.MarkerPopup.borderColor",
+      "description": "Color of border in the Vcs Marker Popup",
+      "since": "2022.2"
+    },
+    {
+      "key": "VersionControl.MarkerPopup.borderInsets",
+      "description": "Insets between the icons toolbar and popup borders in the Vcs Marker Popup",
+      "since": "2022.2"
     },
     {
       "key": "WelcomeScreen.background"
@@ -1257,29 +1621,52 @@
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.background",
+      "key": "Tooltip.Learning.background",
       "description": "Background for tooltips used in lessons",
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.spanBackground",
+      "key": "Tooltip.Learning.borderColor",
+      "description": "Border color for tooltips used in lessons",
+      "since": "2021.2"
+    },
+    {
+      "key": "Tooltip.Learning.spanBackground",
       "description": "Background for buttons and shortcuts used in lesson tooltips",
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.foreground",
+      "key": "Tooltip.Learning.spanForeground",
+      "description": "Foreground for buttons and shortcuts used in lesson tooltips",
+      "since": "2021.2"
+    },
+    {
+      "key": "Tooltip.Learning.foreground",
       "description": "Foreground for tooltips text used in lessons",
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.stepNumberForeground",
+      "key": "Tooltip.Learning.stepNumberForeground",
       "description": "Foreground for task numbers in lesson tooltips",
+      "since": "2021.2"
+    },
+    {
+      "key": "Lesson.Badge.newLessonBackground",
+      "description": "Background for badge near new modules/lessons",
+      "since": "2021.2"
+    },
+    {
+      "key": "Lesson.Badge.newLessonForeground",
+      "description": "Foreground for badge near new modules/lessons",
       "since": "2021.2"
     },
     {
       "key": "ProblemsView.projectAnalysisButtonBackground",
       "description": "Background for Project-Wide analysis button when enabled",
       "since": "2021.2"
+    },
+    {
+      "key": "Tag.background"
     }
   ]
 }

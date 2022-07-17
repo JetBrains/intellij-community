@@ -25,13 +25,13 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 import org.jetbrains.plugins.gradle.model.data.AnnotationProcessingData
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 import java.util.*
 
@@ -202,11 +202,19 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
         .toList()
 
       val orphans = profiles
-        .filter { importedProcessingProfiles.none { imported -> imported.matches(it) } }
+        .filter {
+          it.moduleNames.all { configuredModule -> isGradleModule(configuredModule, modelsProvider) }
+          && importedProcessingProfiles.none { imported -> imported.matches(it) }
+        }
         .toMutableList()
 
       orphans
     }
+
+  private fun isGradleModule(moduleName: String, modelsProvider: IdeModifiableModelsProvider): Boolean {
+    return ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID,
+      modelsProvider.findIdeModule(moduleName))
+  }
 
   override fun removeData(toRemoveComputable: Computable<out Collection<ProcessorConfigProfile>>,
                           toIgnore: Collection<DataNode<AnnotationProcessingData>>,

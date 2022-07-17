@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -84,7 +84,7 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
    *   <li>The current {@link PsiSwitchLabelStatement} is the switch label where it's legal to resolve the passed element.
    *      <p>
    *        Read more about scopes of variables in pattern matching for switch statements in
-   *        <a href="https://openjdk.java.net/jeps/406#3--Scope-of-pattern-variable-declarations">the JEP</a>.
+   *        <a href="https://openjdk.org/jeps/406#3--Scope-of-pattern-variable-declarations">the JEP</a>.
    *      </p>
    *   </li>
    * </ol>
@@ -107,7 +107,7 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
         immediateSwitchLabel = PsiTreeUtil.getPrevSiblingOfType(currentScope, PsiSwitchLabelStatementBase.class);
       }
 
-      while (immediateSwitchLabel != null && isFallthrough(immediateSwitchLabel) && isSpecialCaseLabel(immediateSwitchLabel)) {
+      while (immediateSwitchLabel != null && isFallthrough(immediateSwitchLabel) && isCaseNull(immediateSwitchLabel)) {
         immediateSwitchLabel = PsiTreeUtil.getPrevSiblingOfType(immediateSwitchLabel, PsiSwitchLabelStatementBase.class);
       }
 
@@ -136,18 +136,12 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
     }
   }
 
-  private static boolean isSpecialCaseLabel(@NotNull PsiSwitchLabelStatementBase switchCaseLabel) {
-    return isCase(switchCaseLabel, JavaTokenType.NULL_KEYWORD) ||
-           isCase(switchCaseLabel, JavaTokenType.DEFAULT_KEYWORD) ||
-           switchCaseLabel.isDefaultCase();
-  }
+  private static boolean isCaseNull(@NotNull PsiSwitchLabelStatementBase switchCaseLabel) {
+    if (switchCaseLabel.getCaseLabelElementList() == null) return false;
 
-  private static boolean isCase(@NotNull PsiSwitchLabelStatementBase item, @NotNull IElementType keyword) {
-    if (item.getCaseLabelElementList() == null) return false;
-
-    final PsiCaseLabelElement[] elements = item.getCaseLabelElementList().getElements();
+    final PsiCaseLabelElement[] elements = switchCaseLabel.getCaseLabelElementList().getElements();
     if (elements.length != 1) return false;
 
-    return elements[0].getNode().getFirstChildNode().getElementType() == keyword;
+    return elements[0].getNode().getFirstChildNode().getElementType() == JavaTokenType.NULL_KEYWORD;
   }
 }

@@ -39,6 +39,10 @@ public class JsonPathVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitExpressionSegment(@NotNull JsonPathExpressionSegment o) {
+    visitPsiElement(o);
+  }
+
   public void visitFilterExpression(@NotNull JsonPathFilterExpression o) {
     visitPsiElement(o);
   }
@@ -115,10 +119,6 @@ public class JsonPathVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
-  public void visitQuotedSegment(@NotNull JsonPathQuotedSegment o) {
-    visitPsiElement(o);
-  }
-
   public void visitRegexExpression(@NotNull JsonPathRegexExpression o) {
     visitExpression(o);
   }
@@ -128,10 +128,6 @@ public class JsonPathVisitor extends PsiElementVisitor {
   }
 
   public void visitRootSegment(@NotNull JsonPathRootSegment o) {
-    visitPsiElement(o);
-  }
-
-  public void visitSegmentExpression(@NotNull JsonPathSegmentExpression o) {
     visitPsiElement(o);
   }
 

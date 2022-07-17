@@ -45,7 +45,7 @@ public abstract class JavaRecursiveElementWalkingVisitor extends JavaElementVisi
   }
 
   @Override
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     visitExpression(expression);
     myWalkingState.startedWalking(); // do not traverse from scratch
     visitReferenceElement(expression);

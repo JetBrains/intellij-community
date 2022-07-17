@@ -21,7 +21,7 @@ import com.intellij.usages.UsageView
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.impl.UsageContextPanelBase
 import com.intellij.usages.impl.UsageViewImpl
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtDeclaration
 import java.awt.BorderLayout
 import javax.swing.JLabel
@@ -73,7 +73,7 @@ sealed class KotlinUsageContextDataFlowPanelBase(
     }
 
     public override fun updateLayoutLater(infos: List<UsageInfo>?) {
-        if (infos == null) {
+        if (infos.isNullOrEmpty()) {
             removeAll()
             val title = UsageViewBundle.message("select.the.usage.to.preview")
             add(JLabel(title, SwingConstants.CENTER), BorderLayout.CENTER)

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.ex.InspectionToolsSupplier
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.configurationStore.runInAllowSaveMode
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.runWriteAction
@@ -38,7 +39,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 import java.awt.Color
 import java.awt.Font
-import java.util.function.Function
 import javax.swing.Action
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -70,7 +70,7 @@ internal class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) :
       (it as? EditorImpl)?.registerLineExtensionPainter(this::generateLineExtension)
       setupHighlighting(it)
     }, MonospaceEditorCustomization.getInstance()))
-    document.addDocumentListener(object: DocumentListener {
+    document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         modified = true
       }
@@ -80,17 +80,24 @@ internal class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) :
     init()
   }
 
+  override fun show() {
+    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
+    InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile!!, { customize() }) {
+      super.show()
+    }
+  }
+
   private fun setupHighlighting(editor: Editor) {
     editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false)
+  }
+
+  private fun customize(): InspectionProfileWrapper {
     val inspections = InspectionToolsSupplier.Simple(listOf(LocalInspectionToolWrapper(ModuleNamesListInspection())))
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(document)
-    file?.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, Function {
-      val profile = InspectionProfileImpl("Module names", inspections, null)
-      for (spellCheckingToolName in SpellCheckingEditorCustomizationProvider.getInstance().spellCheckingToolNames) {
-        profile.getToolsOrNull(spellCheckingToolName, project)?.isEnabled = false
-      }
-      InspectionProfileWrapper(profile)
-    })
+    val profile = InspectionProfileImpl("Module names", inspections, null)
+    for (spellCheckingToolName in SpellCheckingEditorCustomizationProvider.getInstance().spellCheckingToolNames) {
+      profile.getToolsOrNull(spellCheckingToolName, project)?.isEnabled = false
+    }
+    return InspectionProfileWrapper(profile)
   }
 
   override fun createCenterPanel(): JPanel {
@@ -205,6 +212,10 @@ internal class ConvertModuleGroupsToQualifiedNamesAction : DumbAwareAction(Proje
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null && ModuleManager.getInstance(e.project!!).hasModuleGroups()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
 

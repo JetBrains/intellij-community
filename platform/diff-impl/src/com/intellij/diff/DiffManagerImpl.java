@@ -3,6 +3,7 @@ package com.intellij.diff;
 
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.editor.ChainDiffVirtualFile;
 import com.intellij.diff.editor.DiffEditorTabFilesManager;
 import com.intellij.diff.impl.DiffRequestPanelImpl;
@@ -12,6 +13,7 @@ import com.intellij.diff.merge.external.AutomaticExternalMergeTool;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.binary.BinaryDiffTool;
 import com.intellij.diff.tools.dir.DirDiffTool;
+import com.intellij.diff.tools.external.ExternalDiffSettings;
 import com.intellij.diff.tools.external.ExternalDiffTool;
 import com.intellij.diff.tools.external.ExternalMergeTool;
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool;
@@ -19,6 +21,7 @@ import com.intellij.diff.tools.simple.SimpleDiffTool;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.WindowWrapper;
@@ -48,9 +51,10 @@ public class DiffManagerImpl extends DiffManagerEx {
 
   @Override
   public void showDiff(@Nullable Project project, @NotNull DiffRequestChain requests, @NotNull DiffDialogHints hints) {
-    if (ExternalDiffTool.isDefault()) {
-      ExternalDiffTool.show(project, requests, hints);
-      return;
+    if (ExternalDiffTool.isEnabled()) {
+      if (ExternalDiffTool.showIfNeeded(project, requests, hints)) {
+        return;
+      }
     }
 
     showDiffBuiltin(project, requests, hints);
@@ -121,14 +125,23 @@ public class DiffManagerImpl extends DiffManagerEx {
   public void showMerge(@Nullable Project project, @NotNull MergeRequest request) {
     // plugin may provide a better tool for this MergeRequest
     AutomaticExternalMergeTool tool = AutomaticExternalMergeTool.EP_NAME.findFirstSafe(mergeTool -> mergeTool.canShow(project, request));
-    if (tool!=null) {
+    if (tool != null) {
       tool.show(project, request);
       return;
     }
 
-    if (ExternalMergeTool.isDefault()) {
-      ExternalMergeTool.show(project, request);
-      return;
+    if (request instanceof ThreesideMergeRequest) {
+      ThreesideMergeRequest mergeRequest = (ThreesideMergeRequest)request;
+      DiffContent outputContent = mergeRequest.getOutputContent();
+      FileType fileType = outputContent.getContentType();
+
+      if (fileType != null) {
+        ExternalDiffSettings.ExternalTool mergeTool = ExternalDiffSettings.findMergeTool(fileType);
+        if (ExternalMergeTool.isEnabled() && mergeTool != null) {
+          ExternalMergeTool.show(project, mergeTool, request);
+          return;
+        }
+      }
     }
 
     showMergeBuiltin(project, request);

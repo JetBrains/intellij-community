@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("HardCodedStringLiteral")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.ide
 
@@ -66,7 +65,7 @@ internal class AboutHttpService : RestService() {
     val origin = origin ?: return false
     @Suppress("SpellCheckingInspection")
     val hyperskillRegex = Regex("https://([a-z0-9-]+\\.)*hyperskill.org$")
-    val academyJetbrainsRegex = Regex("https://([a-z0-9-]+)*.jetbrains.com$")
+    val academyJetbrainsRegex = Regex("https://([a-z0-9-.]+)\\.jetbrains.com$")
     return origin.matches(hyperskillRegex) || origin.matches(academyJetbrainsRegex)
   }
 

@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
@@ -26,15 +25,15 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
   internal fun getAffectedChangeList(changes: Collection<Change>): LocalChangeList =
     changes.firstOrNull()?.let { changeListManager.getChangeList(it) } ?: changeListManager.defaultChangeList
 
-  override fun processExecuteDefaultChecksResult(result: CheckinHandler.ReturnResult) {
-    if (result == CheckinHandler.ReturnResult.COMMIT) doCommit()
+  override fun processExecuteDefaultChecksResult(result: CommitChecksResult) {
+    if (result.shouldCommit) doCommit()
   }
 
   override fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean =
     executeCustom(executor, session, commitState.changes, commitState.commitMessage)
 
-  override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CheckinHandler.ReturnResult) {
-    if (result == CheckinHandler.ReturnResult.COMMIT) doCommitCustom(executor, session)
+  override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CommitChecksResult) {
+    if (result.shouldCommit) doCommitCustom(executor, session)
   }
 
   override fun doRunBeforeCommitChecks(checks: Runnable) =

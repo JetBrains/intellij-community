@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -10,6 +10,7 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescript
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.GetterDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -80,8 +81,15 @@ public class JavaDfaValueFactory {
       return factory.fromDfType(DfaPsiUtil.fromLiteral((PsiLiteralExpression)expression));
     }
 
-    if (expression instanceof PsiNewExpression || expression instanceof PsiLambdaExpression) {
-      return factory.fromDfType(DfTypes.typedObject(expression.getType(), Nullability.NOT_NULL));
+    if (expression instanceof PsiNewExpression) {
+      PsiType psiType = expression.getType();
+      DfType dfType = psiType == null ? DfType.TOP : TypeConstraints.exact(psiType).asDfType();
+      return factory.fromDfType(dfType.meet(DfTypes.NOT_NULL_OBJECT));
+    }
+
+    if (expression instanceof PsiLambdaExpression) {
+      DfType dfType = JavaDfaHelpers.getFunctionDfType((PsiFunctionalExpression)expression);
+      return factory.fromDfType(dfType.meet(DfTypes.NOT_NULL_OBJECT));
     }
 
     final Object value = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
@@ -92,7 +100,7 @@ public class JavaDfaValueFactory {
       }
     }
 
-    if (expression instanceof PsiThisExpression || expression instanceof PsiSuperExpression) {
+    if (expression instanceof PsiQualifiedExpression) {
       PsiJavaCodeReferenceElement qualifier = ((PsiQualifiedExpression)expression).getQualifier();
       PsiClass target;
       if (qualifier != null) {
@@ -140,12 +148,14 @@ public class JavaDfaValueFactory {
     if (qualifierExpression == null) {
       PsiElement element = refExpr.resolve();
       if (element instanceof PsiMember && !((PsiMember)element).hasModifierProperty(PsiModifier.STATIC)) {
-        PsiClass currentClass;
-        currentClass = ClassUtils.getContainingClass(refExpr);
+        PsiClass currentClass = ClassUtils.getContainingClass(refExpr);
         PsiClass memberClass = ((PsiMember)element).getContainingClass();
         if (memberClass != null && currentClass != null) {
           PsiClass target;
-          if (currentClass == memberClass || InheritanceUtil.isInheritorOrSelf(currentClass, memberClass, true)) {
+          PsiElement refName = refExpr.getReferenceNameElement();
+          if (currentClass == memberClass ||
+              (!(refName instanceof PsiKeyword && ((PsiKeyword)refName).getTokenType() == JavaTokenType.SUPER_KEYWORD) &&
+               InheritanceUtil.isInheritorOrSelf(currentClass, memberClass, true))) {
             target = currentClass;
           }
           else {

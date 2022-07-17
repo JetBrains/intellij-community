@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log;
 
+import com.intellij.diagnostic.opentelemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,11 +25,11 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
 import com.intellij.vcs.log.impl.VcsLogIndexer;
-import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import com.intellij.vcsUtil.VcsFileUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
@@ -42,6 +43,8 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.repo.GitSubmodule;
 import git4idea.repo.GitSubmoduleKt;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
@@ -71,17 +74,16 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   };
 
   @NotNull private final Project myProject;
-  @NotNull private final GitVcs myVcs;
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
+  private static final Tracer myTracer = TraceManager.INSTANCE.getTracer("vcs");
 
   public GitLogProvider(@NotNull Project project) {
     myProject = project;
     myRepositoryManager = GitRepositoryManager.getInstance(project);
     myRefSorter = new GitRefManager(myProject, myRepositoryManager);
     myVcsObjectsFactory = project.getService(VcsLogObjectsFactory.class);
-    myVcs = GitVcs.getInstance(project);
   }
 
   @NotNull
@@ -135,10 +137,10 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       }
     }
 
-    StopWatch sw = StopWatch.start("sorting commits in " + root.getName());
+    Span span = myTracer.spanBuilder("sorting commits").setAttribute("root name", root.getName()).startSpan();
     List<VcsCommitMetadata> sortedCommits = VcsLogSorter.sortByDateTopoOrder(allDetails);
     sortedCommits = ContainerUtil.getFirstItems(sortedCommits, requirements.getCommitCount());
-    sw.report();
+    span.end();
 
     if (LOG.isDebugEnabled()) {
       validateDataAndReportError(root, allRefs, sortedCommits, data, branches, currentTagNames, commitsFromTags);
@@ -154,7 +156,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
                                                  @NotNull final Set<? extends VcsRef> manuallyReadBranches,
                                                  @Nullable final Set<String> currentTagNames,
                                                  @Nullable final DetailedLogData commitsFromTags) {
-    StopWatch sw = StopWatch.start("validating data in " + root.getName());
+    Span span = myTracer.spanBuilder("validating data").setAttribute("root name", root.getName()).startSpan();
     final Set<Hash> refs = ContainerUtil.map2Set(allRefs, VcsRef::getCommitHash);
 
     PermanentGraphImpl.newInstance(sortedCommits, new GraphColorManager<>() {
@@ -179,7 +181,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
         return 0;
       }
     }, refs);
-    sw.report();
+    span.end();
   }
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
@@ -254,10 +256,10 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @NotNull
   private Set<String> readCurrentTagNames(@NotNull VirtualFile root) throws VcsException {
-    StopWatch sw = StopWatch.start("reading tags in " + root.getName());
+    Span span = myTracer.spanBuilder("reading tags").setAttribute("root name", root.getName()).startSpan();
     Set<String> tags = new HashSet<>();
     tags.addAll(GitBranchUtil.getAllTags(myProject, root));
-    sw.report();
+    span.end();
     return tags;
   }
 
@@ -282,7 +284,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   private DetailedLogData loadSomeCommitsOnTaggedBranches(@NotNull VirtualFile root,
                                                           int commitCount,
                                                           @NotNull Collection<String> unmatchedTags) throws VcsException {
-    StopWatch sw = StopWatch.start("loading commits on tagged branch in " + root.getName());
+    Span span = myTracer.spanBuilder("loading commits on tagged branch").setAttribute("root name", root.getName()).startSpan();
     List<String> params = new ArrayList<>();
     params.add("--max-count=" + commitCount);
 
@@ -295,7 +297,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       commits.addAll(logData.getCommits());
     });
 
-    sw.report();
+    span.end();
     return new LogDataImpl(refs, new ArrayList<>(commits));
   }
 
@@ -328,7 +330,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     }
 
     GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(myRepositoryManager, root),
-                                                                   DiffRenameLimit.GIT_CONFIG,
+                                                                   DiffRenameLimit.GitConfig.INSTANCE,
                                                                    DiffInMergeCommits.DIFF_TO_PARENTS);
     GitLogUtil.readFullDetailsForHashes(myProject, root, hashes, requirements, commitConsumer);
   }
@@ -343,12 +345,12 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @Override
   public void readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes, @NotNull Consumer<? super VcsCommitMetadata> consumer)
     throws VcsException {
-    GitLogUtil.collectMetadata(myProject, myVcs, root, hashes, consumer);
+    GitLogUtil.collectMetadata(myProject, root, hashes, consumer);
   }
 
   @NotNull
   private Set<VcsRef> readBranches(@NotNull GitRepository repository) {
-    StopWatch sw = StopWatch.start("readBranches in " + repository.getRoot().getName());
+    Span span = myTracer.spanBuilder("readBranches").setAttribute("root name", repository.getRoot().getName()).startSpan();
     VirtualFile root = repository.getRoot();
     repository.update();
     GitBranchesCollection branches = repository.getBranches();
@@ -369,7 +371,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     if (currentRevision != null) { // null => fresh repository
       refs.add(myVcsObjectsFactory.createRef(HashImpl.build(currentRevision), GitUtil.HEAD, GitRefManager.HEAD, root));
     }
-    sw.report();
+    span.end();
     return refs;
   }
 
@@ -501,7 +503,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       Collection<String> names = ContainerUtil.map(userFilter.getUsers(root), VcsUserUtil::toExactString);
       if (regexp) {
         List<String> authors = ContainerUtil.map(names, UserNameRegex.EXTENDED_INSTANCE);
-        if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myVcs)) {
+        if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myProject)) {
           filterParameters.add(prepareParameter("author", StringUtil.join(authors, "|")));
         }
         else {
@@ -593,7 +595,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @Override
   public @NotNull VirtualFile getVcsRoot(@NotNull Project project, @NotNull VirtualFile detectedRoot, @NotNull FilePath path) {
-    if (detectedRoot.equals(path.getVirtualFile())) {
+    if (VcsUtil.getFilePath(detectedRoot).equals(path)) {
       GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(detectedRoot);
       if (repository != null) {
         GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);

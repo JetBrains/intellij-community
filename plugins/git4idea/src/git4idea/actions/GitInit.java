@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
+import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -29,6 +31,17 @@ import org.jetbrains.annotations.NotNull;
 import static git4idea.GitNotificationIdsHolder.INIT_FAILED;
 
 public class GitInit extends DumbAwareAction {
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    e.getPresentation().setEnabledAndVisible(project == null || project.isDefault() || TrustedProjects.isTrusted(project));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -83,5 +96,10 @@ public class GitInit extends DumbAwareAction {
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
     manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), path, GitVcs.NAME));
     VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(root);
+  }
+
+  public static void configureVcsMappings(@NotNull Project project, @NotNull VirtualFile root) {
+    ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+    manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), root.getPath(), GitVcs.NAME));
   }
 }

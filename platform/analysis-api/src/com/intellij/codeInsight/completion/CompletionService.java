@@ -40,8 +40,7 @@ public abstract class CompletionService {
    * @param text
    * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void setAdvertisementText(@Nullable @NlsContexts.PopupAdvertisement String text);
 
   /**
@@ -108,14 +107,14 @@ public abstract class CompletionService {
       @Override
       public void startBatch() {
         if (consumer instanceof BatchConsumer) {
-          ((BatchConsumer)consumer).startBatch();
+          ((BatchConsumer<?>)consumer).startBatch();
         }
       }
 
       @Override
       public void endBatch() {
         if (consumer instanceof BatchConsumer) {
-          ((BatchConsumer)consumer).endBatch();
+          ((BatchConsumer<?>)consumer).endBatch();
         }
       }
 

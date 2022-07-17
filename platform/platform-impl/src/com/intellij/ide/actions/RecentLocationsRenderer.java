@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -39,6 +39,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,7 +199,7 @@ class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWithGutt
     myTitle.setIcon(icon);
     myTitle.setIconTextGap(4);
     if (!SystemInfo.isWindows) {
-      myTitle.setFont(FontUtil.minusOne(UIUtil.getLabelFont()));
+      myTitle.setFont(FontUtil.minusOne(StartupUiUtil.getLabelFont()));
     }
     long timeStamp = place.getTimeStamp();
     if (UISettings.getInstance().getShowInplaceComments() && Registry.is("show.last.visited.timestamps") && timeStamp != -1) {

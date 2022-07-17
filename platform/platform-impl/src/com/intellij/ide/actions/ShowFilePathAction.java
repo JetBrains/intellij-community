@@ -4,24 +4,21 @@ package com.intellij.ide.actions;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +45,11 @@ public class ShowFilePathAction extends DumbAwareAction {
       e.getPresentation().setEnabled(file != null);
       e.getPresentation().setText(ActionsBundle.messagePointer(file != null && file.isDirectory() ? "action.ShowFilePath.directory" : "action.ShowFilePath.file"));
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -133,48 +135,29 @@ public class ShowFilePathAction extends DumbAwareAction {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link RevealFileAction#FILE_SELECTING_LISTENER} (to be removed in IDEA 2021.3) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final NotificationListener FILE_SELECTING_LISTENER = RevealFileAction.FILE_SELECTING_LISTENER;
 
-  /** @deprecated use {@link RevealFileAction#isSupported} (to be removed in IDEA 2021.3) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static boolean isSupported() {
-    return RevealFileAction.isSupported();
-  }
-
   /** @deprecated use {@link RevealFileAction#getFileManagerName} (to be removed in IDEA 2021.3) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull String getFileManagerName() {
     return RevealFileAction.getFileManagerName();
   }
 
   /** @deprecated use {@link RevealFileAction#openFile} (to be removed in IDEA 2021.3) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void openFile(@NotNull File file) {
     RevealFileAction.openFile(file);
   }
 
   /** @deprecated use {@link RevealFileAction#openDirectory} (to be removed in IDEA 2021.3) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void openDirectory(@NotNull File directory) {
     RevealFileAction.openDirectory(directory);
   }
 
-  /** @deprecated use {@link RevealFileAction#showDialog} (to be removed in IDEA 2021.3) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void showDialog(Project project, @NlsContexts.DialogMessage String message, @NlsContexts.DialogTitle String title, @NotNull File file, @Nullable DialogWrapper.DoNotAskOption option) {
-    RevealFileAction.showDialog(project, message, title, file, option);
-  }
-
   /** @deprecated use {@link RevealFileAction#findLocalFile} (to be removed in IDEA 2021.3) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @Nullable VirtualFile findLocalFile(@Nullable VirtualFile file) {
     return RevealFileAction.findLocalFile(file);
   }

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.internal.statistic.beans.MetricEvent;
+import com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.events.*;
@@ -56,7 +57,8 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
   );
   private static final List<String> ALLOWED_SEVERITIES = ContainerUtil.concat(List.of("custom", "TYPO"), ContainerUtil.map(HighlightSeverity.DEFAULT_SEVERITIES, severity -> severity.getName()));
 
-  private static final StringEventField INSPECTION_ID_FIELD = EventFields.StringValidatedByCustomRule("inspection_id", "tool");
+  private static final StringEventField INSPECTION_ID_FIELD =
+    EventFields.StringValidatedByCustomRule("inspection_id", InspectionToolValidator.class);
   private static final StringEventField SCOPE_FIELD = EventFields.String("scope", ALLOWED_SCOPES);
   private static final StringEventField SEVERITY_FIELD = EventFields.String("severity", ALLOWED_SEVERITIES);
   private static final BooleanEventField ENABLED_FIELD = EventFields.Boolean("enabled");
@@ -85,9 +87,9 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
   };
   private static final StringEventField OPTION_TYPE_FIELD =
     new StringEventField.ValidatedByAllowedValues("option_type", Arrays.asList("boolean", "integer"));
-  private static final StringEventField OPTION_NAME_FIELD = EventFields.StringValidatedByCustomRule("option_name", "plugin_info");
-
-  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 11);
+  private static final StringEventField OPTION_NAME_FIELD =
+    EventFields.StringValidatedByCustomRule("option_name", PluginInfoValidationRule.class);
+  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 12);
 
   private static final VarargEventId NOT_DEFAULT_STATE =
     GROUP.registerVarargEvent("not.default.state",
@@ -160,6 +162,11 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
                                                                   PluginInfo pluginInfo,
                                                                   boolean inspectionEnabled) {
     if (!isSafeToReport(pluginInfo)) {
+      return Collections.emptyList();
+    }
+
+    if (!tool.isInitialized()) {
+      // trade-off : we would like to not trigger class loading and instantiation of unnecessary inspections
       return Collections.emptyList();
     }
 
@@ -292,10 +299,10 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
   }
 
   public static class InspectionToolValidator extends CustomValidationRule {
-
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "tool".equals(ruleId);
+    public String getRuleId() {
+      return "tool";
     }
 
     @NotNull

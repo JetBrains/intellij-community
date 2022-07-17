@@ -32,7 +32,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8_ANNOTATED;
+    return JAVA_11_ANNOTATED;
   }
 
   @Override
@@ -68,6 +68,11 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testProblems() { doTest();}
 
   public void testAnnotatingPrimitivesTypeUse() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testTypeParameterShouldNotWarn() {
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
@@ -119,6 +124,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testOverriddenViaMethodReference() { doTest(); }
+  public void testMethodReferenceListOf() { doTest(); }
   public void testOverridingExternalNotNull() { doTest(); }
 
   public void testIgnoreExternalNotNull() {
@@ -294,10 +300,6 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
 
-  public void testAnnotateQuickFixOnMethodReference() {
-    doTestWithFix("Annotate");
-  }
-
   public void testAnnotateOverridingParametersOnNotNullMethod() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     doTestWithFix("Annotate overridden method parameters");
@@ -369,6 +371,10 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     }
   }
 
+  public void testRemoveAnnotationWithImportQuickFix() {
+    doTestWithFix("Remove annotation");
+  }
+  
   public void testQuickFixOnTypeArgumentNullable() {
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());
@@ -380,5 +386,25 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     finally {
       manager.setDefaultNotNull(oldDefault);
     }
+  }
+
+  public void testCheckerDefaultTypeUseRecursiveGeneric() {
+    myFixture.addClass("package org.checkerframework.checker.nullness.qual;import java.lang.annotation.*;" +
+                       "@Target(ElementType.TYPE_USE)public @interface NonNull {}");
+    myFixture.addClass("package org.checkerframework.checker.nullness.qual;import java.lang.annotation.*;" +
+                       "@Target(ElementType.TYPE_USE)public @interface Nullable {}");
+    myFixture.addClass("package org.checkerframework.framework.qual;" +
+                       "import java.lang.annotation.*;" +
+                       "enum TypeUseLocation {ALL}" +
+                       "public @interface DefaultQualifier {" +
+                       "  Class<? extends Annotation> value();" +
+                       "  TypeUseLocation[] locations() default {TypeUseLocation.ALL};" +
+                       "}");
+    doTest();
+  }
+
+  public void testMapComputeLambdaAnnotation() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
   }
 }

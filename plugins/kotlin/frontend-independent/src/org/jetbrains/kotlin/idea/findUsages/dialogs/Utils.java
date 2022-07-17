@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.findUsages.dialogs;
 
 import com.intellij.ui.SimpleColoredComponent;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport;
 import org.jetbrains.kotlin.psi.KtNamedDeclaration;
@@ -18,13 +19,14 @@ class Utils {
             @NotNull SimpleColoredComponent coloredComponent,
             @NotNull KtNamedDeclaration declaration
     ) {
+        @SuppressWarnings("HardCodedStringLiteral")
         String renderedDeclaration = KotlinFindUsagesSupport.Companion.tryRenderDeclarationCompactStyle(declaration);
         if (renderedDeclaration != null) {
             coloredComponent.append(renderedDeclaration);
         }
     }
 
-    static boolean renameCheckbox(@NotNull JPanel panel, @NotNull String srcText, @NotNull String destText) {
+    static boolean renameCheckbox(@NotNull JPanel panel, @NotNull String srcText, @Nls @NotNull String destText) {
         for (Component component : panel.getComponents()) {
             if (component instanceof JCheckBox) {
                 JCheckBox checkBox = (JCheckBox) component;

@@ -57,19 +57,21 @@ public class ChangeNotesPanel {
     if (text == null) {
       myPanel.setVisible(false);
     }
-    else if (!text.equals(myText)) {
-      myText = text;
-      myEditorPane.setText(XmlStringUtil.wrapInHtml(text));
-      if (myEditorPane.getCaret() != null) {
-        myEditorPane.setCaretPosition(0);
+    else {
+      if (!text.equals(myText)) {
+        myText = text;
+        myEditorPane.setText(XmlStringUtil.wrapInHtml(text));
+        if (myEditorPane.getCaret() != null) {
+          myEditorPane.setCaretPosition(0);
+        }
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myTitle.setBorder(JBUI.Borders.empty(getBorder(myDescriptionPane, true), 0, getBorder(myEditorPane, false), 0));
+          fullRepaint();
+        });
+
+        setDecorateState(false);
       }
-
-      ApplicationManager.getApplication().invokeLater(() -> {
-        myTitle.setBorder(JBUI.Borders.empty(getBorder(myDescriptionPane, true), 0, getBorder(myEditorPane, false), 0));
-        fullRepaint();
-      });
-
-      setDecorateState(false);
       myPanel.setVisible(true);
     }
   }

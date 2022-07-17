@@ -2,7 +2,6 @@
 package com.intellij.java.codeInspection.java19api
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.java19api.Java9UndeclaredServiceUsageInspection
 import com.intellij.java.JavaBundle
 import com.intellij.testFramework.LightProjectDescriptor

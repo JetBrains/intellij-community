@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local
 
+import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.impl.local.FileWatcher
@@ -14,7 +15,6 @@ import com.intellij.openapi.vfs.local.FileWatcherTestUtil.watch
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.TimeoutUtil
-import org.apache.log4j.Level
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.*
 import java.io.File
@@ -44,13 +44,13 @@ class FileWatcherPerformanceTest : BareTestFixtureTestCase() {
   @Before fun setUp() {
     val logger = Logger.getInstance(NativeFileWatcherImpl::class.java)
     tracing = logger.isTraceEnabled
-    if (tracing) logger.setLevel(Level.WARN)
+    if (tracing) logger.setLevel(LogLevel.WARNING)
     watcher = (LocalFileSystem.getInstance() as LocalFileSystemImpl).fileWatcher
   }
 
   @After
   fun tearDown() {
-    if (tracing) Logger.getInstance(NativeFileWatcherImpl::class.java).setLevel(Level.TRACE)
+    if (tracing) Logger.getInstance(NativeFileWatcherImpl::class.java).setLevel(LogLevel.TRACE)
   }
 
   @Test fun watcherOverhead() {

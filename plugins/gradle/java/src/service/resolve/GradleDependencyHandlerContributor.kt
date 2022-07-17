@@ -1,22 +1,27 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.parentOfType
 import icons.GradleIcons
+import org.jetbrains.plugins.gradle.service.completion.GradleLookupWeigher
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DEPENDENCY_HANDLER
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleConfiguration
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder
+import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
 import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 
 class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
 
-  override fun getParentClassName(): String? = GRADLE_API_DEPENDENCY_HANDLER
+  override fun getParentClassName(): String = GRADLE_API_DEPENDENCY_HANDLER
 
   override fun processDynamicElements(qualifierType: PsiType,
                                       clazz: PsiClass?,
@@ -40,13 +45,21 @@ class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
       val method = GrLightMethodBuilder(manager, configurationName).apply {
         methodKind = dependencyMethodKind
         containingClass = clazz
-        returnType = null
+        returnType = TypesUtil.createType(GradleCommonClassNames.GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY, place)
+        originInfo = DEPENDENCY_NOTATION
         addParameter("dependencyNotation", objectVarargType)
         setBaseIcon(GradleIcons.Gradle)
         putUserData(NonCodeMembersHolder.DOCUMENTATION, configuration.getDescription())
+        if (worthLifting(place)) {
+          GradleLookupWeigher.setGradleCompletionPriority(this, 10)
+        }
       }
       if (!processor.execute(method, state)) return
     }
+  }
+
+  private fun worthLifting(place: PsiElement): Boolean {
+    return place.parentOfType<GrFunctionalExpression>()?.ownerType?.resolve() is GroovyScriptClass
   }
 
   private fun GradleConfiguration.getDescription(): String? {
@@ -59,6 +72,7 @@ class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
   }
 
   companion object {
+    internal const val DEPENDENCY_NOTATION : String = "by Gradle, configuration method"
     const val dependencyMethodKind: String = "gradle:dependencyMethod"
   }
 }

@@ -37,16 +37,13 @@ public class FieldAccessor<FIELD_TYPE> {
     return myWagonManagerCache;
   }
 
-  private Object getFieldValue(Class c, String fieldName, Object o) {
+  private static Object getFieldValue(Class<?> c, String fieldName, Object o) {
     try {
       Field f = c.getDeclaredField(fieldName);
       f.setAccessible(true);
       return f.get(o);
     }
-    catch (NoSuchFieldException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (NoSuchFieldException | IllegalAccessException e) {
       throw new RuntimeException(e);
     }
   }

@@ -20,6 +20,7 @@ import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkUtil
 import javax.swing.JComponent
 
@@ -58,12 +59,12 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor {
-    return Visitor(ignoredStubPackages, holder, session)
+    return Visitor(ignoredStubPackages, holder, PyInspectionVisitor.getContext(session))
   }
 
   private class Visitor(val ignoredStubPackages: MutableList<String>,
                         holder: ProblemsHolder,
-                        session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
+                        context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyFile(node: PyFile) {
       val module = ModuleUtilCore.findModuleForFile(node) ?: return

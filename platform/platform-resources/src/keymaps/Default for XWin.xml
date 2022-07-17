@@ -1,4 +1,7 @@
 <keymap version="1" name="Default for XWin" disable-mnemonics="false" parent="$default">
+  <action id="FileChooserList.Root">
+    <keyboard-shortcut first-keystroke="control SLASH"/>
+  </action>
   <action id="RunToCursor">
     <keyboard-shortcut first-keystroke="shift alt 9"/>
   </action>

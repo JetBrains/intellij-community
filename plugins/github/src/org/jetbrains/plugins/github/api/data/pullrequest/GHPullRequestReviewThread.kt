@@ -10,9 +10,11 @@ import org.jetbrains.plugins.github.api.data.GHNodes
 @GraphQLFragment("/graphql/fragment/pullRequestReviewThread.graphql")
 class GHPullRequestReviewThread(id: String,
                                 val isResolved: Boolean,
+                                val isOutdated: Boolean,
+                                val path: String,
+                                @JsonProperty("diffSide") val side: Side,
                                 val line: Int,
                                 val startLine: Int?,
-                                @JsonProperty("diffSide") val side: Side,
                                 @JsonProperty("comments") comments: GHNodes<GHPullRequestReviewComment>)
   : GHNode(id) {
   val comments = comments.nodes
@@ -24,6 +26,4 @@ class GHPullRequestReviewThread(id: String,
   val createdAt = root.createdAt
   val diffHunk = root.diffHunk
   val reviewId = root.reviewId
-  val isOutdated = root.position == null
-  val path = root.path
 }

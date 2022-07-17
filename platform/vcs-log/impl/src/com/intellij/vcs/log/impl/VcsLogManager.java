@@ -1,27 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
+import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStatusBarProgress;
-import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.*;
@@ -29,12 +30,12 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import org.jetbrains.annotations.*;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
@@ -44,7 +45,7 @@ public class VcsLogManager implements Disposable {
 
   @NotNull private final Project myProject;
   @NotNull private final VcsLogTabsProperties myUiProperties;
-  @Nullable private final Consumer<? super Throwable> myRecreateMainLogHandler;
+  @Nullable private final PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> myRecreateMainLogHandler;
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogColorManagerImpl myColorManager;
@@ -61,13 +62,12 @@ public class VcsLogManager implements Disposable {
                        @NotNull VcsLogTabsProperties uiProperties,
                        @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                        boolean scheduleRefreshImmediately,
-                       @Nullable Consumer<? super Throwable> recreateHandler) {
+                       @Nullable PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> recreateHandler) {
     myProject = project;
     myUiProperties = uiProperties;
     myRecreateMainLogHandler = recreateHandler;
 
-    MyFatalErrorsHandler fatalErrorsHandler = new MyFatalErrorsHandler();
-    myLogData = new VcsLogData(myProject, logProviders, fatalErrorsHandler, this);
+    myLogData = new VcsLogData(myProject, logProviders, new MyErrorHandler(), this);
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
 
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
@@ -90,6 +90,27 @@ public class VcsLogManager implements Disposable {
     return myPostponableRefresher.isLogVisible();
   }
 
+  /**
+   * Checks if this Log has full data pack and there are no postponed refreshes. Does not check if there are refreshes in progress.
+   */
+  @ApiStatus.Internal
+  @RequiresEdt
+  public boolean isLogUpToDate() {
+    return myLogData.getDataPack().isFull() && !myPostponableRefresher.hasPostponedRoots();
+  }
+
+  /**
+   * Schedules Log initialization and update even when none on the log tabs is visible and power save mode is enabled.
+   *
+   * @see PostponableLogRefresher#canRefreshNow()
+   */
+  @ApiStatus.Internal
+  @RequiresEdt
+  public void scheduleUpdate() {
+    myLogData.initialize();
+    myPostponableRefresher.refreshPostponedRoots();
+  }
+
   @NotNull
   public VcsLogData getDataManager() {
     return myLogData;
@@ -106,18 +127,20 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public MainVcsLogUi createLogUi(@NotNull String logId, @NotNull LogWindowKind kind) {
-    return createLogUi(getMainLogUiFactory(logId, null), kind, true);
+  public MainVcsLogUi createLogUi(@NotNull String logId, @NotNull VcsLogTabLocation location) {
+    return createLogUi(getMainLogUiFactory(logId, null), location, true);
   }
 
   @NotNull
-  MainVcsLogUi createLogUi(@NotNull String logId, @NotNull LogWindowKind kind, boolean isClosedOnDispose) {
-    return createLogUi(getMainLogUiFactory(logId, null), kind, isClosedOnDispose);
+  MainVcsLogUi createLogUi(@NotNull String logId, @NotNull VcsLogTabLocation location, boolean isClosedOnDispose) {
+    return createLogUi(getMainLogUiFactory(logId, null), location, isClosedOnDispose);
   }
 
   @NotNull
   public VcsLogUiFactory<? extends MainVcsLogUi> getMainLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters) {
-    CustomVcsLogUiFactoryProvider factoryProvider = LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.findFirstSafe(myProject, p -> p.isActive(this));
+    CustomVcsLogUiFactoryProvider factoryProvider = LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.findFirstSafe(myProject, p -> {
+      return p.isActive(myLogData.getLogProviders());
+    });
     if (factoryProvider == null) {
       return new MainVcsLogUiFactory(logId, filters, myUiProperties, myColorManager);
     }
@@ -131,14 +154,23 @@ public class VcsLogManager implements Disposable {
     return myTabsLogRefresher;
   }
 
+  /**
+   * @deprecated Use {@link VcsLogManager#createLogUi(VcsLogUiFactory, VcsLogTabLocation)} method instead.
+   */
+  @Deprecated(forRemoval = true)
   @NotNull
   public <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory, @NotNull LogWindowKind kind) {
-    return createLogUi(factory, kind, true);
+    return createLogUi(factory, kind.getLocation(), true);
+  }
+
+  @NotNull
+  public <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory, @NotNull VcsLogTabLocation location) {
+    return createLogUi(factory, location, true);
   }
 
   @NotNull
   private <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory,
-                                               @NotNull LogWindowKind kind,
+                                               @NotNull VcsLogTabLocation location,
                                                boolean isClosedOnDispose) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed()) {
@@ -147,9 +179,24 @@ public class VcsLogManager implements Disposable {
     }
 
     U ui = factory.createLogUi(myProject, myLogData);
-    Disposer.register(ui, getTabsWatcher().addTabToWatch(ui.getId(), ui.getRefresher(), kind, isClosedOnDispose));
+    Disposer.register(ui, getTabsWatcher().addTabToWatch(ui, location, isClosedOnDispose));
 
     return ui;
+  }
+
+  @NotNull
+  public List<? extends VcsLogUi> getLogUis() {
+    return getTabsWatcher().getTabs();
+  }
+
+  @NotNull
+  public List<? extends VcsLogUi> getLogUis(@NotNull VcsLogTabLocation location) {
+    return getTabsWatcher().getTabs(location);
+  }
+
+  @NotNull
+  public List<? extends VcsLogUi> getVisibleLogUis(@NotNull VcsLogTabLocation location) {
+    return getTabsWatcher().getVisibleTabs(location);
   }
 
   /*
@@ -158,18 +205,22 @@ public class VcsLogManager implements Disposable {
   @ApiStatus.Internal
   @NonNls
   public String getLogWindowsInformation() {
-    return StringUtil.join(myPostponableRefresher.getLogWindows(),
-                           window -> window.toString() + (window.isVisible() ? " (visible)" : ""), "\n");
+    return myPostponableRefresher.getLogWindowsInformation();
   }
 
   private static void refreshLogOnVcsEvents(@NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                                            @NotNull VcsLogRefresher refresher,
+                                            @NotNull PostponableLogRefresher refresher,
                                             @NotNull Disposable disposableParent) {
     MultiMap<VcsLogProvider, VirtualFile> providers2roots = MultiMap.create();
     logProviders.forEach((key, value) -> providers2roots.putValue(value, key));
 
+    VcsLogRefresher wrappedRefresher = root -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        refresher.refresh(root);
+      }, ModalityState.any());
+    };
     for (Map.Entry<VcsLogProvider, Collection<VirtualFile>> entry : providers2roots.entrySet()) {
-      Disposable disposable = entry.getKey().subscribeToRootRefreshEvents(entry.getValue(), refresher);
+      Disposable disposable = entry.getKey().subscribeToRootRefreshEvents(entry.getValue(), wrappedRefresher);
       Disposer.register(disposableParent, disposable);
     }
   }
@@ -236,34 +287,34 @@ public class VcsLogManager implements Disposable {
     return myDisposed;
   }
 
-  private class MyFatalErrorsHandler implements FatalErrorHandler {
-    private final AtomicBoolean myIsBroken = new AtomicBoolean(false);
+  private class MyErrorHandler implements VcsLogErrorHandler {
+    private final @NotNull IntSet myErrors = IntSets.synchronize(new IntOpenHashSet());
+    private final @NotNull AtomicBoolean myIsBroken = new AtomicBoolean(false);
 
     @Override
-    public void consume(@Nullable Object source, @NotNull Throwable e) {
+    public void handleError(@Nullable Source source, @NotNull Throwable throwable) {
       if (myIsBroken.compareAndSet(false, true)) {
-        processError(source, e);
+        if (myRecreateMainLogHandler != null) {
+          ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(source, throwable));
+        }
+        else {
+          LOG.error(throwable);
+        }
+
+        if (source == Source.Storage) {
+          ((VcsLogModifiableIndex)myLogData.getIndex()).markCorrupted();
+        }
       }
       else {
-        LOG.debug("Vcs Log storage is broken and is being recreated", e);
-      }
-    }
-
-    protected void processError(@Nullable Object source, @NotNull Throwable e) {
-      if (myRecreateMainLogHandler != null) {
-        ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(e));
-      }
-      else {
-        LOG.error(e);
-      }
-
-      if (source instanceof VcsLogStorage) {
-        ((VcsLogModifiableIndex)myLogData.getIndex()).markCorrupted();
+        int errorHashCode = ThrowableInterner.computeTraceHashCode(throwable);
+        if (myErrors.add(errorHashCode)) {
+          LOG.debug("Vcs Log storage is broken and is being recreated", throwable);
+        }
       }
     }
 
     @Override
-    public void displayFatalErrorMessage(@Nls @NotNull String message) {
+    public void displayMessage(@Nls @NotNull String message) {
       VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
     }
   }
@@ -328,9 +379,23 @@ public class VcsLogManager implements Disposable {
     }
   }
 
+  /**
+   * @deprecated Use {@link VcsLogTabLocation} instead.
+   */
+  @Deprecated(forRemoval = true)
   public enum LogWindowKind {
-    TOOL_WINDOW,
-    EDITOR,
-    STANDALONE
+    TOOL_WINDOW(VcsLogTabLocation.TOOL_WINDOW),
+    EDITOR(VcsLogTabLocation.EDITOR),
+    STANDALONE(VcsLogTabLocation.STANDALONE);
+
+    private final @NotNull VcsLogTabLocation myLocation;
+
+    LogWindowKind(@NotNull VcsLogTabLocation location) {
+      myLocation = location;
+    }
+
+    @NotNull VcsLogTabLocation getLocation() {
+      return myLocation;
+    }
   }
 }

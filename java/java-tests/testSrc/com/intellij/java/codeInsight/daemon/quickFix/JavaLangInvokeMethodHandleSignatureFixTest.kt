@@ -19,10 +19,11 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.java.JavaBundle.message
+import com.intellij.codeInspection.CommonQuickFixBundle
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection.DEFAULT_SIGNATURE
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection.POSSIBLE_SIGNATURES
+import com.intellij.java.JavaBundle.message
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveSignature
@@ -64,9 +65,9 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightJavaCodeInsightFixtureTe
   fun testVirtualMethod4() = doTestReplace("findVirtual")
 
 
-  fun doTestMethod(vararg withSignature: String) = doTest(USE_METHOD, *withSignature)
-  fun doTestConstructor(vararg withSignature: String) = doTest(USE_CONSTRUCTOR, VOID, *withSignature)
-  fun doTestReplace(replacement: String) = doTest(message("inspection.handle.signature.replace.with.fix.name", replacement))
+  private fun doTestMethod(vararg withSignature: String) = doTest(USE_METHOD, *withSignature)
+  private fun doTestConstructor(vararg withSignature: String) = doTest(USE_CONSTRUCTOR, VOID, *withSignature)
+  private fun doTestReplace(replacement: String) = doTest(CommonQuickFixBundle.message("fix.replace.with.x", replacement))
 
   fun doTest(actionPrefix: String, vararg withSignature: String) {
     val testName = getTestName(false)
@@ -91,7 +92,7 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightJavaCodeInsightFixtureTe
       USE_CONSTRUCTOR -> message("inspection.handle.signature.use.constructor.fix.family.name")
       USE_METHOD -> message("inspection.handle.signature.use.method.fix.family.name")
       else -> {
-        fail("Unexpected action " + actionPrefix); ""
+        fail("Unexpected action $actionPrefix"); ""
       }
     }
     val familyActions = myFixture.filterAvailableIntentions(familyName)
@@ -114,7 +115,7 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightJavaCodeInsightFixtureTe
 
   private fun checkLookupElements(file: PsiFile?, lookupElements: List<LookupElement>?) {
     val expected = (file?.children ?: arrayOf())
-      .filter { it is PsiComment }
+      .filterIsInstance<PsiComment>()
       .map { it.text.removePrefix("//").trim() }
 
     val actual = (lookupElements ?: listOf())

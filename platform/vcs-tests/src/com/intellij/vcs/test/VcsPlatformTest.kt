@@ -168,7 +168,7 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
 
   private fun checkTestRootIsEmpty(testRoot: File) {
     val files = testRoot.listFiles()
-    if (files != null && files.isNotEmpty()) {
+    if (!files.isNullOrEmpty()) {
       LOG.warn("Test root was not cleaned up during some previous test run. " + "testRoot: " + testRoot +
           ", files: " + Arrays.toString(files))
       for (file in files) {

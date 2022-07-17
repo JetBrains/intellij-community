@@ -25,7 +25,7 @@ public class PythonFrameworkSupportConfigurable extends FrameworkSupportConfigur
     mySdkComboBox = new PythonSdkComboBox();
     mySdkComboBox.setProject(model.getProject());
     myMainPanel = LabeledComponent.create(mySdkComboBox, PyBundle.message("framework.support.python.sdk.combobox.label"));
-    ((LabeledComponent)myMainPanel).setLabelLocation(BorderLayout.WEST);
+    ((LabeledComponent<?>)myMainPanel).setLabelLocation(BorderLayout.WEST);
   }
 
   @Override

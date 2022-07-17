@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.FunctionInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.ParameterInfo
@@ -18,7 +19,7 @@ class AddMethodCreateCallableFromUsageFix(
     private val request: CreateMethodRequest,
     modifierList: KtModifierList,
     providedText: String,
-    familyName: String,
+    @Nls familyName: String,
     targetContainer: KtElement
 ) : AbstractCreateCallableFromUsageFixWithTextAndFamilyName<KtElement>(
     providedText = providedText,

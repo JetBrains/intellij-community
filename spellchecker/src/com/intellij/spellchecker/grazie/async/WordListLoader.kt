@@ -1,12 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.grazie.async
 
-import com.intellij.grazie.speller.lists.TraversableWordList
+import ai.grazie.spell.lists.WordList
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.spellchecker.dictionary.Loader
+import com.intellij.spellchecker.grazie.dictionary.SimpleWordList
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
@@ -18,18 +19,18 @@ internal class WordListLoader(private val project: Project) {
   }
 
   private val myIsLoadingList = AtomicBoolean(false)
-  private val myListsToLoad: MutableList<Pair<Loader, (String, TraversableWordList) -> Unit>> = ContainerUtil.createLockFreeCopyOnWriteList()
+  private val myListsToLoad: MutableList<Pair<Loader, (String, WordList) -> Unit>> = ContainerUtil.createLockFreeCopyOnWriteList()
 
-  fun loadWordList(loader: Loader, consumer: (String, TraversableWordList) -> Unit) {
+  fun loadWordList(loader: Loader, consumer: (String, WordList) -> Unit) {
     if (AsyncUtils.isNonAsyncMode()) {
-      consumer(loader.name, TraversableWordList.create(readAll(loader)))
+      consumer(loader.name, SimpleWordList(readAll(loader)))
     }
     else {
       loadWordListAsync(loader, consumer)
     }
   }
 
-  private fun loadWordListAsync(loader: Loader, consumer: (String, TraversableWordList) -> Unit) {
+  private fun loadWordListAsync(loader: Loader, consumer: (String, WordList) -> Unit) {
     if (myIsLoadingList.compareAndSet(false, true)) {
       logger.debug("Loading ${loader.name}")
       doLoadWordListAsync(loader, consumer)
@@ -39,7 +40,7 @@ internal class WordListLoader(private val project: Project) {
     }
   }
 
-  private fun doLoadWordListAsync(loader: Loader, consumer: (String, TraversableWordList) -> Unit) {
+  private fun doLoadWordListAsync(loader: Loader, consumer: (String, WordList) -> Unit) {
     if (project.isDefault) return
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized {
@@ -50,14 +51,14 @@ internal class WordListLoader(private val project: Project) {
         if (app.isDisposed) return@executeOnPooledThread
 
         logger.debug("${loader.name} loaded!")
-        consumer(loader.name, TraversableWordList.create(readAll(loader)))
+        consumer(loader.name, SimpleWordList(readAll(loader)))
 
         while (myListsToLoad.isNotEmpty()) {
           if (app.isDisposed) return@executeOnPooledThread
           val (curLoader, curConsumer) = myListsToLoad.removeAt(0)
 
           logger.debug("${curLoader.name} loaded!")
-          curConsumer(curLoader.name, TraversableWordList.create(readAll(curLoader)))
+          curConsumer(curLoader.name, SimpleWordList(readAll(curLoader)))
         }
 
         logger.debug("Loading finished, restarting daemon...")
@@ -78,7 +79,7 @@ internal class WordListLoader(private val project: Project) {
     return set
   }
 
-  private fun queueWordListLoad(loader: Loader, consumer: (String, TraversableWordList) -> Unit) {
+  private fun queueWordListLoad(loader: Loader, consumer: (String, WordList) -> Unit) {
     logger.debug("Queuing load for: ${loader.name}")
     myListsToLoad.add(loader to consumer)
   }

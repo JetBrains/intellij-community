@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +15,7 @@ public final class StreamUtil {
   private StreamUtil() { }
 
   /**
-   * Buffers up to this size allow to avoid native memory allocation in stream implementations.
+   * Buffers up to this size avoid native memory allocation in stream implementations.
    */
   public static final int BUFFER_SIZE = 8192;
 

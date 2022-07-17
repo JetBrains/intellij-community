@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,18 +28,18 @@ class MixedResultsSearcher implements SESearcher {
 
   private static final Logger LOG = Logger.getInstance(MixedResultsSearcher.class);
 
-  @NotNull private final Listener myListener;
+  @NotNull private final SearchListener myListener;
   @NotNull private final Executor myNotificationExecutor;
   @NotNull private final SEResultsEqualityProvider myEqualityProvider;
 
   /**
-   * Creates MultiThreadSearcher with search results {@link Listener} and specifies executor which going to be used to call listener methods.
+   * Creates MultiThreadSearcher with search results {@link SearchListener} and specifies executor which going to be used to call listener methods.
    * Use this constructor when you for example need to receive listener events only in AWT thread
-   * @param listener {@link Listener} to get notifications about searching process
+   * @param listener {@link SearchListener} to get notifications about searching process
    * @param notificationExecutor searcher guarantees that all listener methods will be called only through this executor
    * @param equalityProviders collection of equality providers that checks if found elements are already in the search results
    */
-  MixedResultsSearcher(@NotNull Listener listener,
+  MixedResultsSearcher(@NotNull SearchListener listener,
                        @NotNull Executor notificationExecutor,
                        @NotNull Collection<? extends SEResultsEqualityProvider> equalityProviders) {
     myListener = listener;
@@ -87,6 +88,7 @@ class MixedResultsSearcher implements SESearcher {
       CountDownLatch latch = new CountDownLatch(contributors.size());
       ProgressIndicatorWithCancelListener indicatorWithCancelListener = new ProgressIndicatorWithCancelListener();
       accumulator = accumulatorSupplier.apply(indicatorWithCancelListener);
+      accumulator.searchStarted();
 
       for (SearchEverywhereContributor<?> contributor : contributors) {
         Runnable task = createSearchTask(pattern, accumulator,
@@ -105,6 +107,7 @@ class MixedResultsSearcher implements SESearcher {
     else {
       indicator = new ProgressIndicatorBase();
       accumulator = accumulatorSupplier.apply(indicator);
+      accumulator.searchStarted();
     }
 
     indicator.start();
@@ -228,7 +231,7 @@ class MixedResultsSearcher implements SESearcher {
   private static class ResultsAccumulator {
 
     private final Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> mySections;
-    private final Listener myListener;
+    private final SearchListener myListener;
     private final Executor myNotificationExecutor;
     private final SEResultsEqualityProvider myEqualityProvider;
     private final ProgressIndicator myProgressIndicator;
@@ -240,16 +243,20 @@ class MixedResultsSearcher implements SESearcher {
     private volatile boolean mySearchFinished = false;
 
     ResultsAccumulator(Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
-                       SEResultsEqualityProvider equalityProvider, Listener listener, Executor notificationExecutor,
+                       SEResultsEqualityProvider equalityProvider, SearchListener listener, Executor notificationExecutor,
                        ProgressIndicator progressIndicator) {
       this(contributorsAndLimits.entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey(), entry -> new ArrayList<>(entry.getValue()))),
            contributorsAndLimits, equalityProvider, listener, notificationExecutor, progressIndicator);
     }
 
+    public void searchStarted() {
+      runInNotificationExecutor(() -> myListener.searchStarted(sectionsLimits.keySet()));
+    }
+
     ResultsAccumulator(Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> alreadyFound,
                        Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
                        SEResultsEqualityProvider equalityProvider,
-                       Listener listener,
+                       SearchListener listener,
                        Executor notificationExecutor,
                        ProgressIndicator progressIndicator) {
       mySections = alreadyFound;
@@ -267,15 +274,29 @@ class MixedResultsSearcher implements SESearcher {
     }
 
     public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator) throws InterruptedException {
-      SearchEverywhereFoundElementInfo newElementInfo = new SearchEverywhereFoundElementInfo(element, priority, contributor);
+      final var mlService = SearchEverywhereMlService.getInstance();
+      final SearchEverywhereFoundElementInfo newElementInfo;
+      if (mlService == null) {
+        newElementInfo = new SearchEverywhereFoundElementInfo(element, priority, contributor);
+      }
+      else {
+        newElementInfo = mlService.createFoundElementInfo(contributor, element, priority);
+      }
+
       Condition condition = conditionsMap.get(contributor);
       Collection<SearchEverywhereFoundElementInfo> section = mySections.get(contributor);
       int limit = sectionsLimits.get(contributor);
 
       lock.lock();
       try {
+        boolean isNotified = false;
         while (section.size() >= limit && !mySearchFinished) {
           indicator.checkCanceled();
+          ProgressManager.checkCanceled();
+          if (!isNotified) {
+            runInNotificationExecutor(() -> myListener.contributorWaits(contributor));
+            isNotified = true;
+          }
           condition.await(100, TimeUnit.MILLISECONDS);
         }
 
@@ -321,6 +342,8 @@ class MixedResultsSearcher implements SESearcher {
       lock.lock();
       try {
         finishedContributorsSet.add(contributor);
+        Boolean hasMore = hasMoreMap.get(contributor);
+        runInNotificationExecutor(() -> myListener.contributorFinished(contributor, hasMore != null && hasMore.booleanValue()));
         stopSearchIfNeeded();
       }
       finally {

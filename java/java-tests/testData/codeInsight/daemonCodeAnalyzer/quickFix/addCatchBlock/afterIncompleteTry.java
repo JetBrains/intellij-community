@@ -4,7 +4,7 @@ class Foo {
         try {
             System.out.println(s);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 }

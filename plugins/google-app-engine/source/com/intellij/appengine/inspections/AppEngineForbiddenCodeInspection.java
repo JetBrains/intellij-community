@@ -43,11 +43,11 @@ public class AppEngineForbiddenCodeInspection extends AbstractBaseJavaLocalInspe
     final List<ProblemDescriptor> problems = new ArrayList<>();
     file.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitDocComment(PsiDocComment comment) {
+      public void visitDocComment(@NotNull PsiDocComment comment) {
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         final PsiModifierList modifierList = method.getModifierList();
         if (modifierList.hasModifierProperty(PsiModifier.NATIVE)) {
           if (!isNativeMethodAllowed(method)) {
@@ -60,7 +60,7 @@ public class AppEngineForbiddenCodeInspection extends AbstractBaseJavaLocalInspe
       }
 
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
         if (classReference != null) {
           final PsiElement resolved = classReference.resolve();
@@ -78,7 +78,7 @@ public class AppEngineForbiddenCodeInspection extends AbstractBaseJavaLocalInspe
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
         final PsiElement element = methodExpression.resolve();
         if (element instanceof PsiMethod) {
@@ -99,7 +99,7 @@ public class AppEngineForbiddenCodeInspection extends AbstractBaseJavaLocalInspe
       }
 
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         final PsiElement resolved = reference.resolve();
         if (resolved instanceof PsiClass) {
           final PsiFile psiFile = resolved.getContainingFile();

@@ -33,11 +33,11 @@ class IPythonInterpreterInterface(BaseInterpreterInterface):
         if code_fragment.text.rstrip().endswith('??'):
             print('IPython-->')
         try:
-            res = bool(self.interpreter.add_exec(code_fragment.text))
+            more, exception_occurred = self.interpreter.add_exec(code_fragment.text)
         finally:
             if code_fragment.text.rstrip().endswith('??'):
                 print('<--IPython')
-        return res
+        return bool(more), exception_occurred
 
     def get_namespace(self):
         return self.interpreter.get_namespace()
@@ -66,3 +66,6 @@ class IPythonInterpreterInterface(BaseInterpreterInterface):
         if hasattr(self.interpreter, 'ipython') and hasattr(self.interpreter.ipython, 'user_ns_hidden'):
             ipython_shell = self.interpreter.ipython
             return get_ipython_hidden_vars(ipython_shell)
+
+    def notify_first_command_executed(self):
+        self.interpreter.ipython.patch_stdout_if_needed()

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -12,7 +12,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
+import com.intellij.openapi.progress.util.ProgressIndicatorListener;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -21,6 +21,7 @@ import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -28,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerCommandImpl> implements DebuggerManagerThread, Disposable {
   private static final Logger LOG = Logger.getInstance(DebuggerManagerThreadImpl.class);
-  private static final ThreadLocal<DebuggerCommandImpl> myCurrentCommand = new ThreadLocal<>();
+  private static final ThreadLocal<LinkedList<DebuggerCommandImpl>> myCurrentCommands = ThreadLocal.withInitial(LinkedList::new);
 
   static final int COMMAND_TIMEOUT = 3000;
 
@@ -145,7 +146,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   @Override
   public void processEvent(@NotNull DebuggerCommandImpl managerCommand) {
     assertIsManagerThread();
-    myCurrentCommand.set(managerCommand);
+    myCurrentCommands.get().push(managerCommand);
     try {
       if (myEvents.isClosed()) {
         managerCommand.notifyCancelled();
@@ -167,16 +168,16 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
       LOG.error(e);
     }
     finally {
-      myCurrentCommand.set(null);
+      myCurrentCommands.get().pop();
     }
   }
 
   public static DebuggerCommandImpl getCurrentCommand() {
-    return myCurrentCommand.get();
+    return myCurrentCommands.get().peek();
   }
 
   public void startProgress(DebuggerCommandImpl command, ProgressWindow progressWindow) {
-    new ProgressIndicatorListenerAdapter() {
+    new ProgressIndicatorListener() {
       @Override
       public void cancelled() {
         command.release();
@@ -251,6 +252,10 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
 
   public boolean isIdle() {
     return myEvents.isEmpty();
+  }
+
+  public boolean hasAsyncCommands() {
+    return myEvents.hasAsyncCommands();
   }
 
   void restartIfNeeded() {

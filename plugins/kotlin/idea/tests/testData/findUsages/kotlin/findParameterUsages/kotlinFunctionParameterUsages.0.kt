@@ -16,3 +16,5 @@ fun usage() {
 fun falseUsage() {
     bar(t = "")
 }
+
+// FIR_COMPARISON

@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSTypeAliasTest : KotlinSSResourceInspectionTest() {
+class KotlinSSTypeAliasTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "typeAlias"
 
     fun testTypeAlias() { doTest("typealias '_ = Int") }

@@ -42,7 +42,7 @@ public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestC
     PsiElementFactory factory = facade.getElementFactory();
     PsiClass aClass = factory.createClass("X");
     PsiMethod methodFromText = factory.createMethodFromText("void method() {\n" +
-                                                            "    IntelliJIDEARulezz<\n" +
+                                                            "    IntelliJIDEARulezz<>\n" +
                                                             "}", null);
     PsiMethod method = (PsiMethod)aClass.add(methodFromText);
     PsiCodeBlock body = method.getBody();
@@ -52,9 +52,9 @@ public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestC
     PsiClass javaUtilListClass = facade.findClass(CommonClassNames.JAVA_UTIL_LIST);
     assertNotNull(javaUtilListClass);
     PsiElement resultingElement = referenceElement.bindToElement(javaUtilListClass);
-    assertEquals("List<", resultingElement.getText());
+    assertEquals("List<>", resultingElement.getText());
     assertEquals("void method() {\n" +
-                 "    List<\n" +
+                 "    List<>\n" +
                  "}", method.getText());
   }
 

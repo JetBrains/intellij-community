@@ -14,7 +14,8 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -24,10 +25,18 @@ class RenameKotlinFileProcessor : RenamePsiFileProcessor() {
         private val file: KtFile
     ) : KtLightClass by psiClass {
         override fun isValid() = file.isValid
+        override fun equals(other: Any?): Boolean = other === this ||
+                other is FileRenamingPsiClassWrapper &&
+                other.psiClass == psiClass &&
+                other.file == file
+
+        override fun hashCode(): Int = psiClass.hashCode() * 31 + file.hashCode()
+        override fun getSourceElement(): PsiElement? = psiClass.sourceElement
     }
 
-    override fun canProcessElement(element: PsiElement) =
-        element is KtFile && ProjectRootsUtil.isInProjectSource(element, includeScriptsOutsideSourceRoots = true)
+    override fun canProcessElement(element: PsiElement): Boolean {
+        return element is KtFile && RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(element)
+    }
 
     override fun prepareRenaming(
         element: PsiElement,

@@ -3,6 +3,7 @@ package org.jetbrains.uast.test.java.generate
 
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
+import com.intellij.psi.util.parentOfType
 import junit.framework.TestCase
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.UParameterInfo
@@ -406,5 +407,98 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
   fun `test qualified reference`() {
     val reference = uastElementFactory.createQualifiedReference("java.util.List", myFixture.file)
     TestCase.assertEquals("java.util.List", reference?.sourcePsi?.text)
+  }
+
+  fun `test create call expression with saved whitespace after`() {
+    myFixture.configureByText("MyFile.java", """
+      class A {
+        void a() {
+          a
+            .b()
+            .c<caret>()
+            .d()
+        }
+      }
+    """.trimIndent())
+
+    val receiver = myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<PsiCallExpression>().toUElementOfType<UCallExpression>()
+                   ?: fail("Cannot find call expression")
+
+    val callExpression = uastElementFactory.createCallExpression(
+      receiver,
+      "e",
+      listOf(),
+      null,
+      UastCallKind.METHOD_CALL
+    ) ?: fail("Cannot create call expression")
+
+    TestCase.assertEquals("""
+      a
+            .b()
+            .c()
+            .e()
+    """.trimIndent(), callExpression.sourcePsi?.text)
+  }
+
+  fun `test create call expression with saved whitespace and dot after`() {
+    myFixture.configureByText("MyFile.java", """
+      class A {
+        void a() {
+          a.
+            b().
+            c<caret>().
+            d()
+        }
+      }
+    """.trimIndent())
+
+    val receiver = myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<PsiCallExpression>().toUElementOfType<UCallExpression>()
+                   ?: fail("Cannot find call expression")
+
+    val callExpression = uastElementFactory.createCallExpression(
+      receiver,
+      "e",
+      listOf(),
+      null,
+      UastCallKind.METHOD_CALL
+    ) ?: fail("Cannot create call expression")
+
+    TestCase.assertEquals("""
+      a.
+            b().
+            c().
+            e()
+    """.trimIndent(), callExpression.sourcePsi?.text)
+  }
+
+  fun `test create call expression with saved whitespace and dot after with receiver from expression with field`() {
+    myFixture.configureByText("MyFile.java", """
+      class A {
+        void a() {
+          a.
+            b().
+            c<caret>().
+            d
+        }
+      }
+    """.trimIndent())
+
+    val receiver = myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<PsiCallExpression>().toUElementOfType<UCallExpression>()
+                   ?: fail("Cannot find call expression")
+
+    val callExpression = uastElementFactory.createCallExpression(
+      receiver,
+      "e",
+      listOf(),
+      null,
+      UastCallKind.METHOD_CALL
+    ) ?: fail("Cannot create call expression")
+
+    TestCase.assertEquals("""
+      a.
+            b().
+            c().
+            e()
+    """.trimIndent(), callExpression.sourcePsi?.text)
   }
 }

@@ -4,10 +4,12 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.compiler.server.BuildProcessParametersProvider
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.io.isDirectory
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import java.nio.file.Path
 
 class KotlinBuildProcessParametersProvider(private val project: Project) : BuildProcessParametersProvider() {
     override fun getVMArguments(): MutableList<String> {
@@ -26,7 +28,7 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
         if (Registry.`is`("kotlin.jps.instrument.bytecode", false)) {
             res.add("-Dkotlin.jps.instrument.bytecode=true")
         }
-        PluginStartupApplicationService.getInstance().aliveFlagPath.let {
+        PluginStartupApplicationService.getInstance().getAliveFlagPath().let {
             if (!it.isBlank()) {
                 // TODO: consider taking the property name from compiler/daemon/common (check whether dependency will be not too heavy)
                 res.add("-Dkotlin.daemon.client.alive.path=\"$it\"")
@@ -35,7 +37,8 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
         return res
     }
 
-    override fun getAdditionalPluginPaths(): Iterable<String> {
-        return listOf(KotlinArtifacts.instance.kotlincDirectory.path)
-    }
+    override fun getPathParameters(): List<Pair<String, Path>> =
+        listOfNotNull(
+            Pair("-Djps.kotlin.home=", KotlinArtifactsDownloader.getUnpackedKotlinDistPath(project).toPath()).takeIf { it.second.isDirectory() }
+        )
 }

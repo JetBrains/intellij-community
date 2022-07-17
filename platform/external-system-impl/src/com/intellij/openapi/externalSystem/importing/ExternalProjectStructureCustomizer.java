@@ -30,7 +30,11 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * @author Vladislav.Soroka
+ * Provides structure of external system project data node and data node's UI info to show this structure.
+ *
+ * @see com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog
+ * @see DataNode
+ * @see Key
  */
 public abstract class ExternalProjectStructureCustomizer {
   public static final ExtensionPointName<ExternalProjectStructureCustomizer> EP_NAME =
@@ -54,6 +58,7 @@ public abstract class ExternalProjectStructureCustomizer {
 
   /**
    * Set of data keys, which respective data can have dependencies or can depend on other data
+   *
    * @return data keys
    */
   @NotNull
@@ -61,11 +66,17 @@ public abstract class ExternalProjectStructureCustomizer {
     return Collections.emptySet();
   }
 
-  @Nullable
-  public abstract Icon suggestIcon(@NotNull DataNode node, @NotNull ExternalSystemUiAware uiAware);
+  /**
+   * @return icon for data node that represents this data node info.
+   */
+  public abstract @Nullable Icon suggestIcon(@NotNull DataNode<?> node, @NotNull ExternalSystemUiAware uiAware);
 
-  @NotNull
-  public Couple<@Nls String> getRepresentationName(@NotNull DataNode node) {
+  /**
+   * @return presentation text and description that represents this data node info.
+   * Node description can be nullable.
+   * @see com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog
+   */
+  public @NotNull Couple<@Nls String> getRepresentationName(@NotNull DataNode<?> node) {
     return Couple.of(node.getKey().toString(), null);
   }
 }

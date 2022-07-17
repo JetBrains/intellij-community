@@ -7,7 +7,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.AssociateFunction
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionFix
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionInspection
@@ -20,8 +20,8 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
@@ -33,7 +33,7 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
         return qualifiedExpressionVisitor(fun(expression) {
             var conversion = findQualifiedConversion(expression, conversionGroups) check@{ conversion, firstResolvedCall, _, context ->
                 // Do not apply on maps due to lack of relevant stdlib functions
-                val firstReceiverType = firstResolvedCall.extensionReceiver?.type
+                val firstReceiverType = firstResolvedCall.resultingDescriptor?.extensionReceiverParameter?.type
                 if (firstReceiverType != null) {
                     if (conversion.replacement == "mapNotNull" && KotlinBuiltIns.isPrimitiveArray(firstReceiverType)) return@check false
                     val builtIns = context[BindingContext.EXPRESSION_TYPE_INFO, expression]?.type?.builtIns ?: return@check false
@@ -47,7 +47,7 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                         }
                     ) return@check false
                 }
-                if (conversion.replacement == "maxBy" || conversion.replacement == "minBy") {
+                if (conversion.replacement in listOf("maxBy", "minBy", "minByOrNull", "maxByOrNull")) {
                     val functionalArgumentReturnType = firstResolvedCall.lastFunctionalArgumentReturnType(context) ?: return@check false
                     if (functionalArgumentReturnType.isNullable()) return@check false
                 }
@@ -227,10 +227,14 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
             Conversion("kotlin.collections.listOf", "kotlin.collections.filterNotNull", "listOfNotNull")
         ).map {
             when (val replacement = it.replacement) {
-                "min", "max", "minBy", "maxBy" -> listOf(
-                    it.copy(replacement = "${replacement}OrNull", replaceableApiVersion = ApiVersion.KOTLIN_1_4),
-                    it
-                )
+                "min", "max", "minBy", "maxBy" -> {
+                    val additionalConversion = if ((replacement == "min" || replacement == "max") && it.addNotNullAssertion) {
+                        it.copy(replacement = "${replacement}Of", replaceableApiVersion = ApiVersion.KOTLIN_1_4, addNotNullAssertion = false, additionalArgument = "{ it }")
+                    } else {
+                        it.copy(replacement = "${replacement}OrNull", replaceableApiVersion = ApiVersion.KOTLIN_1_4)
+                    }
+                    listOf(additionalConversion, it)
+                }
                 else -> listOf(it)
             }
         }.flatten()

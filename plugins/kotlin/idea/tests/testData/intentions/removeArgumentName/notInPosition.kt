@@ -1,6 +1,5 @@
-// IS_APPLICABLE: false
-fun foo(s: String = "", b: Boolean){}
+fun foo(a: Int, b: Int) = a + b
 
-fun bar() {
-    foo(<caret>b = true)
+fun main() {
+    foo(b = 3, <caret>a = 1)
 }

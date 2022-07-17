@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
@@ -32,7 +33,7 @@ import java.util.Set;
 
 public class ClassWithTooManyDependenciesInspection extends BaseGlobalInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public int limit = 10;
 
   @Override
@@ -42,17 +43,17 @@ public class ClassWithTooManyDependenciesInspection extends BaseGlobalInspection
                                                            @NotNull GlobalInspectionContext globalContext) {
     if (refEntity instanceof RefClass) {
       RefClass refClass = (RefClass)refEntity;
-      if (refClass.getOwner() instanceof RefClass) {
-          return null;
-        }
-        final Set<RefClass> dependencies = DependencyUtils.calculateDependenciesForClass(refClass);
-        final int numDependencies = dependencies.size();
-        if (numDependencies <= limit) {
-          return null;
-        }
-        final String errorString = InspectionGadgetsBundle.message("class.with.too.many.dependencies.problem.descriptor", 
-                                                                   refClass.getName(), numDependencies, limit);
-        return new CommonProblemDescriptor[] {manager.createProblemDescriptor(errorString)};
+      if (!(refClass.getOwner() instanceof RefPackage)) {
+        return null;
+      }
+      final Set<RefClass> dependencies = DependencyUtils.calculateDependenciesForClass(refClass);
+      final int numDependencies = dependencies.size();
+      if (numDependencies <= limit) {
+        return null;
+      }
+      final String errorString = InspectionGadgetsBundle.message("class.with.too.many.dependencies.problem.descriptor",
+                                                                 refClass.getName(), numDependencies, limit);
+      return new CommonProblemDescriptor[] {manager.createProblemDescriptor(errorString)};
     }
     return null;
   }

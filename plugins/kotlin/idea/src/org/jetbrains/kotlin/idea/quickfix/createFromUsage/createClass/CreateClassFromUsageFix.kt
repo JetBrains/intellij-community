@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.ide.util.DirectoryChooserUtil
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -13,11 +12,12 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.psi.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils
 import org.jetbrains.kotlin.idea.quickfix.IntentionActionPriority
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageFixBase
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
@@ -29,10 +29,7 @@ import org.jetbrains.kotlin.idea.refactoring.getOrCreateKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.ui.CreateKotlinClassDialog
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.application.executeCommand
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.projectStructure.module
+import org.jetbrains.kotlin.idea.util.application.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
@@ -119,7 +116,7 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
             }
         }
 
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             val targetParent = applicableParents.firstOrNull { element ->
                 if (element is PsiPackage) false else element.allChildren.any { it is PsiComment && it.text == "// TARGET_PARENT:" }
             } ?: classInfo.applicableParents.last()
@@ -149,7 +146,7 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
             directories.firstOrNull { ModuleUtilCore.findModuleForPsiElement(it) == currentModule }
                 ?: directories.firstOrNull()
 
-        val targetDirectory = if (directories.size > 1 && !ApplicationManager.getApplication().isUnitTestMode) {
+        val targetDirectory = if (directories.size > 1 && !isUnitTestMode()) {
             DirectoryChooserUtil.chooseDirectory(directories.toTypedArray(), preferredDirectory, originalFile.project, HashMap())
         } else {
             preferredDirectory
@@ -159,7 +156,7 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
         val targetFile = getOrCreateKotlinFile(fileName, targetDirectory)
         if (targetFile == null) {
             val filePath = "${targetDirectory.virtualFile.path}/$fileName"
-            CodeInsightUtils.showErrorHint(
+            KotlinSurrounderUtils.showErrorHint(
                 targetDirectory.project,
                 editor,
                 KotlinBundle.message("file.0.already.exists.but.does.not.correspond.to.kotlin.file", filePath),
@@ -174,7 +171,7 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
         val className = classInfo.name
 
         if (selectedParent is SeparateFileWrapper) {
-            if (ApplicationManager.getApplication().isUnitTestMode) {
+            if (isUnitTestMode()) {
                 return doInvoke(file, editor, file)
             }
 
@@ -216,7 +213,7 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
                         is KtElement, is PsiClass -> selectedParent
                         is PsiPackage -> createFileByPackage(selectedParent, editor, file)
                         else -> throw KotlinExceptionWithAttachments("Unexpected element: ${selectedParent::class.java}")
-                            .withAttachment("selectedParent", selectedParent.text)
+                            .withPsiAttachment("selectedParent", selectedParent)
                     } ?: return@runWriteAction
                 val constructorInfo = ClassWithPrimaryConstructorInfo(
                     classInfo,

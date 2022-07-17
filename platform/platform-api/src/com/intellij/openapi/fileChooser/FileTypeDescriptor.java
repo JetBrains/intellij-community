@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ImmutableList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
@@ -61,7 +62,7 @@ public class FileTypeDescriptor extends FileChooserDescriptor {
   }
 
   @Override
-  public boolean isFileSelectable(VirtualFile file) {
-    return !file.isDirectory() && isFileVisible(file, true);
+  public boolean isFileSelectable(@Nullable VirtualFile file) {
+    return file != null && !file.isDirectory() && isFileVisible(file, true);
   }
 }

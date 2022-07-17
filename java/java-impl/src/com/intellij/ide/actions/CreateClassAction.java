@@ -119,6 +119,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     return createdElement.getLBrace();
   }
 
+  @SuppressWarnings("RedundantMethodOverride")
   @Override
   protected void postProcess(@NotNull PsiClass createdElement, String templateName, Map<String, String> customProperties) {
     // This override is necessary for plugin compatibility

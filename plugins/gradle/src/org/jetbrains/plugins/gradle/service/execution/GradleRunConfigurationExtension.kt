@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
 import com.intellij.openapi.externalSystem.service.ui.project.path.ExternalSystemWorkingDirectoryInfo
+import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
+import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
@@ -13,10 +15,8 @@ class GradleRunConfigurationExtension
   override fun SettingsFragmentsContainer<GradleRunConfiguration>.configureFragments(configuration: GradleRunConfiguration) {
     val project = configuration.project
     addBeforeRunFragment(GradleBeforeRunTaskProvider.ID)
-    val workingDirectoryFragment =
-      addWorkingDirectoryFragment(project, ExternalSystemWorkingDirectoryInfo(project, SYSTEM_ID))
-    val workingDirectoryField = workingDirectoryFragment.component().component
-    addCommandLineFragment(project, GradleCommandLineInfo(project, workingDirectoryField))
+    val workingDirectoryField = addWorkingDirectoryFragment(project).component().component
+    addCommandLineFragment(project, workingDirectoryField)
     addTag(
       "gradle.tasks.script.debugging.fragment",
       GradleBundle.message("gradle.tasks.script.debugging"),
@@ -42,4 +42,21 @@ class GradleRunConfigurationExtension
       GradleRunConfiguration::setDebugAllEnabled
     )
   }
+
+  private fun SettingsFragmentsContainer<GradleRunConfiguration>.addWorkingDirectoryFragment(
+    project: Project
+  ) = addWorkingDirectoryFragment(
+    project,
+    ExternalSystemWorkingDirectoryInfo(project, SYSTEM_ID)
+  )
+
+  private fun SettingsFragmentsContainer<GradleRunConfiguration>.addCommandLineFragment(
+    project: Project,
+    workingDirectoryField: WorkingDirectoryField
+  ) = addCommandLineFragment(
+    project,
+    GradleCommandLineInfo(project, workingDirectoryField),
+    { rawCommandLine },
+    { rawCommandLine = it }
+  )
 }

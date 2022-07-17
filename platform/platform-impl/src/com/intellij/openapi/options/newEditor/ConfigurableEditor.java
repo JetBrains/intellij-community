@@ -15,6 +15,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableCardPanel;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
@@ -25,6 +26,8 @@ import com.intellij.ui.LightColors;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.ActionLink;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -96,7 +99,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     add(BorderLayout.SOUTH, RelativeFont.HUGE.install(myErrorLabel));
     add(BorderLayout.CENTER, myCardPanel);
     Disposer.register(this, myCardPanel);
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(TOPIC, this);
+    MessageBusConnection messageBus = ApplicationManager.getApplication().getMessageBus().connect(this);
+    messageBus.subscribe(AnActionListener.TOPIC, this);
+    messageBus.subscribe(ExternalUpdateRequest.TOPIC, conf -> updateCurrent(conf, false));
     getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
     if (configurable != null) {
       myConfigurable = configurable;
@@ -263,7 +268,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         HtmlChunk.text(exception.getTitle()).wrapWith("strong"),
         HtmlChunk.text(":"),
         HtmlChunk.br(),
-        HtmlChunk.text(exception.getMessage())
+        exception.isHtmlMessage() ? HtmlChunk.raw(exception.getMessage()) : HtmlChunk.text(exception.getMessage())
       ).wrapWith("html").toString());
       myErrorLabel.setVisible(true);
     }
@@ -284,9 +289,12 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   private JComponent createDefaultContent(Configurable configurable) {
     JComponent content = new JPanel(new BorderLayout());
     content.setBorder(JBUI.Borders.empty(11, 16, 16, 16));
-    SortedConfigurableGroup group = configurable instanceof SortedConfigurableGroup ? (SortedConfigurableGroup)configurable : null;
-    String description = group == null ? null : group.getDescription();
-    if (description == null) {
+
+    SortedConfigurableGroup sortedGroup = ConfigurableWrapper.cast(SortedConfigurableGroup.class, configurable);
+    String description = sortedGroup != null ? sortedGroup.getDescription() : null;
+
+    Configurable.Composite compositeGroup = ObjectUtils.tryCast(configurable, Configurable.Composite.class);
+    if (compositeGroup == null) {
       description = IdeBundle.message("label.select.configuration.element");
       content.add(BorderLayout.CENTER, new JLabel(description, SwingConstants.CENTER));
       content.setPreferredSize(JBUI.size(800, 600));
@@ -298,7 +306,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
       content.add(BorderLayout.CENTER, panel);
       panel.add(Box.createVerticalStrut(10));
-      for (Configurable current : group.getConfigurables()) {
+      for (Configurable current : compositeGroup.getConfigurables()) {
         //noinspection DialogTitleCapitalization (title case is OK here)
         ActionLink label = new ActionLink(current.getDisplayName(), e -> { openLink(current); });
         label.setBorder(JBUI.Borders.empty(1, 17, 3, 1));

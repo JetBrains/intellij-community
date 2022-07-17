@@ -1,24 +1,28 @@
 fun test() {
     if (true
-            || false
-            || true) {
+        || false
+        || true
+    ) {
 
     }
 
     if (true || false
-            || true) {
+        || true
+    ) {
 
     }
 
     if (true
-            || false
-            || true) {
+        || false
+        || true
+    ) {
 
     }
 
     if (true ||
-            false ||
-            true) {
+        false ||
+        true
+    ) {
 
     }
 

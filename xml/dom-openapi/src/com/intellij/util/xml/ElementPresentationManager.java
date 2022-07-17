@@ -14,7 +14,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +54,7 @@ public abstract class ElementPresentationManager {
   /**
    * @deprecated use {@link com.intellij.codeInsight.lookup.LookupElementBuilder}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract Object createVariant(final Object variant, final String name, final PsiElement psiElement);
 
   public abstract <T> Object @NotNull [] createVariants(Collection<? extends T> elements, Function<? super T, String> namer, int iconFlags);
@@ -89,16 +88,6 @@ public abstract class ElementPresentationManager {
     return null;
   }
 
-
-  /**
-   * @deprecated always return {@code null}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  @Nullable
-  public static String getDocumentationForElement(Object element) {
-    return null;
-  }
 
   @Nullable
   public static Object invokeNameValueMethod(@NotNull final Object element) {

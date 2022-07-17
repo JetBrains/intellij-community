@@ -34,6 +34,10 @@ import java.awt.*;
 import static java.awt.GridBagConstraints.CENTER;
 import static java.awt.GridBagConstraints.HORIZONTAL;
 
+/**
+ * @deprecated Completely replaced with @{link {@link IdePluginModuleBuilder}.
+ */
+@Deprecated(forRemoval = true)
 public class PluginModuleBuilder extends JavaModuleBuilder {
 
   @Override
@@ -89,7 +93,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
 
   @Override
   public boolean isAvailable() {
-    return true;
+    return false;
   }
 
   @Override
@@ -104,7 +108,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
 
   @Override
   public int getWeight() {
-    return 0;
+    return IJ_PLUGIN_WEIGHT;
   }
 
   @Override

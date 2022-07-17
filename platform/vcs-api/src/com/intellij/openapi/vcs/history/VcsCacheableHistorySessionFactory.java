@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.vcs.FilePath;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +35,7 @@ public interface VcsCacheableHistorySessionFactory<Cacheable extends Serializabl
    * @deprecated implement {@link #getAdditionallyCachedData(VcsAbstractHistorySession)}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable
   default Cacheable getAddinionallyCachedData(T session) {
     return null;

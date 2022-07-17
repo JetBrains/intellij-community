@@ -70,7 +70,7 @@ public interface AnnotationHolder {
    * @return the annotation (which can be modified to set additional annotation parameters)
    * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   Annotation createWarningAnnotation(@NotNull ASTNode node, @Nullable @InspectionMessage String message);
 
   /**
@@ -211,7 +211,7 @@ public interface AnnotationHolder {
   @NotNull
   default AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity,
                                           @NotNull @InspectionMessage String message) {
-    throw new IllegalStateException("Please do not override AnnotationHolder, use standard provided one instead");
+    throw new IllegalStateException("Please do not override AnnotationHolder, use the standard provided one instead");
   }
 
   /**
@@ -227,6 +227,6 @@ public interface AnnotationHolder {
   @Contract(pure = true)
   @NotNull
   default AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
-    throw new IllegalStateException("Please do not override AnnotationHolder, use standard provided one instead");
+    throw new IllegalStateException("Please do not override AnnotationHolder, use the standard provided one instead");
   }
 }

@@ -16,11 +16,11 @@
 
 package simple;
 
-import org.jspecify.annotations.DefaultNonNull;
-import org.jspecify.annotations.Nullable;
-import org.jspecify.annotations.NullnessUnspecified;
+import org.jspecify.nullness.NullMarked;
+import org.jspecify.nullness.Nullable;
+import org.jspecify.nullness.NullnessUnspecified;
 
-@DefaultNonNull
+@NullMarked
 public class Simple {
   public @Nullable Derived field = null;
 
@@ -40,7 +40,7 @@ class Derived extends Base {
   void foo() {}
 }
 
-@DefaultNonNull
+@NullMarked
 class Use {
   public static void main(Simple a, Derived x) {
     // jspecify_nullness_mismatch

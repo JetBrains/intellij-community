@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 
-public class FilePromptMacro extends PromptingMacro implements SecondQueueExpandMacro {
+public class FilePromptMacro extends PromptingMacro implements SecondQueueExpandMacro, PathMacro {
   @NotNull
   @Override
   public String getName() {

@@ -23,7 +23,7 @@ public abstract class PackageIndex {
    *
    * @param packageName           the name of the package for which directories are requested.
    * @param includeLibrarySources if true, directories under library sources are included in the returned list.
-   * @return the list of directories.
+   * @return the array of directories.
    */
   public abstract VirtualFile @NotNull [] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);
 

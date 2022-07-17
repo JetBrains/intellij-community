@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.filters.LogEventSnapshotBuildFil
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.logger.TestDataCollectorDebugLogger
 import com.intellij.openapi.util.io.FileUtil
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.junit.Test
 import kotlin.test.assertEquals
 

@@ -31,10 +31,10 @@ public class MavenServerSettings implements Serializable, Cloneable {
    * do not use debug level {@link MavenServerConsole#LEVEL_DEBUG} by default, it can pollute logs
    */
   private int myLoggingLevel = MavenServerConsole.LEVEL_INFO;
-  @Nullable private File myMavenHome;
-  @Nullable private File myUserSettingsFile;
-  @Nullable private File myGlobalSettingsFile;
-  @Nullable private File myLocalRepository;
+  @Nullable private String myMavenHome;
+  @Nullable private String myUserSettingsFile;
+  @Nullable private String myGlobalSettingsFile;
+  @Nullable private String myLocalRepository;
   @NotNull private Properties myUserProperties = new Properties();
   private boolean isOffline;
   @NotNull private UpdatePolicy myPluginUpdatePolicy = UpdatePolicy.DO_NOT_UPDATE;
@@ -69,38 +69,38 @@ public class MavenServerSettings implements Serializable, Cloneable {
   }
 
   @Nullable
-  public File getMavenHome() {
+  public String getMavenHomePath() {
     return myMavenHome;
   }
 
-  public void setMavenHome(@Nullable File mavenHome) {
+  public void setMavenHomePath(@Nullable String mavenHome) {
     myMavenHome = mavenHome;
   }
 
   @Nullable
-  public File getUserSettingsFile() {
+  public String getUserSettingsPath() {
     return myUserSettingsFile;
   }
 
-  public void setUserSettingsFile(@Nullable File userSettingsFile) {
+  public void setUserSettingsPath(@Nullable String userSettingsFile) {
     myUserSettingsFile = userSettingsFile;
   }
 
   @Nullable
-  public File getGlobalSettingsFile() {
+  public String getGlobalSettingsPath() {
     return myGlobalSettingsFile;
   }
 
-  public void setGlobalSettingsFile(@Nullable File globalSettingsFile) {
+  public void setGlobalSettingsPath(@Nullable String globalSettingsFile) {
     myGlobalSettingsFile = globalSettingsFile;
   }
 
   @Nullable
-  public File getLocalRepository() {
+  public String getLocalRepositoryPath() {
     return myLocalRepository;
   }
 
-  public void setLocalRepository(@Nullable File localRepository) {
+  public void setLocalRepositoryPath(@Nullable String localRepository) {
     myLocalRepository = localRepository;
   }
 

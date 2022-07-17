@@ -1,3 +1,2 @@
-version = "0.1"
-python2 = true
+version = "4.1"
 requires = ["types-pytz"]

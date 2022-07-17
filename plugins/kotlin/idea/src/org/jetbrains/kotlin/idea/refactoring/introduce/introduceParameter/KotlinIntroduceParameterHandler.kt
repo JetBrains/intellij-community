@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter
 
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -15,16 +14,24 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
+import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.core.moveInsideParenthesesAndReplaceWith
+import org.jetbrains.kotlin.idea.core.util.ElementKind
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
@@ -35,12 +42,12 @@ import org.jetbrains.kotlin.idea.refactoring.showWithTransaction
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.approximateWithResolvableType
 import org.jetbrains.kotlin.idea.util.getResolutionScope
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiRange
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.toRange
+import org.jetbrains.kotlin.idea.util.psi.patternMatching.match
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -73,14 +80,14 @@ data class IntroduceParameterDescriptor(
     }
 
     val originalOccurrence: KotlinPsiRange
-        get() = occurrencesToReplace.first { it.getTextRange().intersects(originalRange.getTextRange()) }
+        get() = occurrencesToReplace.first { it.textRange.intersects(originalRange.textRange) }
 
     val valVar: KotlinValVar = if (callable is KtClass) {
         val modifierIsUnnecessary: (PsiElement) -> Boolean = {
             when {
                 it.parent != callable.body -> false
                 it is KtAnonymousInitializer -> true
-                it is KtProperty && it.initializer?.textRange?.intersects(originalRange.getTextRange()) ?: false -> true
+              it is KtProperty && it.initializer?.textRange?.intersects(originalRange.textRange) ?: false -> true
                 else -> false
             }
         }
@@ -100,7 +107,7 @@ fun getParametersToRemove(
 ): List<KtElement> {
     if (withDefaultValue) return Collections.emptyList()
 
-    val occurrenceRanges = occurrencesToReplace.map { it.getTextRange() }
+    val occurrenceRanges = occurrencesToReplace.map { it.textRange }
     return parametersUsages.entrySet()
         .asSequence()
         .filter {
@@ -172,7 +179,7 @@ fun selectNewParameterContext(
         editor = editor,
         file = file,
         title = KotlinBundle.message("title.introduce.parameter.to.declaration"),
-        elementKinds = listOf(CodeInsightUtils.ElementKind.EXPRESSION),
+        elementKinds = listOf(ElementKind.EXPRESSION),
         elementValidator = ::validateExpressionElements,
         getContainers = { _, parent ->
             val parents = parent.parents
@@ -243,14 +250,14 @@ open class KotlinIntroduceParameterHandler(
             else -> null
         }
         val bodyValidator: ((String) -> Boolean)? =
-            body?.let { NewDeclarationNameValidator(it, sequenceOf(it), NewDeclarationNameValidator.Target.VARIABLES) }
+            body?.let { Fe10KotlinNewDeclarationNameValidator(it, sequenceOf(it), KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER) }
         val nameValidator = CollectingNameValidator(targetParent.getValueParameters().mapNotNull { it.name }, bodyValidator ?: { true })
 
         val suggestedNames = SmartList<String>().apply {
-            if (physicalExpression is KtProperty && !ApplicationManager.getApplication().isUnitTestMode) {
+            if (physicalExpression is KtProperty && !isUnitTestMode()) {
                 addIfNotNull(physicalExpression.name)
             }
-            addAll(KotlinNameSuggester.suggestNamesByType(replacementType, nameValidator, "p"))
+            addAll(Fe10KotlinNameSuggester.suggestNamesByType(replacementType, nameValidator, "p"))
         }
 
         val parametersUsages = findInternalUsagesOfParametersAndReceiver(targetParent, functionDescriptor) ?: return
@@ -286,7 +293,7 @@ open class KotlinIntroduceParameterHandler(
             INTRODUCE_PARAMETER,
             null,
             fun() {
-                val isTestMode = ApplicationManager.getApplication().isUnitTestMode
+                val isTestMode = isUnitTestMode()
                 val haveLambdaArgumentsToReplace = occurrencesToReplace.any { range ->
                     range.elements.any { it is KtLambdaExpression && it.parent is KtLambdaArgument }
                 }
@@ -520,7 +527,7 @@ open class KotlinIntroduceLambdaParameterHandler(
             }
 
             val dialog = createDialog(project, editor, lambdaExtractionDescriptor) ?: return
-            if (ApplicationManager.getApplication()!!.isUnitTestMode) {
+            if (isUnitTestMode()) {
                 dialog.performRefactoring()
             } else {
                 dialog.showWithTransaction()
@@ -546,5 +553,9 @@ open class KotlinIntroduceLambdaParameterHandler(
     }
 }
 
-val INTRODUCE_PARAMETER: String = KotlinBundle.message("name.introduce.parameter1")
-val INTRODUCE_LAMBDA_PARAMETER: String = KotlinBundle.message("name.introduce.lambda.parameter")
+val INTRODUCE_PARAMETER: String
+    @Nls
+    get() = KotlinBundle.message("name.introduce.parameter1")
+val INTRODUCE_LAMBDA_PARAMETER: String
+    @Nls
+    get() = KotlinBundle.message("name.introduce.lambda.parameter")

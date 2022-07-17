@@ -29,7 +29,7 @@ public class LineNumberMacro extends Macro {
   public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     final int offset = context.getStartOffset();
     int line = context.getEditor().offsetToLogicalPosition(offset).line + 1;
-    return new TextResult("" + line);
+    return new TextResult(String.valueOf(line));
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.postProcessing
 
@@ -99,13 +99,13 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
         },
 
         diagnosticBasedProcessing(
-            addExclExclFactoryNoImplicitReceiver(AddExclExclCallFix),
+            UnsafeCallExclExclFixFactory,
             Errors.UNSAFE_CALL,
             Errors.UNSAFE_INFIX_CALL,
             Errors.UNSAFE_OPERATOR_CALL
         ),
         diagnosticBasedProcessing(
-            addExclExclFactoryNoImplicitReceiver(MissingIteratorExclExclFixFactory),
+            MissingIteratorExclExclFixFactory,
             Errors.ITERATOR_ON_NULLABLE
         ),
         diagnosticBasedProcessing(
@@ -123,15 +123,15 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
         ),
 
         diagnosticBasedProcessing(
-            RemoveModifierFix.createRemoveProjectionFactory(true),
+            RemoveModifierFixBase.createRemoveProjectionFactory(true),
             Errors.REDUNDANT_PROJECTION
         ),
         diagnosticBasedProcessing(
-            AddModifierFix.createFactory(KtTokens.OVERRIDE_KEYWORD),
-            Errors.VIRTUAL_MEMBER_HIDDEN
+          AddModifierFixFE10.createFactory(KtTokens.OVERRIDE_KEYWORD),
+          Errors.VIRTUAL_MEMBER_HIDDEN
         ),
         diagnosticBasedProcessing(
-            RemoveModifierFix.createRemoveModifierFromListOwnerFactory(KtTokens.OPEN_KEYWORD),
+            RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.OPEN_KEYWORD),
             Errors.NON_FINAL_MEMBER_IN_FINAL_CLASS, Errors.NON_FINAL_MEMBER_IN_OBJECT
         ),
         diagnosticBasedProcessing(
@@ -139,7 +139,7 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
             Errors.INVISIBLE_MEMBER
         ),
         diagnosticBasedProcessing(
-            RemoveModifierFix.createRemoveModifierFactory(),
+            RemoveModifierFixBase.removeNonRedundantModifier,
             Errors.WRONG_MODIFIER_TARGET
         ),
         diagnosticBasedProcessing(
@@ -147,7 +147,8 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
             Errors.EXPOSED_FUNCTION_RETURN_TYPE,
             Errors.EXPOSED_PARAMETER_TYPE,
             Errors.EXPOSED_PROPERTY_TYPE,
-            Errors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR,
+            Errors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR.errorFactory,
+            Errors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR.warningFactory,
             Errors.EXPOSED_RECEIVER_TYPE,
             Errors.EXPOSED_SUPER_CLASS,
             Errors.EXPOSED_SUPER_INTERFACE
@@ -164,7 +165,6 @@ private val addOrRemoveModifiersProcessingGroup =
             RemoveRedundantVisibilityModifierProcessing(),
             RemoveRedundantModalityModifierProcessing(),
             inspectionBasedProcessing(AddOperatorModifierInspection(), writeActionNeeded = false),
-            RemoveExplicitUnitTypeProcessing()
         )
     )
 
@@ -179,16 +179,6 @@ private val removeRedundantElementsProcessingGroup =
             intentionBasedProcessing(RemoveEmptyClassBodyIntention())
         )
     )
-
-private val removeRedundantSemicolonProcessing =
-    InspectionLikeProcessingGroup(
-        runSingleTime = true,
-        acceptNonKtElements = true,
-        processings = listOf(
-            RedundantSemicolonInspectionBasedProcessing()
-        )
-    )
-
 
 private val inspectionLikePostProcessingGroup =
     InspectionLikeProcessingGroup(
@@ -213,7 +203,6 @@ private val inspectionLikePostProcessingGroup =
         RemoveRedundantNullabilityProcessing(),
         CanBeValInspectionBasedProcessing(),
         inspectionBasedProcessing(FoldInitializerAndIfToElvisInspection(), writeActionNeeded = false),
-        intentionBasedProcessing(RemoveRedundantCallsOfConversionMethodsIntention()),
         inspectionBasedProcessing(JavaMapForEachInspection()),
         intentionBasedProcessing(FoldIfToReturnIntention()) { it.then.isTrivialStatementBody() && it.`else`.isTrivialStatementBody() },
         intentionBasedProcessing(FoldIfToReturnAsymmetricallyIntention()) {
@@ -252,7 +241,7 @@ private val inspectionLikePostProcessingGroup =
 private val cleaningUpDiagnosticBasedPostProcessingGroup =
     DiagnosticBasedPostProcessingGroup(
         removeUselessCastDiagnosticBasedProcessing,
-        removeInnecessaryNotNullAssertionDiagnosticBasedProcessing,
+        removeUnnecessaryNotNullAssertionDiagnosticBasedProcessing,
         fixValToVarDiagnosticBasedProcessing
     )
 
@@ -283,11 +272,10 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
                 RemoveExplicitGetterInspectionBasedProcessing(),
                 RemoveExplicitSetterInspectionBasedProcessing()
             ),
-            ConvertToDataClassProcessing(),
+            MergePropertyWithConstructorParameterProcessing(),
             errorsFixingDiagnosticBasedPostProcessingGroup,
             addOrRemoveModifiersProcessingGroup,
             inspectionLikePostProcessingGroup,
-            removeRedundantSemicolonProcessing,
             removeRedundantElementsProcessingGroup,
             cleaningUpDiagnosticBasedPostProcessingGroup
         )

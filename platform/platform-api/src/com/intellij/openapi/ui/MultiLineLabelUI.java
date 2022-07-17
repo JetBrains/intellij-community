@@ -160,7 +160,7 @@ public class MultiLineLabelUI extends BasicLabelUI {
 
     // Fix for textIsEmpty sent by Paulo Santos
     boolean textIsEmpty =
-      (text == null) || (text.length == 0) || (text.length == 1 && ((text[0] == null) || "".equals(text[0])));
+      (text == null) || (text.length == 0) || (text.length == 1 && ((text[0] == null) || text[0].isEmpty()));
 
     String rettext = "";
     if (textIsEmpty) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structuralsearch.predicates
 
@@ -13,12 +13,12 @@ import com.intellij.structuralsearch.StructuralSearchUtil
 import com.intellij.structuralsearch.impl.matcher.MatchContext
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
+import com.intellij.util.castSafelyTo
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
-import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.structuralsearch.resolveKotlinType
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
@@ -41,7 +41,6 @@ class KotlinExprTypePredicate(
     private val baseName: String,
     private val regex: Boolean
 ) : MatchPredicate() {
-
     override fun match(matchedNode: PsiElement, start: Int, end: Int, context: MatchContext): Boolean {
         val searchedTypeNames = if (regex) listOf() else search.split('|')
         if (matchedNode is KtExpression && matchedNode.isNull() && searchedTypeNames.contains("null")) return true
@@ -49,14 +48,14 @@ class KotlinExprTypePredicate(
         val type = when {
             node is KtDeclaration -> node.resolveKotlinType()
             node is KtExpression -> try {
-                node.resolveType()
+                node.resolveType() ?: node.parent?.castSafelyTo<KtDotQualifiedExpression>()?.resolveType()
             } catch (e: Exception) {
                 if (e is ControlFlowException) throw e
                 null
             }
             node is KtStringTemplateEntry && node !is KtSimpleNameStringTemplateEntry -> null
             node is KtSimpleNameStringTemplateEntry -> node.expression?.resolveType()
-            else -> throw IllegalStateException(KotlinBundle.message("error.type.filter.node"))
+            else -> null
         } ?: return false
 
         val project = node.project
@@ -172,22 +171,22 @@ class KotlinExprTypePredicate(
 
             // Kotlin indexes
             when {
-                fq -> if (KotlinFullClassNameIndex.getInstance()[className, project, scope].any {
-                        it.getKotlinFqName() == type.fqName
-                    }) return true
-                else -> if (KotlinClassShortNameIndex.getInstance()[className, project, scope].any {
-                        it.getKotlinFqName() == type.fqName
-                    }) return true
+                fq -> if (KotlinFullClassNameIndex.get(className, project, scope).any {
+                    it.kotlinFqName == type.fqName
+                  }) return true
+                else -> if (KotlinClassShortNameIndex.get(className, project, scope).any {
+                    it.kotlinFqName == type.fqName
+                  }) return true
             }
 
             // Java indexes
             when {
-                fq -> if (JavaFullClassNameIndex.getInstance()[className.hashCode(), project, scope].any {
-                        it.getKotlinFqName() == type.fqName
-                    }) return true
+                fq -> if (JavaFullClassNameIndex.getInstance()[className, project, scope].any {
+                    it.kotlinFqName == type.fqName
+                  }) return true
                 else -> if (JavaShortClassNameIndex.getInstance()[className, project, scope].any {
-                        it.getKotlinFqName() == type.fqName
-                    }) return true
+                    it.kotlinFqName == type.fqName
+                  }) return true
             }
 
             return false

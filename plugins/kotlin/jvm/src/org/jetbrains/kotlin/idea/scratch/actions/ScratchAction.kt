@@ -2,21 +2,31 @@
 
 package org.jetbrains.kotlin.idea.scratch.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
-import org.jetbrains.kotlin.idea.scratch.getScratchFile
-import org.jetbrains.kotlin.idea.scratch.getScratchFileFromSelectedEditor
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.fileEditor.TextEditor
+import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.scratch.ScratchFile
+import org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorWithPreview
+import org.jetbrains.kotlin.idea.scratch.ui.findScratchFileEditorWithPreview
 import javax.swing.Icon
 
-abstract class ScratchAction(message: String, icon: Icon) : AnAction(message, message, icon) {
-    override fun update(e: AnActionEvent) {
-        val scratchFile = e.getData(CommonDataKeys.EDITOR)
-            ?.let { TextEditorProvider.getInstance().getTextEditor(it).getScratchFile() }
-            ?: e.project?.let { getScratchFileFromSelectedEditor(it) }
+abstract class ScratchAction(@Nls message: String, icon: Icon) : AnAction(message, message, icon) {
 
-        e.presentation.isVisible = scratchFile != null
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+        e.presentation.isVisible = e.currentScratchFile != null
     }
+
+    protected val AnActionEvent.currentScratchFile: ScratchFile?
+        get() = currentScratchEditor?.scratchFile
+
+    protected val AnActionEvent.currentScratchEditor: KtScratchFileEditorWithPreview?
+        get() {
+            val textEditor = getData(PlatformCoreDataKeys.FILE_EDITOR) as? TextEditor
+            return textEditor?.findScratchFileEditorWithPreview()
+        }
 }

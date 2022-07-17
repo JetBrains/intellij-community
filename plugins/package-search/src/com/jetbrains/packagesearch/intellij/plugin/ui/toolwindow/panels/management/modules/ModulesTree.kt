@@ -1,55 +1,83 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.modules
 
 import com.intellij.ide.CopyProvider
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.project.Project
 import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModuleSetter
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.findPathWithData
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
+import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
+import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
 internal class ModulesTree(
-    private val targetModuleSetter: TargetModuleSetter
-) : Tree(DefaultMutableTreeNode(TargetModules.None)), DataProvider, CopyProvider, Displayable<ModulesTree.ViewModel> {
+    project: Project
+) : Tree(DefaultMutableTreeNode(TargetModules.None)), DataProvider, CopyProvider {
 
-    private var latestTargetModules: TargetModules? = null
-
-    private val onTreeItemSelected = TreeSelectionListener {
-        val node = lastSelectedPathComponent as DefaultMutableTreeNode?
-        if (node == null) {
-            setTargetModules(TargetModules.None, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
-            return@TreeSelectionListener
-        }
-
-        val targetModules = checkNotNull(node.userObject as? TargetModules) {
-            "Node '${node.path}' has invalid data: ${node.userObject}"
-        }
-        PackageSearchEventsLogger.logTargetModuleSelected(targetModules)
-
-        setTargetModules(targetModules, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
-    }
+    private val targetModulesChannel = Channel<TargetModules>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val targetModulesStateFlow = targetModulesChannel.consumeAsFlow()
+        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, TargetModules.None)
 
     init {
+        addTreeSelectionListener {
+            val node = lastSelectedPathComponent as DefaultMutableTreeNode?
+            if (node == null) {
+                setTargetModules(TargetModules.None, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
+                return@addTreeSelectionListener
+            }
+
+            val targetModules = checkNotNull(node.userObject as? TargetModules) {
+                "Node '${node.path}' has invalid data: ${node.userObject}"
+            }
+
+            setTargetModules(targetModules, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
+        }
+
         setCellRenderer(ModulesTreeItemRenderer())
         selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
 
@@ -57,7 +85,7 @@ internal class ModulesTree(
         emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.modulesTree.empty")
 
         @Suppress("MagicNumber") // Swing dimension constants
-        border = scaledEmptyBorder(left = 8)
+        border = emptyBorder(left = 8)
 
         addKeyListener(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent?) {
@@ -70,29 +98,35 @@ internal class ModulesTree(
 
         TreeUIHelper.getInstance().installTreeSpeedSearch(this)
         TreeUtil.installActions(this)
+        project.uiStateSource.targetModulesFlow
+            .mapNotNull { selectedTargetModule ->
+                val queue = mutableListOf(model.root as DefaultMutableTreeNode)
+                while (queue.isNotEmpty()) {
+                    val elem = queue.removeAt(0)
+                    if (elem.userObject as TargetModules == selectedTargetModule) {
+                        return@mapNotNull TreePath(elem.path)
+                    } else {
+                        queue.addAll(elem.children().asSequence().filterIsInstance<DefaultMutableTreeNode>())
+                    }
+                }
+                null
+            }
+            .flowOn(project.lifecycleScope.coroutineDispatcher)
+            .onEach { selectionModel.selectionPath = it }
+            .flowOn(Dispatchers.EDT)
+            .launchIn(project.lifecycleScope)
     }
 
-    internal data class ViewModel(
-        val treeModel: TreeModel,
-        val pendingSelectionPath: TreePath,
-        val traceInfo: TraceInfo
-    )
-
-    override suspend fun display(viewModel: ViewModel) = withContext(Dispatchers.AppUI) {
-        if (model.root == null || model.getChildCount(model.root) == 0)
-            targetModuleSetter.setTargetModules(getTargetModulesFrom(viewModel.pendingSelectionPath))
-
+    fun display(treeModel: TreeModel) {
+        if (treeModel == model) return
         setPaintBusy(true)
-
-        logDebug(viewModel.traceInfo, "ModulesTree#display()") { "Tree populated. Found selection path: '${viewModel.pendingSelectionPath}'" }
-
+        val wasEmpty = model.root == null || model.getChildCount(model.root) == 0
+        val lastSelected = selectionPath?.lastPathComponent?.castSafelyTo<DefaultMutableTreeNode>()
+            ?.userObject?.castSafelyTo<TargetModules>()
         // Swapping model resets the selection — but, we set the right selection just afterwards
-        removeTreeSelectionListener(onTreeItemSelected)
-        model = viewModel.treeModel
-        selectionModel.selectionPath = viewModel.pendingSelectionPath
-        addTreeSelectionListener(onTreeItemSelected)
-
-        TreeUtil.expandAll(this@ModulesTree)
+        model = treeModel
+        if (wasEmpty) TreeUtil.expandAll(this)
+        selectionPath = lastSelected?.let { model.root.castSafelyTo<DefaultMutableTreeNode>()?.findPathWithData(it) } ?: TreePath(model.root)
         updateUI()
         setPaintBusy(false)
     }
@@ -104,8 +138,7 @@ internal class ModulesTree(
 
     private fun setTargetModules(targetModules: TargetModules, traceInfo: TraceInfo?) {
         logDebug(traceInfo, "ModulesTree#setTargetModules()") { "Target module changed, now it's $targetModules" }
-        latestTargetModules = targetModules
-        targetModuleSetter.setTargetModules(targetModules)
+        targetModulesChannel.trySend(targetModules)
     }
 
     override fun getData(dataId: String): Any? = when {
@@ -114,13 +147,48 @@ internal class ModulesTree(
     }
 
     override fun performCopy(dataContext: DataContext) {
-        val dataToCopy = latestTargetModules?.joinToString { it.projectModule.getFullName() }
+        val dataToCopy = targetModulesStateFlow.value.takeIf { it !is TargetModules.None }?.joinToString { it.projectModule.getFullName() }
             ?: return
 
         CopyPasteManager.getInstance().setContents(StringSelection(dataToCopy))
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
     override fun isCopyEnabled(dataContext: DataContext) = true
 
     override fun isCopyVisible(dataContext: DataContext) = true
+}
+
+private fun TreeModel.pathTo(selection: DefaultMutableTreeNode): TreePath? {
+    val rootNode = root as? DefaultMutableTreeNode ?: return null
+    val path = recursiveSearch(rootNode, selection)
+    return path?.takeIf { it.isNotEmpty() }?.let { TreePath(it.toTypedArray()) }
+}
+
+private operator fun <T> T.plus(elements: List<T>): List<T> = buildList {
+    add(this@plus)
+    addAll(elements)
+}
+
+private fun recursiveSearch(currentElement: DefaultMutableTreeNode, selection: DefaultMutableTreeNode): MutableList<DefaultMutableTreeNode>? {
+    if (currentElement.userObject == selection.userObject) return mutableListOf(currentElement)
+    else for (child: TreeNode in currentElement.children()) {
+        if (child !is DefaultMutableTreeNode) continue
+        val path = recursiveSearch(child, selection)
+        if (path != null) return path.also { it.add(0, currentElement) }
+    }
+    return null
+}
+
+private operator fun TreeModel.contains(treeNode: DefaultMutableTreeNode) =
+    treeNode in treeNodesSequence().map { it.userObject }
+
+fun TreeModel.treeNodesSequence() = sequence {
+    val queue = mutableListOf(root.castSafelyTo<DefaultMutableTreeNode>() ?: return@sequence)
+    while (queue.isNotEmpty()) {
+        val next = queue.removeAt(0)
+        yield(next)
+        queue.addAll(next.children().toList().mapNotNull { it.castSafelyTo<DefaultMutableTreeNode>() })
+    }
 }

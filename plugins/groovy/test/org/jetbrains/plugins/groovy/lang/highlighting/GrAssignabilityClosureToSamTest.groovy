@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -15,7 +15,7 @@ class GrAssignabilityClosureToSamTest extends GrHighlightingTestBase {
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_2
 
   void testAssignability() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 interface A {
   def foo()
 }
@@ -29,7 +29,7 @@ B <warning>b</warning> = {print 2}
   }
 
   void testAmbiguous() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 interface SAM1 { def foo(String s)}
 interface SAM2 { def bar(Integer i)}
 
@@ -43,7 +43,7 @@ method <warning>("1")</warning> {it}  // fails because SAM1 and SAM2 are seen as
   }
 
   void testGenerics() {
-    testHighlighting('''
+    doTestHighlighting('''
 interface A<T> {
   def foo(T t)
 }
@@ -59,7 +59,7 @@ A a6 = {x -> print 1}
   }
 
   void testGenerics2() {
-    testHighlighting('''
+    doTestHighlighting('''
 interface A<T> {
   def foo(T t)
 }

@@ -5,6 +5,6 @@
     <line>1</line>
     <entry_point TYPE="java.module" FQNAME="MAIN" />
     <problem_class severity="WARNING">Redundant 'requires' directive in module-info</problem_class>
-    <description>Redundant directive 'requires M6'</description>
+    <description>Redundant directive 'requires M6'. Transitive dependencies on 'M7' can be used directly.</description>
   </problem>
 </problems>

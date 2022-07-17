@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.*;
 
@@ -74,23 +73,16 @@ public abstract class ChangeListManager implements ChangeListModification {
                                          @Nullable @Nls String title,
                                          @Nullable ModalityState state);
 
-  /**
-   * @deprecated use {@link #invokeAfterUpdate(Runnable, InvokeAfterUpdateMode, String, ModalityState)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
-                                         @NotNull InvokeAfterUpdateMode mode,
-                                         @Nullable @Nls String title,
-                                         @Nullable Consumer<? super VcsDirtyScopeManager> dirtyScopeManager,
-                                         @Nullable ModalityState state);
-
 
   public abstract boolean areChangeListsEnabled();
 
   public abstract int getChangeListsNumber();
 
+  /**
+   * @deprecated Use {@link #getChangeLists()} instead.
+   */
   @NotNull
+  @Deprecated
   public List<LocalChangeList> getChangeListsCopy() {
     return getChangeLists();
   }
@@ -179,8 +171,7 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @deprecated Use {@link com.intellij.openapi.vcs.ProjectLevelVcsManager#getVcsFor}
    */
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract AbstractVcs getVcsFor(@NotNull Change change);
 
 
@@ -200,8 +191,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   /**
    * @deprecated use {@link LocalCommitExecutor#LOCAL_COMMIT_EXECUTOR} extension point
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Deprecated(forRemoval = true)
   public abstract void registerCommitExecutor(@NotNull CommitExecutor executor);
 
   @NotNull
@@ -217,8 +207,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract IgnoredFileBean @NotNull [] getFilesToIgnore();
 
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);
@@ -231,22 +220,19 @@ public abstract class ChangeListManager implements ChangeListModification {
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void setFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles);
 
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles);
 
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addDirectoryToIgnoreImplicitly(@NotNull @NlsSafe String path);
 
 
@@ -262,7 +248,7 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract boolean isFreezedWithNotification(@NlsContexts.DialogTitle @Nullable String modalTitle);
 
-  @Deprecated // used in TeamCity
+  @Deprecated(forRemoval = true)
   public abstract void reopenFiles(@NotNull List<? extends FilePath> paths);
 
 }

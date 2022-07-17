@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
@@ -71,6 +71,17 @@ class AllImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
   }
 }
 
+@Ignore
+class AllIconClassesTest : ImageResourcesTestBase() {
+  companion object {
+    @JvmStatic
+    @Parameters(name = "{0}")
+    fun data(): Collection<Array<Any?>> {
+      return collectNonRegeneratedIconClasses(TestRoot.ALL)
+    }
+  }
+}
+
 
 @RunWith(Parameterized::class)
 abstract class ImageResourcesTestBase {
@@ -137,7 +148,7 @@ abstract class ImageResourcesTestBase {
       val model = JpsElementFactory.getInstance().createModel()
 
       val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
-      JpsProjectLoader.loadProject(model.project, pathVariables, home.path)
+      JpsProjectLoader.loadProject(model.project, pathVariables, home.toPath())
 
       return model
     }
@@ -192,7 +203,9 @@ private class MyOptimumSizeChecker(val projectHome: Path, val iconsOnly: Boolean
       image.files.parallelStream().forEach { file ->
         val optimized = ImageSizeOptimizer.optimizeImage(file)
         if (optimized != null && !optimized.hasOptimumSize) {
-          failures.add(FailedTest(module, "image size can be optimized (run \"Generate icon classes\" configuration): ${optimized.compressionStats}", image, file.toFile()))
+          failures.add(FailedTest(module, "image size can be optimized using " +
+                                          "\"Icons processing | Generate icon classes\" run configuration: " +
+                                          optimized.compressionStats, image, file.toFile()))
         }
       }
     }
@@ -204,12 +217,17 @@ private class MyIconClassFileChecker(private val projectHome: Path, private val 
 
   private val config = IntellijIconClassGeneratorConfig()
 
+  /**
+   * See [org.jetbrains.intellij.build.images.RobotFileHandler] for supported icon-robots.txt rules.
+   */
   fun checkIconClasses(module: JpsModule) {
     val generator = IconsClassGenerator(projectHome, modules, false)
     generator.processModule(module, config.getConfigForModule(module.name))
 
     generator.getModifiedClasses().forEach { (module, file, details) ->
-      failures.add(FailedTest(module, "icon class file should be regenerated (run \"Generate icon classes\" configuration)", file, details))
+      failures.add(FailedTest(module, "icon class file should be regenerated using " +
+                                      "\"Icons processing | Generate icon classes\" run configuration, " +
+                                      "or new icons be ignored via 'icon-robots.txt'", file, details))
     }
   }
 }

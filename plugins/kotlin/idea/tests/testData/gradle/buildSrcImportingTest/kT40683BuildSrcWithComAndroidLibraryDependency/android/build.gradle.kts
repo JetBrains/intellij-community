@@ -3,5 +3,5 @@ plugins {
 }
 
 android {
-    compileSdkVersion(29)
+    compileSdkVersion({{compile_sdk_version}})
 }

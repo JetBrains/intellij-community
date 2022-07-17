@@ -23,18 +23,18 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
   private final Project myProject;
   private final Editor myEditor;
 
-  DaemonTooltipRendererProvider(final Project project, Editor editor) {
+  DaemonTooltipRendererProvider(Project project, Editor editor) {
     myProject = project;
     myEditor = editor;
   }
 
   @Override
-  public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<? extends RangeHighlighter> highlighters) {
+  public TooltipRenderer calcTooltipRenderer(@NotNull Collection<? extends RangeHighlighter> highlighters) {
     LineTooltipRenderer bigRenderer = null;
     List<HighlightInfo> infos = new SmartList<>();
     Collection<String> tooltips = new HashSet<>(); //do not show same tooltip twice
     for (RangeHighlighter marker : highlighters) {
-      final Object tooltipObject = marker.getErrorStripeTooltip();
+      Object tooltipObject = marker.getErrorStripeTooltip();
       if (tooltipObject == null) continue;
       if (tooltipObject instanceof HighlightInfo) {
         HighlightInfo info = (HighlightInfo)tooltipObject;
@@ -62,7 +62,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
         if (i != 0) return i;
         return o1.getToolTip().compareTo(o2.getToolTip());
       });
-      final HighlightInfoComposite composite = HighlightInfoComposite.create(infos);
+      HighlightInfoComposite composite = HighlightInfoComposite.create(infos);
       String toolTip = composite.getToolTip();
       TooltipAction action = TooltipActionProvider.calcTooltipAction(composite, myEditor);
       DaemonTooltipRenderer myRenderer = new DaemonTooltipWithActionRenderer(
@@ -78,13 +78,13 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
 
   @NotNull
   @Override
-  public TooltipRenderer calcTooltipRenderer(@NotNull final String text) {
+  public TooltipRenderer calcTooltipRenderer(@NotNull String text) {
     return new DaemonTooltipRenderer(text, new Object[]{text});
   }
 
   @NotNull
   @Override
-  public TooltipRenderer calcTooltipRenderer(@NotNull final String text, final int width) {
+  public TooltipRenderer calcTooltipRenderer(@NotNull String text, int width) {
     return new DaemonTooltipRenderer(text, width, new Object[]{text});
   }
 

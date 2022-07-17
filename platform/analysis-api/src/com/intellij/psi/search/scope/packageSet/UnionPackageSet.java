@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,8 +34,7 @@ public class UnionPackageSet extends CompoundPackageSet {
   /**
    * @deprecated use {@link #create(PackageSet...)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public UnionPackageSet(@NotNull PackageSet set1, @NotNull PackageSet set2) {
     super(set1, set2);
   }

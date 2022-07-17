@@ -7,7 +7,7 @@ class Parent<T> {
 }
 
 class Child<Integer> extends Parent<Integer> {
-    public Child(Integer field) {
+    Child(Integer field) {
         super(field);
     }
 }

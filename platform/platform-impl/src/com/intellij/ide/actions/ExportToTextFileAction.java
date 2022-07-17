@@ -12,7 +12,7 @@ public class ExportToTextFileAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Project project = e.getProject();
     ExporterToTextFile exporterToTextFile = getExporter(dataContext);
     if (project == null || exporterToTextFile == null) return;
     if (!exporterToTextFile.canExport()) return;
@@ -29,7 +29,12 @@ public class ExportToTextFileAction extends DumbAwareAction {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     ExporterToTextFile exporterToTextFile = getExporter(dataContext);
-    presentation.setEnabled(
-      CommonDataKeys.PROJECT.getData(dataContext) != null && exporterToTextFile != null && exporterToTextFile.canExport());
+    presentation.setEnabledAndVisible(event.getProject() != null &&
+                                      exporterToTextFile != null && exporterToTextFile.canExport());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

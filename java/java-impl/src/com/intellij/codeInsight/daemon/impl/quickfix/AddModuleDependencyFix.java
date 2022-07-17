@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.ModuleListCellRenderer;
@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
+import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -49,11 +50,17 @@ class AddModuleDependencyFix extends OrderEntryFix {
     for (PsiClass aClass : classes) {
       if (isAccessible(aClass, psiElement)) {
         Module classModule = ModuleUtilCore.findModuleForFile(aClass.getContainingFile());
-        if (classModule != null && classModule != currentModule && !rootManager.isDependsOn(classModule)) {
+        if (classModule != null && classModule != currentModule && !dependsWithScope(rootManager, classModule, scope)) {
           myModules.add(classModule);
         }
       }
     }
+  }
+
+  private static boolean dependsWithScope(ModuleRootManager rootManager, Module classModule, DependencyScope scope) {
+    return ContainerUtil.exists(rootManager.getOrderEntries(), 
+                                entry -> entry instanceof ModuleOrderEntry && classModule.equals(((ModuleOrderEntry)entry).getModule()) &&
+                                         (scope == DependencyScope.TEST || scope == ((ModuleOrderEntry)entry).getScope()));
   }
 
   private static boolean isAccessible(PsiClass aClass, PsiElement refElement) {

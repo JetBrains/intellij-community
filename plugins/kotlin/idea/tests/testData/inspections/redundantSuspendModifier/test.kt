@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun coroutine(block: suspend () -> Unit) {}
 

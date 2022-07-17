@@ -16,7 +16,7 @@
 package org.intellij.lang.regexp.psi;
 
 /**
- * Represents elements that can be part of a {@link org.intellij.lang.regexp.psi.RegExpBranch}.
+ * Represents elements that can be part of a {@link RegExpBranch}.
  */
 public interface RegExpAtom extends RegExpElement {
 }

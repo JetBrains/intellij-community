@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.Executor;
@@ -6,10 +6,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.ExecutorGroup;
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
-import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.TargetEnvironmentConfigurations;
-import com.intellij.execution.target.TargetEnvironmentType;
+import com.intellij.execution.target.*;
 import com.intellij.internal.statistic.IdeActivityDefinition;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -35,9 +32,11 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
   public static final String GROUP_NAME = "run.configuration.exec";
-  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 62);
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 67);
+  public static final IntEventField ALTERNATIVE_JRE_VERSION = EventFields.Int("alternative_jre_version");
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
-  private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor", "run_config_executor");
+  private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor",
+                                                                                           RunConfigurationExecutorUtilValidator.class);
   /**
    * The type of the target the run configuration is being executed with. {@code null} stands for the local machine target.
    * <p>
@@ -45,7 +44,7 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
    * configuration.
    */
   private static final StringEventField TARGET =
-    EventFields.StringValidatedByCustomRule("target", RunConfigurationUsageTriggerCollector.RunTargetValidator.RULE_ID);
+    EventFields.StringValidatedByCustomRule("target", RunTargetValidator.class);
   private static final EnumEventField<RunConfigurationFinishType> FINISH_TYPE =
     EventFields.Enum("finish_type", RunConfigurationFinishType.class);
 
@@ -88,15 +87,28 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
       ObjectEventData objectEventData = new ObjectEventData(additionalData);
       eventPairs.add(ADDITIONAL_FIELD.with(objectEventData));
     }
+    String targetTypeId = getTargetTypeId(project, runConfiguration);
+    if (targetTypeId != null) {
+      eventPairs.add(TARGET.with(targetTypeId));
+    }
+    return eventPairs;
+  }
+
+  private static @Nullable String getTargetTypeId(@NotNull Project project, @Nullable RunConfiguration runConfiguration) {
     if (runConfiguration instanceof TargetEnvironmentAwareRunProfile) {
       String assignedTargetName = ((TargetEnvironmentAwareRunProfile)runConfiguration).getDefaultTargetName();
       TargetEnvironmentConfiguration effectiveTargetConfiguration =
         TargetEnvironmentConfigurations.getEffectiveConfiguration(assignedTargetName, project);
       if (effectiveTargetConfiguration != null) {
-        eventPairs.add(TARGET.with(effectiveTargetConfiguration.getTypeId()));
+        return effectiveTargetConfiguration.getTypeId();
+      }
+    } else if (runConfiguration instanceof ImplicitTargetAwareRunProfile) {
+      TargetEnvironmentType<?> targetType = ((ImplicitTargetAwareRunProfile)runConfiguration).getTargetType();
+      if (targetType != null) {
+        return targetType.getId();
       }
     }
-    return eventPairs;
+    return null;
   }
 
   public static void logProcessFinished(@Nullable StructuredIdeActivity activity,
@@ -107,10 +119,10 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   }
 
   public static class RunConfigurationExecutorUtilValidator extends CustomValidationRule {
-
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "run_config_executor".equals(ruleId);
+    public String getRuleId() {
+      return "run_config_executor";
     }
 
     @NotNull
@@ -129,9 +141,10 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   public static class RunTargetValidator extends CustomValidationRule {
     public static final String RULE_ID = "run_target";
 
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return RULE_ID.equals(ruleId);
+    public String getRuleId() {
+      return RULE_ID;
     }
 
     @NotNull
@@ -150,5 +163,5 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     }
   }
 
-  public enum RunConfigurationFinishType {FAILED_TO_START, UNKNOWN}
+  public enum RunConfigurationFinishType {FAILED_TO_START, UNKNOWN, TERMINATED}
 }

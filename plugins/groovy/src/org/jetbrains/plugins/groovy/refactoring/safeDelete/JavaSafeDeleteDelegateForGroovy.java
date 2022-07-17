@@ -11,6 +11,7 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDele
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
@@ -26,10 +27,10 @@ import java.util.List;
  */
 public class JavaSafeDeleteDelegateForGroovy implements JavaSafeDeleteDelegate {
   @Override
-  public void createUsageInfoForParameter(PsiReference reference,
-                                          List<UsageInfo> usages,
-                                          final PsiParameter parameter,
-                                          final PsiMethod method) {
+  public void createUsageInfoForParameter(@NotNull PsiReference reference,
+                                          @NotNull List<UsageInfo> usages,
+                                          @NotNull PsiParameter parameter,
+                                          @NotNull PsiMethod method) {
     int index = method.getParameterList().getParameterIndex(parameter);
     final PsiElement element = reference.getElement();
     GrCall call = null;

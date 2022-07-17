@@ -10,8 +10,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.ide.ui.UISettings" preload="true"/>
     <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings"/>
-    <applicationService serviceInterface="com.intellij.ide.ui.ToolbarSettings"
-                        serviceImplementation="com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings"/>
 
     <projectService
       serviceInterface="com.intellij.openapi.vcs.FileStatusManager"

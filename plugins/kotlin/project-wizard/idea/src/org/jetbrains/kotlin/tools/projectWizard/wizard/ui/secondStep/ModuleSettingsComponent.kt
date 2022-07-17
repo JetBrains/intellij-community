@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep
 
 import com.intellij.util.ui.JBUI
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.UiEditorUsageStats
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService.UiEditorUsageStats
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.StringValidators
@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingRefe
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.CommonTargetConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.getConfiguratorSettings
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
-import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.TemplatesPlugin
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
@@ -94,17 +93,9 @@ private class ModuleNameComponent(context: Context, private val module: Module) 
 
     override val title: String = KotlinNewProjectWizardUIBundle.message("module.settings.name")
 
-    override fun onInit() {
-        super.onInit()
+    override fun shouldBeShown(): Boolean {
         val isSingleRootMode = read { KotlinPlugin.modules.settingValue }.size == 1
-        when {
-            isSingleRootMode && module.isRootModule -> {
-                textField.disable(KotlinNewProjectWizardUIBundle.message("module.settings.name.same.as.project"))
-            }
-            module.configurator == CommonTargetConfigurator -> {
-                textField.disable(ModuleType.common.name + " " + KotlinNewProjectWizardUIBundle.message("module.settings.name.can.not.be.modified"))
-            }
-        }
+        return super.shouldBeShown() && !(isSingleRootMode && module.isRootModule) && (module.configurator != CommonTargetConfigurator)
     }
 
     companion object {
@@ -124,12 +115,18 @@ private class ModuleTemplateComponent(
     uiEditorUsagesStats: UiEditorUsageStats,
     onTemplateChanged: () -> Unit
 ) : TitledComponent(context) {
+
+    init {
+        if (module.template == null) {
+            module.template = templates.firstOrNull()
+        }
+    }
+
     @OptIn(ExperimentalStdlibApi::class)
     private val dropDown = DropDownComponent(
         context,
         initialValues = templates,
-        initiallySelectedValue = module.template ?: NoneTemplate,
-        filter = { template: Template -> read { template.isApplicableTo(this, module) } },
+        initiallySelectedValue = module.template,
         labelText = null,
     ) { value, isByUser ->
         if (isByUser) {
@@ -174,14 +171,14 @@ private class ModuleTemplateComponent(
 private object NoneTemplate : Template() {
     override val title = KotlinNewProjectWizardUIBundle.message("module.settings.template.none")
     override val description: String = ""
-    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean = true
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean = true
 
     override val id: String = "none"
 }
 
 fun Reader.availableTemplatesFor(module: Module) =
     TemplatesPlugin.templates.propertyValue.values.filter { template ->
-        template.isSupportedByModuleType(module, KotlinPlugin.projectKind.settingValue)
+        template.isSupportedByModuleType(module, KotlinPlugin.projectKind.settingValue, this)
     }
 
 

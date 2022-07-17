@@ -10,7 +10,7 @@ class TestSignature(unittest.TestCase):
         cmp('int', 1)
         cmp('str', 'str')
         cmp('NoneType', None)
-        cmp('test_signature.TestSignature', self)
+        cmp('pydev_tests.test_signature.TestSignature', self)
         cmp('List', [])
         cmp('List[int]', [1, 2, 3])
         cmp('Dict', {})

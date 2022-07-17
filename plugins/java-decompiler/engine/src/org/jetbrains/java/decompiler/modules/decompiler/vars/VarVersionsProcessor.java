@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -110,33 +110,33 @@ public class VarVersionsProcessor {
   }
 
   private static void eliminateNonJavaTypes(VarTypeProcessor typeProcessor) {
-    Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMapExprentMaxTypes();
-    Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMapExprentMinTypes();
+    Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMaxExprentTypes();
+    Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMinExprentTypes();
 
     for (VarVersionPair paar : new ArrayList<>(mapExprentMinTypes.keySet())) {
       VarType type = mapExprentMinTypes.get(paar);
       VarType maxType = mapExprentMaxTypes.get(paar);
 
-      if (type.type == CodeConstants.TYPE_BYTECHAR || type.type == CodeConstants.TYPE_SHORTCHAR) {
-        if (maxType != null && maxType.type == CodeConstants.TYPE_CHAR) {
+      if (type.getType() == CodeConstants.TYPE_BYTECHAR || type.getType() == CodeConstants.TYPE_SHORTCHAR) {
+        if (maxType != null && maxType.getType() == CodeConstants.TYPE_CHAR) {
           type = VarType.VARTYPE_CHAR;
         }
         else {
-          type = type.type == CodeConstants.TYPE_BYTECHAR ? VarType.VARTYPE_BYTE : VarType.VARTYPE_SHORT;
+          type = type.getType() == CodeConstants.TYPE_BYTECHAR ? VarType.VARTYPE_BYTE : VarType.VARTYPE_SHORT;
         }
         mapExprentMinTypes.put(paar, type);
         //} else if(type.type == CodeConstants.TYPE_CHAR && (maxType == null || maxType.type == CodeConstants.TYPE_INT)) { // when possible, lift char to int
         //	mapExprentMinTypes.put(paar, VarType.VARTYPE_INT);
       }
-      else if (type.type == CodeConstants.TYPE_NULL) {
+      else if (type.getType() == CodeConstants.TYPE_NULL) {
         mapExprentMinTypes.put(paar, VarType.VARTYPE_OBJECT);
       }
     }
   }
 
   private static void simpleMerge(VarTypeProcessor typeProcessor, DirectGraph graph, StructMethod mt) {
-    Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMapExprentMaxTypes();
-    Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMapExprentMinTypes();
+    Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMaxExprentTypes();
+    Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMinExprentTypes();
 
     Map<Integer, Set<Integer>> mapVarVersions = new HashMap<>();
 
@@ -169,14 +169,76 @@ public class VarVersionsProcessor {
             VarType secondType = mapExprentMinTypes.get(secondPair);
 
             if (firstType.equals(secondType) ||
-                (firstType.equals(VarType.VARTYPE_NULL) && secondType.type == CodeConstants.TYPE_OBJECT) ||
-                (secondType.equals(VarType.VARTYPE_NULL) && firstType.type == CodeConstants.TYPE_OBJECT)) {
-
+                firstType.equals(VarType.VARTYPE_NULL) && secondType.getType() == CodeConstants.TYPE_OBJECT ||
+                secondType.equals(VarType.VARTYPE_NULL) && firstType.getType() == CodeConstants.TYPE_OBJECT ||
+                firstType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER && secondType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
               VarType firstMaxType = mapExprentMaxTypes.get(firstPair);
               VarType secondMaxType = mapExprentMaxTypes.get(secondPair);
               VarType type = firstMaxType == null ? secondMaxType :
                              secondMaxType == null ? firstMaxType :
                              VarType.getCommonMinType(firstMaxType, secondMaxType);
+
+              if (firstType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER && secondType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
+                switch (secondType.getType()) {
+                  case CodeConstants.TYPE_INT:
+                    type = VarType.VARTYPE_INT;
+                    break;
+                  case CodeConstants.TYPE_SHORT:
+                    type = firstType.getType() == CodeConstants.TYPE_INT ? null : VarType.VARTYPE_SHORT;
+                    break;
+                  case CodeConstants.TYPE_CHAR:
+                    switch (firstType.getType()) {
+                      case CodeConstants.TYPE_INT:
+                      case CodeConstants.TYPE_SHORT:
+                        type = null;
+                        break;
+                      default:
+                        type = VarType.VARTYPE_CHAR;
+                    }
+                    break;
+                  case CodeConstants.TYPE_SHORTCHAR:
+                    switch (firstType.getType()) {
+                      case CodeConstants.TYPE_INT:
+                      case CodeConstants.TYPE_SHORT:
+                      case CodeConstants.TYPE_CHAR:
+                        type = null;
+                        break;
+                      default:
+                        type = VarType.VARTYPE_SHORTCHAR;
+                    }
+                    break;
+                  case CodeConstants.TYPE_BYTECHAR:
+                    switch (firstType.getType()) {
+                      case CodeConstants.TYPE_INT:
+                      case CodeConstants.TYPE_SHORT:
+                      case CodeConstants.TYPE_CHAR:
+                      case CodeConstants.TYPE_SHORTCHAR:
+                        type = null;
+                        break;
+                      default:
+                        type = VarType.VARTYPE_BYTECHAR;
+                    }
+                    break;
+                  case CodeConstants.TYPE_BYTE:
+                    switch (firstType.getType()) {
+                      case CodeConstants.TYPE_INT:
+                      case CodeConstants.TYPE_SHORT:
+                      case CodeConstants.TYPE_CHAR:
+                      case CodeConstants.TYPE_SHORTCHAR:
+                      case CodeConstants.TYPE_BYTECHAR:
+                        type = null;
+                        break;
+                      default:
+                        type = VarType.VARTYPE_BYTE;
+                    }
+                    break;
+                }
+                if (type == null) {
+                  continue;
+                }
+                firstType = type;
+                mapExprentMinTypes.put(firstPair, type);
+              }
 
               mapExprentMaxTypes.put(firstPair, type);
               mapMergedVersions.put(secondPair, firstPair.version);
@@ -188,7 +250,7 @@ public class VarVersionsProcessor {
                 firstType = secondType;
               }
 
-              typeProcessor.getMapFinalVars().put(firstPair, VarTypeProcessor.VAR_NON_FINAL);
+              typeProcessor.getFinalVariables().put(firstPair, VarProcessor.VAR_NON_FINAL);
 
               lstVersions.remove(j);
               //noinspection AssignmentToForLoopParameter
@@ -205,9 +267,9 @@ public class VarVersionsProcessor {
   }
 
   private void setNewVarIndices(VarTypeProcessor typeProcessor, DirectGraph graph, VarVersionsProcessor previousVersionsProcessor) {
-    final Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMapExprentMaxTypes();
-    Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMapExprentMinTypes();
-    Map<VarVersionPair, Integer> mapFinalVars = typeProcessor.getMapFinalVars();
+    final Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMaxExprentTypes();
+    Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMinExprentTypes();
+    Map<VarVersionPair, Integer> mapFinalVars = typeProcessor.getFinalVariables();
 
     CounterContainer counters = DecompilerContext.getCounterContainer();
 
@@ -283,12 +345,12 @@ public class VarVersionsProcessor {
   }
 
   public int getVarFinal(VarVersionPair pair) {
-    Integer fin = typeProcessor.getMapFinalVars().get(pair);
-    return fin == null ? VarTypeProcessor.VAR_FINAL : fin;
+    Integer fin = typeProcessor.getFinalVariables().get(pair);
+    return fin == null ? VarProcessor.VAR_FINAL : fin;
   }
 
   public void setVarFinal(VarVersionPair pair, int finalType) {
-    typeProcessor.getMapFinalVars().put(pair, finalType);
+    typeProcessor.getFinalVariables().put(pair, finalType);
   }
 
   public Map<Integer, Integer> getMapOriginalVarIndices() {

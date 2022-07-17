@@ -1,2 +1,2 @@
 // MODE: property
-val entries<# [:  [jar://kotlin-stdlib-sources.jar!/kotlin/Collections.kt:8501]Set < [jar://kotlin-stdlib-sources.jar!/kotlin/Collections.kt:12273]Map.Entry < [jar://kotlin-stdlib-sources.jar!/kotlin/Primitives.kt:21054]Int ,  [jar://kotlin-stdlib-sources.jar!/kotlin/String.kt:618]String >>] #> = mapOf(1 to "1").entries
+val entries<# [:  [jar://kotlin-stdlib-sources.jar!/kotlin/Collections.kt:8501]Set < [jar://kotlin-stdlib-sources.jar!/kotlin/Collections.kt:12273]Map.Entry < [jar://kotlin-stdlib-sources.jar!/kotlin/Primitives.kt:21362]Int ,  [jar://kotlin-stdlib-sources.jar!/kotlin/String.kt:618]String >>] #> = mapOf(1 to "1").entries

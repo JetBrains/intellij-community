@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -21,14 +21,14 @@ public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
 
   public void testRecursionIsBlocked() {
     final Ref<Boolean> myInnerRunning = new Ref<>(null);
-    service().runTaskSynchronously(new DumbModeTask("parent") {
+    service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("parent") {
       boolean myIsRunning = false;
 
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         myIsRunning = true;
         try {
-          service().runTaskSynchronously(new DumbModeTask("child") {
+          service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("child") {
             @Override
             public void performInDumbMode(@NotNull ProgressIndicator indicator) {
               //the task execution must be postponed, so the captured closure will evaluate to `false`
@@ -47,12 +47,12 @@ public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
   public void testEquivalentTasksAreMerged() {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
-    service().runTaskSynchronously(new DumbModeTask("parent") {
+    service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("parent") {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         for (int i = 0; i < 100; i++) {
           int taskId = i;
-          service().runTaskSynchronously(new DumbModeTask("child") {
+          service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("child") {
             @Override
             public void performInDumbMode(@NotNull ProgressIndicator indicator) {
               childLog.add(taskId);
@@ -73,18 +73,18 @@ public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
 
   public void testDifferentClassesWithSameEquivalentAreNotMerged() {
     List<Integer> childLog = new ArrayList<>();
-    service().runTaskSynchronously(new DumbModeTask("parent") {
+    service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("parent") {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         final String commonEquivalence = "child";
-        DumbModeTask taskA = new DumbModeTask(commonEquivalence) {
+        DumbModeTask taskA = new DumbServiceMergingTaskQueueTest.MyDumbModeTask(commonEquivalence) {
           @Override
           public void performInDumbMode(@NotNull ProgressIndicator indicator) {
             childLog.add(1);
           }
         };
 
-        DumbModeTask taskB = new DumbModeTask(commonEquivalence) {
+        DumbModeTask taskB = new DumbServiceMergingTaskQueueTest.MyDumbModeTask(commonEquivalence) {
           @Override
           public void performInDumbMode(@NotNull ProgressIndicator indicator) {
             childLog.add(-1);
@@ -102,12 +102,12 @@ public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
 
   public void testNonEquivalentTasksAreNotMerged() {
     List<Integer> childLog = new ArrayList<>();
-    service().runTaskSynchronously(new DumbModeTask("parent") {
+    service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("parent") {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         for (int i = 0; i < 100; i++) {
           int taskId = i;
-          service().runTaskSynchronously(new DumbModeTask("child" + i) {
+          service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("child" + i) {
             @Override
             public void performInDumbMode(@NotNull ProgressIndicator indicator) {
               childLog.add(taskId);

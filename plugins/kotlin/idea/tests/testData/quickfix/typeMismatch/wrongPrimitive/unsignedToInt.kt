@@ -1,5 +1,5 @@
 // "Change to '1'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo(param: Int) {}
 
 fun test() {

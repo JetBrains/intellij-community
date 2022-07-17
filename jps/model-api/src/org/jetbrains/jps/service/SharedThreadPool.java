@@ -30,7 +30,7 @@ public abstract class SharedThreadPool implements ExecutorService {
    * @deprecated Use {@link #submit(Runnable)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   public abstract Future<?> executeOnPooledThread(@NotNull Runnable action);
 }

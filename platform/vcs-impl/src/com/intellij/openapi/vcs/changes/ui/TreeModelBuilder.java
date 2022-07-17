@@ -17,7 +17,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,11 +27,8 @@ import java.util.*;
 import java.util.function.Function;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.createLockedFolders;
-import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
-import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.NONE_GROUPING;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.sorted;
-import static com.intellij.util.containers.ContainerUtil.toList;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingInt;
 
@@ -77,15 +73,6 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
    */
   public final static Comparator<FilePath> PATH_COMPARATOR = comparingInt(path -> path.getPath().length());
   public final static Comparator<Change> CHANGE_COMPARATOR = comparing(ChangesUtil::getFilePath, PATH_COMPARATOR);
-
-  /**
-   * @deprecated Use {@link #TreeModelBuilder(Project, ChangesGroupingPolicyFactory)}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public TreeModelBuilder(@NotNull Project project, boolean showFlatten) {
-    this(project, ChangesGroupingSupport.getFactory(showFlatten ? NONE_GROUPING : DIRECTORY_GROUPING));
-  }
 
   /**
    * Requires non-null Project for local changes.
@@ -191,7 +178,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @NotNull
   private TreeModelBuilder insertSpecificFilePathNodeToModel(@NotNull List<? extends FilePath> specificFiles,
-                                                             @NotNull ChangesBrowserSpecificFilePathsNode node,
+                                                             @NotNull ChangesBrowserSpecificFilePathsNode<?> node,
                                                              @NotNull FileStatus status) {
     insertSubtreeRoot(node);
     if (!node.isManyFiles()) {
@@ -238,7 +225,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     if (lists.size() != 1) return false;
     ChangeList single = lists.iterator().next();
     if (!(single instanceof LocalChangeList)) return false;
-    return ((LocalChangeList) single).isBlank();
+    return ((LocalChangeList)single).isBlank();
   }
 
   @NotNull
@@ -269,16 +256,6 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   @NotNull
   public ChangesBrowserNode<?> createTagNode(@NotNull @Nls String tag) {
     return createTagNode(new ChangesBrowserNode.TagImpl(tag));
-  }
-
-  /**
-   * @deprecated Use {@link #createTagNode(ChangesBrowserNode.Tag)} instead.
-   */
-  @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public ChangesBrowserNode<?> createTagNode(@Nullable Object tag) {
-    return createTagNode(ChangesBrowserNode.WrapperTag.wrap(tag));
   }
 
   @NotNull
@@ -482,15 +459,14 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
       node = collapsedNode;
     }
 
-    final Enumeration<?> children = node.children();
-    while (children.hasMoreElements()) {
-      ChangesBrowserNode<?> child = (ChangesBrowserNode<?>)children.nextElement();
+    node.iterateNodeChildren().forEach(child -> {
       collapseDirectories(model, child);
-    }
+    });
   }
 
   @Nullable
-  private static ChangesBrowserNode<?> collapseParentWithOnlyChild(@NotNull ChangesBrowserNode<?> parent, @NotNull ChangesBrowserNode<?> child) {
+  private static ChangesBrowserNode<?> collapseParentWithOnlyChild(@NotNull ChangesBrowserNode<?> parent,
+                                                                   @NotNull ChangesBrowserNode<?> child) {
     if (child.isLeaf()) return null;
 
     Object parentUserObject = parent.getUserObject();
@@ -509,9 +485,8 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
       parent.remove(0);
 
-      @SuppressWarnings({"unchecked", "rawtypes"})
-      Enumeration<ChangesBrowserNode<?>> children = (Enumeration)child.children();
-      for (ChangesBrowserNode<?> childNode : toList(children)) {
+      List<ChangesBrowserNode<?>> children = child.iterateNodeChildren().toList(); // defensive copy
+      for (ChangesBrowserNode<?> childNode : children) {
         parent.add(childNode);
       }
 
@@ -574,15 +549,5 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   public boolean isEmpty() {
     return myModel.getChildCount(myRoot) == 0;
-  }
-
-  /**
-   * @deprecated Use {@link #setChanges(Collection, ChangeNodeDecorator)} directly.
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public DefaultTreeModel buildModel(@NotNull List<? extends Change> changes, @Nullable ChangeNodeDecorator changeNodeDecorator) {
-    return setChanges(changes, changeNodeDecorator).build();
   }
 }

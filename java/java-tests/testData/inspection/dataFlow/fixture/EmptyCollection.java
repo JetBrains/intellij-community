@@ -39,4 +39,16 @@ class EmptyCollection {
     list.add("foo");
     return list;
   }
+
+  void custom() {
+    SomeDict dictionary = new SomeDict();
+    if (dictionary.contains("aaa")) {}
+  }
+}
+class SomeDict extends ArrayList<String> {
+
+  public SomeDict() {
+    add("aaa");
+    add("bbb");
+  }
 }

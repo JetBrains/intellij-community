@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
 import com.intellij.execution.*;
@@ -8,12 +8,12 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestRunnableState;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,9 +46,20 @@ import java.util.Arrays;
 public abstract class AbstractImportTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(AbstractImportTestsAction.class);
   public static final String TEST_HISTORY_SIZE = "test_history_size";
+  private final Executor myExecutor;
 
-  public AbstractImportTestsAction(@Nullable @NlsActions.ActionText String text, @Nullable @NlsActions.ActionDescription String description, @Nullable Icon icon) {
+  public AbstractImportTestsAction(@Nullable @NlsActions.ActionText String text,
+                                 @Nullable @NlsActions.ActionDescription String description,
+                                 @Nullable Icon icon) {
+    this(text, description, icon, null);
+  }
+
+  public AbstractImportTestsAction(@Nullable @NlsActions.ActionText String text,
+                                   @Nullable @NlsActions.ActionDescription String description,
+                                   @Nullable Icon icon,
+                                   @Nullable Executor executor) {
     super(text, description, icon);
+    myExecutor = executor;
   }
 
 
@@ -68,6 +79,11 @@ public abstract class AbstractImportTestsAction extends AnAction {
     e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Nullable
   protected abstract VirtualFile getFile(@NotNull Project project);
 
@@ -80,27 +96,30 @@ public abstract class AbstractImportTestsAction extends AnAction {
       return;
     }
 
-    doImport(project, file, null);
+    doImport(project, file, null, myExecutor != null ? myExecutor : DefaultRunExecutor.getRunExecutorInstance());
   }
 
   public static void doImport(Project project,
                               VirtualFile file,
                               Long executionId) {
+    doImport(project, file, executionId, DefaultRunExecutor.getRunExecutorInstance());
+  }
+
+  private static void doImport(Project project,
+                               VirtualFile file,
+                               Long executionId,
+                               Executor executor) {
     try {
-      final ImportRunProfile profile = new ImportRunProfile(file, project);
-      final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-      ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.create(project, executor, profile);
-      ExecutionTarget target = profile.getTarget();
-      if (target != null) {
-        builder = builder.target(target);
-      }
+      final ImportRunProfile profile = new ImportRunProfile(file, project, executor);
+      Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
+      //runner should be default to be able to execute ImportProfile, thus it's required to pass defaultExecutor
+      ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.create(project, defaultExecutor, profile);
+      //to correct icon in com.intellij.execution.runners.FakeRerunAction (appended in RunTab), let's set executor here
+      builder.executor(executor);
+
+      builder.target(profile.getTarget());
       if (executionId != null) {
-        builder = builder.executionId(executionId);
-      }
-      final RunConfiguration initialConfiguration = profile.getInitialConfiguration();
-      final ProgramRunner runner = initialConfiguration != null ? ProgramRunner.getRunner(executor.getId(), initialConfiguration) : null;
-      if (runner != null) {
-        builder.runner(runner);
+        builder.executionId(executionId);
       }
       builder.buildAndExecute();
     }
@@ -130,13 +149,19 @@ public abstract class AbstractImportTestsAction extends AnAction {
     private RunConfiguration myConfiguration;
     private boolean myImported;
     private String myTargetId;
+    private final Executor myExecutor;
 
     public ImportRunProfile(VirtualFile file, Project project) {
+      this(file, project, DefaultRunExecutor.getRunExecutorInstance());
+    }
+
+    public ImportRunProfile(VirtualFile file, Project project, Executor executor) {
       myFile = file;
       myProject = project;
+      myExecutor = executor;
       class TerminateParsingException extends SAXException { }
       try (InputStream inputStream = new BufferedInputStream(new FileInputStream(VfsUtilCore.virtualToIoFile(myFile)))) {
-        SAXParserFactory factory = SAXParserFactory.newInstance();
+        SAXParserFactory factory = SAXParserFactory.newDefaultInstance();
         factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         factory.newSAXParser().parse(inputStream, new DefaultHandler() {
           boolean isConfigContent = false;
@@ -236,6 +261,10 @@ public abstract class AbstractImportTestsAction extends AnAction {
       }
       if (myConfiguration != null) {
         try {
+          if (!executor.equals(myExecutor)) { //restart initial configuration with predefined executor
+            ExecutionEnvironmentBuilder.create(myExecutor, myConfiguration).target(getTarget()).buildAndExecute();
+            return null;
+          }
           return myConfiguration.getState(executor, environment);
         }
         catch (Throwable e) {

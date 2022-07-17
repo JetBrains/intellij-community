@@ -8,14 +8,18 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.intentions.canBeReplacedWithInvokeCall
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
+import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.isNullabilityMismatch
 
@@ -42,8 +46,12 @@ class WrapWithSafeLetCallFix(
         } else {
             nullableExpression.text
         }
-        val validator = NewDeclarationNameValidator(element, nullableExpression, NewDeclarationNameValidator.Target.VARIABLES)
-        val name = KotlinNameSuggester.suggestNameByName("it", validator)
+        val validator = Fe10KotlinNewDeclarationNameValidator(
+            element,
+            nullableExpression,
+            KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER
+        )
+        val name = Fe10KotlinNameSuggester.suggestNameByName("it", validator)
 
         nullableExpression.replace(factory.createExpression(name))
         val underLetExpression = when {
@@ -87,13 +95,33 @@ class WrapWithSafeLetCallFix(
 
     object TypeMismatchFactory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val typeMismatch = Errors.TYPE_MISMATCH.cast(diagnostic)
-            val argument = typeMismatch.psiElement.parent as? KtValueArgument ?: return null
+            val element = diagnostic.psiElement as? KtExpression ?: return null
+            val argument = element.parent as? KtValueArgument ?: return null
             val call = argument.getParentOfType<KtCallExpression>(true) ?: return null
 
-            if (!isNullabilityMismatch(expected = typeMismatch.a, actual = typeMismatch.b)) return null
+            val expectedType: KotlinType
+            val actualType: KotlinType
+            when (diagnostic.factory) {
+                Errors.TYPE_MISMATCH -> {
+                    val diagnosticWithParameters = Errors.TYPE_MISMATCH.cast(diagnostic)
+                    expectedType = diagnosticWithParameters.a
+                    actualType = diagnosticWithParameters.b
+                }
+                Errors.TYPE_MISMATCH_WARNING -> {
+                    val diagnosticWithParameters = Errors.TYPE_MISMATCH_WARNING.cast(diagnostic)
+                    expectedType = diagnosticWithParameters.a
+                    actualType = diagnosticWithParameters.b
+                }
+                ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS -> {
+                    val diagnosticWithParameters = ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.cast(diagnostic)
+                    expectedType = diagnosticWithParameters.a
+                    actualType = diagnosticWithParameters.b
+                }
+                else -> return null
+            }
 
-            return WrapWithSafeLetCallFix(call.getLastParentOfTypeInRow<KtQualifiedExpression>() ?: call, typeMismatch.psiElement)
+            if (element.isNull() || !isNullabilityMismatch(expected = expectedType, actual = actualType)) return null
+            return WrapWithSafeLetCallFix(call.getLastParentOfTypeInRow<KtQualifiedExpression>() ?: call, element)
         }
     }
 }

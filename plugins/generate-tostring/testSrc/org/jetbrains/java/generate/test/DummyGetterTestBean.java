@@ -18,6 +18,7 @@ package org.jetbrains.java.generate.test;
 /**
  * This is a dummy test bean for testing the toString() plugin.
  */
+@SuppressWarnings("unused")
 public class DummyGetterTestBean {
 
     public int getX() throws RuntimeException { return 0; }

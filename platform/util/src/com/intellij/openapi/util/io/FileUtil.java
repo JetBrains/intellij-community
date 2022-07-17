@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.UtilBundle;
@@ -23,10 +23,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.InvalidPathException;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -46,7 +43,9 @@ public class FileUtil extends FileUtilRt {
   /**
    * @deprecated use {@link com.intellij.util.containers.CollectionFactory#createFilePathSet()}, or other createFilePath*() methods from there
    */
+  @SuppressWarnings("unchecked")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY = 
     SystemInfoRt.isFileSystemCaseSensitive
     ? TObjectHashingStrategy.CANONICAL
@@ -56,6 +55,7 @@ public class FileUtil extends FileUtilRt {
    * @deprecated use {@link com.intellij.util.containers.CollectionFactory#createFilePathSet()}, or other createFilePath*() methods from there
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static final TObjectHashingStrategy<File> FILE_HASHING_STRATEGY =
     new TObjectHashingStrategy<File>() {
       @Override
@@ -71,6 +71,7 @@ public class FileUtil extends FileUtilRt {
 
   private static final Logger LOG = Logger.getInstance(FileUtil.class);
 
+  @Contract(pure = true)
   public static @NotNull @NlsSafe String join(String @NotNull ... parts) {
     return String.join(File.separator, parts);
   }
@@ -85,20 +86,23 @@ public class FileUtil extends FileUtilRt {
    * @return the relative path from the {@code base} to the {@code file} or {@code null}
    */
   @Nullable
+  @Contract(pure = true)
   public static @NlsSafe String getRelativePath(File base, File file) {
     return FileUtilRt.getRelativePath(base, file);
   }
 
   @Nullable
-  public static @NlsSafe String getRelativePath(@NotNull String basePath, @NotNull String filePath, final char separator) {
+  @Contract(pure = true)
+  public static @NlsSafe String getRelativePath(@NotNull String basePath, @NotNull String filePath, char separator) {
     return FileUtilRt.getRelativePath(basePath, filePath, separator);
   }
 
   @Nullable
+  @Contract(pure = true)
   public static @NlsSafe String getRelativePath(@NotNull String basePath,
-                                       @NotNull String filePath,
-                                       final char separator,
-                                       final boolean caseSensitive) {
+                                                @NotNull String filePath,
+                                                char separator,
+                                                boolean caseSensitive) {
     return FileUtilRt.getRelativePath(basePath, filePath, separator, caseSensitive);
   }
 
@@ -120,6 +124,10 @@ public class FileUtil extends FileUtilRt {
    */
   public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {
     return isAncestor(ancestor.getPath(), file.getPath(), strict);
+  }
+
+  public static boolean isAncestor(@NotNull Path ancestor, @NotNull Path file, boolean strict) {
+    return isAncestor(ancestor.toString(), file.toString(), strict);
   }
 
   public static boolean isAncestor(@NotNull String ancestor, @NotNull String file, boolean strict) {
@@ -145,19 +153,23 @@ public class FileUtil extends FileUtilRt {
     return startsWith(filePath, ancestorPath, strict, SystemInfoRt.isFileSystemCaseSensitive, true);
   }
 
+  @Contract(pure = true)
   public static boolean startsWith(@NotNull String path, @NotNull String prefix) {
     return startsWith(path, prefix, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
+  @Contract(pure = true)
   public static boolean startsWith(@NotNull String path, @NotNull String prefix, boolean isCaseSensitive) {
     return startsWith(path, prefix, isCaseSensitive, false);
   }
 
+  @Contract(pure = true)
   public static boolean startsWith(@NotNull String path, @NotNull String prefix, boolean isCaseSensitive, boolean strict) {
     return !ThreeState.NO.equals(startsWith(path, prefix, strict, isCaseSensitive, false));
   }
 
   @NotNull
+  @Contract(pure = true)
   private static ThreeState startsWith(@NotNull String path, @NotNull String prefix, boolean strict, boolean isCaseSensitive, boolean checkImmediateParent) {
     int pathLength = path.length();
     int prefixLength = prefix.length();
@@ -186,6 +198,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @Nullable
+  @Contract(pure = true)
   public static File findAncestor(@NotNull File f1, @NotNull File f2) {
     File ancestor = f1;
     while (ancestor != null && !isAncestor(ancestor, f2, false)) {
@@ -195,6 +208,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @Nullable
+  @Contract(pure = true)
   public static File getParentFile(@NotNull File file) {
     return FileUtilRt.getParentFile(file);
   }
@@ -202,7 +216,7 @@ public class FileUtil extends FileUtilRt {
   public static byte @NotNull [] loadFileBytes(@NotNull File file) throws IOException {
     byte[] bytes;
     try (InputStream stream = new FileInputStream(file)) {
-      final long len = file.length();
+      long len = file.length();
       if (len < 0) {
         throw new IOException("File length reported negative, probably doesn't exist");
       }
@@ -348,7 +362,7 @@ public class FileUtil extends FileUtilRt {
 
     if (isSameDrive) {
       // the optimization is reasonable only if destination dir is located on the same drive
-      final String originalFileName = file.getName();
+      String originalFileName = file.getName();
       File tempFile = getTempFile(originalFileName, tempDir);
       if (file.renameTo(tempFile)) {
         return tempFile;
@@ -402,7 +416,7 @@ public class FileUtil extends FileUtilRt {
     performCopy(fromFile, toFile, false);
   }
 
-  private static void performCopy(@NotNull File fromFile, @NotNull File toFile, final boolean syncTimestamp) throws IOException {
+  private static void performCopy(@NotNull File fromFile, @NotNull File toFile, boolean syncTimestamp) throws IOException {
     if (filesEqual(fromFile, toFile)) return;
 
     try (FileOutputStream fos = openOutputStream(toFile); FileInputStream fis = new FileInputStream(fromFile)) {
@@ -413,7 +427,7 @@ public class FileUtil extends FileUtilRt {
     }
 
     if (syncTimestamp) {
-      final long timeStamp = fromFile.lastModified();
+      long timeStamp = fromFile.lastModified();
       if (timeStamp < 0) {
         LOG.warn("Invalid timestamp " + timeStamp + " of '" + fromFile + "'");
       }
@@ -428,12 +442,12 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  private static FileOutputStream openOutputStream(@NotNull final File file) throws IOException {
+  private static FileOutputStream openOutputStream(@NotNull File file) throws IOException {
     try {
       return new FileOutputStream(file);
     }
     catch (FileNotFoundException e) {
-      final File parentFile = file.getParentFile();
+      File parentFile = file.getParentFile();
       if (parentFile == null) {
         throw new IOException("Parent file is null for " + file.getPath(), e);
       }
@@ -497,7 +511,7 @@ public class FileUtil extends FileUtilRt {
     copyDir(fromDir, toDir, copySystemFiles ? null : file -> !StringUtil.startsWithChar(file.getName(), '.'));
   }
 
-  public static void copyDir(@NotNull File fromDir, @NotNull File toDir, @Nullable final FileFilter filter) throws IOException {
+  public static void copyDir(@NotNull File fromDir, @NotNull File toDir, @Nullable FileFilter filter) throws IOException {
     ensureExists(toDir);
     if (isAncestor(fromDir, toDir, true)) {
       LOG.error(fromDir.getAbsolutePath() + " is ancestor of " + toDir + ". Can't copy to itself.");
@@ -659,9 +673,9 @@ public class FileUtil extends FileUtilRt {
 
   @Contract("null, _, _, _ -> null; !null,_,_,_->!null")
   private static String toCanonicalPath(@Nullable String path,
-                                        final char separatorChar,
-                                        final boolean removeLastSlash,
-                                        final boolean resolveSymlinks) {
+                                        char separatorChar,
+                                        boolean removeLastSlash,
+                                        boolean resolveSymlinks) {
     SymlinkResolver symlinkResolver = resolveSymlinks ? SYMLINK_RESOLVER : null;
     return toCanonicalPath(path, separatorChar, removeLastSlash, symlinkResolver);
   }
@@ -685,7 +699,7 @@ public class FileUtil extends FileUtilRt {
     }
 
     for (int i = start; i < path.length(); ++i) {
-      final char c = path.charAt(i);
+      char c = path.charAt(i);
       if (c == '/') {
         if (separator) {
           return normalizeTail(i, path, true);
@@ -705,7 +719,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   private static String normalizeTail(int prefixEnd, @NotNull String path, boolean separator) {
-    final StringBuilder result = new StringBuilder(path.length());
+    StringBuilder result = new StringBuilder(path.length());
     result.append(path, 0, prefixEnd);
     int start = prefixEnd;
     if (start==0 && SystemInfoRt.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
@@ -715,7 +729,7 @@ public class FileUtil extends FileUtilRt {
     }
 
     for (int i = start; i < path.length(); ++i) {
-      final char c = path.charAt(i);
+      char c = path.charAt(i);
       if (c == '/' || c == '\\') {
         if (!separator) result.append('/');
         separator = true;
@@ -800,7 +814,7 @@ public class FileUtil extends FileUtilRt {
    *             If you need to check whether a file has a specified extension use {@link FileUtilRt#extensionEquals(String, String)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   public static String getExtension(@NotNull String fileName) {
     return Strings.toLowerCase(FileUtilRt.getExtension(fileName));
@@ -850,7 +864,7 @@ public class FileUtil extends FileUtilRt {
   @Nullable
   public static String extractRootPath(@NotNull String normalizedPath) {
     if (SystemInfoRt.isWindows) {
-      if (normalizedPath.length() >= 2 && normalizedPath.charAt(1) == ':') {
+      if (OSAgnosticPathUtil.startsWithWindowsDrive(normalizedPath)) {
         // drive letter
         return StringUtil.toUpperCase(normalizedPath.substring(0, 2));
       }
@@ -858,9 +872,12 @@ public class FileUtil extends FileUtilRt {
         // UNC (https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/62e862f4-2a51-452e-8eeb-dc4ff5ee33cc)
         int p1 = normalizedPath.indexOf('/', 2);
         if (p1 > 2) {
-          int p2 = normalizedPath.indexOf('/', p1 + 1);
-          if (p2 > p1 + 1) return normalizedPath.substring(0, p2);
-          if (p2 < 0) return normalizedPath;
+          if (PathUtilRt.isWindowsUNCRoot(normalizedPath, p1)) {
+            int p2 = normalizedPath.indexOf('/', p1 + 1);
+            if (p2 > p1 + 1) return normalizedPath.substring(0, p2);
+            if (p2 < 0) return normalizedPath;
+          }
+          // else the path doesn't look like UNC, e.g. "//.."
         }
       }
     }
@@ -883,13 +900,13 @@ public class FileUtil extends FileUtilRt {
                                           @NotNull File root,
                                           @NotNull Pattern pattern,
                                           @NotNull List<? super File> files) {
-    final File[] dirs = root.listFiles();
+    File[] dirs = root.listFiles();
     if (dirs == null) return;
     for (File dir : dirs) {
       if (dir.isFile()) {
-        final String relativePath = getRelativePath(absoluteRoot, dir);
+        String relativePath = getRelativePath(absoluteRoot, dir);
         if (relativePath != null) {
-          final String path = toSystemIndependentName(relativePath);
+          String path = toSystemIndependentName(relativePath);
           if (pattern.matcher(path).matches()) {
             files.add(dir);
           }
@@ -918,21 +935,21 @@ public class FileUtil extends FileUtilRt {
   @RegExp
   @NotNull
   public static String convertAntToRegexp(@NotNull String antPattern, boolean ignoreStartingSlash) {
-    final StringBuilder builder = new StringBuilder();
+    StringBuilder builder = new StringBuilder();
     int asteriskCount = 0;
     boolean recursive = true;
-    final int start =
+    int start =
       ignoreStartingSlash && (StringUtil.startsWithChar(antPattern, '/') || StringUtil.startsWithChar(antPattern, '\\')) ? 1 : 0;
     for (int idx = start; idx < antPattern.length(); idx++) {
-      final char ch = antPattern.charAt(idx);
+      char ch = antPattern.charAt(idx);
 
       if (ch == '*') {
         asteriskCount++;
         continue;
       }
 
-      final boolean foundRecursivePattern = recursive && asteriskCount == 2 && (ch == '/' || ch == '\\');
-      final boolean asterisksFound = asteriskCount > 0;
+      boolean foundRecursivePattern = recursive && asteriskCount == 2 && (ch == '/' || ch == '\\');
+      boolean asterisksFound = asteriskCount > 0;
 
       asteriskCount = 0;
       recursive = ch == '/' || ch == '\\';
@@ -973,7 +990,7 @@ public class FileUtil extends FileUtilRt {
     }
 
     // handle ant shorthand: my_package/test/ is interpreted as if it were my_package/test/**
-    final boolean isTrailingSlash = builder.length() > 0 && builder.charAt(builder.length() - 1) == '/';
+    boolean isTrailingSlash = builder.length() > 0 && builder.charAt(builder.length() - 1) == '/';
     if (asteriskCount == 0 && isTrailingSlash || recursive && asteriskCount == 2) {
       if (isTrailingSlash) {
         builder.setLength(builder.length() - 1);
@@ -1082,8 +1099,8 @@ public class FileUtil extends FileUtilRt {
     writeToFile(file, text.getBytes(StandardCharsets.UTF_8), true);
   }
 
-  public static void writeToFile(@NotNull File file, byte @NotNull [] text) throws IOException {
-    writeToFile(file, text, false);
+  public static void writeToFile(@NotNull File file, byte @NotNull [] content) throws IOException {
+    writeToFile(file, content, false);
   }
 
   public static void writeToFile(@NotNull File file, @NotNull String text) throws IOException {
@@ -1096,19 +1113,19 @@ public class FileUtil extends FileUtilRt {
     writeToFile(file, text.getBytes(StandardCharsets.UTF_8), append);
   }
 
-  public static void writeToFile(@NotNull File file, byte @NotNull [] text, int off, int len) throws IOException {
-    writeToFile(file, text, off, len, false);
+  public static void writeToFile(@NotNull File file, byte @NotNull [] content, int off, int len) throws IOException {
+    writeToFile(file, content, off, len, false);
   }
 
-  public static void writeToFile(@NotNull File file, byte @NotNull [] text, boolean append) throws IOException {
-    writeToFile(file, text, 0, text.length, append);
+  public static void writeToFile(@NotNull File file, byte @NotNull [] content, boolean append) throws IOException {
+    writeToFile(file, content, 0, content.length, append);
   }
 
-  private static void writeToFile(@NotNull File file, byte @NotNull [] text, int off, int len, boolean append) throws IOException {
+  private static void writeToFile(@NotNull File file, byte @NotNull [] content, int off, int len, boolean append) throws IOException {
     createParentDirs(file);
 
     try (OutputStream stream = new FileOutputStream(file, append)) {
-      stream.write(text, off, len);
+      stream.write(content, off, len);
     }
   }
 
@@ -1130,17 +1147,18 @@ public class FileUtil extends FileUtilRt {
    * @deprecated use  {@link #fileTraverser(File)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor,
-                                                @Nullable final Processor<? super File> directoryFilter) {
-    final LinkedList<File> queue = new LinkedList<>();
+  @ApiStatus.ScheduledForRemoval
+  public static boolean processFilesRecursively(@NotNull File root,
+                                                @NotNull Processor<? super File> processor,
+                                                @Nullable Processor<? super File> directoryFilter) {
+    LinkedList<File> queue = new LinkedList<>();
     queue.add(root);
     while (!queue.isEmpty()) {
-      final File file = queue.removeFirst();
+      File file = queue.removeFirst();
       if (!processor.process(file)) return false;
       if (directoryFilter != null && (!file.isDirectory() || !directoryFilter.process(file))) continue;
 
-      final File[] children = file.listFiles();
+      File[] children = file.listFiles();
       if (children != null) {
         ContainerUtil.addAll(queue, children);
       }
@@ -1204,7 +1222,7 @@ public class FileUtil extends FileUtilRt {
    * @return path of the first of found files or empty string or null.
    */
   @Nullable
-  public static @NlsSafe String findFileInProvidedPath(String providedPath, String... fileNames) {
+  public static @NlsSafe String findFileInProvidedPath(@NotNull String providedPath, @NotNull String @NotNull ... fileNames) {
     if (Strings.isEmpty(providedPath)) {
       return "";
     }
@@ -1244,21 +1262,17 @@ public class FileUtil extends FileUtilRt {
 
   /** @deprecated ambiguous w.r.t. to normalized UNC paths; consider using {@link OSAgnosticPathUtil} or {@link java.nio.file NIO2} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isUnixAbsolutePath(@NotNull String path) {
     return path.startsWith("/");
   }
 
   /** @deprecated does not support UNC paths; consider using {@link OSAgnosticPathUtil} or {@link java.nio.file NIO2} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isWindowsAbsolutePath(@NotNull String path) {
-    boolean ok = path.length() >= 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':';
-    if (ok && path.length() > 2) {
-      char separatorChar = path.charAt(2);
-      ok = separatorChar == '/' || separatorChar == '\\';
-    }
-    return ok;
+    return path.length() <= 2 && OSAgnosticPathUtil.startsWithWindowsDrive(path)
+           || OSAgnosticPathUtil.isAbsoluteDosPath(path);
   }
 
   @Contract("null -> null; !null -> !null")
@@ -1306,7 +1320,7 @@ public class FileUtil extends FileUtilRt {
       return false;
     }
 
-    final int lineBreak = Strings.indexOf(firstCharsIfText, '\n', 2);
+    int lineBreak = Strings.indexOf(firstCharsIfText, '\n', 2);
     return lineBreak >= 0 && Strings.indexOf(firstCharsIfText, marker, 2, lineBreak) != -1;
   }
 
@@ -1385,6 +1399,19 @@ public class FileUtil extends FileUtilRt {
 
   public static void setExecutable(@NotNull File file) throws IOException {
     NioFiles.setExecutable(file.toPath());
+  }
+
+  public static @Nullable String loadFileOrNull(@NotNull String path) {
+    return loadFileOrNull(new File(path));
+  }
+
+  public static @Nullable String loadFileOrNull(@NotNull File file) {
+    try {
+      return loadFile(file);
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 
   @NotNull
@@ -1476,6 +1503,10 @@ public class FileUtil extends FileUtilRt {
     }
 
     return true;
+  }
+
+  public static boolean deleteWithRenamingIfExists(@NotNull Path file) {
+    return Files.exists(file) && deleteWithRenaming(file);
   }
 
   public static boolean deleteWithRenaming(@NotNull Path file) {

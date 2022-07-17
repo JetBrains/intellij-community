@@ -9,10 +9,11 @@ import com.intellij.openapi.options.colors.AttributesDescriptor
 import com.intellij.openapi.options.colors.ColorDescriptor
 import com.intellij.openapi.options.colors.ColorSettingsPage
 import com.intellij.openapi.options.colors.RainbowColorSettingsPage
-import org.jetbrains.kotlin.idea.KotlinBundle
+import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.highlighter.dsl.DslHighlighterExtension
+import org.jetbrains.kotlin.idea.highlighter.dsl.DslKotlinHighlightingVisitorExtension
 import java.lang.reflect.Modifier
 
 class KotlinColorSettingsPage : ColorSettingsPage, RainbowColorSettingsPage {
@@ -105,7 +106,7 @@ var <PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION><MUTABLE_VARIABLE>globalCounte
             }
         }
 
-        map.putAll(DslHighlighterExtension.descriptionsToStyles)
+        map.putAll(DslKotlinHighlightingVisitorExtension.descriptionsToStyles)
 
         return map
     }
@@ -179,11 +180,16 @@ var <PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION><MUTABLE_VARIABLE>globalCounte
             KotlinBundle.message("highlighter.descriptor.text.smart.cast.receiver") to KotlinHighlightingColors.SMART_CAST_RECEIVER,
             KotlinBundle.message("highlighter.descriptor.text.label") to KotlinHighlightingColors.LABEL,
             KotlinBundle.message("highlighter.descriptor.text.named.argument") to KotlinHighlightingColors.NAMED_ARGUMENT
-        ) + DslHighlighterExtension.descriptionsToStyles.map { (description, key) -> description to key }.toTypedArray()
+        ) + DslKotlinHighlightingVisitorExtension.descriptionsToStyles.map { (description, key) -> description to key }.toTypedArray()
     }
 
     override fun getColorDescriptors(): Array<ColorDescriptor> = ColorDescriptor.EMPTY_ARRAY
-    override fun getDisplayName(): String = KotlinLanguage.NAME
+    override fun getDisplayName(): String {
+        @Suppress("UnnecessaryVariable")
+        @NlsSafe
+        val name = KotlinLanguage.NAME
+        return name
+    }
 
     override fun isRainbowType(type: TextAttributesKey): Boolean {
         return type == KotlinHighlightingColors.LOCAL_VARIABLE ||

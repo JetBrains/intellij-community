@@ -7,9 +7,10 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
 import com.intellij.serialization.PropertyMapping;
 import com.intellij.util.containers.Interner;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.DependencyAccessorsModel;
+import org.jetbrains.plugins.gradle.model.VersionCatalogsModel;
 
 import java.io.File;
 import java.util.List;
@@ -20,6 +21,8 @@ public final class BuildScriptClasspathData extends AbstractExternalEntityData {
   @NotNull
   public static final Key<BuildScriptClasspathData> KEY =
     Key.create(BuildScriptClasspathData.class, ProjectKeys.LIBRARY_DEPENDENCY.getProcessingWeight() + 1);
+  public static final Key<VersionCatalogsModel> VERSION_CATALOGS = Key.create(VersionCatalogsModel.class, KEY.getProcessingWeight());
+  public static final Key<DependencyAccessorsModel> ACCESSORS = Key.create(DependencyAccessorsModel.class, KEY.getProcessingWeight());
 
   @Nullable
   private File gradleHomeDir;
@@ -86,8 +89,7 @@ public final class BuildScriptClasspathData extends AbstractExternalEntityData {
     /**
      * @deprecated use ClasspathEntry{@link #create(Set, Set, Set)} to avoid memory leaks
      */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @Deprecated(forRemoval = true)
     @PropertyMapping({"classesFile", "sourcesFile", "javadocFile"})
     public ClasspathEntry(@NotNull Set<String> classesFile, @NotNull Set<String> sourcesFile, @NotNull Set<String> javadocFile) {
       this.classesFile = classesFile;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.idea.Bombed;
@@ -50,8 +50,8 @@ public class TestCaseLoader {
   private static final boolean RUN_WITH_TEST_DISCOVERY = System.getProperty("test.discovery.listener") != null;
   private static final boolean HARDWARE_AGENT_REQUIRED = "true".equals(System.getProperty(HARDWARE_AGENT_REQUIRED_FLAG));
 
-  private static final int TEST_RUNNERS_COUNT = Integer.valueOf(System.getProperty(TEST_RUNNERS_COUNT_FLAG, "1"));
-  private static final int TEST_RUNNER_INDEX = Integer.valueOf(System.getProperty(TEST_RUNNER_INDEX_FLAG, "0"));
+  private static final int TEST_RUNNERS_COUNT = Integer.parseInt(System.getProperty(TEST_RUNNERS_COUNT_FLAG, "1"));
+  private static final int TEST_RUNNER_INDEX = Integer.parseInt(System.getProperty(TEST_RUNNER_INDEX_FLAG, "0"));
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
@@ -89,7 +89,7 @@ public class TestCaseLoader {
     System.out.println(myTestClassesFilter);
   }
 
-  private TestClassesFilter calcTestClassFilter(String classFilterName) {
+  private static TestClassesFilter calcTestClassFilter(String classFilterName) {
     String patterns = getTestPatterns();
     if (!StringUtil.isEmpty(patterns)) {
       System.out.println("Using patterns: [" + patterns + "]");
@@ -225,7 +225,7 @@ public class TestCaseLoader {
   }
 
   private boolean shouldExcludeTestClass(String moduleName, Class<?> testCaseClass) {
-    if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass)) return true;
+    if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass.getSimpleName())) return true;
     String className = testCaseClass.getName();
     return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass) || isExcludeFromTestDiscovery(testCaseClass);
   }
@@ -254,8 +254,8 @@ public class TestCaseLoader {
     }
   }
 
-  protected ClassLoader getClassLoader() {
-    return getClass().getClassLoader();
+  protected static ClassLoader getClassLoader() {
+    return TestCaseLoader.class.getClassLoader();
   }
 
   public List<Throwable> getClassLoadingErrors() {
@@ -350,14 +350,31 @@ public class TestCaseLoader {
     return INCLUDE_PERFORMANCE_TESTS;
   }
 
-  static boolean shouldIncludePerformanceTestCase(Class<?> aClass) {
-    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null, aClass);
+  public static boolean shouldIncludePerformanceTestCase(String className) {
+    if (isIncludingPerformanceTestsRun()) return true;
+    boolean isPerformanceTest = isPerformanceTest(null, className);
+    return isPerformanceTestsRun() == isPerformanceTest;
   }
 
-  static boolean isPerformanceTest(String methodName, Class<?> aClass) {
-    return TestFrameworkUtil.isPerformanceTest(methodName, aClass.getSimpleName());
+  static boolean isPerformanceTest(String methodName, String className) {
+    return TestFrameworkUtil.isPerformanceTest(methodName, className);
   }
 
+  private static TestClassesFilter ourFilter;
+  public static boolean isClassIncluded(String className) {
+    if (!INCLUDE_UNCONVENTIONALLY_NAMED_TESTS && 
+        !className.endsWith("Test")) {
+      return false;
+    }
+
+    if (ourFilter == null) {
+      ourFilter = calcTestClassFilter("tests/testGroups.properties");
+    }
+    return shouldIncludePerformanceTestCase(className) &&
+           matchesCurrentBucket(className) &&
+           ourFilter.matches(className);
+  }
+  
   public void fillTestCases(String rootPackage, List<Path> classesRoots) {
     long t = System.nanoTime();
 
@@ -378,10 +395,12 @@ public class TestCaseLoader {
     t = (System.nanoTime() - t) / 1_000_000;
     System.out.println("Loaded " + getClassesCount() + " classes in " + t + " ms");
 
-    if (!RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0 && !Boolean.getBoolean("idea.tests.ignoreEmptySuite")) {
+    if (!RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0 && !Boolean.getBoolean("idea.tests.ignoreJUnit3EmptySuite")) {
       // Specially formatted error message will fail the build
       // See https://www.jetbrains.com/help/teamcity/build-script-interaction-with-teamcity.html#BuildScriptInteractionwithTeamCity-ReportingMessagesForBuildLog
-      System.out.println("##teamcity[message text='Expected some tests to be executed, but no test classes were found.' status='ERROR']");
+      System.out.println("##teamcity[message text='Expected some junit 3 or junit 4 tests to be executed, but no test classes were found. " +
+                         "If all your tests are junit 5 and you do not expect old junit tests to be executed, please pass vm option " +
+                         "-Didea.tests.ignoreJUnit3EmptySuite=true' status='ERROR']");
     }
   }
 

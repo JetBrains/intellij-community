@@ -1,0 +1,168 @@
+_ast.ImportFrom.level
+_collections_abc.AsyncGenerator.ag_await
+_collections_abc.AsyncGenerator.ag_code
+_collections_abc.AsyncGenerator.ag_frame
+_collections_abc.AsyncGenerator.ag_running
+_collections_abc.ItemsView.__reversed__
+_collections_abc.KeysView.__reversed__
+_collections_abc.ValuesView.__reversed__
+
+# These are not positional-only at runtime, but we treat them
+# as positional-only to match dict.
+_collections_abc.MutableMapping.pop
+_collections_abc.MutableMapping.setdefault
+
+# typing.IO uses positional-or-keyword arguments, but in the stubs we prefer
+# to mark these as positional-only for compatibility with existing sub-classes.
+typing.BinaryIO.write
+typing.IO.read
+typing.IO.readline
+typing.IO.readlines
+typing.IO.seek
+typing.IO.truncate
+typing.IO.write
+typing.IO.writelines
+
+_weakref.ProxyType.__reversed__  # Doesn't really exist
+ast.Bytes.__new__
+ast.Ellipsis.__new__
+ast.ExtSlice.__new__
+ast.ImportFrom.level
+ast.Index.__new__
+ast.NameConstant.__new__
+ast.Num.__new__
+ast.Str.__new__
+asyncio.Future.__init__  # Usually initialized from c object
+asyncio.Future._callbacks  # Usually initialized from c object
+asyncio.futures.Future.__init__  # Usually initialized from c object
+asyncio.futures.Future._callbacks  # Usually initialized from c object
+builtins.dict.get
+builtins.float.__set_format__  # Internal method for CPython test suite
+builtins.property.__set_name__  # Doesn't actually exist
+contextvars.Context.__init__  # Default C __init__ signature is wrong
+contextlib.AbstractAsyncContextManager.__class_getitem__
+contextlib.AbstractContextManager.__class_getitem__
+dataclasses.field
+dataclasses.KW_ONLY
+enum.Enum._generate_next_value_
+fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
+ftplib.FTP.trust_server_pasv_ipv4_address  # Dangerous to use, intentionally undocumented, intentionally missing from typeshed. #6154
+gettext.install
+gettext.translation
+hmac.new  # Stub is a white lie; see comments in the stub
+http.server.SimpleHTTPRequestHandler.__init__  # *args is expanded
+importlib.abc.Traversable.__init__  # Inherits __init__ from typing.Protocol
+importlib.metadata.PackageMetadata.__init__  # Inherits __init__ from typing.Protocol
+importlib.metadata._meta.PackageMetadata.__init__  # Inherits __init__ from typing.Protocol
+importlib.metadata._meta.SimplePath.__init__  # Inherits __init__ from typing.Protocol
+ipaddress.IPv4Interface.hostmask
+ipaddress.IPv6Interface.hostmask
+ipaddress._BaseNetwork.broadcast_address
+ipaddress._BaseNetwork.hostmask
+multiprocessing.spawn._main
+os.PathLike.__class_getitem__  # PathLike is a protocol; we don't expect all PathLike classes to implement class_getitem
+pickle.Pickler.reducer_override  # implemented in C pickler
+# platform.uname_result's processor field is now dynamically made to exist
+platform.uname_result.__match_args__
+platform.uname_result.__new__
+platform.uname_result._fields
+platform.uname_result.processor
+queue.SimpleQueue.__init__  # Default C __init__ signature is wrong
+re.Pattern.scanner  # Undocumented and not useful. #6405
+ssl.PROTOCOL_SSLv3  # Depends on ssl compilation
+ssl.RAND_egd  # Depends on openssl compilation
+symtable.SymbolTable.has_exec
+sys.UnraisableHookArgs  # Not exported from sys
+types.ClassMethodDescriptorType.__get__
+types.CodeType.replace  # stubtest thinks default values are None but None doesn't work at runtime
+types.GenericAlias.__getattr__
+types.GenericAlias.__mro_entries__
+types.GenericAlias.__call__  # Would be complicated to fix properly, Any could silence problems. #6392
+types.MethodDescriptorType.__get__
+types.WrapperDescriptorType.__get__
+typing._SpecialForm.__mro_entries__
+typing.ForwardRef._evaluate
+typing.SupportsAbs.__init__
+typing.SupportsBytes.__init__
+typing.SupportsComplex.__init__
+typing.SupportsFloat.__init__
+typing.SupportsIndex.__init__
+typing.SupportsInt.__init__
+typing.SupportsRound.__init__
+typing._SpecialForm.__init__
+typing._TypedDict.__delitem__
+typing._TypedDict.__ior__
+typing._TypedDict.__or__
+typing._TypedDict.copy
+typing._TypedDict.items
+typing._TypedDict.keys
+typing._TypedDict.pop
+typing._TypedDict.setdefault
+typing._TypedDict.update
+typing._TypedDict.values
+weakref.ProxyType.__reversed__  # Doesn't really exist
+weakref.WeakValueDictionary.update
+xml.etree.ElementTree.XMLParser.__init__  # Defined in C so has general signature
+xml.etree.cElementTree.XMLParser.__init__  # Defined in C so has general signature
+
+# positional-only complaints caused by differences between typing aliases and the "real" classes in the stdlib
+_collections_abc.AsyncGenerator.asend
+_collections_abc.AsyncGenerator.athrow
+_collections_abc.Coroutine.send
+_collections_abc.Coroutine.throw
+_collections_abc.Generator.send
+_collections_abc.Generator.throw
+
+# typing.SupportsRound.__round__  # pos-or-kw at runtime, but we pretend it's pos-only in the stub so that e.g. float.__round__ satisfies the interface
+types.DynamicClassAttribute..*  # In the stub we pretend it's an alias for property, but it has positional-only differences
+
+# These three have a pos-or-keyword first parameter at runtime, but deliberately have a pos-only first parameter in the stub. #6812
+posixpath.join
+ntpath.join
+os.path.join
+
+# These enums derive from (str, Enum). See comment in py3_common.txt
+pstats.SortKey.__new__
+tkinter.EventType.__new__
+
+# stubtest complains that in 3.10 the default argument is inconsistent with the annotation,
+# but in 3.10+ calling the function without the default argument is in fact deprecated,
+# so it's better to ignore stubtest
+ssl.SSLContext.__new__
+ssl._create_unverified_context
+
+# Exists at runtime, but missing from stubs
+_ast.Tuple.dims
+_codecs.unregister
+_collections_abc.AsyncIterable.__class_getitem__
+_collections_abc.Awaitable.__class_getitem__
+_collections_abc.Container.__class_getitem__
+_collections_abc.Iterable.__class_getitem__
+_collections_abc.MappingView.__class_getitem__
+_csv.Reader
+_csv.Writer
+_imp.source_hash
+ast.Tuple.dims
+ast.main
+asynchat.__warningregistry__  # Removal planned for 3.12, can add if someone needs this
+asyncio.AbstractEventLoop.connect_accepted_socket
+asyncio.events.AbstractEventLoop.connect_accepted_socket
+bdb.Breakpoint.clearBreakpoints
+distutils.dist.DistributionMetadata.set_classifiers
+distutils.dist.DistributionMetadata.set_keywords
+distutils.dist.DistributionMetadata.set_platforms
+distutils.util.get_host_platform
+functools.partial.__vectorcalloffset__  # undocumented implementation detail
+multiprocessing.managers.SharedMemoryServer.create
+multiprocessing.managers.SharedMemoryServer.list_segments
+multiprocessing.managers.SharedMemoryServer.public
+multiprocessing.managers.SharedMemoryServer.release_segment
+multiprocessing.managers.SharedMemoryServer.shutdown
+multiprocessing.managers.SharedMemoryServer.track_segment
+pyexpat.XMLParserType.SkippedEntityHandler
+pyexpat.XMLParserType.intern
+typing._SpecialForm.__call__
+unicodedata.UCD.is_normalized
+xml.parsers.expat.XMLParserType.SkippedEntityHandler
+xml.parsers.expat.XMLParserType.intern
+xml.sax.handler.LexicalHandler

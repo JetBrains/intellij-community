@@ -249,4 +249,9 @@ public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
   public void testNoClassCastExceptionInCopiedFunctionWithClassInitAndMethodCall() {
     doSimpleTest("Baz", "Bar", null, true, false, ".baz");
   }
+
+  // PY-16221
+  public void testFromFutureImports() {
+    multiFileTestHelper(".foo", false);
+  }
 }

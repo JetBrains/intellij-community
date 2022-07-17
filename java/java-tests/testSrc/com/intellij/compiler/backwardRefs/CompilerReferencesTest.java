@@ -15,7 +15,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.MoreCollectors;
 
 import java.util.Collection;
 import java.util.List;
@@ -130,11 +129,11 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
 
     assertSize(6, classes);
     for (PsiClass aClass : classes) {
-      PsiClass inheritor = getDirectInheritorsFor(aClass)
+      List<PsiClass> inheritors = getDirectInheritorsFor(aClass)
         .getHierarchyChildren()
         .map(PsiClass.class::cast)
-        .collect(MoreCollectors.onlyOne())
-        .orElse(null);
+        .collect(Collectors.toList());
+      PsiClass inheritor = assertOneElement(inheritors);
       PsiAnonymousClass anonymousInheritor = assertInstanceOf(inheritor, PsiAnonymousClass.class);
       PsiClass superFromReference = PsiUtil.resolveClassInType(anonymousInheritor.getBaseClassType());
       assertEquals(superFromReference, aClass);

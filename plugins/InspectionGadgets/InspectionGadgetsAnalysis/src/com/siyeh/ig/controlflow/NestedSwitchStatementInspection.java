@@ -15,9 +15,11 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.PsiSwitchExpression;
 import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.util.JavaElementKind;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -30,7 +32,8 @@ public class NestedSwitchStatementInspection extends BaseInspection {
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
-      "nested.switch.statement.problem.descriptor", infos[0] instanceof PsiSwitchStatement ? "statement" : "expression");
+      "nested.switch.statement.problem.descriptor",
+      JavaElementKind.fromElement((PsiElement)infos[0]).subject());
   }
 
   @Override
@@ -49,7 +52,7 @@ public class NestedSwitchStatementInspection extends BaseInspection {
     }
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       super.visitSwitchExpression(expression);
       if (ControlFlowUtils.isNestedElement(expression, PsiSwitchBlock.class)) {
         registerError(expression.getFirstChild(), expression);

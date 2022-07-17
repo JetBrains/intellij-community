@@ -27,9 +27,10 @@ class TextFieldComponent(
     private var isDisabled: Boolean = false
     private var cachedValueWhenDisabled: String? = null
 
+    @Suppress("HardCodedStringLiteral")
     private val textField = textField(initialValue.orEmpty(), ::fireValueUpdated)
 
-    override val alignTarget: JComponent? get() = textField
+    override val alignTarget: JComponent get() = textField
 
     override val uiComponent = componentWithCommentAtBottom(textField, description)
 

@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(i: Int) {
     <caret>if (i == 1) {
         "a"

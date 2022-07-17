@@ -1,4 +1,5 @@
-// WITH_RUNTIME
+// SKIP_ERRORS_BEFORE
+// WITH_STDLIB
 
 enum class Entry {
     FOO, BAR, BAZ

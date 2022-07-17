@@ -1,14 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.regex.PatternSyntaxException;
+
 public class RegExMacro extends MacroBase {
+  private static final Logger LOG = Logger.getInstance(RegExMacro.class);
 
   public RegExMacro() {
     super("regularExpression", "regularExpression(String, Pattern, Replacement)");
@@ -32,6 +36,13 @@ public class RegExMacro extends MacroBase {
     if (replacement == null) {
       return null;
     }
-    return new TextResult(value.toString().replaceAll(pattern.toString(), replacement.toString()));
+    try {
+      return new TextResult(value.toString().replaceAll(pattern.toString(), replacement.toString()));
+    } catch (IndexOutOfBoundsException e) {
+      LOG.warn("Incorrect replacement value specified in Live Template '" + getName() + "' regularExpression() expression");
+    } catch (PatternSyntaxException e) {
+      LOG.warn("Incorrect regex specified in Live Template '" + getName() + "' regularExpression() expression");
+    }
+    return null;
   }
 }

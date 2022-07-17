@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.application.Topics;
@@ -65,7 +65,7 @@ public final class WelcomeScreenComponentFactory {
 
     String welcomeScreenLogoUrl = appInfo.getApplicationSvgIconUrl();
     if (welcomeScreenLogoUrl != null) {
-      Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl);
+      Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader());
       float scale = 28f / icon.getIconWidth();
       Icon smallLogoIcon = IconUtil.scale(icon, null, scale);
       JLabel logo = new JLabel(smallLogoIcon);
@@ -124,7 +124,7 @@ public final class WelcomeScreenComponentFactory {
 
     String welcomeScreenLogoUrl = appInfo.getWelcomeScreenLogoUrl();
     if (welcomeScreenLogoUrl != null) {
-      JLabel logo = new JLabel(IconLoader.getIcon(welcomeScreenLogoUrl));
+      JLabel logo = new JLabel(IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader()));
       logo.setBorder(JBUI.Borders.empty(30, 0, 10, 0));
       logo.setHorizontalAlignment(SwingConstants.CENTER);
       panel.add(logo, BorderLayout.NORTH);
@@ -288,22 +288,25 @@ public final class WelcomeScreenComponentFactory {
 
   @NotNull
   public static Component createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
-    ActionLink actionLink = new ActionLink(linkText, AllIcons.Ide.Notification.NoEvents, new AnAction() {
+    ActionLink actionLink = new ActionLink(linkText, AllIcons.Ide.Notification.NoEvents, new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
         if (balloonLayout instanceof WelcomeBalloonLayoutImpl) {
-          WelcomeBalloonLayoutImpl welcomeBalloonLayout = (WelcomeBalloonLayoutImpl)balloonLayout;
-          if (welcomeBalloonLayout.getLocationComponent() == null && e.getInputEvent() != null) {
-            welcomeBalloonLayout.setLocationComponent(e.getInputEvent().getComponent());
-          }
-          welcomeBalloonLayout.showPopup();
+          ((WelcomeBalloonLayoutImpl)balloonLayout).showPopup();
         }
       }
     });
     final JComponent panel = wrapActionLink(actionLink);
     panel.setVisible(false);
     Topics.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, parentDisposable, types -> {
+      BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
+      if (balloonLayout instanceof WelcomeBalloonLayoutImpl) {
+        WelcomeBalloonLayoutImpl welcomeBalloonLayout = (WelcomeBalloonLayoutImpl)balloonLayout;
+        if (welcomeBalloonLayout.getLocationComponent() == null) {
+          welcomeBalloonLayout.setLocationComponent(actionLink);
+        }
+      }
       if (!types.isEmpty()) {
         NotificationType type = Collections.max(types);
         actionLink.setIcon(type == NotificationType.IDE_UPDATE
@@ -326,5 +329,13 @@ public final class WelcomeScreenComponentFactory {
       title += " (" + suffix + ")";
     }
     return title;
+  }
+
+  public static @NotNull JPanel createNotificationPanel(@NotNull Disposable parentDisposable) {
+    JPanel panel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
+    panel.setBorder(JBUI.Borders.emptyTop(10));
+    panel.add(createErrorsLink(parentDisposable));
+    panel.add(createEventLink("", parentDisposable));
+    return panel;
   }
 }

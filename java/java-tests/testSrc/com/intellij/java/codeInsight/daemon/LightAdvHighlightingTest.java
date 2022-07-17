@@ -1,15 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.impl.GotoNextErrorHandler;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ReassignedVariableInspection;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
@@ -42,8 +45,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * This class is for "lightweight" tests only, i.e. those which can run inside default light project set up
- * For "heavyweight" tests use AdvHighlightingTest
+ * This class is for "lightweight" tests only, i.e., those which can run inside default light project.
+ * For "heavyweight" tests use {@link AdvHighlightingTest}
  */
 public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
@@ -51,7 +54,11 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   private UnusedDeclarationInspectionBase myUnusedDeclarationInspection;
 
   private void doTest(boolean checkWarnings) {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+    doTest(checkWarnings, false);
+  }
+
+  private void doTest(boolean checkWarnings, boolean checkInfos) {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
 
   @Override
@@ -60,6 +67,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     myUnusedDeclarationInspection = new UnusedDeclarationInspection(isUnusedInspectionRequired());
     enableInspectionTool(myUnusedDeclarationInspection);
     enableInspectionTool(new UnusedImportInspection());
+    enableInspectionTool(new AccessStaticViaInstance());
+    enableInspectionTool(new ReassignedVariableInspection());
     setLanguageLevel(LanguageLevel.JDK_1_4);
   }
 
@@ -98,7 +107,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testCtrCallIsFirst() { doTest(false); }
   public void testAccessLevelClash() { doTest(false); }
   public void testCasts() { doTest(false); }
-  public void testOverrideConflicts() { doTest(false); }
+  public void testOverrideConflicts() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.HIGHEST, () -> doTest(false)); }
   public void testOverriddenMethodIsFinal() { doTest(false); }
   public void testMissingReturn() { doTest(false); }
   public void testUnreachable() { doTest(false); }
@@ -130,10 +139,11 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testLabels() { doTest(false); }
   public void testUnclosedBlockComment() { doTest(false); }
   public void testUnclosedComment() { doTest(false); }
+  public void testBadUnicodeEscapeInComment() { doTest(false); }
   public void testUnclosedDecl() { doTest(false); }
   public void testSillyAssignment() {
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
-    doTest(true);
+    doTest(true, true);
   }
   public void testTernary() { doTest(false); }
   public void testDuplicateClass() { doTest(false); }
@@ -142,7 +152,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnhandledMessingWithFinally() { doTest(false); }
   public void testSerializableStuff() {  doTest(true); }
   public void testDeprecated() { doTest(true); }
-  public void testJavadoc() { enableInspectionTool(new JavaDocLocalInspection()); doTest(true); }
+  public void testJavadoc() { enableInspectionTool(new JavadocDeclarationInspection()); doTest(true); }
   public void testExpressionsInSwitch () { doTest(false); }
   public void testAccessInner() {
     Editor e = createSaveAndOpenFile("x/BeanContextServicesSupport.java",
@@ -224,7 +234,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMustBeFinal() { doTest(false); }
 
   public void testXXX() { doTest(false); }
-  public void testUnused() { doTest(true); }
+  public void testUnused() { doTest(true, true); }
   public void testQualifierBeforeClassName() { doTest(false); }
   public void testQualifiedSuper() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), getTestRootDisposable());
@@ -342,20 +352,18 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertEmpty(highlightErrors());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    final StringBuilder sb = new StringBuilder("\"-\"");
-    for (int i = 0; i < 10000; i++) sb.append("+\"b\"");
-    final String hugeExpr = sb.toString();
-    final int pos = getEditor().getDocument().getText().indexOf("\"\"");
+    String hugeExpr = "\"-\"" + "+\"b\"".repeat(10000);
+    int pos = getEditor().getDocument().getText().indexOf("\"\"");
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       getEditor().getDocument().replaceString(pos, pos + 2, hugeExpr);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     });
 
-    final PsiField field = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
-    final PsiExpression expression = field.getInitializer();
+    PsiField field = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
+    PsiExpression expression = field.getInitializer();
     assert expression != null;
-    final PsiType type = expression.getType();
+    PsiType type = expression.getType();
     assert type != null;
     assertEquals("PsiType:String", type.toString());
   }
@@ -402,6 +410,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testTooManyArrayDimensions() { doTest(false);}
+
   public void testInsane() {
     configureFromFileText("x.java", "class X { \nx_x_x_x\n }");
     List<HighlightInfo> infos = highlightErrors();
@@ -413,5 +423,25 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMarkUsedDefaultAnnotationMethodUnusedInspection() {
     setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest(true);
+  }
+
+  public void testNavigateByReassignVariables() {
+    doTest(true, true);
+    DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
+    boolean old = settings.isNextErrorActionGoesToErrorsFirst();
+    settings.setNextErrorActionGoesToErrorsFirst(true);
+    try {
+      int offset = getEditor().getCaretModel().getOffset();
+      new GotoNextErrorHandler(true).invoke(getProject(), getEditor(), getFile());
+
+      assertEquals(offset, getEditor().getCaretModel().getOffset());
+    }
+    finally {
+      settings.setNextErrorActionGoesToErrorsFirst(old);
+    }
+  }
+
+  public void testUninitializedVarComplexTernary() {
+    doTest(false);
   }
 }

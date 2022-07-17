@@ -4,6 +4,7 @@ package com.intellij.remoteServer.impl.configuration;
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -27,7 +28,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-@State(name = "RemoteServers", storages = @Storage("remote-servers.xml"))
+@State(name = "RemoteServers", storages = @Storage("remote-servers.xml"), category = SettingsCategory.TOOLS)
 public class RemoteServersManagerImpl extends RemoteServersManager implements PersistentStateComponent<RemoteServersManagerState> {
   private SkipDefaultValuesSerializationFilters myDefaultValuesFilter = new SkipDefaultValuesSerializationFilters();
   private final List<RemoteServer<?>> myServers = new ArrayList<>();

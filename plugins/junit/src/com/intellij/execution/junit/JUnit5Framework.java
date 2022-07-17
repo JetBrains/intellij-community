@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -26,6 +26,11 @@ public class JUnit5Framework extends JUnitTestFramework {
   @Override
   protected String getMarkerClassFQName() {
     return JUnitUtil.TEST5_ANNOTATION;
+  }
+
+  @Override
+  protected boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
+    return isFrameworkApplicable(clazz, JUnitUtil.CUSTOM_TESTABLE_ANNOTATION);
   }
 
   @Override
@@ -126,7 +131,7 @@ public class JUnit5Framework extends JUnitTestFramework {
   @Override
   public boolean isIgnoredMethod(PsiElement element) {
     final PsiMethod testMethod = element instanceof PsiMethod ? JUnitUtil.getTestMethod(element) : null;
-    return testMethod != null && AnnotationUtil.isAnnotated(testMethod, JUnitUtil.IGNORE_ANNOTATION, 0);
+    return testMethod != null && AnnotationUtil.isAnnotated(testMethod, "org.junit.jupiter.api.Disabled", 0);
   }
 
   @Override
@@ -163,5 +168,10 @@ public class JUnit5Framework extends JUnitTestFramework {
   @Override
   public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit5 Test Class.java");
+  }
+
+  @Override
+  public boolean isSuiteClass(PsiClass psiClass) {
+    return AnnotationUtil.isAnnotated(psiClass, "org.junit.platform.suite.api.Suite", AnnotationUtil.CHECK_HIERARCHY);
   }
 }

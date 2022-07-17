@@ -16,8 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 04.04.2007
+ * @author Dmitry.Krasilschikov
  */
 public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl implements GrAnnotationArrayInitializer, PsiListLikeElement {
 

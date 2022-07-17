@@ -7,7 +7,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider
 import com.intellij.lang.java.JavaFindUsagesProvider
 import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
-import org.jetbrains.kotlin.idea.KotlinIndependentBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
@@ -24,17 +24,17 @@ open class KotlinFindUsagesProviderBase : FindUsagesProvider {
 
     override fun getType(element: PsiElement): String {
         return when (element) {
-            is KtNamedFunction -> KotlinIndependentBundle.message("find.usages.function")
-            is KtClass -> KotlinIndependentBundle.message("find.usages.class")
-            is KtParameter -> KotlinIndependentBundle.message("find.usages.parameter")
+            is KtNamedFunction -> KotlinBundle.message("find.usages.function")
+            is KtClass -> KotlinBundle.message("find.usages.class")
+            is KtParameter -> KotlinBundle.message("find.usages.parameter")
             is KtProperty -> if (element.isLocal)
-                KotlinIndependentBundle.message("find.usages.variable")
+                KotlinBundle.message("find.usages.variable")
             else
-                KotlinIndependentBundle.message("find.usages.property")
-            is KtDestructuringDeclarationEntry -> KotlinIndependentBundle.message("find.usages.variable")
-            is KtTypeParameter -> KotlinIndependentBundle.message("find.usages.type.parameter")
-            is KtSecondaryConstructor -> KotlinIndependentBundle.message("find.usages.constructor")
-            is KtObjectDeclaration -> KotlinIndependentBundle.message("find.usages.object")
+                KotlinBundle.message("find.usages.property")
+            is KtDestructuringDeclarationEntry -> KotlinBundle.message("find.usages.variable")
+            is KtTypeParameter -> KotlinBundle.message("find.usages.type.parameter")
+            is KtSecondaryConstructor -> KotlinBundle.message("find.usages.constructor")
+            is KtObjectDeclaration -> KotlinBundle.message("find.usages.object")
             else -> ""
         }
     }
@@ -50,20 +50,30 @@ open class KotlinFindUsagesProviderBase : FindUsagesProvider {
         return when (element) {
             is PsiDirectory, is PsiPackage, is PsiFile -> javaProvider.getDescriptiveName(element)
             is KtClassOrObject -> {
-                if (element is KtObjectDeclaration && element.isObjectLiteral()) return "<unnamed>"
-                element.fqName?.asString() ?: element.name ?: "<unnamed>"
+                if (element is KtObjectDeclaration && element.isObjectLiteral()) return KotlinBundle.message("usage.provider.text.unnamed")
+                run {
+                    @Suppress("HardCodedStringLiteral")
+                    element.fqName?.asString()
+                } ?: element.name ?: KotlinBundle.message("usage.provider.text.unnamed")
             }
-            is KtProperty -> (element.name ?: "") + (element.containerDescription?.let { " of $it" } ?: "")
+            is KtProperty -> {
+                val name = element.name ?: ""
+                element.containerDescription?.let { KotlinBundle.message("usage.provider.text.property.of.0", name, it) } ?: name
+            }
             is KtFunction -> {
                 //TODO: Correct FIR implementation
                 return element.name?.let { "$it(...)" } ?: ""
             }
-            is KtLabeledExpression -> element.getLabelName() ?: ""
+            is KtLabeledExpression -> {
+                @Suppress("HardCodedStringLiteral")
+                element.getLabelName() ?: ""
+            }
             is KtImportAlias -> element.name ?: ""
             is KtLightElement<*, *> -> element.kotlinOrigin?.let { getDescriptiveName(it) } ?: ""
             is KtParameter -> {
                 if (element.isPropertyParameter()) {
-                    (element.name ?: "") + (element.containerDescription?.let { " of $it" } ?: "")
+                    val name = element.name ?: ""
+                    element.containerDescription?.let { KotlinBundle.message("usage.provider.text.property.of.0", name, it) } ?: name
                 } else {
                     element.name ?: ""
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,21 +70,9 @@ public class UnnecessaryContinueInspection extends BaseInspection {
     public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
       final PsiStatement continuedStatement = statement.findContinuedStatement();
       PsiStatement body = null;
-      if (continuedStatement instanceof PsiForeachStatement) {
-        final PsiForeachStatement foreachStatement = (PsiForeachStatement)continuedStatement;
-        body = foreachStatement.getBody();
-      }
-      else if (continuedStatement instanceof PsiForStatement) {
-        final PsiForStatement forStatement = (PsiForStatement)continuedStatement;
-        body = forStatement.getBody();
-      }
-      else if (continuedStatement instanceof PsiDoWhileStatement) {
-        final PsiDoWhileStatement doWhileStatement = (PsiDoWhileStatement)continuedStatement;
-        body = doWhileStatement.getBody();
-      }
-      else if (continuedStatement instanceof PsiWhileStatement) {
-        final PsiWhileStatement whileStatement = (PsiWhileStatement)continuedStatement;
-        body = whileStatement.getBody();
+      if (continuedStatement instanceof PsiLoopStatement) {
+        final PsiLoopStatement loopStatement = (PsiLoopStatement)continuedStatement;
+        body = loopStatement.getBody();
       }
       if (body == null) {
         return;
@@ -96,11 +84,11 @@ public class UnnecessaryContinueInspection extends BaseInspection {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
         final PsiCodeBlock block = blockStatement.getCodeBlock();
         if (ControlFlowUtils.blockCompletesWithStatement(block, statement)) {
-          registerStatementError(statement);
+          registerError(statement.getFirstChild());
         }
       }
       else if (ControlFlowUtils.statementCompletesWithStatement(body, statement)) {
-        registerStatementError(statement);
+        registerError(statement.getFirstChild());
       }
     }
   }

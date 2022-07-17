@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.html.embedding
 
+import com.intellij.lang.HtmlScriptContentProvider
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageHtmlScriptContentProvider
 import com.intellij.lang.LanguageUtil
@@ -12,10 +13,14 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.TestOnly
 import java.util.stream.Stream
 
+/**
+ * @see HtmlScriptContentProvider
+ */
 interface HtmlEmbeddedContentSupport {
   @JvmDefault
   fun isEnabled(lexer: BaseHtmlLexer): Boolean = true
@@ -24,7 +29,9 @@ interface HtmlEmbeddedContentSupport {
   fun createEmbeddedContentProviders(lexer: BaseHtmlLexer): List<HtmlEmbeddedContentProvider> = emptyList()
 
   companion object {
-    internal val EP_NAME: ExtensionPointName<HtmlEmbeddedContentSupport> = ExtensionPointName.create(
+    @JvmField
+    @ApiStatus.Internal
+    val EP_NAME: ExtensionPointName<HtmlEmbeddedContentSupport> = ExtensionPointName.create(
       "com.intellij.html.embeddedContentSupport")
 
     fun getContentSupports(): @NotNull Stream<HtmlEmbeddedContentSupport> {
@@ -48,7 +55,7 @@ interface HtmlEmbeddedContentSupport {
       if (LanguageUtil.isInjectableLanguage(language))
         LanguageHtmlScriptContentProvider.getScriptContentProvider(language)
           ?.let { provider ->
-            object: HtmlEmbedmentInfo {
+            object: HtmlEmbedmentInfo { // weird debug name
               override fun getElementType(): IElementType?  = provider.scriptElementType
               override fun createHighlightingLexer(): Lexer?  = provider.highlightingLexer
             }

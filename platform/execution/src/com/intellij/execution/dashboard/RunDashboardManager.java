@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +19,6 @@ import java.util.function.Predicate;
 /**
  * @author konstantin.aleev
  */
-@ApiStatus.Experimental
 public interface RunDashboardManager {
   Topic<RunDashboardListener> DASHBOARD_TOPIC =
     Topic.create("run dashboard", RunDashboardListener.class, Topic.BroadcastDirection.TO_PARENT);

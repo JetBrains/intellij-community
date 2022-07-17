@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.facet.ui.ValidationResult;
@@ -71,7 +71,7 @@ public final class LocalArchivedTemplate extends ArchivedProjectTemplate {
         Element templateElement = JDOMUtil.load(meta);
         String unencoded = templateElement.getAttributeValue(UNENCODED_ATTRIBUTE);
         if (unencoded != null) {
-          myEscaped = !Boolean.valueOf(unencoded);
+          myEscaped = !Boolean.parseBoolean(unencoded);
         }
 
         myModuleDescriptions = RootDescription.readRoots(templateElement);

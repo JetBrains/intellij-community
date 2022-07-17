@@ -17,9 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class CustomRegionTreeElement implements StructureViewTreeElement {
 
   private final PsiElement myStartElement;

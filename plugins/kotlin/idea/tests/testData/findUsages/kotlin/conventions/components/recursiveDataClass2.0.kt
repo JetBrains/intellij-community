@@ -9,3 +9,5 @@ fun f(a: A) {
     val (b, n) = a
     val (a1, s) = b
 }
+// FIR_COMPARISON_WITH_DISABLED_COMPONENTS
+// IGNORE_FIR_LOG

@@ -76,6 +76,14 @@ public final class XValuePresentationUtil {
     return extractor.getText();
   }
 
+  /**
+   * Tells whether the given renderer is supposed to extract a plain text presentation of the value,
+   * which is used by the "Copy Value" action, for instance.
+   */
+  public static boolean isValueTextExtractor(@NotNull XValuePresentation.XValueTextRenderer renderer) {
+    return renderer instanceof XValuePresentationTextExtractor;
+  }
+
   private static class XValuePresentationTextExtractor extends XValueTextRendererBase {
     private final StringBuilder myBuilder;
 

@@ -114,7 +114,7 @@ open class CommonInjectedFileChangesHandler(
       if (host == null) continue
       val hostRange = host.textRange
       val hostOffset = hostRange.startOffset
-      var currentHost = host;
+      var currentHost = host
       val hostMarkers = map[host].orEmpty().reversed()
       for ((hostMarker, fragmentMarker, _) in hostMarkers) {
         val localInsideHost = ProperTextRange(hostMarker.startOffset - hostOffset, hostMarker.endOffset - hostOffset)
@@ -162,7 +162,7 @@ open class CommonInjectedFileChangesHandler(
   }
 
   @Deprecated("use updateHostElement", ReplaceWith("updateHostElement"))
-  @ApiStatus.ScheduledForRemoval(inVersion =  "2021.3")
+  @ApiStatus.ScheduledForRemoval
   protected fun updateInjectionHostElement(host: PsiLanguageInjectionHost,
                                            insideHost: ProperTextRange,
                                            content: String): PsiLanguageInjectionHost? {

@@ -13,8 +13,8 @@ import org.jetbrains.annotations.Nullable;
 public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalInspectionTool, InspectionEP> {
   private static final Logger LOG = Logger.getInstance(GlobalInspectionToolWrapper.class);
 
-  public GlobalInspectionToolWrapper(@NotNull GlobalInspectionTool globalInspectionTool) {
-    super(globalInspectionTool, null);
+  public GlobalInspectionToolWrapper(@NotNull GlobalInspectionTool tool) {
+    super(tool, InspectionEP.GLOBAL_INSPECTION.getByKey(tool.getShortName(), GlobalInspectionToolWrapper.class, InspectionEP::getShortName));
   }
 
   public GlobalInspectionToolWrapper(@NotNull GlobalInspectionTool tool, @NotNull InspectionEP ep) {
@@ -22,7 +22,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
   }
 
   public GlobalInspectionToolWrapper(@NotNull InspectionEP ep) {
-    super(null, ep);
+    super(ep);
   }
 
   private GlobalInspectionToolWrapper(@NotNull GlobalInspectionToolWrapper other) {
@@ -55,7 +55,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
                        ArrayUtil.append(additionalJobs, stdJobDescriptors.BUILD_GRAPH);
     }
     if (tool instanceof GlobalSimpleInspectionTool) {
-      // if we run e.g. just "Annotator" simple global tool then myJobDescriptors are empty but LOCAL_ANALYSIS is used from inspectFile()
+      // if we run e.g., just "Annotator" simple global tool then myJobDescriptors are empty but LOCAL_ANALYSIS is used from inspectFile()
       additionalJobs = additionalJobs.length == 0 ? stdJobDescriptors.LOCAL_ANALYSIS_ARRAY :
                        ArrayUtil.contains(stdJobDescriptors.LOCAL_ANALYSIS, additionalJobs) ? additionalJobs :
                        ArrayUtil.append(additionalJobs, stdJobDescriptors.LOCAL_ANALYSIS);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
@@ -31,7 +31,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -50,7 +49,7 @@ import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
-class ServiceTreeView extends ServiceView {
+final class ServiceTreeView extends ServiceView {
   private static final String ADD_SERVICE_ACTION_ID = "ServiceView.AddService";
 
   private final ServiceViewTree myTree;
@@ -105,7 +104,7 @@ class ServiceTreeView extends ServiceView {
       state.treeState.applyTo(myTree, myTreeModel.getRoot());
     }
     else {
-      Set<ServiceViewItem> roots = new THashSet<>(model.getVisibleRoots());
+      Set<ServiceViewItem> roots = new HashSet<>(model.getVisibleRoots());
       List<TreePath> adjusted = adjustPaths(state.expandedPaths, roots, myTreeModel.getRoot());
       if (!adjusted.isEmpty()) {
         TreeUtil.promiseExpand(myTree, new PathExpandVisitor(adjusted));

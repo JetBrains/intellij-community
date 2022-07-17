@@ -1,6 +1,7 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // IS_APPLICABLE: false
 // INTENTION_TEXT_2: "Replace with 'asSequence().filter{}.forEach{}'"
+// AFTER-WARNING: Parameter 'i' is never used
 fun getMaxLineWidth(lineCount: Int): Float {
     var max_width = 0.0f
     <caret>for (i in 0..lineCount - 1) {

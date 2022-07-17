@@ -1,7 +1,9 @@
 // "Replace with safe (?.) call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo(a: String?) {
     a.let {
         it<caret>.length
     }
 }
+
+/* IGNORE_FIR */

@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.lexer.YAMLGrammarCharUtil;
+import org.jetbrains.yaml.psi.YAMLBlockScalar;
 import org.jetbrains.yaml.psi.YAMLScalarText;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
@@ -19,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScalarText {
+public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScalarText, YAMLBlockScalar {
   public YAMLScalarTextImpl(@NotNull final ASTNode node) {
     super(node);
   }

@@ -32,6 +32,15 @@ public class LightParameterWrapper extends LightElement implements PsiParameter,
     mySubstitutor = substitutor;
   }
 
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitParameter(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
   @NotNull
   @Override
   public PsiParameter getPrototype() {

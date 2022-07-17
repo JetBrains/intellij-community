@@ -369,7 +369,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     final Function<String, Hash> TO_HASH = s -> HashImpl.build(s);
     return ContainerUtil.map(StringUtil.splitByLines(output), record -> {
       String[] items = ArrayUtilRt.toStringArray(StringUtil.split(record, "|", true, false));
-      long time = Long.valueOf(items[2]) * 1000;
+      long time = Long.parseLong(items[2]) * 1000;
       return new VcsCommitMetadataImpl(TO_HASH.fun(items[0]), ContainerUtil.map(items[1].split(" "), TO_HASH), time,
                                        getProjectRoot(), items[3], defaultUser, items[4], defaultUser, time);
     });

@@ -1,11 +1,11 @@
 package com.intellij.grazie.config
 
+import ai.grazie.detector.ChainLanguageDetector
+import ai.grazie.detector.LanguageDetector
+import ai.grazie.detector.heuristics.list.ListDetector
+import ai.grazie.detector.ngram.NgramDetector
+import ai.grazie.nlp.langs.Language
 import com.intellij.grazie.detection.hasWhitespaces
-import com.intellij.grazie.detector.ChainLanguageDetector
-import com.intellij.grazie.detector.LanguageDetector
-import com.intellij.grazie.detector.heuristics.list.ListDetector
-import com.intellij.grazie.detector.model.Language
-import com.intellij.grazie.detector.ngram.NgramDetector
 import com.intellij.util.xmlb.annotations.Property
 import java.util.concurrent.ConcurrentHashMap
 
@@ -51,7 +51,7 @@ object DetectionContext {
       return langs.toSet()
     }
 
-    fun update(size: Int, details: ChainLanguageDetector.ChainDetectionResult) {
+    fun update(size: Int, wordsTotal: Int, details: ChainLanguageDetector.ChainDetectionResult) {
       val result = details.result
       val language = result.preferred
 
@@ -61,7 +61,7 @@ object DetectionContext {
       //Check threshold by text size is not met
       if (size < TEXT_SIZE_THRESHOLD) return
       //Check threshold by number of words is not met (if language has words at all)
-      if (language.hasWhitespaces && details.info.wordsTotal < WORDS_SIZE_THRESHOLD) return
+      if (language.hasWhitespaces && wordsTotal < WORDS_SIZE_THRESHOLD) return
 
       if (language in ListDetector.supported) {
         //Check if threshold by list detector is not met

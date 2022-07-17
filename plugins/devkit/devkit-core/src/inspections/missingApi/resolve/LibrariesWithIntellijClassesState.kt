@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.missingApi.resolve
 
 import com.intellij.openapi.components.*
@@ -59,7 +59,6 @@ private fun createDefaultState(): LibrariesWithIntellijClassesState {
   return result
 }
 
-@Suppress("HardCodedStringLiteral")
 private fun getMavenCoordinatesOfProduct(product: IntelliJPlatformProduct): Pair<String, String>? {
   return when (product) {
     IntelliJPlatformProduct.IDEA -> "com.jetbrains.intellij.idea" to "ideaIU"
@@ -71,7 +70,7 @@ private fun getMavenCoordinatesOfProduct(product: IntelliJPlatformProduct): Pair
     IntelliJPlatformProduct.GOIDE -> "com.jetbrains.intellij.goland" to "goland"
 
     IntelliJPlatformProduct.RUBYMINE,
-    IntelliJPlatformProduct.PYCHARM_DS,
+    IntelliJPlatformProduct.DATASPELL,
     IntelliJPlatformProduct.PYCHARM_EDU,
     IntelliJPlatformProduct.PHPSTORM,
     IntelliJPlatformProduct.WEBSTORM,
@@ -80,6 +79,7 @@ private fun getMavenCoordinatesOfProduct(product: IntelliJPlatformProduct): Pair
     IntelliJPlatformProduct.DBE,
     IntelliJPlatformProduct.ANDROID_STUDIO,
     IntelliJPlatformProduct.CWM_GUEST,
+    IntelliJPlatformProduct.JETBRAINS_CLIENT,
     IntelliJPlatformProduct.GATEWAY,
     IntelliJPlatformProduct.IDEA_IE -> null
   }

@@ -5,6 +5,7 @@ import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
@@ -47,5 +48,9 @@ open class DumpUastTreeAction : AnAction() {
       val file = e.getData(LangDataKeys.PSI_FILE) ?: return@run false
       UastLanguagePlugin.byLanguage(file.language) != null
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

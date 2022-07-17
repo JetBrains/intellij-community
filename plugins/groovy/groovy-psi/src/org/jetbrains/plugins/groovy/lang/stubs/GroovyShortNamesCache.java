@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.stubs;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -21,7 +22,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.search.GrSourceFilterScope;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys.CLASS_SHORT_NAMES;
 
@@ -50,35 +54,19 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
 
   public List<PsiClass> getScriptClassesByFQName(final String name, final GlobalSearchScope scope, final boolean srcOnly) {
     GlobalSearchScope actualScope = srcOnly ? new GrSourceFilterScope(scope) : scope;
-    final Collection<GroovyFile> files = StubIndex.getElements(GrFullScriptNameIndex.KEY, name.hashCode(), myProject, actualScope,
-                                                               GroovyFile.class);
-    if (files.isEmpty()) {
-      return Collections.emptyList();
-    }
-
-    final ArrayList<PsiClass> result = new ArrayList<>();
-    for (GroovyFile file : files) {
-      if (file.isScript()) {
-        final PsiClass scriptClass = file.getScriptClass();
-        if (scriptClass != null && name.equals(scriptClass.getQualifiedName())) {
-          result.add(scriptClass);
-        }
-      }
-    }
-    return result;
+    return ContainerUtil.map2List(
+      StubIndex.getElements(GrFullScriptNameIndex.KEY, name, myProject, actualScope, GroovyFile.class),
+      o -> Objects.requireNonNull(o.getScriptClass()));
   }
 
   @NotNull
   public List<PsiClass> getClassesByFQName(String name, GlobalSearchScope scope, boolean inSource) {
-    final List<PsiClass> result = new ArrayList<>();
-
-    for (PsiClass psiClass : StubIndex.getElements(GrFullClassNameIndex.KEY, name.hashCode(), myProject,
-                                                     inSource ? new GrSourceFilterScope(scope) : scope, PsiClass.class)) {
-      //hashcode doesn't guarantee equals
-      if (name.equals(psiClass.getQualifiedName())) {
-        result.add(psiClass);
-      }
+    List<PsiClass> result = new ArrayList<>();
+    GlobalSearchScope actualScope = inSource ? new GrSourceFilterScope(scope) : scope;
+    if (DumbService.getInstance(myProject).isAlternativeResolveEnabled()) {
+      return List.of();
     }
+    result.addAll(StubIndex.getElements(GrFullClassNameIndex.KEY, name, myProject, actualScope, PsiClass.class));
     result.addAll(getScriptClassesByFQName(name, scope, inSource));
     return result;
   }

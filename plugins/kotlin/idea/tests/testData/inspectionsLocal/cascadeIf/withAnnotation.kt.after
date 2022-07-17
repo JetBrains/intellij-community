@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo(a: Any) {
     when (a) {
         "" -> {
@@ -7,6 +7,7 @@ fun foo(a: Any) {
         is String -> {
             println(a)
         }
+
         is List<*> -> {
             @Suppress("UNCHECKED_CAST")
             println(a as List<String>)

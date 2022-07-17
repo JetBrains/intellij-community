@@ -1,8 +1,8 @@
 package demo
 
 internal class Test {
-    constructor() {}
-    constructor(s: String?) {}
+    constructor()
+    constructor(s: String?)
 }
 
 internal class User {

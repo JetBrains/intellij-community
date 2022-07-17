@@ -21,7 +21,7 @@ import java.util.List;
 import static com.intellij.codeInsight.template.impl.LiveTemplateRunLogger.registerLiveTemplateEvent;
 
 public final class SurroundWithLogger extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("surround.with", 3);
+  private static final EventLogGroup GROUP = new EventLogGroup("surround.with", 4);
   private static final VarargEventId LIVE_TEMPLATE_EXECUTED = registerLiveTemplateEvent(GROUP, "live.template.executed");
   private static final ClassEventField CLASS = EventFields.Class("class");
   private static final VarargEventId SURROUNDER_EXECUTED =

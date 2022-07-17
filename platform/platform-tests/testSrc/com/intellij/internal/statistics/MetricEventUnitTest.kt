@@ -1,18 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION")
 
 package com.intellij.internal.statistics
 
-import com.intellij.internal.statistic.beans.*
+import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.beans.newBooleanMetric
+import com.intellij.internal.statistic.beans.newCounterMetric
+import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.containers.ContainerUtil.newArrayList
-import gnu.trove.THashSet
 import org.junit.Assert
 import org.junit.Test
 
 class MetricEventUnitTest : HeavyPlatformTestCase() {
-
   @Test
   fun `test compare metric events`() {
     Assert.assertEquals(newMetric("abcd"), newMetric("abcd"))
@@ -74,7 +75,7 @@ class MetricEventUnitTest : HeavyPlatformTestCase() {
   }
 
   private fun doTestUniqueFilter(expectedSize: Int, all: List<MetricEvent>) {
-    val unique = THashSet<MetricEvent>(all)
+    val unique = HashSet<MetricEvent>(all)
     Assert.assertTrue(unique.size == expectedSize)
     for (descriptor in all) {
       Assert.assertTrue(unique.contains(descriptor))

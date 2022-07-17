@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,9 +29,8 @@ public abstract class IntentionManager  {
   /**
    * @deprecated Use {@link #getInstance()} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  public static IntentionManager getInstance(@SuppressWarnings("unused") Project project) {
+  @Deprecated(forRemoval = true)
+  public static IntentionManager getInstance(Project project) {
     return getInstance();
   }
 
@@ -58,18 +56,9 @@ public abstract class IntentionManager  {
    * Returns all registered intention actions which are available now
    * (not disabled via Settings|Intentions or Alt-Enter|Disable intention quick fix)
    *
-   * @return array of actions.
+   * @return list of actions.
    */
   public abstract @NotNull List<IntentionAction> getAvailableIntentions();
-
-  /**
-   * @deprecated Use {@link #getAvailableIntentions()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final IntentionAction @NotNull [] getAvailableIntentionActions() {
-    return getAvailableIntentions().toArray(IntentionAction.EMPTY_ARRAY);
-  }
 
   /**
    * @deprecated Please use {@code <intentionAction>} extension point instead

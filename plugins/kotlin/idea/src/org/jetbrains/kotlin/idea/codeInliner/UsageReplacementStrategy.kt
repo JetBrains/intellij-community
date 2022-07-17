@@ -23,10 +23,10 @@ import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.intentions.ConvertReferenceToLambdaIntention
 import org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntention
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
-import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -44,7 +44,8 @@ private val LOG = Logger.getInstance(UsageReplacementStrategy::class.java)
 fun UsageReplacementStrategy.replaceUsagesInWholeProject(
     targetPsiElement: PsiElement,
     @NlsContexts.DialogTitle progressTitle: String,
-    commandName: String
+    @NlsContexts.Command commandName: String,
+    unwrapSpecialUsages: Boolean = true,
 ) {
     val project = targetPsiElement.project
     ProgressManager.getInstance().run(
@@ -59,14 +60,14 @@ fun UsageReplacementStrategy.replaceUsagesInWholeProject(
 
               ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL) {
                   project.executeWriteCommand(commandName) {
-                      this@replaceUsagesInWholeProject.replaceUsages(usages)
+                      this@replaceUsagesInWholeProject.replaceUsages(usages, unwrapSpecialUsages)
                   }
               }
             }
         })
 }
 
-fun UsageReplacementStrategy.replaceUsages(usages: Collection<KtReferenceExpression>) {
+fun UsageReplacementStrategy.replaceUsages(usages: Collection<KtReferenceExpression>, unwrapSpecialUsages: Boolean = true) {
     val usagesByFile = usages.groupBy { it.containingFile }
 
     for ((file, usagesInFile) in usagesByFile) {
@@ -77,7 +78,7 @@ fun UsageReplacementStrategy.replaceUsages(usages: Collection<KtReferenceExpress
 
         var usagesToProcess = usagesInFile
         while (usagesToProcess.isNotEmpty()) {
-            if (processUsages(usagesToProcess, importsToDelete)) break
+            if (processUsages(usagesToProcess, importsToDelete, unwrapSpecialUsages)) break
 
             // some usages may get invalidated we need to find them in the tree
             usagesToProcess = file.collectDescendantsOfType { it.getCopyableUserData(UsageReplacementStrategy.KEY) != null }
@@ -95,6 +96,7 @@ fun UsageReplacementStrategy.replaceUsages(usages: Collection<KtReferenceExpress
 private fun UsageReplacementStrategy.processUsages(
     usages: List<KtReferenceExpression>,
     importsToDelete: MutableList<KtImportDirective>,
+    unwrapSpecialUsages: Boolean,
 ): Boolean {
     val sortedUsages = usages.sortedWith { element1, element2 ->
         if (element1.parent.textRange.intersects(element2.parent.textRange)) {
@@ -112,10 +114,12 @@ private fun UsageReplacementStrategy.processUsages(
                 continue
             }
 
-            val specialUsage = unwrapSpecialUsageOrNull(usage)
-            if (specialUsage != null) {
-                createReplacer(specialUsage)?.invoke()
-                continue
+            if (unwrapSpecialUsages) {
+                val specialUsage = unwrapSpecialUsageOrNull(usage)
+                if (specialUsage != null) {
+                    createReplacer(specialUsage)?.invoke()
+                    continue
+                }
             }
 
             //TODO: keep the import if we don't know how to replace some of the usages

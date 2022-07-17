@@ -1,5 +1,5 @@
 // IS_APPLICABLE: true
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun f(p: Int): List<String>? {
     return if (p > 0) {

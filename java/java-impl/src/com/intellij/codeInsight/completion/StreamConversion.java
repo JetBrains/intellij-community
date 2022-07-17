@@ -12,12 +12,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.statistics.JavaStatisticsManager;
+import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collector;
@@ -203,7 +206,7 @@ final class StreamConversion {
     return result;
   }
 
-  private static class CollectLookupElement extends LookupElement implements TypedLookupItem {
+  private static class CollectLookupElement extends LookupElement implements TypedLookupItem, JavaCompletionStatistician.CustomStatisticsInfoProvider {
     private final String myLookupString;
     private final String myTypeText;
     private final String myMethodName;
@@ -274,6 +277,11 @@ final class StreamConversion {
     public PsiType getType() {
       return myExpectedType;
     }
+
+    @Override
+    public @Nullable StatisticsInfo getStatisticsInfo() {
+      return JavaStatisticsManager.createInfoForNoArgMethod(JAVA_UTIL_STREAM_COLLECTORS, myMethodName);
+    }
   }
 
   static class StreamMethodInvocation extends LookupElementDecorator<LookupElement> {
@@ -282,8 +290,7 @@ final class StreamConversion {
     StreamMethodInvocation(LookupElement e, Consumer<? super InsertionContext> beforeInsertion) {
       super(e);
       myBeforeInsertion = beforeInsertion;
-      // Prevent from merging with non-stream method in JavaMethodMergingContributor
-      putUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR, true);
+      JavaMethodMergingContributor.disallowMerge(this);
     }
 
     @Override

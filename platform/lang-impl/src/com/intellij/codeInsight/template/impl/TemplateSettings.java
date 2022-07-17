@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.DynamicBundle;
@@ -9,13 +9,14 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
@@ -39,14 +41,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 @State(
   name = "TemplateSettings",
   storages = @Storage("templates.xml"),
   additionalExportDirectory = TemplateSettings.TEMPLATES_DIR_PATH,
-  category = ComponentCategory.CODE
+  category = SettingsCategory.CODE
 )
 public final class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
   private static final Logger LOG = Logger.getInstance(TemplateSettings.class);
@@ -275,7 +276,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
           removeTemplate(template);
         }
       }
-    });
+    }, null, null, SettingsCategory.CODE);
 
     doLoadTemplates(mySchemeManager.loadSchemes());
 
@@ -500,7 +501,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
         }
 
         try {
-          ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
+          ClassLoader pluginClassLoader = pluginDescriptor.getClassLoader();
           readDefTemplate(file, !ep.hidden, pluginClassLoader,
                           PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
         }
@@ -539,29 +540,28 @@ public final class TemplateSettings implements PersistentStateComponent<Template
                                boolean registerTemplate,
                                @NotNull ClassLoader loader,
                                PluginInfo info) throws JDOMException {
+    String pluginId = info.getId();
     Element element;
     try {
-      InputStream stream;
+      byte[] data;
       if (defTemplate.startsWith("/")) {
-        stream = loader.getResourceAsStream(appendExt(defTemplate.substring(1)));
+        data = ResourceUtil.getResourceAsBytes(appendExt(defTemplate.substring(1)), loader);
       }
       else {
-        stream = loader.getResourceAsStream(appendExt(defTemplate));
+        data = ResourceUtil.getResourceAsBytes(appendExt(defTemplate), loader);
       }
-      if (stream == null) {
-        stream = loader.getResourceAsStream(appendExt("idea/" + defTemplate));
-        if (stream == null) {
-          LOG.error("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
-          return;
-        }
-        else {
-          LOG.error("Do not rely on implicit `idea/` prefix: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
-        }
+      if (data == null) {
+        LOG.error(new PluginException("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info,
+                                      pluginId == null ? null : PluginId.getId(pluginId)));
+        return;
       }
-      element = JDOMUtil.load(stream);
+
+      element = JDOMUtil.load(data);
     }
     catch (IOException e) {
-      LOG.error("Unable to read template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info, e);
+      LOG.error(
+        new PluginException("Unable to read template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info, e,
+                            pluginId == null ? null : PluginId.getId(pluginId)));
       return;
     }
 
@@ -683,7 +683,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     String key = element.getAttributeValue(KEY);
     String id = element.getAttributeValue(ID);
     if (resourceBundle != null && key != null) {
-      ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(resourceBundle, classLoader);
+      ResourceBundle bundle = DynamicBundle.getResourceBundle(classLoader, resourceBundle);
       description = bundle.getString(key);
     }
     else {

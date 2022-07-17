@@ -275,6 +275,17 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "}");
   }
 
+  public void testUseDfa() {
+    doTest("class X {\n" +
+           "  void test() {\n" +
+           "    Object obj = \"value\";\n" +
+           "    Object obj2 = 123;\n" +
+           "    if (obj./*'equals' between objects of inconvertible types 'String' and 'int'*/equals/**/(1)) {}\n" +
+           "    if (obj2./*'equals' between objects of inconvertible types 'Integer' and 'String'*/equals/**/(obj)) {}\n" +
+           "  }\n" +
+           "}");
+  }
+
   public void testCapture() {
     doTest("class X<A, B> {\n" +
            "  static final X<?, ?> CONST = new X<>();\n" +

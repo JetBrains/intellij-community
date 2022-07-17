@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.PsiCopyPasteManager;
@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
@@ -33,6 +32,7 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -47,9 +47,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import static com.intellij.ide.projectView.ProjectViewSelectionTopicKt.PROJECT_VIEW_SELECTION_TOPIC;
+
 public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane {
   private AsyncProjectViewSupport myAsyncSupport;
-  private JScrollPane myComponent;
+  private JComponent myComponent;
 
   protected AbstractProjectViewPSIPane(@NotNull Project project) {
     super(project);
@@ -67,10 +69,20 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);
     myTree = createTree(treeModel);
     enableDnD();
-    myComponent = ScrollPaneFactory.createScrollPane(myTree);
+    JScrollPane treePaneScroll = ScrollPaneFactory.createScrollPane(myTree);
+    JComponent promoter = createPromoter();
+    if (promoter != null ) {
+      JPanel contentAndPromoter = new JPanel();
+      contentAndPromoter.setLayout(new BoxLayout(contentAndPromoter, BoxLayout.Y_AXIS));
+      contentAndPromoter.add(treePaneScroll);
+      contentAndPromoter.add(promoter);
+      myComponent = contentAndPromoter;
+    } else {
+      myComponent = treePaneScroll;
+    }
     if (Registry.is("error.stripe.enabled")) {
       ErrorStripePainter painter = new ErrorStripePainter(true);
-      Disposer.register(this, new TreeUpdater<>(painter, myComponent, myTree) {
+      Disposer.register(this, new TreeUpdater<>(painter, treePaneScroll, myTree) {
         @Override
         protected void update(ErrorStripePainter painter, int index, Object object) {
           if (object instanceof DefaultMutableTreeNode) {
@@ -169,6 +181,8 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   }
 
   protected void onSelectionChanged() {
+    myProject.getMessageBus().syncPublisher(PROJECT_VIEW_SELECTION_TOPIC).onChanged();
+
     if (myTree != null && myTree.getSelectionModel() != null) {
       int count = myTree.getSelectionModel().getSelectionCount();
       String description = count > 1 && myTree.hasFocus() ? LangBundle.message("project.view.elements.selected", count) : null;
@@ -256,6 +270,12 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   @NotNull
   protected abstract ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel);
 
+  @ApiStatus.Internal
+  @Nullable
+  protected JComponent createPromoter() {
+    return null;
+  }
+
   @NotNull
   protected abstract AbstractTreeUpdater createTreeUpdater(@NotNull AbstractTreeBuilder treeBuilder);
 
@@ -288,7 +308,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       if (userObject instanceof PsiDirectoryNode) {
         String str = getElementText(element);
         if (str == null) return false;
-        str = StringUtil.toLowerCase(str);
         if (pattern.indexOf('.') >= 0) {
           return compare(str, pattern);
         }

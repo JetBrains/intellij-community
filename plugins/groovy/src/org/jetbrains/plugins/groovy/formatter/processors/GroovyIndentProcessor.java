@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.ChildAttributes;
@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
@@ -149,16 +150,32 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitCaseSection(@NotNull GrCaseSection caseSection) {
-    if (myChildType != GroovyElementTypes.CASE_LABEL) {
+    if (myChildType != KW_CASE && myChildType != KW_DEFAULT) {
       myResult = getNormalIndent();
     }
   }
 
   @Override
-  public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
+  public void visitExpressionList(@NotNull GrExpressionList expressionList) {
+    if (myChildType != T_COMMA) {
+      myResult = getContinuationWithoutFirstIndent();
+    }
+  }
+
+  public void visitSwitchElement() {
     if (myChildType == GroovyElementTypes.CASE_SECTION) {
       myResult = getSwitchCaseIndent(getGroovySettings());
     }
+  }
+
+  @Override
+  public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
+    visitSwitchElement();
+  }
+
+  @Override
+  public void visitSwitchExpression(@NotNull GrSwitchExpression switchExpression) {
+    visitSwitchElement();
   }
 
   @Override
@@ -201,7 +218,10 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitIfStatement(@NotNull GrIfStatement ifStatement) {
-    if (TokenSets.BLOCK_SET.contains(myChildType)) {
+    if (myChild == ifStatement.getCondition()) {
+      myResult = getContinuationWithoutFirstIndent();
+    }
+    else if (TokenSets.BLOCK_SET.contains(myChildType)) {
       if (myChild == ifStatement.getCondition()) {
         myResult = getContinuationWithoutFirstIndent();
       }
@@ -309,7 +329,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
     }
     else if (myChildType == GroovyStubElementTypes.THROWS_CLAUSE) {
       myResult = getGroovySettings().ALIGN_THROWS_KEYWORD ? getNoneIndent() : getContinuationIndent();
-    } else if (myChildType == GroovyElementTypes.OPEN_BLOCK) {
+    } else if (myChildType instanceof GrBlockElementType) {
       myResult = getBlockIndent(getGroovySettings().METHOD_BRACE_STYLE);
     }
   }
@@ -341,7 +361,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   @Override
   public void visitOpenBlock(@NotNull GrOpenBlock block) {
     final IElementType type = block.getNode().getElementType();
-    if (type != GroovyElementTypes.OPEN_BLOCK && type != GroovyElementTypes.CONSTRUCTOR_BODY) return;
+    if (!(type instanceof GrBlockElementType) && type != GroovyElementTypes.CONSTRUCTOR_BODY) return;
 
     int braceStyle;
     PsiElement parent = block.getParent();
@@ -478,7 +498,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitTryStatement(@NotNull GrTryCatchStatement tryCatchStatement) {
-    if (myChildType == GroovyElementTypes.OPEN_BLOCK) {
+    if (myChildType instanceof GrBlockElementType) {
       myResult = getBlockIndent(getGroovySettings().BRACE_STYLE);
     }
   }
@@ -497,7 +517,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitFinallyClause(@NotNull GrFinallyClause catchClause) {
-    if (myChildType == GroovyElementTypes.OPEN_BLOCK) {
+    if (myChildType instanceof GrBlockElementType) {
       myResult = getBlockIndent(getGroovySettings().BRACE_STYLE);
     }
   }
@@ -530,13 +550,17 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   public static boolean isFinishedCase(GrCaseSection psiParent, int newIndex) {
-    final PsiElement[] children = psiParent.getChildren();
+    GrStatement[] statements = psiParent.getStatements();
     newIndex--;
-    for (int i = 0; i < children.length && i < newIndex; i++) {
-      PsiElement child = children[i];
+    if (psiParent.getArrow() != null && statements.length == 1) {
+      return true;
+    }
+    for (int i = 0; i < statements.length && i < newIndex; i++) {
+      PsiElement child = statements[i];
       if (child instanceof GrBreakStatement ||
           child instanceof GrContinueStatement ||
           child instanceof GrReturnStatement ||
+          child instanceof GrYieldStatement ||
           child instanceof GrThrowStatement) {
         return true;
       }

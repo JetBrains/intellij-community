@@ -137,13 +137,6 @@ public class SegmentArray {
     return mySegmentCount == 0 ? 0 : myEnds[mySegmentCount - 1];
   }
 
-  public final void changeSegmentLength(int startIndex, int change) {
-    if (startIndex >= 0 && startIndex < mySegmentCount) {
-      myEnds[startIndex] += change;
-    }
-    shiftSegments(startIndex + 1, change);
-  }
-
   public final void shiftSegments(int startIndex, int shift) {
     for (int i = startIndex; i < mySegmentCount; i++) {
       myStarts[i] += shift;

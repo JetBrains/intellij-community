@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.DynamicBundle
@@ -28,7 +28,7 @@ class DefaultBundleIndexAction : AnAction() {
 
         val pluginDescriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(it.javaClass.name)
         val path = pluginDescriptor?.resourceBundleBaseName ?: ActionsBundle.IDEA_ACTIONS_BUNDLE
-        val bundle = DynamicBundle.INSTANCE.getResourceBundle(path, pluginDescriptor?.pluginClassLoader ?: it.javaClass.classLoader)
+        val bundle = DynamicBundle.getResourceBundle(pluginDescriptor?.pluginClassLoader ?: it.javaClass.classLoader, path)
 
         fun appendKey(key: String, string: String?) {
           if (!bundle.containsKey(key) && !string.isNullOrBlank()) {
@@ -44,5 +44,9 @@ class DefaultBundleIndexAction : AnAction() {
           appendKey("group.$id.description", presentation.description)
         }
       }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

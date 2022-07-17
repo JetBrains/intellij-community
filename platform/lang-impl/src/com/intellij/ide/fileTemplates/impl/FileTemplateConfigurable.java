@@ -1,14 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -43,12 +41,14 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -57,15 +57,13 @@ import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.function.Supplier;
 
-public class FileTemplateConfigurable implements Configurable, Configurable.NoScroll {
-  private static final Logger LOG = Logger.getInstance(FileTemplateConfigurable.class);
-  @NonNls private static final String EMPTY_HTML = "<html></html>";
+public final class FileTemplateConfigurable implements Configurable, Configurable.NoScroll {
+  private static final @NonNls String EMPTY_HTML = "<html></html>";
 
   private JPanel myMainPanel;
   private FileTemplate myTemplate;
@@ -78,7 +76,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   private EditorTextField myFileName;
   private JEditorPane myDescriptionComponent;
   private boolean myModified;
-  private URL myDefaultDescriptionUrl;
+  private Supplier<@NonNls String> defaultDescriptionUrl;
   private final Project myProject;
 
   private final List<ChangeListener> myChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -94,12 +92,12 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     return myTemplate;
   }
 
-  public void setTemplate(@Nullable FileTemplate template, URL defaultDescription) {
+  public void setTemplate(@Nullable FileTemplate template, @Nullable Supplier<String> defaultDescription) {
     setTemplate(template, defaultDescription, false);
   }
 
-  public void setTemplate(@Nullable FileTemplate template, URL defaultDescription, boolean internalTemplate) {
-    myDefaultDescriptionUrl = defaultDescription;
+  public void setTemplate(@Nullable FileTemplate template, @Nullable Supplier<String> defaultDescription, boolean internalTemplate) {
+    defaultDescriptionUrl = defaultDescription;
     myTemplate = template;
     if (myMainPanel != null) {
       reset();
@@ -119,7 +117,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
         label.setLabelFor(myNameField);
         myTopPanel.add(label,
                        new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-                                              GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+                                              GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
         myTopPanel.add(myNameField,
                        new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
                                               GridBagConstraints.HORIZONTAL, JBUI.insets(0, 3), 0, 0));
@@ -128,7 +126,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
       extLabel.setLabelFor(myExtensionField);
       myTopPanel.add(extLabel,
                      new GridBagConstraints(child ? 0 : 2, child ? 1 : 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
-                                            GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+                                            GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
       myTopPanel.add(myExtensionField,
                      new GridBagConstraints(child ? 1 : 3, child ? 1 : 0, 1, 1, .3, 0.0, GridBagConstraints.WEST,
                                             child ? GridBagConstraints.NONE : GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(3), 0, 0));
@@ -137,7 +135,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
         label.setLabelFor(myFileName);
         myTopPanel.add(label,
                        new GridBagConstraints(0, child ? 0 : 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-                                              GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+                                              GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
         myTopPanel.add(myFileName,
                        new GridBagConstraints(1, child ? 0 : 1, 3, 1, 1.0, 0.0, GridBagConstraints.CENTER,
                                               GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(3), 0, 0));
@@ -177,7 +175,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myFileName.setShowPlaceholderWhenFocused(true);
 
     myDescriptionComponent = new JEditorPane();
-    myDescriptionComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+    myDescriptionComponent.setEditorKit(HTMLEditorKitBuilder.simple());
     myDescriptionComponent.setText(EMPTY_HTML);
     myDescriptionComponent.setEditable(false);
     myDescriptionComponent.addHyperlinkListener(new BrowserHyperlinkListener());
@@ -195,10 +193,10 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
     myMainPanel.add(myTopPanel,
                     new GridBagConstraints(0, 0, 4, 1, 1.0, 0.0, GridBagConstraints.CENTER,
-                                           GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+                                           GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
     myMainPanel.add(mySplitter,
                     new GridBagConstraints(0, 2, 4, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                           JBUI.emptyInsets(), 0, 0));
+                                           JBInsets.emptyInsets(), 0, 0));
 
     mySplitter.setSecondComponent(descriptionPanel);
     updateTopPanel(false);
@@ -258,8 +256,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     return editor;
   }
 
-  @NotNull
-  private Document createDocument(@Nullable PsiFile file) {
+  private @NotNull Document createDocument(@Nullable PsiFile file) {
     Document document = file != null ? PsiDocumentManager.getInstance(file.getProject()).getDocument(file) : null;
     return document != null ? document : EditorFactory.getInstance().createDocument(myTemplate == null ? "" : myTemplate.getText());
   }
@@ -345,15 +342,10 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     final String text = myTemplate == null ? "" : myTemplate.getText();
     String name = myTemplate == null ? "" : myTemplate.getName();
     String extension = myTemplate == null ? "" : myTemplate.getExtension();
-    String description = myTemplate == null ? "" : myTemplate.getDescription();
+    @NonNls String description = myTemplate == null ? "" : myTemplate.getDescription();
 
-    if (description.isEmpty() && myDefaultDescriptionUrl != null) {
-      try {
-        description = UrlUtil.loadText(myDefaultDescriptionUrl); //NON-NLS
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+    if (description.isEmpty() && defaultDescriptionUrl != null) {
+      description = defaultDescriptionUrl.get();
     }
 
     EditorFactory.getInstance().releaseEditor(myTemplateEditor);
@@ -388,8 +380,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     return myTemplate != null && !myTemplate.isDefault();
   }
 
-  @Nullable
-  private PsiFile createFile(final String text, final String name) {
+  private @Nullable PsiFile createFile(final String text, final String name) {
     final FileType fileType = myVelocityFileType;
     if (fileType == FileTypes.UNKNOWN) return null;
 
@@ -434,13 +425,12 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     return highlighter;
   }
 
-  @NotNull
   @VisibleForTesting
-  public static Lexer createDefaultLexer() {
+  public static @NotNull Lexer createDefaultLexer() {
     return new MergingLexerAdapter(new FlexAdapter(new _FileTemplateTextLexer()), TokenSet.create(FileTemplateTokenType.TEXT));
   }
 
-  public void focusToNameField() {
+  void focusToNameField() {
     JComponent field = FileTemplateBase.isChild(myTemplate) ? myFileName : myNameField;
     myNameField.selectAll();
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(field, true));

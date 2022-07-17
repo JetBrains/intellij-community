@@ -15,8 +15,6 @@ object GHSecurityUtil {
   private const val WORKFLOW_SCOPE = "workflow"
   val MASTER_SCOPES = listOf(REPO_SCOPE, GIST_SCOPE, READ_ORG_SCOPE, WORKFLOW_SCOPE)
 
-  const val DEFAULT_CLIENT_NAME = "Github Integration Plugin"
-
   @JvmStatic
   internal fun loadCurrentUserWithScopes(executor: GithubApiRequestExecutor,
                                          progressIndicator: ProgressIndicator,

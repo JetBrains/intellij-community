@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Change call to 'map'
 
 fun test(): List<String> {

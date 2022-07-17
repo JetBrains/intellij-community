@@ -29,10 +29,10 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
 
     // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
     // find any other suitable font withing "preferred" fonts first.
-    var fontIsValid = FontUtil.isValidFont(Font(state.fontFace, Font.PLAIN, state.fontSize))
+    var fontIsValid = FontUtil.isValidFont(Font(state.fontFace, Font.PLAIN, 1).deriveFont(state.fontSize))
     if (!fontIsValid) {
       for (preferredFont in arrayOf("dialog", "Arial", "Tahoma")) {
-        if (FontUtil.isValidFont(Font(preferredFont, Font.PLAIN, state.fontSize))) {
+        if (FontUtil.isValidFont(Font(preferredFont, Font.PLAIN, 1).deriveFont(state.fontSize))) {
           state.fontFace = preferredFont
           fontIsValid = true
           break
@@ -64,7 +64,7 @@ class NotRoamableUiOptions : BaseState() {
   var fontFace by string()
 
   @get:Property(filter = FontFilter::class)
-  var fontSize by property(0)
+  var fontSize by property(0f)
 
   @get:Property(filter = FontFilter::class)
   var fontScale by property(0f)
@@ -72,7 +72,7 @@ class NotRoamableUiOptions : BaseState() {
   init {
     val fontData = JBUIScale.getSystemFontData(null)
     fontFace = fontData.key
-    fontSize = fontData.value
+    fontSize = fontData.value.toFloat()
     fontScale = UISettings.defFontScale
   }
 }
@@ -86,6 +86,6 @@ private class FontFilter : SerializationFilter {
     }
     // fontSize/fontScale should either be stored in pair or not stored at all
     // otherwise the fontSize restore logic gets broken (see loadState)
-    return !(fontData.value == settings.fontSize && 1f == settings.fontScale)
+    return !(fontData.value.toFloat() == settings.fontSize && 1f == settings.fontScale)
   }
 }

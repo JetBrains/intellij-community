@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.util;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -73,30 +74,14 @@ public abstract class HgUtil {
   public static final @NlsSafe String HEAD_REFERENCE = "HEAD";
 
   public static File copyResourceToTempFile(String basename, String extension) throws IOException {
-    final InputStream in = HgUtil.class.getClassLoader().getResourceAsStream("python/" + basename + extension);
-
     final File tempFile = FileUtil.createTempFile(basename, extension);
     final byte[] buffer = new byte[4096];
 
-    OutputStream out = null;
-    try {
-      out = new FileOutputStream(tempFile, false);
+    try (InputStream in = HgUtil.class.getClassLoader().getResourceAsStream("python/" + basename + extension);
+         OutputStream out = new FileOutputStream(tempFile, false)) {
       int bytesRead;
       while ((bytesRead = in.read(buffer)) != -1)
         out.write(buffer, 0, bytesRead);
-    } finally {
-      try {
-        out.close();
-      }
-      catch (IOException e) {
-        // ignore
-      }
-    }
-    try {
-      in.close();
-    }
-    catch (IOException e) {
-      // ignore
     }
     tempFile.deleteOnExit();
     return tempFile;
@@ -530,12 +515,12 @@ public abstract class HgUtil {
     return hgRepository.getRepositoryConfig().getPaths();
   }
 
-  public static boolean isExecutableValid(@Nullable String executable) {
+  public static boolean isExecutableValid(@NotNull Project project, @Nullable String executable) {
     try {
       if (StringUtil.isEmptyOrSpaces(executable)) {
         return false;
       }
-      HgCommandResult result = getVersionOutput(executable);
+      HgCommandResult result = getVersionOutput(project, executable);
       return result.getExitValue() == 0 && !result.getRawOutput().isEmpty();
     }
     catch (Throwable e) {
@@ -545,7 +530,11 @@ public abstract class HgUtil {
   }
 
   @NotNull
-  public static HgCommandResult getVersionOutput(@NotNull String executable) throws ShellCommandException {
+  public static HgCommandResult getVersionOutput(@NotNull Project project, @NotNull String executable) throws ShellCommandException {
+    if (!project.isDefault() && !TrustedProjects.isTrusted(project)) {
+      throw new ShellCommandException("Can't run a Hg command in the safe mode");
+    }
+
     String hgExecutable = executable.trim();
     List<String> cmdArgs = new ArrayList<>();
     cmdArgs.add(hgExecutable);

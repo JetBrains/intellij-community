@@ -2,8 +2,6 @@
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,8 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 public class ConfigEncodingManager implements FileEncodingProvider {
@@ -25,44 +21,24 @@ public class ConfigEncodingManager implements FileEncodingProvider {
   public static final String charsetKey = "charset";
 
   public static final String UTF8_BOM_ENCODING = "utf-8-bom";
-  public static final String UTF8_ENCODING = "utf-8";
+  public static final String UTF8_ENCODING     = "utf-8";
 
-  private static final Map<String, Charset> encodingMap;
-
-  static {
-    Map<String, Charset> map = new HashMap<>();
-    map.put("latin1", StandardCharsets.ISO_8859_1);
-    map.put(UTF8_ENCODING, StandardCharsets.UTF_8);
-    map.put(UTF8_BOM_ENCODING, StandardCharsets.UTF_8);
-    map.put("utf-16be", StandardCharsets.UTF_16BE);
-    map.put("utf-16le", StandardCharsets.UTF_16LE);
-    encodingMap = Collections.unmodifiableMap(map);
-  }
-
-  private final ThreadLocal<Boolean> isApplyingSettings = new ThreadLocal<>();
+  // @formatter:off
+  private static final Map<String, Charset> encodingMap =
+      Map.of(
+        "latin1",          StandardCharsets.ISO_8859_1,
+        UTF8_ENCODING,     StandardCharsets.UTF_8,
+        UTF8_BOM_ENCODING, StandardCharsets.UTF_8,
+        "utf-16be",        StandardCharsets.UTF_16BE,
+        "utf-16le",        StandardCharsets.UTF_16LE);
+  // @formatter:on
 
   @Override
   public @Nullable Charset getEncoding(@NotNull VirtualFile virtualFile) {
-    if (!Utils.isApplicableTo(virtualFile) || Utils.isEditorConfigFile(virtualFile)) return null;
     Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
-    if (project != null && !Utils.isEnabled(CodeStyle.getSettings(project)) ||
-        isApplyingSettings.get() != null && isApplyingSettings.get()) return null;
-    if (isIndexing(project)) {
-      return EditorConfigEncodingCache.getInstance().getCachedEncoding(virtualFile);
-    }
-    try {
-      isApplyingSettings.set(true);
-      return EditorConfigEncodingCache.getInstance().getEncoding(project, virtualFile);
-    }
-    finally {
-      isApplyingSettings.set(false);
-    }
-  }
-
-  private static boolean isIndexing(@Nullable Project project) {
-    return project != null
-           && !LightEdit.owns(project)
-           && DumbService.isDumb(project);
+    return
+      project != null && isEnabledFor(project, virtualFile) ?
+      EditorConfigEncodingCache.getInstance().getCachedEncoding(virtualFile) : null;
   }
 
   @Nullable
@@ -71,11 +47,16 @@ public class ConfigEncodingManager implements FileEncodingProvider {
       return useBom ? UTF8_BOM_ENCODING : UTF8_ENCODING;
     }
     return ObjectUtils.doIfNotNull(
-      ContainerUtil.find(encodingMap.entrySet(), e -> e.getValue() == charset), entry-> entry.getKey());
+      ContainerUtil.find(encodingMap.entrySet(), e -> e.getValue() == charset), entry -> entry.getKey());
   }
 
   @Nullable
   public static Charset toCharset(@NotNull String str) {
     return encodingMap.get(str);
+  }
+
+  static boolean isEnabledFor(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    return Utils.isEnabled(CodeStyle.getSettings(project)) &&
+           Utils.isApplicableTo(virtualFile) && !Utils.isEditorConfigFile(virtualFile);
   }
 }

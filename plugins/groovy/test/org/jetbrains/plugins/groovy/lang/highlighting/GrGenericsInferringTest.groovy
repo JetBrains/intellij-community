@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -15,7 +15,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
 
 
   void testMapExplicit() {
-    testHighlighting '''
+    doTestHighlighting '''
       import groovy.transform.CompileStatic
 
       @CompileStatic
@@ -28,7 +28,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testMapImplicit() {
-    testHighlighting '''
+    doTestHighlighting '''
       import groovy.transform.CompileStatic
 
       @CompileStatic
@@ -40,7 +40,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testMapChainCall() {
-    testHighlighting '''
+    doTestHighlighting '''
       import groovy.transform.CompileStatic
 
       @CompileStatic
@@ -51,7 +51,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testListWildcardExtends() {
-    testHighlighting '''
+    doTestHighlighting '''
       import groovy.transform.CompileStatic
 
       @CompileStatic
@@ -63,7 +63,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testListWildcardExtendsError() {
-    testHighlighting '''
+    doTestHighlighting '''
       import groovy.transform.CompileStatic
 
       @CompileStatic
@@ -75,7 +75,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testListWildcardExtendsAssign() {
-    testHighlighting '''
+    doTestHighlighting '''
       import groovy.transform.CompileStatic
 
       @CompileStatic
@@ -86,7 +86,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testListWildcardSuper() {
-    testHighlighting '''
+    doTestHighlighting '''
       import groovy.transform.CompileStatic
 
       @CompileStatic
@@ -98,7 +98,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testListWildcardSuperError() {
-    testHighlighting '''
+    doTestHighlighting '''
       import groovy.transform.CompileStatic
 
       @CompileStatic
@@ -109,7 +109,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testDeclaration6() {
-    testHighlighting '''
+    doTestHighlighting '''
       import groovy.transform.CompileStatic
 
       @CompileStatic
@@ -120,7 +120,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testAddOnList() {
-    testHighlighting '''
+    doTestHighlighting '''
       import groovy.transform.CompileStatic
 
       @CompileStatic
@@ -132,7 +132,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testAddOnListUsingLeftShift() {
-    testHighlighting '''
+    doTestHighlighting '''
       import groovy.transform.CompileStatic
 
      @CompileStatic
@@ -144,7 +144,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testPutMethodWithWrongValueType() {
-    testHighlighting '''
+    doTestHighlighting '''
       import groovy.transform.CompileStatic
 
       @CompileStatic
@@ -156,7 +156,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testPutMethodWithPrimitiveValueAndArrayPut() {
-    testHighlighting '''
+    doTestHighlighting '''
       import groovy.transform.CompileStatic
 
       @CompileStatic
@@ -169,7 +169,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
 
 
   void testAddAllWithCollectionShouldNotBeAllowed() {
-    testHighlighting '''
+    doTestHighlighting '''
       import groovy.transform.CompileStatic
 
       @CompileStatic
@@ -182,7 +182,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testIncompatibleGenericsForTwoArgumentsUsingEmbeddedPlaceholder() {
-    testHighlighting '''
+    doTestHighlighting '''
           import groovy.transform.CompileStatic 
           
           @CompileStatic
@@ -197,7 +197,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testConstructorArgumentsAgainstGenerics() {
-    testHighlighting '''
+    doTestHighlighting '''
         class Foo<T>{  Foo(T a, T b){} }
         
         @groovy.transform.CompileStatic
@@ -209,7 +209,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testMethodWithDefaultArgument() {
-    testHighlighting '''
+    doTestHighlighting '''
           class A{}
           class B extends A{}
           def foo(List<? extends A> arg, String value='default'){1}
@@ -220,7 +220,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
           assert foo(a) == 1
       '''
 
-    testHighlighting '''
+    doTestHighlighting '''
           class A{}
           class B extends A{}
           def foo(List<? extends A> arg, String value='default'){1}
@@ -234,7 +234,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testMethodShadowGenerics() {
-    testHighlighting '''
+    doTestHighlighting '''
           @groovy.transform.CompileStatic
           public class GoodCodeRed<T> {
               Collection<GoodCodeRed<T>> attached = []
@@ -252,7 +252,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testGenericField() {
-    testHighlighting '''
+    doTestHighlighting '''
       class MyClass {
           static void main(args) {
               Holder<Integer> holder = new Holder<Integer>()
@@ -267,7 +267,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testReturnTypeChecking() {
-    testHighlighting '''
+    doTestHighlighting '''
       @groovy.transform.CompileStatic
       class Foo {
           List<String> run() {
@@ -278,7 +278,7 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   }
 
   void testEnumGenerics() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 enum MyEnum { ONE, TWO }
 
 @groovy.transform.CompileStatic
@@ -289,7 +289,7 @@ void compare() {
   }
 
   void testInjectGenerics() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 @groovy.transform.CompileStatic
 void printList() {
   List<String> list = ['1', '2']
@@ -299,7 +299,7 @@ void printList() {
   }
 
   void testBoundedGenericsCompileStatic() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 @groovy.transform.CompileStatic
 class Foo {
   static <T extends List<Integer>> void extInteger(T a) {}
@@ -319,7 +319,7 @@ class Foo {
   }
 
   void testClosureToSAM() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import groovy.transform.CompileStatic
 
 interface SAM<In, Out> {
@@ -341,7 +341,7 @@ class SomeClass2 {
   }
 
   void testClosureToSAMWildcard() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import groovy.transform.CompileStatic
 
 interface SAM<In, Out> {
@@ -362,7 +362,7 @@ class SomeClass2 {
   }
 
   void testClosureToSAMGenericWildcard() {
-    testHighlighting '''\
+    doTestHighlighting '''\
   import groovy.transform.CompileStatic
   
   interface SAM<In, Out> {
@@ -384,7 +384,7 @@ class SomeClass2 {
   }
 
   void testListToArrayCoercion() {
-    testHighlighting '''\
+    doTestHighlighting '''\
   import groovy.transform.CompileStatic
   
   @CompileStatic
@@ -397,7 +397,7 @@ class SomeClass2 {
   }
 
   void testListToArrayCoercionWithHierarchy() {
-    testHighlighting '''\
+    doTestHighlighting '''\
   import groovy.transform.CompileStatic
   
   @CompileStatic
@@ -410,7 +410,7 @@ class SomeClass2 {
   }
 
   void testComponentCoercion() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -424,7 +424,7 @@ class SomeClass {
   }
 
   void testArrayListInitializerCoercion() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -437,7 +437,7 @@ class SomeClass {
   }
 
   void testArrayEmptyListInitializerCoercion() {
-    testHighlighting ''' 
+    doTestHighlighting ''' 
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -450,7 +450,7 @@ class SomeClass {
   }
 
   void testOverloadWithPlaceholders() {
-    testHighlighting ''' 
+    doTestHighlighting ''' 
 import groovy.transform.CompileStatic
 
 class User{}
@@ -473,7 +473,7 @@ static void main(Foo foo) {
   }
 
   void testOverloadWithPlaceholders2() {
-    testHighlighting ''' 
+    doTestHighlighting ''' 
 import groovy.transform.CompileStatic
 
 class User{}
@@ -491,7 +491,7 @@ static void main() {
   }
 
   void testCollectManyListReturn() {
-    testHighlighting ''' 
+    doTestHighlighting ''' 
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -504,7 +504,7 @@ def foo() {
   }
 
   void testCollectManyItReturn() {
-    testHighlighting ''' 
+    doTestHighlighting ''' 
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -517,7 +517,7 @@ def foo() {
   }
 
   void testSeveralPossibleClosureSignatures() {
-    testHighlighting ''' 
+    doTestHighlighting ''' 
 import groovy.transform.CompileStatic
 @CompileStatic
 def bar(Map<String, Integer> map) {

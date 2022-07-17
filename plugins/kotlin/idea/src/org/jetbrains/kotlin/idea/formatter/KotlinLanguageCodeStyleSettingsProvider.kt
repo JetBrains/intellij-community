@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter
 
@@ -11,7 +11,7 @@ import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAc
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.psi.codeStyle.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntryTable
@@ -34,7 +34,7 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
         initIndentOptions()
     }
 
-    override fun createCustomSettings(settings: CodeStyleSettings?): CustomCodeStyleSettings = KotlinCodeStyleSettings(settings)
+    override fun createCustomSettings(settings: CodeStyleSettings): CustomCodeStyleSettings = KotlinCodeStyleSettings(settings)
 
     override fun getAccessor(codeStyleObject: Any, field: Field): CodeStyleFieldAccessor<*, *>? {
         if (codeStyleObject is KotlinCodeStyleSettings && KotlinPackageEntryTable::class.java.isAssignableFrom(field.type)) {
@@ -192,6 +192,12 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                 showCustomOption(
                     KotlinCodeStyleSettings::ALIGN_IN_COLUMNS_CASE_BRANCH,
                     KotlinBundle.message("formatter.title.align.when.branches.in.columns"),
+                    codeStyleSettingsCustomizableOptions.WRAPPING_SWITCH_STATEMENT
+                )
+
+                showCustomOption(
+                    KotlinCodeStyleSettings::LINE_BREAK_AFTER_MULTILINE_WHEN_ENTRY,
+                    KotlinBundle.message("formatter.title.line.break.after.multiline.when.entry"),
                     codeStyleSettingsCustomizableOptions.WRAPPING_SWITCH_STATEMENT
                 )
 

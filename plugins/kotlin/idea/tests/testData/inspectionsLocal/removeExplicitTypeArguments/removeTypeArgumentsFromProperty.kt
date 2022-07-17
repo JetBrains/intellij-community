@@ -1,3 +1,3 @@
 // FIX: Remove explicit type arguments
-// WITH_RUNTIME
+// WITH_STDLIB
 val foo: MutableList<String> = mutableListOf<String<caret>>()

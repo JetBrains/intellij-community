@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.IdeBundle
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationType
-import com.intellij.notification.NotificationsManager
+import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathMacros
@@ -12,13 +10,13 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.impl.ProjectMacrosUtil
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -30,7 +28,6 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
 
 @NonNls const val NOTIFICATION_GROUP_ID = "Load Error"
 
@@ -53,7 +50,8 @@ fun doNotify(macros: MutableSet<String>, project: Project, substitutorToStore: M
                                       ApplicationNamesInfo.getInstance().productName)
   val message = HtmlBuilder().appendRaw(mainMessage).br().br().appendRaw(description).toString()
   val title = IdeBundle.message("notification.title.unknown.macros.error")
-  UnknownMacroNotification(NOTIFICATION_GROUP_ID, title, message, NotificationType.ERROR, null, macros).apply {
+  UnknownMacroNotification(NOTIFICATION_GROUP_ID, title, message, NotificationType.ERROR,
+                                                                              null, macros).apply {
     addAction(NotificationAction.createSimple(IdeBundle.message("notification.action.unknown.macros.error.fix")) {
       checkUnknownMacros(project, true, macros, substitutorToStore)
     })
@@ -102,7 +100,8 @@ private fun checkUnknownMacros(project: Project,
     if (store.isReloadPossible(components)) {
       substitutor.invalidateUnknownMacros(unknownMacros)
 
-      for (notification in notificationManager.getNotificationsOfType(UnknownMacroNotification::class.java, project)) {
+      for (notification in notificationManager.getNotificationsOfType(
+        UnknownMacroNotification::class.java, project)) {
         if (unknownMacros.containsAll(notification.macros)) {
           notification.expire()
         }
@@ -162,5 +161,19 @@ inline fun <T> runAsWriteActionIfNeeded(crossinline runnable: () -> T): T {
   return when {
     ApplicationManager.getApplication().isWriteAccessAllowed -> runnable()
     else -> runWriteAction(runnable)
+  }
+}
+
+class UnknownMacroNotification(groupId: String,
+                               title: @NlsContexts.NotificationTitle String,
+                               content: @NlsContexts.NotificationContent String,
+                               type: NotificationType,
+                               listener: NotificationListener?,
+                               val macros: Collection<String>) : Notification(groupId, title, content, type) {
+  init {
+    listener?.let {
+      @Suppress("DEPRECATION")
+      setListener(it)
+    }
   }
 }

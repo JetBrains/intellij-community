@@ -23,9 +23,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class DefaultProjectFormatterTest extends JavaFormatterTestCase {
   @Override
   protected String getBasePath() {

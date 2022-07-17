@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.actions.internal.benchmark
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.navigation.NavigationUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ScrollType
@@ -22,15 +22,17 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.uiDesigner.core.GridConstraints
 import kotlinx.coroutines.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.caches.project.ModuleOrigin
-import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.completion.CompletionBenchmarkSink
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.util.EDT
-import org.jetbrains.kotlin.idea.core.util.getLineCount
+import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.*
@@ -56,7 +58,7 @@ abstract class AbstractCompletionBenchmarkAction : AnAction() {
     ): AbstractCompletionBenchmarkScenario?
 
     companion object {
-        fun showPopup(project: Project, text: String) {
+        fun showPopup(project: Project, @Nls text: String) {
             val statusBar = WindowManager.getInstance().getStatusBar(project)
             JBPopupFactory.getInstance()
                 .createHtmlTextBalloonBuilder(text, MessageType.ERROR, null)
@@ -72,7 +74,7 @@ abstract class AbstractCompletionBenchmarkAction : AnAction() {
             val scope = GlobalSearchScope.allScope(project)
 
             fun KtFile.isUsableForBenchmark(): Boolean {
-                val moduleInfo = this.getNullableModuleInfo() ?: return false
+                val moduleInfo = this.moduleInfoOrNull ?: return false
                 if (this.isCompiled || !this.isWritable || this.isScript()) return false
                 return moduleInfo.moduleOrigin == ModuleOrigin.MODULE
             }
@@ -85,7 +87,7 @@ abstract class AbstractCompletionBenchmarkAction : AnAction() {
                 .filterTo(mutableListOf()) { it.isUsableForBenchmark() && filePredicate(it) }
         }
 
-        internal fun JPanel.addBoxWithLabel(tooltip: String, label: String = "$tooltip:", default: String, i: Int): JBTextField {
+        internal fun JPanel.addBoxWithLabel(@Nls tooltip: String, @Nls label: String = "$tooltip:", default: String, i: Int): JBTextField {
             this.add(JBLabel(label), GridConstraints().apply { row = i; column = 0 })
             val textField = JBTextField().apply {
                 text = default
@@ -96,8 +98,10 @@ abstract class AbstractCompletionBenchmarkAction : AnAction() {
         }
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal
+        e.presentation.isEnabledAndVisible = isApplicationInternalMode()
     }
 }
 
@@ -157,7 +161,7 @@ internal abstract class AbstractCompletionBenchmarkScenario(
             }
             editor.moveCaret(editor.caretModel.offset + text.length + 1)
             AutoPopupController.getInstance(project).scheduleAutoPopup(editor, CompletionType.BASIC, null)
-        }, "insertTextAndInvokeCompletion", "completionBenchmark")
+        }, "InsertTextAndInvokeCompletion", "completionBenchmark")
 
         val result = try {
             withTimeout(timeout) { collectResult(file, location) }
@@ -170,7 +174,7 @@ internal abstract class AbstractCompletionBenchmarkScenario(
                 document.deleteString(offset, offset + text.length + 2)
                 PsiDocumentManager.getInstance(project).commitDocument(document)
             }
-        }, "revertToOriginal", "completionBenchmark")
+        }, "RevertToOriginal", "completionBenchmark")
 
         delay(100)
         return result

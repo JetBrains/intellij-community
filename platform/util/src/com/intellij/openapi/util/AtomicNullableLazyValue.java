@@ -1,30 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
+@ApiStatus.NonExtendable
 public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
   private volatile T myValue;
   private volatile boolean myComputed;
+
+  /** @deprecated please use {@link NullableLazyValue#atomicLazyNullable} instead */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  protected AtomicNullableLazyValue() { }
 
   @Override
   public final T getValue() {
@@ -49,13 +38,18 @@ public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
     return value;
   }
 
+  @Override
+  public boolean isComputed() {
+    return myComputed;
+  }
+
+  /** @deprecated please use {@link NullableLazyValue#atomicLazyNullable} instead */
+  @Deprecated
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  @NotNull
-  public static <T> AtomicNullableLazyValue<T> createValue(@NotNull final Factory<? extends T> value) {
+  public static @NotNull <T> AtomicNullableLazyValue<T> createValue(@NotNull Factory<? extends T> value) {
     return new AtomicNullableLazyValue<T>() {
-      @Nullable
       @Override
-      protected T compute() {
+      protected @Nullable T compute() {
         return value.create();
       }
     };

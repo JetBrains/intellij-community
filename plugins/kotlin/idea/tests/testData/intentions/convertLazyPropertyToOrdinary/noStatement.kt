@@ -1,3 +1,3 @@
 // IS_APPLICABLE: false
-// WITH_RUNTIME
+// WITH_STDLIB
 <caret>val x by lazy { }

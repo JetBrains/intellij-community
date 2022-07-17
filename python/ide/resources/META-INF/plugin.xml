@@ -10,6 +10,7 @@
 
   <xi:include href="/META-INF/pycharm-community-customization.xml"/>
   <xi:include href="/META-INF/tips-pycharm-community.xml"/>
+  <xi:include href="/META-INF/jupyter-view-only.xml"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.jetbrains.python.PyCharmCorePluginConfigurator"/>

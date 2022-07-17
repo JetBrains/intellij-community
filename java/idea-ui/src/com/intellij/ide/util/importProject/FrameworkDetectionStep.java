@@ -19,8 +19,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -102,15 +104,16 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
   }
 
   @Override
-  protected void onFinished(final List<? extends DetectedFrameworkDescription> result, final boolean canceled) {
-    myDetectedFrameworksComponent.getTree().rebuildTree(result);
-    if (result.isEmpty()) {
+  protected void onFinished(@Nullable List<? extends DetectedFrameworkDescription> result, final boolean canceled) {
+    List<? extends DetectedFrameworkDescription> frameworks = ContainerUtil.notNullize(result);
+    myDetectedFrameworksComponent.getTree().rebuildTree(frameworks);
+    if (frameworks.isEmpty()) {
       myFrameworksDetectedLabel.setText(JavaUiBundle.message("label.text.no.frameworks.detected"));
     }
     else {
       myFrameworksDetectedLabel.setText(JavaUiBundle.message("label.text.the.following.frameworks.are.detected"));
     }
-    myFrameworksPanel.setVisible(!result.isEmpty());
+    myFrameworksPanel.setVisible(!frameworks.isEmpty());
   }
 
   @Override

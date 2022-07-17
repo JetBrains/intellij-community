@@ -170,12 +170,12 @@ public final class NavigationUtil {
     CommandProcessor.getInstance().executeCommand(element.getProject(), () -> {
       if (openAsNativeFinal || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
         final NavigationItem navigationItem = (NavigationItem)element;
-        if (!navigationItem.canNavigate()) {
-          resultRef.set(Boolean.FALSE);
-        }
-        else {
+        if (navigationItem.canNavigate()) {
           navigationItem.navigate(requestFocus);
           resultRef.set(Boolean.TRUE);
+        }
+        else {
+          resultRef.set(Boolean.FALSE);
         }
       }
     }, "", null);
@@ -382,7 +382,7 @@ public final class NavigationUtil {
         String current = null;
         boolean hasTitle = false;
         for (Object element : elements) {
-          final GotoRelatedItem item = itemsMap.get(element);
+          final GotoRelatedItem item = element instanceof GotoRelatedItem ? (GotoRelatedItem)element : itemsMap.get(element);
           if (item != null && !Objects.equals(current, item.getGroup())) {
             current = item.getGroup();
             separators.put(element, new ListSeparator(
@@ -489,12 +489,12 @@ public final class NavigationUtil {
   @NotNull
   public static List<GotoRelatedItem> collectRelatedItems(@NotNull PsiElement contextElement, @Nullable DataContext dataContext) {
     Set<GotoRelatedItem> items = new LinkedHashSet<>();
-    for (GotoRelatedProvider provider : GO_TO_EP_NAME.getExtensionList()) {
+    GO_TO_EP_NAME.forEachExtensionSafe(provider -> {
       items.addAll(provider.getItems(contextElement));
       if (dataContext != null) {
         items.addAll(provider.getItems(dataContext));
       }
-    }
+    });
     GotoRelatedItem[] result = items.toArray(new GotoRelatedItem[0]);
     Arrays.sort(result, (i1, i2) -> {
       String o1 = i1.getGroup();

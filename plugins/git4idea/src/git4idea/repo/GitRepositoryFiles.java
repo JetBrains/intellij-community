@@ -54,6 +54,7 @@ public final class GitRepositoryFiles {
   private static final @NonNls String SHALLOW = "shallow";
   private static final @NonNls String LOGS = "logs";
   private static final @NonNls String STASH = "stash";
+  private static final @NonNls String WORKTREES_DIR = "worktrees";
 
   private final VirtualFile myRootDir;
   private final VirtualFile myMainDir;
@@ -80,9 +81,15 @@ public final class GitRepositoryFiles {
   private final @NonNls String myHooksDirPath;
   private final @NonNls String myShallow;
   private final @NonNls String myStashReflogPath;
+  private final @NonNls String myWorktreesDirPath;
 
   private @Nullable @NonNls String myCustomHooksDirPath;
 
+  /**
+   * @param rootDir     Root of the repository (parent directory of '.git' file/directory).
+   * @param mainDir     '.git' directory location. For worktrees - location of the 'main_repo/.git'.
+   * @param worktreeDir '.git' directory location. For worktrees - location of the 'main_repo/.git/worktrees/worktree_name/'.
+   */
   private GitRepositoryFiles(@NotNull VirtualFile rootDir, @NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
     myRootDir = rootDir;
     myMainDir = mainDir;
@@ -100,6 +107,7 @@ public final class GitRepositoryFiles {
     myHooksDirPath = mainPath + slash(HOOKS);
     myShallow = mainPath + slash(SHALLOW);
     myStashReflogPath = mainPath + slash(LOGS) + slash(REFS) + slash(STASH);
+    myWorktreesDirPath = mainPath + slash(WORKTREES_DIR);
 
     String worktreePath = myWorktreeDir.getPath();
     myHeadFilePath = worktreePath + slash(HEAD);
@@ -116,8 +124,8 @@ public final class GitRepositoryFiles {
   }
 
   @NotNull
-  public static GitRepositoryFiles getInstance(@NotNull VirtualFile rootDir,
-                                               @NotNull VirtualFile gitDir) {
+  public static GitRepositoryFiles createInstance(@NotNull VirtualFile rootDir,
+                                                  @NotNull VirtualFile gitDir) {
     VirtualFile gitDirForWorktree = getMainGitDirForWorktree(gitDir);
     VirtualFile mainDir = gitDirForWorktree == null ? gitDir : gitDirForWorktree;
     return new GitRepositoryFiles(rootDir, mainDir, gitDir);
@@ -265,6 +273,11 @@ public final class GitRepositoryFiles {
   @NotNull
   public File getStashReflogFile() {
     return file(myStashReflogPath);
+  }
+
+  @NotNull
+  public File getWorktreesDirFile() {
+    return file(myWorktreesDirPath);
   }
 
   @NotNull

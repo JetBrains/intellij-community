@@ -13,6 +13,7 @@ import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
+import java.util.function.Consumer
 
 /**
  * Manages the execution of run configurations and the relationship between running processes and Run/Debug toolwindow tabs.
@@ -85,16 +86,25 @@ abstract class ExecutionManager {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use {@link #startRunProfile(RunProfileStarter, ExecutionEnvironment)}")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun startRunProfile(starter: RunProfileStarter, @Suppress("UNUSED_PARAMETER") state: RunProfileState, environment: ExecutionEnvironment) {
     startRunProfile(starter, environment)
+  }
+
+  fun restartRunProfile(project: Project,
+                        executor: Executor,
+                        target: ExecutionTarget,
+                        configuration: RunnerAndConfigurationSettings?,
+                        processHandler: ProcessHandler?) {
+    restartRunProfile(project, executor, target, configuration, processHandler, environmentCustomization = null)
   }
 
   abstract fun restartRunProfile(project: Project,
                                  executor: Executor,
                                  target: ExecutionTarget,
                                  configuration: RunnerAndConfigurationSettings?,
-                                 processHandler: ProcessHandler?)
+                                 processHandler: ProcessHandler?,
+                                 environmentCustomization: Consumer<in ExecutionEnvironment>?)
   abstract fun restartRunProfile(environment: ExecutionEnvironment)
 
   fun isStarting(environment: ExecutionEnvironment): Boolean {

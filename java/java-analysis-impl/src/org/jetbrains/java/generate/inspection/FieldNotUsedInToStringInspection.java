@@ -62,7 +62,7 @@ public final class FieldNotUsedInToStringInspection extends AbstractToStringInsp
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       @NonNls final String methodName = method.getName();
       if (!"toString".equals(methodName)) {
@@ -120,7 +120,7 @@ public final class FieldNotUsedInToStringInspection extends AbstractToStringInsp
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (myUnusedFields.isEmpty() && myUnusedMethods.isEmpty()) {
         return;
       }

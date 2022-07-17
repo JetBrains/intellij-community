@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageFixBase
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
@@ -21,8 +21,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.lang.ref.WeakReference
 
 class CreateParameterFromUsageFix<E : KtElement>(
-    val originalExpression: E,
-    private val dataProvider: () -> CreateParameterData<E>?
+    originalExpression: E,
+    private val dataProvider: (E) -> CreateParameterData<E>?
 ) : CreateFromUsageFixBase<E>(originalExpression) {
     private var parameterInfoReference: WeakReference<KotlinParameterInfo>? = null
 
@@ -54,7 +54,7 @@ class CreateParameterFromUsageFix<E : KtElement>(
     override fun startInWriteAction() = false
 
     private fun runChangeSignature(project: Project, editor: Editor?) {
-        element ?: return
+        val originalExpression = element ?: return
         val parameterInfo = parameterInfo() ?: return
         val config = object : KotlinChangeSignatureConfiguration {
             override fun configure(originalDescriptor: KotlinMethodDescriptor): KotlinMethodDescriptor {
@@ -67,7 +67,7 @@ class CreateParameterFromUsageFix<E : KtElement>(
         runChangeSignature(project, editor, parameterInfo.callableDescriptor, config, originalExpression, text)
     }
 
-    private fun parameterData() = dataProvider()
+    private fun parameterData() = element?.let { dataProvider(it) }
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val onComplete = parameterData()?.onComplete
@@ -89,9 +89,10 @@ class CreateParameterFromUsageFix<E : KtElement>(
     companion object {
         fun <E : KtElement> createFixForPrimaryConstructorPropertyParameter(
             element: E,
-            callableInfosFactory: () -> List<CallableInfo>?
-        ): CreateParameterFromUsageFix<E> = CreateParameterFromUsageFix(element, dataProvider = fun(): CreateParameterData<E>? {
-            val info = callableInfosFactory.invoke()?.singleOrNull().safeAs<PropertyInfo>() ?: return null
+            callableInfosFactory: (E) -> List<CallableInfo>?
+        ): CreateParameterFromUsageFix<E> = CreateParameterFromUsageFix(element, dataProvider = fun(element): CreateParameterData<E>? {
+            val info = callableInfosFactory.invoke(element)?.singleOrNull().safeAs<PropertyInfo>() ?: return null
+            if (info.receiverTypeInfo.staticContextRequired) return null
 
             val builder = CallableBuilderConfiguration(listOf(info), element).createBuilder()
             val receiverTypeCandidate = builder.computeTypeCandidates(info.receiverTypeInfo).firstOrNull()

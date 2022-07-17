@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
@@ -20,7 +20,7 @@ fun plugin(outDir: Path, @Language("XML") descriptor: String) {
   catch (e: Throwable) {
     throw RuntimeException("Cannot parse:\n ${descriptor.trimIndent().prependIndent("  ")}", e)
   }
-  outDir.resolve("${rawDescriptor.id!!}/META-INF/plugin.xml").write(descriptor.trimIndent())
+  outDir.resolve("${rawDescriptor.id!!}/${PluginManagerCore.PLUGIN_XML_PATH}").write(descriptor.trimIndent())
 }
 
 fun module(outDir: Path, ownerId: String, moduleId: String, @Language("XML") descriptor: String) {
@@ -42,6 +42,7 @@ class PluginBuilder {
     private set
 
   private var implementationDetail = false
+  private var onDemand = false
   private var name: String? = null
   private var description: String? = null
   private var packagePrefix: String? = null
@@ -95,7 +96,7 @@ class PluginBuilder {
 
   fun depends(pluginId: String, subDescriptor: PluginBuilder): PluginBuilder {
     val fileName = "dep_${pluginIdCounter.incrementAndGet()}.xml"
-    subDescriptors.put("META-INF/$fileName", subDescriptor)
+    subDescriptors.put(PluginManagerCore.META_INF + fileName, subDescriptor)
     depends(pluginId, fileName)
     return this
   }
@@ -160,14 +161,21 @@ class PluginBuilder {
     return this
   }
 
+  fun onDemand() = also {
+    onDemand = true
+  }
+
   fun text(requireId: Boolean = true): String {
     return buildString {
       append("<idea-plugin")
       if (implementationDetail) {
-        append(""" implementation-detail="true"""")
+        append(""" $IMPLEMENTATION_DETAIL_ATTRIBUTE="true"""")
+      }
+      if (onDemand) {
+        append(""" $ON_DEMAND_ATTRIBUTE="true"""")
       }
       packagePrefix?.let {
-        append(""" package="$it"""")
+        append(""" $PACKAGE_ATTRIBUTE="$it"""")
       }
       append(">")
       if (requireId) {
@@ -217,7 +225,7 @@ class PluginBuilder {
   }
 
   fun build(path: Path): PluginBuilder {
-    path.resolve("META-INF/plugin.xml").write(text())
+    path.resolve(PluginManagerCore.PLUGIN_XML_PATH).write(text())
     writeSubDescriptors(path)
     return this
   }
@@ -236,7 +244,7 @@ class PluginBuilder {
 
   private fun buildJarToStream(outputStream: OutputStream) {
     Compressor.Zip(outputStream).use {
-      it.addFile("META-INF/plugin.xml", text().toByteArray())
+      it.addFile(PluginManagerCore.PLUGIN_XML_PATH, text().toByteArray())
     }
   }
 

@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -79,7 +78,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
   private static class UnnecessaryConstantArrayCreationExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+    public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
       super.visitArrayInitializerExpression(expression);
       final PsiElement parent = expression.getParent();
       if (!(parent instanceof PsiNewExpression)) {
@@ -101,7 +100,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
       if (hasGenericTypeParameters(variable)) {
         return;
       }
-      registerErrorAtOffset(parent, 0, expression.getStartOffsetInParent(), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+      registerErrorAtOffset(parent, 0, expression.getStartOffsetInParent(),
                             expressionType.getPresentableText());
     }
 

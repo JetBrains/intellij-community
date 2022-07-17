@@ -21,7 +21,7 @@ import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import java.io.File;
 
 /**
- * @author: db
+ * @author db
  */
 public class StorageDumper {
   private static class Env {

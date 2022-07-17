@@ -65,7 +65,7 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
         final ShelvedChangeList list = ShelveChangesManager.getInstance(myProject).shelveChanges(changes, commitMessage, true, false, true);
         ShelvedChangesViewManager.getInstance(myProject).activateView(list);
 
-        Change[] changesArray = changes.toArray(new Change[0]);
+        Change[] changesArray = changes.toArray(Change.EMPTY_CHANGE_ARRAY);
         LocalChangeList changeList = ChangesUtil.getChangeListIfOnlyOne(myProject, changesArray);
         if (changeList != null) {
           ChangeListManager.getInstance(myProject).scheduleAutomaticEmptyChangeListDeletion(changeList, true);

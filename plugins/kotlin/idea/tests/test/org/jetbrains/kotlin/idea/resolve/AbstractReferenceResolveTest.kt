@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.resolve
 
@@ -10,11 +10,12 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.completion.test.configureWithExtraFile
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.Assert
 import kotlin.test.assertTrue
 
@@ -29,7 +30,14 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
     protected open fun doTest(path: String) {
         assert(path.endsWith(".kt")) { path }
         myFixture.configureWithExtraFile(path, ".Data")
-        performChecks()
+        val controlDirective = if (isFirPlugin()) {
+            IgnoreTests.DIRECTIVES.IGNORE_FIR
+        } else {
+            IgnoreTests.DIRECTIVES.IGNORE_FE10
+        }
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), controlDirective) {
+            performChecks()
+        }
     }
 
     protected fun performChecks() {
@@ -84,7 +92,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         }
     }
 
-    override fun getDefaultProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getDefaultProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_NO_SOURCES
 
     open val refMarkerText: String = "REF"
 

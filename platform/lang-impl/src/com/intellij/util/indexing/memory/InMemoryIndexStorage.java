@@ -4,12 +4,11 @@ package com.intellij.util.indexing.memory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
+import com.intellij.util.indexing.impl.IndexStorageUtil;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -21,20 +20,7 @@ public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K,
   private final Map<K, ValueContainerImpl<V>> myMap;
 
   public InMemoryIndexStorage(@NotNull KeyDescriptor<K> keyDescriptor) {
-    myMap = CollectionFactory.createCustomHashingStrategyMap(new HashingStrategy<>() {
-      @Override
-      public int hashCode(@Nullable K o) {
-        if (o == null) return 0;
-        return keyDescriptor.getHashCode(o);
-      }
-
-      @Override
-      public boolean equals(@Nullable K a, @Nullable K b) {
-        if (a == null && b != null) return false;
-        if (b == null && a != null) return false;
-        return keyDescriptor.isEqual(a, b);
-      }
-    });
+    myMap = IndexStorageUtil.createKeyDescriptorHashedMap(keyDescriptor);
   }
 
   @Override

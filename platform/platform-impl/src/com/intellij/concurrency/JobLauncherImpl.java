@@ -5,16 +5,14 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.WrappedProgressIndicator;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +42,7 @@ public final class JobLauncherImpl extends JobLauncher {
     ProgressIndicator wrapper = progress == null ? new StandardProgressIndicatorBase() : new SensitiveProgressWrapper(progress);
 
     Boolean result = processImmediatelyIfTooFew(things, wrapper, runInReadAction, thingProcessor);
-    if (result != null) return result.booleanValue();
+    if (result != null) return result;
 
     ProgressManager pm = ProgressManager.getInstance();
     Processor<? super T> processor = ((CoreProgressManager)pm).isCurrentThreadPrioritized()
@@ -110,7 +108,7 @@ public final class JobLauncherImpl extends JobLauncher {
 
   private static boolean isAlreadyUnder(@NotNull ProgressIndicator progress) {
     progress = ProgressWrapper.unwrapAll(progress);
-    ProgressIndicator existing = ProgressManager.getGlobalProgressIndicator();
+    ProgressIndicator existing = ProgressIndicatorProvider.getGlobalProgressIndicator();
     while (existing != null) {
       if (existing == progress) return true;
       if (!(existing instanceof WrappedProgressIndicator)) return false;
@@ -125,13 +123,9 @@ public final class JobLauncherImpl extends JobLauncher {
                                                         @NotNull ProgressIndicator progress,
                                                         boolean runInReadAction,
                                                         @NotNull Processor<? super T> thingProcessor) {
-    // commit can be invoked from within write action
-    //if (runInReadAction && ApplicationManager.getApplication().isWriteAccessAllowed()) {
-    //  throw new RuntimeException("Must not run invokeConcurrentlyUnderProgress() from under write action because of imminent deadlock");
-    //}
     if (things.isEmpty()) return true;
 
-    if (things.size() <= 1 ||
+    if (things.size() == 1 ||
         JobSchedulerImpl.getJobPoolParallelism() <= CORES_FORK_THRESHOLD ||
         runInReadAction && ApplicationManager.getApplication().isWriteAccessAllowed()
       ) {
@@ -156,8 +150,6 @@ public final class JobLauncherImpl extends JobLauncher {
     }
     return null;
   }
-
-  // This implementation is not really async
 
   @NotNull
   @Override
@@ -257,8 +249,9 @@ public final class JobLauncherImpl extends JobLauncher {
   }
 
   /**
-   * Process all elements from the {@code failedToProcess} and then {@code things} concurrently in the underlying pool.
-   * Processing happens concurrently maintaining {@code JobSchedulerImpl.CORES_COUNT} parallelism.
+   * Process all elements from the {@code failedToProcess} and then {@code things} concurrently in the system ForkJoinPool and the current thread.
+   * Processing happens from the queue head to the queue tail, maintaining {@link JobSchedulerImpl#getJobPoolParallelism} parallelism.
+   * So the elements in the queue head have higher priority than the tail.
    * Stop when {@code tombStone} element is occurred.
    * If was unable to process some element (an exception occurred during {@code thingProcessor.process()} call), add it back to the {@code failedToProcess} queue.
    * @return true if all elements processed successfully, false if at least one processor returned false or exception occurred
@@ -268,32 +261,37 @@ public final class JobLauncherImpl extends JobLauncher {
                                   @NotNull Queue<@NotNull T> failedToProcess,
                                   @NotNull ProgressIndicator progress,
                                   @NotNull T tombStone,
-                                  @NotNull Processor<? super T> thingProcessor) {
-    final class MyTask implements Callable<Boolean> {
+                                  @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
+    // spawn up to (JobSchedulerImpl.getJobPoolParallelism() - 1) tasks,
+    // each one trying to dequeue as many elements off `things` as possible and handing them to `thingProcessor`, until `tombStone` is hit
+    final class MyProcessQueueTask implements Callable<Boolean> {
       private final int mySeq;
-      private boolean result;
+      private final T myFirstTask;
 
-      private MyTask(int seq) {
+      private MyProcessQueueTask(int seq, @Nullable T firstTask) {
         mySeq = seq;
+        myFirstTask = firstTask;
       }
 
       @Override
       public Boolean call() {
+        boolean[] result = new boolean[1];
         ProgressManager.getInstance().executeProcessUnderProgress(() -> {
           try {
+            T element = myFirstTask;
             while (true) {
-              ProgressManager.checkCanceled();
-              T element = failedToProcess.poll();
+              if (element == null) element = failedToProcess.poll();
               if (element == null) element = things.take();
 
               if (element == tombStone) {
-                things.offer(element);
-                result = true;
+                things.put(tombStone); // return just popped tombStone to the 'things' queue for everybody else to see it
+                // since the queue is drained up to the tombStone, there surely should be a place for one element
+                result[0] = true;
                 break;
               }
               try {
+                ProgressManager.checkCanceled();
                 if (!thingProcessor.process(element)) {
-                  result = false;
                   break;
                 }
               }
@@ -304,13 +302,14 @@ public final class JobLauncherImpl extends JobLauncher {
                 failedToProcess.add(element);
                 throw e;
               }
+              element = null;
             }
           }
           catch (InterruptedException e) {
             throw new RuntimeException(e);
           }
         }, progress);
-        return result;
+        return result[0];
       }
 
       @Override
@@ -320,33 +319,42 @@ public final class JobLauncherImpl extends JobLauncher {
       }
     }
     progress.checkCanceled(); // do not start up expensive threads if there's no need to
-    boolean isSmallEnough = things.contains(tombStone) && things.size() < 10;
-    if (isSmallEnough) {
+    int size = things.size();
+    boolean isQueueBounded = things.contains(tombStone);
+    // start up (CPU cores) parallel tasks but no more than (queue size)
+    int n = Math.max(1, Math.min(isQueueBounded ? size-1 : Integer.MAX_VALUE, JobSchedulerImpl.getJobPoolParallelism() - 1));
+    List<ForkJoinTask<Boolean>> tasks = new ArrayList<>(n-1);
+    List<T> firstElements = new ArrayList<>(n);
+    things.drainTo(firstElements, n);
+    // if the tombstone was removed by this batch operation, return it back to the queue to give chance tasks to stop themselves
+    if (ContainerUtil.getLastItem(firstElements) == tombStone) {
+      firstElements.remove(firstElements.size() - 1);
       try {
-        // do not distribute for small queues
-        return new MyTask(0).call();
+        things.put(tombStone);
       }
-      catch (RuntimeException|Error e) {
-        throw e;
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
+      catch (InterruptedException e) {
+        LOG.error(e);
       }
     }
-
-    List<ForkJoinTask<Boolean>> tasks = new ArrayList<>();
-    int n = Math.max(1, Math.min(things.size(), JobSchedulerImpl.getJobPoolParallelism()) - 1);
-    for (int i = 0; i < n; i++) {
-      tasks.add(ForkJoinPool.commonPool().submit(new MyTask(i)));
+    for (int i = 1; i < n; i++) {
+      tasks.add(ForkJoinPool.commonPool().submit(new MyProcessQueueTask(i, i < firstElements.size() ? firstElements.get(i) : null)));
     }
-
-    boolean result = true;
+    MyProcessQueueTask firstTask = new MyProcessQueueTask(0, ContainerUtil.getFirstItem(firstElements));
+    // execute the first task directly in this thread to avoid thread starvation
+    boolean result = false;
     Throwable exception = null;
+    try {
+      result = firstTask.call();
+    }
+    catch (Throwable e) {
+      exception = e;
+    }
     for (ForkJoinTask<Boolean> task : tasks) {
       try {
+        //noinspection NonShortCircuitBooleanExpression
         result &= task.join();
       }
-      catch (RuntimeException|Error e) {
+      catch (Throwable e) {
         exception = e;
       }
     }

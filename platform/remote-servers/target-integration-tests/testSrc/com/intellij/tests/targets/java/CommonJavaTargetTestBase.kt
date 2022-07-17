@@ -214,17 +214,11 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
         for (child in testrun.getChildren("suite")) {
           child.removeAttribute("duration")
           for (testChild in child.getChildren("test")) {
-            testChild.removeAttribute("duration")
-
-            // Stacktrace for LocalJavaTargetTest differs here due to usage of AppMainV2 in ProcessProxyFactoryImpl;
-            // let's mask that; AppMainV2 won't be used in production, only when running from sources
-            testChild.getChildren("output").forEach {
-              val content = it.getContent(0)
-              assertEquals(writer.toString(), Content.CType.Text, content.cType)
-              val contentText = content.value
-              it.setContent(Text(contentText.substring(0, contentText.length.coerceAtMost(600))))
-            }
+            purifyTestNode(testChild, writer)
           }
+        }
+        for (testChild in testrun.getChildren("test")) {
+          purifyTestNode(testChild, writer)
         }
 
         val expectedText = when (executionMode) {
@@ -234,17 +228,33 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
           else -> {
             val element = JDOMUtil.load(expectedTestsResultExported)
             element.getChildren("suite").forEach { suite ->
-              suite.getChildren("test").forEach { testElement ->
-                removeContentsPartially(testElement) {
-                  it?.text?.contains("Debugger:") ?: false
-                }
-              }
+              suite.getChildren("test").forEach(::removeDebuggerOutput)
             }
+            element.getChildren("test").forEach(::removeDebuggerOutput)
             JDOMUtil.write(element)
           }
         }
         assertEquals(output, expectedText, JDOMUtil.write(testrun))
       }
+    }
+  }
+
+  private fun purifyTestNode(testNode: Element, writer: StringWriter) {
+    testNode.removeAttribute("duration")
+
+    // Stacktrace for LocalJavaTargetTest differs here due to usage of AppMainV2 in ProcessProxyFactoryImpl;
+    // let's mask that; AppMainV2 won't be used in production, only when running from sources
+    testNode.getChildren("output").forEach {
+      val content = it.getContent(0)
+      assertEquals(writer.toString(), Content.CType.Text, content.cType)
+      val contentText = content.value
+      it.setContent(Text(contentText.substring(0, contentText.length.coerceAtMost(600))))
+    }
+  }
+
+  private fun removeDebuggerOutput(testElement: Element) {
+    removeContentsPartially(testElement) {
+      it?.text?.contains("Debugger:") ?: false
     }
   }
 
@@ -309,8 +319,15 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
    *                    folders in it
    */
   protected fun initializeSampleModule(module: Module, contentRoot: VirtualFile) {
-    val libraryDescriptor = JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0")
-    AbstractTestFrameworkIntegrationTest.addMavenLibs(module, libraryDescriptor)
+    val libraryDescriptors = listOf(
+      JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0"),
+      JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-engine", "5.3.0"),
+      JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-engine", "1.7.0"),
+      JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-launcher", "1.7.0"),
+    )
+    libraryDescriptors.forEach { libraryDescriptor ->
+      AbstractTestFrameworkIntegrationTest.addMavenLibs(module, libraryDescriptor)
+    }
 
     ModuleRootModificationUtil.updateModel(module) { model: ModifiableRootModel ->
       val contentEntry = model.addContentEntry(contentRoot)

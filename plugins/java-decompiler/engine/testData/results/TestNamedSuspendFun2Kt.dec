@@ -1,5 +1,5 @@
 import kotlin.Metadata;
-import kotlin.SuccessOrFailure.Failure;
+import kotlin.SuccessOrFailure;
 import kotlin.coroutines.Continuation;
 import kotlin.coroutines.intrinsics.IntrinsicsKt;
 import kotlin.coroutines.jvm.internal.ContinuationImpl;
@@ -65,62 +65,62 @@ public final class TestNamedSuspendFun2Kt {
             var4 = IntrinsicsKt.getCOROUTINE_SUSPENDED();// 2
             boolean var10001;
             Object var22;
-            switch(var3.label) {
-            case 0:
-               if (var2 instanceof Failure) {
-                  throw ((Failure)var2).exception;
-               }
-               break;
-            case 1:
-               try {
-                  if (var2 instanceof Failure) {
-                     throw ((Failure)var2).exception;
+            switch (var3.label) {
+               case 0:
+                  if (var2 instanceof SuccessOrFailure.Failure) {
+                     throw ((SuccessOrFailure.Failure)var2).exception;
+                  }
+                  break;
+               case 1:
+                  try {
+                     if (var2 instanceof SuccessOrFailure.Failure) {
+                        throw ((SuccessOrFailure.Failure)var2).exception;
+                     }
+
+                     var22 = var2;
+                  } catch (Throwable var19) {
+                     var10000 = var19;
+                     var10001 = false;
+                     break label472;
                   }
 
-                  var22 = var2;
-               } catch (Throwable var19) {
-                  var10000 = var19;
-                  var10001 = false;
-                  break label472;
-               }
-
-               try {
-                  x = ((Number)var22).intValue();// 6
-                  if (x == 0) {
-                     break label491;
+                  try {
+                     x = ((Number)var22).intValue();// 6
+                     if (x == 0) {
+                        break label491;
+                     }
+                  } catch (Throwable var17) {
+                     var10000 = var17;
+                     var10001 = false;
+                     break label472;
                   }
-               } catch (Throwable var17) {
-                  var10000 = var17;
-                  var10001 = false;
-                  break label472;
-               }
 
-               var3.label = 3;
-               if (bar(var3) == var4) {
-                  return var4;
-               }
-               break;
-            case 2:
-               x = var3.I$0;
-               if (var2 instanceof Failure) {
-                  throw ((Failure)var2).exception;
-               }
+                  var3.label = 3;
+                  if (bar(var3) == var4) {
+                     return var4;
+                  }
+                  break;
+               case 2:
+                  x = var3.I$0;
+                  if (var2 instanceof SuccessOrFailure.Failure) {
+                     throw ((SuccessOrFailure.Failure)var2).exception;
+                  }
 
-               return 1;// 11
-            case 3:
-               if (var2 instanceof Failure) {
-                  throw ((Failure)var2).exception;
-               }
-               break;
-            case 4:
-               var1 = (Throwable)var3.L$0;
-               if (var2 instanceof Failure) {
-                  throw ((Failure)var2).exception;
-               }
+                  return 1;// 11
+               case 3:
+                  if (var2 instanceof SuccessOrFailure.Failure) {
+                     throw ((SuccessOrFailure.Failure)var2).exception;
+                  }
+                  break;
+               case 4:
+                  var1 = (Throwable)var3.L$0;
+                  if (var2 instanceof SuccessOrFailure.Failure) {
+                     throw ((SuccessOrFailure.Failure)var2).exception;
+                  }
 
-               throw var1;// 9
-            default:
-               throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
+                  throw var1;// 9
+               default:
+                  throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
             }
 
             do {

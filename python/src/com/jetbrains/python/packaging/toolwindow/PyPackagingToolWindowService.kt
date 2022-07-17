@@ -8,10 +8,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.options.ex.SingleConfigurableEditor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -19,13 +22,13 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.HttpRequests
-import com.intellij.webcore.packaging.ManageRepoDialog
 import com.intellij.webcore.packaging.PackageManagementService
 import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.PyBundle.*
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.PyPackageVersionComparator.STR_COMPARATOR
+import com.jetbrains.python.packaging.repository.*
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
@@ -112,6 +115,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
       searchJob = GlobalScope.launch(Dispatchers.Default) {
         val installed = installedPackages.filter { StringUtil.containsIgnoreCase(it.name, query) }
         val managementService = PyPackageManagers.getInstance().getManagementService(project, currentSdk) as PyPackageManagementService
+        val invalidRepositories = service<PyPackageRepositories>().invalidRepositories.map(::PyInvalidRepositoryViewData)
 
         val packagesFromRepos = managementService.allPackagesByRepository.map {
           filterPackagesForRepo(it.value, query, it.key)
@@ -119,7 +123,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
 
         if (isActive) {
           withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-            toolWindowPanel.showSearchResult(installed, packagesFromRepos)
+            toolWindowPanel.showSearchResult(installed, packagesFromRepos + invalidRepositories)
           }
         }
       }
@@ -127,7 +131,9 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
     else {
       val managementService = PyPackageManagers.getInstance().getManagementService(project, currentSdk) as PyPackageManagementService
       val packagesFromRepos = managementService.allPackagesByRepository.map { entry ->
-        val repository = PyPackageRepository(entry.key)
+        val repository = service<PyPackageRepositories>()
+          .repositories
+          .find { repo -> repo.repositoryUrl == entry.key } ?: PyPIPackageRepository
 
         val (packagesSeq, size) = when {
           PyPIPackageUtil.isPyPIRepository(entry.key) -> Pair(PyPIPackageRanking.names, PyPIPackageCache.getInstance().packageNames.size)
@@ -135,10 +141,11 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
         }
 
         val shownPackages = packagesSeq.limitDisplayableResult(repository)
-        PyPackagesViewData(repository.url, shownPackages, moreItems = size - PACKAGES_LIMIT)
+        PyPackagesViewData(repository, shownPackages, moreItems = size - PACKAGES_LIMIT)
       }
+      val invalidRepositories = service<PyPackageRepositories>().invalidRepositories.map(::PyInvalidRepositoryViewData)
 
-      toolWindowPanel.resetSearch(installedPackages, packagesFromRepos)
+      toolWindowPanel.resetSearch(installedPackages, packagesFromRepos + invalidRepositories)
     }
   }
 
@@ -168,7 +175,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
       }
     }
 
-    managementService.installPackage(RepoPackage(toInstall.name, toInstall.repository.url), version, false, null, listener, false)
+    managementService.installPackage(RepoPackage(toInstall.name, toInstall.repository.urlForInstallation), version, false, null, listener, false)
   }
 
   fun deleteSelectedPackage() {
@@ -226,9 +233,8 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
       var newPackages: List<InstalledPackage>? = null
       override fun run(indicator: ProgressIndicator) {
         val currentlyInstalled = previouslyInstalled.mapTo(HashSet()) { it.name }
-        val installedRepo = PyPackageRepository("")
         packages = PyPackageManagers.getInstance().forSdk(sdk).refreshAndGetPackages(false).map {
-          val repository = previouslyInstalled.find { pkg -> pkg.name == it.name }?.repository ?: installedRepo
+          val repository = previouslyInstalled.find { pkg -> pkg.name == it.name }?.repository ?: PyEmptyPackagePackageRepository
           InstalledPackage(it, repository)
         }
         newPackages = packages?.filter { it.name !in currentlyInstalled }
@@ -245,9 +251,12 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
 
   private suspend fun fetchPackageInfo(pkg: DisplayablePackage): String? = withContext(Dispatchers.IO) {
     val result = runCatching {
-      val repoUrl = pkg.repository.url.ifEmpty { PyPIPackageUtil.PYPI_LIST_URL }
+      val repoUrl = pkg.repository.repositoryUrl.let { if (it.isNullOrEmpty()) PyPIPackageUtil.PYPI_LIST_URL else it }
       val packageUrl = repoUrl.replace("simple", "pypi/${pkg.name}/json")
-      HttpRequests.request(packageUrl).readTimeout(3000).readString()
+      HttpRequests.request(packageUrl)
+        .withBasicAuthorization(pkg.repository)
+        .readTimeout(3000)
+        .readString()
     }
     if (result.isFailure) thisLogger().debug("Request failed for package $pkg.name")
     result.getOrNull()
@@ -260,7 +269,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
 
     val comparator = createComparator(query, url)
 
-    val repository = PyPackageRepository(url)
+    val repository = service<PyPackageRepositories>().findByUrl(url) ?: PyPIPackageRepository
     val searchResult = packageNames.asSequence()
       .filter { StringUtil.containsIgnoreCase(it.name, query) }
       .toList()
@@ -271,13 +280,13 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
       .limitDisplayableResult(repository, skipItems)
 
     val exactMatch = shownPackages.indexOfFirst { StringUtil.equalsIgnoreCase(it.name, query) }
-    return PyPackagesViewData(url, shownPackages, exactMatch, searchResult.size - shownPackages.size)
+    return PyPackagesViewData(repository, shownPackages, exactMatch, searchResult.size - shownPackages.size)
   }
 
 
   private suspend fun fetchVersionsFromPage(pkg: DisplayablePackage): List<String> = withContext(Dispatchers.IO) {
     val result = runCatching {
-      val url = StringUtil.trimEnd(pkg.repository.url, "/") + "/" + pkg.name
+      val url = StringUtil.trimEnd(pkg.repository.repositoryUrl!!, "/") + "/" + pkg.name
       PyPIPackageUtil.parsePackageVersionsFromArchives(url, pkg.name)
     }
     return@withContext result.getOrDefault(emptyList()).sortedWith(STR_COMPARATOR.reversed())
@@ -314,19 +323,37 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
 
   fun reloadPackages() {
     GlobalScope.launch(Dispatchers.IO) {
-      val managementService = PyPackageManagers.getInstance().getManagementService(project, currentSdk)
-      PyPIPackageUtil.INSTANCE.loadAdditionalPackages(managementService.allRepositories!!, true)
-      withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-        handleSearch("")
+      withBackgroundProgressIndicator(project, message("python.packaging.loading.packages.progress.text"), cancellable = false) {
+        val managementService = PyPackageManagers.getInstance().getManagementService(project, currentSdk)
+        PyPIPackageUtil.INSTANCE.loadAdditionalPackages(managementService.allRepositories!!, true)
+        withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+          handleSearch("")
+        }
       }
     }
   }
 
   fun manageRepositories() {
-    val managementService = PyPackageManagers.getInstance().getManagementService(project, currentSdk)
-    if (ManageRepoDialog(project, managementService).showAndGet()) {
+    val updated = SingleConfigurableEditor(project, PyRepositoriesList(project)).showAndGet()
+    if (updated) {
       GlobalScope.launch(Dispatchers.IO) {
-        PyPIPackageUtil.INSTANCE.loadAdditionalPackages(managementService.allRepositories!!, false)
+        val packageService = PyPackageService.getInstance()
+        val repositoryService = service<PyPackageRepositories>()
+        val allRepos = repositoryService.repositories.map { it.repositoryUrl }
+        packageService.additionalRepositories.asSequence()
+          .filter { it !in allRepos }
+          .forEach { packageService.removeRepository(it) }
+
+        val (valid, invalid) = repositoryService.repositories.partition { it.checkValid() }
+        repositoryService.invalidRepositories.clear()
+        repositoryService.invalidRepositories.addAll(invalid)
+        invalid.forEach { packageService.removeRepository(it.repositoryUrl!!) }
+
+        valid.asSequence()
+          .map { it.repositoryUrl }
+          .filter { it !in packageService.additionalRepositories }
+          .forEach { packageService.addRepository(it) }
+
         reloadPackages()
       }
     }
@@ -334,14 +361,14 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
 
   fun getMoreResultsForRepo(repository: PyPackageRepository, skipItems: Int): PyPackagesViewData {
     val managementService = PyPackageManagers.getInstance().getManagementService(project, currentSdk) as PyPackageManagementService
-    val fromCurrentRepo = managementService.allPackagesByRepository[repository.url]!!
+    val fromCurrentRepo = managementService.allPackagesByRepository[repository.repositoryUrl]!!
     if (currentQuery.isNotEmpty()) {
-      return filterPackagesForRepo(fromCurrentRepo, currentQuery, repository.url, skipItems)
+      return filterPackagesForRepo(fromCurrentRepo, currentQuery, repository.repositoryUrl!!, skipItems)
     }
     else {
       // The number of items to skip might be more than the number of ranked packages we store,
       // so we need to include the remaining packages from pypi, filtering out those, that are already shown.
-      if (PyPIPackageUtil.isPyPIRepository(repository.url)) {
+      if (PyPIPackageUtil.isPyPIRepository(repository.repositoryUrl)) {
         val ranked = PyPIPackageRanking.packageRank
         val names = PyPIPackageRanking.names
         val rankedSize = PyPIPackageRanking.packageRank.size
@@ -361,14 +388,14 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
         val pypiPackages = pypiAdjusted.limitDisplayableResult(repository)
 
         val packageNum = PyPIPackageCache.getInstance().packageNames.size
-        return PyPackagesViewData(repository.url, pypiPackages, moreItems = packageNum - PACKAGES_LIMIT)
+        return PyPackagesViewData(repository, pypiPackages, moreItems = packageNum - PACKAGES_LIMIT)
       }
 
       val packagesFromRepo = fromCurrentRepo.asSequence()
         .map { it.name }
         .limitDisplayableResult(repository, skipItems)
 
-      return PyPackagesViewData(repository.url, packagesFromRepo, moreItems = fromCurrentRepo.size - (PACKAGES_LIMIT + skipItems))
+      return PyPackagesViewData(repository, packagesFromRepo, moreItems = fromCurrentRepo.size - (PACKAGES_LIMIT + skipItems))
     }
   }
 

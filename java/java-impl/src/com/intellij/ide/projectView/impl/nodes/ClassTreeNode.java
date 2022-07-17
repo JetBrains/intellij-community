@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -72,7 +73,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
     boolean showInnerClasses = Registry.is("projectView.always.show.inner.classes", false);
     if (showInnerClasses) return true;
     VirtualFile file = getVirtualFile();
-    return file != null && JavaClassFileType.INSTANCE == file.getFileType();
+    return file != null && FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE);
   }
 
   @Override

@@ -1,12 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("LocalVariableName", "ClassName")
 
 package com.intellij.util
 
 import java.io.Serializable
+import kotlin.reflect.KProperty
 
-interface ResettableLazy<out T> : Lazy<T> {
+interface ResettableLazy<out T> {
+
+  val value: T
+
   fun reset()
+
+  operator fun getValue(thisRef: Any?, property: KProperty<*>): T
 }
 
 fun <T> resettableLazy(initializer: () -> T): ResettableLazy<T> = ResettableSynchronizedLazy(initializer)
@@ -15,8 +21,10 @@ private object UNINITIALIZED_VALUE
 
 private class ResettableSynchronizedLazy<out T>(initializer: () -> T, lock: Any? = null) : ResettableLazy<T>, Serializable {
   private var initializer: (() -> T)? = initializer
+
   @Volatile
   private var _value: Any? = UNINITIALIZED_VALUE
+
   // final field is required to enable safe publication of constructed instance
   private val lock = lock ?: this
 
@@ -38,7 +46,8 @@ private class ResettableSynchronizedLazy<out T>(initializer: () -> T, lock: Any?
         val _v2 = _value
         if (_v2 !== UNINITIALIZED_VALUE) {
           @Suppress("UNCHECKED_CAST") (_v2 as T)
-        } else {
+        }
+        else {
           val typedValue = initializer!!()
           _value = typedValue
           typedValue
@@ -46,7 +55,7 @@ private class ResettableSynchronizedLazy<out T>(initializer: () -> T, lock: Any?
       }
     }
 
-  override fun isInitialized(): Boolean = _value !== UNINITIALIZED_VALUE
+  override fun getValue(thisRef: Any?, property: KProperty<*>): T = value
 
-  override fun toString(): String = if (isInitialized()) value.toString() else "Lazy value is not initialized."
+  override fun toString(): String = if (_value !== UNINITIALIZED_VALUE) value.toString() else "Lazy value is not initialized."
 }

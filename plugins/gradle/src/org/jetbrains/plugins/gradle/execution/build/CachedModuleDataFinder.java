@@ -34,7 +34,7 @@ public class CachedModuleDataFinder {
   /**
    * @deprecated use {@link #getInstance(Project)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public CachedModuleDataFinder() {
     myProject = null;
   }
@@ -51,6 +51,13 @@ public class CachedModuleDataFinder {
   public static @Nullable GradleModuleData getGradleModuleData(@NotNull Module module) {
     DataNode<? extends ModuleData> moduleData = getInstance(module.getProject()).findMainModuleData(module);
     return moduleData != null ? new GradleModuleData(moduleData) : null;
+  }
+
+  public static @Nullable DataNode<? extends ModuleData> findModuleData(@NotNull Project project, @NotNull String modulePath) {
+    var projectNode = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, modulePath);
+    if (projectNode == null) return null;
+
+    return getInstance(project).findModuleData(projectNode, modulePath);
   }
 
   @Nullable

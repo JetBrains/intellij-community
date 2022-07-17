@@ -36,11 +36,10 @@ public enum StatusType {
 
   private static final @NonNls String STATUS_PREFIX = "STATUS_";
 
-  @NotNull private static final Map<String, StatusType> ourOtherStatusTypes = new HashMap<>();
   @NotNull private static final Map<String, StatusType> ourStatusTypesForStatusOperation = new HashMap<>();
 
   static {
-    for (StatusType action : StatusType.values()) {
+    for (StatusType action : values()) {
       register(action);
     }
   }
@@ -66,7 +65,9 @@ public enum StatusType {
   }
 
   private static void register(@NotNull StatusType action) {
-    (action.name().startsWith(STATUS_PREFIX) ? ourStatusTypesForStatusOperation : ourOtherStatusTypes).put(action.myName, action);
+    if (action.name().startsWith(STATUS_PREFIX)) {
+      ourStatusTypesForStatusOperation.put(action.myName, action);
+    }
   }
 
   @Nullable

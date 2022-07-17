@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -49,10 +50,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessorImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer;
 
+import javax.swing.*;
 import java.util.*;
 
 import static org.jetbrains.plugins.groovy.ext.newify.NewifyMemberContributor.NewifiedConstructor;
 import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.resolvePackageFqn;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.ignoreImports;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialState;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT;
 
 /**
@@ -87,10 +91,23 @@ public final class CompleteReferenceExpression {
     new CompleteReferenceExpression(matcher, consumer, refExpr, parameters).processVariantsImpl();
   }
 
+  public static void processSpecificPlace(@NotNull PrefixMatcher matcher, @NotNull GrReferenceExpressionImpl refExpr, @NotNull CompletionParameters parameters, Consumer<PsiScopeProcessor> placeSupplier, @NotNull Consumer<LookupElement> consumer) {
+    new CompleteReferenceExpression(matcher, consumer, refExpr, parameters).processSpecificVariants(placeSupplier);
+  }
+
+  private void processSpecificVariants(Consumer<PsiScopeProcessor> supplier) {
+    supplier.consume(myProcessor);
+    consumeCandidates();
+  }
+
   private void processVariantsImpl() {
     processRefInAnnotationImpl();
 
     getVariantsImpl();
+    consumeCandidates();
+  }
+
+  private void consumeCandidates() {
     final GroovyResolveResult[] candidates = myProcessor.getCandidates();
     List<LookupElement> results =
       GroovyCompletionUtil.getCompletionVariants(candidates,
@@ -141,7 +158,7 @@ public final class CompleteReferenceExpression {
   private void getVariantsImpl() {
     GrExpression qualifier = myRefExpr.getQualifierExpression();
     if (qualifier == null) {
-      ResolveUtil.treeWalkUp(myRefExpr, myProcessor, true);
+      ResolveUtil.treeWalkUp(myRefExpr, myRefExpr, myProcessor, ignoreImports(initialState(true)));
 
       ClosureMissingMethodContributor.processMethodsFromClosures(myRefExpr, myProcessor);
 
@@ -431,7 +448,9 @@ public final class CompleteReferenceExpression {
         PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
         if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
         if (element instanceof PsiMethod) {
-          substitutor = mySubstitutorComputer.obtainSubstitutor(substitutor, (PsiMethod)element, resolveContext);
+          for (PsiTypeParameter typeParameter : ((PsiMethod)element).getTypeParameters()) {
+            substitutor = substitutor.put(typeParameter, null);
+          }
         }
 
         consume(new GroovyResolveResultImpl(namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
@@ -496,7 +515,8 @@ public final class CompleteReferenceExpression {
       if (field.getGetters().length != 0 || field.getSetter() != null || !myPropertyNames.add(field.getName()) || myIsMap) return;
 
       for (LookupElement element : GroovyCompletionUtil.createLookupElements(resolveResult, false, myMatcher, null)) {
-        myConsumer.consume(((LookupElementBuilder)element).withIcon(JetgroovyIcons.Groovy.Property));
+        Icon icon = field.getIcon(0);
+        myConsumer.consume(((LookupElementBuilder)element).withIcon(icon == null ? JetgroovyIcons.Groovy.Property : icon));
       }
 
     }

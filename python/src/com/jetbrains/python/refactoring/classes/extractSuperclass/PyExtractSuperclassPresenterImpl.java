@@ -17,6 +17,8 @@ package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
+import com.intellij.notebook.editor.BackedVirtualFile;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,22 +29,26 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMembersUtil;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.BadDataException;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedPresenterNoPreviewImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * @author Ilya.Kazakevich
@@ -87,13 +93,27 @@ class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImp
     myView.getModuleFile();
     final VirtualFile moduleVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(moduleFile);
     if (moduleVirtualFile != null) {
-      final PsiFile psiFile = PsiManager.getInstance(project).findFile(moduleVirtualFile);
-      if (psiFile instanceof PyFile) {
-        if (((PyFile)psiFile).findTopLevelClass(myView.getSuperClassName()) != null) {
+      final PyFile pyFile = getPyFile(project, moduleVirtualFile);
+      if (pyFile != null) {
+        if (pyFile.findTopLevelClass(myView.getSuperClassName()) != null) {
           throw new BadDataException(PyBundle.message("refactoring.extract.super.target.class.already.exists", myView.getSuperClassName()));
         }
       }
     }
+  }
+  
+  @Nullable
+  private static PyFile getPyFile(Project project, VirtualFile virtualFile) {
+    VirtualFile targetFile = Arrays.stream(FileEditorManager.getInstance(project).getAllEditors(virtualFile))
+      .map(editor -> editor.getFile())
+      .filter(file -> file instanceof BackedVirtualFile)
+      .findFirst()
+      .orElse(virtualFile);
+    
+    return (PyFile)ContainerUtil.find(
+      Objects.requireNonNull(PsiManager.getInstance(project).findFile(targetFile))
+        .getViewProvider()
+        .getAllFiles(), file -> file instanceof PyFile);
   }
 
   @Override
@@ -101,7 +121,7 @@ class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImp
     final String defaultFilePath = FileUtil.toSystemDependentName(myClassUnderRefactoring.getContainingFile().getVirtualFile().getPath());
     final VirtualFile[] roots = ProjectRootManager.getInstance(myClassUnderRefactoring.getProject()).getContentRoots();
     final Collection<PyMemberInfo<PyElement>> pyMemberInfos =
-      PyRefactoringUtil.filterOutObject(myStorage.getClassMemberInfos(myClassUnderRefactoring));
+      PyMembersUtil.filterOutObject(myStorage.getClassMemberInfos(myClassUnderRefactoring));
     myView.configure(
       new PyExtractSuperclassInitializationInfo(myModel, pyMemberInfos, defaultFilePath,
                                                 roots)

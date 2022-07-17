@@ -146,7 +146,7 @@ public class FastFixedSetFactory<E> {
       if (o == this) return true;
       if (!(o instanceof FastFixedSet)) return false;
 
-      int[] extdata = ((FastFixedSet)o).getData();
+      int[] extdata = ((FastFixedSet<?>)o).getData();
       int[] intdata = data;
 
       for (int i = intdata.length - 1; i >= 0; i--) {

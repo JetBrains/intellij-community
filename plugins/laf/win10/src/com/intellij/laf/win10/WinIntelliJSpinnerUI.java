@@ -19,7 +19,7 @@ import java.awt.geom.Area;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 
-public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
+public final class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
   static final String HOVER_PROPERTY = "JSpinner.hover";
 
   static final int BUTTON_WIDTH = 20;

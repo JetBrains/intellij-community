@@ -25,14 +25,26 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     return JAVA_17;
   }
 
-  public void testPatternsInSwitchInOldJava() {
-      IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, this::doTest);
+  public void testPatternsInSwitchIn16Java() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, this::doTest);
+  }
+
+  public void testPatternsInSwitchIn11Java() {
+      IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_11, this::doTest);
+  }
+
+  public void testPatternsInSwitchIn19Java() {
+      IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
   }
 
   public void testPatternMatchingInSwitch() {
     doTest();
     IntentionAction action = myFixture.getAvailableIntention("Remove 'default' branch");
     assertNotNull(action);
+  }
+
+  public void testPatternMatchingInSwitchJava18() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_18_PREVIEW, this::doTest);
   }
 
   public void testPatternMatchingWithGuard() {
@@ -99,10 +111,30 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     doTest();
   }
 
+  public void testFallthroughDefault() {
+    doTest();
+  }
+
   public void testUnusedPatternVariable() {
     myFixture.enableInspections(new UnusedDeclarationInspection());
     doTest();
     assertNotNull(myFixture.getAvailableIntention("Rename 's' to 'ignored'"));
+  }
+
+  public void testMalformedReferenceExpression() {
+    doTest();
+  }
+
+  public void testBrokenSealedHierarchy() {
+    doTest();
+  }
+
+  public void testRecordPatternsAndWhenGuardsInJava18() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_18_PREVIEW, this::doTest);
+  }
+
+  public void testRecordPatternsAndWhenGuardsInJava19() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
   }
 
   private void doTest() {

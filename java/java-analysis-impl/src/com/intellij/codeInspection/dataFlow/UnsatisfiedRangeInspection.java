@@ -19,7 +19,7 @@ public class UnsatisfiedRangeInspection extends AbstractBaseJavaLocalInspectionT
                                                  boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         PsiCodeBlock body = method.getBody();
         if (body == null) return;
         PsiType returnType = method.getReturnType();

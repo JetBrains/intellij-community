@@ -12,7 +12,7 @@ Reports suspicious calls to <code>Collection.toArray()</code>.
   </li>
 </ul>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
 void m1(List list) {
   Number[] ns = (Number[]) list.toArray(new String[0]);
 }
@@ -20,7 +20,7 @@ void m1(List list) {
 void m2(List&lt;Number&gt; list) {
   Number[] ns = list.toArray(new String[0]);
 }
-</pre>
+</code></pre>
 
 
 </body>

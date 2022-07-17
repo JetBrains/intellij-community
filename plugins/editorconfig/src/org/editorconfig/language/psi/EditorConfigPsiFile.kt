@@ -4,6 +4,7 @@ package org.editorconfig.language.psi
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.childrenOfType
 import org.editorconfig.language.EditorConfigLanguage
 import org.editorconfig.language.filetype.EditorConfigFileConstants
 import org.editorconfig.language.filetype.EditorConfigFileType
@@ -14,12 +15,11 @@ class EditorConfigPsiFile(viewProvider: FileViewProvider) : PsiFileBase(viewProv
   override fun toString() = EditorConfigFileConstants.PSI_FILE_NAME
 
   val hasValidRootDeclaration: Boolean
-    get() = PsiTreeUtil
-      .getChildrenOfTypeAsList(this, EditorConfigRootDeclaration::class.java)
+    get() = this.childrenOfType<EditorConfigRootDeclaration>()
       .any(EditorConfigRootDeclaration::isValidRootDeclaration)
 
-  val sections: List<EditorConfigSection>
-    get() = PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigSection::class.java)
+  val sections
+    get() = this.childrenOfType<EditorConfigSection>()
 
   fun findRelevantNavigatable() =
     sections.lastOrNull { section ->

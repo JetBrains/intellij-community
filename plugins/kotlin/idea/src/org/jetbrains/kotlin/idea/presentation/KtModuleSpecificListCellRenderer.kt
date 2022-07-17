@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.presentation
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.NavigatablePsiElement
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.base.util.module
 
 abstract class KtModuleSpecificListCellRenderer<T : NavigatablePsiElement> : PsiElementListCellRenderer<T>() {
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.CommonBundle
@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import git4idea.GitLocalBranch
 import git4idea.GitPushUtil
@@ -131,7 +132,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       lineWrap = true
     }.also {
       CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
-        font = UIUtil.getLabelFont()
+        font = StartupUiUtil.getLabelFont()
       }
       CollaborationToolsUIUtil.registerFocusActions(it)
     }
@@ -143,7 +144,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       lineWrap = true
     }.also {
       CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
-        font = UIUtil.getLabelFont()
+        font = StartupUiUtil.getLabelFont()
       }
       CollaborationToolsUIUtil.registerFocusActions(it)
     }

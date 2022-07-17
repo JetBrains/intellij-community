@@ -1,11 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.ui.command.line
 
-import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeCoreBundle
 import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.ui.ColoredTableCellRenderer
@@ -16,7 +17,6 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
-import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.Icon
 import javax.swing.JTable
@@ -79,7 +79,7 @@ class CommandLineDialog(
 
   init {
     title = commandLineInfo.dialogTitle
-    setOKButtonText(IdeBundle.message("button.insert"))
+    setOKButtonText(IdeCoreBundle.message("button.insert"))
     init()
   }
 
@@ -96,13 +96,8 @@ class CommandLineDialog(
         }
       }
 
-    private fun setEmptyText(@Nls text: String) {
-      getAccessibleContext().accessibleName = text
-      emptyText.text = text
-    }
-
     init {
-      setEmptyText(tableInfo.emptyState)
+      setEmptyState(tableInfo.emptyState)
     }
 
     init {

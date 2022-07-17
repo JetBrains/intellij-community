@@ -15,9 +15,16 @@ abstract class AbstractUastFixtureTest : LightJavaCodeInsightFixtureTestCase() {
 
   @Suppress("NAME_SHADOWING")
   fun doTest(testName: String, checkCallback: (String, UFile) -> Unit = { testName, file -> check(testName, file) }) {
+    val uFile = configureUFile(testName)
+    checkCallback(testName, uFile)
+  }
+
+  fun configureUFile(testName: String): UFile {
     val psiFile = myFixture.configureByFile(testName)
     val uFile = UastFacade.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
-    checkCallback(testName, uFile as UFile)
+    assertNotNull(uFile)
+    assertTrue(uFile.toString(), uFile is UFile)
+    return uFile as UFile
   }
 }
 

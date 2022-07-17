@@ -1,0 +1,27 @@
+// "Import" "true"
+package p
+
+import p.PObject.foo
+
+class A {
+    companion object
+}
+
+class B {
+    companion object
+}
+
+open class P {
+    fun A.Companion.foo() {}
+}
+
+open class Q {
+    fun B.Companion.foo() {}
+}
+
+object PObject : P()
+object QObject : Q()
+
+fun usage() {
+    A.foo()
+}

@@ -40,29 +40,20 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   // constructor which creates marker without document and saves it in the virtual file directly. Can be cheaper than loading document.
-  RangeMarkerImpl(@NotNull VirtualFile virtualFile, int start, int end, boolean register) {
+  RangeMarkerImpl(@NotNull VirtualFile virtualFile, int start, int end, int estimatedDocumentLength, boolean register) {
     // unfortunately we don't know the exact document size until we load it
-    this(virtualFile, estimateDocumentLength(virtualFile), start, end, register, false, false);
+    this(virtualFile, estimatedDocumentLength, start, end, register, false, false);
   }
 
-  private static int estimateDocumentLength(@NotNull VirtualFile virtualFile) {
-    Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
-    return document == null ? Integer.MAX_VALUE : document.getTextLength();
-  }
-
-  private RangeMarkerImpl(@NotNull Object documentOrFile, int documentTextLength, int start,
+  private RangeMarkerImpl(@NotNull Object documentOrFile,
+                          int documentTextLength,
+                          int start,
                           int end,
                           boolean register,
                           boolean greedyToLeft,
                           boolean greedyToRight) {
-    if (start < 0) {
-      throw new IllegalArgumentException("Wrong start: " + start+"; end="+end);
-    }
-    if (end > documentTextLength) {
-      throw new IllegalArgumentException("Wrong end: " + end + "; document length=" + documentTextLength + "; start=" + start);
-    }
-    if (start > end){
-      throw new IllegalArgumentException("start > end: start=" + start+"; end="+end);
+    if (start < 0 || end > documentTextLength || start > end) {
+      throw new IllegalArgumentException("Wrong offsets: start=" +start+ "; end=" + end + "; document length=" + documentTextLength);
     }
 
     myDocumentOrFile = documentOrFile;
@@ -70,6 +61,11 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     if (register) {
       registerInTree(start, end, greedyToLeft, greedyToRight, 0);
     }
+  }
+
+  static int estimateDocumentLength(@NotNull VirtualFile virtualFile) {
+    Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+    return document == null ? Math.max(0, (int)virtualFile.getLength()) : document.getTextLength();
   }
 
   protected void registerInTree(int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
@@ -318,7 +314,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       return new ProperTextRange(offset + newLength, intervalEnd + newLength - oldLength);
     }
 
-    if (intervalEnd >= offset && intervalEnd <= offset + oldLength && intervalStart < offset) {
+    if (intervalEnd <= offset + oldLength && intervalStart < offset) {
       return new UnfairTextRange(intervalStart, offset);
     }
 
@@ -420,5 +416,17 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   public RangeMarker findRangeMarkerBefore() {
     return myNode.getTree().findRangeMarkerBefore(this);
+  }
+
+  // re-register myself in the document tree (e.g. after document load)
+  void reRegister(@NotNull DocumentImpl document, int tabSize) {
+    int startOffset = getStartOffset();
+    int endOffset = getEndOffset();
+    if (startOffset <= endOffset && endOffset <= document.getTextLength()) {
+      document.registerRangeMarker(this, startOffset, endOffset, isGreedyToLeft(), isGreedyToRight(), 0);
+    }
+    else {
+      invalidate("document was gc-ed and re-created with invalid offsets: ("+startOffset+","+endOffset+"): "+document.getTextLength());
+    }
   }
 }

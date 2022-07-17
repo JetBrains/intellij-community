@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -10,6 +10,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requests.generateCreateMethodActions
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.jetbrains.plugins.groovy.lang.GrCreateClassKind
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
@@ -68,6 +69,9 @@ fun generateCreateClassActions(ref: GrReferenceElement<*>): Collection<Intention
       }
       result += factory.createClassFixAction(ref, GrCreateClassKind.ENUM)
       result += factory.createClassFixAction(ref, GrCreateClassKind.ANNOTATION)
+      if (GroovyConfigUtils.isAtLeastGroovy40(ref)) {
+        result += factory.createClassFixAction(ref, GrCreateClassKind.RECORD)
+      }
       result
     }
   }

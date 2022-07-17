@@ -13,7 +13,7 @@ import training.util.adaptToNotNativeLocalization
 import javax.swing.JDialog
 
 class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.menu") {
-  private val sample = parseLessonSample("""
+  override val sample = parseLessonSample("""
     import java.io.BufferedReader;
     import java.io.FileReader;
     import java.io.IOException;
@@ -44,10 +44,9 @@ class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.me
   """.trimIndent())
 
   override val lessonContent: LessonContext.() -> Unit = {
-    prepareSample(sample)
-    showWarningIfInplaceRefactoringsDisabled()
     extractParameterTasks()
     moreRefactoringsTasks()
+    restoreRefactoringOptionsInformer()
   }
 
   private fun LessonContext.moreRefactoringsTasks() {

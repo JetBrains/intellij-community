@@ -1,0 +1,41 @@
+// FIR_IDENTICAL
+val <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>packageSize<!> = 0
+val <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION'")!>packageSizeGetter<!>
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>get<!>() = <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>packageSize<!> * 2
+
+var <!HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION'")!>packageSizeSetter<!> = 5
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>set<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>value<!>) {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_BACKING_FIELD_VARIABLE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'")!>field<!> = <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>value<!> * 2
+}
+
+var <!HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION'")!>packageSizeBean<!> = 5
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>get<!>() = <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>packageSize<!> * 2
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>set<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>value<!>) {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_BACKING_FIELD_VARIABLE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'")!>field<!> = <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>value<!> * 2
+}
+
+
+class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>test<!>() {
+    // no highlighting check
+    val <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>size<!> = 0
+
+    val <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>classSize<!> = 0
+
+    val <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION'")!>classSizeGetter<!>
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>get<!>() = <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>classSize<!> * 2
+
+    var <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION'"), HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'")!>classSizeSetter<!> = 5
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>set<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>value<!>) {
+        <!HIGHLIGHTING("textAttributesKey='KOTLIN_BACKING_FIELD_VARIABLE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'")!>field<!> = <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>value<!> * 2
+    }
+
+    var <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION'"), HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'")!>classSizeBean<!> = 5
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>get<!>() = <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>classSize<!> * 2
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>set<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>value<!>) {
+        <!HIGHLIGHTING("textAttributesKey='KOTLIN_BACKING_FIELD_VARIABLE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'")!>field<!> = <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>value<!> * 2
+    }
+
+    fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>callCustomPD<!>() {
+        <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION'"), HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'")!>classSizeBean<!> = 30
+    }
+}

@@ -7,6 +7,7 @@ interface
 package
 protected
 public
+record
 static
 strictfp
 switch

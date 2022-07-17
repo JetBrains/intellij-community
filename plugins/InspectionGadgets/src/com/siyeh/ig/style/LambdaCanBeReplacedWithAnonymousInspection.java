@@ -62,7 +62,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
     return new LambdaToAnonymousFix();
   }
 
-  private static void doFix(@NotNull Project project, @NotNull PsiLambdaExpression lambdaExpression) {
+  public static PsiAnonymousClass doFix(@NotNull Project project, @NotNull PsiLambdaExpression lambdaExpression) {
     final PsiParameter[] paramListCopy = ((PsiParameterList)lambdaExpression.getParameterList().copy()).getParameters();
     final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
     LOG.assertTrue(functionalInterfaceType != null);
@@ -70,7 +70,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
     LOG.assertTrue(method != null);
 
     final String blockText = getBodyText(lambdaExpression);
-    if (blockText == null) return;
+    if (blockText == null) return null;
 
     final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(project);
     PsiCodeBlock blockFromText = psiElementFactory.createCodeBlockFromText(blockText, lambdaExpression);
@@ -104,6 +104,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
         parent.replace(operand);
       }
     }
+    return anonymousClass;
   }
 
   private static void qualifyThisExpressions(final PsiLambdaExpression lambdaExpression,
@@ -118,10 +119,10 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
       final Set<PsiExpression> replacements = new HashSet<>();
       blockFromText.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitClass(PsiClass aClass) {}
+        public void visitClass(@NotNull PsiClass aClass) {}
 
         @Override
-        public void visitSuperExpression(PsiSuperExpression expression) {
+        public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
           super.visitSuperExpression(expression);
           if (expression.getQualifier() == null) {
             replacements.add(expression);
@@ -129,7 +130,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
         }
 
         @Override
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
           final PsiMethod psiMethod = expression.resolveMethod();
           final PsiReferenceExpression methodExpression = expression.getMethodExpression();
@@ -170,7 +171,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
 
   private static class LambdaToAnonymousVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression lambdaExpression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression lambdaExpression) {
       super.visitLambdaExpression(lambdaExpression);
       if (isConvertibleLambdaExpression(lambdaExpression)) {
         PsiParameterList parameterList = lambdaExpression.getParameterList();
@@ -188,47 +189,47 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
         }
       }
     }
+  }
 
-    private static boolean isConvertibleLambdaExpression(PsiElement parent) {
-      if (parent instanceof PsiLambdaExpression) {
-        final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)parent;
-        final PsiClass thisClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class, true);
-        if (thisClass == null || thisClass instanceof PsiAnonymousClass) {
-          final PsiElement body = lambdaExpression.getBody();
-          if (body == null) return false;
-          final boolean [] disabled = new boolean[1];
-          body.accept(new JavaRecursiveElementWalkingVisitor() {
-            @Override
-            public void visitThisExpression(PsiThisExpression expression) {
-              disabled[0] = true;
-            }
-
-            @Override
-            public void visitSuperExpression(PsiSuperExpression expression) {
-              disabled[0] = true;
-            }
-          });
-          if (disabled[0]) return false;
-        }
-        final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
-        if (functionalInterfaceType != null &&
-            LambdaUtil.isFunctionalType(functionalInterfaceType)) {
-          final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
-          if (interfaceMethod != null) {
-            final PsiSubstitutor substitutor =
-              LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(functionalInterfaceType));
-            for (PsiType type : interfaceMethod.getSignature(substitutor).getParameterTypes()) {
-              if (!PsiTypesUtil.isDenotableType(type, parent)) {
-                return false;
-              }
-            }
-            final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
-            return PsiTypesUtil.isDenotableType(returnType, parent);
+  public static boolean isConvertibleLambdaExpression(PsiElement parent) {
+    if (parent instanceof PsiLambdaExpression) {
+      final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)parent;
+      final PsiClass thisClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class, true);
+      if (thisClass == null || thisClass instanceof PsiAnonymousClass) {
+        final PsiElement body = lambdaExpression.getBody();
+        if (body == null) return false;
+        final boolean [] disabled = new boolean[1];
+        body.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitThisExpression(@NotNull PsiThisExpression expression) {
+            disabled[0] = true;
           }
+
+          @Override
+          public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
+            disabled[0] = true;
+          }
+        });
+        if (disabled[0]) return false;
+      }
+      final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
+      if (functionalInterfaceType != null &&
+          LambdaUtil.isFunctionalType(functionalInterfaceType)) {
+        final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+        if (interfaceMethod != null) {
+          final PsiSubstitutor substitutor =
+            LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(functionalInterfaceType));
+          for (PsiType type : interfaceMethod.getSignature(substitutor).getParameterTypes()) {
+            if (!PsiTypesUtil.isDenotableType(type, parent)) {
+              return false;
+            }
+          }
+          final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+          return PsiTypesUtil.isDenotableType(returnType, parent);
         }
       }
-      return false;
     }
+    return false;
   }
 
   private static class LambdaToAnonymousFix extends InspectionGadgetsFix {

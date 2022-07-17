@@ -1,4 +1,4 @@
-// "Fix all ''equals()' called on 'java.math.BigDecimal'' problems in file" "true"
+// "Fix all ''equals()' called on 'BigDecimal'' problems in file" "true"
 import java.math.BigDecimal;
 import java.util.Objects;
 

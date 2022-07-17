@@ -153,7 +153,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     }
 
     @Override
-    public void visitSwitchStatement(PsiSwitchStatement statement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       super.visitSwitchStatement(statement);
       final PsiCodeBlock body = statement.getBody();
       if (body == null || !isEmpty(body)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.ActionChangeRange;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<ActionChangeRange> {
+final class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<ActionChangeRange> {
   SharedUndoRedoStacksHolder(boolean isUndo) {
     super(isUndo);
   }
@@ -19,7 +19,8 @@ public class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<ActionC
     if (!changeRange.isValid()) {
       if (stack.isEmpty()) {
         return;  // No need to add invalid change at the beginning of stack since it will be trimmed anyway
-      } else {
+      }
+      else {
         ActionChangeRange lastRange = stack.getLast();
         if (!lastRange.isValid() && isRolledBackBy(lastRange, changeRange)) {
           stack.removeLast();
@@ -58,7 +59,7 @@ public class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<ActionC
     return last;
   }
 
-  @NotNull MovementAvailability canMoveToStackTop(@NotNull DocumentReference reference, @NotNull Set<ActionChangeRange> rangesToMove) {
+  @NotNull MovementAvailability canMoveToStackTop(@NotNull DocumentReference reference, @NotNull Set<? extends ActionChangeRange> rangesToMove) {
     LinkedList<ActionChangeRange> stack = getStack(reference);
     ActionChangeRange[] affected = getAffectedRanges(stack, rangesToMove);
     if (affected == null) {
@@ -91,10 +92,10 @@ public class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<ActionC
     trimInvalid(stack);
   }
 
-  private static ActionChangeRange @Nullable [] getAffectedRanges(@NotNull LinkedList<ActionChangeRange> stack,
-                                                                  @NotNull Set<ActionChangeRange> rangesToMove) {
+  private static ActionChangeRange @Nullable [] getAffectedRanges(@NotNull LinkedList<? extends ActionChangeRange> stack,
+                                                                  @NotNull Set<? extends ActionChangeRange> rangesToMove) {
     Set<ActionChangeRange> notSeenRanges = new HashSet<>(rangesToMove);
-    ListIterator<ActionChangeRange> iterator = stack.listIterator(stack.size());
+    ListIterator<? extends ActionChangeRange> iterator = stack.listIterator(stack.size());
     int affectedRangeCount = 0;
     while (iterator.hasPrevious()) {
       affectedRangeCount++;
@@ -152,7 +153,7 @@ public class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<ActionC
     return false;
   }
 
-  void trimStacks(@NotNull Iterable<DocumentReference> references) {
+  void trimStacks(@NotNull Iterable<? extends DocumentReference> references) {
     for (DocumentReference reference : references) {
       trimInvalid(getStack(reference));
     }

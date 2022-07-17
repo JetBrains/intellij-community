@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers, Fabrice TIERCELIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,11 +28,9 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class LengthOneStringsInConcatenationInspection
-  extends BaseInspection {
+public class LengthOneStringsInConcatenationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -68,6 +66,9 @@ public class LengthOneStringsInConcatenationInspection
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();
+      if (ExpressionUtils.isConversionToStringNecessary(expression, false)) {
+        return;
+      }
       final String text = expression.getText();
       final String charLiteral = PsiLiteralUtil.charLiteralForCharString(text);
       PsiReplacementUtil.replaceExpression(expression, charLiteral);
@@ -83,8 +84,7 @@ public class LengthOneStringsInConcatenationInspection
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitLiteralExpression(
-      @NotNull PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
       if (!TypeUtils.isJavaLangString(type)) {
@@ -94,44 +94,10 @@ public class LengthOneStringsInConcatenationInspection
       if (value == null || value.length() != 1) {
         return;
       }
-      if (!ExpressionUtils.isStringConcatenationOperand(expression) &&
-          !isArgumentOfStringAppend(expression)) {
+      if (ExpressionUtils.isConversionToStringNecessary(expression, false)) {
         return;
       }
       registerError(expression, value);
-    }
-
-    static boolean isArgumentOfStringAppend(PsiExpression expression) {
-      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-      if (parent == null) {
-        return false;
-      }
-      if (!(parent instanceof PsiExpressionList)) {
-        return false;
-      }
-      final PsiElement grandparent = parent.getParent();
-      if (!(grandparent instanceof PsiMethodCallExpression)) {
-        return false;
-      }
-      final PsiMethodCallExpression call =
-        (PsiMethodCallExpression)grandparent;
-      final PsiReferenceExpression methodExpression =
-        call.getMethodExpression();
-      @NonNls final String name = methodExpression.getReferenceName();
-      if (!"append".equals(name) && !"insert".equals(name)) {
-        return false;
-      }
-      final PsiMethod method = call.resolveMethod();
-      if (method == null) {
-        return false;
-      }
-      final PsiClass methodClass = method.getContainingClass();
-      if (methodClass == null) {
-        return false;
-      }
-      final String className = methodClass.getQualifiedName();
-      return CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className) ||
-             CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(className);
     }
   }
 }

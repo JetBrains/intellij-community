@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -17,17 +17,30 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import org.jetbrains.annotations.NotNull;
 
-public class StaticIconFieldsAction extends AnAction {
+import java.util.Objects;
+
+final class StaticIconFieldsAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getData(LangDataKeys.PROJECT);
-
+    final Project project = Objects.requireNonNull(e.getProject());
 
     final UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setTabName("Statics");
-    presentation.setTabText("Statitcs");
-    final UsageView view = UsageViewManager.getInstance(project).showUsages(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation);
+    presentation.setTabText("Statics");
 
+    final UsageView view = UsageViewManager.getInstance(project)
+      .showUsages(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation);
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching icons usages") {
       @Override
@@ -35,8 +48,13 @@ public class StaticIconFieldsAction extends AnAction {
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
         final GlobalSearchScope all = GlobalSearchScope.allScope(project);
         PsiClass allIcons = ReadAction.compute(() -> facade.findClass("com.intellij.icons.AllIcons", all));
-        searchFields(allIcons, view, indicator);
-        PsiClass[] classes = ReadAction.compute(() -> facade.findPackage("icons").getClasses(all));
+        if (allIcons != null) {
+          searchFields(allIcons, view, indicator);
+        }
+        PsiClass[] classes = ReadAction.compute(() -> {
+          PsiPackage aPackage = facade.findPackage("icons");
+          return aPackage != null ? aPackage.getClasses(all) : PsiClass.EMPTY_ARRAY;
+        });
         for (PsiClass iconsClass : classes) {
           searchFields(iconsClass, view, indicator);
         }

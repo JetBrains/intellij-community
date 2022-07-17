@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.impl;
 
+import com.intellij.tracing.Tracer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
@@ -37,6 +38,7 @@ public final class BuildTargetIndexImpl implements BuildTargetIndex {
       return;
     }
 
+    Tracer.Span chunksInitSpan = Tracer.start("BuildTargetIndexImpl.initializeChunks");
     List<BuildTarget<?>> allTargets = getAllTargets();
     TargetOutputIndex outputIndex = new TargetOutputIndexImpl(allTargets, context);
     Map<BuildTarget<?>, Collection<BuildTarget<?>>> dummyTargetDependencies = new HashMap<>();
@@ -83,6 +85,7 @@ public final class BuildTargetIndexImpl implements BuildTargetIndex {
     for (Collection<BuildTarget<?>> component : components) {
       myTargetChunks.add(new BuildTargetChunk(new LinkedHashSet<>(component)));
     }
+    chunksInitSpan.complete();
   }
 
   private static Collection<BuildTarget<?>> includeTransitiveDependenciesOfDummyTargets(Collection<? extends BuildTarget<?>> dependencies,

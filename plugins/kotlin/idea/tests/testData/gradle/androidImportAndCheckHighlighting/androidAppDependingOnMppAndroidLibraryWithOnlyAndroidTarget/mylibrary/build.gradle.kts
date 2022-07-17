@@ -4,19 +4,17 @@ plugins {
 }
 
 android {
-    compileSdkVersion(28)
+    compileSdkVersion({{compile_sdk_version}})
     defaultConfig {
         minSdkVersion(23)
-        targetSdkVersion(28)
-        versionCode = 1
-        versionName = "1.0"
+        targetSdkVersion({{compile_sdk_version}})
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
     
     buildTypes {
         getByName("release") {
-            minifyEnabled(false)
+            isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

@@ -16,6 +16,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,6 +35,7 @@ public abstract class ElementPresentation {
   @Nullable
   public abstract Icon getIcon();
 
+  @Nls
   @Nullable
   public String getDocumentation() { return null;}
 }

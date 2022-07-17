@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -37,7 +36,7 @@ import java.util.stream.Stream;
  * (used internally by {@link java.awt.Desktop#browse(URI)}) won't work as expected (fragment will be ignored on file opening).
  * This class allows to clear quarantine status from folder containing Javadoc, if confirmed by user.
  *
- * Implementation note: UserDefinedFileAttributeView is not supported on macOS (https://bugs.openjdk.java.net/browse/JDK-8030048),
+ * Implementation note: UserDefinedFileAttributeView is not supported on macOS (https://bugs.openjdk.org/browse/JDK-8030048),
  * so the class resorts to JNA.
  */
 public final class JavadocQuarantineStatusCleaner {
@@ -89,7 +88,7 @@ public final class JavadocQuarantineStatusCleaner {
         LOG.warn(error);
         String title = JavaUiBundle.message("quarantine.cleaner");
         String message = JavaUiBundle.message("quarantine.error.message", error.getMessage());
-        new Notification(NotificationGroup.createIdWithTitle("Quarantine Cleaner", title), title, message, NotificationType.WARNING)
+        NotificationGroupManager.getInstance().getNotificationGroup("Quarantine Cleaner").createNotification(title, message, NotificationType.WARNING)
           .notify(null);
       }
     }.queue();

@@ -51,10 +51,14 @@ public final class JBUIScale {
 
   private static volatile Map.Entry<String, Integer> systemFontData;
 
-  private synchronized static @NotNull Map.Entry<String, Integer> computeSystemFontData(@Nullable Supplier<UIDefaults> uiDefaults) {
+  private synchronized static @NotNull Map.Entry<String, Integer> computeSystemFontData(@Nullable Supplier<? extends UIDefaults> uiDefaults) {
     Map.Entry<String, Integer > result = systemFontData;
     if (result != null) {
       return result;
+    }
+
+    if (GraphicsEnvironment.isHeadless()) {
+      return systemFontData = Map.entry("Dialog", 12);
     }
 
     // with JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
@@ -64,6 +68,7 @@ public final class JBUIScale {
       // text family should be used for relatively small sizes (<20pt), don't change to Display
       // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
       font = new Font(".SF NS Text", Font.PLAIN, 13);
+      DEF_SYSTEM_FONT_SIZE = font.getSize();
     }
     else {
       font = uiDefaults == null ? UIManager.getFont("Label.font") : uiDefaults.get().getFont("Label.font");
@@ -355,7 +360,7 @@ public final class JBUIScale {
     return discreteScale(dpi / 96f);
   }
 
-  public static @NotNull Map.Entry<String, Integer> getSystemFontData(@Nullable Supplier<UIDefaults> uiDefaults) {
+  public static @NotNull Map.Entry<String, Integer> getSystemFontData(@Nullable Supplier<? extends UIDefaults> uiDefaults) {
     Map.Entry<String, Integer> result = systemFontData;
     return result == null ? computeSystemFontData(uiDefaults) : result;
   }

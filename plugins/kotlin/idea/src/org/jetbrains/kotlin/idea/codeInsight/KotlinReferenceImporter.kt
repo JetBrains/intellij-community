@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.quickfix.ImportFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -23,9 +24,24 @@ import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-class KotlinReferenceImporter : ReferenceImporter {
-    override fun isAddUnambiguousImportsOnTheFlyEnabled(file: PsiFile): Boolean =
-        file is KtFile && KotlinCodeInsightSettings.getInstance().addUnambiguousImportsOnTheFly
+class KotlinReferenceImporter : AbstractKotlinReferenceImporter() {
+    override fun isEnabledFor(file: KtFile): Boolean = KotlinCodeInsightSettings.getInstance().addUnambiguousImportsOnTheFly
+    override val enableAutoImportFilter: Boolean = false
+}
+
+abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
+    override fun isAddUnambiguousImportsOnTheFlyEnabled(file: PsiFile): Boolean = file is KtFile && isEnabledFor(file)
+
+    protected abstract fun isEnabledFor(file: KtFile): Boolean
+
+    protected abstract val enableAutoImportFilter: Boolean
+
+    private fun filterSuggestions(context: KtFile, suggestions: Collection<FqName>): Collection<FqName> =
+        if (enableAutoImportFilter) {
+            KotlinAutoImportsFilter.filterSuggestionsIfApplicable(context, suggestions)
+        } else {
+            suggestions
+        }
 
     override fun autoImportReferenceAtCursor(editor: Editor, file: PsiFile): Boolean {
         if (file !is KtFile || !DaemonListeners.canChangeFileSilently(file)) return false
@@ -40,7 +56,7 @@ class KotlinReferenceImporter : ReferenceImporter {
             val bindingContext = analyze(BodyResolveMode.PARTIAL)
             if (mainReference.resolveToDescriptors(bindingContext).isNotEmpty()) return false
 
-            val suggestions = ImportFix(this).collectSuggestions()
+            val suggestions = filterSuggestions(file, ImportFix(this).collectSuggestions())
             val suggestion = suggestions.singleOrNull() ?: return false
             val descriptors = file.resolveImportReference(suggestion)
 

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Implement this class in your plugin if there is another plugin whose functionality covers functionality provided by this plugin,
  * so there is no sense to have both plugins installed simultaneously.
- * The IDE then suggests the user disable this plugin when she downloads the new plugin in Settings | Plugins.
+ * The IDE then suggests the user disable this plugin when they download the new plugin in Settings | Plugins.
  * <p/>
  * The implementation must be registered in plugin.xml of the plugin you want to replace:
  * <pre>

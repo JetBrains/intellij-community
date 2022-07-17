@@ -1,0 +1,13 @@
+<html>
+<body>
+Reports that Gradle plugin version isn't properly supported in the current IDE plugin.
+<p>This can cause inconsistencies between IDE and Gradle builds in error reporting or code behavior.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:0.0.1"
+  }
+</code></pre>
+<p>To fix the problem change the kotlin gradle plugin version to match the version of kotlin that is bundled into the IDE plugin.</p>
+</body>
+</html>

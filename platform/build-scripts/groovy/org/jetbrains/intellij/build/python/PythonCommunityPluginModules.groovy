@@ -1,12 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.python
 
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.ResourcesGenerator
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.PluginLayoutGroovy
+import org.jetbrains.intellij.build.io.FileKt
 
-class PythonCommunityPluginModules {
-  static List<String> COMMUNITY_MODULES = [
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.function.BiConsumer
+import java.util.function.Predicate
+
+@CompileStatic
+final class PythonCommunityPluginModules {
+  static final List<String> COMMUNITY_MODULES = List.of(
     "intellij.python.community",
     "intellij.python.community.plugin.impl",
     "intellij.python.community.plugin.java",
@@ -22,8 +30,9 @@ class PythonCommunityPluginModules {
     "intellij.python.reStructuredText",
     "intellij.python.sdk",
     "intellij.python.featuresTrainer",
-  ]
-  static String pythonCommunityName = "python-ce"
+    "intellij.jupyter.core"
+  )
+  static final String pythonCommunityName = "python-ce"
 
   static PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
     def communityOnlyModules = [
@@ -38,14 +47,14 @@ class PythonCommunityPluginModules {
 
   static PluginLayout pythonPlugin(String mainModuleName, String name, List<String> modules,
                                    @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
-    PluginLayout.plugin(mainModuleName) {
+    PluginLayoutGroovy.plugin(mainModuleName) {
       directoryName = name
       mainJarName = "${name}.jar"
       modules.each { module ->
         withModule(module, mainJarName)
       }
       withModule(mainModuleName, mainJarName)
-      withGeneratedResources(new HelpersGenerator(), "helpers")
+      withGeneratedResources(new HelpersGenerator())
       withProjectLibrary("libthrift")  // Required for "Python Console" in intellij.python.community.impl module
       body.delegate = delegate
       body()
@@ -57,18 +66,28 @@ class PythonCommunityPluginModules {
   }
 }
 
-class HelpersGenerator implements ResourcesGenerator {
+@CompileStatic
+final class HelpersGenerator implements BiConsumer<Path, BuildContext> {
   @Override
-  File generateResources(BuildContext context) {
-    String output = "$context.paths.temp/python/helpers"
-    context.ant.copy(todir: output) {
-      fileset(dir: "$context.paths.communityHome/python/helpers") {
-        exclude(name: "**/setup.py")
-        exclude(name: "**/.idea/")
-        exclude(name: "pydev/pydev_test*")
-        exclude(name: "tests/")
+  void accept(Path targetDir, BuildContext context) {
+    Path output = targetDir.resolve("helpers")
+    Files.createDirectories(output)
+    FileKt.copyDir(context.paths.communityHomeDir.communityRoot.resolve("python/helpers"), output, new Predicate<Path>() {
+      @Override
+      boolean test(Path path) {
+        if (path.endsWith("tests") || path.endsWith(".idea")) {
+          return false
+        }
+        if (path.parent?.fileName?.toString() == "pydev") {
+          return !path.fileName.toString().startsWith("pydev_test")
+        }
+        return true
       }
-    }
-    return new File(output)
+    }, new Predicate<Path>() {
+      @Override
+      boolean test(Path path) {
+        return !path.endsWith("setup.py")
+      }
+    })
   }
 }

@@ -19,14 +19,12 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.tree.TokenSet;
 import com.siyeh.ipp.base.PsiElementPredicate;
-
-import java.util.Set;
 
 class OperatorAssignmentPredicate implements PsiElementPredicate {
   private static class Lazy {
-    private static final Set<IElementType> OPERATOR_ASSIGNMENT_TOKENS = ContainerUtil.newHashSet(
+    private static final TokenSet OPERATOR_ASSIGNMENT_TOKENS = TokenSet.create(
       JavaTokenType.PLUSEQ,
       JavaTokenType.MINUSEQ,
       JavaTokenType.ASTERISKEQ,

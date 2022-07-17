@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -11,8 +11,6 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.process.KillableProcessHandler;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.execution.runners.JvmPatchableProgramRunner;
@@ -23,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SlowOperations;
@@ -120,15 +119,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
         isPollConnection = true;
       }
 
-      // TODO: remove in 2019.1 where setShouldKillProcessSoftlyWithWinP is enabled by default in KillableProcessHandler
-      RunContentDescriptor descriptor = attachVirtualMachine(state, environment, connection, isPollConnection);
-      if (descriptor != null) {
-        ProcessHandler handler = descriptor.getProcessHandler();
-        if (handler instanceof KillableProcessHandler) {
-          ((KillableProcessHandler)handler).setShouldKillProcessSoftlyWithWinP(true);
-        }
-      }
-      return descriptor;
+      return attachVirtualMachine(state, environment, connection, isPollConnection);
     }
     if (state instanceof PatchedRunnableState) {
       RemoteConnection connection =
@@ -182,6 +173,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
           }
         }).getRunContentDescriptor());
       }
+      catch (ProcessCanceledException ignored) { }
       catch (ExecutionException e) {
         ex.set(e);
       }

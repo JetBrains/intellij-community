@@ -8,26 +8,28 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.project.platform
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.util.addAnnotation
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.annotations.JVM_THROWS_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.annotations.KOTLIN_THROWS_ANNOTATION_FQ_NAME
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
@@ -68,7 +70,7 @@ class AddThrowsAnnotationIntention : SelfTargetingIntention<KtThrowExpression>(
         val annotationArgumentText = if (type.getAbbreviatedType() != null)
             "$type::class"
         else
-            type.constructor.declarationDescriptor?.fqNameSafe?.let { "$it::class" } ?: return
+            type.constructor.declarationDescriptor?.fqNameSafe?.render()?.let { "$it::class" } ?: return
 
         val context = element.analyze(BodyResolveMode.PARTIAL)
         val annotationEntry = containingDeclaration.findThrowsAnnotation(context)
@@ -137,18 +139,10 @@ private fun ValueArgument.hasType(type: KotlinType, context: BindingContext): Bo
     }.any { it.getType(context)?.arguments?.firstOrNull()?.type == type }
 
 private fun KtPsiFactory.createCollectionLiteral(expressions: List<KtExpression>, lastExpression: String): KtCollectionLiteralExpression =
-    buildExpression {
-        appendFixedText("[")
-        expressions.forEach {
-            appendExpression(it)
-            appendFixedText(", ")
-        }
-        appendFixedText(lastExpression)
-        appendFixedText("]")
-    } as KtCollectionLiteralExpression
+    createExpression(
+        (expressions.map { it.text } + lastExpression).joinToString(prefix = "[", postfix = "]")
+    ) as KtCollectionLiteralExpression
 
-private fun FqName.fqNameIsExists(module: Module): Boolean = KotlinFullClassNameIndex.getInstance()[
-        asString(),
-        module.project,
-        GlobalSearchScope.moduleWithLibrariesScope(module)
-].isNotEmpty()
+private fun FqName.fqNameIsExists(module: Module): Boolean {
+    return KotlinFullClassNameIndex.get(asString(), module.project, GlobalSearchScope.moduleWithLibrariesScope(module)).isNotEmpty()
+}

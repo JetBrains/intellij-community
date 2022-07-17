@@ -5,7 +5,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -19,6 +18,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -33,20 +33,18 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 
 public class XVariablesView extends XVariablesViewBase implements DataProvider {
-  protected BorderLayoutPanel myComponent;
-  private final WeakReference<XDebugSessionImpl> mySession;
+  protected JPanel myComponent;
+  protected final WeakReference<XDebugSessionImpl> mySession;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
     super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
     mySession = new WeakReference<>(session);
-    myComponent = new BorderLayoutPanel();
-    JComponent panel = super.getPanel();
-    JComponent top = createTopPanel();
-    if (top != null) {
-      panel = new BorderLayoutPanel().addToTop(top).addToCenter(panel);
-    }
-    myComponent.add(panel);
+    myComponent = createMainPanel(super.getPanel());
     DataManager.registerDataProvider(myComponent, this);
+  }
+
+  protected JPanel createMainPanel(JComponent localsPanel) {
+    return new BorderLayoutPanel().addToCenter(localsPanel);
   }
 
   @Override
@@ -54,8 +52,12 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     return myComponent;
   }
 
-  JComponent createTopPanel() {
-    return null;
+  @Override
+  public JComponent getMainComponent() {
+    return getPanel();
+  }
+
+  protected void beforeTreeBuild(@NotNull SessionEvent event) {
   }
 
   @Override
@@ -73,6 +75,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       getTree().markNodesObsolete();
       if (stackFrame != null) {
         cancelClear();
+        beforeTreeBuild(event);
         buildTreeAndRestoreState(stackFrame);
       }
       else {
@@ -136,7 +139,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData = new HashMap<>();
     private final Object2LongMap<VirtualFile> myTimestamps = new Object2LongOpenHashMap<>();
     private static final Key<InlineVariablesInfo> DEBUG_VARIABLES = Key.create("debug.variables");
-    private List<Inlay> myInlays = null;
+    private List<InlineDebugRenderer> myInlays = null;
 
     public InlineVariablesInfo() {
       myTimestamps.defaultReturnValue(-1);
@@ -173,12 +176,12 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       myData.computeIfAbsent(key, k -> new TreeSet<>()).add(new Entry(position.getOffset(), node));
     }
 
-    public void setInlays(List<Inlay> inlays) {
+    public void setInlays(List<InlineDebugRenderer> inlays) {
       myInlays = inlays;
     }
 
     @NotNull
-    public List<Inlay> getInlays() {
+    public List<InlineDebugRenderer> getInlays() {
       return ObjectUtils.notNull(myInlays, Collections::emptyList);
     }
 

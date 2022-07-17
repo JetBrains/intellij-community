@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.util.text.TextWithMnemonic;
+import com.intellij.ui.ClientProperty;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -16,13 +18,13 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 abstract class MnemonicWrapper<T extends JComponent> implements Runnable, PropertyChangeListener {
-  public static MnemonicWrapper getWrapper(Component component) {
-    if (component == null || component.getClass().getName().equals("com.intellij.openapi.wm.impl.StripeButton")) {
+  public static MnemonicWrapper<?> getWrapper(Component component) {
+    if (component == null || ClientProperty.isTrue(component, MnemonicHelper.DISABLE_MNEMONIC_PROCESSING)) {
       return null;
     }
     for (PropertyChangeListener listener : component.getPropertyChangeListeners()) {
       if (listener instanceof MnemonicWrapper) {
-        MnemonicWrapper wrapper = (MnemonicWrapper)listener;
+        MnemonicWrapper<?> wrapper = (MnemonicWrapper<?>)listener;
         wrapper.run(); // update mnemonics immediately
         return wrapper;
       }
@@ -43,11 +45,10 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
   private final String myTextProperty;
   private final String myCodeProperty;
   private final String myIndexProperty;
-  private int myCode;
-  private int myIndex;
+  private TextWithMnemonic myTextWithMnemonic;
   private boolean myFocusable;
   private boolean myEvent;
-  private boolean myTextChanged;
+  private boolean myMnemonicChanged;
   private Runnable myRunnable;
 
   private MnemonicWrapper(T component, String text, String code, String index) {
@@ -55,24 +56,34 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     myTextProperty = text;
     myCodeProperty = code;
     myIndexProperty = index;
-    if (!updateText()) {
-      // assume that it is already set
-      myCode = getMnemonicCode();
-      myIndex = getMnemonicIndex();
-    }
     myFocusable = isFocusable();
     myComponent.addPropertyChangeListener(this);
-    run(); // update mnemonics immediately
+    run(); // update text and mnemonics immediately
   }
 
   @Override
   public final void run() {
-    boolean disabled = isDisabled();
+    boolean disabled = UISettings.getShadowInstance().getDisableMnemonicsInControls();
     try {
       myEvent = true;
-      if (myTextChanged) updateText();
+      if (myTextWithMnemonic == null) {
+        myTextWithMnemonic = createTextWithMnemonic();
+      }
+      else if (myMnemonicChanged) {
+        try {
+          myTextWithMnemonic = myTextWithMnemonic.withMnemonicIndex(getMnemonicIndex());
+        }
+        catch (IndexOutOfBoundsException cause) {
+          myTextWithMnemonic = myTextWithMnemonic.withMnemonicIndex(-1);
+          String message = "cannot change mnemonic index " + myComponent;
+          Logger.getInstance(MnemonicWrapper.class).warn(message, cause);
+        }
+      }
+      // update component text only if changed
+      String text = myTextWithMnemonic.getText(!disabled);
+      if (!text.equals(Strings.notNullize(getText()))) setText(text);
       // update mnemonic code only if changed
-      int code = disabled ? KeyEvent.VK_UNDEFINED : myCode;
+      int code = disabled ? KeyEvent.VK_UNDEFINED : myTextWithMnemonic.getMnemonicCode();
       if (code != getMnemonicCode()) setMnemonicCode(code);
       // update input map to support Alt-based mnemonics
       if (SystemInfo.isMac && Registry.is("ide.mac.alt.mnemonic.without.ctrl", true)) {
@@ -80,7 +91,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
         if (map != null) updateInputMap(map, code);
       }
       // update mnemonic index only if changed
-      int index = disabled ? -1 : myIndex;
+      int index = disabled ? -1 : myTextWithMnemonic.getMnemonicIndex();
       if (index != getMnemonicIndex()) {
         try {
           setMnemonicIndex(index);
@@ -88,7 +99,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
         catch (IllegalArgumentException cause) {
           // EA-94674 - IAE: AbstractButton.setDisplayedMnemonicIndex
           StringBuilder sb = new StringBuilder("cannot set mnemonic index ");
-          if (myTextChanged) sb.append("if text changed ");
+          if (myMnemonicChanged) sb.append("if mnemonic changed ");
           String message = sb.append(myComponent).toString();
           Logger.getInstance(MnemonicWrapper.class).warn(message, cause);
         }
@@ -100,27 +111,27 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     }
     finally {
       myEvent = false;
-      myTextChanged = false;
+      myMnemonicChanged = false;
       myRunnable = null;
     }
   }
 
   @Override
   public final void propertyChange(PropertyChangeEvent event) {
-    if (!myEvent) {
+    if (!myEvent && myTextWithMnemonic != null) {
       String property = event.getPropertyName();
       if (myTextProperty.equals(property)) {
         // it is needed to update text later because
         // this listener is notified before Swing updates mnemonics
-        myTextChanged = true;
+        myTextWithMnemonic = null;
         updateRequest();
       }
       else if (myCodeProperty.equals(property)) {
-        myCode = getMnemonicCode();
+        myMnemonicChanged = true;
         updateRequest();
       }
       else if (myIndexProperty.equals(property)) {
-        myIndex = getMnemonicIndex();
+        myMnemonicChanged = true;
         updateRequest();
       }
       else if ("focusable".equals(property) || "labelFor".equals(property)) {
@@ -130,43 +141,21 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     }
   }
 
-  private boolean updateText() {
+  private TextWithMnemonic createTextWithMnemonic() {
     String text = getText();
-    if (text != null) {
-      int code = KeyEvent.VK_UNDEFINED;
-      int index = -1;
-      int length = text.length();
-      @Nls StringBuilder sb = new StringBuilder(length);
-      for (int i = 0; i < length; i++) {
-        char ch = text.charAt(i);
-        if (ch != UIUtil.MNEMONIC) {
-          sb.append(ch);
-        }
-        else if (i + 1 < length) {
-          code = KeyEvent.getExtendedKeyCodeForChar(text.charAt(i + 1));
-          index = sb.length();
-        }
-      }
-      if (code != KeyEvent.VK_UNDEFINED) {
-        try {
-          myEvent = true;
-          setText(sb.toString());
-        }
-        finally {
-          myEvent = false;
-        }
-        myCode = code;
-        myIndex = index;
-        return true;
-      }
-    }
-    return false;
+    if (Strings.isEmpty(text)) return TextWithMnemonic.EMPTY;
+    TextWithMnemonic mnemonic = TextWithMnemonic.fromMnemonicText(text);
+    if (mnemonic != null) return mnemonic;
+    // assume that it is already set
+    int index = getMnemonicIndex();
+    return 0 <= index && index < text.length()
+           ? TextWithMnemonic.fromPlainTextWithIndex(text, index)
+           : TextWithMnemonic.fromPlainText(text, (char)getMnemonicCode());
   }
 
   private void updateRequest() {
     if (myRunnable == null) {
       myRunnable = this; // run once
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(this);
     }
   }
@@ -178,10 +167,6 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
 
   Component getFocusableComponent() {
     return myComponent;
-  }
-
-  boolean isDisabled() {
-    return UISettings.getShadowInstance().getDisableMnemonicsInControls();
   }
 
   abstract @Nls String getText();
@@ -204,7 +189,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
       stroke = null;
     }
     if (stroke == null && code != KeyEvent.VK_UNDEFINED) {
-      stroke = KeyStroke.getKeyStroke(code, InputEvent.ALT_MASK | InputEvent.ALT_DOWN_MASK, onKeyRelease);
+      stroke = KeyStroke.getKeyStroke(code, InputEvent.ALT_DOWN_MASK, onKeyRelease);
       map.put(stroke, action);
     }
     return stroke;

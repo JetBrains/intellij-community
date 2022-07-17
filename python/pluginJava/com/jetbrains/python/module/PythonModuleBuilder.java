@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.module;
 
+import com.intellij.ide.NewProjectWizardLegacy;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SdkSettingsStep;
 import com.intellij.ide.util.projectWizard.SettingsStep;
@@ -33,6 +34,11 @@ public class PythonModuleBuilder extends PythonModuleBuilderBase implements Sour
       mySourcePaths = new ArrayList<>();
     }
     mySourcePaths.add(sourcePathInfo);
+  }
+
+  @Override
+  public boolean isAvailable() {
+    return NewProjectWizardLegacy.isAvailable();
   }
 
   @Override

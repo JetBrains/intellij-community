@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.refactoring
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.lang.findUsages.DescriptiveNameUtil
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -19,7 +18,7 @@ import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -27,6 +26,7 @@ import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingElement
 import org.jetbrains.kotlin.idea.util.actualsForExpected
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.psi.*
@@ -145,7 +145,7 @@ abstract class CallableRefactoring<out T : CallableDescriptor>(
         val deepestSuperDeclarations =
             (callableDescriptor as? CallableMemberDescriptor)?.getDeepestSuperDeclarations()
                 ?: listOf(callableDescriptor)
-        if (ApplicationManager.getApplication()!!.isUnitTestMode) {
+        if (isUnitTestMode()) {
             performRefactoring(deepestSuperDeclarations)
             return true
         }

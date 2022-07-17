@@ -1,0 +1,13 @@
+{
+  "org": {
+    "intellij": {
+      "images": {
+        "icons": {
+          "expui": {
+            "image.svg": "org/intellij/images/icons/ImagesFileType.svg"
+          }
+        }
+      }
+    }
+  }
+}

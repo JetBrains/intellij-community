@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventId;
@@ -43,12 +44,11 @@ public abstract class FeatureUsagesCollector {
    */
   @NonNls
   @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String getGroupId() {
     EventLogGroup group = getGroup();
     if (group == null) {
-      throw new IllegalStateException("Please override either getGroupId() or getGroup()");
+      throw PluginException.createByClass("Please override either getGroupId() or getGroup() in " + getClass().getName(), null, getClass());
     }
     return group.getId();
   }
@@ -57,8 +57,7 @@ public abstract class FeatureUsagesCollector {
    * Increment collector version if any changes in collector logic were implemented.
    * @deprecated Please use {@link FeatureUsagesCollector#getGroup()} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public int getVersion() {
     EventLogGroup group = getGroup();
     if (group != null) {

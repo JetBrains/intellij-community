@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.BaseComponent;
@@ -24,10 +23,10 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.messages.MessageBus;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
 import org.picocontainer.PicoContainer;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -122,6 +121,11 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   }
 
   @Override
+  public String toString() {
+    return "Project" + (isDisposed() ? " (Disposed)" : "") + DefaultProjectImpl.TEMPLATE_PROJECT_NAME;
+  }
+
+  @Override
   public void dispose() {
     if (!ApplicationManager.getApplication().isDisposed()) {
       throw new IllegalStateException("Must not dispose default project");
@@ -199,7 +203,11 @@ final class DefaultProject extends UserDataHolderBase implements Project {
     return true;
   }
 
-  @SuppressWarnings("deprecation")
+  @Override
+  public CoroutineScope getCoroutineScope() {
+    throw new IllegalStateException("Default project doesn't have coroutineScope");
+  }
+
   @Override
   @Deprecated
   public BaseComponent getComponent(@NotNull String name) {
@@ -267,7 +275,7 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
   private final Project actualContainerInstance;
 
   DefaultProjectImpl(@NotNull Project actualContainerInstance) {
-    super((ComponentManagerImpl)ApplicationManager.getApplication());
+    super((ComponentManagerImpl)ApplicationManager.getApplication(), false);
 
     this.actualContainerInstance = actualContainerInstance;
   }
@@ -312,9 +320,7 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
   public void init() {
     // do not leak internal delegate, use DefaultProject everywhere instead
     registerServiceInstance(Project.class, actualContainerInstance, ComponentManagerImpl.fakeCorePluginDescriptor);
-
-    //noinspection unchecked
-    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), ApplicationManager.getApplication(), null, null);
+    registerComponents();
     createComponents(null);
     Disposer.register(actualContainerInstance, this);
   }

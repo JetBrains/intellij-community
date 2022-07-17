@@ -23,6 +23,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 
+/**
+ * Inherit from this class and register implementation as {@code sdkType} extension in plugin.xml to provide a custom type of
+ * <a href="https://www.jetbrains.com/help/idea/sdk.html">SDK</a>. Users can create and assign SDKs to modules in Project Structure dialog.
+ * You may use {@link ProjectJdkTable} to add or remove SDK in code, {@link com.intellij.openapi.roots.ModifiableRootModel#setSdk} to assign
+ * SDK to a specific module, and {@link com.intellij.openapi.roots.ProjectRootManager#setProjectSdk} to use it as the default SDK in the project.
+ */
 public abstract class SdkType implements SdkTypeId {
   public static final ExtensionPointName<SdkType> EP_NAME = new ExtensionPointName<>("com.intellij.sdkType");
 

@@ -201,7 +201,7 @@ public final class MethodCallUtils {
   @Contract(pure = true)
   public static boolean isCallDuringObjectConstruction(PsiMethodCallExpression expression) {
     PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
-    if (qualifier != null && !(qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression)) {
+    if (qualifier != null && !(qualifier instanceof PsiQualifiedExpression)) {
       return false;
     }
     final PsiMember member = PsiTreeUtil.getParentOfType(expression, PsiMember.class, true, PsiClass.class, PsiLambdaExpression.class);
@@ -516,7 +516,7 @@ public final class MethodCallUtils {
     }
 
     @Override
-    public void visitIfStatement(PsiIfStatement statement) {
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
       final PsiExpression condition = statement.getCondition();
       final Object result = ExpressionUtils.computeConstantExpression(condition);
       if (result != null && result.equals(Boolean.FALSE)) {
@@ -537,7 +537,7 @@ public final class MethodCallUtils {
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       if (mySuperCallFound) {
         return;
       }

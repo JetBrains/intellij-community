@@ -60,7 +60,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression methodCallExpression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCallExpression) {
         String qName = methodCallExpression.getMethodExpression().getQualifiedName();
         if (qName == null) {
           return;

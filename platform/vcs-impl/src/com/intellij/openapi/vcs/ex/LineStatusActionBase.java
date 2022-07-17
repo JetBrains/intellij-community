@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -39,7 +40,7 @@ public abstract class LineStatusActionBase extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
+    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
     if (tracker == null || !tracker.isValid() || !tracker.isAvailableAt(editor) || !isEnabled(tracker, editor)) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
@@ -59,11 +60,16 @@ public abstract class LineStatusActionBase extends DumbAwareAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
     Integer selectedOffset = e.getData(SELECTED_OFFSET_KEY);
-    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
+    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
     assert tracker != null;
 
     Range range = null;

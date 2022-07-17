@@ -75,7 +75,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
                                  Pair<String, String> position, Project project, TestDiscoveryIndex testDiscoveryIndex) {
     final RunnerAndConfigurationSettings template =
       configurationContext.getRunManager().getConfigurationTemplate(getConfigurationFactory());
-    final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
+    final Module predefinedModule = ((ModuleBasedConfiguration<?, ?>)template.getConfiguration()).getConfigurationModule().getModule();
     if (predefinedModule != null) {
       return predefinedModule;
     }

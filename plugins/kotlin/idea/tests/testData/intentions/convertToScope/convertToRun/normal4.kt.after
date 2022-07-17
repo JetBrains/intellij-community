@@ -1,4 +1,5 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Parameter 'c' is never used
 
 class MyClass {
     fun foo(c: Int) {

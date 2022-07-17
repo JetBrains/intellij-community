@@ -6,14 +6,13 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.todo.*
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.DumbService.isDumb
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
@@ -52,7 +51,7 @@ class TodoCommitProblem(val changes: Collection<Change>, val todoItems: Collecti
   override val text: String get() = message("label.todo.items.found", todoItems.size)
 }
 
-class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck<TodoCommitProblem> {
+class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck<TodoCommitProblem>, DumbAware {
   private val project: Project get() = commitPanel.project
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
   private val todoSettings: TodoPanelSettings get() = settings.myTodoPanelSettings
@@ -81,7 +80,7 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
   override fun showDetails(problem: TodoCommitProblem) = showTodoItems(problem.changes, problem.todoItems)
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    object : BooleanCommitOption(commitPanel, "", true, settings::CHECK_NEW_TODO) {
+    object : BooleanCommitOption(commitPanel, "", false, settings::CHECK_NEW_TODO) {
       override fun getComponent(): JComponent {
         setFilterText(todoSettings.todoFilterName)
         todoSettings.todoFilterName?.let { todoFilter = TodoConfiguration.getInstance().getTodoFilter(it) }
@@ -109,7 +108,6 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
 
   override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
     if (!isEnabled()) return ReturnResult.COMMIT
-    if (isDumb(project)) return if (confirmCommitInDumbMode(project)) ReturnResult.COMMIT else ReturnResult.CANCEL
 
     val worker = FindTodoItemsTask(project, commitPanel.selectedChanges, todoFilter).find() ?: return ReturnResult.CANCEL
     val commitActionText = removeEllipsisSuffix(executor?.actionText ?: commitPanel.commitActionName)
@@ -177,14 +175,6 @@ private class FindTodoItemsTask(project: Project, changes: Collection<Change>, t
     result = worker
   }
 }
-
-private fun confirmCommitInDumbMode(project: Project): Boolean =
-  !yesNo(message("checkin.dialog.title.not.possible.right.now"),
-         message("checkin.dialog.message.cant.be.performed", ApplicationNamesInfo.getInstance().fullProductName))
-    .icon(null)
-    .yesText(message("checkin.wait"))
-    .noText(message("checkin.commit"))
-    .ask(project)
 
 private fun confirmCommitWithSkippedFiles(worker: TodoCheckinHandlerWorker, @NlsContexts.Button commitActionText: String) =
   yesNo(message("checkin.dialog.title.todo"), getDescription(worker))

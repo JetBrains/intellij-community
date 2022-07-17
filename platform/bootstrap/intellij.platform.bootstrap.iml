@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
   </component>
   <component name="copyright">
     <Base>

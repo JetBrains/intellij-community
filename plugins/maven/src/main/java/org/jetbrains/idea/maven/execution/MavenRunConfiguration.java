@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.CommonBundle;
@@ -29,6 +29,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
@@ -40,11 +41,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -66,10 +69,12 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
+import org.jetbrains.idea.maven.server.MavenWrapperDownloader;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Paths;
 import java.util.List;
@@ -78,47 +83,27 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
-import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
-import static com.intellij.openapi.util.text.StringUtil.*;
-import static com.intellij.util.containers.ContainerUtil.indexOf;
-import static org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider.patchVmParameters;
-
 public class MavenRunConfiguration extends LocatableConfigurationBase implements ModuleRunProfile, TargetEnvironmentAwareRunProfile {
-
-  private @Nullable MavenRunConfigurationSettings previousSettings = null;
-  private @NotNull MavenRunConfigurationSettings settings = new MavenRunConfigurationSettings();
+  private @NotNull MavenSettings settings = new MavenSettings(getProject());
 
   protected MavenRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(project, factory, name);
   }
 
-  public @NotNull MavenRunConfigurationSettings getSettings() {
-    return settings;
-  }
-
-  public @NotNull MavenSettings getMavenSettings() {
-    return new MavenSettings(getGeneralSettings(), getRunnerSettings(), getRunnerParameters());
-  }
-
   public @Nullable MavenGeneralSettings getGeneralSettings() {
-    return settings.getGeneralSettings(getProject());
+    return settings.getGeneralSettings();
   }
 
   public void setGeneralSettings(@Nullable MavenGeneralSettings settings) {
-    if (settings != null) {
-      this.settings.setGeneralSettings(settings);
-    }
+    this.settings.setGeneralSettings(settings);
   }
 
   public @Nullable MavenRunnerSettings getRunnerSettings() {
-    return settings.getRunnerSettings(getProject());
+    return settings.getRunnerSettings();
   }
 
   public void setRunnerSettings(@Nullable MavenRunnerSettings settings) {
-    if (settings != null) {
-      this.settings.setRunnerSettings(settings);
-    }
+    this.settings.setRunnerSettings(settings);
   }
 
   public @NotNull MavenRunnerParameters getRunnerParameters() {
@@ -138,15 +123,18 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   }
 
   private void initializeSettings() {
-    if (isEmptyOrSpaces(settings.getWorkingDirectory())) {
-      ObjectUtils.consumeIfNotNull(getRootProjectPath(), settings::setWorkingDirectory);
+    if (StringUtil.isEmptyOrSpaces(settings.getRunnerParameters().getWorkingDirPath())) {
+      String rootProjectPath = getRootProjectPath();
+      if (rootProjectPath != null) {
+        settings.getRunnerParameters().setWorkingDirPath(rootProjectPath);
+      }
     }
   }
 
   private @Nullable String getRootProjectPath() {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(getProject());
     MavenProject rootProject = ContainerUtil.getFirstItem(projectsManager.getRootProjects());
-    return ObjectUtils.doIfNotNull(rootProject, it -> FileUtil.toCanonicalPath(it.getDirectory()));
+    return ObjectUtils.doIfNotNull(rootProject, it -> it.getDirectory());
   }
 
   @ApiStatus.Internal
@@ -203,23 +191,6 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
-
-    Element mavenSettingsElement = element.getChild(MavenSettings.TAG);
-    if (mavenSettingsElement != null) {
-      MavenSettings settings = XmlSerializer.deserialize(mavenSettingsElement, MavenSettings.class);
-      if (settings.myRunnerParameters == null) {
-        settings.myRunnerParameters = new MavenRunnerParameters();
-      }
-
-      // fix old settings format
-      settings.myRunnerParameters.fixAfterLoadingFromOldFormat();
-
-      ObjectUtils.consumeIfNotNull(settings.myGeneralSettings, this::setGeneralSettings);
-      ObjectUtils.consumeIfNotNull(settings.myRunnerSettings, this::setRunnerSettings);
-      ObjectUtils.consumeIfNotNull(settings.myRunnerParameters, this::setRunnerParameters);
-
-      previousSettings = this.settings.clone();
-    }
     settings.readExternal(element);
     getExtensionsManager().readExternal(this, element);
   }
@@ -227,13 +198,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
-    if (Objects.equals(previousSettings, settings)) {
-      element.addContent(XmlSerializer.serialize(getMavenSettings()));
-    }
-    else {
-      previousSettings = null;
-      settings.writeExternal(element);
-    }
+    settings.writeExternal(element);
     getExtensionsManager().writeExternal(this, element);
   }
 
@@ -271,6 +236,8 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
   }
 
+  // TODO: make private
+  @ApiStatus.Internal
   public static class MavenSettings implements Cloneable {
     public static final String TAG = "MavenSettings";
 
@@ -286,14 +253,31 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       myRunnerParameters = new MavenRunnerParameters();
     }
 
-    private MavenSettings(
-      @Nullable MavenGeneralSettings generalSettings,
-      @Nullable MavenRunnerSettings runnerSettings,
-      @NotNull MavenRunnerParameters runnerParameters
-    ) {
-      myGeneralSettings = ObjectUtils.doIfNotNull(generalSettings, MavenGeneralSettings::clone);
-      myRunnerSettings = ObjectUtils.doIfNotNull(runnerSettings, MavenRunnerSettings::clone);
-      myRunnerParameters = runnerParameters.clone();
+    @Transient
+    public @Nullable MavenGeneralSettings getGeneralSettings() {
+      return myGeneralSettings;
+    }
+
+    public void setGeneralSettings(@Nullable MavenGeneralSettings generalSettings) {
+      myGeneralSettings = generalSettings;
+    }
+
+    @Transient
+    public @Nullable MavenRunnerSettings getRunnerSettings() {
+      return myRunnerSettings;
+    }
+
+    public void setRunnerSettings(@Nullable MavenRunnerSettings runnerSettings) {
+      myRunnerSettings = runnerSettings;
+    }
+
+    @Transient
+    public @NotNull MavenRunnerParameters getRunnerParameters() {
+      return Objects.requireNonNull(myRunnerParameters);
+    }
+
+    public void setRunnerParameters(@NotNull MavenRunnerParameters runnerParameters) {
+      myRunnerParameters = runnerParameters;
     }
 
     @Override
@@ -302,12 +286,33 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         MavenSettings clone = (MavenSettings)super.clone();
         clone.myGeneralSettings = ObjectUtils.doIfNotNull(myGeneralSettings, MavenGeneralSettings::clone);
         clone.myRunnerSettings = ObjectUtils.doIfNotNull(myRunnerSettings, MavenRunnerSettings::clone);
-        clone.myRunnerParameters = myRunnerParameters.clone();
+        clone.myRunnerParameters = ObjectUtils.doIfNotNull(myRunnerParameters, MavenRunnerParameters::clone);
         return clone;
       }
       catch (CloneNotSupportedException e) {
         throw new Error(e);
       }
+    }
+
+    public void readExternal(@NotNull Element element) {
+      Element mavenSettingsElement = element.getChild(TAG);
+      if (mavenSettingsElement != null) {
+        MavenSettings settings = XmlSerializer.deserialize(mavenSettingsElement, MavenSettings.class);
+        if (settings.myRunnerParameters == null) {
+          settings.myRunnerParameters = new MavenRunnerParameters();
+        }
+
+        // fix old settings format
+        settings.myRunnerParameters.fixAfterLoadingFromOldFormat();
+
+        myRunnerParameters = settings.myRunnerParameters;
+        myGeneralSettings = settings.myGeneralSettings;
+        myRunnerSettings = settings.myRunnerSettings;
+      }
+    }
+
+    public void writeExternal(@NotNull Element element) throws WriteExternalException {
+      element.addContent(XmlSerializer.serialize(this));
     }
   }
 
@@ -353,7 +358,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       String execArgsStr;
 
       String execArgsPrefix = "-Dexec.args=";
-      int execArgsIndex = indexOf(programParametersList.getList(), s -> s.startsWith(execArgsPrefix));
+      int execArgsIndex = ContainerUtil.indexOf(programParametersList.getList(), s -> s.startsWith(execArgsPrefix));
       if (execArgsIndex != -1) {
         execArgsStr = programParametersList.get(execArgsIndex).substring(execArgsPrefix.length());
       }
@@ -362,12 +367,12 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       }
 
       ParametersList execArgs = new ParametersList();
-      execArgs.addAll(patchVmParameters(parameters.getVMParametersList()));
+      execArgs.addAll(MavenApplicationConfigurationExecutionEnvironmentProvider.patchVmParameters(parameters.getVMParametersList()));
 
       execArgs.addParametersString(execArgsStr);
 
-      String classPath = toSystemDependentName(parameters.getClassPath().getPathsString());
-      if (isNotEmpty(classPath)) {
+      String classPath = FileUtil.toSystemDependentName(parameters.getClassPath().getPathsString());
+      if (StringUtil.isNotEmpty(classPath)) {
         appendToClassPath(execArgs, classPath);
       }
 
@@ -390,12 +395,12 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     private static String getExecArgsFromPomXml(Project project, MavenRunnerParameters runnerParameters) {
       VirtualFile workingDir = VfsUtil.findFileByIoFile(runnerParameters.getWorkingDirFile(), false);
       if (workingDir != null) {
-        String pomFileName = defaultIfEmpty(runnerParameters.getPomFileName(), MavenConstants.POM_XML);
+        String pomFileName = StringUtil.defaultIfEmpty(runnerParameters.getPomFileName(), MavenConstants.POM_XML);
         VirtualFile pomFile = workingDir.findChild(pomFileName);
         if (pomFile != null) {
           MavenDomProjectModel projectModel = MavenDomUtil.getMavenDomProjectModel(project, pomFile);
           if (projectModel != null) {
-            return notNullize(MavenPropertyResolver.resolve("${exec.args}", projectModel));
+            return StringUtil.notNullize(MavenPropertyResolver.resolve("${exec.args}", projectModel));
           }
         }
       }
@@ -444,8 +449,8 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         MavenDistribution mavenDistribution =
           MavenDistributionsCache.getInstance(myConfiguration.getProject()).getMavenDistribution(myConfiguration.getRunnerParameters()
                                                                                                    .getWorkingDirPath());
-        String mavenHome = notNullize(config.getDistribution().getWslPath(mavenDistribution.getMavenHome().getPath()));
-        String mavenVersion = notNullize(mavenDistribution.getVersion());
+        String mavenHome = StringUtil.notNullize(config.getDistribution().getWslPath(mavenDistribution.getMavenHome().toString()));
+        String mavenVersion = StringUtil.notNullize(mavenDistribution.getVersion());
 
         MavenRuntimeTargetConfiguration mavenConfig = new MavenRuntimeTargetConfiguration();
         mavenConfig.setHomePath(mavenHome);
@@ -477,13 +482,29 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       }
     }
 
+    @Override
+    protected @Nullable ConsoleView createConsole(@NotNull Executor executor) throws ExecutionException {
+      ConsoleView console = super.createConsole(executor);
+      if (console != null && getEnvironment().getTargetEnvironmentRequest() instanceof LocalTargetEnvironmentRequest) {
+        return JavaRunConfigurationExtensionManager.getInstance().decorateExecutionConsole(
+          myConfiguration,
+          getRunnerSettings(),
+          console,
+          executor
+        );
+      }
+      else {
+        return console;
+      }
+    }
+
     public ExecutionResult doDelegateBuildExecute(@NotNull Executor executor,
                                                   @NotNull ProgramRunner runner,
                                                   ExternalSystemTaskId taskId,
                                                   DefaultBuildDescriptor descriptor,
                                                   ProcessHandler processHandler,
                                                   Function<String, String> targetFileMapper) throws ExecutionException {
-      ConsoleView consoleView = super.createConsole(executor);
+      ConsoleView consoleView = createConsole(executor);
       BuildViewManager viewManager = getEnvironment().getProject().getService(BuildViewManager.class);
       descriptor.withProcessHandler(new MavenBuildHandlerFilterSpyWrapper(processHandler), null);
       descriptor.withExecutionEnvironment(getEnvironment());
@@ -544,6 +565,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     @NotNull
     @Override
     public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
+      checkMavenWrapperAndPatchJavaParams();
       final ProcessHandler processHandler = startProcess();
       ExecutionEnvironment environment = getEnvironment();
       TargetEnvironment targetEnvironment = environment.getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
@@ -570,7 +592,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       String targetWorkingDirectory = targetedCommandLineBuilder.build().getWorkingDirectory();
       String workingDir =
         targetWorkingDirectory != null ? targetFileMapper.apply(targetWorkingDirectory) : getEnvironment().getProject().getBasePath();
-      ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, myConfiguration.getProject());
+      ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, myConfiguration.getProject());
       DefaultBuildDescriptor descriptor =
         new DefaultBuildDescriptor(taskId, myConfiguration.getName(), workingDir, System.currentTimeMillis());
       if (MavenRunConfigurationType.isDelegate(getEnvironment())) {
@@ -584,7 +606,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     @Nullable
     private BuildView createBuildView(@NotNull Executor executor, @NotNull ExternalSystemTaskId taskId,
                                       @NotNull BuildDescriptor descriptor) throws ExecutionException {
-      ConsoleView console = super.createConsole(executor);
+      ConsoleView console = createConsole(executor);
       if (console == null) {
         return null;
       }
@@ -600,6 +622,31 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       };
     }
 
+    private void checkMavenWrapperAndPatchJavaParams() {
+      if (myConfiguration.getGeneralSettings() == null || !MavenUtil.isWrapper(myConfiguration.getGeneralSettings())) return;
+
+      MavenDistributionsCache instance = MavenDistributionsCache.getInstance(myConfiguration.getProject());
+      String workingDirPath = myConfiguration.getRunnerParameters().getWorkingDirPath();
+      MavenDistribution wrapper = instance.getWrapper(workingDirPath);
+      if (wrapper == null) {
+        MavenWrapperDownloader.checkOrInstall(myConfiguration.getProject(), workingDirPath);
+      }
+      wrapper = instance.getWrapper(workingDirPath);
+      if (wrapper == null) return;
+      try {
+        JavaParameters javaParameters = getJavaParameters();
+        if (javaParameters == null || !javaParameters.getVMParametersList().hasProperty(MavenConstants.HOME_PROPERTY)) return;
+        String mavenHomePath = wrapper.getMavenHome().toFile().getCanonicalPath();
+
+        ParametersList vmParametersList = javaParameters.getVMParametersList();
+        if (Objects.equals(vmParametersList.getPropertyValue(MavenConstants.HOME_PROPERTY), wrapper.getMavenHome().toString())) return;
+        vmParametersList.addProperty(MavenConstants.HOME_PROPERTY, mavenHomePath);
+      }
+      catch (IOException | ExecutionException e) {
+        MavenLog.LOG.error(e);
+      }
+    }
+
     @Override
     protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
       throws ExecutionException {
@@ -609,8 +656,12 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       if (request.getConfiguration() == null) {
         throw new CantRunException(RunnerBundle.message("cannot.find.target.environment.configuration"));
       }
+      var settings = new MavenSettings(myConfiguration.getProject());
+      settings.setRunnerParameters(myConfiguration.getRunnerParameters());
+      settings.setGeneralSettings(myConfiguration.getGeneralSettings());
+      settings.setRunnerSettings(myConfiguration.getRunnerSettings());
       return new MavenCommandLineSetup(myConfiguration.getProject(), myConfiguration.getName(), request)
-        .setupCommandLine(myConfiguration.getMavenSettings())
+        .setupCommandLine(settings)
         .getCommandLine();
     }
 
@@ -677,12 +728,12 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       boolean isWindows = targetEnvironment.getTargetPlatform().getPlatform() == Platform.WINDOWS;
       path = isWindows && path.charAt(0) == '/' ? path.substring(1) : path;
       if (path.startsWith(projectRootTargetPath)) {
-        return Paths.get(projectRootlocalPath, trimStart(path, projectRootTargetPath)).toString();
+        return Paths.get(projectRootlocalPath, StringUtil.trimStart(path, projectRootTargetPath)).toString();
       }
       // workaround for "var -> private/var" symlink
       // TODO target absolute path can be used instead for such mapping of target file absolute paths
       if (path.startsWith("/private" + projectRootTargetPath)) {
-        return Paths.get(projectRootlocalPath, trimStart(path, "/private" + projectRootTargetPath)).toString();
+        return Paths.get(projectRootlocalPath, StringUtil.trimStart(path, "/private" + projectRootTargetPath)).toString();
       }
       return path;
     };

@@ -90,25 +90,50 @@ public abstract class NlsInfo implements RestrictionInfo {
    */
   static @NotNull NlsInfo forExpression(@NotNull UExpression expression, boolean allowStringModifications) {
     expression = StringFlowUtil.goUp(expression, allowStringModifications, NlsInfoFactory.INSTANCE);
+    NlsInfo target = fromEqualityCheck(expression, allowStringModifications);
+    if (target != NlsUnspecified.UNKNOWN) return target;
+    AnnotationContext context = AnnotationContext.fromExpression(expression);
+    return fromAnnotationContext(expression.getUastParent(), context);
+  }
+
+  @NotNull
+  private static NlsInfo fromEqualityCheck(@NotNull UExpression expression, boolean allowStringModifications) {
     UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
     if (parent instanceof UCallExpression) {
       String name = ((UCallExpression)parent).getMethodName();
-      if (name != null && (name.equals("equals") || (allowStringModifications && name.equals("startsWith") || name.equals("endsWith") ||
-                                                     name.equals("equalsIgnoreCase") || name.equals("contains")))) {
+      if (name != null && (name.equals("equals") ||
+                           (allowStringModifications && name.equals("startsWith") || name.equals("endsWith") ||
+                            name.equals("equalsIgnoreCase") || name.equals("contains")))) {
         var qualifiedCall = ObjectUtils.tryCast(parent.getUastParent(), UQualifiedReferenceExpression.class);
         if (qualifiedCall != null && parent.equals(qualifiedCall.getSelector())) {
-          UExpression receiver = qualifiedCall.getReceiver();
-          if (receiver instanceof UReferenceExpression && TypeUtils.isJavaLangString(receiver.getExpressionType())) {
-            PsiElement target = ((UReferenceExpression)receiver).resolve();
-            if (target instanceof PsiVariable) {
-              return factory().fromModifierListOwner((PsiVariable)target);
-            }
-          }
+          return fromVariableReference(qualifiedCall.getReceiver());
         }
       }
     }
-    AnnotationContext context = AnnotationContext.fromExpression(expression);
-    return fromAnnotationContext(expression.getUastParent(), context);
+    if (parent instanceof UBinaryExpression) {
+      UastBinaryOperator operator = ((UBinaryExpression)parent).getOperator();
+      if (operator == UastBinaryOperator.EQUALS || operator == UastBinaryOperator.NOT_EQUALS) {
+        UExpression left = ((UBinaryExpression)parent).getLeftOperand();
+        UExpression right = ((UBinaryExpression)parent).getRightOperand();
+        if (AnnotationContext.expressionsAreEquivalent(left, expression)) {
+          return fromVariableReference(right);
+        }
+        if (AnnotationContext.expressionsAreEquivalent(right, expression)) {
+          return fromVariableReference(left);
+        }
+      }
+    }
+    return NlsUnspecified.UNKNOWN;
+  }
+
+  private static @NotNull NlsInfo fromVariableReference(UExpression receiver) {
+    if (receiver instanceof UReferenceExpression && TypeUtils.isJavaLangString(receiver.getExpressionType())) {
+      PsiElement target = ((UReferenceExpression)receiver).resolve();
+      if (target instanceof PsiVariable) {
+        return factory().fromModifierListOwner((PsiVariable)target);
+      }
+    }
+    return NlsUnspecified.UNKNOWN;
   }
 
   public static @NotNull NlsInfo forType(@NotNull PsiType type) {
@@ -198,7 +223,7 @@ public abstract class NlsInfo implements RestrictionInfo {
       if (info != NlsUnspecified.UNKNOWN) {
         return info;
       }
-      info = fromMetaAnnotation(annotation);
+      info = fromMetaAnnotation(annotation.resolve());
       if (info != NlsUnspecified.UNKNOWN) {
         return info;
       }
@@ -223,10 +248,15 @@ public abstract class NlsInfo implements RestrictionInfo {
       }
       UAnnotation uAnnotation = UastContextKt.toUElement(annotation, UAnnotation.class);
       if (uAnnotation != null) {
-        info = fromMetaAnnotation(uAnnotation);
-        if (info != NlsUnspecified.UNKNOWN) {
-          return info;
+        info = fromMetaAnnotation(uAnnotation.resolve());
+      } else {
+        String name = annotation.getQualifiedName();
+        if (name != null) {
+          info = fromMetaAnnotation(JavaPsiFacade.getInstance(annotation.getProject()).findClass(name, annotation.getResolveScope()));
         }
+      }
+      if (info != NlsUnspecified.UNKNOWN) {
+        return info;
       }
     }
     if (owner instanceof PsiModifierList) {
@@ -242,8 +272,7 @@ public abstract class NlsInfo implements RestrictionInfo {
     return NlsUnspecified.UNKNOWN;
   }
 
-  private static @NotNull NlsInfo fromMetaAnnotation(@NotNull UAnnotation annotation) {
-    PsiClass annotationClass = annotation.resolve();
+  private static @NotNull NlsInfo fromMetaAnnotation(@Nullable PsiClass annotationClass) {
     if (annotationClass == null) return NlsUnspecified.UNKNOWN;
     NlsInfo baseInfo = NlsUnspecified.UNKNOWN;
     String prefix = "";
@@ -261,7 +290,7 @@ public abstract class NlsInfo implements RestrictionInfo {
       }
     }
     if (baseInfo instanceof Localized) {
-      return ((Localized)baseInfo).withPrefixAndSuffix(prefix, suffix).withAnnotation(annotation);
+      return ((Localized)baseInfo).withPrefixAndSuffix(prefix, suffix).withAnnotation(annotationClass.getQualifiedName());
     }
     return baseInfo;
   }
@@ -277,7 +306,7 @@ public abstract class NlsInfo implements RestrictionInfo {
     return fromAnnotationInfo(annotation.getQualifiedName(), () -> annotation.findAttributeValue("capitalization"));
   }
 
-  private static @NotNull NlsInfo fromAnnotationInfo(String qualifiedName, Supplier<UExpression> capitalization) {
+  private static @NotNull NlsInfo fromAnnotationInfo(String qualifiedName, Supplier<? extends UExpression> capitalization) {
     if (qualifiedName == null) return NlsUnspecified.UNKNOWN;
     if (qualifiedName.equals(AnnotationUtil.NON_NLS) ||
         qualifiedName.equals(AnnotationUtil.PROPERTY_KEY)) {
@@ -400,8 +429,7 @@ public abstract class NlsInfo implements RestrictionInfo {
       return new Localized(myCapitalization, prefix, suffix, myAnnotationName);
     }
 
-    private @NotNull Localized withAnnotation(@NotNull UAnnotation annotation) {
-      String qualifiedName = annotation.getQualifiedName();
+    private @NotNull Localized withAnnotation(@Nullable String qualifiedName) {
       if (Objects.equals(qualifiedName, myAnnotationName)) {
         return this;
       }

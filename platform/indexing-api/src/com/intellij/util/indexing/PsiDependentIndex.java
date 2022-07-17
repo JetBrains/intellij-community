@@ -15,14 +15,11 @@
  */
 package com.intellij.util.indexing;
 
-import org.jetbrains.annotations.ApiStatus;
-
 /**
  * Marker interface of index that is built from PSI, meaning its invalidation will happen upon producing new PSI.
  *
  * @deprecated because all content-aware indices are PSI dependent.
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public interface PsiDependentIndex {
 }

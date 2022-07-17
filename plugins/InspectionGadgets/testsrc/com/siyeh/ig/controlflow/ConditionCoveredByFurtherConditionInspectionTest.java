@@ -20,6 +20,9 @@ public class ConditionCoveredByFurtherConditionInspectionTest extends LightJavaI
   public void testStringLength() {
     doTest();
   }
+  public void testInInjection() {
+    doTest();
+  }
 
   @Nullable
   @Override

@@ -15,20 +15,23 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
+public class DefaultNotLastCaseInSwitchInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -91,16 +94,16 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
     @Override
     public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       super.visitSwitchStatement(statement);
-      visitSwitchBlock(statement, "statement");
+      visitSwitchBlock(statement);
     }
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       super.visitSwitchExpression(expression);
-      visitSwitchBlock(expression, "expression");
+      visitSwitchBlock(expression);
     }
 
-    private void visitSwitchBlock(@NotNull PsiSwitchBlock statement, String locationDescription) {
+    private void visitSwitchBlock(@NotNull PsiSwitchBlock statement) {
       final PsiCodeBlock body = statement.getBody();
       if (body == null) {
         return;
@@ -111,9 +114,10 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
         final PsiStatement child = statements[i];
         if (child instanceof PsiSwitchLabelStatementBase) {
           final PsiSwitchLabelStatementBase label = (PsiSwitchLabelStatementBase)child;
-          if (label.isDefaultCase()) {
+          PsiElement defaultElement = SwitchUtils.findDefaultElement(label);
+          if (defaultElement != null) {
             if (labelSeen) {
-              registerStatementError(label, label, locationDescription);
+              registerError(defaultElement.getFirstChild(), label, JavaElementKind.fromElement(statement).subject());
             }
             return;
           }

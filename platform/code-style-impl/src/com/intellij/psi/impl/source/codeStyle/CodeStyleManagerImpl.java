@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.CodeStyleBundle;
@@ -11,6 +11,7 @@ import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class CodeStyleManagerImpl extends CodeStyleManager implements FormattingModeAwareIndentAdjuster {
   private static final Logger LOG = Logger.getInstance(CodeStyleManagerImpl.class);
@@ -321,6 +323,22 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   @Nullable
+  public List<String> getLineIndents(@NotNull PsiFile file) {
+    return new CodeStyleManagerRunnable<List<String>>(this, FormattingMode.ADJUST_INDENT) {
+      @Override
+      protected boolean useDocumentBaseFormattingModel() {
+        return false;
+      }
+
+      @Override
+      protected List<String> doPerform(int offset, TextRange range) {
+        return FormatterEx.getInstanceEx().getLineIndents(myModel, mySettings, myIndentOptions);
+      }
+    }.perform(file, 0, null, null);
+  }
+
+  @Override
+  @Nullable
   public String getLineIndent(@NotNull Document document, int offset) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (file == null) return "";
@@ -430,7 +448,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   /**
    * @deprecated Use {@link CoreCodeStyleUtil#setSequentialProcessingAllowed(boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void setSequentialProcessingAllowed(boolean allowed) {
     CoreCodeStyleUtil.setSequentialProcessingAllowed(allowed);
   }
@@ -646,7 +664,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   @NotNull
   public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
     Language language = file.getLanguage();
-    LanguageCodeStyleProvider settingsProvider = CodeStyleSettingsService.getLanguageCodeStyleProvider(language);
+    LanguageCodeStyleProvider settingsProvider = LanguageCodeStyleProvider.forLanguage(language);
     if (settingsProvider != null) {
       return settingsProvider.getDocCommentSettings(CodeStyle.getSettings(file));
     }
@@ -665,8 +683,12 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       return;
     }
 
-    final Runnable commandRunnable = () -> WriteCommandAction.runWriteCommandAction(
-      myProject, CodeStyleBundle.message("command.name.reformat"), null, () -> commitAndFormat(file), file);
+    final Runnable commandRunnable = () -> {
+      if (file.isValid()) {
+        WriteCommandAction.runWriteCommandAction(
+          myProject, CodeStyleBundle.message("command.name.reformat"), null, () -> commitAndFormat(file), file);
+      }
+    };
 
     CodeStyleCachingService.getInstance(myProject).scheduleWhenSettingsComputed(
       file,
@@ -676,7 +698,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
           commandRunnable.run();
         }
         else {
-          ApplicationManager.getApplication().invokeLater(commandRunnable);
+          ApplicationManager.getApplication().invokeLater(commandRunnable, ModalityState.NON_MODAL, file.getProject().getDisposed());
         }
       }
     );

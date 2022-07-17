@@ -31,6 +31,10 @@ sealed class PythonExecution {
     parameters.forEach { parameter -> addParameter(parameter) }
   }
 
+  fun addParameters(parameters: List<String>) {
+    parameters.forEach { parameter -> addParameter(parameter) }
+  }
+
   fun addEnvironmentVariable(key: String, value: String) {
     envs[key] = constant(value)
   }

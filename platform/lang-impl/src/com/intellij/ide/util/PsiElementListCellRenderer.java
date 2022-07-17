@@ -269,9 +269,8 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   /**
    * @deprecated method has no effect
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
-  protected final void setFocusBorderEnabled(@SuppressWarnings("unused") boolean enabled) { }
+  @Deprecated(forRemoval = true)
+  protected final void setFocusBorderEnabled(boolean enabled) { }
 
   protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
                                                        JList list,
@@ -364,15 +363,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   @Deprecated
   public void installSpeedSearch(PopupChooserBuilder<?> builder) {
     installSpeedSearch((IPopupChooserBuilder)builder);
-  }
-
-  /**
-   * @deprecated use {@link #installSpeedSearch(IPopupChooserBuilder, boolean)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void installSpeedSearch(PopupChooserBuilder<?> builder, boolean includeContainerText) {
-    installSpeedSearch((IPopupChooserBuilder)builder, includeContainerText);
   }
 
   public void installSpeedSearch(IPopupChooserBuilder builder) {

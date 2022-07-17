@@ -44,6 +44,17 @@ public final class MacDockDelegate implements SystemDock.Delegate {
     }
   }
 
+  private static void activateApplication() {
+    try {
+      Class<?> appClass = Class.forName("com.apple.eawt.Application");
+      Object application = appClass.getMethod("getApplication").invoke(null);
+      appClass.getMethod("requestForeground", boolean.class).invoke(application, false);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
   @Override
   public void updateRecentProjectsMenu () {
     RecentProjectsManager projectsManager = RecentProjectsManager.getInstance();
@@ -58,6 +69,9 @@ public final class MacDockDelegate implements SystemDock.Delegate {
       menuItem.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
+          // Newly opened project won't become an active window, if another application is currently active.
+          // This is not what user expects, so we activate our application explicitly.
+          activateApplication();
           ActionUtil.performActionDumbAwareWithCallbacks(action, AnActionEvent.createFromAnAction(action, null, ActionPlaces.DOCK_MENU, DataManager.getInstance().getDataContext(null)));
         }
       });

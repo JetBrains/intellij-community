@@ -7,7 +7,4 @@ import com.intellij.psi.PsiElement;
 
 public interface JsonPathWildcardSegment extends PsiElement {
 
-  @NotNull
-  List<JsonPathSegmentExpression> getSegmentExpressionList();
-
 }

@@ -6,6 +6,8 @@ import com.intellij.ide.actions.NewProjectAction
 import com.intellij.ide.util.projectWizard.*
 import com.intellij.ide.wizard.AbstractWizard
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
@@ -14,13 +16,17 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SystemProperties
-import org.jetbrains.kotlin.idea.framework.KotlinTemplatesFactory
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.ProjectCreationStats
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.UiEditorUsageStats
+import com.intellij.util.ui.EDT
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService.ProjectCreationStats
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService.UiEditorUsageStats
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.tools.projectWizard.core.div
@@ -35,6 +41,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ProjectTemplate
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaJpsWizardService
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaServices
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.asHtml
@@ -42,6 +49,8 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep.FirstWizardS
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.runWithProgressBar
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.SecondStepWizardComponent
 import java.io.File
+import java.util.*
+import java.util.regex.Pattern
 import javax.swing.JButton
 import javax.swing.JComponent
 import com.intellij.openapi.module.Module as IdeaModule
@@ -57,23 +66,29 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     override fun isOpenProjectSettingsAfter(): Boolean = false
     override fun canCreateModule(): Boolean = false
     override fun getPresentableName(): String = moduleType.name
-    override fun getDescription(): String? = moduleType.description
-    override fun getGroupName(): String? = moduleType.name
+    override fun getDescription(): String = moduleType.description
+    override fun getGroupName(): String = moduleType.name
     override fun isTemplateBased(): Boolean = false
+
+    override fun getWeight(): Int {
+        return ModuleBuilder.KOTLIN_WEIGHT
+    }
 
     companion object {
         const val MODULE_BUILDER_ID = "kotlin.newProjectWizard.builder"
         private val projectNameValidator = StringValidators.shouldBeValidIdentifier("Project name", setOf('-', '_'))
-        private const val INVALID_PROJECT_NAME_MESSAGE = "Invalid project name"
+        private val INVALID_PROJECT_NAME_MESSAGE
+            @NlsContexts.DialogTitle
+            get() = KotlinNewProjectWizardUIBundle.message("dialog.title.invalid.project.name")
     }
 
     override fun isAvailable(): Boolean = isCreatingNewProject()
 
-    private var wizardContext: WizardContext? = null
+    private lateinit var wizardContext: WizardContext
     private var finishButtonClicked: Boolean = false
 
     override fun getModuleType(): ModuleType<*> = NewProjectWizardModuleType()
-    override fun getParentGroup(): String = KotlinTemplatesFactory.KOTLIN_PARENT_GROUP_NAME
+    override fun getParentGroup(): String = "Kotlin Group"
 
     override fun createWizardSteps(
         wizardContext: WizardContext,
@@ -106,7 +121,9 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
         }.isSuccess
         if (success) {
             logToFUS(project)
+            scheduleSampleFilesOpening(project)
         }
+
         return when {
             !success -> null
             wizard.buildSystemType == BuildSystemType.Jps -> runWriteAction {
@@ -116,12 +133,53 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
         }
     }
 
+    private fun scheduleSampleFilesOpening(project: Project) = StartupManager.getInstance(project).runAfterOpened {
+        // From javadoc of StartupManager.runAfterOpened:
+        //      ... that is executed on pooled thread after project is opened.
+        //      The runnable will be executed in current thread if project is already opened.
+
+        // The latter literally means EDT. New module addition is an example of the case.
+
+        fun openSampleFiles() {
+            val pathname = project.basePath ?: return
+            val projectPath = File(pathname)
+
+            val wizardModules = wizard.context.read { KotlinPlugin.modules.settingValue }
+                .flatMap { module ->
+                    buildList<Module> {
+                        +module.subModules
+                        +module
+                    }
+                }
+
+            // Might take time. Should be executed in a background thread.
+            val filesToOpen = wizardModules
+                .flatMap { it.template?.filesToOpenInEditor ?: emptyList() }
+                .mapNotNull { expectedFileName ->
+                    val file = FileUtil.findFilesByMask(Pattern.compile(Pattern.quote(expectedFileName)), projectPath).firstOrNull()
+                    file?.let { VirtualFileManager.getInstance().findFileByNioPath(file.toPath()) }
+                }
+
+            ApplicationManager.getApplication().invokeLater {
+                filesToOpen.forEach {
+                    FileEditorManager.getInstance(project).openFile(it, true)
+                }
+            }
+        }
+
+        if (EDT.isCurrentThreadEdt()) {
+            ApplicationManager.getApplication().executeOnPooledThread(::openSampleFiles)
+        } else {
+            openSampleFiles()
+        }
+    }
+
     private fun logToFUS(project: Project?) {
         val modules = wizard.context.read {
             KotlinPlugin.modules.reference.settingValue
         }
         val projectCreationStats = ProjectCreationStats(
-            KotlinTemplatesFactory.KOTLIN_GROUP_NAME,
+            "Kotlin",
             wizard.projectTemplate!!.id,
             wizard.buildSystemType!!.id,
             modules.map { it.configurator.id },
@@ -147,7 +205,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     private fun clickFinishButton() {
         if (finishButtonClicked) return
         finishButtonClicked = true
-        wizardContext?.getNextButton()?.doClick()
+        wizardContext.getNextButton()?.doClick()
     }
 
     override fun modifySettingsStep(settingsStep: SettingsStep): ModuleWizardStep? {
@@ -194,7 +252,7 @@ abstract class WizardStep(protected val wizard: IdeWizard, private val phase: Ge
         }
 
     protected open fun handleErrors(error: ValidationResult.ValidationError) {
-        throw ConfigurationException(error.asHtml(), "Validation Error")
+        throw ConfigurationException(error.asHtml(), KotlinNewProjectWizardUIBundle.message("dialog.title.validation.error"))
     }
 
     companion object {
@@ -240,7 +298,7 @@ class ModuleNewWizardFirstStep(wizard: IdeWizard, disposable: Disposable) : Wiza
     private fun suggestGroupId(): String {
         val username = SystemProperties.getUserName() ?: return DEFAULT_GROUP_ID
         if (!username.matches("[\\w\\s]+".toRegex())) return DEFAULT_GROUP_ID
-        val usernameAsGroupId = username.trim().toLowerCase().split("\\s+".toRegex()).joinToString(separator = ".")
+        val usernameAsGroupId = username.trim().toLowerCase(Locale.US).split("\\s+".toRegex()).joinToString(separator = ".")
         return "me.$usernameAsGroupId"
     }
 
@@ -275,7 +333,7 @@ class ModuleNewWizardSecondStep(
     }
 
     override fun getPreferredFocusedComponent(): JComponent? {
-        wizardContext.getNextButton()?.text = "Finish"
+        wizardContext.getNextButton()?.text = KotlinNewProjectWizardUIBundle.message("finish.button.text")
         return super.getPreferredFocusedComponent()
     }
 

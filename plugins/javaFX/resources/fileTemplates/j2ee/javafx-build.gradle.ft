@@ -1,3 +1,4 @@
+#set ($D = '$')
 plugins {
   id 'java'
   id 'application'
@@ -8,6 +9,7 @@ plugins {
   id 'org.jetbrains.kotlin.jvm' version '${context.getVersion("org.jetbrains.kotlin", "kotlin-gradle-plugin")}'
 #end
   id 'org.openjfx.javafxplugin' version '${context.getVersion("org.openjfx", "javafxplugin")}'
+  id 'org.beryx.jlink' version '${context.getVersion("org.beryx", "badass-jlink-plugin")}'
 }
 
 group '${context.group}'
@@ -47,12 +49,12 @@ application {
 
 javafx {
   version = '${context.getProperty("javafx.version")}'
-  modules = ['javafx.controls', 'javafx.fxml'#if ($context.hasLibrary("tilesfx")), 'javafx.web'#end]
+  modules = ['javafx.controls', 'javafx.fxml'#if ($context.hasLibrary("tilesfx")), 'javafx.web'#end#if ($context.hasLibrary("fxgl")), 'javafx.media'#end]
 }
 
 dependencies {
 #if ($context.hasLanguage("groovy"))
-  implementation('org.codehaus.groovy:groovy:${context.getVersion("org.codehaus.groovy", "groovy")}')
+  implementation('org.apache.groovy:groovy:${context.getVersion("org.apache.groovy", "groovy")}')
 #end
 #if ($context.hasLibrary("controlsfx"))
   implementation('org.controlsfx:controlsfx:${context.getVersion("org.controlsfx", "controlsfx")}')
@@ -78,6 +80,11 @@ dependencies {
     exclude(group: 'org.openjfx')
   }
 #end
+#if ($context.hasLibrary("fxgl"))
+  implementation('com.github.almasb:fxgl:#if ($context.sdkFeatureVersion >= 17)${context.getBomProperty("fxgl17.version")}#else${context.getBomProperty("fxgl11.version")}#end') {
+    exclude(group: 'org.openjfx')
+  }
+#end
 
 #if ($context.testRunnerId == "junit")
   testImplementation("org.junit.jupiter:junit-jupiter-api:${context.asPlaceholder("junitVersion")}")
@@ -91,4 +98,16 @@ dependencies {
 test {
   #if ($context.testRunnerId == "junit")useJUnitPlatform()#end
   #if ($context.testRunnerId == "testng")useTestNG()#end
+}
+
+jlink {
+  imageZip = project.file("${D}{buildDir}/distributions/app-${D}{javafx.platform.classifier}.zip")
+  options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+  launcher {
+    name = 'app'
+  }
+}
+
+jlinkZip {
+  group = 'distribution'
 }

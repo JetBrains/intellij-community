@@ -9,10 +9,12 @@ object NonDefault {
                 valueString = "ONE"
                 1
             }
+
             2 -> {
                 valueString = "TWO"
                 2
             }
+
             3 -> {
                 valueString = "THREE"
                 3

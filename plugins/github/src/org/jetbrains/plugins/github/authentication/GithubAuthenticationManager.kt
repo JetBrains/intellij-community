@@ -96,8 +96,12 @@ class GithubAuthenticationManager internal constructor() {
 
   @RequiresEdt
   internal fun login(project: Project?, parentComponent: Component?, request: GHLoginRequest): GHAccountAuthData? =
-    if (request.server?.isGithubDotCom == true) request.loginWithOAuthOrToken(project, parentComponent)
-    else request.loginWithToken(project, parentComponent)
+    if (request.server?.isGithubDotCom == true) {
+      request.loginWithOAuthOrToken(project, parentComponent)
+    }
+    else {
+      request.loginWithToken(project, parentComponent)
+    }
 
   @RequiresEdt
   internal fun removeAccount(account: GithubAccount) {
@@ -126,7 +130,6 @@ class GithubAuthenticationManager internal constructor() {
   fun getDefaultAccount(project: Project): GithubAccount? =
     project.service<GithubProjectDefaultAccountHolder>().account
 
-  @TestOnly
   fun setDefaultAccount(project: Project, account: GithubAccount?) {
     project.service<GithubProjectDefaultAccountHolder>().account = account
   }

@@ -1,6 +1,6 @@
 # Here is the good part
 
-It is written completely OK.
+It is written completely OK. `code` is also OK.
 
 It has:
 * lists;
@@ -15,17 +15,17 @@ Even big fragment with injected code.
 <tag>This is <warning descr="EN_A_VS_AN">a</warning> error in article, making this paragraph so damn big!</tag>
 ```
 
-## Now bad part have <warning descr="HAVE_PART_AGREEMENT">go</warning> there
+## Now <warning descr="EN_A_VS_AN">an</warning> bad part
 
 It <warning descr="IT_VBZ">are</warning> written not many good .
 
 Of <warning descr="MISSING_COMMA_AFTER_INTRODUCTORY_PHRASE">course</warning> it has <TYPO descr="Typo: In word 'errosr'">errosr</TYPO> in lists:
 * so much <TYPO descr="Typo: In word 'errorsss'">errorsss</TYPO>!
-* even here it is <warning descr="BEEN_PART_AGREEMENT">friend</warning> of error
+* even here it is <warning descr="EN_A_VS_AN">an</warning> friend of human
 
-Once more we have an inline fragment<warning descr="COMMA_COMPOUND_SENTENCE"> and</warning> it is `a` friend.
+<warning descr="UPPERCASE_SENTENCE_START">once</warning> more we have an inline fragment<warning descr="COMMA_COMPOUND_SENTENCE"> and</warning> it is `a` friend.
 
-It is <warning descr="BEEN_PART_AGREEMENT">friend</warning> of human
+It is <warning descr="EN_A_VS_AN">an</warning> friend of human
 
 And we've got error in injected code!
 ```kotlin
@@ -40,6 +40,8 @@ val b = "It is friend."
 За весь вечер она <warning descr="ne_proronila_ni">не проронила и слово</warning>.
 Собрание состоится в <warning descr="RU_COMPOUNDS">конференц зале</warning>.
 <warning descr="WORD_REPEAT_RULE">Он он</warning> ошибка.
+
+Я предлагаю в&nbsp;своём приложении создавать что-нибудь.
 
 Er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <warning descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</warning>.
 das ist <warning descr="FUEHR_FUER">führ</warning> Dich!

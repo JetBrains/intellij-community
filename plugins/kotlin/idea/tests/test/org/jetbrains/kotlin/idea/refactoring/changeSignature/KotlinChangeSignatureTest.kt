@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
@@ -28,13 +28,13 @@ import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinCallableParameterTableModel
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.getTypeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinMethodNode
-import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.test.*
@@ -42,8 +42,6 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -71,9 +69,14 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     override fun tearDown() {
-        files = emptyList()
-        psiFiles = PsiFile.EMPTY_ARRAY
-        super.tearDown()
+        try {
+            files = emptyList()
+            psiFiles = PsiFile.EMPTY_ARRAY
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
     }
 
     private lateinit var files: List<String>
@@ -1258,6 +1261,14 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         newReturnTypeInfo = KotlinTypeInfo(true, BUILT_INS.stringType)
     }
 
+    fun testChangeClassParameterWithInvalidCharacter() = doTest {
+        newParameters[0].name = "a@bc"
+    }
+
+    fun testChangeClassParameterWithEscapedName() = doTest {
+        newParameters[0].name = "`x@yz`"
+    }
+
     fun testParameterPropagation() = doTestAndIgnoreConflicts {
         val psiFactory = KtPsiFactory(project)
 
@@ -1279,9 +1290,9 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         ).apply { currentTypeInfo = kotlinStringType }
         addParameter(newParameter2)
 
-        val classA = KotlinFullClassNameIndex.getInstance().get("A", project, project.allScope()).first()
+        val classA = KotlinFullClassNameIndex.get("A", project, project.allScope()).first()
         val functionBar = classA.declarations.first { it is KtNamedFunction && it.name == "bar" }
-        val functionTest = KotlinTopLevelFunctionFqnNameIndex.getInstance().get("test", project, project.allScope()).first()
+        val functionTest = KotlinTopLevelFunctionFqnNameIndex.get("test", project, project.allScope()).first()
 
         primaryPropagationTargets = listOf(functionBar, functionTest)
     }
@@ -1290,11 +1301,11 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         newParameters.add(ParameterInfoImpl(-1, "n", PsiType.INT, "1"))
         newParameters.add(ParameterInfoImpl(-1, "s", stringPsiType, "\"abc\""))
 
-        val classA = JavaFullClassNameIndex.getInstance().get("A".hashCode(), project, project.allScope()).first { it.name == "A" }
+        val classA = JavaFullClassNameIndex.getInstance().get("A", project, project.allScope()).first { it.name == "A" }
         val methodBar = classA.methods.first { it.name == "bar" }
         parameterPropagationTargets.add(methodBar)
 
-        val functionTest = KotlinTopLevelFunctionFqnNameIndex.getInstance().get("test", project, project.allScope()).first()
+        val functionTest = KotlinTopLevelFunctionFqnNameIndex.get("test", project, project.allScope()).first()
         parameterPropagationTargets.add(functionTest.getRepresentativeLightMethod()!!)
     }
 
@@ -1303,7 +1314,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
 
         primaryPropagationTargets = listOf(
-            KotlinTopLevelFunctionFqnNameIndex.getInstance().get("bar", project, project.allScope()).first()
+            KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
         )
     }
 
@@ -1312,7 +1323,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
 
         primaryPropagationTargets = listOf(
-            KotlinTopLevelFunctionFqnNameIndex.getInstance().get("bar", project, project.allScope()).first()
+            KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
         )
     }
 
@@ -1320,7 +1331,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         val defaultValueForCall = KtPsiFactory(project).createExpression("1")
         addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
 
-        val classA = KotlinFullClassNameIndex.getInstance().get("A", project, project.allScope()).first()
+        val classA = KotlinFullClassNameIndex.get("A", project, project.allScope()).first()
         val functionBar = classA.declarations.first { it is KtNamedFunction && it.name == "bar" }
         primaryPropagationTargets = listOf(functionBar)
     }
@@ -1330,7 +1341,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
 
         primaryPropagationTargets = listOf(
-            KotlinTopLevelFunctionFqnNameIndex.getInstance().get("bar", project, project.allScope()).first()
+            KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
         )
     }
 

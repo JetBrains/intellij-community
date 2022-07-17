@@ -17,7 +17,7 @@ import java.util.*;
 @Service
 public final class DocRenderItemUpdater implements Runnable {
   private static final long MAX_UPDATE_DURATION_MS = 50;
-  private final Map<RenderedElement, Boolean> myQueue = new HashMap<>();
+  private final Map<CustomFoldRegion, Boolean> myQueue = new HashMap<>();
 
   static DocRenderItemUpdater getInstance() {
     return ApplicationManager.getApplication().getService(DocRenderItemUpdater.class);
@@ -27,16 +27,7 @@ public final class DocRenderItemUpdater implements Runnable {
     if (foldRegions.isEmpty()) return;
     boolean wasEmpty = myQueue.isEmpty();
     for (CustomFoldRegion foldRegion : foldRegions) {
-      myQueue.merge(new FoldRegionWrapper(foldRegion), recreateContent, Boolean::logicalOr);
-    }
-    if (wasEmpty) processChunk();
-  }
-
-  void updateInlays(@NotNull Collection<Inlay<DocRenderer>> inlays, boolean recreateContent) {
-    if (inlays.isEmpty()) return;
-    boolean wasEmpty = myQueue.isEmpty();
-    for (Inlay<DocRenderer> inlay : inlays) {
-      myQueue.merge(new InlayWrapper(inlay), recreateContent, Boolean::logicalOr);
+      myQueue.merge(foldRegion, recreateContent, Boolean::logicalOr);
     }
     if (wasEmpty) processChunk();
   }
@@ -49,24 +40,24 @@ public final class DocRenderItemUpdater implements Runnable {
   private void processChunk() {
     long deadline = System.currentTimeMillis() + MAX_UPDATE_DURATION_MS;
     Map<Editor, EditorScrollingPositionKeeper> keepers = new HashMap<>();
-    // This is a heuristic to lessen visual 'jumping' on editor opening. We'd like inlays visible at target opening location to be updated
+    // This is a heuristic to lessen visual 'jumping' on editor opening. We'd like regions visible at target opening location to be updated
     // first, and all the rest - later. We're not specifically optimizing for the case when multiple editors are opened simultaneously now,
     // opening several editors in succession should work fine with this logic though (by the time a new editor is opened, 'high-priority'
-    // inlays from the previous editor are likely to have been processed already).
-    List<RenderedElement> toProcess = new ArrayList<>(myQueue.keySet());
+    // regions from the previous editor are likely to have been processed already).
+    List<CustomFoldRegion> toProcess = new ArrayList<>(myQueue.keySet());
     Object2IntMap<Editor> memoMap = new Object2IntOpenHashMap<>();
-    toProcess.sort(Comparator.comparingInt(i -> -Math.abs(i.getOffset() - getVisibleOffset(i.getEditor(), memoMap))));
+    toProcess.sort(Comparator.comparingInt(i -> -Math.abs(i.getStartOffset() - getVisibleOffset(i.getEditor(), memoMap))));
     do {
-      RenderedElement element = toProcess.remove(toProcess.size() - 1);
-      boolean updateContent = myQueue.remove(element);
-      if (element.isValid()) {
-        Editor editor = element.getEditor();
+      CustomFoldRegion region = toProcess.remove(toProcess.size() - 1);
+      boolean updateContent = myQueue.remove(region);
+      if (region.isValid()) {
+        Editor editor = region.getEditor();
         keepers.computeIfAbsent(editor, e -> {
           EditorScrollingPositionKeeper keeper = new EditorScrollingPositionKeeper(editor);
           keeper.savePosition();
           return keeper;
         });
-        element.getRenderer().update(true, updateContent, null);
+        ((DocRenderer)region.getRenderer()).update(true, updateContent, null);
       }
     }
     while (!toProcess.isEmpty() && System.currentTimeMillis() < deadline);
@@ -86,65 +77,5 @@ public final class DocRenderItemUpdater implements Runnable {
         return e.visualPositionToOffset(new VisualPosition(visualLine, 0));
       }
     });
-  }
-
-  // remove after migration to new backend
-  private interface RenderedElement {
-    Editor getEditor();
-    int getOffset();
-    boolean isValid();
-    DocRenderer getRenderer();
-  }
-
-  private static class InlayWrapper implements RenderedElement {
-    private final Inlay<DocRenderer> myInlay;
-
-    private InlayWrapper(Inlay<DocRenderer> inlay) { myInlay = inlay; }
-
-    @Override
-    public Editor getEditor() {
-      return myInlay.getEditor();
-    }
-
-    @Override
-    public int getOffset() {
-      return myInlay.getOffset();
-    }
-
-    @Override
-    public boolean isValid() {
-      return myInlay.isValid();
-    }
-
-    @Override
-    public DocRenderer getRenderer() {
-      return myInlay.getRenderer();
-    }
-  }
-
-  private static class FoldRegionWrapper implements RenderedElement {
-    private final CustomFoldRegion myFoldRegion;
-
-    private FoldRegionWrapper(CustomFoldRegion region) { myFoldRegion = region; }
-
-    @Override
-    public Editor getEditor() {
-      return myFoldRegion.getEditor();
-    }
-
-    @Override
-    public int getOffset() {
-      return myFoldRegion.getStartOffset();
-    }
-
-    @Override
-    public boolean isValid() {
-      return myFoldRegion.isValid();
-    }
-
-    @Override
-    public DocRenderer getRenderer() {
-      return (DocRenderer)myFoldRegion.getRenderer();
-    }
   }
 }

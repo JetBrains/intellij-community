@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,8 +21,7 @@ public abstract class CommonActionsManager {
   /**
    * @deprecated use {@link #createCollapseAllAction(TreeExpander, JComponent)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract AnAction createExpandAllAction(TreeExpander expander);
 
   public abstract AnAction createExpandAllAction(TreeExpander expander, JComponent component);
@@ -35,8 +33,7 @@ public abstract class CommonActionsManager {
   /**
    * @deprecated use {@link #createCollapseAllAction(TreeExpander, JComponent)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract AnAction createCollapseAllAction(TreeExpander expander);
 
   public abstract AnAction createCollapseAllAction(TreeExpander expander, JComponent component);

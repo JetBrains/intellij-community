@@ -12,12 +12,13 @@ import com.intellij.refactoring.util.DocCommentPolicy
 import com.intellij.refactoring.util.RefactoringMessageUtil
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.FormBuilder
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.onTextChange
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.unquote
-import org.jetbrains.kotlin.idea.core.util.onTextChange
+import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
@@ -35,7 +36,7 @@ abstract class KotlinExtractSuperDialogBase(
     protected val targetParent: PsiElement,
     private val conflictChecker: (KotlinExtractSuperDialogBase) -> Boolean,
     private val isExtractInterface: Boolean,
-    refactoringName: String,
+    @Nls refactoringName: String,
     private val refactoring: (ExtractSuperInfo) -> Unit
 ) : JavaExtractSuperBaseDialog(originalClass.project, originalClass.toLightClass()!!, emptyList(), refactoringName) {
     private var initComplete: Boolean = false
@@ -85,7 +86,7 @@ abstract class KotlinExtractSuperDialogBase(
 
     protected abstract fun createMemberInfoModel(): MemberInfoModelBase
 
-    override fun getDocCommentPanelName() = KotlinBundle.message("name.kdoc.for.abstracts")
+    override fun getDocCommentPanelName() = KotlinBundle.message("title.kdoc.for.abstracts")
 
     override fun checkConflicts() = conflictChecker(this)
 
@@ -161,7 +162,7 @@ abstract class KotlinExtractSuperDialogBase(
     override fun validateName(name: String): String? {
         return when {
             !name.quoteIfNeeded().isIdentifier() -> RefactoringMessageUtil.getIncorrectIdentifierMessage(name)
-            name.unquote() == mySourceClass.name -> KotlinBundle.message("error.text.different.name.expected")
+            name.unquoteKotlinIdentifier() == mySourceClass.name -> KotlinBundle.message("error.text.different.name.expected")
             else -> null
         }
     }

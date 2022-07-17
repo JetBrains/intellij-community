@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration;
 
-import com.intellij.history.VersionedFileSystem;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.StoredContent;

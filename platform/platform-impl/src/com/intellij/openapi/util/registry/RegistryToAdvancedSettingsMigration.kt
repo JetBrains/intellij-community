@@ -9,7 +9,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 
-class RegistryToAdvancedSettingsMigration : StartupActivity.DumbAware {
+private class RegistryToAdvancedSettingsMigration : StartupActivity.DumbAware {
   override fun runActivity(project: Project) {
     val propertyName = "registry.to.advanced.settings.migration.build"
     val lastMigratedVersion = PropertiesComponent.getInstance().getValue(propertyName)
@@ -56,7 +56,6 @@ class RegistryToAdvancedSettingsMigration : StartupActivity.DumbAware {
   }
 
   private fun migrateVcsIgnoreProcessing(userProperties: MutableMap<String, String>, setting: AdvancedSettingBean) {
-
     if (userProperties["git.process.ignored"] == "false") {
       userProperties.remove("git.process.ignored")
     }

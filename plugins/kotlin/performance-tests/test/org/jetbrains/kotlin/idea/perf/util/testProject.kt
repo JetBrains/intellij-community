@@ -4,11 +4,15 @@ package org.jetbrains.kotlin.idea.perf.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
-import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.ProjectOpenAction
+import java.io.File
 
 class ExternalProject(val path: String, val openWith: ProjectOpenAction) {
     companion object {
-        val KOTLIN_PROJECT_PATH = "../${System.getProperty("performanceProjects", "kotlin")}"
+        val KOTLIN_PROJECT_PATH = run {
+            val path = System.getProperty("performanceProjects", "kotlin")
+            if (File(path).exists()) path else "../$path"
+        }
 
         val KOTLIN_GRADLE = ExternalProject(KOTLIN_PROJECT_PATH, ProjectOpenAction.GRADLE_PROJECT)
         val KOTLIN_JPS = ExternalProject(KOTLIN_PROJECT_PATH, ProjectOpenAction.EXISTING_IDEA_PROJECT)

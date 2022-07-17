@@ -17,9 +17,11 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiClassObjectAccessExpression
 import com.intellij.psi.PsiType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UClassLiteralExpression
 import org.jetbrains.uast.UElement
 
+@ApiStatus.Internal
 class JavaUClassLiteralExpression(
   override val sourcePsi: PsiClassObjectAccessExpression,
   givenParent: UElement?
@@ -27,5 +29,9 @@ class JavaUClassLiteralExpression(
   override val type: PsiType
     get() = sourcePsi.operand.type
 
-  override val expression: JavaUTypeReferenceExpression by lz { JavaUTypeReferenceExpression(sourcePsi.operand, this) }
+  // TODO: return type JavaUTypeReferenceExpression doesn't have anything special,
+  //  so UTypeReferenceExpression should be good enough (or checking if the underlying sourcePsi is from Java).
+  override val expression: JavaUTypeReferenceExpression by lz {
+    JavaUTypeReferenceExpression(sourcePsi.operand, this)
+  }
 }

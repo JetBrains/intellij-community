@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -33,18 +33,23 @@ final class RemoveNewKeywordFix extends LocalQuickFixAndIntentionActionOnPsiElem
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    final PsiNewExpression newDeclaration = tryCast(startElement, PsiNewExpression.class);
+    PsiNewExpression newDeclaration = tryCast(startElement, PsiNewExpression.class);
     if (newDeclaration == null) return;
 
-    final PsiJavaCodeReferenceElement reference = newDeclaration.getClassOrAnonymousClassReference();
+    PsiJavaCodeReferenceElement reference = newDeclaration.getClassOrAnonymousClassReference();
     if (reference == null) return;
+    PsiElement qualifier = reference.getQualifier();
+    if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return;
+    PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)qualifier;
+    CommentTracker ct = new CommentTracker();
+    PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+    if (parameterList != null) {
+      ct.delete(parameterList);
+    }
 
-    final PsiExpressionList arguments = newDeclaration.getArgumentList();
+    ct.markRangeUnchanged(reference, Objects.requireNonNullElse(newDeclaration.getArgumentList(), reference));
 
-    final CommentTracker ct = new CommentTracker();
-    ct.markRangeUnchanged(reference, Objects.requireNonNullElse(arguments, reference));
-
-    final String methodCallExpression = newDeclaration.getText().substring(reference.getStartOffsetInParent());
+    String methodCallExpression = newDeclaration.getText().substring(reference.getStartOffsetInParent());
     ct.replaceAndRestoreComments(newDeclaration, methodCallExpression);
   }
 }

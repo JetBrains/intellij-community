@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,11 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     Project project = getEventProject(e);
     if (project == null) return EMPTY_ARRAY;
@@ -34,11 +40,13 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
 
   public static List<ActivateToolWindowAction> getToolWindowActions(@NotNull Project project, boolean shouldSkipHidden) {
     ActionManager actionManager = ActionManager.getInstance();
-    ToolWindowManager manager = ToolWindowManager.getInstance(project);
+    ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
     List<ActivateToolWindowAction> result = new ArrayList<>();
-    for (String id : manager.getToolWindowIds()) {
-      if (shouldSkipHidden && !manager.getToolWindow(id).isShowStripeButton()) continue;
-      String actionId = ActivateToolWindowAction.getActionIdForToolWindow(id);
+    for (ToolWindow window : manager.getToolWindows()) {
+      if (shouldSkipHidden && !window.isShowStripeButton()) {
+        continue;
+      }
+      String actionId = ActivateToolWindowAction.getActionIdForToolWindow(window.getId());
       AnAction action = actionManager.getAction(actionId);
       if (action instanceof ActivateToolWindowAction) {
         result.add((ActivateToolWindowAction)action);

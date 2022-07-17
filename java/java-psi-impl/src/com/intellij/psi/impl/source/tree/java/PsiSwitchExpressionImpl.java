@@ -107,7 +107,7 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
       ((JavaElementVisitor)visitor).visitSwitchExpression(this);
     }
     else {
-      super.accept(visitor);
+      visitor.visitElement(this);
     }
   }
 

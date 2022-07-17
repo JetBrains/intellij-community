@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.codevision
 
@@ -8,15 +8,16 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import com.intellij.ui.layout.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import javax.swing.JPanel
 
-@Suppress("UnstableApiUsage")
 class KotlinCodeVisionProvider : InlayHintsProvider<NoSettings> {
 
     override val key: SettingsKey<NoSettings> = SettingsKey("CodeVision")
     override val name: String = KotlinBundle.message("hints.title.codevision")
+    override val group: InlayGroup
+        get() = InlayGroup.CODE_VISION_GROUP
     override val previewText: String? = null
 
     var usagesLimit: Int = 100

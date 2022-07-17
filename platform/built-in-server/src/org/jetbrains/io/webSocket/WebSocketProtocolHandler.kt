@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.webSocket
 
 import io.netty.channel.Channel
@@ -52,7 +53,6 @@ open class WebSocketProtocolHandshakeHandler(private val handshaker: WebSocketCl
       try {
         handshaker.finishHandshake(channel, message as FullHttpResponse)
         val pipeline = channel.pipeline()
-        @Suppress("HardCodedStringLiteral")
         pipeline.replace(this, "aggregator", WebSocketFrameAggregator(NettyUtil.MAX_CONTENT_LENGTH))
         // https codec is removed by finishHandshake
         completed()

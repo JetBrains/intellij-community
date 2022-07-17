@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,14 +11,22 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * This class allows changing behavior of the platform in specific IDEs. But if its methods are used for something it means that third-party
- * IDEs not listed here won't be able to get the desired behavior. So <strong>it's strongly not recommended to use methods from this class</strong>.
+ * This class allows changing behavior of the platform and plugins in specific IDEs. But if its methods are used for something it means that third-party
+ * IDEs not listed here won't be able to get the desired behavior. Also, it's hard to correctly select IDEs where customizations should be
+ * enabled, and there is no chance that such code will be properly updated when new IDEs or their editions appear.
+ * So <strong>it's strongly not recommended to use methods from this class</strong>.
+ * <p>
  * If you need to customize behavior of the platform somewhere, you should create a special application service for that and override it in
  * a specific IDE (look at {@link com.intellij.lang.IdeLanguageCustomization} and {@link com.intellij.openapi.updateSettings.UpdateStrategyCustomization}
  * for example).
- *
+ * </p>
+ * <p>
+ * If you need to customize behavior of a plugin depending on the IDE it's installed, it's better to use optional dependency on a corresponding
+ * plugin or IDE module. See https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules
+ * </p>
  * @author Konstantin Bulenkov, Nikolay Chashnikov
  */
+@ApiStatus.Internal
 public final class PlatformUtils {
   public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
 
@@ -30,7 +39,7 @@ public final class PlatformUtils {
   public static final String MOBILE_IDE_PREFIX = "MobileIDE";
   public static final String PYCHARM_PREFIX = "Python";
   public static final String PYCHARM_CE_PREFIX = "PyCharmCore";
-  public static final String PYCHARM_DS_PREFIX = "PyCharmDS";
+  public static final String DATASPELL_PREFIX = "DataSpell";
   public static final String PYCHARM_EDU_PREFIX = "PyCharmEdu";
   public static final String RUBY_PREFIX = "Ruby";
   public static final String PHP_PREFIX = "PhpStorm";
@@ -39,11 +48,18 @@ public final class PlatformUtils {
   public static final String RIDER_PREFIX = "Rider";
   public static final String GOIDE_PREFIX = "GoLand";
   public static final String FLEET_PREFIX = "FleetBackend";
+
+  /**
+   * @deprecated Code With Me Guest is an old name for JetBrains Client
+   */
+  @Deprecated
   public static final String CWM_GUEST_PREFIX = "CodeWithMeGuest";
+  public static final String JETBRAINS_CLIENT_PREFIX = "JetBrainsClient";
   public static final String GATEWAY_PREFIX = "Gateway";
+  public static final String QODANA_PREFIX = "Qodana";
 
   @SuppressWarnings("SSBasedInspection") private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(
-    IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, MOBILE_IDE_PREFIX, PYCHARM_PREFIX, PYCHARM_DS_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX,
+    IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, MOBILE_IDE_PREFIX, PYCHARM_PREFIX, DATASPELL_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX,
     DBE_PREFIX, RIDER_PREFIX, GOIDE_PREFIX));
 
   public static @NotNull String getPlatformPrefix() {
@@ -65,18 +81,30 @@ public final class PlatformUtils {
     return appInfo != null && appInfo.getShortCompanyName().equals("JetBrains");
   }
 
+  /**
+   * If you're enabling some behavior in IntelliJ IDEA, it's quite probable that it makes sense to enable it in Android Studio as well,
+   * so consider adding {@code || getPlatformPrefix().equals("AndroidStudio")} condition.
+   */
   public static boolean isIntelliJ() {
-    return isIdeaUltimate() || isIdeaCommunity() || isIdeaEducational();
+    return isIdeaUltimate() || isIdeaCommunity() || is(IDEA_EDU_PREFIX);
   }
 
   public static boolean isIdeaUltimate() {
     return is(IDEA_PREFIX);
   }
 
+  /**
+   * If you're enabling some behavior in IntelliJ IDEA, it's quite probable that it makes sense to enable it in Android Studio as well,
+   * so consider adding {@code || getPlatformPrefix().equals("AndroidStudio")} condition.
+   */
   public static boolean isIdeaCommunity() {
     return is(IDEA_CE_PREFIX);
   }
 
+  /**
+   * @deprecated use other ways to customize behavior in different IDEs, see {@link PlatformUtils the class-level javadoc}
+   */
+  @Deprecated
   public static boolean isIdeaEducational() {
     return is(IDEA_EDU_PREFIX);
   }
@@ -102,9 +130,13 @@ public final class PlatformUtils {
   }
 
   public static boolean isPyCharm() {
-    return isPyCharmPro() || isPyCharmCommunity() || isPyCharmEducational() || isPyCharmDs();
+    return is(PYCHARM_PREFIX) || isPyCharmCommunity() || isPyCharmEducational() || isDataSpell();
   }
 
+  /**
+   * @deprecated use other ways to customize behavior in different IDEs, see {@link PlatformUtils the class-level javadoc}
+   */
+  @Deprecated
   public static boolean isPyCharmPro() {
     return is(PYCHARM_PREFIX);
   }
@@ -113,8 +145,8 @@ public final class PlatformUtils {
     return is(PYCHARM_CE_PREFIX);
   }
 
-  public static boolean isPyCharmDs() {
-    return is(PYCHARM_DS_PREFIX);
+  public static boolean isDataSpell() {
+    return is(DATASPELL_PREFIX);
   }
 
   public static boolean isPyCharmEducational() {
@@ -141,9 +173,15 @@ public final class PlatformUtils {
     return is(GOIDE_PREFIX);
   }
 
-  public static boolean isCodeWithMeGuest() {
-    return is(CWM_GUEST_PREFIX);
-  }
+  /**
+   * @deprecated Code With Me Guest is an old name for JetBrains Client
+   */
+  @Deprecated
+  public static boolean isCodeWithMeGuest() { return is(CWM_GUEST_PREFIX); }
+
+  public static boolean isJetBrainsClient() { return is(JETBRAINS_CLIENT_PREFIX); }
+
+  public static boolean isGateway() { return is(GATEWAY_PREFIX); }
 
   public static boolean isCommunityEdition() {
     return isIdeaCommunity() || isPyCharmCommunity();

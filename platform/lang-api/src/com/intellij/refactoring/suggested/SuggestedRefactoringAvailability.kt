@@ -58,7 +58,7 @@ abstract class SuggestedRefactoringAvailability(protected val refactoringSupport
    */
   open class RenameOnly(refactoringSupport: SuggestedRefactoringSupport) : SuggestedRefactoringAvailability(refactoringSupport) {
     override fun detectAvailableRefactoring(state: SuggestedRefactoringState): SuggestedRefactoringData? {
-      val namedElement = state.declaration as? PsiNamedElement ?: return null
+      val namedElement = state.anchor as? PsiNamedElement ?: return null
       return SuggestedRenameData(namedElement, state.oldSignature.name)
     }
   }

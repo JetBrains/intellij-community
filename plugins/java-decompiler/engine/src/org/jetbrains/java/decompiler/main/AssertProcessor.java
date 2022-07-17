@@ -10,8 +10,10 @@ import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.SecondaryFunctionsHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -83,8 +85,8 @@ public final class AssertProcessor {
                 if (invexpr.getInstance() != null &&
                     invexpr.getInstance().type == Exprent.EXPRENT_CONST &&
                     "desiredAssertionStatus".equals(invexpr.getName()) &&
-                    "java/lang/Class".equals(invexpr.getClassname()) &&
-                    invexpr.getLstParameters().isEmpty()) {
+                    "java/lang/Class".equals(invexpr.getClassName()) &&
+                    invexpr.getParameters().isEmpty()) {
 
                   ConstExprent cexpr = (ConstExprent)invexpr.getInstance();
                   if (VarType.VARTYPE_CLASS.equals(cexpr.getConstType())) {
@@ -127,7 +129,7 @@ public final class AssertProcessor {
       replaced = false;
 
       for (Statement st : statement.getStats()) {
-        if (st.type == Statement.TYPE_IF) {
+        if (st.type == StatementType.IF) {
           if (replaceAssertion(statement, (IfStatement)st, classname, key)) {
             replaced = true;
             break;
@@ -181,8 +183,8 @@ public final class AssertProcessor {
 
 
     lstParams.add(retcond == null ? ascond : retcond);
-    if (!throwError.getLstParameters().isEmpty()) {
-      lstParams.add(throwError.getLstParameters().get(0));
+    if (!throwError.getParameters().isEmpty()) {
+      lstParams.add(throwError.getParameters().get(0));
     }
 
     AssertExprent asexpr = new AssertExprent(lstParams);
@@ -217,7 +219,7 @@ public final class AssertProcessor {
       sequence.setAllParent();
 
       for (int i = 0; i < sequence.getStats().size() - 1; i++) {
-        sequence.getStats().get(i).addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR,
+        sequence.getStats().get(i).addSuccessor(new StatEdge(EdgeType.REGULAR,
                                                              sequence.getStats().get(i), sequence.getStats().get(i + 1)));
       }
 

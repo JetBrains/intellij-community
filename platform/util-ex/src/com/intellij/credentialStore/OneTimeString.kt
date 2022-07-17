@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
 import com.intellij.openapi.util.text.StringUtil
@@ -94,7 +94,6 @@ class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0,
   }
 }
 
-@Suppress("FunctionName")
 @JvmOverloads
 fun OneTimeString(value: ByteArray, offset: Int = 0, length: Int = value.size - offset, clearable: Boolean = false): OneTimeString {
   if (length == 0) {

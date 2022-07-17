@@ -10,22 +10,22 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.StubElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.indexing.FileContentImpl
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.decompiler.classFile.KotlinClsStubBuilder
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinClsStubBuilder
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.stubs.AbstractStubBuilderTest
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.stubs.elements.KtFileStubBuilder
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinCompilerStandalone
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.junit.Assert
 import java.io.File
 
 abstract class AbstractClsStubBuilderTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinJdkAndLibraryProjectDescriptor(
-        listOf(KotlinArtifacts.instance.kotlinAnnotationsJvm),
+        listOf(KotlinArtifacts.kotlinAnnotationsJvm),
         emptyList()
     )
 
@@ -82,7 +82,7 @@ abstract class AbstractClsStubBuilderTest : KotlinLightCodeInsightFixtureTestCas
             sources = listOf(File(sourcePath)),
             target = outDir,
             options = extraOptions,
-            classpath = listOf(KotlinArtifacts.instance.kotlinAnnotationsJvm)
+            classpath = listOf(KotlinArtifacts.kotlinAnnotationsJvm)
         ).compile()
 
         val root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(outDir)!!

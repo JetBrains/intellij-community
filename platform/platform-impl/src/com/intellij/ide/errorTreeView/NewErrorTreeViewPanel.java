@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.icons.AllIcons;
@@ -60,7 +60,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   private volatile float myFraction;
   private final ErrorViewStructure myErrorViewStructure;
   private final StructureTreeModel<ErrorViewStructure> myStructureModel;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm();
   private volatile boolean myIsDisposed;
   private final ErrorTreeViewConfiguration myConfiguration;
 
@@ -177,6 +177,11 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     return !getSelectedNodeDescriptors().isEmpty();
   }
@@ -199,7 +204,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       final NavigatableErrorTreeElement selectedMessageElement = getSelectedNavigatableElement();
       return selectedMessageElement != null ? selectedMessageElement.getNavigatable() : null;
     }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
     }
     else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
@@ -464,7 +469,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   public void close() {
-    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+    MessageView messageView = MessageView.getInstance(myProject);
     Content content = messageView.getContentManager().getContent(this);
     if (content != null) {
       messageView.getContentManager().removeContent(content, true);

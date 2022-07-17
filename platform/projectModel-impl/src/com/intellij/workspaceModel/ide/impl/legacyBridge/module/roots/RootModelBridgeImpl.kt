@@ -18,10 +18,10 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import java.util.*
@@ -31,7 +31,7 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
                                    private val storage: VersionedEntityStorage,
                                    private val itemUpdater: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?,
                                    private val rootModel: ModuleRootModelBridge,
-                                   internal val updater: (((WorkspaceEntityStorageDiffBuilder) -> Unit) -> Unit)?) : RootModelBase(), Disposable {
+                                   internal val updater: (((MutableEntityStorage) -> Unit) -> Unit)?) : RootModelBase(), Disposable {
   private val module: ModuleBridge = rootModel.moduleBridge
 
   private val extensions by lazy {
@@ -112,7 +112,7 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
     internal fun loadExtensions(storage: VersionedEntityStorage,
                                 module: ModuleBridge,
                                 writable: Boolean,
-                                diff: WorkspaceEntityStorageDiffBuilder?,
+                                diff: MutableEntityStorage?,
                                 parentDisposable: Disposable): Set<ModuleExtension> {
 
       val result = TreeSet<ModuleExtension> { o1, o2 ->

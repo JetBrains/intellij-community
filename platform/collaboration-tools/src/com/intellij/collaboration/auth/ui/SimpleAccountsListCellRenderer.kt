@@ -5,10 +5,9 @@ import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.ui.ScalingDeferredSquareImageIcon
+import com.intellij.collaboration.ui.codereview.avatar.IconsProvider
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
@@ -17,13 +16,11 @@ import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.*
 
-class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
+internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
   private val listModel: AccountsListModel<A, *>,
   private val detailsProvider: AccountsDetailsProvider<A, D>,
-  private val defaultAvatarIcon: Icon
+  private val avatarIconsProvider: IconsProvider<A>
 ) : ListCellRenderer<A>, JPanel() {
-
-  private val avatarIcons = mutableMapOf<A, Icon>()
 
   private val accountName = JLabel()
 
@@ -65,7 +62,7 @@ class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
                                             cellHasFocus: Boolean): Component {
     UIUtil.setBackgroundRecursively(this, ListUiUtil.WithTallRow.background(list, isSelected, list.hasFocus()))
     val primaryTextColor = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
-    val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(list, isSelected)
+    val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(isSelected, list.hasFocus())
 
     accountName.apply {
       text = account.name
@@ -83,7 +80,7 @@ class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
       foreground = secondaryTextColor
     }
     profilePicture.apply {
-      icon = getAvatarIcon(account)
+      icon = avatarIconsProvider.getIcon(account, 40)
     }
     fullName.apply {
       text = getDetails(account)?.name
@@ -104,21 +101,10 @@ class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
     return this
   }
 
-  private fun getAvatarIcon(account: A): Icon {
-    val image = getAvatarImage(account)
-    if (image == null) return IconUtil.resizeSquared(defaultAvatarIcon, 40)
-    return avatarIcons.getOrPut(account) {
-      ScalingDeferredSquareImageIcon(40, defaultAvatarIcon, account) {
-        getAvatarImage(account)
-      }
-    }
-  }
-
-  private fun isDefault(account: A): Boolean = account == listModel.defaultAccount
+  private fun isDefault(account: A): Boolean = (listModel is AccountsListModel.WithDefault) && account == listModel.defaultAccount
   private fun editAccount(parentComponent: JComponent, account: A) = listModel.editAccount(parentComponent, account)
 
   private fun getDetails(account: A): D? = detailsProvider.getDetails(account)
-  private fun getAvatarImage(account: A): Image? = detailsProvider.getAvatarImage(account)
 
   @Nls
   private fun getError(account: A): String? = detailsProvider.getErrorText(account)

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaTypeHierarchyProvider implements HierarchyProvider {
   private static final Logger LOG = Logger.getInstance(JavaTypeHierarchyProvider.class);
   @Override
-  public PsiElement getTarget(@NotNull DataContext dataContext) {
+  public PsiClass getTarget(@NotNull DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
@@ -36,7 +36,7 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
         LOG.debug("target element " + targetElement);
       }
       if (targetElement instanceof PsiClass) {
-        return targetElement;
+        return (PsiClass)targetElement;
       }
 
       int offset = editor.getCaretModel().getOffset();
@@ -51,7 +51,7 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
           return classes.length == 1 ? classes[0] : null;
         }
         if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass) && !(element instanceof PsiSyntheticClass)) {
-          return element;
+          return (PsiClass)element;
         }
         element = element.getParent();
       }

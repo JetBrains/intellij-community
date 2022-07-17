@@ -6,6 +6,7 @@ import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -15,6 +16,7 @@ import java.util.function.Consumer;
  * And to interact with the process and handling its callbacks.
  * {@link MavenRemoteProcessSupport}
  */
+@ApiStatus.Internal
 public interface MavenRemoteProcessSupportFactory {
   ExtensionPointName<MavenRemoteProcessSupportFactory> MAVEN_SERVER_SUPPORT_EP_NAME = new ExtensionPointName<>("org.jetbrains.idea.maven.mavenServerSupportFactory");
 

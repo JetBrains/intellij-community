@@ -17,7 +17,7 @@ internal class FunctionScopesValueGroup(private val functionValue: FunctionValue
     functionValue.resolve()
       .onSuccess(node) {
           val scopes = it.scopes
-          if (scopes == null || scopes.size == 0) {
+          if (scopes.isNullOrEmpty()) {
             node.addChildren(XValueChildrenList.EMPTY, true)
           }
           else {

@@ -15,6 +15,7 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jdom.Document
 import org.jdom.input.SAXBuilder
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -49,7 +50,7 @@ abstract class AbstractMultiFileLocalInspectionTest : AbstractLocalInspectionTes
             ?.let { (SAXBuilder().build(it) as Document).rootElement }
 
 
-        doTest(path) test@{ _ ->
+        doTest(path) test@{
             myFixture.configureFromTempProjectFile(mainFilePath)
 
             runInspectionWithFixesAndCheck(inspection, problemExpectedString, null, localFixTextString, inspectionSettings)

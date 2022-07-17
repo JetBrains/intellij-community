@@ -1,0 +1,3 @@
+croniter.CroniterError
+croniter.croniter.__next__
+croniter.croniter.next

@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class XDebuggerPauseActionHandler extends XDebuggerActionHandler {
@@ -17,7 +17,7 @@ public class XDebuggerPauseActionHandler extends XDebuggerActionHandler {
 
   @Override
   public boolean isHidden(@NotNull Project project, AnActionEvent event) {
-    final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+    final XDebugSession session = DebuggerUIUtil.getSession(event);
     return session == null || !((XDebugSessionImpl)session).isPauseActionSupported();
   }
 

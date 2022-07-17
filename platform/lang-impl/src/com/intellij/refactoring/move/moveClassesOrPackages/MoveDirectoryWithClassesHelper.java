@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -12,10 +13,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author ksafonov
@@ -26,6 +25,15 @@ public abstract class MoveDirectoryWithClassesHelper {
 
   public abstract void findUsages(Collection<PsiFile> filesToMove, PsiDirectory[] directoriesToMove, Collection<UsageInfo> result,
                                   boolean searchInComments, boolean searchInNonJavaFiles, Project project);
+
+  public void findUsages(Map<VirtualFile, MoveDirectoryWithClassesProcessor.TargetDirectoryWrapper> filesToMove, 
+                         PsiDirectory[] directoriesToMove, Collection<UsageInfo> result,
+                         boolean searchInComments, boolean searchInNonJavaFiles, Project project) {
+    Set<PsiFile> psiFiles = filesToMove.keySet().stream().map(PsiManager.getInstance(project)::findFile)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toSet());
+    findUsages(psiFiles, directoriesToMove, result, searchInComments, searchInNonJavaFiles, project);
+  }
 
   public abstract boolean move(PsiFile file,
                                   PsiDirectory moveDestination,
@@ -42,7 +50,7 @@ public abstract class MoveDirectoryWithClassesHelper {
   public void preprocessUsages(Project project,
                                Set<PsiFile> files,
                                UsageInfo[] infos,
-                               PsiDirectory directory,
+                               PsiDirectory targetDirectory,
                                MultiMap<PsiElement, String> conflicts) {}
 
   public static List<MoveDirectoryWithClassesHelper> findAll() {

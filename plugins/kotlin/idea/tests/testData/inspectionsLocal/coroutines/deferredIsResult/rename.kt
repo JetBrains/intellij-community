@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Rename to 'myFunctionAsync'
 
 package kotlinx.coroutines

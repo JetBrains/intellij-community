@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceArgumentAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
 import com.intellij.codeInspection.dataFlow.java.inliner.CallInliner;
 import com.intellij.codeInspection.dataFlow.java.inst.*;
@@ -12,6 +13,7 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchAllTrap;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -20,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.IntStreamEx;
@@ -35,6 +38,8 @@ import java.util.function.Consumer;
  */
 @SuppressWarnings("UnusedReturnValue")
 public class CFGBuilder {
+  private static final CallMatcher PREDICATE_NOT =
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, "not").parameterTypes(CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE);
   private final ControlFlowAnalyzer myAnalyzer;
   private final Deque<Runnable> myBranches = new ArrayDeque<>();
   private final Map<PsiExpression, DfaVariableValue> myMethodRefQualifiers = new HashMap<>();
@@ -252,6 +257,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder splice(int count, int... replacement) {
+    if (count == 0 && replacement.length == 0) return this;
     return add(new SpliceInstruction(count, replacement));
   }
 
@@ -330,7 +336,7 @@ public class CFGBuilder {
    * @param relation relation to use for comparison
    * @return this builder
    */
-  CFGBuilder compare(RelationType relation) {
+  public CFGBuilder compare(RelationType relation) {
     return add(new BooleanBinaryInstruction(relation, false, null));
   }
 
@@ -627,6 +633,22 @@ public class CFGBuilder {
   }
 
   /**
+   * Generate instructions to perform binary numeric operation on stack operands
+   * <p>
+   * Stack before: ... operand1 operand2
+   * <p>
+   * Stack after: ... result
+   *
+   * @param binOp operation to perform
+   * @param expression anchor
+   * @return this builder
+   */
+  public CFGBuilder mathOp(@NotNull LongRangeBinOp binOp, @Nullable PsiExpression expression) {
+    myAnalyzer.addInstruction(new NumericBinaryInstruction(binOp, expression == null ? null : new JavaExpressionAnchor(expression)));
+    return this;
+  }
+
+  /**
    * Generate instructions to assign top stack value to the specified variable
    * <p>
    * Stack before: ... value
@@ -686,6 +708,10 @@ public class CFGBuilder {
       }
       return this;
     }
+    if (stripped instanceof PsiMethodCallExpression && PREDICATE_NOT.test((PsiMethodCallExpression)stripped)) {
+      evaluateFunction(((PsiMethodCallExpression)stripped).getArgumentList().getExpressions()[0]);
+      return this;
+    }
     return pushExpression(functionalExpression, NullabilityProblemKind.passingToNotNullParameter).pop();
   }
 
@@ -720,6 +746,9 @@ public class CFGBuilder {
       JavaResolveResult resolveResult = methodRef.advancedResolve(false);
       PsiMethod method = ObjectUtils.tryCast(resolveResult.getElement(), PsiMethod.class);
       if (method != null && !method.isVarArgs()) {
+        if (argCount == 1) {
+          add(new ResultOfInstruction(new JavaMethodReferenceArgumentAnchor(methodRef)));
+        }
         if (processKnownMethodReference(argCount, methodRef, method)) return this;
         int expectedArgCount = method.getParameterList().getParametersCount();
         boolean pushQualifier = true;
@@ -751,6 +780,11 @@ public class CFGBuilder {
           .push(DfTypes.typedObject(((PsiTypeElement)qualifier).getType(), Nullability.NOT_NULL));
         return this;
       }
+    }
+    if (stripped instanceof PsiMethodCallExpression && PREDICATE_NOT.test((PsiMethodCallExpression)stripped)) {
+      invokeFunction(argCount, ((PsiMethodCallExpression)stripped).getArgumentList().getExpressions()[0], resultNullability);
+      myAnalyzer.addInstruction(new NotInstruction(null));
+      return this;
     }
     splice(argCount);
     if (functionalExpression == null) {

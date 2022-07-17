@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.test
 
 import com.intellij.openapi.application.ApplicationManager
@@ -17,8 +17,8 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
-import com.intellij.testFramework.runAll
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsFullCommitDetails
@@ -29,10 +29,7 @@ import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitHandler
-import git4idea.config.GitExecutableManager
-import git4idea.config.GitSaveChangesPolicy
-import git4idea.config.GitVcsApplicationSettings
-import git4idea.config.GitVcsSettings
+import git4idea.config.*
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -246,6 +243,13 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected fun `assert commit dialog was shown`() {
     assertTrue("Commit dialog was not shown", vcsHelper.commitDialogWasShown())
+  }
+
+  /**
+   * There are small differences between 'recursive' (old) and 'ort' (new) merge algorithms.
+   */
+  protected fun gitUsingOrtMergeAlg(): Boolean {
+    return vcs.version.isLaterOrEqual(GitVersion(2, 34, 0, 0))
   }
 
   protected fun assertNoChanges() {

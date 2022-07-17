@@ -6,4 +6,7 @@ import org.jetbrains.annotations.NotNull;
 public interface ProjectDependencyNode extends DependencyNode {
   @NotNull
   String getProjectName();
+
+  @NotNull
+  String getProjectPath();
 }

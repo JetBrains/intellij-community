@@ -21,21 +21,19 @@ object NativeConsoleApplicationTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.native.console.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.native.console.description")
 
-    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean =
         module.configurator.moduleType == ModuleType.native
+                && module.configurator.safeAs<NativeTargetConfigurator>()?.isDesktopTarget == true
 
     override val id: String = "nativeConsoleApp"
 
-    override fun isApplicableTo(
-        reader: Reader,
-        module: Module
-    ): Boolean =
-        module.configurator.safeAs<NativeTargetConfigurator>()?.isDesktopTarget == true
+    private const val fileToCreate = "Main.kt"
+    override val filesToOpenInEditor = listOf(fileToCreate)
 
     override fun updateTargetIr(module: ModuleIR, targetConfigurationIR: TargetConfigurationIR): TargetConfigurationIR =
         targetConfigurationIR.withIrs(NativeTargetInternalIR("main"))
 
     override fun Reader.getFileTemplates(module: ModuleIR): List<FileTemplateDescriptorWithPath> = buildList {
-        +(FileTemplateDescriptor("$id/main.kt.vm", "Main.kt".asPath()) asSrcOf SourcesetType.main)
+        +(FileTemplateDescriptor("$id/main.kt.vm", fileToCreate.asPath()) asSrcOf SourcesetType.main)
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -83,7 +83,12 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   }
 
   private void debug(@NotNull String message) {
-    LOG.debug("[" + myName + "] " + message);
+    LOG.debug(formMessage(message));
+  }
+
+  @NotNull
+  private String formMessage(@NotNull String message) {
+    return "[" + myName + "] " + message;
   }
 
   private void cancelTask(@NotNull SingleTask t) {
@@ -102,7 +107,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
 
   /**
    * Returns all awaiting requests and clears the queue. <br/>
-   * I.e. the second call to this method will return an empty list (unless new requests came via {@link #request(Object[])}.
+   * I.e. the second call to this method will return an empty list (unless new requests came via {@link #request(Object[])}).
    */
   @NotNull
   public final List<Request> popRequests() {
@@ -143,7 +148,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   /**
    * The underlying currently active task should use this method to inform that it has completed the execution. <br/>
    * If the result is not null, it is immediately passed to the result handler specified in the constructor.
-   * Otherwise result handler is not called, the task just completes.
+   * Otherwise, result handler is not called, the task just completes.
    * After result handler is called, a new task is started if there are new requests awaiting in the queue.
    */
   public final void taskCompleted(@Nullable Result result) {
@@ -203,7 +208,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
         LOG.debug(e);
       }
       catch (TimeoutException e) {
-        if (longTimeOut) LOG.warn("Wait time out ", e);
+        if (longTimeOut) LOG.warn(formMessage("Wait time out "), e);
       }
     }
   }

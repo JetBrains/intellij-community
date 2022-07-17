@@ -7,7 +7,10 @@ Try not to use objects instead of primitives. It might significantly affect the 
 <p>The quick-fix makes the conversion explicit:</p>
 <pre><code>int x = new Integer(42).intValue();</code></pre>
 <!-- tooltip end -->
-<p>Autoboxing conversion is not supported in Java 1.4 and earlier JVM.</p>
+<p>
+  <i>AutoUnboxing</i> appeared in Java 5.
+  This inspection can help to downgrade for backward compatibility with earlier Java versions.
+</p>
 
 </body>
 </html>

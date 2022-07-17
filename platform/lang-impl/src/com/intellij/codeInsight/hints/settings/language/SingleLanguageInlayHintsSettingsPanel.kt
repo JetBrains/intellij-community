@@ -11,19 +11,24 @@ import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.ide.CopyProvider
 import com.intellij.ide.DataManager
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFileFactory
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
@@ -32,10 +37,12 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.layout.*
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.GridLayout
 import java.awt.datatransfer.StringSelection
+import java.util.concurrent.Callable
 import javax.swing.*
 import javax.swing.border.LineBorder
 
@@ -49,7 +56,7 @@ class SingleLanguageInlayHintsSettingsPanel(
   private val config = InlayHintsSettings.instance()
   private val myProviderList = createList()
   private var myCurrentProvider = selectLastViewedProvider()
-  private val myEditorTextField = createEditor()
+  private val myEditorTextField = createEditor(myLanguage, myProject) { updateHints() }
   private val myCurrentProviderCustomSettingsPane = JBScrollPane().also {
     it.border = null
   }
@@ -167,44 +174,6 @@ class SingleLanguageInlayHintsSettingsPanel(
     return previewPanel
   }
 
-  private fun createEditor(): EditorTextField {
-    val fileType: FileType = myLanguage.associatedFileType ?: FileTypes.PLAIN_TEXT
-    val editorField = object : EditorTextField(null, myProject, fileType, false, false) {
-      override fun addNotify() {
-        super.addNotify()
-        // only here the editor is finally initialized
-        updateHints()
-      }
-    }
-    editorField.font = EditorFontType.PLAIN.globalFont
-    editorField.border = LineBorder(JBColor.border())
-    editorField.addSettingsProvider { editor ->
-      editor.setVerticalScrollbarVisible(true)
-      editor.setHorizontalScrollbarVisible(true)
-      editor.setBorder(JBUI.Borders.empty(4))
-      with(editor.settings) {
-        additionalLinesCount = 2
-        isAutoCodeFoldingEnabled = false
-        isLineNumbersShown = true
-      }
-      // Sadly, but we can't use daemon here, because we need specific kind of settings instance here.
-      editor.document.addDocumentListener(object : DocumentListener {
-        override fun documentChanged(event: DocumentEvent) {
-          updateHints()
-        }
-      })
-      editor.backgroundColor = EditorFragmentComponent.getBackgroundColor(editor, false)
-      editor.setBorder(JBUI.Borders.empty())
-      // If editor is created as not viewer, daemon is enabled automatically. But we want to collect hints manually with another settings.
-      val psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.document)
-      if (psiFile != null) {
-        DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(psiFile, false)
-      }
-    }
-    editorField.setCaretPosition(0)
-    return editorField
-  }
-
   private fun withInset(component: JComponent): JPanel {
     val panel = JPanel(GridLayout())
     panel.add(component)
@@ -271,15 +240,21 @@ class SingleLanguageInlayHintsSettingsPanel(
 
   private fun updateHints() {
     if (myBottomPanel.isVisible) {
-      val document = myEditorTextField.document
-      val factory = PsiFileFactory.getInstance(myProject)
-      val fileType = myLanguage.associatedFileType ?: PlainTextFileType.INSTANCE
-      val psiFile = factory.createFileFromText("dummy", fileType, document.text)
-      ApplicationManager.getApplication().runWriteAction {
-        val editor = myEditorTextField.editor
-        if (editor != null) {
-          myCurrentProvider.collectAndApply(editor, psiFile)
-        }
+      myEditorTextField.editor?.let { editor ->
+        val model = myCurrentProvider
+        val document = myEditorTextField.document
+        val fileType = myLanguage.associatedFileType ?: PlainTextFileType.INSTANCE
+        ReadAction.nonBlocking(Callable {
+          val psiFile = model.createFile(myProject, fileType, document)
+          myCurrentProvider.collectData(editor, psiFile)
+        })
+          .finishOnUiThread(ModalityState.defaultModalityState()) { continuation ->
+            ApplicationManager.getApplication().runWriteAction {
+              continuation.run()
+            }
+          }
+          .inSmartMode(myProject)
+          .submit(AppExecutorUtil.getAppExecutorService())
       }
     }
   }
@@ -303,6 +278,8 @@ class SingleLanguageInlayHintsSettingsPanel(
     updateHints()
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
   override fun performCopy(dataContext: DataContext) {
     val selectedIndex = myProviderList.selectedIndex
     if (selectedIndex < 0) return
@@ -313,4 +290,49 @@ class SingleLanguageInlayHintsSettingsPanel(
   override fun isCopyEnabled(dataContext: DataContext): Boolean = !myProviderList.isSelectionEmpty
 
   override fun isCopyVisible(dataContext: DataContext): Boolean = false
+}
+
+internal val SETTINGS_EDITOR_MARKER: Key<Boolean> = Key.create("inlay.settings.editor")
+
+fun isInlaySettingsEditor(editor: Editor) : Boolean {
+  return editor.getUserData(SETTINGS_EDITOR_MARKER) == true
+}
+
+fun createEditor(language: Language,
+                 project: Project,
+                 updateHints: (editor: Editor) -> Any): EditorTextField {
+  val fileType: FileType = language.associatedFileType ?: FileTypes.PLAIN_TEXT
+  val editorField = object : EditorTextField(null, project, fileType, true, false) {
+    override fun createEditor(): EditorEx {
+      val editor = super.createEditor()
+      editor.putUserData(SETTINGS_EDITOR_MARKER, true)
+      updateHints(editor)
+      return editor
+    }
+  }
+  editorField.font = EditorFontType.PLAIN.globalFont
+  editorField.border = LineBorder(JBColor.border())
+  editorField.addSettingsProvider { editor ->
+    editor.setVerticalScrollbarVisible(true)
+    editor.setHorizontalScrollbarVisible(true)
+    with(editor.settings) {
+      additionalLinesCount = 0
+      isAutoCodeFoldingEnabled = false
+    }
+    // Sadly, but we can't use daemon here, because we need specific kind of settings instance here.
+    editor.document.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        updateHints(editor)
+      }
+    })
+    editor.backgroundColor = EditorFragmentComponent.getBackgroundColor(editor, false)
+    editor.setBorder(JBUI.Borders.empty())
+    // If editor is created as not viewer, daemon is enabled automatically. But we want to collect hints manually with another settings.
+    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+    if (psiFile != null) {
+      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, false)
+    }
+  }
+  ReadAction.run<Throwable> {  editorField.setCaretPosition(0) }
+  return editorField
 }

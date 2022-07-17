@@ -81,6 +81,31 @@ interface Foo {
     myFixture.assertPreferredCompletionItems 0, 'BAR', 'FOO'
   }
 
+  @NeedsIndex.ForStandardLibrary
+  void "test completion in enum constructor"() {
+    addMagicConstant()
+    myFixture.configureByText "a.java", """
+import org.intellij.lang.annotations.MagicConstant;
+
+enum MagicConstantTest {
+  FOO(<caret>),
+  ;
+
+  private final int magicConstant;
+
+  MagicConstantTest(@MagicConstant(valuesFromClass = MagicConstantIds.class) int magicConstant) {
+    this.magicConstant = magicConstant;
+  }
+}
+class MagicConstantIds {
+  static final int ONE = 1;
+  static final int TWO = 2;
+}
+"""
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'ONE', 'TWO'
+  }
+
   void "test magic constant in equality before another equality"() {
     addMagicConstant()
 

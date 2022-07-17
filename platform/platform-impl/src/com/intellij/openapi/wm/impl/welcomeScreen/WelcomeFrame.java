@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.CommonBundle;
+import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.idea.SplashManager;
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
@@ -9,6 +11,7 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
@@ -17,6 +20,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -25,13 +29,14 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,10 +47,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.concurrent.ForkJoinPool;
 
 public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
   public static final ExtensionPointName<WelcomeFrameProvider> EP = new ExtensionPointName<>("com.intellij.welcomeFrameProvider");
-  @NonNls static final String DIMENSION_KEY = "WELCOME_SCREEN";
+  static final String DIMENSION_KEY = "WELCOME_SCREEN";
+
   private static IdeFrame ourInstance;
   private static Disposable ourTouchbar;
 
@@ -74,18 +81,14 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
       }
     });
 
-    myBalloonLayout = new BalloonLayoutImpl(rootPane, new Insets(8, 8, 8, 8));
+    myBalloonLayout = new BalloonLayoutImpl(rootPane, JBUI.insets(8));
 
     myScreen = screen;
     setupCloseAction(this);
     MnemonicHelper.init(this);
     myScreen.setupFrame(this);
-    Disposer.register(ApplicationManager.getApplication(), new Disposable() {
-      @Override
-      public void dispose() {
-        WelcomeFrame.this.dispose();
-      }
-    });
+
+    Disposer.register(ApplicationManager.getApplication(), () -> this.dispose());
   }
 
   public static IdeFrame getInstance() {
@@ -113,7 +116,19 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     frame.addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(WindowEvent e) {
-        if (ProjectUtil.getOpenProjects().length == 0) {
+        if (ProjectUtilCore.getOpenProjects().length == 0) {
+          boolean isActiveClone = CloneableProjectsService.getInstance().isCloneActive();
+          if (isActiveClone) {
+            int exitCode = Messages.showOkCancelDialog(ApplicationBundle.message("exit.confirm.prompt.tasks"),
+                                                       ApplicationBundle.message("exit.confirm.title"),
+                                                       ApplicationBundle.message("command.exit"),
+                                                       CommonBundle.getCancelButtonText(),
+                                                       Messages.getQuestionIcon());
+            if (exitCode == Messages.CANCEL) {
+              return;
+            }
+          }
+
           ApplicationManager.getApplication().exit();
         }
         else {
@@ -146,10 +161,6 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
   }
 
   public static void showNow() {
-    if (ourInstance != null) {
-      return;
-    }
-
     Runnable show = prepareToShow();
     if (show != null) {
       show.run();
@@ -162,7 +173,7 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     }
 
     // ActionManager is used on Welcome Frame, but should be initialized in a pooled thread and not in EDT.
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    ForkJoinPool.commonPool().execute(() -> {
       ActionManager.getInstance();
       if (SystemInfoRt.isMac) {
         TouchbarSupport.initialize();
@@ -174,7 +185,7 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
         return;
       }
 
-      IdeFrame frame = EP.computeSafeIfAny(provider -> provider.createFrame());
+      IdeFrame frame = EP.computeSafeIfAny(WelcomeFrameProvider::createFrame);
       if (frame == null) {
         throw new IllegalStateException("No implementation of `com.intellij.welcomeFrameProvider` extension point");
       }
@@ -188,7 +199,7 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
       IdeMenuBar.installAppMenuIfNeeded(jFrame);
       ourInstance = frame;
       if (SystemInfoRt.isMac) {
-        ourTouchbar = TouchbarSupport.showDialogButtons(frame.getComponent());
+        ourTouchbar = TouchbarSupport.showWindowActions(frame.getComponent());
       }
     };
   }
@@ -204,7 +215,16 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
   }
 
   public static void showIfNoProjectOpened() {
+    showIfNoProjectOpened(null);
+  }
+
+  public static void showIfNoProjectOpened(@Nullable AppLifecycleListener lifecyclePublisher) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
+    Runnable show = prepareToShow();
+    if (show == null) {
       return;
     }
 
@@ -212,33 +232,32 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       windowManager.disposeRootFrame();
       if (windowManager.getProjectFrameHelpers().isEmpty()) {
-        showNow();
+        show.run();
+        if (lifecyclePublisher != null) {
+          lifecyclePublisher.welcomeScreenDisplayed();
+        }
       }
     }, ModalityState.NON_MODAL);
   }
 
-  @Nullable
   @Override
-  public StatusBar getStatusBar() {
+  public @Nullable StatusBar getStatusBar() {
     Container pane = getContentPane();
     return pane instanceof JComponent ? UIUtil.findComponentOfType((JComponent)pane, IdeStatusBarImpl.class) : null;
   }
 
-  @Nullable
   @Override
-  public BalloonLayout getBalloonLayout() {
+  public @Nullable BalloonLayout getBalloonLayout() {
     return myBalloonLayout;
   }
 
-  @NotNull
   @Override
-  public Rectangle suggestChildFrameBounds() {
+  public @NotNull Rectangle suggestChildFrameBounds() {
     return getBounds();
   }
 
-  @NotNull
   @Override
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return ProjectManager.getInstance().getDefaultProject();
   }
 

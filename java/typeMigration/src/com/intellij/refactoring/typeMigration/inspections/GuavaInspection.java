@@ -79,7 +79,7 @@ public final class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       });
 
       @Override
-      public void visitVariable(PsiVariable variable) {
+      public void visitVariable(@NotNull PsiVariable variable) {
         if (!checkVariables) return;
         final PsiType type = variable.getType();
         PsiType targetType = getConversionClassType(type);
@@ -91,7 +91,7 @@ public final class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         super.visitMethod(method);
         if (!checkReturnTypes) return;
         final PsiType targetType = getConversionClassType(method.getReturnType());
@@ -106,7 +106,7 @@ public final class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         checkFluentIterableGenerationMethod(expression);
         checkPredicatesUtilityMethod(expression);
       }

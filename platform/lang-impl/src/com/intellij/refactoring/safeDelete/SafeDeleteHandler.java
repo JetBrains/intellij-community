@@ -4,7 +4,7 @@ package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -47,7 +47,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
 
   @Override
   public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
-    invoke(project, elements, LangDataKeys.MODULE.getData(dataContext), true, null, null);
+    invoke(project, elements, PlatformCoreDataKeys.MODULE.getData(dataContext), true, null, null);
   }
 
   public static void invoke(final Project project, PsiElement[] elements, boolean checkDelegates) {

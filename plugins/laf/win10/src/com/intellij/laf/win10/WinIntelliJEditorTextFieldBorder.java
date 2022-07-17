@@ -21,7 +21,7 @@ import java.awt.geom.Path2D;
 
 import static com.intellij.laf.win10.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 
-class WinIntelliJEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
+final class WinIntelliJEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
   WinIntelliJEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
     super(editorTextField, editor);
     editor.addEditorMouseListener(new EditorMouseListener() {
@@ -123,7 +123,7 @@ class WinIntelliJEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
   @Override
   public Insets getBorderInsets(Component c) {
     if (ComponentUtil.getParentOfType((Class<? extends ComboBoxCompositeEditor>)ComboBoxCompositeEditor.class, c) != null) {
-      return JBUI.emptyInsets().asUIResource();
+      return JBInsets.emptyInsets().asUIResource();
     }
     return (DarculaUIUtil.isTableCellEditor(c) ?
             JBUI.insets(1) :

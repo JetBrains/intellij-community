@@ -8,9 +8,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiIntersectionType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
@@ -29,10 +27,10 @@ import java.util.Set;
  * Immutable object representing a number of type constraints applied to some reference value.
  * Type constraints represent a lattice with {@link TypeConstraints#TOP} and {@link TypeConstraints#BOTTOM}
  * elements, as well as {@link #join(TypeConstraint)} and {@link #meet(TypeConstraint)} operations.
- *
+ * <p>
  * Besides TOP and BOTTOM there are two types of constrains: {@link Exact} (value is known to have exactly some JVM type)
  * and {@link Constrained} (value is instanceof zero or more JVM types and not instanceof zero or more JVM types).
- *
+ * <p>
  * value is instance of some type and value is not an instance of some type.
  * Null or primitive types are not handled here.
  */
@@ -99,6 +97,13 @@ public interface TypeConstraint {
   }
 
   /**
+   * @return true if this type constraint represents a known singleton type (an object that has exactly one instance)
+   */
+  default boolean isSingleton() {
+    return false;
+  }
+
+  /**
    * @param className fully-qualified class name to check
    * @return true if all types that satisfy this constraint are subtypes of a given class name
    */
@@ -161,6 +166,14 @@ public interface TypeConstraint {
   }
 
   /**
+   * @return an exact type which is an array whose components are this exact type
+   * @see #getArrayComponentType()
+   */
+  default @NotNull TypeConstraint arrayOf() {
+    return TypeConstraints.TOP;
+  }
+
+  /**
    * @return an array component type for an array type; BOTTOM if this type is not always an array type
    */
   default @NotNull DfType getArrayComponentType() {
@@ -188,6 +201,27 @@ public interface TypeConstraint {
    */
   default boolean isPrimitiveWrapper() {
     return false;
+  }
+
+  /**
+   * @return true if this type always represents an enum
+   */
+  default boolean isEnum() {
+    return false;
+  }
+
+  default @Nullable PsiEnumConstant getEnumConstant(int ordinal) {
+    return null;
+  }
+
+  /**
+   * Convert type constraint to another factory based on fully-qualified names of classes
+   *
+   * @param factory
+   * @return converted type constraint that uses a supplied factory
+   */
+  default @NotNull TypeConstraint convert(TypeConstraints.TypeConstraintFactory factory) {
+    return this;
   }
 
   /**
@@ -229,6 +263,15 @@ public interface TypeConstraint {
      * @return true if the type represented by this constraint cannot have subtypes
      */
     boolean isFinal();
+
+    /**
+     * @return an exact type which is an array whose components are this exact type
+     * @see #getArrayComponentType()
+     */
+    @Override
+    default @NotNull Exact arrayOf() {
+      return new TypeConstraints.ExactArray(this);
+    }
 
     @Override
     default boolean isExact() {
@@ -326,6 +369,12 @@ public interface TypeConstraint {
     @Override
     default @NotNull String getPresentationText(@Nullable PsiType type) {
       return type != null && TypeConstraints.exact(type).equals(this) ? "" : "exactly " + toShortString();
+    }
+
+    @Override
+    @NotNull
+    default Exact convert(TypeConstraints.TypeConstraintFactory factory) {
+      return this;
     }
   }
 
@@ -613,8 +662,32 @@ public interface TypeConstraint {
     }
 
     @Override
+    public @NotNull TypeConstraint arrayOf() {
+      TypeConstraint constraint =
+        instanceOfTypes().<TypeConstraint>map(Exact::arrayOf).reduce(TypeConstraint::meet).orElse(TypeConstraints.EXACTLY_OBJECT.arrayOf());
+      return constraint instanceof Exact ? ((Exact)constraint).instanceOf() : constraint;
+    }
+
+    @Override
     public boolean isArray() {
       return instanceOfTypes().anyMatch(Exact::isArray);
+    }
+
+    @Override
+    public boolean isEnum() {
+      return myInstanceOf.size() == 1 && myInstanceOf.iterator().next().isEnum();
+    }
+
+    @Override
+    public @Nullable PsiEnumConstant getEnumConstant(int ordinal) {
+      return myInstanceOf.size() == 1 ? myInstanceOf.iterator().next().getEnumConstant(ordinal) : null;
+    }
+
+    @Override
+    public @NotNull TypeConstraint convert(TypeConstraints.TypeConstraintFactory factory) {
+      Set<Exact> instanceOf = ContainerUtil.map2LinkedSet(myInstanceOf, exact -> exact.convert(factory));
+      Set<Exact> notInstanceOf = ContainerUtil.map2LinkedSet(myNotInstanceOf, exact -> exact.convert(factory));
+      return new Constrained(instanceOf, notInstanceOf);
     }
 
     @Override

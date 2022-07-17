@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
@@ -17,10 +17,10 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.resolve.OverrideResolver
 
-open class ImplementMembersHandler : OverrideImplementMembersHandler(), IntentionAction {
+open class ImplementMembersHandler : GenerateMembersHandler(true), IntentionAction {
     override fun collectMembersToGenerate(descriptor: ClassDescriptor, project: Project): Collection<OverrideMemberChooserObject> {
         return OverrideResolver.getMissingImplementations(descriptor)
-            .map { OverrideMemberChooserObject.create(project, it, it, OverrideMemberChooserObject.BodyType.FROM_TEMPLATE) }
+            .map { OverrideMemberChooserObject.create(project, it, it, BodyType.FROM_TEMPLATE) }
     }
 
     override fun getChooserTitle() = KotlinIdeaCoreBundle.message("implement.members.handler.title")
@@ -53,6 +53,6 @@ class ImplementAsConstructorParameter : ImplementMembersHandler() {
     override fun collectMembersToGenerate(descriptor: ClassDescriptor, project: Project): Collection<OverrideMemberChooserObject> {
         return OverrideResolver.getMissingImplementations(descriptor)
             .filterIsInstance<PropertyDescriptor>()
-            .map { OverrideMemberChooserObject.create(project, it, it, OverrideMemberChooserObject.BodyType.FROM_TEMPLATE, true) }
+            .map { OverrideMemberChooserObject.create(project, it, it, BodyType.FROM_TEMPLATE, true) }
     }
 }

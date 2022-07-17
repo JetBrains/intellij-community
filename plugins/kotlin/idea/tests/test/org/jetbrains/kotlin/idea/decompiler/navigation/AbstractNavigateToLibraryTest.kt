@@ -6,11 +6,12 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractNavigateToLibraryTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -23,7 +24,7 @@ abstract class AbstractNavigateToLibraryTest : KotlinLightCodeInsightFixtureTest
     }
 
     override fun tearDown() = runAll(
-        ThrowableRunnable { SourceNavigationHelper.setForceResolve(false) },
+        ThrowableRunnable { SourceNavigationHelper.resetForceResolve() },
         ThrowableRunnable { super.tearDown() }
     )
 }
@@ -134,7 +135,7 @@ class NavigationChecker(val file: PsiFile, val referenceTargetChecker: (PsiEleme
 
         val targetNavFile = targetNavPsiFile.virtualFile ?: return
 
-        if (!ProjectRootsUtil.isProjectSourceFile(target.project, targetNavFile)) {
+        if (!RootKindFilter.projectSources.matches(target.project, targetNavFile)) {
             put(ref.element, ref)
         }
     }
@@ -142,9 +143,13 @@ class NavigationChecker(val file: PsiFile, val referenceTargetChecker: (PsiEleme
     companion object {
         fun checkAnnotatedCode(file: PsiFile, expectedFile: File, referenceTargetChecker: (PsiElement) -> Unit = {}) {
             val navigationChecker = NavigationChecker(file, referenceTargetChecker)
-            for (forceResolve in listOf(false, true)) {
-                SourceNavigationHelper.setForceResolve(forceResolve)
-                KotlinTestUtils.assertEqualsToFile(expectedFile, navigationChecker.annotatedLibraryCode())
+            try {
+                for (forceResolve in listOf(false, true)) {
+                    SourceNavigationHelper.setForceResolve(forceResolve)
+                    KotlinTestUtils.assertEqualsToFile(expectedFile, navigationChecker.annotatedLibraryCode())
+                }
+            } finally {
+                SourceNavigationHelper.resetForceResolve()
             }
         }
     }

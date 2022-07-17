@@ -1,4 +1,5 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Variable 'a' is never used
 
 class MyClass {
     fun foo1() = Unit

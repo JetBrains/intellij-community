@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test;
 
@@ -11,12 +11,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.TempFiles;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.util.ThrowableRunnable;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -25,6 +22,9 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashSet;
+
+import static org.jetbrains.kotlin.idea.test.TestUtilsKt.checkPluginIsCorrect;
 
 public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJavaCodeInsightFixtureTestCase {
     @NotNull
@@ -44,8 +44,14 @@ public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJav
         return super.getFile();
     }
 
-    protected final Collection<Path> myFilesToDelete = new THashSet<>();
+    protected final Collection<Path> myFilesToDelete = new HashSet<>();
     private final TempFiles myTempFiles = new TempFiles(myFilesToDelete);
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        checkPluginIsCorrect(isFirPlugin());
+    }
 
     @Override
     protected void tearDown() throws Exception {
@@ -58,7 +64,7 @@ public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJav
     @NotNull
     public VirtualFile createTempFile(
             @NonNls @NotNull String ext,
-            @Nullable byte[] bom,
+            byte @Nullable[] bom,
             @NonNls @NotNull String content,
             @NotNull Charset charset
     ) throws IOException {
@@ -71,7 +77,7 @@ public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJav
         return file;
     }
 
-    public static void setContentOnDisk(@NotNull File file, @Nullable byte[] bom, @NotNull String content, @NotNull Charset charset)
+    public static void setContentOnDisk(@NotNull File file, byte @Nullable[] bom, @NotNull String content, @NotNull Charset charset)
             throws IOException {
         FileOutputStream stream = new FileOutputStream(file);
         if (bom != null) {

@@ -14,12 +14,13 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.ui.EditorTextField
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -137,7 +138,7 @@ private data class CallChain(
 private fun KtQualifiedExpression.findCallChain(): CallChain? {
     if (parent is KtQualifiedExpression) return null
 
-    val context = analyze(BodyResolveMode.PARTIAL)
+    val context = safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
     val calls = collectCallExpression(context)
     if (calls.isEmpty()) return null
 

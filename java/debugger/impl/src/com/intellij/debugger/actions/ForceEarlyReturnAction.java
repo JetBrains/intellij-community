@@ -16,6 +16,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -86,7 +87,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
                                                   @Nullable final DialogWrapper dialog) {
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
-      if (PopFrameAction.evaluateFinallyBlocks(debugProcess.getProject(),
+      if (JvmDropFrameActionHandler.evaluateFinallyBlocks(debugProcess.getProject(),
                                                UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")),
                                                frame,
                                                new XDebuggerEvaluator.XEvaluationCallback() {
@@ -164,7 +165,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
   }
 
   private static void showError(Project project, @NlsContexts.DialogMessage String message) {
-    PopFrameAction.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")));
+    JvmDropFrameActionHandler.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")));
   }
 
   @Override
@@ -182,5 +183,10 @@ public class ForceEarlyReturnAction extends DebuggerAction {
     else {
       e.getPresentation().setVisible(enable);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

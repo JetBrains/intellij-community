@@ -43,7 +43,7 @@ class TextInlayPresentation(
           when (attributes.effectType) {
             EffectType.LINE_UNDERSCORE -> EffectPainter.LINE_UNDERSCORE.paint(g, 0, metrics.ascent, width, metrics.descent, font)
             EffectType.BOLD_LINE_UNDERSCORE -> EffectPainter.BOLD_LINE_UNDERSCORE.paint(g, 0, metrics.ascent, width, metrics.descent, font)
-            EffectType.STRIKEOUT -> EffectPainter.STRIKE_THROUGH.paint(g, 0, metrics.ascent, width, height, font)
+            EffectType.STRIKEOUT -> EffectPainter.STRIKE_THROUGH.paint(g, 0, metrics.fontBaseline, width, height, font)
             EffectType.WAVE_UNDERSCORE -> EffectPainter.WAVE_UNDERSCORE.paint(g, 0, metrics.ascent, width, metrics.descent, font)
             EffectType.BOLD_DOTTED_LINE -> EffectPainter.BOLD_DOTTED_UNDERSCORE.paint(g, 0, metrics.ascent, width, metrics.descent, font)
             else -> {}

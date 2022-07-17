@@ -28,7 +28,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author spleaner
+ * This extension point customizes the "Move Statement Up/Down" action behaviour.
+ * For example, {@link com.intellij.codeInsight.editorActions.moveUpDown.DeclarationMover} specifies how to move
+ * a java variable declaration as a whole (instead of line-by-line) even if it spans across several lines.
  */
 public abstract class StatementUpDownMover {
   public static final ExtensionPointName<StatementUpDownMover> STATEMENT_UP_DOWN_MOVER_EP =

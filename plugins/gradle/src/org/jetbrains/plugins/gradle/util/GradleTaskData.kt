@@ -10,23 +10,26 @@ import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-class GradleTaskData(private val taskDataNode: DataNode<TaskData>, val gradleModulePath: String) {
-  private val taskData = taskDataNode.data
-  val name: String = taskData.name.run { substringAfterLast(':').nullize() ?: this }
-  val description = taskData.description
-  val isTest = taskData.isTest
-  val isInherited = taskData.isInherited
+class GradleTaskData(val node: DataNode<TaskData>, val gradleModulePath: String) {
+  val data = node.data
+  val name = data.name.run { substringAfterLast(':').nullize() ?: this }
+  val description = data.description
+  val group = data.group
+  val isTest = data.isTest
+  val isInherited = data.isInherited
 
   val isFromIncludedBuild by lazy {
-    taskData.name.removePrefix(":").contains(":") &&
-    (taskDataNode.parent?.data as? ModuleData)?.linkedExternalProjectPath != taskData.linkedExternalProjectPath
+    data.name.removePrefix(":").contains(":") &&
+    (node.parent?.data as? ModuleData)?.linkedExternalProjectPath != data.linkedExternalProjectPath
   }
 
   fun getFqnTaskName(): String {
     val taskPath = gradleModulePath.removeSuffix(":")
-    val taskName = taskData.name.removePrefix(gradleModulePath).removePrefix(":")
+    val taskName = data.name.removePrefix(gradleModulePath).removePrefix(":")
     return "$taskPath:$taskName"
   }
 
-  fun <T : Any?> find(key: Key<T>): T? = ExternalSystemApiUtil.find(taskDataNode, key)?.data
+  fun <T : Any?> find(key: Key<T>): T? = ExternalSystemApiUtil.find(node, key)?.data
+
+  override fun toString() = getFqnTaskName()
 }

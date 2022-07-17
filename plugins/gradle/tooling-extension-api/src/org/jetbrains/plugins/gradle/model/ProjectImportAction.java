@@ -34,13 +34,15 @@ import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.build
 import java.io.File;
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 
 /**
  * @author Vladislav.Soroka
  */
 public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
   private static final ModelConverter NOOP_CONVERTER = new NoopConverter();
+  public static final String IDEA_BACKGROUND_CONVERT = "idea.background.convert";
+  public static final String IDEA_MODELS_PARALLEL_FETCH = "idea.models.parallel.fetch";
 
   private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new HashSet<ProjectImportModelProvider>();
   private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new HashSet<ProjectImportModelProvider>();
@@ -52,6 +54,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   private AllModels myAllModels = null;
   @Nullable
   private transient GradleBuild myGradleBuild;
+  private transient ExecutorService myConverterExecutor;
   private ModelConverter myModelConverter;
 
   public ProjectImportAction(boolean isPreviewMode, boolean isCompositeBuildsSupported) {
@@ -104,6 +107,17 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   @Nullable
   @Override
   public AllModels execute(final BuildController controller) {
+    if (System.getProperties().containsKey(IDEA_MODELS_PARALLEL_FETCH)) {
+      myParallelModelsFetch = Boolean.getBoolean(IDEA_MODELS_PARALLEL_FETCH);
+    }
+    if (!System.getProperties().containsKey(IDEA_BACKGROUND_CONVERT) || Boolean.getBoolean(IDEA_BACKGROUND_CONVERT)) {
+      myConverterExecutor =  Executors.newSingleThreadExecutor(new ThreadFactory() {
+        @Override
+        public Thread newThread(@NotNull Runnable runnable) {
+          return new Thread(runnable, "idea-tooling-model-converter");
+        }
+      });
+    }
     configureAdditionalTypes(controller);
     final boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
     if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
@@ -122,26 +136,55 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
     assert myGradleBuild != null;
     assert myModelConverter != null;
+    //We only need these later, but need to fetch them before fetching other models because of https://github.com/gradle/gradle/issues/20008
+    final Set<GradleBuild> nestedBuilds = getNestedBuilds(myGradleBuild);
     final MyBuildController wrappedController = new MyBuildController(controller, myGradleBuild);
     fetchProjectBuildModels(wrappedController, isProjectsLoadedAction, myGradleBuild);
     addBuildModels(wrappedController, myAllModels, myGradleBuild, isProjectsLoadedAction);
 
-    if (myIsCompositeBuildsSupported) {
-      forEachNestedBuild(myGradleBuild, new GradleBuildConsumer() {
-        @Override
-        public void accept(@NotNull GradleBuild includedBuild) {
-          if (!isProjectsLoadedAction) {
-            myAllModels.getIncludedBuilds().add(convert(includedBuild));
-          }
-          fetchProjectBuildModels(wrappedController, isProjectsLoadedAction, includedBuild);
-          addBuildModels(wrappedController, myAllModels, includedBuild, isProjectsLoadedAction);
-        }
-      });
+    for (GradleBuild includedBuild : nestedBuilds) {
+      if (!isProjectsLoadedAction) {
+        myAllModels.getIncludedBuilds().add(convert(includedBuild));
+      }
+      fetchProjectBuildModels(wrappedController, isProjectsLoadedAction, includedBuild);
+      addBuildModels(wrappedController, myAllModels, includedBuild, isProjectsLoadedAction);
     }
+    setupIncludedBuildsHierarchy(myAllModels.getIncludedBuilds(), nestedBuilds);
     if (isProjectsLoadedAction) {
       wrappedController.getModel(TurnOffDefaultTasks.class);
     }
+    if (myConverterExecutor != null) {
+      myConverterExecutor.shutdown();
+      try {
+        myConverterExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+      }
+      catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    }
     return isProjectsLoadedAction && !myAllModels.hasModels() ? null : myAllModels;
+  }
+
+  private static void setupIncludedBuildsHierarchy(List<Build> builds, Set<GradleBuild> gradleBuilds) {
+    Map<File, Build> rootDirsToBuilds = new HashMap<File, Build>();
+    for (Build build : builds) {
+      rootDirsToBuilds.put(build.getBuildIdentifier().getRootDir(), build);
+    }
+
+    for (GradleBuild gradleBuild : gradleBuilds) {
+      Build build = rootDirsToBuilds.get(gradleBuild.getBuildIdentifier().getRootDir());
+      if (build == null) {
+        continue;
+      }
+
+      for (GradleBuild includedGradleBuild : gradleBuild.getIncludedBuilds()) {
+        Build buildToUpdate = rootDirsToBuilds.get(includedGradleBuild.getBuildIdentifier().getRootDir());
+        if (buildToUpdate instanceof DefaultBuild) {
+          ((DefaultBuild)buildToUpdate).setParentBuildIdentifier(
+            new DefaultBuildIdentifier(gradleBuild.getBuildIdentifier().getRootDir()));
+        }
+      }
+    }
   }
 
   @ApiStatus.Internal
@@ -180,8 +223,12 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     void accept(@NotNull GradleBuild build);
   }
 
-  private static void forEachNestedBuild(@NotNull GradleBuild rootBuild, @NotNull GradleBuildConsumer buildConsumer) {
+  private Set<GradleBuild> getNestedBuilds(@NotNull GradleBuild rootBuild) {
+    if (!myIsCompositeBuildsSupported) {
+      return Collections.emptySet();
+    }
     Set<String> processedBuildsPaths = new HashSet<String>();
+    Set<GradleBuild> nestedBuilds = new LinkedHashSet<GradleBuild>();
     String rootBuildPath = rootBuild.getBuildIdentifier().getRootDir().getPath();
     processedBuildsPaths.add(rootBuildPath);
     Queue<GradleBuild> queue = new LinkedList<GradleBuild>(rootBuild.getIncludedBuilds());
@@ -189,10 +236,11 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       GradleBuild includedBuild = queue.remove();
       String includedBuildPath = includedBuild.getBuildIdentifier().getRootDir().getPath();
       if (processedBuildsPaths.add(includedBuildPath)) {
-        buildConsumer.accept(includedBuild);
+        nestedBuilds.add(includedBuild);
         queue.addAll(includedBuild.getIncludedBuilds());
       }
     }
+    return nestedBuilds;
   }
 
   private void fetchProjectBuildModels(BuildController controller, final boolean isProjectsLoadedAction, GradleBuild build) {
@@ -277,13 +325,18 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         ProjectModelConsumer modelConsumer = new ProjectModelConsumer() {
           @Override
           public void consume(final @NotNull Object object, final @NotNull Class clazz) {
-            result.add(new Runnable() {
+            Runnable convert = new Runnable() {
               @Override
               public void run() {
                 Object o = myModelConverter.convert(object);
                 allModels.addModel(o, clazz, project);
               }
-            });
+            };
+            if (myConverterExecutor != null) {
+              myConverterExecutor.execute(convert);
+            } else {
+              result.add(convert);
+            }
             obtainedModels.add(clazz.getName());
           }
         };
@@ -316,19 +369,37 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         long startTime = System.currentTimeMillis();
         BuildModelConsumer modelConsumer = new BuildModelConsumer() {
           @Override
-          public void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class clazz) {
-            object = myModelConverter.convert(object);
-            allModels.addModel(object, clazz, projectModel);
+          public void consumeProjectModel(@NotNull final ProjectModel projectModel, @NotNull final Object object, @NotNull final Class clazz) {
             obtainedModels.add(clazz.getName());
+            Runnable convert = new Runnable() {
+              @Override
+              public void run() {
+                Object converted = myModelConverter.convert(object);
+                allModels.addModel(converted, clazz, projectModel);
+              }
+            };
+            if (myConverterExecutor != null) {
+              myConverterExecutor.execute(convert);
+            } else {
+              convert.run();
+            }
           }
 
           @Override
-          public void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class clazz) {
-            if (myModelConverter != null) {
-              object = myModelConverter.convert(object);
-            }
-            allModels.addModel(object, clazz, buildModel);
+          public void consume(@NotNull final BuildModel buildModel, @NotNull final Object object, @NotNull final Class clazz) {
             obtainedModels.add(clazz.getName());
+            Runnable convert = new Runnable() {
+              @Override
+              public void run() {
+                Object converted = myModelConverter.convert(object);
+                allModels.addModel(converted, clazz, buildModel);
+              }
+            };
+            if (myConverterExecutor != null) {
+              myConverterExecutor.execute(convert);
+            } else {
+              convert.run();
+            }
           }
         };
         extension.populateBuildModels(controller, buildModel, modelConsumer);
@@ -399,7 +470,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
      */
     @NotNull
     @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @ApiStatus.ScheduledForRemoval
     public IdeaProject getIdeaProject() {
       IdeaProject ideaProject = getModel(IdeaProject.class);
       assert ideaProject != null;
@@ -472,6 +543,8 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     private final DefaultBuildIdentifier myBuildIdentifier;
     private final Collection<Project> myProjects = new ArrayList<Project>(0);
 
+    private DefaultBuildIdentifier myParentBuildIdentifier = null;
+
     private DefaultBuild(String name, File rootDir) {
       myName = name;
       myBuildIdentifier = new DefaultBuildIdentifier(rootDir);
@@ -490,6 +563,15 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     @Override
     public Collection<Project> getProjects() {
       return myProjects;
+    }
+
+    @Override
+    public BuildIdentifier getParentBuildIdentifier() {
+      return myParentBuildIdentifier;
+    }
+
+    private void setParentBuildIdentifier(DefaultBuildIdentifier parentBuildIdentifier) {
+      myParentBuildIdentifier = parentBuildIdentifier;
     }
 
     private void addProject(String name, final ProjectIdentifier projectIdentifier) {

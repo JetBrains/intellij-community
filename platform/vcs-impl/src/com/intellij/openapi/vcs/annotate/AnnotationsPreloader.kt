@@ -1,9 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.annotate
 
+import com.intellij.codeInsight.codeVision.CodeVisionHost
+import com.intellij.codeInsight.codeVision.CodeVisionInitializer
+import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
+import com.intellij.codeInsight.hints.VcsCodeVisionProvider
 import com.intellij.codeInsight.hints.isCodeAuthorInlayHintsEnabled
 import com.intellij.codeInsight.hints.refreshCodeAuthorInlayHints
 import com.intellij.ide.PowerSaveMode
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
@@ -14,6 +19,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
@@ -42,17 +48,15 @@ internal class AnnotationsPreloader(private val project: Project) {
           val start = if (LOG.isDebugEnabled) System.currentTimeMillis() else 0
 
           if (!FileEditorManager.getInstance(project).isFileOpen(file)) return
-
-          val fileStatus = ChangeListManager.getInstance(project).getStatus(file)
-          if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED || fileStatus == FileStatus.IGNORED) return
-
-          val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file) ?: return
-          val annotationProvider = vcs.annotationProvider as? CacheableAnnotationProvider ?: return
+          val annotationProvider = getAnnotationProvider(project, file) ?: return
 
           annotationProvider.populateCache(file)
           LOG.debug { "Preloaded VCS annotations for ${file.name} in ${System.currentTimeMillis() - start} ms" }
 
-          refreshCodeAuthorInlayHints()
+          runInEdt {
+            refreshCodeAuthorInlayHints(project, file)
+            CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProvider(CodeVisionHost.LensInvalidateSignal(null, listOf(VcsCodeVisionProvider.id)))
+          }
         }
         catch (e: VcsException) {
           LOG.info(e)
@@ -81,7 +85,25 @@ internal class AnnotationsPreloader(private val project: Project) {
     private val LOG = logger<AnnotationsPreloader>()
 
     // TODO: check cores number?
-    private fun isEnabled(): Boolean =
-      (isCodeAuthorInlayHintsEnabled() || AdvancedSettings.getBoolean("vcs.annotations.preload")) && !PowerSaveMode.isEnabled()
+    internal fun isEnabled(): Boolean {
+      if (PowerSaveMode.isEnabled()) return false
+      val enabledInSettings = if (Registry.`is`("editor.codeVision.new")) {
+        CodeVisionSettings.instance().isProviderEnabled(VcsCodeVisionProvider.id)
+      } else {
+        isCodeAuthorInlayHintsEnabled()
+      }
+      return enabledInSettings || AdvancedSettings.getBoolean("vcs.annotations.preload")
+    }
+
+    internal fun canPreload(project: Project, file: VirtualFile): Boolean =
+      getAnnotationProvider(project, file) != null
+
+    private fun getAnnotationProvider(project: Project, file: VirtualFile): CacheableAnnotationProvider? {
+      val status = ChangeListManager.getInstance(project).getStatus(file)
+      if (status == FileStatus.UNKNOWN || status == FileStatus.ADDED || status == FileStatus.IGNORED) return null
+
+      val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file) ?: return null
+      return vcs.annotationProvider as? CacheableAnnotationProvider
+    }
   }
 }

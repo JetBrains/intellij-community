@@ -1,5 +1,5 @@
 // "Wrap with '?.let { ... }' call" "false"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ACTION: Add non-null asserted (!!) call
 // ACTION: Convert to block body
 // ACTION: Introduce local variable

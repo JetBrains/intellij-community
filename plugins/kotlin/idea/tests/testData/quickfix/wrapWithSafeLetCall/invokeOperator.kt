@@ -1,5 +1,5 @@
 // "Wrap with '?.let { ... }' call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class Foo(val bar: Bar)
 
 class Bar {
@@ -9,3 +9,4 @@ class Bar {
 fun test(foo: Foo?) {
     foo?.bar<caret>()
 }
+/* IGNORE_FIR */

@@ -1,0 +1,4 @@
+// FIR_IDENTICAL
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@SuppressWarnings<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>TheClass<!> : <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>Runnable<!>, <!HIGHLIGHTING("textAttributesKey='KOTLIN_CONSTRUCTOR'")!>Thread<!>() {
+    val <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!> = <!HIGHLIGHTING("textAttributesKey='KOTLIN_SYNTHETIC_EXTENSION_PROPERTY'")!>id<!>
+}

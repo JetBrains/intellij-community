@@ -44,7 +44,7 @@ class CtxEditors {
       }
     }, ApplicationManager.getApplication());
 
-    ourCustomizer = new Customizer(new TouchBar.CrossEscInfo(false, false)/*always replace esc for editor search*/, null);
+    ourCustomizer = new Customizer(new TBPanel.CrossEscInfo(false, false)/*always replace esc for editor search*/, null);
   }
 
   static void onUpdateEditorHeader(@NotNull Editor editor) {

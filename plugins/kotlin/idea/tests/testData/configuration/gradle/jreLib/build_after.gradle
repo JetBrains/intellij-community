@@ -1,5 +1,5 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '$VERSION$'
+    id 'org.jetbrains.kotlin.jvm' version '1.1.60'
 }
 repositories {
     mavenCentral()
@@ -16,5 +16,5 @@ compileTestKotlin {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-}// VERSION: $VERSION$
+}// VERSION: 1.1.60
 // JDK: 1.8

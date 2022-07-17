@@ -24,14 +24,13 @@ import kotlin.sequences.SequencesKt;
 import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.backend.common.output.OutputFileCollection;
-import org.jetbrains.kotlin.checkers.CompilerTestLanguageVersionSettings;
-import org.jetbrains.kotlin.codegen.ClassBuilderFactories;
 import org.jetbrains.kotlin.codegen.GenerationUtils;
+import org.jetbrains.kotlin.idea.checkers.CompilerTestLanguageVersionSettings;
+import org.jetbrains.kotlin.codegen.ClassBuilderFactories;
 import org.jetbrains.kotlin.codegen.state.GenerationState;
 import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager;
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManagerFactory;
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches;
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockLocation;
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockVirtualMachine;
 import org.jetbrains.kotlin.idea.debugger.test.mock.SmartMockReferenceTypeContext;
@@ -40,8 +39,8 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor;
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider;
 import org.jetbrains.kotlin.psi.KtFile;
-import org.jetbrains.kotlin.test.ConfigurationKind;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.ConfigurationKind;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestJdkKind;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 
@@ -52,7 +51,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.kotlin.idea.debugger.test.DebuggerTestUtils.DEBUGGER_TESTDATA_PATH_BASE;
-import static org.jetbrains.kotlin.idea.debugger.test.DebuggerTestUtils.DEBUGGER_TESTDATA_PATH_RELATIVE;
 
 public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsightFixtureTestCase {
     // Breakpoint is given as a line comment on a specific line, containing the regexp to match the name of the class where that line
@@ -74,18 +72,9 @@ public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsight
     }
 
     @NotNull
-    private static KotlinPositionManager createPositionManager(
-            @NotNull DebugProcess process,
-            @NotNull List<KtFile> files,
-            @NotNull GenerationState state
-    ) {
+    private static KotlinPositionManager createPositionManager(@NotNull DebugProcess process) {
         KotlinPositionManager positionManager = (KotlinPositionManager) new KotlinPositionManagerFactory().createPositionManager(process);
         assertNotNull(positionManager);
-
-        for (KtFile file : files) {
-            KotlinDebuggerCaches.Companion.addTypeMapper(file, state.getTypeMapper());
-        }
-
         return positionManager;
     }
 
@@ -108,7 +97,7 @@ public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsight
 
     @NotNull
     private static String getPath(@NotNull String fileName) {
-        return StringsKt.substringAfter(fileName, DEBUGGER_TESTDATA_PATH_RELATIVE, fileName);
+        return StringsKt.substringAfter(fileName, DEBUGGER_TESTDATA_PATH_BASE, fileName);
     }
 
     private void performTest() {
@@ -137,7 +126,7 @@ public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsight
 
         debugProcess = createDebugProcess(referencesByName);
 
-        PositionManager positionManager = createPositionManager(debugProcess, files, state);
+        PositionManager positionManager = createPositionManager(debugProcess);
 
         ApplicationManager.getApplication().runReadAction(() -> {
             try {

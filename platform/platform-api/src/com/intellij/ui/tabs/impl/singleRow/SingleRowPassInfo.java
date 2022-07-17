@@ -19,7 +19,9 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   int toFitLength;
   public final List<TabInfo> toLayout;
   public final List<TabInfo> toDrop;
+  final int entryPointAxisSize;
   final int moreRectAxisSize;
+  public Rectangle entryPointRect;
   public Rectangle moreRect;
   public Rectangle titleRect;
 
@@ -40,11 +42,11 @@ public class SingleRowPassInfo extends LayoutPassInfo {
     contentCount = tabs.getTabCount();
     toLayout = new ArrayList<>();
     toDrop = new ArrayList<>();
+    entryPointAxisSize = layout.getStrategy().getEntryPointAxisSize();
     moreRectAxisSize = layout.getStrategy().getMoreRectAxisSize();
     scrollOffset = layout.getScrollOffset();
   }
 
-  @Deprecated
   @Override
   public int getRowCount() {
     return 1;

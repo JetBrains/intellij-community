@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 class kotlin
 fun buildTemplates() {
     println()<caret>

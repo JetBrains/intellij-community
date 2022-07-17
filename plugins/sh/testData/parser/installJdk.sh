@@ -281,8 +281,8 @@ function download_and_extract_and_set_target() {
     fi
 
     # Link to system certificates
-    # https://openjdk.java.net/jeps/319
-    # https://bugs.openjdk.java.net/browse/JDK-8196141
+    # https://openjdk.org/jeps/319
+    # https://bugs.openjdk.org/browse/JDK-8196141
     if [[ ${cacerts} == true ]]; then
         local directory="${target}/lib/security/cacerts"
         if [[ -f "${directory}" ]]; then

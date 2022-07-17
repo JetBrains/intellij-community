@@ -1,7 +1,7 @@
 package sample
 
-actual interface <!LINE_MARKER("descr='Has declaration in common module'")!>A<!><T : A<T>> {
-    actual fun <!LINE_MARKER("descr='Has declaration in common module'")!>foo<!>(): T
+actual interface <!LINE_MARKER("descr='Has expects in common module'")!>A<!><T : A<T>> {
+    actual fun <!LINE_MARKER("descr='Has expects in common module'")!>foo<!>(): T
     fun bar() : T
 }
 

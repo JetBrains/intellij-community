@@ -217,6 +217,7 @@ public class EditorFactoryImpl extends EditorFactory {
 
   @Override
   public void releaseEditor(@NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     try {
       EditorFactoryEvent event = new EditorFactoryEvent(this, editor);
       myEditorFactoryEventDispatcher.getMulticaster().editorReleased(event);
@@ -245,12 +246,6 @@ public class EditorFactoryImpl extends EditorFactory {
   @Override
   public @NotNull Stream<Editor> editors(@NotNull Document document, @Nullable Project project) {
     return collectAllEditors()
-      .filter(editor -> editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject())));
-  }
-
-  @Override
-  public @NotNull Stream<Editor> editorsForCurrentClient(@NotNull Document document, @Nullable Project project) {
-    return ClientEditorManager.getCurrentInstance().editors()
       .filter(editor -> editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject())));
   }
 

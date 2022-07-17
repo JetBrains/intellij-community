@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.Disposable;
@@ -14,9 +14,6 @@ import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
-import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomGroupingRule;
-import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
-import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointGroupingByTypeRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +23,6 @@ import java.util.Collection;
 public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoint> {
   @Override
   public void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules) {
-    rules.add(new XBreakpointGroupingByTypeRule());
-    rules.add(new XBreakpointFileGroupingRule());
-    rules.add(new XBreakpointCustomGroupingRule());
   }
 
   @Override
@@ -64,7 +58,7 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
   @Override
   public GutterIconRenderer getBreakpointGutterIconRenderer(Object breakpoint) {
     if (breakpoint instanceof XLineBreakpointImpl) {
-      RangeHighlighter highlighter = ((XLineBreakpointImpl)breakpoint).getHighlighter();
+      RangeHighlighter highlighter = ((XLineBreakpointImpl<?>)breakpoint).getHighlighter();
       if (highlighter != null) {
         return highlighter.getGutterIconRenderer();
       }

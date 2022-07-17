@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup;
 
@@ -12,7 +12,6 @@ import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,15 +56,6 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
     setLookupString(lookupString);
   }
 
-  /**
-   * @deprecated use {@link LookupElementBuilder}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static LookupItem fromString(String s) {
-    return new LookupItem<>(s, s);
-  }
-
   public void setObject(@NotNull T o) {
     myObject = o;
   }
@@ -102,8 +92,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
   }
 
   /**
-   * Returns a string which will be inserted to the editor when this item is
-   * choosen.
+   * Returns a string which will be inserted to the editor when this item is chosen.
    */
   @Override
   @NotNull
@@ -229,7 +218,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
     if(!(o instanceof LookupItem)){
       throw new RuntimeException("Trying to compare LookupItem with " + o.getClass() + "!!!");
     }
-    return getLookupString().compareTo(((LookupItem)o).getLookupString());
+    return getLookupString().compareTo(((LookupItem<?>)o).getLookupString());
   }
 
   public LookupItem<T> setInsertHandler(@NotNull final InsertHandler<? extends LookupElement> handler) {

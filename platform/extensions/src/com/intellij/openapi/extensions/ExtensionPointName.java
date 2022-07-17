@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
@@ -59,7 +59,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   }
 
   public @NotNull List<T> getExtensionsIfPointIsRegistered(@Nullable AreaInstance areaInstance) {
-    @SuppressWarnings("deprecation")
+    //noinspection deprecation
     ExtensionsArea area = areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea();
     ExtensionPoint<T> point = area == null ? null : area.getExtensionPointIfRegistered(getName());
     return point == null ? Collections.emptyList() : point.getExtensionList();
@@ -99,7 +99,6 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    * to access project-level and module-level extensions
    */
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public @NotNull ExtensionPoint<T> getPoint(@Nullable AreaInstance areaInstance) {
     return getPointImpl(areaInstance);
   }
@@ -122,17 +121,6 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   }
 
   /**
-   * @deprecated use {@link #findExtensionOrFail(Class)} to access application-level extensions and
-   * {@link ProjectExtensionPointName#findExtensionOrFail(Class, AreaInstance)} to access project-level and module-level extensions
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public @NotNull <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @Nullable AreaInstance areaInstance) {
-    //noinspection ConstantConditions
-    return getPointImpl(areaInstance).findExtension(instanceOf, true, ThreeState.UNSURE);
-  }
-
-  /**
    * Do not use it if there is any extension point listener, because in this case behaviour is not predictable -
    * events will be fired during iteration and probably it will be not expected.
    * <p>
@@ -145,12 +133,11 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    * 1. Conditional iteration (no need to create all extensions if iteration will be stopped due to some condition).
    * 2. Iterated only once per application (no need to cache extension list internally).
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public @NotNull Iterable<T> getIterable() {
     return getPointImpl(null);
   }
 
-  @ApiStatus.Experimental
   @ApiStatus.Internal
   public void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
     getPointImpl(null).processWithPluginDescriptor(/* shouldBeSorted = */ true, consumer);
@@ -160,13 +147,17 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
     getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable);
   }
 
-  /**
-   * @deprecated Use {@link #addChangeListener(Runnable, Disposable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener, @Nullable Disposable parentDisposable) {
-    getPointImpl(null).addChangeListener(listener::extensionListChanged, parentDisposable);
+  public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
+    getPointImpl(null).addExtensionPointListener(listener, false, null);
+  }
+
+  public void addExtensionPointListener(@NotNull AreaInstance areaInstance,
+                                        @NotNull ExtensionPointListener<T> listener) {
+    getPointImpl(areaInstance).addExtensionPointListener(listener, false, null);
+  }
+
+  public void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
+    getPointImpl(null).removeExtensionPointListener(listener);
   }
 
   public void addChangeListener(@NotNull Runnable listener, @Nullable Disposable parentDisposable) {

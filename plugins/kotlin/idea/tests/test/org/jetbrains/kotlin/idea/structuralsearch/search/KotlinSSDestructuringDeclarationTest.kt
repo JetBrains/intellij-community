@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSDestructuringDeclarationTest : KotlinSSResourceInspectionTest() {
+class KotlinSSDestructuringDeclarationTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "destructuringDeclaration"
 
     fun testDataClass() { doTest("val ('_, '_, '_) = '_") }

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.highlighter.markers
 
 import com.intellij.codeInsight.daemon.DaemonBundle
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask
+import com.intellij.ide.IdeDeprecatedMessagesBundle
 import com.intellij.ide.util.MethodCellRenderer
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
@@ -20,14 +21,14 @@ import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.isTraitFakeOverride
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.presentation.DeclarationByModuleRenderer
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachDeclaredMemberOverride
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
-import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
@@ -38,15 +39,22 @@ private fun PsiMethod.isMethodWithDeclarationInOtherClass(): Boolean {
 
 internal fun <T> getOverriddenDeclarations(mappingToJava: MutableMap<PsiElement, T>, classes: Set<PsiClass>): Set<T> {
     val overridden = HashSet<T>()
+
     for (aClass in classes) {
         aClass.forEachDeclaredMemberOverride { superMember, overridingMember ->
             ProgressManager.checkCanceled()
-            if (overridingMember.toPossiblyFakeLightMethods().any { !it.isMethodWithDeclarationInOtherClass() }) {
-                val declaration = mappingToJava[superMember]
-                if (declaration != null) {
-                    mappingToJava.remove(superMember)
+            val possiblyFakeLightMethods = overridingMember.toPossiblyFakeLightMethods()
+            possiblyFakeLightMethods.find { !it.isMethodWithDeclarationInOtherClass() }?.let {
+                mappingToJava.remove(superMember)?.let { declaration ->
+                    // Light methods points to same methods
+                    // and no reason to keep searching those methods
+                    // those originals are found
+                    if (mappingToJava.remove(it) == null) {
+                        mappingToJava.values.removeIf(superMember::equals)
+                    }
                     overridden.add(declaration)
                 }
+                false
             }
 
             mappingToJava.isNotEmpty()
@@ -62,7 +70,7 @@ fun getSubclassedClassTooltip(klass: PsiClass): String? {
     ClassInheritorsSearch.search(klass).forEach(PsiElementProcessorAdapter(processor))
 
     if (processor.isOverflow) {
-        return DaemonBundle.message(if (klass.isInterface) "interface.is.implemented.too.many" else "class.is.subclassed.too.many")
+        return if (klass.isInterface) IdeDeprecatedMessagesBundle.message("interface.is.implemented.too.many") else DaemonBundle.message("class.is.subclassed.too.many")
     }
 
     val subclasses = processor.toArray(PsiClass.EMPTY_ARRAY)
@@ -75,7 +83,7 @@ fun getSubclassedClassTooltip(klass: PsiClass): String? {
             null
     }
 
-    val start = DaemonBundle.message(if (klass.isInterface) "interface.is.implemented.by.header" else "class.is.subclassed.by.header")
+    val start = IdeDeprecatedMessagesBundle.message(if (klass.isInterface) "interface.is.implemented.by.header" else "class.is.subclassed.by.header")
     val shortcuts = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_IMPLEMENTATION).shortcutSet.shortcuts
     val shortcut = shortcuts.firstOrNull()
     val shortCutText = if (shortcut != null)
@@ -181,11 +189,12 @@ private class OverridingMethodsUpdater(
         if (o1 is PsiMethod && o2 is PsiMethod) comparator.compare(o1, o2) else 0
     }
 ) {
+    @Suppress("DialogTitleCapitalization")
     override fun getCaption(size: Int): String {
         return if (myMethod.hasModifierProperty(PsiModifier.ABSTRACT))
-            DaemonBundle.message("navigation.title.implementation.method", myMethod.name, size)!!
+            DaemonBundle.message("navigation.title.implementation.method", myMethod.name, size)
         else
-            DaemonBundle.message("navigation.title.overrider.method", myMethod.name, size)!!
+            DaemonBundle.message("navigation.title.overrider.method", myMethod.name, size)
     }
 
     override fun run(indicator: ProgressIndicator) {

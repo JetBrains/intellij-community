@@ -1,3 +1,8 @@
+// AFTER-WARNING: Parameter 'a' is never used
+// AFTER-WARNING: Parameter 'p' is never used
+// AFTER-WARNING: Parameter 'p' is never used
+// AFTER-WARNING: Parameter 'q' is never used
+// AFTER-WARNING: Parameter 'q' is never used
 fun overloadFun(p: Int, q: Long) {}
 fun overloadFun(p: String, q: Long) {}
 

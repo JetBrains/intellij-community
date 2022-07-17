@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 import java.util.Comparator
 
 class S(val a: Int)

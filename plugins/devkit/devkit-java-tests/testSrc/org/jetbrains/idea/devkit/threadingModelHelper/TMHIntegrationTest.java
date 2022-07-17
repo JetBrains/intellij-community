@@ -133,7 +133,7 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   @RequiresWriteLock
   private static void runWriteAction() {}
 
-  @RequiresNoReadLock
+  @RequiresReadLockAbsence
   private static void runNonReadAction() {}
 
   @RequiresEdt(generateAssertion = false)

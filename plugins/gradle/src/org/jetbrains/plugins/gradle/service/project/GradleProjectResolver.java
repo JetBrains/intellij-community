@@ -2,9 +2,6 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivityCategory;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
@@ -16,6 +13,8 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.project.PerformanceTrace;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemSyncActionsCollector;
+import com.intellij.openapi.externalSystem.statistics.Phase;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -31,6 +30,8 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.gradle.api.ProjectConfigurationException;
+import org.gradle.tooling.BuildActionFailureException;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.ProjectModel;
@@ -137,6 +138,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final CancellationTokenSource cancellationTokenSource = resolverContext.getCancellationTokenSource();
     myCancellationMap.putValue(resolverContext.getExternalSystemTaskId(), cancellationTokenSource);
 
+    final long activityId = resolverContext.getExternalSystemTaskId().getId();
+    ExternalSystemSyncActionsCollector.logSyncStarted(null, activityId);
     try {
       if (settings != null) {
         myHelper.ensureInstalledWrapper(syncTaskId, projectPath, settings, listener, cancellationTokenSource.token());
@@ -185,7 +188,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                      @NotNull final GradleProjectResolverExtension projectResolverChain,
                                                      boolean isBuildSrcProject)
     throws IllegalArgumentException, IllegalStateException {
+    final long activityId = resolverCtx.getExternalSystemTaskId().getId();
     final PerformanceTrace performanceTrace = new PerformanceTrace();
+    performanceTrace.setId(activityId);
     final GradleProjectResolverExtension tracedResolverChain = new TracedProjectResolverExtension(projectResolverChain, performanceTrace);
 
     final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(resolverCtx);
@@ -259,8 +264,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     resolverCtx.checkCancelled();
 
     final long startTime = System.currentTimeMillis();
-    Activity activity = StartUpMeasurer.startActivity("project data obtaining", ActivityCategory.GRADLE_IMPORT);
+    ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.GRADLE_CALL);
     ProjectImportAction.AllModels allModels;
+    int errorsCount = 0;
     CountDownLatch buildFinishWaiter = new CountDownLatch(1);
     try {
       allModels = buildActionRunner.fetchModels(
@@ -286,13 +292,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     catch (Throwable t) {
       buildFinishWaiter.countDown();
+      errorsCount += 1;
       throw t;
     }
     finally {
       ProgressIndicatorUtils.awaitWithCheckCanceled(buildFinishWaiter);
-      activity.end();
       final long timeInMs = (System.currentTimeMillis() - startTime);
       performanceTrace.logPerformance("Gradle data obtained", timeInMs);
+      ExternalSystemSyncActionsCollector.logPhaseFinished(null, activityId, Phase.GRADLE_CALL, timeInMs, errorsCount);
       LOG.debug(String.format("Gradle data obtained in %d ms", timeInMs));
     }
 
@@ -303,10 +310,21 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     allModels.setBuildEnvironment(buildEnvironment);
+    final long startDataConversionTime = System.currentTimeMillis();
+    int resolversErrorsCount = 0;
     try (GradleTargetPathsConverter pathsConverter = new GradleTargetPathsConverter(executionSettings)) {
       pathsConverter.mayBeApplyTo(allModels);
       return convertData(allModels, executionSettings, resolverCtx, gradleVersion,
                          tracedResolverChain, performanceTrace, isBuildSrcProject, useCustomSerialization);
+    } catch (Throwable t) {
+      resolversErrorsCount += 1;
+      throw t;
+    }
+    finally {
+      final long timeConversionInMs = (System.currentTimeMillis() - startDataConversionTime);
+      performanceTrace.logPerformance("Gradle project data processed", timeConversionInMs);
+      LOG.debug(String.format("Project data resolved in %d ms", timeConversionInMs));
+      ExternalSystemSyncActionsCollector.logPhaseFinished(null, activityId, Phase.PROJECT_RESOLVERS, timeConversionInMs, resolversErrorsCount);
     }
   }
 
@@ -319,8 +337,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                             @NotNull PerformanceTrace performanceTrace,
                                             boolean isBuildSrcProject,
                                             boolean useCustomSerialization) {
-    final long startDataConversionTime = System.currentTimeMillis();
-    Activity activity = StartUpMeasurer.startActivity("project data converting", ActivityCategory.GRADLE_IMPORT);
+    final long activityId = resolverCtx.getExternalSystemTaskId().getId();
+    ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.PROJECT_RESOLVERS);
     extractExternalProjectModels(allModels, resolverCtx, useCustomSerialization);
 
     String projectName = allModels.getMainBuild().getName();
@@ -465,10 +483,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Collection<DataNode<LibraryData>> libraries = getChildren(projectDataNode, ProjectKeys.LIBRARY);
     myLibraryNamesMixer.mixNames(libraries);
 
-    activity.end();
-    final long timeConversionInMs = (System.currentTimeMillis() - startDataConversionTime);
-    performanceTrace.logPerformance("Gradle project data processed", timeConversionInMs);
-    LOG.debug(String.format("Project data resolved in %d ms", timeConversionInMs));
     return projectDataNode;
   }
 
@@ -530,8 +544,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           String rootProjectName = build.getName();
           BuildParticipant buildParticipant = new BuildParticipant();
           String projectPath = toCanonicalPath(build.getBuildIdentifier().getRootDir().getPath());
+          String parentPath = build.getParentBuildIdentifier() != null ?
+                              toCanonicalPath(build.getParentBuildIdentifier().getRootDir().getPath()) : null;
           buildParticipant.setRootProjectName(rootProjectName);
           buildParticipant.setRootPath(projectPath);
+          buildParticipant.setParentRootPath(parentPath);
           if (ideaProject != null) {
             for (IdeaModule module : ideaProject.getModules()) {
               String modulePath = toCanonicalPath(module.getGradleProject().getProjectDirectory().getPath());
@@ -671,13 +688,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       final ExternalProject externalProject = resolverCtx.getExtraProject(pair.second, ExternalProject.class);
       if (externalProject == null) continue;
 
-      if (resolverCtx.isResolveModulePerSourceSet()) {
-        for (DataNode<GradleSourceSetData> sourceSetNode : findAll(moduleNode, GradleSourceSetData.KEY)) {
-          mergeModuleContentRoots(weightMap, externalProject, sourceSetNode);
-        }
-      }
-      else {
-        mergeModuleContentRoots(weightMap, externalProject, moduleNode);
+      mergeModuleContentRoots(weightMap, externalProject, moduleNode);
+      for (DataNode<GradleSourceSetData> sourceSetNode : findAll(moduleNode, GradleSourceSetData.KEY)) {
+        mergeModuleContentRoots(weightMap, externalProject, sourceSetNode);
       }
     }
   }
@@ -769,6 +782,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     @Override
     public DataNode<ProjectData> fun(ProjectConnection connection) {
+      final long activityId = myResolverContext.getExternalSystemTaskId().getId();
       try {
         myCancellationMap.putValue(myResolverContext.getExternalSystemTaskId(), myResolverContext.getCancellationTokenSource());
         myResolverContext.setConnection(connection);
@@ -783,6 +797,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         if (esException != null && esException != e) {
           LOG.info("\nCaused by: " + esException.getOriginalReason());
         }
+        ExternalSystemSyncActionsCollector.logError(null, activityId, extractCause(e));
+        ExternalSystemSyncActionsCollector.logSyncFinished(null, activityId, false);
         throw myProjectResolverChain.getUserFriendlyError(
           myResolverContext.getBuildEnvironment(), e, myResolverContext.getProjectPath(), null);
       }
@@ -790,6 +806,24 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         myCancellationMap.remove(myResolverContext.getExternalSystemTaskId(), myResolverContext.getCancellationTokenSource());
       }
     }
+  }
+
+  private static Throwable extractCause(Throwable e) {
+    if (e instanceof BuildActionFailureException) {
+      return extractCause(e.getCause());
+    }
+    // Exceptions returned by Gradle TAPI have classes loaded by a separate classloader
+    Class<? extends Throwable> exceptionClass = e.getClass();
+    if (exceptionClass.getName().equals(ProjectConfigurationException.class.getName())) {
+      try {
+        //noinspection unchecked
+        List<Throwable> causes = (List<Throwable>)exceptionClass.getMethod("getCauses").invoke(e);
+        return causes.get(0);
+      } catch (Throwable ignore) {
+        return e;
+      }
+    }
+    return e;
   }
 
   @ApiStatus.Experimental // chaining of resolver extensions complicates things and can be replaced in future

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -7,7 +7,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -29,11 +28,11 @@ import java.util.Set;
  *  </li>
  *  <li>
  *    Add group to events test scheme with "Add Group to Events Test Scheme" action.<br/>
- *    {@link com.intellij.internal.statistic.actions.scheme.AddGroupToTestSchemeAction}
+ *    {@link com.intellij.internal.statistic.devkit.actions.scheme.AddGroupToTestSchemeAction}
  *  </li>
  *  <li>
  *    Record all state collectors with "Record State Collectors to Event Log" action.<br/>
- *    {@link com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction}
+ *    {@link com.intellij.internal.statistic.devkit.actions.RecordStateStatisticsEventLogAction}
  *  </li>
  * </ol>
  * <br/>
@@ -59,9 +58,9 @@ public abstract class ApplicationUsagesCollector extends FeatureUsagesCollector 
    * <br/><br/>
    * {@link MetricEvent#eventId} should indicate what we measure, e.g. "configured.vcs", "module.jdk".<br/>
    * {@link MetricEvent#data} should contain the value of the measurement, e.g. {"name":"Git"}, {"version":"1.8", "vendor":"OpenJdk"}
+   *
+   * @return <b>Not empty</b> set of metrics
    */
   @NotNull
-  public Set<MetricEvent> getMetrics() {
-    return Collections.emptySet();
-  }
+  public abstract Set<MetricEvent> getMetrics();
 }

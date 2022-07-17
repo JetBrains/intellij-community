@@ -18,7 +18,7 @@ public interface IntForwardIndex extends ForwardIndex {
   @Override
   default ByteArraySequence get(@NotNull Integer key) throws IOException {
     int intValue = getInt(key);
-    return AbstractForwardIndexAccessor.serializeToByteSeq(intValue, EnumeratorIntegerDescriptor.INSTANCE, 4);
+    return AbstractForwardIndexAccessor.serializeValueToByteSeq(intValue, EnumeratorIntegerDescriptor.INSTANCE, 4);
   }
 
   @Override

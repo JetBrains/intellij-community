@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElementBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.util.function.Consumer
 
-@Suppress("unused")
 interface GradleBuildScriptBuilderCore<out BSB : GradleBuildScriptBuilderCore<BSB>> : ScriptElementBuilder {
 
   val gradleVersion: GradleVersion
@@ -130,4 +130,9 @@ interface GradleBuildScriptBuilderCore<out BSB : GradleBuildScriptBuilderCore<BS
    * @return content for build.gradle
    */
   fun generate(): String
+
+  /**
+   * @return partial AST for build.gradle
+   */
+  fun generateTree(): BlockElement
 }

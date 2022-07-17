@@ -61,7 +61,7 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
   private class StaticVariableInitializationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       PsiField[] fields = aClass.getFields();
       if (aClass.isEnum()) {
         return;

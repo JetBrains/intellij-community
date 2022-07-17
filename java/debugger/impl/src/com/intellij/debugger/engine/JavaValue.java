@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.JavaReferringObjectsValue;
-import com.intellij.debugger.actions.JumpToObjectAction;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
@@ -13,6 +12,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.memory.agent.MemoryAgent;
 import com.intellij.debugger.memory.agent.MemoryAgentPathsToClosestGCRootsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -21,12 +21,15 @@ import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
@@ -38,7 +41,7 @@ import com.intellij.xdebugger.impl.pinned.items.PinToTopMemberValue;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.sun.jdi.Type;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -361,6 +364,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
               }
 
               @Override
+              public void tooManyChildren(int remaining, @NotNull Runnable addNextChildren) {
+                node.tooManyChildren(remaining, addNextChildren);
+              }
+
+              @Override
               public void setAlreadySorted(boolean alreadySorted) {
                 node.setAlreadySorted(alreadySorted);
               }
@@ -471,7 +479,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   public void computeTypeSourcePosition(@NotNull final XNavigatable navigatable) {
     if (myEvaluationContext.getSuspendContext().isResumed()) return;
     DebugProcessImpl debugProcess = myEvaluationContext.getDebugProcess();
-    debugProcess.getManagerThread().schedule(new JumpToObjectAction.NavigateCommand(getDebuggerContext(), myValueDescriptor, debugProcess, null) {
+    debugProcess.getManagerThread().schedule(new NavigateCommand(getDebuggerContext(), myValueDescriptor, debugProcess, null) {
       @Override
       public Priority getPriority() {
         return Priority.HIGH;
@@ -561,6 +569,14 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return myValueDescriptor.getValueText();
   }
 
+  @Override
+  public boolean shouldShowTextValue() {
+    if (myValueDescriptor.isValueReady()) {
+      return myValueDescriptor.isString();
+    }
+    return false;
+  }
+
   @Nullable
   @Override
   public XReferrersProvider getReferrersProvider() {
@@ -631,5 +647,117 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       node.clearChildren();
       computePresentation(node, XValuePlace.TREE);
     });
+  }
+
+  private static class NavigateCommand extends SourcePositionCommand {
+    NavigateCommand(final DebuggerContextImpl debuggerContext,
+                    final ValueDescriptor descriptor,
+                    final DebugProcessImpl debugProcess,
+                    final AnActionEvent e) {
+      super(debuggerContext, descriptor, debugProcess, e);
+    }
+
+    @Override
+    protected NavigateCommand createRetryCommand() {
+      return new NavigateCommand(myDebuggerContext, myDescriptor, myDebugProcess, myActionEvent);
+    }
+
+    @Override
+    protected void doAction(final SourcePosition sourcePosition) {
+      if (sourcePosition != null) {
+        sourcePosition.navigate(true);
+      }
+    }
+  }
+
+  private abstract static class SourcePositionCommand extends SuspendContextCommandImpl {
+    protected final DebuggerContextImpl myDebuggerContext;
+    protected final ValueDescriptor myDescriptor;
+    protected final DebugProcessImpl myDebugProcess;
+    protected final AnActionEvent myActionEvent;
+
+    SourcePositionCommand(final DebuggerContextImpl debuggerContext,
+                          final ValueDescriptor descriptor,
+                          final DebugProcessImpl debugProcess,
+                          final AnActionEvent actionEvent) {
+      super(debuggerContext.getSuspendContext());
+      myDebuggerContext = debuggerContext;
+      myDescriptor = descriptor;
+      myDebugProcess = debugProcess;
+      myActionEvent = actionEvent;
+    }
+
+    @Override
+    public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+      try {
+        doAction(calcPosition(myDescriptor, myDebugProcess));
+      }
+      catch (ClassNotLoadedException ex) {
+        final String className = ex.className();
+        if (loadClass(className) != null) {
+          myDebugProcess.getManagerThread().schedule(createRetryCommand());
+        }
+      }
+    }
+
+    protected abstract SourcePositionCommand createRetryCommand();
+
+    protected abstract void doAction(@Nullable SourcePosition sourcePosition);
+
+    private ReferenceType loadClass(final String className) {
+      final EvaluationContextImpl eContext = myDebuggerContext.createEvaluationContext();
+      try {
+        return myDebugProcess.loadClass(eContext, className, eContext.getClassLoader());
+      }
+      catch (Throwable ignored) {
+      }
+      return null;
+    }
+
+    private static SourcePosition calcPosition(final ValueDescriptor descriptor, final DebugProcessImpl debugProcess)
+      throws ClassNotLoadedException {
+      Type type = descriptor.getType();
+      if (type == null) {
+        return null;
+      }
+
+      try {
+        if (type instanceof ArrayType) {
+          type = ((ArrayType)type).componentType();
+        }
+        if (type instanceof ClassType) {
+          ClassType clsType = (ClassType)type;
+
+          Method lambdaMethod =
+            MethodBytecodeUtil.getLambdaMethod(clsType, debugProcess.getVirtualMachineProxy().getClassesByNameProvider());
+          Location location = lambdaMethod != null ? ContainerUtil.getFirstItem(DebuggerUtilsEx.allLineLocations(lambdaMethod)) : null;
+
+          if (location == null) {
+            location = ContainerUtil.getFirstItem(clsType.allLineLocations());
+          }
+
+          if (location != null) {
+            SourcePosition position = debugProcess.getPositionManager().getSourcePosition(location);
+            return ReadAction.compute(() -> {
+              // adjust position for non-anonymous classes
+              if (clsType.name().indexOf('$') < 0) {
+                PsiClass classAt = JVMNameUtil.getClassAt(position);
+                if (classAt != null) {
+                  SourcePosition classPosition = SourcePosition.createFromElement(classAt);
+                  if (classPosition != null) {
+                    return classPosition;
+                  }
+                }
+              }
+              return position;
+            });
+          }
+        }
+      }
+      catch (ClassNotPreparedException | AbsentInformationException e) {
+        LOG.debug(e);
+      }
+      return null;
+    }
   }
 }

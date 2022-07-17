@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // DISABLE-ERRORS
 interface A<in TPipeline, out TBuilder : Any, TFeature : Any> {
     fun install(pipeline: TPipeline, configure: TBuilder.() -> Unit): TFeature
@@ -5,6 +6,6 @@ interface A<in TPipeline, out TBuilder : Any, TFeature : Any> {
 
 class X : A<String, UnresolvedType, Unit> {
     override fun install(pipeline: String, configure: UnresolvedType.() -> Unit) {
-        <selection><caret>TODO("Not yet implemented")</selection>
+        TODO("Not yet implemented")
     }
 }

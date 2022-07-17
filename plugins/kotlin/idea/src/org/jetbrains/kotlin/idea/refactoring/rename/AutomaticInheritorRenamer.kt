@@ -30,7 +30,7 @@ class AutomaticInheritorRenamer(klass: KtClass, newName: String) : AutomaticRena
     }
 
     override fun getDialogTitle() = RefactoringBundle.message("rename.inheritors.title")
-    override fun getDialogDescription() = JavaRefactoringBundle.message("rename.inheritors.with.the.following.names.to")
+    override fun getDialogDescription() = JavaRefactoringBundle.message("rename.inheritors.with.the.following.names.to.title")
     override fun entityName() = JavaRefactoringBundle.message("entity.name.inheritor")
 }
 

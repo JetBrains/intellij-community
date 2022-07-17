@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.structuralsearch.visitor
 
 import com.intellij.dupLocator.util.NodeFilter
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
@@ -33,13 +34,16 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
     private val mySubstitutionPattern = Pattern.compile("\\b(_____\\w+)\\b")
 
     fun compile(topLevelElements: Array<out PsiElement>?) {
-        val optimizer = KotlinWordOptimizer()
-        val pattern = myCompilingVisitor.context.pattern
+        val context = myCompilingVisitor.context
+
+        // When dumb the index is not used while editing pattern (e.g. no warning when zero hits in project).
+        val optimizer = if (DumbService.isDumb(context.project)) null else KotlinWordOptimizer()
+        val pattern = context.pattern
         if (topLevelElements == null) return
 
         for (element in topLevelElements) {
             element.accept(this)
-            element.accept(optimizer)
+            optimizer?.let { element.accept(it) }
             pattern.setHandler(element, TopLevelMatchingHandler(pattern.getHandler(element)))
         }
     }

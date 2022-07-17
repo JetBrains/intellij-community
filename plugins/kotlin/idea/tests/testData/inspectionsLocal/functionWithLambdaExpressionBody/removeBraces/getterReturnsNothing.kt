@@ -1,3 +1,3 @@
 // FIX: Remove braces
-// WITH_RUNTIME
+// WITH_STDLIB
 val test get() = <caret>{ error("") }

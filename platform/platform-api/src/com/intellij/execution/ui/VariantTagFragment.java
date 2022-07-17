@@ -9,16 +9,17 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Objects;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.function.*;
 
 public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButton> {
@@ -27,12 +28,12 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     myVariantNameProvider = variantNameProvider;
   }
 
-  public void setToggleListener(Consumer<? super V> toggleListener) {
-    myToggleListener = toggleListener;
+  public void setVariantHintProvider(Function<? super V, String> variantHintProvider) {
+    myVariantHintProvider = variantHintProvider;
   }
 
-  public void setDefaultVariant(V defaultVariant) {
-    myDefaultVariant = defaultVariant;
+  public void setToggleListener(Consumer<? super V> toggleListener) {
+    myToggleListener = toggleListener;
   }
 
   public static <T, V> VariantTagFragment<T, V> createFragment(String id,
@@ -52,11 +53,11 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   }
 
   private V mySelectedVariant;
-  private V myDefaultVariant;
   private final Supplier<? extends V[]> myVariantsProvider;
   private final Function<? super T, ? extends V> myGetter;
   private final BiConsumer<? super T, ? super V> mySetter;
   private Function<? super V, String> myVariantNameProvider;
+  private Function<? super V, String> myVariantHintProvider;
   private Consumer<? super V> myToggleListener;
 
   public VariantTagFragment(String id,
@@ -71,7 +72,6 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     myVariantsProvider = variantsProvider;
     myGetter = getter;
     mySetter = setter;
-    myDefaultVariant = getVariants()[0];
   }
 
   public V getSelectedVariant() {
@@ -80,9 +80,8 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
 
   public void setSelectedVariant(V variant) {
     mySelectedVariant = variant;
-    setSelected(!Objects.equals(myDefaultVariant, variant));
-    String name = variant == null ? getName() : getName() + ": " + getVariantName(variant);
-    component().updateButton(name, null, true);
+    setSelected(!variant.equals(getVariants()[0]));
+    component().updateButton(getName() + ": " + getVariantName(variant), null);
   }
 
   protected V[] getVariants() {
@@ -93,7 +92,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   public void toggle(boolean selected, AnActionEvent e) {
     super.toggle(selected, e);
     if (!selected) {
-      setSelectedVariant(myDefaultVariant);
+      setSelectedVariant(getVariants()[0]);
     }
   }
 
@@ -105,11 +104,17 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   @Override
   protected void applyEditorTo(@NotNull T s) {
     mySetter.accept(s, mySelectedVariant);
+    validate(s);
   }
 
   @Nls
   protected String getVariantName(V variant) {
     return myVariantNameProvider == null ? StringUtil.capitalize(variant.toString()) : myVariantNameProvider.apply(variant); //NON-NLS
+  }
+
+  @Nls
+  protected @Nullable String getVariantHint(V variant) {
+    return myVariantHintProvider == null ? null : myVariantHintProvider.apply(variant); //NON-NLS
   }
 
   @Override
@@ -119,7 +124,8 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
 
   @Override
   public @Nullable ActionGroup getCustomActionGroup() {
-    DefaultActionGroup group = new DefaultActionGroup(getName(), ContainerUtil.map(getVariants(), s -> new ToggleAction(getVariantName(s)) {
+    DefaultActionGroup group = new DefaultActionGroup(getName(), ContainerUtil.map(getVariants(), s ->
+      new ToggleAction(getVariantName(s), getVariantHint(s), null) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return s.equals(mySelectedVariant);
@@ -161,11 +167,26 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     private final DropDownLink<V> myDropDown;
     private VariantTagFragment<?, V> myFragment;
 
-    private VariantTagButton(@Nls String text, Consumer<AnActionEvent> action) {
+    private VariantTagButton(@Nls String text, Consumer<? super AnActionEvent> action) {
       super(text, action);
       myDropDown = new DropDownLink<>(null, link -> showPopup());
-      myDropDown.setForeground(JBUI.CurrentTheme.Label.foreground());
+      myDropDown.setAutoHideOnDisable(false);
       add(myDropDown, JLayeredPane.POPUP_LAYER);
+      myButton.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+          if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            myDropDown.dispatchEvent(e);
+          }
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+          if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            myDropDown.dispatchEvent(e);
+          }
+        }
+      });
     }
 
     private JBPopup showPopup() {
@@ -174,6 +195,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           myFragment.setSelectedVariant(v);
+          IdeFocusManager.findInstanceByComponent(myButton).requestFocus(myButton, true);
         }
       }));
       return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
@@ -203,11 +225,10 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     }
 
     @Override
-    protected void updateButton(String text, Icon icon, boolean isEnabled) {
+    protected void updateButton(String text, Icon icon) {
       String[] split = text.split(": ");
       myButton.setText(split[0] + ": ");
       myDropDown.setText(split.length > 1 ? split[1] : null);
-      myButton.setEnabled(isEnabled);
       layoutButtons();
     }
   }

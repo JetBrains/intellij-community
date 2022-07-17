@@ -28,12 +28,12 @@ import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.buildout.BuildoutFacet;
-import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.console.PydevConsoleRunnerUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.Nls;
@@ -129,7 +129,7 @@ public class PythonTask {
     if (env != null) {
       commandLine.getEnvironment().putAll(env);
     }
-    PydevConsoleRunner.setCorrectStdOutEncoding(commandLine, myModule.getProject()); // To support UTF-8 output
+    PydevConsoleRunnerUtil.setCorrectStdOutEncoding(commandLine, myModule.getProject()); // To support UTF-8 output
 
     ProcessHandler handler;
     if (PythonSdkUtil.isRemote(mySdk)) {
@@ -214,11 +214,6 @@ public class PythonTask {
     List<String> pythonPath = setupPythonPath();
     PythonCommandLineState.initPythonPath(cmd, true, pythonPath, homePath);
 
-    BuildoutFacet facet = BuildoutFacet.getInstance(myModule);
-    if (facet != null) {
-      facet.patchCommandLineForBuildout(cmd);
-    }
-
     return cmd;
   }
 
@@ -240,6 +235,7 @@ public class PythonTask {
     final ProcessHandler process = createProcess(env);
     final Project project = myModule.getProject();
     stopProcessWhenAppClosed(process);
+    process.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_GUEST, true);
     new RunContentExecutor(project, process)
       .withFilter(new PythonTracebackFilter(project))
       .withConsole(consoleView)

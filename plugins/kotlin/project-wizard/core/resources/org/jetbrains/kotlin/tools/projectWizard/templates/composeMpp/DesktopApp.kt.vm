@@ -1,0 +1,13 @@
+#if ($package)
+package ${package}
+
+#end
+#set( $dollar = "${" )
+import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.runtime.Composable
+
+@Preview
+@Composable
+fun AppPreview() {
+    App()
+}

@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.replace
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSRReplaceTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralReplaceTest
 
-class KotlinSSRQualifiedExpressionReplaceTest : KotlinSSRReplaceTest() {
+class KotlinSSRQualifiedExpressionReplaceTest : KotlinStructuralReplaceTest() {
     fun testQualifiedExpressionReceiverWithCountFilter() {
         doTest(
             searchPattern = "'_BEFORE{0,1}.'_FUN()",

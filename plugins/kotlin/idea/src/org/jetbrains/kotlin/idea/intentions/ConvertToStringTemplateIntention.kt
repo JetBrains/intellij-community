@@ -6,11 +6,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
@@ -18,7 +20,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ConvertToStringTemplateInspection : IntentionBasedInspection<KtBinaryExpression>(
     ConvertToStringTemplateIntention::class,
-    { it -> ConvertToStringTemplateIntention.shouldSuggestToConvert(it) },
+    ConvertToStringTemplateIntention::shouldSuggestToConvert,
     problemText = KotlinBundle.message("convert.concatenation.to.template.before.text")
 )
 
@@ -37,7 +39,7 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
         val replacement = buildReplacement(element)
-        runWriteAction {
+        runWriteActionIfPhysical(element) {
             element.replaced(replacement)
         }
     }
@@ -73,7 +75,8 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
             if (expr == null) return ""
             val expression = KtPsiUtil.safeDeparenthesize(expr).let {
                 when {
-                    (it as? KtDotQualifiedExpression)?.isToString() == true -> it.receiverExpression
+                    (it as? KtDotQualifiedExpression)?.isToString() == true && it.receiverExpression !is KtSuperExpression ->
+                        it.receiverExpression
                     it is KtLambdaExpression && it.parent is KtLabeledExpression -> expr
                     else -> it
                 }
@@ -129,7 +132,7 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
 
         private fun isApplicableToNoParentCheck(expression: KtBinaryExpression): Boolean {
             if (expression.operationToken != KtTokens.PLUS) return false
-            val expressionType = expression.analyze(BodyResolveMode.PARTIAL).getType(expression)
+            val expressionType = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL).getType(expression)
             if (!KotlinBuiltIns.isString(expressionType)) return false
             return isSuitable(expression)
         }

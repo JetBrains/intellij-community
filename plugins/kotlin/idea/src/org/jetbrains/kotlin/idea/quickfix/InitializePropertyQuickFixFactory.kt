@@ -16,22 +16,20 @@ import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.shorten.runRefactoringAndKeepDelayedRequests
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.appendElement
 import org.jetbrains.kotlin.idea.core.getOrCreateBody
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.secondaryConstructors
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.source.getPsi
@@ -139,7 +137,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                         val initializerText = CodeInsightUtils.defaultInitializer(propertyDescriptor.type) ?: "null"
                         val newParam = KotlinParameterInfo(
                             callableDescriptor = originalDescriptor.baseDescriptor,
-                            name = KotlinNameSuggester.suggestNameByName(propertyDescriptor.name.asString(), validator),
+                            name = Fe10KotlinNameSuggester.suggestNameByName(propertyDescriptor.name.asString(), validator),
                             originalTypeInfo = KotlinTypeInfo(false, propertyDescriptor.type),
                             defaultValueForCall = KtPsiFactory(element!!.project).createExpression(initializerText)
                         )
@@ -222,11 +220,15 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
 
         actions.add(AddInitializerFix(property))
 
-        (property.containingClassOrObject as? KtClass)?.let { klass ->
+        property.containingClassOrObject.safeAs<KtClass>()?.let { klass ->
             if (klass.isAnnotation() || klass.isInterface()) return@let
+            if (klass.primaryConstructor?.hasActualModifier() == true) return@let
 
-            if (property.accessors.isNotEmpty() || klass.secondaryConstructors.any { !it.getDelegationCall().isCallToThis }) {
-                actions.add(InitializeWithConstructorParameter(property))
+            val secondaryConstructors by lazy { klass.secondaryConstructors.filter { it.getDelegationCallOrNull()?.isCallToThis != true } }
+            if (property.accessors.isNotEmpty() || secondaryConstructors.isNotEmpty()) {
+                if (secondaryConstructors.none { it.hasActualModifier() }) {
+                    actions.add(InitializeWithConstructorParameter(property))
+                }
             } else {
                 actions.add(MoveToConstructorParameters(property))
             }

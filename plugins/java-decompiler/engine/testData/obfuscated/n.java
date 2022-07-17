@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 public class n<F, S> {
    private F a;
@@ -107,7 +106,7 @@ public class n<F, S> {
       ArrayList var10000;
       while(true) {
          if (var2.hasNext()) {
-            Entry var3 = (Entry)var2.next();
+            Map.Entry var3 = (Map.Entry)var2.next();
 
             try {
                var10000 = var1;
@@ -173,21 +172,21 @@ public class n<F, S> {
       while(true) {
          char var10004 = var4[var10003];
          byte var10005;
-         switch(var1 % 5) {
-         case 0:
-            var10005 = 74;
-            break;
-         case 1:
-            var10005 = 60;
-            break;
-         case 2:
-            var10005 = 116;
-            break;
-         case 3:
-            var10005 = 28;
-            break;
-         default:
-            var10005 = 38;
+         switch (var1 % 5) {
+            case 0:
+               var10005 = 74;
+               break;
+            case 1:
+               var10005 = 60;
+               break;
+            case 2:
+               var10005 = 116;
+               break;
+            case 3:
+               var10005 = 28;
+               break;
+            default:
+               var10005 = 38;
          }
 
          var4[var10003] = (char)(var10004 ^ var10005);

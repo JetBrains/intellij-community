@@ -33,6 +33,11 @@ internal fun substituteInjectedBlocks(settings: CodeStyleSettings,
     YamlInjectedLanguageBlockBuilder(settings, outerBLocks).addInjectedBlocks(this, injectionHost, wrap, alignment, fixedIndent)
   }
   if (injectedBlocks.isEmpty()) return rawSubBlocks
+
+  injectedBlocks.addAll(0,
+    rawSubBlocks.filter(injectedBlocks.first().textRange.startOffset.let { start -> { it.textRange.endOffset <= start } }))
+  injectedBlocks.addAll(rawSubBlocks.filter(injectedBlocks.last().textRange.endOffset.let { end -> { it.textRange.startOffset >= end } }))
+
   return injectedBlocks
 }
 
@@ -107,7 +112,13 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val 
     override fun toString(): String = "YamlInjectedLanguageBlockWrapper($original, $myRange," +
                                       " rangeInRoot = $textRange '${textRange.substring(injectionHost.psi.containingFile.text).escLBr()}')"
 
-    override fun getTextRange(): TextRange = rangeInHost
+    override fun getTextRange(): TextRange {
+      val subBlocks = subBlocks
+      if (subBlocks.isEmpty()) return rangeInHost
+      return TextRange.create(
+        subBlocks.first().textRange.startOffset.coerceAtMost(rangeInHost.startOffset),
+        subBlocks.last().textRange.endOffset.coerceAtLeast(rangeInHost.endOffset))
+    }
 
     private val myBlocks by lazy(LazyThreadSafetyMode.NONE) {
       SmartList<Block>().also { result ->
@@ -152,19 +163,21 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val 
     override fun getWrap(): Wrap? = original.wrap
     override fun getIndent(): Indent? = indent
     override fun getAlignment(): Alignment? = original.alignment
-    override fun getSpacing(child1: Block?, child2: Block): Spacing? = original.getSpacing(child1, child2)
+    override fun getSpacing(child1: Block?, child2: Block): Spacing? = original.getSpacing(child1?.unwrap(), child2.unwrap())
     override fun getChildAttributes(newChildIndex: Int): ChildAttributes = original.getChildAttributes(newChildIndex)
     override fun isIncomplete(): Boolean = original.isIncomplete
     override fun isLeaf(): Boolean = original.isLeaf
     override fun getLanguage(): Language? = language
   }
 
+  private fun Block.unwrap() = this.castSafelyTo<YamlInjectedLanguageBlockWrapper>()?.original ?: this
+
   private fun <T> ArrayDeque<T>.popWhile(pred: (T) -> Boolean): List<T> {
     if (this.isEmpty()) return emptyList()
     val result = SmartList<T>()
     while (this.isNotEmpty() && pred(this.first()))
       result.add(this.removeFirst())
-    return result;
+    return result
   }
 
 }

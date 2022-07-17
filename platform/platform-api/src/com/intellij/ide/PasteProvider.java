@@ -16,10 +16,17 @@
 
 package com.intellij.ide;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThreadAware;
 import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
 
-public interface PasteProvider {
+/**
+ * If defined as {@code com.intellij.customPasteProvider} extension, can modify the behaviour of 'Paste' action in editor:
+ * if {@link #isPasteEnabled(DataContext)} returns {@code true}, then {@link #performPaste(DataContext)} is executed instead of default
+ * paste logic. Transferable to paste can be retrieved from passed {@code dataContext} using
+ * {@link com.intellij.openapi.editor.actions.PasteAction#TRANSFERABLE_PROVIDER} key.
+ */
+public interface PasteProvider extends ActionUpdateThreadAware {
   void performPaste(@NotNull DataContext dataContext);
 
   /**

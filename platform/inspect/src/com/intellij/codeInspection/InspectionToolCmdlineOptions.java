@@ -6,7 +6,6 @@ package com.intellij.codeInspection;
 public interface InspectionToolCmdlineOptions extends InspectionToolCmdlineOptionHelpProvider {
   /**
    * @param app Inspection Application
-   * @return  true if was successfully initialized
    */
   void initApplication(InspectionApplication app);
 

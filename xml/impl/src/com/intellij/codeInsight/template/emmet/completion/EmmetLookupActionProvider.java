@@ -20,10 +20,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class EmmetLookupActionProvider implements LookupActionProvider {
   @Override
-  public void fillActions(LookupElement element, final Lookup lookup, Consumer<LookupElementAction> consumer) {
+  public void fillActions(@NotNull LookupElement element, final @NotNull Lookup lookup, @NotNull Consumer<@NotNull LookupElementAction> consumer) {
     if (element instanceof CustomLiveTemplateLookupElement  && 
         ((CustomLiveTemplateLookupElement)element).getCustomLiveTemplate() instanceof ZenCodingTemplate) {
 

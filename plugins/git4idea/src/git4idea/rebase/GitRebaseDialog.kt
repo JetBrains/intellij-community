@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -29,7 +31,10 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
-import git4idea.*
+import git4idea.GitBranch
+import git4idea.GitRevisionNumber
+import git4idea.GitTag
+import git4idea.GitVcs
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.config.GitRebaseSettings
@@ -49,6 +54,7 @@ import java.awt.Container
 import java.awt.Insets
 import java.awt.event.*
 import java.util.Collections.synchronizedMap
+import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -94,8 +100,6 @@ internal class GitRebaseDialog(private val project: Project,
   private val rebaseMergesAvailable = REBASE_MERGES_REPLACES_PRESERVE_MERGES.existsIn(gitVersion)
 
   init {
-    loadTagsInBackground()
-
     title = GitBundle.message("rebase.dialog.title")
     setOKButtonText(GitBundle.message("rebase.dialog.start.rebase"))
 
@@ -103,10 +107,12 @@ internal class GitRebaseDialog(private val project: Project,
     updateBranches()
     loadSettings()
 
-    updateUi()
     init()
+    updateUi()
 
     updateOkActionEnabled()
+
+    invokeLater(ModalityState.stateForComponent(rootPane)) { loadTagsInBackground() }
   }
 
   override fun createCenterPanel() = panel
@@ -259,10 +265,12 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun loadTagsInBackground() {
+    val selectedRoot = getSelectedRepo().root
     ProgressManager.getInstance().run(
       object : Task.Backgroundable(project, GitBundle.message("rebase.dialog.progress.loading.tags"), true) {
         override fun run(indicator: ProgressIndicator) {
           val sortedRoots = LinkedHashSet<VirtualFile>(roots.size).apply {
+            add(selectedRoot)
             if (defaultRoot != null) {
               add(defaultRoot)
             }
@@ -274,12 +282,16 @@ internal class GitRebaseDialog(private val project: Project,
 
             tags[root] = tagsInRepo
 
-            if (getSelectedRepo().root == root) {
+            if (selectedRoot == root) {
               UIUtil.invokeLaterIfNeeded {
-                addRefsToOntoAndFrom(tagsInRepo, replace = false)
+                updateBaseFields()
               }
             }
           }
+        }
+
+        override fun onSuccess() {
+          updateBaseFields()
         }
       })
   }
@@ -296,29 +308,16 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun updateBranches() {
-    branchField.model.castSafelyTo<MutableCollectionComboBoxModel<String>>()?.update(localBranches.map { it.name })
+    branchField.mutableModel?.update(localBranches.map { it.name })
 
     updateBaseFields()
   }
 
   private fun updateBaseFields() {
-    addRefsToOntoAndFrom(localBranches + remoteBranches + getTags(), replace = true)
-  }
+    val newRefs = sequenceOf(localBranches, remoteBranches, getTags()).flatten().map { it.name }.toList()
 
-  private fun addRefsToOntoAndFrom(refs: Collection<GitReference>, replace: Boolean = true) {
-    val upstream = upstreamField.item
-    val onto = ontoField.item
-
-    val existingRefs = upstreamField.model.castSafelyTo<MutableCollectionComboBoxModel<String>>()?.items?.toSet() ?: emptySet()
-    val newRefs = refs.map { it.name }.toSet()
-
-    val result = (if (replace) newRefs else existingRefs + newRefs).toList()
-
-    upstreamField.model.castSafelyTo<MutableCollectionComboBoxModel<String>>()?.update(result)
-    ontoField.model.castSafelyTo<MutableCollectionComboBoxModel<String>>()?.update(result)
-
-    upstreamField.item = upstream
-    ontoField.item = onto
+    upstreamField.updatePreserving { upstreamField.mutableModel?.update(newRefs) }
+    ontoField.updatePreserving { ontoField.mutableModel?.update(newRefs) }
   }
 
   private fun showRootField() = roots.size > 1
@@ -354,7 +353,7 @@ internal class GitRebaseDialog(private val project: Project,
     add(ontoField,
         CC()
           .gapAfter("0")
-          .minWidth("${JBUI.scale(if (showRootField()) 220 else 310)}px")
+          .minWidth("${JBUI.scale(if (showRootField()) SHORT_FIELD_LENGTH else LONG_FIELD_LENGTH)}px")
           .growX()
           .pushX())
 
@@ -424,9 +423,8 @@ internal class GitRebaseDialog(private val project: Project,
   private fun createOntoField() = ComboBoxWithAutoCompletion<String>(MutableCollectionComboBoxModel(), project).apply {
     prototypeDisplayValue = GIT_REF_PROTOTYPE_VALUE
     isVisible = false
-    setMinimumAndPreferredWidth(JBUI.scale(if (showRootField()) 220 else 310))
+    setMinimumAndPreferredWidth(JBUI.scale(if (showRootField()) SHORT_FIELD_LENGTH else LONG_FIELD_LENGTH))
     setPlaceholder(GitBundle.message("rebase.dialog.new.base"))
-    @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
     addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
@@ -437,9 +435,8 @@ internal class GitRebaseDialog(private val project: Project,
 
   private fun createUpstreamField() = ComboBoxWithAutoCompletion<String>(MutableCollectionComboBoxModel(), project).apply {
     prototypeDisplayValue = GIT_REF_PROTOTYPE_VALUE
-    setMinimumAndPreferredWidth(JBUI.scale(185))
+    setMinimumAndPreferredWidth(JBUI.scale(SHORT_FIELD_LENGTH))
     setPlaceholder(GitBundle.message("rebase.dialog.target"))
-    @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
     addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
@@ -459,7 +456,6 @@ internal class GitRebaseDialog(private val project: Project,
   private fun createBranchField() = ComboBoxWithAutoCompletion<String>(MutableCollectionComboBoxModel(), project).apply {
     prototypeDisplayValue = GIT_REF_PROTOTYPE_VALUE
     setPlaceholder(GitBundle.message("rebase.dialog.branch.field"))
-    @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(
       outerInsets = Insets(BW.get(), 0, BW.get(), 0),
       popupEmptyText = GitBundle.message("merge.branch.popup.empty.text")))
@@ -479,12 +475,12 @@ internal class GitRebaseDialog(private val project: Project,
     mnemonic = KeyEvent.VK_M
   }
 
-  private fun createPopupBuilder() = GitOptionsPopupBuilder(project,
-                                                            GitBundle.message("rebase.options.modify.dialog.title"),
-                                                            { GitRebaseOption.values().toMutableList() },
-                                                            OptionListCellRenderer(::getOptionInfo, ::isOptionSelected, ::isOptionEnabled),
-                                                            ::optionChosen,
-                                                            ::isOptionEnabled)
+  private fun createPopupBuilder() = GitOptionsPopupBuilder(
+    project,
+    GitBundle.message("rebase.options.modify.dialog.title"),
+    { GitRebaseOption.values().toList() },
+    ::getOptionInfo, ::isOptionSelected, ::isOptionEnabled, ::optionChosen, ::hasSeparatorAbove
+  )
 
   private fun isOptionSelected(option: GitRebaseOption) = option in selectedOptions
 
@@ -495,6 +491,8 @@ internal class GitRebaseDialog(private val project: Project,
     return !(option == GitRebaseOption.REBASE_MERGES && selectedOptions.contains(GitRebaseOption.INTERACTIVE)
              || option == GitRebaseOption.INTERACTIVE && selectedOptions.contains(GitRebaseOption.REBASE_MERGES))
   }
+
+  private fun hasSeparatorAbove(option: GitRebaseOption): Boolean = option == GitRebaseOption.INTERACTIVE
 
   private fun getOptionInfo(option: GitRebaseOption) = optionInfos.computeIfAbsent(option) {
     OptionInfo(option, option.getOption(gitVersion), option.description)
@@ -538,11 +536,11 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun updateUi() {
+    updatePlaceholders()
     updateUpstreamField()
     updateTopPanel()
     updateBottomPanel()
     optionsPanel.rerender(selectedOptions intersect REBASE_FLAGS)
-    updatePlaceholders()
     rerender()
   }
 
@@ -581,7 +579,7 @@ internal class GitRebaseDialog(private val project: Project,
 
         val layout = topPanel.layout as MigLayout
 
-        val constraints = CC().minWidth("${JBUI.scale(185)}px").growX().pushX().alignY("top")
+        val constraints = CC().minWidth("${JBUI.scale(SHORT_FIELD_LENGTH)}px").growX().pushX().alignY("top")
         layout.setComponentConstraints(upstreamField, constraints)
         layout.setComponentConstraints(branchField, constraints)
 
@@ -677,5 +675,10 @@ internal class GitRebaseDialog(private val project: Project,
       IconUtil.brighter(AllIcons.General.ContextHelp, 3)
     else
       IconUtil.darker(AllIcons.General.ContextHelp, 3)
+
+    private const val SHORT_FIELD_LENGTH = 220
+    private const val LONG_FIELD_LENGTH = 310
   }
 }
+
+private val JComboBox<String>.mutableModel get() = this.model.castSafelyTo<MutableCollectionComboBoxModel<String>>()

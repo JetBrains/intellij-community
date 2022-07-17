@@ -1,17 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.Nullable
 import javax.swing.JComponent
 
 class OpenInRightSplitAction : AnAction(), DumbAware {
@@ -38,7 +36,7 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
     val project = getEventProject(e)
     val editor = e.getData(CommonDataKeys.EDITOR)
-    val fileEditor = e.getData(PlatformDataKeys.FILE_EDITOR)
+    val fileEditor = e.getData(PlatformCoreDataKeys.FILE_EDITOR)
 
     val place = e.place
     if (project == null ||
@@ -55,16 +53,19 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
     e.presentation.isEnabledAndVisible = contextFile != null && !contextFile.isDirectory
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   companion object {
     private fun getVirtualFile(e: AnActionEvent): VirtualFile? = e.getData(CommonDataKeys.VIRTUAL_FILE)
 
     @JvmOverloads
-    fun openInRightSplit(project: @Nullable Project, file: VirtualFile, element: Navigatable? = null, requestFocus: Boolean = true): EditorWindow? {
+    fun openInRightSplit(project: Project, file: VirtualFile, element: Navigatable? = null, requestFocus: Boolean = true): EditorWindow? {
       val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
       val splitters = fileEditorManager.splitters
 
-      val providers = FileEditorProviderManager.getInstance().getProviders(project, file)
-      if (providers.isEmpty()) {
+      if (!fileEditorManager.canOpenFile(file)) {
         element?.navigate(requestFocus)
         return null
       }

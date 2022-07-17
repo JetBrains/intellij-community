@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.registry.Registry
 import org.gradle.tooling.*
 import org.gradle.tooling.model.BuildModel
 import org.gradle.tooling.model.ProjectModel
@@ -10,6 +12,7 @@ import org.gradle.tooling.model.idea.IdeaProject
 import org.jetbrains.plugins.gradle.model.ModelsHolder
 import org.jetbrains.plugins.gradle.model.ProjectImportAction
 import org.jetbrains.plugins.gradle.model.ProjectImportAction.AllModels
+import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import java.util.concurrent.ArrayBlockingQueue
@@ -65,6 +68,12 @@ class BuildActionRunner(
    */
   fun fetchModels(projectsLoadedCallBack: Consumer<ModelsHolder<BuildModel, ProjectModel>>,
                   buildFinishedCallBack: Consumer<GradleConnectionException?>): AllModels {
+
+    // Optionally tell Gradle daemon there were recent file changes
+    if (Registry.`is`("gradle.report.recently.saved.paths")) {
+      notifyConnectionAboutChangedPaths()
+    }
+
     // First try with the phased build executor
     createPhasedExecuter(projectsLoadedCallBack).run(BuildActionResultHandler(buildFinishedCallBack))
 
@@ -102,6 +111,12 @@ class BuildActionRunner(
     buildFinishedCallBack.accept(null)
 
     return AllModels(modelBuilder.get())
+  }
+
+  private fun notifyConnectionAboutChangedPaths() {
+    ApplicationManager.getApplication()
+      .getService(GradleFileModificationTracker::class.java)
+      .notifyConnectionAboutChangedPaths(resolverCtx.connection)
   }
 
   private fun takeQueueResultBlocking(): Any {

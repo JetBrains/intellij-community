@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,6 +29,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameterList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -36,7 +38,7 @@ import java.util.Set;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 
-public class PySuperMethodCompletionContributor extends CompletionContributor {
+public class PySuperMethodCompletionContributor extends CompletionContributor implements DumbAware {
   public PySuperMethodCompletionContributor() {
     extend(CompletionType.BASIC,
            psiElement().afterLeafSkipping(psiElement().whitespace(), psiElement().withElementType(PyTokenTypes.DEF_KEYWORD)),
@@ -47,6 +49,7 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
                                            @NotNull CompletionResultSet result) {
                PsiElement position = parameters.getOriginalPosition();
                PyClass containingClass = PsiTreeUtil.getParentOfType(position, PyClass.class);
+               PsiElement nextElement = position != null ? position.getNextSibling() : null;
                if (containingClass == null && position instanceof PsiWhiteSpace) {
                  position = PsiTreeUtil.prevLeaf(position);
                  containingClass = PsiTreeUtil.getParentOfType(position, PyClass.class);
@@ -64,19 +67,21 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
                  for (PyFunction superMethod : ancestor.getMethods()) {
                    if (!seenNames.contains(superMethod.getName())) {
                      StringBuilder builder = new StringBuilder();
-                     builder.append(superMethod.getName())
-                       .append(superMethod.getParameterList().getText());
-                     if (superMethod.getAnnotation() != null) {
-                       builder.append(" ")
-                         .append(superMethod.getAnnotation().getText())
-                         .append(":");
-                     }
-                     else if (superMethod.getTypeComment() != null) {
-                       builder.append(":  ")
-                         .append(superMethod.getTypeComment().getText());
-                     }
-                     else {
-                       builder.append(":");
+                     builder.append(superMethod.getName());
+                     if (!(nextElement instanceof PyParameterList)) {
+                       builder.append(superMethod.getParameterList().getText());
+                       if (superMethod.getAnnotation() != null) {
+                         builder.append(" ")
+                           .append(superMethod.getAnnotation().getText())
+                           .append(":");
+                       }
+                       else if (superMethod.getTypeComment() != null) {
+                         builder.append(":  ")
+                           .append(superMethod.getTypeComment().getText());
+                       }
+                       else {
+                         builder.append(":");
+                       }
                      }
                      LookupElementBuilder element = LookupElementBuilder.create(builder.toString());
                      result.addElement(TailTypeDecorator.withTail(element, TailType.NONE));

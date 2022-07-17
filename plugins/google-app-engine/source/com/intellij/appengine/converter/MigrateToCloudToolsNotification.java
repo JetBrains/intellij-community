@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.appengine.converter;
 
 import com.intellij.appengine.JavaGoogleAppEngineBundle;
@@ -25,6 +25,7 @@ public class MigrateToCloudToolsNotification implements StartupActivity.DumbAwar
       Notification notification = new Notification("Migrate to Google Cloud SDK",
                                                    JavaGoogleAppEngineBundle.message("notification.title.app.engine.sdk.detected"),
                                                    text, NotificationType.WARNING)
+        .setSuggestionType(true)
         .setListener(new NotificationListener.UrlOpeningListener(false));
       /*
       //currently Google Cloud Tools plugin doesn't provide seamless migration for all project, so we don't want to provide a direct link which installs it.

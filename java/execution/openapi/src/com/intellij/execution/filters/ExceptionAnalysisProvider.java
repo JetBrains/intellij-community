@@ -20,7 +20,7 @@ public interface ExceptionAnalysisProvider {
    */
   @Nullable AnAction getAnalysisAction(@NotNull PsiElement anchor,
                                        @NotNull ExceptionInfo info,
-                                       @NotNull Supplier<List<StackLine>> nextFrames);
+                                       @NotNull Supplier<? extends List<StackLine>> nextFrames);
 
   /**
    * @param anchor a place (method name identifier) in the source code where next stack frame row is invoked 
@@ -28,7 +28,7 @@ public interface ExceptionAnalysisProvider {
    * @return an action to provide additional analysis for given location; null if not available
    */
   @Nullable AnAction getIntermediateRowAnalysisAction(@NotNull PsiElement anchor,
-                                                      @NotNull Supplier<List<StackLine>> nextFrames);
+                                                      @NotNull Supplier<? extends List<StackLine>> nextFrames);
 
   /**
    * Stack frame descriptor

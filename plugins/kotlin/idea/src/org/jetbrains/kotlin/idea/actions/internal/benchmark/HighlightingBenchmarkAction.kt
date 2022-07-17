@@ -8,9 +8,9 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
@@ -20,14 +20,16 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.uiDesigner.core.GridLayoutManager
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.actions.internal.benchmark.AbstractCompletionBenchmarkAction.Companion.addBoxWithLabel
 import org.jetbrains.kotlin.idea.actions.internal.benchmark.AbstractCompletionBenchmarkAction.Companion.collectSuitableKotlinFiles
 import org.jetbrains.kotlin.idea.actions.internal.benchmark.AbstractCompletionBenchmarkAction.Companion.shuffledSequence
 import org.jetbrains.kotlin.idea.core.util.EDT
-import org.jetbrains.kotlin.idea.core.util.getLineCount
+import org.jetbrains.kotlin.idea.base.psi.getLineCount
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.*
 import javax.swing.JFileChooser
@@ -91,11 +93,11 @@ class HighlightingBenchmarkAction : AnAction() {
         val channel = Channel<String>(capacity = Channel.CONFLATED)
 
         override fun daemonFinished() {
-            channel.offer(SUCCESS)
+            channel.trySend(SUCCESS).onClosed { throw IllegalStateException(it) }
         }
 
         override fun daemonCancelEventOccurred(reason: String) {
-            channel.offer(reason)
+            channel.trySend(reason).onClosed { throw IllegalStateException(it) }
         }
     }
 
@@ -204,7 +206,9 @@ class HighlightingBenchmarkAction : AnAction() {
         AbstractCompletionBenchmarkAction.showPopup(project, KotlinBundle.message("text.done"))
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal
+        e.presentation.isEnabledAndVisible = isApplicationInternalMode()
     }
 }

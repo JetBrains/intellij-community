@@ -135,9 +135,9 @@ public abstract class PsiDocumentManager {
   public abstract Document getLastCommittedDocument(@NotNull PsiFile file);
 
   /**
-   * Returns the list of documents which have been modified but not committed.
+   * Returns the array of documents which have been modified but not committed.
    *
-   * @return the list of uncommitted documents.
+   * @return the array of uncommitted documents.
    * @see #commitDocument(Document)
    */
   public abstract @NotNull Document @NotNull [] getUncommittedDocuments();
@@ -221,7 +221,7 @@ public abstract class PsiDocumentManager {
    * @deprecated Use message bus {@link PsiDocumentListener#TOPIC}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public abstract void addListener(@NotNull Listener listener);
 
   /**

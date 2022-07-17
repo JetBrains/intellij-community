@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -23,6 +23,7 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.execution.util.ProgramParametersUtil;
@@ -151,11 +152,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected abstract String getForkMode();
 
   @NotNull
-  private OSProcessHandler createHandler(Executor executor, SMTestRunnerResultsForm viewer) throws ExecutionException {
-    downloadAdditionalDependencies(getJavaParameters()); //required for fork info
-    appendForkInfo(executor);
-    appendRepeatMode();
-
+  private OSProcessHandler createHandler(SMTestRunnerResultsForm viewer) throws ExecutionException {
     TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
     TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
@@ -204,8 +201,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   /**
    * @deprecated Use {@link #createSearchingForTestsTask(TargetEnvironment)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public @Nullable SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
     return null;
   }
@@ -249,6 +245,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @Override
   protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
     throws ExecutionException {
+
+    downloadAdditionalDependencies(getJavaParameters());
+    appendForkInfo(getEnvironment().getExecutor());
+    appendRepeatMode();
+
     TargetedCommandLineBuilder commandLineBuilder = super.createTargetedCommandLine(request);
     File inputFile = InputRedirectAware.getInputFile(getConfiguration());
     if (inputFile != null) {
@@ -269,12 +270,19 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
-    final BaseTestsOutputConsoleView consoleView =
+    final BaseTestsOutputConsoleView testConsole =
       UIUtil.invokeAndWaitIfNeeded(() -> SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties));
-    final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)consoleView).getResultsViewer();
+    final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)testConsole).getResultsViewer();
+
+    final ConsoleView consoleView = JavaRunConfigurationExtensionManager.getInstance().decorateExecutionConsole(
+      getConfiguration(),
+      getRunnerSettings(),
+      testConsole,
+      executor
+    );
     Disposer.register(getConfiguration().getProject(), consoleView);
 
-    OSProcessHandler handler = createHandler(executor, viewer);
+    OSProcessHandler handler = createHandler(viewer);
 
     for (ArgumentFileFilter filter : myArgumentFileFilters) {
       consoleView.addMessageFilter(filter);
@@ -306,7 +314,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       }
     });
 
-    AbstractRerunFailedTestsAction rerunFailedTestsAction = testConsoleProperties.createRerunFailedTestsAction(consoleView);
+    AbstractRerunFailedTestsAction rerunFailedTestsAction = testConsoleProperties.createRerunFailedTestsAction(testConsole);
     LOG.assertTrue(rerunFailedTestsAction != null);
     rerunFailedTestsAction.setModelProvider(() -> viewer);
 
@@ -497,7 +505,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected static PsiJavaModule findJavaModule(Module module, boolean inTests) {
     return DumbService.getInstance(module.getProject())
-      .computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findDescriptorByModule(module, inTests));
+      .computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findNonAutomaticDescriptorByModule(module, inTests));
   }
 
   private void configureModulePath(JavaParameters javaParameters, @NotNull Module module) {
@@ -571,7 +579,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   /**
    * called on EDT
    */
-  protected static void collectSubPackages(List<String> options, PsiPackage aPackage, GlobalSearchScope globalSearchScope) {
+  protected static void collectSubPackages(List<String> options, @NotNull PsiPackage aPackage, GlobalSearchScope globalSearchScope) {
     if (aPackage.getClasses(globalSearchScope).length > 0) {
       options.add(aPackage.getQualifiedName());
     }
@@ -701,7 +709,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
   }
 
-  private static void writeClasspath(PrintWriter wWriter, JavaParameters parameters) {
+  private static void writeClasspath(PrintWriter wWriter, JavaParameters parameters) { //todo TargetValue expected
     wWriter.println(parameters.getClassPath().getPathsString());
     wWriter.println(parameters.getModulePath().getPathsString());
     ParamsGroup paramsGroup = getJigsawOptions(parameters);

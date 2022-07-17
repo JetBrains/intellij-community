@@ -2,6 +2,7 @@
 package org.jetbrains.java.generate.template.toString;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-@State(name = "ToStringTemplates", storages = @Storage("toStringTemplates.xml"))
+@State(name = "ToStringTemplates", storages = @Storage("toStringTemplates.xml"), category = SettingsCategory.CODE)
 public final class ToStringTemplatesManager extends TemplatesManager {
   private static final String DEFAULT_CONCAT = "DefaultConcatMember.vm";
   private static final String DEFAULT_CONCAT_GROOVY = "/org/jetbrains/java/generate/template/toString/DefaultConcatMemberGroovy.vm";

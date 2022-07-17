@@ -11,14 +11,15 @@ import org.jetbrains.annotations.NotNull;
 final class CodeFoldingPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar, DumbAware {
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    boolean serialized = ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
-    int[] ghl = serialized ? new int[]{Pass.UPDATE_ALL} : null;
-    registrar.registerTextEditorHighlightingPass(this, ghl, null, false, Pass.UPDATE_FOLDING);
+    int[] ghp = {Pass.UPDATE_ALL};
+    boolean serializeCodeInsightPasses =
+      ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
+    registrar.registerTextEditorHighlightingPass(this, serializeCodeInsightPasses ? ghp : null, null, false, Pass.UPDATE_FOLDING);
   }
 
   @Override
   @NotNull
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
+  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     return new CodeFoldingPass(editor, file);
   }
 }

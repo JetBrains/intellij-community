@@ -2,17 +2,26 @@
 
 package org.jetbrains.kotlin.idea.framework.ui;
 
+import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.text.VersionComparatorUtil;
-import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.Collection;
 
-@RunWith(JUnit38ClassRunner.class)
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class LoadVersionsFromMavenTest extends LightIdeaTestCase {
-    public void testDownload() throws Exception {
-        Collection<String> versions = ConfigureDialogWithModulesAndVersion.loadVersions("1.0.0");
+    public void testDownload() {
+        Collection<String> versions;
+        try {
+            versions = ConfigureDialogWithModulesAndVersion.loadVersions("1.0.0");
+        } catch (IOException e) {
+            ExternalResourcesChecker.reportUnavailability("Kotlin artifact repository", e);
+            return;
+        }
+
         assertTrue(versions.size() > 0);
         for (String version : versions) {
             assertTrue(VersionComparatorUtil.compare(version, "1.0.0") >= 0);

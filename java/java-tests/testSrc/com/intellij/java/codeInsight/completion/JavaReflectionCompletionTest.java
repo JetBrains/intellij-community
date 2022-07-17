@@ -37,8 +37,9 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     doTest(1, "num", "num2", "num3");
   }
 
+  @NeedsIndex.SmartMode(reason = "Ordering requires smart mode")
   public void testDeclaredField() {
-    doTest(3, "num", "num0", "num1", "num2");
+    doTest(2, "num", "num1", "num2", "num0");
   }
 
   public void testDeclaredMethod() {
@@ -161,11 +162,11 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     doTest(1, "num", "num2", "num3");
   }
 
-
+  @NeedsIndex.SmartMode(reason = "Ordering requires smart mode")
   public void testClassForNameClasses() {
     myFixture.addClass("package foo.bar; public class PublicClass {}");
     myFixture.addClass("package foo.bar; class PackageLocalClass {}");
-    doTest(1, "PackageLocalClass", "PublicClass");
+    doTest(0, "PublicClass", "PackageLocalClass");
   }
 
   public void testClassForNameInvalidPackage() {

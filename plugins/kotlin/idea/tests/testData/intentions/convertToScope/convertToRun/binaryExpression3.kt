@@ -1,4 +1,5 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Parameter 'x' is never used
 class A {
     infix fun foo(x: Any) = A()
 }

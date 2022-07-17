@@ -72,7 +72,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
 
   @NotNull
   @Override
-  public Map<VirtualFile, VcsRevisionNumber> getCurrentRevisions(@NotNull Iterable<VirtualFile> files) {
+  public Map<VirtualFile, VcsRevisionNumber> getCurrentRevisions(@NotNull Iterable<? extends VirtualFile> files) {
     Map<VirtualFile, VcsRevisionNumber> result = new HashMap<>();
     Map<String, VirtualFile> items = new HashMap<>();
     List<File> ioFiles = new ArrayList<>();

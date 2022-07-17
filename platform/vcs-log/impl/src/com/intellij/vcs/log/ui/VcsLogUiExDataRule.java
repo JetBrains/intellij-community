@@ -8,6 +8,9 @@ import com.intellij.vcs.log.VcsLogUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * {@link VcsLogInternalDataKeys#FILE_HISTORY_UI}
+ */
 public class VcsLogUiExDataRule implements GetDataRule {
   @Nullable
   @Override

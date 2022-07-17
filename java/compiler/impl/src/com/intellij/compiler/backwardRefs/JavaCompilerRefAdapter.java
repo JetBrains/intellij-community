@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -12,7 +12,8 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
@@ -124,7 +125,7 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
   @Override
   public PsiFunctionalExpression @NotNull [] findFunExpressionsInFile(SearchId @NotNull [] funExpressions,
                                                                       @NotNull PsiFileWithStubSupport file) {
-    TIntHashSet requiredIndices = new TIntHashSet(funExpressions.length);
+    IntSet requiredIndices = new IntOpenHashSet(funExpressions.length);
     for (SearchId funExpr : funExpressions) {
       requiredIndices.add(funExpr.getId());
     }

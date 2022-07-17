@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.debugger.test.util
 
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.engine.SourcePositionProvider
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -10,6 +11,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.ui.impl.watch.*
 import com.intellij.debugger.ui.tree.*
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.util.io.FileUtil
@@ -71,8 +73,7 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
     )
 
     private fun computeInfo(container: XValueContainer): ValueInfo {
-        val name = if (container is XNamedValue) container.name.takeIf { it.isNotEmpty() } else null
-
+        val name = container.getName()
         when (container) {
             is XValue -> {
                 val node = XTestValueNode()
@@ -95,6 +96,13 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
             }
         }
     }
+
+    private fun XValueContainer.getName() =
+        when (this) {
+            is XNamedValue -> name.takeIf { it.isNotEmpty() }
+            is JavaStackFrame -> descriptor.name
+            else -> null
+        }
 
     private fun computeValue(descriptor: NodeDescriptorImpl?): String? {
         val valueDescriptor = descriptor as? ValueDescriptorImpl ?: return null
@@ -151,7 +159,9 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
 
         val debugProcess = suspendContext.debugProcess
         return debugProcess.invokeInManagerThread { debuggerContext ->
-            SourcePositionProvider.getSourcePosition(descriptor, debugProcess.project, debuggerContext)
+            runReadAction {
+                SourcePositionProvider.getSourcePosition(descriptor, debugProcess.project, debuggerContext)
+            }
         }
     }
 

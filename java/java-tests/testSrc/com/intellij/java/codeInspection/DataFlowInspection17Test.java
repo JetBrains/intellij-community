@@ -25,7 +25,31 @@ public class DataFlowInspection17Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
-  public void testDuplicateLabels() {
+  public void testSuspiciousLabelElements() {
     doTest();
   }
+
+  public void testPredicateNot() { doTest(); }
+
+  public void testEnumNullability() {
+    doTest();
+  }
+
+  public void testBoxedTypeNullability() {
+    doTest();
+  }
+
+  public void testPatternsNullability() {
+    doTest();
+  }
+
+  public void testPatterns() {
+    doTest();
+  }
+
+  public void testInstanceof() {
+    doTest();
+  }
+
+  public void testNewStringWrongEquals() { doTest(); }
 }

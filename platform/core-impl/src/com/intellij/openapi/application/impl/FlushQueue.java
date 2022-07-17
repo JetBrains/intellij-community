@@ -1,216 +1,194 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.EventWatcher;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.*;
 
-import java.util.*;
-import java.util.function.Consumer;
+import javax.swing.*;
 
 final class FlushQueue {
-  private static final Logger LOG = Logger.getInstance(LaterInvocator.class);
-  private static final boolean DEBUG = LOG.isDebugEnabled();
-  private final Object LOCK = new Object();
+  private static final Logger LOG = Logger.getInstance(FlushQueue.class);
+  private ObjectList<RunnableInfo> mySkippedItems = new ObjectArrayList<>(100); //guarded by getQueueLock()
+  private final BulkArrayQueue<RunnableInfo> myQueue = new BulkArrayQueue<>();  //guarded by getQueueLock()
 
-  private final List<RunnableInfo> mySkippedItems = new ArrayList<>(); //protected by LOCK
-
-  private final ArrayDeque<RunnableInfo> myQueue = new ArrayDeque<>(); //protected by LOCK
-  private final @NotNull Consumer<? super Runnable> myRunnableExecutor;
-
-  private volatile boolean myMayHaveItems;
-
-  private RunnableInfo myLastInfo;
-
-  FlushQueue(@NotNull Consumer<? super Runnable> executor) {
-    myRunnableExecutor = executor;
-  }
-
-  public void scheduleFlush() {
-    myRunnableExecutor.accept(new FlushNow());
-  }
-
-  public void flushNow() {
-    LaterInvocator.FLUSHER_SCHEDULED.set(false);
-    myMayHaveItems = false;
+  private void flushNow() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    synchronized (getQueueLock()) {
+      FLUSHER_SCHEDULED = false;
+    }
 
     long startTime = System.currentTimeMillis();
     while (true) {
-      if (!runNextEvent()) {
+      RunnableInfo info = pollNextEvent();
+      if (info == null) {
         break;
       }
+      runNextEvent(info);
       if (System.currentTimeMillis() - startTime > 5) {
-        myMayHaveItems = true;
+        synchronized (getQueueLock()) {
+          requestFlush();
+        }
         break;
       }
     }
-    LaterInvocator.requestFlush();
   }
 
-  public void push(@NotNull RunnableInfo runnableInfo) {
-    synchronized (LOCK) {
-      myQueue.add(runnableInfo);
-      myMayHaveItems = true;
+  private Object getQueueLock() {
+    return myQueue;
+  }
+
+  void push(@NotNull ModalityState modalityState,
+            @NotNull Condition<?> expired,
+            @NotNull Runnable runnable) {
+    synchronized (getQueueLock()) {
+      RunnableInfo info = new RunnableInfo(runnable, modalityState, expired);
+      myQueue.enqueue(info);
+      requestFlush();
     }
-  }
-
-  boolean mayHaveItems() {
-    return myMayHaveItems;
   }
 
   @TestOnly
   @NotNull
-  Collection<RunnableInfo> getQueue() {
-    synchronized (LOCK) {
+  Object getQueue() {
+    synchronized (getQueueLock()) {
       // used by leak hunter as root, so we must not copy it here to another list
       // to avoid walking over obsolete queue
-      return Collections.unmodifiableCollection(myQueue);
+      return myQueue;
     }
   }
 
   // Extracted to have a capture point
   private static void doRun(@Async.Execute @NotNull RunnableInfo info) {
-    if (ClientId.Companion.getPropagateAcrossThreads()) {
-      ClientId.withClientId(info.clientId, info.runnable);
-    }
-    else {
+    try (AccessToken ignored = ClientId.withClientId(info.clientId)) {
       info.runnable.run();
     }
   }
 
   @Override
   public String toString() {
-    return "LaterInvocator.FlushQueue" + (myLastInfo == null ? "" : " lastInfo=" + myLastInfo);
+    synchronized (getQueueLock()) {
+      return "LaterInvocator.FlushQueue size=" + myQueue.size() + "; FLUSHER_SCHEDULED=" + FLUSHER_SCHEDULED;
+    }
   }
 
   @Nullable
-  RunnableInfo getNextEvent(boolean remove) {
-    synchronized (LOCK) {
+  private RunnableInfo pollNextEvent() {
+    synchronized (getQueueLock()) {
       ModalityState currentModality = LaterInvocator.getCurrentModalityState();
 
-      while (!myQueue.isEmpty()) {
-        RunnableInfo info = myQueue.getFirst();
-
+      RunnableInfo info;
+      while (true) {
+        info = myQueue.pollFirst();
+        if (info == null) {
+          break;
+        }
         if (info.expired.value(null)) {
-          myQueue.removeFirst();
-          info.markDone();
           continue;
         }
-
         if (!currentModality.dominates(info.modalityState)) {
-          if (remove) {
-            myQueue.removeFirst();
-          }
-          return info;
+          requestFlush(); // in case someone wrote "invokeLater { UIUtil.dispatchAllInvocationEvents(); }"
+          break;
         }
-        mySkippedItems.add(myQueue.removeFirst());
+        mySkippedItems.add(info);
       }
 
-      return null;
+      return info;
     }
   }
 
-  private boolean runNextEvent() {
-    long startedAt = System.currentTimeMillis();
-    final RunnableInfo lastInfo = getNextEvent(true);
-    myLastInfo = lastInfo;
+  private static void runNextEvent(@NotNull RunnableInfo info) {
+    EventWatcher watcher = EventWatcher.getInstanceOrNull();
+    Runnable runnable = info.runnable;
+    if (watcher != null) {
+      watcher.runnableStarted(runnable, System.currentTimeMillis());
+    }
+    try {
+      doRun(info);
+    }
+    catch (ProcessCanceledException ignored) {
 
-    if (lastInfo != null) {
-      EventWatcher watcher = EventWatcher.getInstanceOrNull();
-      Runnable runnable = lastInfo.runnable;
+    }
+    catch (Throwable t) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        ExceptionUtil.rethrow(t);
+      }
+      LOG.error(t);
+    }
+    finally {
       if (watcher != null) {
-        watcher.runnableStarted(runnable, startedAt);
-      }
-
-      try {
-        doRun(lastInfo);
-        lastInfo.markDone();
-      }
-      catch (ProcessCanceledException ignored) {
-
-      }
-      catch (Throwable t) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          ExceptionUtil.rethrow(t);
-        }
-        LOG.error(t);
-      }
-      finally {
-        if (!DEBUG) myLastInfo = null;
-        if (watcher != null) {
-          watcher.runnableFinished(runnable, System.currentTimeMillis());
-        }
+        watcher.runnableFinished(runnable, System.currentTimeMillis());
       }
     }
-    return lastInfo != null;
   }
 
   void reincludeSkippedItems() {
-    synchronized (LOCK) {
-      for (int i = mySkippedItems.size() - 1; i >= 0; i--) {
-        RunnableInfo item = mySkippedItems.get(i);
-        myQueue.addFirst(item);
-        myMayHaveItems = true;
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    synchronized (getQueueLock()) {
+      int size = mySkippedItems.size();
+      if (size != 0) {
+        myQueue.bulkEnqueueFirst(mySkippedItems);
+        // .clear() may be expensive
+        if (size < 100) {
+          mySkippedItems.clear();
+        }
+        else {
+          mySkippedItems = new ObjectArrayList<>(100);
+        }
       }
-      mySkippedItems.clear();
+      requestFlush();
     }
   }
 
   void purgeExpiredItems() {
-    synchronized (LOCK) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    synchronized (getQueueLock()) {
       reincludeSkippedItems();
-
-      List<RunnableInfo> alive = new ArrayList<>(myQueue.size());
-      for (RunnableInfo info : myQueue) {
-        if (info.expired.value(null)) {
-          info.markDone();
-        }
-        else {
-          alive.add(info);
-        }
-      }
-      if (alive.size() < myQueue.size()) {
-        myQueue.clear();
-        myQueue.addAll(alive);
-      }
+      myQueue.removeAll(info -> info.expired.value(null));
+      requestFlush();
     }
   }
 
-  final class FlushNow implements Runnable {
-    @Override
-    public void run() {
-      flushNow();
+  private boolean FLUSHER_SCHEDULED; // guarded by getQueueLock()
+
+  // must be run under getQueueLock()
+  private void requestFlush() {
+    boolean shouldSchedule = !FLUSHER_SCHEDULED && !myQueue.isEmpty();
+    if (shouldSchedule) {
+      FLUSHER_SCHEDULED = true;
+      SwingUtilities.invokeLater(FLUSH_NOW);
     }
   }
 
-  final static class RunnableInfo {
+  private final Runnable FLUSH_NOW = this::flushNow;
+  boolean isFlushNow(@NotNull Runnable runnable) {
+    return runnable == FLUSH_NOW;
+  }
+
+  private static class RunnableInfo {
     @NotNull private final Runnable runnable;
     @NotNull private final ModalityState modalityState;
     @NotNull private final Condition<?> expired;
-    @Nullable private final ActionCallback callback;
-    @Nullable private final ClientId clientId;
+    @NotNull
+    private final String clientId;
 
     @Async.Schedule
     RunnableInfo(@NotNull Runnable runnable,
                  @NotNull ModalityState modalityState,
-                 @NotNull Condition<?> expired,
-                 @Nullable ActionCallback callback) {
+                 @NotNull Condition<?> expired) {
       this.runnable = runnable;
       this.modalityState = modalityState;
       this.expired = expired;
-      this.callback = callback;
-      this.clientId = ClientId.getCurrent();
-    }
-
-    void markDone() {
-      if (callback != null) callback.setDone();
+      this.clientId = ClientId.getCurrentValue();
     }
 
     @Override

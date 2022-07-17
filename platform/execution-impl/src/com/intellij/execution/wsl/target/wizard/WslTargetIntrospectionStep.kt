@@ -26,7 +26,7 @@ import javax.swing.border.Border
 
 internal class WslTargetIntrospectionStep(model: WslTargetWizardModel) : WslTargetStepBase(model) {
 
-  private val selectDistributionConfigurable : WslTargetConfigurable by lazy {
+  private val selectDistributionConfigurable: WslTargetConfigurable by lazy {
     WslTargetConfigurable(WslTargetEnvironmentConfiguration(null), model.project)
   }
   private val console: ConsoleView by lazy {
@@ -143,7 +143,7 @@ internal class WslTargetIntrospectionStep(model: WslTargetWizardModel) : WslTarg
 
   override fun getStepId(): Any = ID
 
-  override fun getNextStepId(): Any = WslTargetLanguageStep.ID
+  override fun getNextStepId(): Any = if (model.isCustomToolConfiguration) WslTargetCustomToolStep.ID else WslTargetLanguageStep.ID
 
   override fun getPreviousStepId(): Any? = null
 

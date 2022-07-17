@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content
 
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.*
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.TabInfo
 import javax.swing.JComponent
@@ -46,6 +43,11 @@ interface SingleContentSupplier {
     return false
   }
 
+  @JvmDefault
+  fun close(tab: TabInfo) {
+    getTabs().removeTab(tab)
+  }
+
   /**
    * This method is called after a single view mode is activated.
    *
@@ -71,6 +73,12 @@ interface SingleContentSupplier {
   @JvmDefault
   fun reset() {
   }
+
+  @JvmDefault
+  fun getMainToolbarPlace(): String = ActionPlaces.TOOLWINDOW_TITLE
+
+  @JvmDefault
+  fun getContentToolbarPlace(): String = ActionPlaces.TOOLWINDOW_TITLE
 
   companion object {
     @JvmField

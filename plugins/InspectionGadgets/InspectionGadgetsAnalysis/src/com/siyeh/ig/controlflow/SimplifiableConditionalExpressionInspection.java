@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.style.ConditionalExpressionGenerator;
 import com.siyeh.ig.style.ConditionalModel;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,8 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
   @Override
   public @NotNull String buildErrorString(Object... infos) {
     final String replacement = (String)infos[0];
-    return InspectionGadgetsBundle.message("simplifiable.conditional.expression.problem.descriptor", replacement);
+    final String orig = (String)infos[1];
+    return InspectionGadgetsBundle.message("simplifiable.conditional.expression.problem.descriptor", replacement, orig);
   }
 
   @Override
@@ -57,7 +59,7 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      PsiConditionalExpression expression = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiConditionalExpression.class);
+      PsiConditionalExpression expression = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiConditionalExpression.class);
       if (expression == null) return;
       ConditionalModel model = ConditionalModel.from(expression);
       if (model == null) return;
@@ -76,12 +78,19 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
 
   private static class SimplifiableConditionalExpressionVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       ConditionalModel model = ConditionalModel.from(expression);
       if (model == null) return;
       ConditionalExpressionGenerator generator = ConditionalExpressionGenerator.from(model);
       if (generator == null || generator.getTokenType().equals("?:")) return;
+      if (PsiType.BOOLEAN.equals(model.getType()) &&
+          ExpressionUtils.nonStructuralChildren(expression).anyMatch(ExpressionUtils::isNullLiteral)) {
+        // Something like Boolean res = cond1 ? true : cond2 ? false : null
+        // While warning is technically correct, it masks more serious "possible NPE" problem
+        // and the applied fix makes it more confusing
+        return;
+      }
       PsiExpression replacement = generator.getReplacement();
       if (replacement != null) {
         PsiElement parent = expression.getParent();
@@ -90,7 +99,7 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
           return;
         }
       }
-      registerError(expression, generator.generate(new CommentTracker()));
+      registerError(expression.getCondition(), generator.generate(new CommentTracker()), expression.getText());
     }
   }
 }

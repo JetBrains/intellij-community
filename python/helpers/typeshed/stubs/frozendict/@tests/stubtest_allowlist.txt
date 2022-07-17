@@ -1,0 +1,5 @@
+frozendict.FrozenOrderedDict
+frozendict.frozendict.__hash__
+frozendict.frozendict.__new__
+frozendict.frozendict.__repr__  # forwards args to super
+frozendict.frozendict.copy

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.layout
 
 import com.intellij.ide.ui.laf.IntelliJLaf
@@ -37,7 +37,6 @@ object IntelliJUiTestApp {
 private fun run(laf: LookAndFeel) {
   //val isDebugEnabled = true
       val isDebugEnabled = false
-  @Suppress("ConstantConditionIf")
   if (isDebugEnabled) {
     LayoutUtil.setGlobalDebugMillis(1000)
   }

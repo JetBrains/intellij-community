@@ -1,37 +1,40 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.statistics
 
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.newMetric
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
-import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector.Companion.EXTERNAL_SYSTEM_ID
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollector.Companion.EXTERNAL_TASK_ACTIVITY
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollector.Companion.TARGET_FIELD
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollector.Companion.TASK_ID_FIELD
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Version
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.lang.JavaVersion
 
 class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
-  override fun getGroupId() = "build.tools"
+  override fun getGroup(): EventLogGroup {
+    return GROUP
+  }
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val usages = mutableSetOf<MetricEvent>()
     for (manager in ExternalSystemApiUtil.getAllManagers()) {
       if (!manager.settingsProvider.`fun`(project).linkedProjectsSettings.isEmpty()) {
-        usages.add(newMetric("externalSystemId", getAnonymizedSystemId(manager.systemId)))
+        usages.add(EXTERNAL_SYSTEM_ID.metric(getAnonymizedSystemId(manager.systemId)))
       }
     }
 
     ModuleManager.getInstance(project).modules.find { ExternalSystemModulePropertyManager.getInstance(it).isMavenized() }?.let {
-      usages.add(newMetric("externalSystemId", "Maven"))
+      usages.add(EXTERNAL_SYSTEM_ID.metric("Maven"))
     }
     return usages
   }
@@ -41,25 +44,35 @@ class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
     ExecuteTask,
   }
 
+  enum class JreType(val description: String) {
+    EMPTY("empty"),
+    CUSTOM("custom"),
+    USE_INTERNAL_JAVA("#JAVA_INTERNAL"),
+    USE_PROJECT_JDK("#USE_PROJECT_JDK"),
+    USE_JAVA_HOME("#JAVA_HOME")
+  }
+
+
   companion object {
-    fun getJRETypeUsage(key: String, jreName: String?): MetricEvent {
+    private val GROUP = EventLogGroup("build.tools", 3)
+    private val EXTERNAL_SYSTEM_ID = GROUP.registerEvent("externalSystemId", EventFields.StringValidatedByEnum("value", "build_tools"))
+    val JRE_TYPE_FIELD = EventFields.Enum("value", JreType::class.java) { it.description }
+
+    fun getJreType(jreName: String?): JreType {
+      val jreType = JreType.values().find { it.description == jreName }
       val anonymizedName = when {
-        jreName.isNullOrBlank() -> "empty"
-        jreName in listOf(ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
-                          ExternalSystemJdkUtil.USE_PROJECT_JDK,
-                          ExternalSystemJdkUtil.USE_JAVA_HOME) -> jreName
-        else -> "custom"
+        jreName.isNullOrBlank() -> JreType.EMPTY
+        jreType != null -> jreType
+        else -> JreType.CUSTOM
       }
-      return newMetric(key, anonymizedName)
+      return anonymizedName
     }
 
-    fun getJREVersionUsage(project: Project, key: String, jreName: String?): MetricEvent {
+    fun getJreVersion(project: Project, jreName: String?): String {
       val jdk = ExternalSystemJdkUtil.getJdk(project, jreName)
-      val versionString =
-        jdk?.versionString?.let { Version.parseVersion(it)?.let { parsed -> "${parsed.major}.${parsed.minor}" } }
-        ?: "unknown"
-
-      return newMetric(key, versionString)
+      return jdk?.versionString?.let<@NlsSafe String, String?> {
+        JavaVersion.tryParse(it)?.let { parsed -> "${parsed.feature}.${parsed.minor}" }
+      } ?: "unknown"
     }
 
     @JvmStatic
@@ -68,7 +81,8 @@ class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
                                   taskId: ExternalSystemTaskId,
                                   environmentConfigurationProvider: TargetEnvironmentConfigurationProvider?): StructuredIdeActivity {
       return EXTERNAL_TASK_ACTIVITY.started(project) {
-        val data: MutableList<EventPair<*>> = mutableListOf(EXTERNAL_SYSTEM_ID.with(anonymizeSystemId(systemId)))
+        val data: MutableList<EventPair<*>> = mutableListOf(
+          ExternalSystemActionsCollector.EXTERNAL_SYSTEM_ID.with(anonymizeSystemId(systemId)))
         data.add(TASK_ID_FIELD.with(taskId))
         environmentConfigurationProvider?.environmentConfiguration?.typeId?.also {
           data.add(TARGET_FIELD.with(it))

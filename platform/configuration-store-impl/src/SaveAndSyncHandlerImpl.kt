@@ -1,17 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.CommonBundle
+import com.intellij.codeWithMe.ClientId
 import com.intellij.conversion.ConversionService
-import com.intellij.ide.FrameStateListener
-import com.intellij.ide.GeneralSettings
-import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.*
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StorageScheme
@@ -23,6 +18,7 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.util.Disposer
@@ -33,6 +29,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.project.stateStore
 import com.intellij.util.SingleAlarm
+import com.intellij.util.application
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
@@ -48,12 +45,15 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
   private val refreshDelayAlarm = SingleAlarm(Runnable { doScheduledRefresh() }, delay = 300, parentDisposable = this)
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncOnFrameActivationCount = AtomicInteger()
+
   @Volatile
   private var refreshSessionId = -1L
 
   private val saveQueue = ArrayDeque<SaveTask>()
 
   private val currentJob = AtomicReference<Job?>()
+
+  private val eventPublisher = application.messageBus.syncPublisher(SaveAndSyncHandlerListener.TOPIC)
 
   init {
     // add listeners after some delay - doesn't make sense to listen earlier
@@ -65,6 +65,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
    * But even if `forceExecuteImmediately = true` specified, job is not re-added.
    * That's ok - client doesn't expect that `forceExecuteImmediately` means "executes immediately", it means "do save without regular delay".
    */
+  @OptIn(DelicateCoroutinesApi::class)
   private fun requestSave(forceExecuteImmediately: Boolean = false) {
     if (currentJob.get() != null) {
       return
@@ -79,12 +80,12 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
       if (!forceExecuteImmediately) {
         delay(300)
       }
-      processTasks()
+      processTasks(forceExecuteImmediately)
       currentJob.set(null)
     })?.cancel(CancellationException("Superseded by another request"))
   }
 
-  private suspend fun processTasks() {
+  private suspend fun processTasks(forceExecuteImmediately: Boolean) {
     while (true) {
       val app = ApplicationManager.getApplication()
       if (app == null || app.isDisposed || blockSaveOnFrameDeactivationCount.get() != 0) {
@@ -104,6 +105,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
       }
 
       LOG.runAndLogException {
+        eventPublisher.beforeSave(task, forceExecuteImmediately)
         saveProjectsAndApp(forceSavingAllSettings = task.forceSavingAllSettings, onlyProject = task.project)
       }
     }
@@ -114,7 +116,9 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
     val settings = GeneralSettings.getInstance()
     val idleListener = Runnable {
       if (settings.isAutoSaveIfInactive && canSyncOrSave()) {
-        (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+        ClientId.withClientId(ClientId.ownerId) {
+          (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+        }
       }
     }
 
@@ -220,7 +224,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
         override fun run(indicator: ProgressIndicator) {
           indicator.isIndeterminate = true
 
-          runBlocking {
+          runBlocking(CoreProgressManager.getCurrentThreadProgressModality().asContextElement()) {
             isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
           }
 
@@ -256,6 +260,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
   }
 
   private fun doScheduledRefresh() {
+    eventPublisher.beforeRefresh()
     if (canSyncOrSave()) {
       refreshOpenFiles()
     }
@@ -281,11 +286,13 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
   override fun refreshOpenFiles() {
     val files = ArrayList<VirtualFile>()
     processOpenedProjects { project ->
-      FileEditorManager.getInstance(project).selectedFiles.filterTo(files) { it is NewVirtualFile }
+      FileEditorManager.getInstance(project).selectedEditors
+        .flatMap { it.filesToRefresh }
+        .filterTo(files) { it is NewVirtualFile }
     }
 
     if (files.isNotEmpty()) {
-      // refresh open files synchronously so it doesn't wait for potentially longish refresh request in the queue to finish
+      // refresh open files synchronously, so it doesn't wait for potentially longish refresh request in the queue to finish
       RefreshQueue.getInstance().refresh(false, false, null, files)
     }
   }
@@ -325,9 +332,5 @@ private val saveAppAndProjectsSettingsTask = SaveAndSyncHandler.SaveTask()
 
 @NlsContexts.DialogTitle
 private fun getProgressTitle(componentManager: ComponentManager): String {
-  return when {
-    componentManager is Application -> CommonBundle.message("title.save.app")
-    (componentManager as Project).isDefault -> CommonBundle.message("title.save.default.project")
-    else -> CommonBundle.message("title.save.project")
-  }
+  return if (componentManager is Application) CommonBundle.message("title.save.app") else CommonBundle.message("title.save.project")
 }

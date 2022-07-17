@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,22 +21,19 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
 
-public class ClassWithTooManyTransitiveDependenciesInspection
-  extends BaseGlobalInspection {
+public class ClassWithTooManyTransitiveDependenciesInspection extends BaseGlobalInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public int limit = 35;
 
   @Override
@@ -49,12 +46,10 @@ public class ClassWithTooManyTransitiveDependenciesInspection
       return null;
     }
     final RefClass refClass = (RefClass)refEntity;
-    final PsiElement aClass = refClass.getPsiElement();
-    if (!(aClass instanceof PsiClass) || ClassUtils.isInnerClass((PsiClass)aClass)) {
+    if (!(refClass.getOwner() instanceof RefPackage)) {
       return null;
     }
-    final Set<RefClass> dependencies =
-      DependencyUtils.calculateTransitiveDependenciesForClass(refClass);
+    final Set<RefClass> dependencies = DependencyUtils.calculateTransitiveDependenciesForClass(refClass);
     final int numDependencies = dependencies.size();
     if (numDependencies <= limit) {
       return null;

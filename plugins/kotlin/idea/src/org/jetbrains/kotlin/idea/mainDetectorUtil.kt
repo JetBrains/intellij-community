@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea
 
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
@@ -12,7 +12,9 @@ fun KtElement.isMainFunction(computedDescriptor: DeclarationDescriptor? = null):
     if (this !is KtNamedFunction) return false
     val mainFunctionDetector = MainFunctionDetector(languageVersionSettings) { it.resolveToDescriptorIfAny() }
 
-    if (computedDescriptor != null) return mainFunctionDetector.isMain(computedDescriptor)
+    if (computedDescriptor != null) {
+        return mainFunctionDetector.isMain(computedDescriptor)
+    }
 
     return mainFunctionDetector.isMain(this)
 }

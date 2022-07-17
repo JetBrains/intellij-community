@@ -43,7 +43,7 @@ public class OnDemandImportInspection extends BaseInspection {
   private static class PackageImportVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitImportStatement(PsiImportStatement statement) {
+    public void visitImportStatement(@NotNull PsiImportStatement statement) {
       super.visitImportStatement(statement);
       if (statement.isOnDemand()) {
         registerError(statement);

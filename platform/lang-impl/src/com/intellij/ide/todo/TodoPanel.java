@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.find.FindModel;
@@ -19,10 +19,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,6 +31,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
@@ -54,6 +55,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -117,15 +119,6 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       todoTreeBuilder.select(selectableElement);
     }
     return todoTreeBuilder;
-  }
-
-  public static class GroupByActionGroup extends DefaultActionGroup {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, this, e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
-          .showUnderneathOf(e.getInputEvent().getComponent());
-      }
   }
 
   protected Tree getTree() {
@@ -233,7 +226,9 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   protected JComponent createCenterComponent() {
     Splitter splitter = new OnePixelSplitter(false);
     splitter.setSecondComponent(myUsagePreviewPanel);
-    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
+    JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), this, 1000);
+    loadingPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+    splitter.setFirstComponent(loadingPanel);
     return splitter;
   }
 
@@ -245,7 +240,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object userObject = node.getUserObject();
       if (userObject instanceof NodeDescriptor) {
-        Object element = ((NodeDescriptor)userObject).getElement();
+        Object element = ((NodeDescriptor<?>)userObject).getElement();
         TodoItemNode pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
         if (pointer != null) {
           final SmartTodoItemPointer value = pointer.getValue();
@@ -350,19 +345,9 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     return getSelectedFile();
   }
 
-  @Override
-  public Object getData(@NotNull String dataId) {
+  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull NodeDescriptor nodeDescriptor) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      TreePath path = myTree.getSelectionPath();
-      if (path == null) {
-        return null;
-      }
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      Object userObject = node.getUserObject();
-      if (!(userObject instanceof NodeDescriptor)) {
-        return null;
-      }
-      Object element = ((NodeDescriptor)userObject).getElement();
+      Object element = nodeDescriptor.getElement();
       if (!(element instanceof TodoFileNode || element instanceof TodoItemNode)) { // allow user to use F4 only on files an TODOs
         return null;
       }
@@ -374,11 +359,13 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
                                                                     pointer.getValue().getRangeMarker()
                                                                            .getStartOffset());
       }
-      else {
-        return null;
-      }
     }
-    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+    return null;
+  }
+
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       final PsiFile file = getSelectedFile();
       return file != null ? file.getVirtualFile() : null;
     }
@@ -394,11 +381,22 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
         return VirtualFile.EMPTY_ARRAY;
       }
     }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return "find.todoList";
     }
     else if (TODO_PANEL_DATA_KEY.is(dataId)) {
       return this;
+    }
+    else if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      TreePath path = myTree.getSelectionPath();
+      if (path == null) {
+        return null;
+      }
+      Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
+      if (!(userObject instanceof NodeDescriptor)) {
+        return null;
+      }
+      return List.of((DataProvider)realDataId -> getSlowData(realDataId, (NodeDescriptor)userObject));
     }
     return super.getData(dataId);
   }
@@ -477,7 +475,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       if (userObject == null) {
         return false;
       }
-      if (userObject instanceof NodeDescriptor && ((NodeDescriptor)userObject).getElement() instanceof TodoItemNode) {
+      if (userObject instanceof NodeDescriptor && ((NodeDescriptor<?>)userObject).getElement() instanceof TodoItemNode) {
         return myTree.getRowCount() != myTree.getRowForPath(path) + 1;
       }
       else {
@@ -549,7 +547,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       if (!(userObject instanceof NodeDescriptor)) {
         return null;
       }
-      Object element = ((NodeDescriptor)userObject).getElement();
+      Object element = ((NodeDescriptor<?>)userObject).getElement();
       TodoItemNode pointer;
       if (element instanceof TodoItemNode) {
         pointer = myTodoTreeBuilder.getNextPointer((TodoItemNode)element);
@@ -571,7 +569,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       if (!(userObject instanceof NodeDescriptor)) {
         return null;
       }
-      Object element = ((NodeDescriptor)userObject).getElement();
+      Object element = ((NodeDescriptor<?>)userObject).getElement();
       TodoItemNode pointer;
       if (element instanceof TodoItemNode) {
         pointer = myTodoTreeBuilder.getPreviousPointer((TodoItemNode)element);
@@ -587,7 +585,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
   }
 
-  public static final class MyShowPackagesAction extends ToggleAction {
+  public static final class MyShowPackagesAction extends ToggleAction implements DumbAware {
     public MyShowPackagesAction() {
       super(IdeBundle.messagePointer("action.group.by.packages"), PlatformIcons.GROUP_BY_PACKAGES);
     }
@@ -596,6 +594,11 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(e.getData(TODO_PANEL_DATA_KEY) != null);
       super.update(e);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -614,7 +617,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
   }
 
-  public static final class MyShowModulesAction extends ToggleAction {
+  public static final class MyShowModulesAction extends ToggleAction implements DumbAware {
     public MyShowModulesAction() {
       super(IdeBundle.messagePointer("action.group.by.modules"), AllIcons.Actions.GroupByModule);
     }
@@ -623,6 +626,11 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(e.getData(TODO_PANEL_DATA_KEY) != null);
       super.update(e);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -642,7 +650,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
   }
 
-  public static final class MyFlattenPackagesAction extends ToggleAction {
+  public static final class MyFlattenPackagesAction extends ToggleAction implements DumbAware {
     public MyFlattenPackagesAction() {
       super(IdeBundle.messagePointer("action.flatten.view"), PlatformIcons.FLATTEN_PACKAGES_ICON);
     }
@@ -653,6 +661,11 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       e.getPresentation().setText("   " + getTemplateText());
       TodoPanel todoPanel = e.getData(TODO_PANEL_DATA_KEY);
       e.getPresentation().setEnabled(todoPanel != null && todoPanel.mySettings.arePackagesShown);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -681,7 +694,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
   }
 
-  private final class MyPreviewAction extends ToggleAction {
+  private final class MyPreviewAction extends ToggleAction implements DumbAware {
 
     MyPreviewAction() {
       super(IdeBundle.messagePointer("todo.panel.preview.source.action.text"), Presentation.NULL_STRING, AllIcons.Actions.PreviewDetails);

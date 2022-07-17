@@ -10,3 +10,13 @@ interface CommitWorkflowHandler {
   fun isExecutorEnabled(executor: CommitExecutor): Boolean
   fun execute(executor: CommitExecutor)
 }
+
+sealed class CommitChecksResult {
+  class Passed(val toCommit: Boolean) : CommitChecksResult()
+  class Failed(val toCloseWindow: Boolean = false) : CommitChecksResult()
+  object Cancelled : CommitChecksResult()
+  object ExecutionError : CommitChecksResult()
+
+  val shouldCommit: Boolean get() = this is Passed && toCommit
+  val shouldCloseWindow: Boolean get() = this is Failed && toCloseWindow
+}

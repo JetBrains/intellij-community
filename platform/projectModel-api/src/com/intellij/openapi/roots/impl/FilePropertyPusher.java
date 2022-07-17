@@ -7,8 +7,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +51,7 @@ public interface FilePropertyPusher<T> {
   ExtensionPointName<FilePropertyPusher<?>> EP_NAME = ExtensionPointName.create("com.intellij.filePropertyPusher");
 
   default void initExtra(@NotNull Project project) {
-    initExtra(project, project.getMessageBus());
+    project.getMessageBus();
   }
 
   default void afterRootsChanged(@NotNull Project project) {}
@@ -92,46 +90,12 @@ public interface FilePropertyPusher<T> {
   //<editor-fold desc="Deprecated APIs" defaultState="collapsed">
 
   /**
-   * @deprecated use {@link FilePropertyPusher#initExtra(Project)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  @SuppressWarnings("unused")
-  default void initExtra(@NotNull Project project, @NotNull MessageBus bus, @NotNull Engine languageLevelUpdater) {
-    initExtra(project, bus);
-  }
-
-  /**
-   * @deprecated not used anymore
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  interface Engine {
-    @SuppressWarnings("unused")
-    void pushAll();
-
-    @SuppressWarnings("unused")
-    void pushRecursively(@NotNull VirtualFile vile, @NotNull Project project);
-  }
-
-  /**
    * @deprecated Please override {@link FilePropertyPusher#acceptsFile(VirtualFile, Project)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("DeprecatedIsStillUsed")
   default boolean acceptsFile(@NotNull VirtualFile file) {
     return false;
   }
-
-  /**
-   * @deprecated use {@link #initExtra(Project)}
-   */
-  @Deprecated
-  @SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default void initExtra(@NotNull Project project, @NotNull MessageBus bus) {
-  }
-
   //</editor-fold>
 }

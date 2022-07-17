@@ -31,7 +31,6 @@ from UserString import UserString as UserString
 # import email.MIMEBase as email_mime_base
 # import email.MIMEMultipart as email_mime_multipart
 # import email.MIMENonMultipart as email_mime_nonmultipart
-# import copy_reg as copyreg
 # import gdbm as dbm_gnu
 from . import (
     BaseHTTPServer,
@@ -40,6 +39,7 @@ from . import (
     _dummy_thread,
     _thread,
     configparser,
+    copyreg as copyreg,
     cPickle,
     email_mime_text,
     html_entities,

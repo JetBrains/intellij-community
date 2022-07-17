@@ -29,6 +29,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.GradleManager;
+import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
@@ -47,6 +48,7 @@ import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getSourceSetName;
 
 /**
@@ -55,7 +57,7 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Override
-  protected void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+  public void importProject(@NonNls @Language("Groovy") String config) throws IOException {
     config += "\n" +
               "allprojects {\n" +
               "  afterEvaluate {\n" +
@@ -144,11 +146,32 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  public void testModuleDependencies() throws IOException {
+    createSettingsFile("include 'project1', 'project2'");
+    createProjectSubFile("project1/build.gradle", script(it -> it.withJavaPlugin()
+      .addImplementationDependency(it.project(":"))));
+    createProjectSubFile("project2/build.gradle", script(it -> it.withJavaPlugin()
+      .addImplementationDependency(it.project(":project1"))));
+    importProject(script(it -> it.withJavaPlugin()));
+
+    assertModules("project", "project.main", "project.test",
+                  "project.project1", "project.project1.main", "project.project1.test",
+                  "project.project2", "project.project2.main", "project.project2.test");
+
+    assertModuleModuleDeps("project.main");
+    assertModuleModuleDeps("project.test", "project.main");
+    assertModuleModuleDeps("project.project1.main", "project.main");
+    assertModuleModuleDeps("project.project1.test", "project.project1.main", "project.main");
+    assertModuleModuleDeps("project.project2.main", "project.project1.main", "project.main");
+    assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.main", "project.main");
+  }
+
+  @Test
   public void testDependencyScopeMerge() throws Exception {
     createSettingsFile("include 'api', 'impl' ");
 
     importProject(script(it -> {
-      it.allprojects(GradleBuildScriptBuilder::withJavaPlugin)
+      it.allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
         .addImplementationDependency(it.project(":api"))
         .addTestImplementationDependency(it.project(":impl"))
         .addTestImplementationDependency("junit:junit:4.11")
@@ -282,7 +305,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     createSettingsFile("include 'api', 'impl' ");
 
     importProject(script(it -> {
-      it.allprojects(GradleBuildScriptBuilder::withJavaPlugin)
+      it.allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
         .project("impl", p -> {
           p.addPrefix("sourceSets {",
                       "  myCustomSourceSet",
@@ -575,7 +598,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertLibraryExcludedRoots("project.main", depName, excludedRoots);
 
     VirtualFile depJar = createProjectJarSubFile("lib/dep.jar");
-    GradleBuildScriptBuilder builder = createBuildScriptBuilder();
+    TestGradleBuildScriptBuilder builder = createBuildScriptBuilder();
     importProject(
       builder.withJavaPlugin()
         .addPrefix("sourceSets.main.output.dir file(\"$buildDir/generated-resources/main\")")
@@ -709,7 +732,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     importProject(
       createBuildScriptBuilder()
-        .allprojects(GradleBuildScriptBuilder::withJavaPlugin)
+        .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
         .project(":api", it -> {
           it
             .addPostfix("configurations { tests }")
@@ -762,7 +785,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     importProject(
       createBuildScriptBuilder()
-        .subprojects(GradleBuildScriptBuilder::withJavaPlugin)
+        .subprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
         .project(":project1", it -> {
           it
             .withJavaLibraryPlugin()
@@ -931,16 +954,16 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  @TargetVersions("3.0 <=> 6.9")
   public void testDependencyOnDefaultConfigurationWithAdditionalArtifact() throws Exception {
     createSettingsFile("include 'project1', 'project2'");
-    String compileConfiguration = isJavaLibraryPluginSupported() ? "implementation" : "compile";
     createProjectSubFile("project1/build.gradle",
                          createBuildScriptBuilder()
-                           .withJavaLibraryPlugin()
+                           .withJavaPlugin()
                            .addPostfix(
                              "configurations {",
                              "  aParentCfg",
-                             "  " + compileConfiguration + ".extendsFrom aParentCfg",
+                             "  compile.extendsFrom aParentCfg",
                              "}",
                              "sourceSets {",
                              "  aParentSrc { java.srcDirs = ['src/aParent/java'] }",
@@ -957,7 +980,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                            .generate()
     );
 
-    GradleBuildScriptBuilder builder = createBuildScriptBuilder();
+    TestGradleBuildScriptBuilder builder = createBuildScriptBuilder();
     createProjectSubFile("project2/build.gradle", builder
       .withJavaPlugin()
       .addImplementationDependency(builder.project(":project1"))
@@ -1097,11 +1120,14 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.project1", "project.project1.main", "project.project1.test",
                   "project.project2", "project.project2.main", "project.project2.test");
 
-    assertModuleOutput("project.project1.main", getProjectPath() + "/project1/buildIdea/main", "");
-    assertModuleOutput("project.project1.test", "", getProjectPath() + "/project1/buildIdea/test");
+    String mainClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/main" : "/build/classes/main";
+    String testClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/test" : "/build/classes/test";
 
-    assertModuleOutput("project.project2.main", getProjectPath() + "/project2/buildIdea/main", "");
-    assertModuleOutput("project.project2.test", "", getProjectPath() + "/project2/buildIdea/test");
+    assertModuleOutput("project.project1.main", getProjectPath() + "/project1" + mainClassesOutputPath, "");
+    assertModuleOutput("project.project1.test", "", getProjectPath() + "/project1" + testClassesOutputPath);
+
+    assertModuleOutput("project.project2.main", getProjectPath() + "/project2" + mainClassesOutputPath, "");
+    assertModuleOutput("project.project2.test", "", getProjectPath() + "/project2" + testClassesOutputPath);
 
     assertModuleModuleDeps("project.project2.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
     assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.test");
@@ -1283,7 +1309,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @TargetVersions("2.12+")
   public void testCompileOnlyAndCompileScope() throws Exception {
     createSettingsFile("include 'app'\n");
-    GradleBuildScriptBuilder builder = createBuildScriptBuilder();
+    TestGradleBuildScriptBuilder builder = createBuildScriptBuilder();
     importProject(
       builder
         .withJavaPlugin()
@@ -1876,6 +1902,39 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       assertModuleLibDeps("project.main", "Gradle: junit:junit:4.12", "Gradle: org.hamcrest:hamcrest-core:1.3");
       assertModuleLibDeps("project.customSrc", "Gradle: org.hamcrest:hamcrest-core:1.3");
     }
+  }
+
+  @Test
+  @TargetVersions("7.4+")
+  public void testVersionCatalogsModelImport() throws Exception {
+    final VirtualFile toml1 = createProjectSubFile("my_versions.toml", "[libraries]\n" +
+                                                                      "mylib = \"junit:junit:4.12\"");
+    final VirtualFile toml2 = createProjectSubFile("my_versions_2.toml", "[libraries]\n" +
+                                                                         "myOtherLib = \"org.hamcrest:hamcrest-core:1.3\"");
+    createSettingsFile("dependencyResolutionManagement {\n" +
+                       "    versionCatalogs {\n" +
+                       "        libs1 {\n" +
+                       "            from(files('my_versions.toml'))\n" +
+                       "        }\n" +
+                       "        libs2 {\n" +
+                       "            from(files('my_versions_2.toml'))\n" +
+                       "        }\n" +
+                       "    }\n" +
+                       "}" +
+                       "");
+    importProject(createBuildScriptBuilder()
+                    .withJavaPlugin()
+                    .addPostfix(
+                      "dependencies {",
+                      "  testImplementation libs1.mylib",
+                      "  testImplementation libs2.myOtherLib",
+                      "}"
+                    ).generate());
+
+    VersionCatalogsLocator locator = myProject.getService(VersionCatalogsLocator.class);
+    final Map<String, Path> stringStringMap = locator.getVersionCatalogsForModule(getModule("project.main"));
+    assertThat(stringStringMap).containsOnly(entry("libs1", Path.of(toml1.getPath())),
+                                             entry("libs2", Path.of(toml2.getPath())));
   }
 
   @SuppressWarnings("SameParameterValue")

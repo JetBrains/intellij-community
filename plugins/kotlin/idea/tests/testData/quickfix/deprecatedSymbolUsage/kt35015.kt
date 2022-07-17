@@ -1,5 +1,5 @@
 // "Replace with 'kotlin.math.cos(x)'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 package package1
 

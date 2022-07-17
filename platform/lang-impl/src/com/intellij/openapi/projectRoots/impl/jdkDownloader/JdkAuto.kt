@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
-import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.lang.JavaVersion
+import com.intellij.util.system.CpuArch
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.NotNull
@@ -103,7 +103,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
       }
 
       val projectInWsl by lazy {
-        project?.basePath?.let { WslDistributionManager.isWslPath(it) } == true
+        project?.basePath?.let { WslPath.isWslUncPath(it) } == true
       }
 
       val lazyDownloadModel: List<JdkItem> by lazy {
@@ -136,7 +136,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
           .getInstance(project)
           .state
           .jdks.singleOrNull { it.name.equals(sdkName, ignoreCase = true) &&
-                               it.path?.let { path -> projectInWsl == WslDistributionManager.isWslPath(path) } ?: false }
+                               it.path?.let { path -> projectInWsl == WslPath.isWslUncPath(path) } ?: false }
       }
 
       private fun parseSdkRequirement(sdk: UnknownSdk): JdkRequirement? {
@@ -184,6 +184,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         val jdkToDownload = lazyDownloadModel
                               .asSequence()
                               .filter { req.matches(it) }
+                              .filter { CpuArch.fromString(it.arch) == CpuArch.CURRENT }
                               .mapNotNull {
                                 val v = JavaVersion.tryParse(it.versionString)
                                 if (v != null) {
@@ -224,7 +225,12 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
           }
         })
 
-        result
+        result.also {
+          LOG.info(
+            result.joinToString(prefix = "The following local JDKs were found: ")
+            { "[${it.existingSdkHome}, ${it.presentableVersionString}, ${it.suggestedSdkName}]" }
+          )
+        }
       }
 
       override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkLocalSdkFix? {
@@ -274,7 +280,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
       }
 
       private fun List<JavaLocalSdkFix>.filterByWsl(): List<JavaLocalSdkFix> {
-        return filter { WslDistributionManager.isWslPath(it.homeDir) == projectInWsl }
+        return filter { WslPath.isWslUncPath(it.homeDir) == projectInWsl }
       }
     }
   }

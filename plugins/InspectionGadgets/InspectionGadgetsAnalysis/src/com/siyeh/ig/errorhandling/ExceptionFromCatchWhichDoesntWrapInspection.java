@@ -70,7 +70,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
   private class ExceptionFromCatchWhichDoesntWrapVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitThrowStatement(PsiThrowStatement statement) {
+    public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
       final PsiCatchSection catchSection = PsiTreeUtil.getParentOfType(statement, PsiCatchSection.class, true, PsiClass.class);
       if (catchSection == null) {
@@ -135,7 +135,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (argumentsContainCatchParameter || !visited.add(expression)) {
         return;
       }

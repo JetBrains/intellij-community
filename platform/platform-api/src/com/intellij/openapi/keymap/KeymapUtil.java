@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.*;
@@ -47,6 +47,7 @@ public final class KeymapUtil {
   private KeymapUtil() {
   }
 
+  @NlsSafe
   @NotNull
   public static String getShortcutText(@NotNull @NonNls String actionId) {
     KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
@@ -730,9 +731,20 @@ public final class KeymapUtil {
     return filtered.isEmpty() ? null : new CustomShortcutSet(filtered.toArray(Shortcut.EMPTY_ARRAY));
   }
 
+  /**
+   * @deprecated use {@link #getShortcutsForMnemonicChar} or {@link #getShortcutsForMnemonicCode} instead
+   */
+  @Deprecated
   @Nullable
   public static CustomShortcutSet getMnemonicAsShortcut(int mnemonic) {
-    mnemonic = KeyEvent.getExtendedKeyCodeForChar(mnemonic);
+    return getShortcutsForMnemonicCode(mnemonic);
+  }
+
+  public static @Nullable CustomShortcutSet getShortcutsForMnemonicChar(char mnemonic) {
+    return getShortcutsForMnemonicCode(KeyEvent.getExtendedKeyCodeForChar(mnemonic));
+  }
+
+  public static @Nullable CustomShortcutSet getShortcutsForMnemonicCode(int mnemonic) {
     if (mnemonic != KeyEvent.VK_UNDEFINED) {
       KeyboardShortcut ctrlAltShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK | CTRL_DOWN_MASK), null);
       KeyboardShortcut altShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK), null);

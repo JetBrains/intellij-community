@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -24,11 +25,11 @@ public class XmlNamespaceAnnotator implements Annotator {
         if (key != null) {
           TextRange range = XmlTagUtil.getStartTagRange(tag);
           if (range != null) {
-            holder.newSilentAnnotation(com.intellij.lang.annotation.HighlightSeverity.INFORMATION).range(range).textAttributes(key).create();
+            holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(range).textAttributes(key).create();
           }
           TextRange endTagRange = XmlTagUtil.getEndTagRange(tag);
           if (endTagRange != null) {
-            holder.newSilentAnnotation(com.intellij.lang.annotation.HighlightSeverity.INFORMATION).range(endTagRange).textAttributes(key).create();
+            holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(endTagRange).textAttributes(key).create();
           }
           return;
         }

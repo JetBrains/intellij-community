@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -7,9 +7,9 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -18,21 +18,24 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.effectiveVisibility
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.canBePrivate
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.core.toDescriptor
-import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
 import org.jetbrains.kotlin.idea.refactoring.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
 import org.jetbrains.kotlin.idea.search.usagesSearch.dataClassComponentFunction
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
 
@@ -63,7 +66,7 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
 
     private fun canBePrivate(declaration: KtNamedDeclaration): Boolean {
         if (declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) || declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
-        if (declaration.annotationEntries.isNotEmpty()) return false
+        if (KotlinPsiHeuristics.hasNonSuppressAnnotations(declaration)) return false
 
         val classOrObject = declaration.containingClassOrObject ?: return false
         val inheritable = classOrObject is KtClass && classOrObject.isInheritable()
@@ -72,7 +75,8 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
 
         val descriptor = (declaration.toDescriptor() as? DeclarationDescriptorWithVisibility) ?: return false
         when (descriptor.effectiveVisibility()) {
-            EffectiveVisibility.Private, EffectiveVisibility.Local -> return false
+            EffectiveVisibility.PrivateInClass, EffectiveVisibility.PrivateInFile, EffectiveVisibility.Local -> return false
+            else -> {}
         }
 
         val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
@@ -102,9 +106,9 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
 
         var otherUsageFound = false
         var inClassUsageFound = false
-        ReferencesSearch.search(declaration, restrictedScope).forEach(Processor<PsiReference> {
+        ReferencesSearch.search(declaration, restrictedScope).forEach(Processor {
             val usage = it.element
-            if (classOrObject != usage.getParentOfType<KtClassOrObject>(false)) {
+            if (usage.isOutside(classOrObject)) {
                 otherUsageFound = true
                 return@Processor false
             }
@@ -129,7 +133,14 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
                 true
             }
         })
+
         return inClassUsageFound && !otherUsageFound
+    }
+
+    private fun PsiElement.isOutside(classOrObject: KtClassOrObject): Boolean {
+        if (classOrObject != getParentOfType<KtClassOrObject>(false)) return true
+        val annotationEntry = getStrictParentOfType<KtAnnotationEntry>() ?: return false
+        return classOrObject.annotationEntries.any { it == annotationEntry }
     }
 
     private fun KtModifierListOwner?.insideInline() = this?.let { it.hasModifier(KtTokens.INLINE_KEYWORD) && !it.isPrivate() } ?: false
@@ -140,12 +151,13 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
             is KtNamedFunction -> KotlinBundle.message("text.Function")
             else -> KotlinBundle.message("text.Property")
         }
+
         val nameElement = (declaration as? PsiNameIdentifierOwner)?.nameIdentifier ?: return
         holder.registerProblem(
             declaration.visibilityModifier() ?: nameElement,
             KotlinBundle.message("0.1.could.be.private", member, declaration.getName().toString()),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-            IntentionWrapper(AddModifierFix(modifierListOwner, KtTokens.PRIVATE_KEYWORD), declaration.containingKtFile)
+            IntentionWrapper(AddModifierFixFE10(modifierListOwner, KtTokens.PRIVATE_KEYWORD))
         )
     }
 }

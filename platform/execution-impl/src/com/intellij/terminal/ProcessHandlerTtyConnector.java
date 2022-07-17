@@ -103,6 +103,11 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
     return myPtyProcess.waitFor();
   }
 
+  @Override
+  public boolean ready() throws IOException {
+    return false;
+  }
+
   private void writeBytes(byte[] bytes) throws IOException {
     OutputStream input = myProcessHandler.getProcessInput();
     if (input != null) {

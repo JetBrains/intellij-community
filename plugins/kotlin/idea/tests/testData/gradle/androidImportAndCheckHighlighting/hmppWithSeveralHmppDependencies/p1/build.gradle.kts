@@ -4,10 +4,10 @@ plugins {
 }
 
 android {
-    compileSdkVersion(30)
+    compileSdkVersion({{compile_sdk_version}})
 
     val debug by buildTypes.getting
-    debug.matchingFallbacks = listOf("debug", "release")
+    debug.matchingFallbacks += listOf("debug", "release")
 }
 
 kotlin {

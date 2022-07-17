@@ -1,33 +1,47 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
+import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.ApplicationListener
-import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.isDumb
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
-import com.intellij.openapi.vcs.checkin.*
-import com.intellij.openapi.vcs.checkin.CheckinHandler.ReturnResult
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx
-import com.intellij.util.progress.DelegatingProgressIndicatorEx
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
+import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
+import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
+import com.intellij.openapi.vcs.checkin.CommitCheck
+import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.containers.nullize
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import kotlinx.coroutines.*
 import java.lang.Runnable
@@ -58,6 +72,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     updateDefaultCommitActionName()
   }
 
+  private val checkinErrorNotifications = SingletonNotificationManager(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.displayId,
+                                                                       NotificationType.ERROR)
+
   protected fun setupCommitHandlersTracking() {
     isBackgroundCommitChecksValue.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) = commitHandlersChanged()
@@ -69,7 +86,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   private fun commitHandlersChanged() {
     if (workflow.isExecuting) return
 
-    saveCommitOptions(false)
+    commitOptions.saveState()
     disposeCommitOptions()
 
     initCommitHandlers()
@@ -138,17 +155,83 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       !isEmptyChanges && !isEmptyMessage
     }
 
-  protected fun setupCommitChecksResultTracking() =
-    getApplication().addApplicationListener(object : ApplicationListener {
-      override fun writeActionStarted(action: Any) {
-        isCommitChecksResultUpToDate = false
+  /**
+   * Subscribe to VFS and documents changes to reset commit checks results
+   */
+  protected fun setupCommitChecksResultTracking() {
+    fun areFilesAffectsCommitChecksResult(files: Collection<VirtualFile>): Boolean {
+      val vcsManager = ProjectLevelVcsManager.getInstance(project)
+      val filesFromVcs = files.filter { vcsManager.getVcsFor(it) != null }.nullize() ?: return false
+
+      val changeListManager = ChangeListManager.getInstance(project)
+      val fileIndex = ProjectRootManagerEx.getInstanceEx(project).fileIndex
+      return filesFromVcs.any {
+        fileIndex.isInContent(it) && changeListManager.getStatus(it) != FileStatus.IGNORED
+      }
+    }
+
+    // reset commit checks on VFS updates
+    project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: MutableList<out VFileEvent>) {
+        if (!isCommitChecksResultUpToDate) {
+          return
+        }
+        val updatedFiles = events.mapNotNull { it.file }
+        if (areFilesAffectsCommitChecksResult(updatedFiles)) {
+          resetCommitChecksResult()
+        }
+      }
+    })
+
+    // reset commit checks on documents modification (e.g. user typed in the editor)
+    EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        if (!isCommitChecksResultUpToDate) {
+          return
+        }
+        val file = FileDocumentManager.getInstance().getFile(event.document)
+        if (file != null && areFilesAffectsCommitChecksResult(listOf(file))) {
+          resetCommitChecksResult()
+        }
       }
     }, this)
+  }
 
-  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: ReturnResult) {
+  private fun resetCommitChecksResult() {
+    isCommitChecksResultUpToDate = false
+  }
+
+  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) {
+    checkinErrorNotifications.clear()
     super.beforeCommitChecksEnded(isDefaultCommit, result)
-    if (result == ReturnResult.COMMIT) {
+    if (result.shouldCommit) {
       ui.commitProgressUi.clearCommitCheckFailures()
+    }
+    if (result is CommitChecksResult.Failed ||
+        result is CommitChecksResult.ExecutionError) {
+      val commitText = getCommitActionName()
+      val messageText = ui.commitProgressUi.getCommitCheckFailures().joinToString { it.text }
+
+      checkinErrorNotifications.notify(message("commit.checks.failed.notification.title", commitText), messageText, project) {
+        it.setDisplayId(VcsNotificationIdsHolder.COMMIT_CHECKS_FAILED)
+        it.addAction(
+          NotificationAction.createExpiring(message("commit.checks.failed.notification.commit.anyway.action", commitText)) { _, _ ->
+            ui.runDefaultCommitAction()
+          })
+        it.addAction(
+          NotificationAction.create(message("commit.checks.failed.notification.show.details.action")) { _, _ ->
+            val detailsViewer = ui.commitProgressUi.getCommitCheckFailures().mapNotNull { it.detailsViewer }.singleOrNull()
+            if (detailsViewer != null) {
+              detailsViewer()
+            }
+            else {
+              val toolWindow = ChangesViewContentManager.getToolWindowFor(project, LOCAL_CHANGES)
+              toolWindow?.activate {
+                ChangesViewContentManager.getInstance(project).selectContent(LOCAL_CHANGES)
+              }
+            }
+          })
+      }
     }
   }
 
@@ -162,13 +245,14 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         val isOnlyRunCommitChecks = commitContext.isOnlyRunCommitChecks
         commitContext.isOnlyRunCommitChecks = false
 
-        if (isSkipCommitChecks() && !isOnlyRunCommitChecks) return@executeDefault ReturnResult.COMMIT
+        if (isSkipCommitChecks() && !isOnlyRunCommitChecks) return@executeDefault CommitChecksResult.Passed(toCommit = true)
 
-        val indicator = IndeterminateIndicator(ui.commitProgressUi.startProgress())
+        val indicator = ui.commitProgressUi.startProgress(isOnlyRunCommitChecks)
         indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
-          override fun cancel() = this@launch.cancel()
+          override fun cancel() = this@launch.cancel() // cancel coroutine
         })
         try {
+          indicator.start()
           runAllHandlers(executor, indicator, isOnlyRunCommitChecks)
         }
         finally {
@@ -184,34 +268,33 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     executor: CommitExecutor?,
     indicator: ProgressIndicator,
     isOnlyRunCommitChecks: Boolean
-  ): ReturnResult {
-    workflow.runMetaHandlers(indicator)
+  ): CommitChecksResult {
+    val metaHandlers = commitHandlers.filterIsInstance<CheckinMetaHandler>()
+    workflow.runMetaHandlers(metaHandlers, ui.commitProgressUi, indicator)
     FileDocumentManager.getInstance().saveAllDocuments()
 
-    val handlersResult = workflow.runHandlers(executor)
-    if (handlersResult != ReturnResult.COMMIT) return handlersResult
+    val plainHandlers = commitHandlers.filterNot { it is CommitCheck<*> }
+    val plainHandlersResult = workflow.runBeforeCommitHandlersChecks(executor, plainHandlers)
+    if (!plainHandlersResult.shouldCommit) return plainHandlersResult
 
-    val checksResult = runCommitChecks(indicator)
-    if (checksResult != ReturnResult.COMMIT || isOnlyRunCommitChecks) isCommitChecksResultUpToDate = true
-
-    return if (isOnlyRunCommitChecks) ReturnResult.CANCEL else checksResult
-  }
-
-  private suspend fun runCommitChecks(indicator: ProgressIndicator): ReturnResult {
-    var result = ReturnResult.COMMIT
-
-    for (commitCheck in commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck<*>>()) {
-      val problem = runCommitCheck(commitCheck, indicator)
-      if (problem != null) result = ReturnResult.CANCEL
+    val commitChecks = commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck<*>>()
+    val checksPassed = workflow.runCommitChecks(commitChecks, ui.commitProgressUi, indicator)
+    when {
+      isOnlyRunCommitChecks -> {
+        isCommitChecksResultUpToDate = true
+        return when {
+          checksPassed -> CommitChecksResult.Passed(toCommit = false)
+          else -> CommitChecksResult.Failed()
+        }
+      }
+      checksPassed -> {
+        return CommitChecksResult.Passed(toCommit = true)
+      }
+      else -> {
+        isCommitChecksResultUpToDate = true
+        return CommitChecksResult.Failed()
+      }
     }
-
-    return result
-  }
-
-  private suspend fun <P : CommitProblem> runCommitCheck(commitCheck: CommitCheck<P>, indicator: ProgressIndicator): P? {
-    val problem = workflow.runCommitCheck(commitCheck, indicator)
-    problem?.let { ui.commitProgressUi.addCommitCheckFailure(it.text) { commitCheck.showDetails(it) } }
-    return problem
   }
 
   override fun dispose() {
@@ -222,11 +305,13 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
     ui.showCommitOptions(ensureCommitOptions(), getCommitActionName(), isFromToolbar, dataContext)
 
-  override fun saveCommitOptions(): Boolean = saveCommitOptions(true)
-
-  protected fun saveCommitOptions(isEnsureOptionsCreated: Boolean): Boolean {
-    if (isEnsureOptionsCreated) ensureCommitOptions()
-    return super.saveCommitOptions()
+  override fun saveCommitOptionsOnCommit(): Boolean {
+    ensureCommitOptions()
+    // restore state in case settings were changed via configurable
+    commitOptions.allOptions
+      .filter { it is UnnamedConfigurable }
+      .forEach { it.restoreState() }
+    return super.saveCommitOptionsOnCommit()
   }
 
   protected fun ensureCommitOptions(): CommitOptions {
@@ -259,13 +344,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       workflow.clearCommitContext()
       initCommitHandlers()
 
-      isCommitChecksResultUpToDate = false
+      resetCommitChecksResult()
       updateDefaultCommitActionName()
     }
   }
-}
-
-private class IndeterminateIndicator(indicator: ProgressIndicatorEx) : DelegatingProgressIndicatorEx(indicator) {
-  override fun setIndeterminate(indeterminate: Boolean) = Unit
-  override fun setFraction(fraction: Double) = Unit
 }

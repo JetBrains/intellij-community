@@ -1,15 +1,13 @@
-import react.dom.render
 import kotlinx.browser.document
-import kotlinx.browser.window
+import react.create
+import react.dom.client.createRoot
 
 fun main() {
-    window.onload = {
-        render(document.getElementById("root")) {
-            child(Welcome::class) {
-                attrs {
-                    name = "Kotlin/JS"
-                }
-            }
-        }
+    val container = document.createElement("div")
+    document.body!!.appendChild(container)
+
+    val welcome = Welcome.create {
+        name = "Kotlin/JS"
     }
+    createRoot(container).render(welcome)
 }

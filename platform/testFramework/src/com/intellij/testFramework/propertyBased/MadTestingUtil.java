@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -32,6 +33,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
@@ -133,6 +135,7 @@ public final class MadTestingUtil {
         new RunAll(
           () -> PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(),
           () -> FileEditorManagerEx.getInstanceEx(project).closeAllFiles(),
+          () -> EditorHistoryManager.getInstance(project).removeAllFiles(),
           () -> FileDocumentManager.getInstance().saveAllDocuments(),
           () -> revertVfs(label, project),
           () -> documentManager.commitAllDocuments(),
@@ -178,6 +181,18 @@ public final class MadTestingUtil {
     for (String shortId : except) {
       disableInspection(project, profile, shortId);
     }
+    replaceProfile(project, profile);
+  }
+
+  public static void enableDefaultInspections(@NotNull Project project) {
+    InspectionProfileImpl profile = new InspectionProfileImpl("defaultInspections");
+    InspectionsKt.runInInitMode(() -> {
+      replaceProfile(project, profile);
+      return null;
+    });
+  }
+
+  private static void replaceProfile(@NotNull Project project, InspectionProfileImpl profile) {
     // instantiate all tools to avoid extension loading in inconvenient moment
     profile.getAllEnabledInspectionTools(project).forEach(state -> state.getTool().getTool());
 
@@ -400,19 +415,14 @@ public final class MadTestingUtil {
      */
     for (boolean roulette : new boolean[]{true, false}) {
       out.println("Testing " + (roulette ? "roulette" : "plain") + " generator");
-      ObjectIntHashMap<String> fileMap = new ObjectIntHashMap<>();
+      ObjectIntMap<String> fileMap = new ObjectIntHashMap<>();
       Generator<File> generator = randomFiles(root.getPath(), filter, roulette);
       MadTestingAction action = env -> {
         long lastTime = System.nanoTime(), startTime = lastTime;
         for (int iteration = 1; iteration <= iterationCount; iteration++) {
           File file = env.generateValue(generator, null);
           assert filter.accept(file);
-          if (!fileMap.containsKey(file.getPath())) {
-            fileMap.put(file.getPath(), 1);
-          }
-          else {
-            fileMap.increment(file.getPath());
-          }
+          fileMap.put(file.getPath(), fileMap.getOrDefault(file.getPath(), 0)+1);
           long curTime = System.nanoTime();
           if (iteration <= 10) {
             out.print("#" + iteration + " = " + (curTime - lastTime) / 1_000_000 + "ms");
@@ -435,7 +445,7 @@ public final class MadTestingUtil {
   }
 
   @NotNull
-  private static String getHistogramReport(ObjectIntHashMap<String> fileMap, int iteration) {
+  private static String getHistogramReport(ObjectIntMap<String> fileMap, int iteration) {
     long[] stops = {1, 2, 3, 5, 10, 20, 30, 50, 100, 200, Long.MAX_VALUE};
     int[] histogram = new int[stops.length];
     for (ObjectIntMap.Entry<String> entry : fileMap.entries()) {

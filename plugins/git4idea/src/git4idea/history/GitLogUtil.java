@@ -1,6 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
+import com.intellij.diagnostic.opentelemetry.TraceManager;
+import com.intellij.diagnostic.telemetry.TraceKt;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -14,20 +16,21 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.LogDataImpl;
-import com.intellij.vcs.log.util.StopWatch;
 import git4idea.GitCommit;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.Charset;
 import java.util.*;
 
 import static git4idea.history.GitLogParser.GitLogOption.*;
@@ -95,15 +98,15 @@ public final class GitLogUtil {
   }
 
   @NotNull
-  public static List<? extends VcsCommitMetadata> collectMetadata(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile root,
+  public static List<? extends VcsCommitMetadata> collectMetadata(@NotNull Project project, @NotNull VirtualFile root,
                                                                   @NotNull List<String> hashes)
     throws VcsException {
     CollectConsumer<VcsCommitMetadata> collectConsumer = new CollectConsumer<>();
-    collectMetadata(project, vcs, root, hashes, collectConsumer);
+    collectMetadata(project, root, hashes, collectConsumer);
     return new ArrayList<>(collectConsumer.getResult());
   }
 
-  public static void collectMetadata(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile root,
+  public static void collectMetadata(@NotNull Project project, @NotNull VirtualFile root,
                                      @NotNull List<String> hashes, @NotNull Consumer<? super VcsCommitMetadata> consumer)
     throws VcsException {
     if (hashes.isEmpty()) return;
@@ -114,7 +117,7 @@ public final class GitLogUtil {
     GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, COMMIT_METADATA_OPTIONS);
     h.setSilent(true);
     // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
-    h.addParameters(getNoWalkParameter(vcs));
+    h.addParameters(getNoWalkParameter(project));
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(STDIN);
     h.endOptions();
@@ -170,13 +173,13 @@ public final class GitLogUtil {
       handler.addParameters("--decorate=full");
       handler.endOptions();
 
-      StopWatch sw = StopWatch.start("loading commit metadata in [" + root.getName() + "]");
-
+      Span span =
+        TraceManager.INSTANCE.getTracer("vcs").spanBuilder("loading commit metadata").setAttribute("root name", root.getName()).startSpan();
       GitLogOutputSplitter<GitLogRecord> handlerListener = new GitLogOutputSplitter<>(handler, parser, recordConsumer);
       Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError();
       handlerListener.reportErrors();
 
-      sw.report();
+      span.end();
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {
@@ -240,17 +243,20 @@ public final class GitLogUtil {
                                         record.getCommitterName(), record.getCommitterEmail(), record.getAuthorTimeStamp());
   }
 
+  /**
+   * Sends hashes to process's stdin (without closing it on Windows).
+   *
+   * @see GitHandlerInputProcessorUtil#writeLines(Collection, String, Charset, boolean)
+   */
   public static void sendHashesToStdin(@NotNull Collection<String> hashes, @NotNull GitHandler handler) {
-    // if we close this stream, RunnerMediator won't be able to send ctrl+c to the process in order to softly kill it
-    // see RunnerMediator.sendCtrlEventThroughStream
     handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(hashes,
                                                                       "\n",
                                                                       handler.getCharset(),
                                                                       true));
   }
 
-  public static @NotNull String getNoWalkParameter(@NotNull GitVcs vcs) {
-    return GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs) ? "--no-walk=unsorted" : "--no-walk";
+  public static @NotNull String getNoWalkParameter(@NotNull Project project) {
+    return GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(project) ? "--no-walk=unsorted" : "--no-walk";
   }
 
   public static @NotNull GitLineHandler createGitHandler(@NotNull Project project, @NotNull VirtualFile root) {
@@ -266,5 +272,9 @@ public final class GitLogUtil {
     if (lowPriorityProcess) handler.withLowPriority();
     handler.setWithMediator(false);
     return handler;
+  }
+
+  public static long parseTime(@NotNull String timeString) {
+    return Long.parseLong(timeString.trim()) * 1000;
   }
 }

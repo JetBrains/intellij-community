@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -39,15 +39,15 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   protected static final Logger LOG = Logger.getInstance(VirtualFileManagerImpl.class);
 
   // do not use extension point name to avoid map lookup on each event publishing
-  private static final ExtensionPointImpl<VirtualFileManagerListener>
-    MANAGER_LISTENER_EP = ((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea()).getExtensionPoint("com.intellij.virtualFileManagerListener");
+  private static final ExtensionPointImpl<VirtualFileManagerListener> MANAGER_LISTENER_EP =
+    ((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea()).getExtensionPoint("com.intellij.virtualFileManagerListener");
+
   private final List<? extends VirtualFileSystem> myPreCreatedFileSystems;
 
   private static class VirtualFileSystemBean extends KeyedLazyInstanceEP<VirtualFileSystem> {
     @Attribute
     public boolean physical;
   }
-
 
   private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector = new KeyedExtensionCollector<>(VirtualFileSystem.EP_NAME);
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
@@ -69,9 +69,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
       }
     }
 
-    if (LOG.isDebugEnabled() && !ApplicationManagerEx.isInStressTest()) {
-      addVirtualFileListener(new LoggingListener());
-    }
+    addVirtualFileListener(new LoggingListener());
 
     bus.connect().subscribe(VFS_CHANGES, new BulkVirtualFileListenerAdapter(myVirtualFileListenerMulticaster.getMulticaster()));
   }
@@ -88,12 +86,12 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
         }
       }
     }
+
     return physicalFileSystems;
   }
 
   @Override
-  public void dispose() {
-  }
+  public void dispose() { }
 
   @Override
   public long getStructureModificationCount() {
@@ -102,24 +100,21 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
 
   @Override
   public @Nullable VirtualFileSystem getFileSystem(@Nullable String protocol) {
-    if (protocol == null) {
-      return null;
-    }
+    if (protocol == null) return null;
 
-    List<VirtualFileSystem> systems = myCollector.forKey(protocol);
-    return selectFileSystem(protocol, systems);
-  }
-
-  protected @Nullable VirtualFileSystem selectFileSystem(@NotNull String protocol, @NotNull List<? extends VirtualFileSystem> candidates) {
+    List<? extends VirtualFileSystem> candidates = getFileSystemsForProtocol(protocol);
     int size = candidates.size();
     if (size == 0) {
       return null;
     }
-
     if (size > 1) {
       LOG.error(protocol + ": " + candidates);
     }
     return candidates.get(0);
+  }
+
+  protected @NotNull List<? extends VirtualFileSystem> getFileSystemsForProtocol(@NotNull String protocol) {
+    return myCollector.forKey(protocol);
   }
 
   @Override
@@ -269,58 +264,83 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   private static class LoggingListener implements VirtualFileListener {
     @Override
     public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-      LOG.debug("propertyChanged: file = " + event.getFile() + ", propertyName = " + event.getPropertyName() +
-                ", oldValue = " + event.getOldValue() + ", newValue = " + event.getNewValue() + ", requestor = " + event.getRequestor());
+      if (shouldLog()) {
+        LOG.debug("propertyChanged: file = " + event.getFile() + ", propertyName = " + event.getPropertyName() +
+                  ", oldValue = " + event.getOldValue() + ", newValue = " + event.getNewValue() + ", requestor = " + event.getRequestor());
+      }
     }
 
     @Override
     public void contentsChanged(@NotNull VirtualFileEvent event) {
-      LOG.debug("contentsChanged: file = " + event.getFile() + ", requestor = " + event.getRequestor());
+      if (shouldLog()) {
+        LOG.debug("contentsChanged: file = " + event.getFile() + ", requestor = " + event.getRequestor());
+      }
     }
 
     @Override
     public void fileCreated(@NotNull VirtualFileEvent event) {
-      LOG.debug("fileCreated: file = " + event.getFile() + ", requestor = " + event.getRequestor());
+      if (shouldLog()) {
+        LOG.debug("fileCreated: file = " + event.getFile() + ", requestor = " + event.getRequestor());
+      }
     }
 
     @Override
     public void fileDeleted(@NotNull VirtualFileEvent event) {
-      LOG.debug("fileDeleted: file = " + event.getFile() + ", parent = " + event.getParent() + ", requestor = " + event.getRequestor());
+      if (shouldLog()) {
+        LOG.debug("fileDeleted: file = " + event.getFile() + ", parent = " + event.getParent() + ", requestor = " + event.getRequestor());
+      }
     }
 
     @Override
     public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-      LOG.debug("fileMoved: file = " + event.getFile() + ", oldParent = " + event.getOldParent() +
-                ", newParent = " + event.getNewParent() + ", requestor = " + event.getRequestor());
+      if (shouldLog()) {
+        LOG.debug("fileMoved: file = " + event.getFile() + ", oldParent = " + event.getOldParent() +
+                  ", newParent = " + event.getNewParent() + ", requestor = " + event.getRequestor());
+      }
     }
 
     @Override
     public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-      LOG.debug("fileCopied: file = " + event.getFile() + ", originalFile = " + event.getOriginalFile() +
-                ", requestor = " + event.getRequestor());
+      if (shouldLog()) {
+        LOG.debug("fileCopied: file = " + event.getFile() + ", originalFile = " + event.getOriginalFile() +
+                  ", requestor = " + event.getRequestor());
+      }
     }
 
     @Override
+    @SuppressWarnings("IdentifierGrammar")
     public void beforeContentsChange(@NotNull VirtualFileEvent event) {
-      LOG.debug("beforeContentsChange: file = " + event.getFile() + ", requestor = " + event.getRequestor());
+      if (shouldLog()) {
+        LOG.debug("beforeContentsChange: file = " + event.getFile() + ", requestor = " + event.getRequestor());
+      }
     }
 
     @Override
     public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
-      LOG.debug("beforePropertyChange: file = " + event.getFile() + ", propertyName = " + event.getPropertyName() +
-                ", oldValue = " + event.getOldValue() + ", newValue = " + event.getNewValue() + ", requestor = " + event.getRequestor());
+      if (shouldLog()) {
+        LOG.debug("beforePropertyChange: file = " + event.getFile() + ", propertyName = " + event.getPropertyName() +
+                  ", oldValue = " + event.getOldValue() + ", newValue = " + event.getNewValue() + ", requestor = " + event.getRequestor());
+      }
     }
 
     @Override
     public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
-      LOG.debug("beforeFileDeletion: file = " + event.getFile() + ", requestor = " + event.getRequestor());
-      LOG.assertTrue(event.getFile().isValid());
+      if (shouldLog()) {
+        LOG.debug("beforeFileDeletion: file = " + event.getFile() + ", requestor = " + event.getRequestor());
+        LOG.assertTrue(event.getFile().isValid());
+      }
     }
 
     @Override
     public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
-      LOG.debug("beforeFileMovement: file = " + event.getFile() + ", oldParent = " + event.getOldParent() +
-                ", newParent = " + event.getNewParent() + ", requestor = " + event.getRequestor());
+      if (shouldLog()) {
+        LOG.debug("beforeFileMovement: file = " + event.getFile() + ", oldParent = " + event.getOldParent() +
+                  ", newParent = " + event.getNewParent() + ", requestor = " + event.getRequestor());
+      }
+    }
+
+    private static boolean shouldLog() {
+      return LOG.isDebugEnabled() && !ApplicationManagerEx.isInStressTest();
     }
   }
 
@@ -344,8 +364,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
     return findByUrl(url, true);
   }
 
-  @Nullable
-  private VirtualFile findByUrl(@NotNull String url, boolean refresh) {
+  private @Nullable VirtualFile findByUrl(@NotNull String url, boolean refresh) {
     int protocolSepIndex = url.indexOf(URLUtil.SCHEME_SEPARATOR);
     VirtualFileSystem fileSystem = protocolSepIndex < 0 ? null : getFileSystem(url.substring(0, protocolSepIndex));
     if (fileSystem == null) return null;
@@ -363,8 +382,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
     return findByNioPath(path, true);
   }
 
-  @Nullable
-  private VirtualFile findByNioPath(@NotNull Path nioPath, boolean refresh) {
+  private @Nullable VirtualFile findByNioPath(@NotNull Path nioPath, boolean refresh) {
     if (!FileSystems.getDefault().equals(nioPath.getFileSystem())) return null;
     VirtualFileSystem fileSystem = getFileSystem(StandardFileSystems.FILE_PROTOCOL);
     if (fileSystem == null) return null;

@@ -109,6 +109,11 @@ public final class DependentGroovycRunner {
             resourceLoader.myClass2File.put(aClass.getName(), file);
           }
         }
+
+        @SuppressWarnings("RedundantMethodOverride")
+        public void doPhaseOperation(CompilationUnit unit) throws CompilationFailedException {
+          super.doPhaseOperation(unit);
+        }
       }, Phases.CONVERSION);
 
       addSources(forStubs, srcFiles, unit);
@@ -457,6 +462,11 @@ public final class DependentGroovycRunner {
               }
               catch (LinkageError ignored) {
               }
+            }
+
+            @SuppressWarnings("RedundantMethodOverride")
+            public void doPhaseOperation(CompilationUnit unit) throws CompilationFailedException {
+              super.doPhaseOperation(unit);
             }
           }, phase);
         }

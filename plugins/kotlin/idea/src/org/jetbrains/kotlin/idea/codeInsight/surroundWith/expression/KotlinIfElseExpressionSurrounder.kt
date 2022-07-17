@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.KotlinIfSurrounderBase
 import org.jetbrains.kotlin.psi.KtExpression
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 class KotlinIfElseExpressionSurrounder(private val withBraces: Boolean) : KotlinControlFlowExpressionSurrounderBase() {
     override fun getPattern() = if (withBraces) "if (a) { $0 } else {}" else "if (a) $0 else"
 
+    @NlsSafe
     override fun getTemplateDescription() = if (withBraces) "if () { expr } else {}" else "if () expr else"
 
     override fun getRange(editor: Editor, replaced: KtExpression): TextRange? {

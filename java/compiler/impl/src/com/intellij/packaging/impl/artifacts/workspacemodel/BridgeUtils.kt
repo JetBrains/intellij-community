@@ -1,22 +1,30 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
+import com.intellij.configurationStore.serialize
 import com.intellij.openapi.compiler.JavaCompilerBundle
+import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.packaging.artifacts.ArtifactProperties
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider
 import com.intellij.packaging.artifacts.ArtifactType
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.elements.PackagingElementType
+import com.intellij.packaging.impl.artifacts.ArtifactLoadingErrorDescription
+import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.FEATURE_TYPE
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.mutableArtifactsMap
 import com.intellij.packaging.impl.elements.*
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import org.jetbrains.annotations.Nls
 
-internal fun addBridgesToDiff(newBridges: List<ArtifactBridge>, builder: WorkspaceEntityStorageBuilder) {
+internal fun addBridgesToDiff(newBridges: List<ArtifactBridge>, builder: MutableEntityStorage) {
   for (newBridge in newBridges) {
     val artifactEntity = builder.resolve(newBridge.artifactId) ?: continue
     builder.mutableArtifactsMap.addMapping(artifactEntity, newBridge)
@@ -25,8 +33,7 @@ internal fun addBridgesToDiff(newBridges: List<ArtifactBridge>, builder: Workspa
 
 internal fun createArtifactBridge(it: ArtifactEntity, entityStorage: VersionedEntityStorage, project: Project): ArtifactBridge {
   if (ArtifactType.findById(it.artifactType) == null) {
-    return InvalidArtifactBridge(it.persistentId(), entityStorage, project, null,
-                                 JavaCompilerBundle.message("unknown.artifact.type.0", it.artifactType))
+    return createInvalidArtifact(it, entityStorage, project, JavaCompilerBundle.message("unknown.artifact.type.0", it.artifactType))
   }
 
   fun findMissingArtifactType(element: PackagingElementEntity): String? {
@@ -47,17 +54,26 @@ internal fun createArtifactBridge(it: ArtifactEntity, entityStorage: VersionedEn
 
   val missingArtifactType = findMissingArtifactType(it.rootElement!!)
   if (missingArtifactType != null) {
-    return InvalidArtifactBridge(it.persistentId(), entityStorage, project, null,
-                                 JavaCompilerBundle.message("unknown.element.0", missingArtifactType))
+    return createInvalidArtifact(it, entityStorage, project, JavaCompilerBundle.message("unknown.element.0", missingArtifactType))
   }
 
   val unknownProperty = it.customProperties.firstOrNull { ArtifactPropertiesProvider.findById(it.providerType) == null }
   if (unknownProperty != null) {
-    return InvalidArtifactBridge(it.persistentId(), entityStorage, project, null,
+    return createInvalidArtifact(it, entityStorage, project,
                                  JavaCompilerBundle.message("unknown.artifact.properties.0", unknownProperty))
   }
 
-  return ArtifactBridge(it.persistentId(), entityStorage, project, null, null)
+  return ArtifactBridge(it.persistentId, entityStorage, project, null, null)
+}
+
+private fun createInvalidArtifact(it: ArtifactEntity,
+                                  entityStorage: VersionedEntityStorage,
+                                  project: Project,
+                                  @Nls message: String): InvalidArtifactBridge {
+  val invalidArtifactBridge = InvalidArtifactBridge(it.persistentId, entityStorage, project, null, message)
+  ProjectLoadingErrorsNotifier.getInstance(project).registerError(ArtifactLoadingErrorDescription(project, invalidArtifactBridge));
+  UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(FEATURE_TYPE, it.artifactType, JavaCompilerBundle.message("plugins.advertiser.feature.artifact"));
+  return invalidArtifactBridge
 }
 
 fun PackagingElement<*>.forThisAndFullTree(action: (PackagingElement<*>) -> Unit) {
@@ -74,7 +90,7 @@ fun PackagingElement<*>.forThisAndFullTree(action: (PackagingElement<*>) -> Unit
   }
 }
 
-fun WorkspaceEntityStorage.get(id: ArtifactId): ArtifactEntity = this.resolve(id) ?: error("Cannot find artifact by id: ${id.name}")
+fun EntityStorage.get(id: ArtifactId): ArtifactEntity = this.resolve(id) ?: error("Cannot find artifact by id: ${id.name}")
 
 internal fun PackagingElementEntity.sameTypeWith(type: PackagingElementType<out PackagingElement<*>>): Boolean {
   return when (this) {
@@ -92,4 +108,14 @@ internal fun PackagingElementEntity.sameTypeWith(type: PackagingElementType<out 
     is CustomPackagingElementEntity -> this.typeId == type.id
     else -> error("Unexpected branch. $this")
   }
+}
+
+internal fun ArtifactProperties<*>.propertiesTag(): String? {
+  val state = state
+  return if (state != null) {
+    val element = serialize(state) ?: return null
+    element.name = "options"
+    JDOMUtil.write(element)
+  }
+  else null
 }

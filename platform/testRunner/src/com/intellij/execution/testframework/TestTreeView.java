@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
@@ -80,6 +80,11 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
@@ -106,7 +111,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
       return testProxy;
     }
 
-    if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
       TestFrameworkRunningModel model = myModel;
       return Collections.<DataProvider>singletonList(dataId1 -> getSlowData(dataId1, testProxy, model));
     }
@@ -141,7 +146,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
         .filter(Objects::nonNull)
         .toArray(Location[]::new);
     }
-    else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       AbstractTestProxy[] proxies = AbstractTestProxy.DATA_KEYS.getData(this);
       return proxies == null ? null : Arrays.stream(proxies)
         .map(p -> p.getLocation(project, model.getProperties().getScope()))

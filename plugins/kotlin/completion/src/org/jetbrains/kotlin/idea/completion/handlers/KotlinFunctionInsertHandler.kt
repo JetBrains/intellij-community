@@ -1,10 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.handlers
 
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.CompletionInitializationContext.IDENTIFIER_END_OFFSET
+import com.intellij.codeInsight.completion.CompletionInitializationContext.START_OFFSET
+import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
+import com.intellij.codeInsight.completion.DeclarativeInsertHandler2
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.editor.Editor
@@ -13,18 +17,18 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.completion.LambdaSignatureTemplates
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 class GenerateLambdaInfo(val lambdaType: KotlinType, val explicitParameters: Boolean)
 
@@ -51,6 +55,7 @@ class KotlinFunctionCompositeDeclarativeInsertHandler(
 fun createNormalFunctionInsertHandler(
     editor: Editor,
     callType: CallType<*>,
+    functionName: Name,
     inputTypeArguments: Boolean,
     inputValueArguments: Boolean,
     argumentText: String = "",
@@ -61,13 +66,12 @@ fun createNormalFunctionInsertHandler(
         assert(argumentText == "")
     }
 
+    val chars = editor.document.charsSequence
     val lazyHandlers = mutableMapOf<String, Lazy<DeclarativeInsertHandler2>>()
 
-    val chars = editor.document.charsSequence
-
     // \n - NormalCompletion
-    lazyHandlers[Lookup.NORMAL_SELECT_CHAR.toString()] = DeclarativeInsertHandler2.LazyBuilder { builder ->
-        val stringToInsert = StringBuilder()
+    lazyHandlers[Lookup.NORMAL_SELECT_CHAR.toString()] = DeclarativeInsertHandler2.LazyBuilder(holdReadLock = true) { builder ->
+        val argumentsStringToInsert = StringBuilder()
 
         val offset = editor.caretModel.offset
         val insertLambda = lambdaInfo != null
@@ -76,7 +80,7 @@ fun createNormalFunctionInsertHandler(
 
         val insertTypeArguments = inputTypeArguments && !(insertLambda && lambdaInfo!!.explicitParameters)
         if (insertTypeArguments) {
-            stringToInsert.append("<>")
+            argumentsStringToInsert.append("<>")
             builder.offsetToPutCaret += 1
         }
 
@@ -92,24 +96,24 @@ fun createNormalFunctionInsertHandler(
             if (insertLambda) {
                 val file = PsiDocumentManager.getInstance(editor.project!!).getPsiFile(editor.document)!!
                 if (file.kotlinCustomSettings.INSERT_WHITESPACES_IN_SIMPLE_ONE_LINE_METHOD) {
-                    stringToInsert.append(" {  }")
+                    argumentsStringToInsert.append(" {  }")
                     lambdaCaseInsideBracketOffset = 3
                 } else {
-                    stringToInsert.append(" {}")
+                    argumentsStringToInsert.append(" {}")
                     lambdaCaseInsideBracketOffset = 2
                 }
             } else {
-                stringToInsert.append("($argumentText)")
+                argumentsStringToInsert.append("($argumentText)")
                 noLambdaCaseInsideBracketOffset = 1
             }
             val shouldPlaceCaretInBrackets = inputValueArguments || lambdaInfo != null
-            if (!insertTypeArguments) {
+            if (!inputTypeArguments) {
                 // no need to insert typeParams, may move cursor around valueParams
                 if (shouldPlaceCaretInBrackets) {
                     builder.offsetToPutCaret += noLambdaCaseInsideBracketOffset + lambdaCaseInsideBracketOffset
                     builder.withPopupOptions(DeclarativeInsertHandler2.PopupOptions.ParameterInfo)
                 } else {
-                    builder.offsetToPutCaret += stringToInsert.toString().length
+                    builder.offsetToPutCaret += argumentsStringToInsert.toString().length
                 }
             } else {
                 // we would love to put caret inside value params, but we can't, cause we have to stay on typeParams first
@@ -129,49 +133,173 @@ fun createNormalFunctionInsertHandler(
                 }
             }
         }
-        builder.addOperation(0, stringToInsert.toString())
-        builder.withPostInsertHandler(InsertHandler<LookupElement> { context, item ->
-            var renderedText = item.lookupString
 
-            if (!argumentsOnly) {
-                // TODO: maybe there is a way to perform all this at declarative stage
-                surroundWithBracesIfInStringTemplate(context)
+        var prefixModificationOperation: DeclarativeInsertHandler2.RelativeTextEdit? = null
+        var alreadyHasBackTickInTheEnd = false
+        if (!argumentsOnly) {
+            val specialSymbols = charArrayOf('_', '`', '~')
+            val typedFuzzyName = editor.document.text.subSequence(0, offset)
+                .reversed()
+                .takeWhile { it.isLetterOrDigit() || specialSymbols.contains(it) }
+                .toString()
+            val functionStartOffset = offset - typedFuzzyName.length
 
-                val name = (item.`object` as? DeclarationLookupObject)?.name
-                if (name != null && !name.isSpecial) {
-                    val startOffset = context.startOffset
-                    if (startOffset > 0 && context.document.isTextAt(startOffset - 1, "`")) {
-                        context.document.deleteString(startOffset - 1, startOffset)
+            /*
+                Essentially `normalizedBeforeFunctionOffset' can be reduced to just
+                val normalizedBeforeFunctionOffset = 0 - functionName.asString().length
+
+                Though it is not obvious why. Operation offsets are relative to cursor position before insertion. In this
+                case it will be offset of lookup element text end - which is functionStartOffset + `functionName.asString().length`.
+                NB! asString() and not render(), we rely on knowledge that backticks are not elevated into LookupElement.
+
+                Example:
+                we have a function "fun fooBar(i: Int) {}" which we want to call from a string template.
+                In editor we have: "$fb<caret>"
+                                    |  \
+                                    \   \-offset
+                                    \- functionStartOffset
+
+
+                Insert handler will be applied at stage: "$fooBar<caret>", (result of handler application should be "${fooBar(<caret>)}")
+                And this new caret position is calculated here as `lookupElementEndPosition`
+                So all the offsets should be relative to the new caret position.
+
+                "$fooBar<caret>"
+                  \- normalizedBeforeFunctionOffset
+             */
+            val lookupElementEndPosition =
+                functionStartOffset + functionName.asString().length // NB! It's `asString()` on purpose, do not change to `render()`
+
+            val normalizedBeforeFunctionOffset = functionStartOffset - lookupElementEndPosition
+
+            // surroundWithBracesIfInStringTemplate
+            run {
+                if (functionStartOffset > 0) {
+                    if (chars[functionStartOffset - 1] == '$') {
+                        // add paranoia check
+                        val dollarIsEscaped = (functionStartOffset - 2).let { predollarOffset ->
+                            if (predollarOffset >= 0) chars[predollarOffset] == '\\'
+                            else false
+                        }
+
+                        if (!dollarIsEscaped) {
+                            argumentsStringToInsert.append('}')
+
+                            prefixModificationOperation = DeclarativeInsertHandler2.RelativeTextEdit(
+                                normalizedBeforeFunctionOffset,
+                                normalizedBeforeFunctionOffset,
+                                "{"
+                            )
+                        }
                     }
-                    renderedText = name.render()
-                    context.document.replaceString(context.startOffset, context.startOffset + item.lookupString.length, renderedText)
                 }
             }
 
+            // enclosing with backticks
+            run {
+                if (!functionName.isSpecial) {
+                    val renderedName = functionName.render()
+                    // it's possible, that nothing typedFuzzyName is empty, and cursor is located after the last symbol in the document,
+                    // which means: `functionStartOffset` and `offset` are outside `chars` bounds.
+                    val alreadyHasTickAtFront = chars.getOrNull(functionStartOffset) == '`'
+
+                    if (renderedName.firstOrNull() == '`') {
+                        alreadyHasBackTickInTheEnd = chars.getOrNull(offset) == '`'
+
+                        // requires backticks
+                        if (!alreadyHasTickAtFront) {
+                            // backtick is not present already, so need to add it manually
+                            prefixModificationOperation = when (val operation = prefixModificationOperation) {
+                                null -> DeclarativeInsertHandler2.RelativeTextEdit(
+                                    normalizedBeforeFunctionOffset,
+                                    normalizedBeforeFunctionOffset,
+                                    "`"
+                                )
+
+                                else -> operation.copy(newText = operation.newText + '`')
+                            }
+                        }
+
+                        if (!alreadyHasBackTickInTheEnd) {
+                            argumentsStringToInsert.insert(0, "`")
+                            builder.offsetToPutCaret += 1
+                        }
+                    } else {
+                        // no backticks required
+                        if (alreadyHasTickAtFront) {
+                            prefixModificationOperation = when (val operation = prefixModificationOperation) {
+                                null -> DeclarativeInsertHandler2.RelativeTextEdit(
+                                    normalizedBeforeFunctionOffset,
+                                    normalizedBeforeFunctionOffset + 1,
+                                    ""
+                                )
+
+                                else -> operation.copy(rangeTo = operation.rangeTo + 1) // already insert brace in front, now need to turn insertion into replacement
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        prefixModificationOperation?.also { builder.addOperation(it) }
+        if (alreadyHasBackTickInTheEnd) {
+            builder.addOperation(1, argumentsStringToInsert.toString())
+            builder.offsetToPutCaret += 1
+        } else {
+            builder.addOperation(0, argumentsStringToInsert.toString())
+        }
+
+        builder.withPostInsertHandler(InsertHandler<LookupElement> { context, item ->
             // The following code looks hacky:
-            // brackets with arguments are already present, and they should be kept, that's why we provide fake context
-            // which only includes the rendered text.
+            // brackets with arguments are already present, so are braces and backticks, and they should be kept.
+            // that's why we provide fake context which is adjusted
             // NB: it is important to fork context here and keep the original one intact
-            context.forkByOffsetMap().let { forkedContext ->
-                val tailOffset = forkedContext.startOffset + renderedText.length
-                forkedContext.tailOffset = tailOffset
-                forkedContext.offsetMap.addOffset(IDENTIFIER_END_OFFSET, tailOffset)
+            context.forkByOffsetMap().also { forkedContext ->
+                val forkedDocument = forkedContext.document
+                val newStartOffset = when {
+                    forkedDocument.isTextAt(forkedContext.startOffset, "{") -> forkedContext.startOffset + 1
+                    forkedContext.startOffset > 0 && forkedDocument.isTextAt(forkedContext.startOffset - 1, "`") ->
+                        forkedContext.startOffset - 1
+
+                    else -> forkedContext.startOffset
+                }
+
+                val newTailOffset = newStartOffset + functionName.render().length
+
+                forkedContext.offsetMap.addOffset(START_OFFSET, newStartOffset)
+                forkedContext.offsetMap.addOffset(IDENTIFIER_END_OFFSET, newTailOffset)
+                forkedContext.tailOffset = newTailOffset
 
                 KotlinCallableInsertHandler.addImport(forkedContext, item, callType)
-            }
 
-            // hack for KT-31902
-            if (callType == CallType.DEFAULT) {
-                val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
+                if (insertLambda && lambdaInfo!!.explicitParameters) {
+                    val charsSequence = forkedDocument.charsSequence
+                    val tailOffset = forkedContext.tailOffset
+                    val startIndex = forkedContext.startOffset
 
-                context.file
-                    .findElementAt(context.startOffset)
-                    ?.parent?.getLastParentOfTypeInRow<KtDotQualifiedExpression>()
-                    ?.createSmartPointer()?.let {
-                        psiDocumentManager.commitDocument(context.document)
-                        val dotQualifiedExpression = it.element ?: return@let
-                        KotlinCallableInsertHandler.SHORTEN_REFERENCES.process(dotQualifiedExpression)
-                    }
+                    val startOffset = charsSequence.indexOfSkippingSpace('{', tailOffset)
+                        ?: throwElementIsNotFound(charsSequence, startIndex, tailOffset)
+
+                    val endOffset = charsSequence.indexOfSkippingSpace('}', startOffset + 1)
+                        ?: throwElementIsNotFound(charsSequence, startIndex, tailOffset)
+
+                    insertLambdaSignatureTemplate(startOffset, endOffset, lambdaInfo.lambdaType, forkedContext, context)
+                }
+
+                // hack for KT-31902
+                if (callType == CallType.DEFAULT) {
+                    val psiDocumentManager = PsiDocumentManager.getInstance(forkedContext.project)
+
+                    forkedContext.file
+                        .findElementAt(forkedContext.startOffset)
+                        ?.parent?.getLastParentOfTypeInRow<KtDotQualifiedExpression>()
+                        ?.createSmartPointer()?.let {
+                            psiDocumentManager.commitDocument(forkedDocument)
+                            val dotQualifiedExpression = it.element ?: return@let
+                            KotlinCallableInsertHandler.SHORTEN_REFERENCES.process(dotQualifiedExpression)
+                        }
+                }
             }
         })
     }
@@ -183,6 +311,39 @@ fun createNormalFunctionInsertHandler(
         handlers = lazyHandlers, fallbackInsertHandler = fallbackHandler,
         isLambda = lambdaInfo != null, inputValueArguments = inputValueArguments,
         inputTypeArguments = inputTypeArguments
+    )
+}
+
+private fun throwElementIsNotFound(charsSequence: CharSequence, startOffset: Int, tailOffset: Int): Nothing {
+    throw KotlinExceptionWithAttachments("brace is not found").apply {
+        withAttachment("element.kt", charsSequence.subSequence(startOffset, tailOffset))
+        withAttachment(
+            "tail.kt",
+            charsSequence.subSequence(tailOffset, minOf(tailOffset + 10, charsSequence.length - 1)),
+        )
+    }
+}
+
+private fun insertLambdaSignatureTemplate(
+    openBraceOffset: Int,
+    closeBraceOffset: Int,
+    lambdaType: KotlinType,
+    currentContext: InsertionContext,
+    originalContext: InsertionContext,
+) {
+    val placeholderRange = TextRange(openBraceOffset, closeBraceOffset + 1)
+    val explicitParameterTypes = LambdaSignatureTemplates.explicitParameterTypesRequired(
+        currentContext,
+        placeholderRange,
+        lambdaType,
+    )
+
+    LambdaSignatureTemplates.insertTemplate(
+        originalContext,
+        placeholderRange,
+        lambdaType,
+        explicitParameterTypes,
+        signatureOnly = false,
     )
 }
 
@@ -222,7 +383,7 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
                 super.handleInsert(context, item)
             }
 
-            psiDocumentManager.commitAllDocuments()
+            psiDocumentManager.commitDocument(document)
             psiDocumentManager.doPostponedOperationsAndUnblockDocument(document)
 
             val startOffset = context.startOffset
@@ -330,16 +491,7 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
             }
 
             if (insertLambda && lambdaInfo!!.explicitParameters) {
-                val placeholderRange = TextRange(openingBracketOffset, closeBracketOffset!! + 1)
-                val explicitParameterTypes =
-                    LambdaSignatureTemplates.explicitParameterTypesRequired(context.file as KtFile, placeholderRange, lambdaInfo.lambdaType)
-                LambdaSignatureTemplates.insertTemplate(
-                    context,
-                    placeholderRange,
-                    lambdaInfo.lambdaType,
-                    explicitParameterTypes,
-                    signatureOnly = false
-                )
+                insertLambdaSignatureTemplate(openingBracketOffset, closeBracketOffset!!, lambdaInfo.lambdaType, context, context)
                 return
             }
 
@@ -388,7 +540,7 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
         super.handleInsert(context, item)
 
         val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
-        psiDocumentManager.commitAllDocuments()
+        psiDocumentManager.commitDocument(context.document)
         psiDocumentManager.doPostponedOperationsAndUnblockDocument(context.document)
     }
 }

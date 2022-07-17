@@ -52,7 +52,7 @@ public class JBCefHeadlessOsrTest {
         }
       })
       .setUrl("chrome:version")
-      .createBrowser();
+      .build();
 
     invokeAndWaitForLoad(browser, () -> browser.getCefBrowser().createImmediately());
   }

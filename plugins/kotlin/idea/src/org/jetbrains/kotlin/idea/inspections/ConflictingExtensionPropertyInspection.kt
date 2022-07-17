@@ -22,17 +22,17 @@ import com.intellij.util.ModalityUiUtil
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.resolve.frontendService
-import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -47,6 +47,8 @@ import org.jetbrains.kotlin.resolve.scopes.SyntheticScopes
 import org.jetbrains.kotlin.resolve.scopes.collectSyntheticExtensionProperties
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class ConflictingExtensionPropertyInspection : AbstractKotlinInspection() {
     @OptIn(FrontendInternals::class)
@@ -162,10 +164,10 @@ class ConflictingExtensionPropertyInspection : AbstractKotlinInspection() {
         isOnTheFly: Boolean
     ): Array<IntentionWrapper> {
         return if (isSameAsSynthetic(property, conflictingExtension)) {
-            val fix1 = IntentionWrapper(DeleteRedundantExtensionAction(property), property.containingFile)
+            val fix1 = IntentionWrapper(DeleteRedundantExtensionAction(property))
             // don't add the second fix when on the fly to allow code cleanup
             val fix2 = if (isOnTheFly)
-                object : IntentionWrapper(MarkHiddenAndDeprecatedAction(property), property.containingFile), LowPriorityAction {}
+                object : IntentionWrapper(MarkHiddenAndDeprecatedAction(property)), LowPriorityAction {}
             else
                 null
             listOfNotNull(fix1, fix2).toTypedArray()
@@ -189,7 +191,7 @@ class ConflictingExtensionPropertyInspection : AbstractKotlinInspection() {
             val fqName = declaration.unsafeResolveToDescriptor(BodyResolveMode.PARTIAL).importableFqName
             if (fqName != null) {
                 ProgressManager.getInstance().run(
-                    object : Task.Modal(project, KotlinBundle.message("searching.for.imports.to.delete"), true) {
+                    object : Task.Modal(project, KotlinBundle.message("searching.for.imports.to.delete.title"), true) {
                         override fun run(indicator: ProgressIndicator) {
                             val importsToDelete = runReadAction {
                                 val searchScope = KotlinSourceFilterScope.projectSources(GlobalSearchScope.projectScope(project), project)

@@ -1,13 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT;
 
 public abstract class NavBarActions extends AnAction implements DumbAware {
   NavBarActions() {
@@ -15,14 +16,19 @@ public abstract class NavBarActions extends AnAction implements DumbAware {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public final void update(@NotNull AnActionEvent event) {
-    NavBarPanel panel = ComponentUtil.getParentOfType((Class<? extends NavBarPanel>)NavBarPanel.class, event.getData(CONTEXT_COMPONENT));
+    NavBarPanel panel = ComponentUtil.getParentOfType(NavBarPanel.class, event.getData(CONTEXT_COMPONENT));
     event.getPresentation().setEnabled(panel != null);
   }
 
   @Override
   public final void actionPerformed(@NotNull AnActionEvent event) {
-    NavBarPanel panel = ComponentUtil.getParentOfType((Class<? extends NavBarPanel>)NavBarPanel.class, event.getData(CONTEXT_COMPONENT));
+    NavBarPanel panel = ComponentUtil.getParentOfType(NavBarPanel.class, event.getData(CONTEXT_COMPONENT));
     if (panel != null) actionPerformed(panel);
   }
 

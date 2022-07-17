@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.daemon.client.DaemonReportingTargets
 import org.jetbrains.kotlin.daemon.client.KotlinCompilerClient
 import org.jetbrains.kotlin.daemon.client.KotlinRemoteReplCompilerClient
 import org.jetbrains.kotlin.daemon.common.*
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.utils.KotlinPaths
 import org.jetbrains.kotlin.utils.KotlinPathsFromHomeDir
 import java.io.File
@@ -33,7 +34,7 @@ class KotlinJsr223JvmScriptEngine4Idea(
 ) : KotlinJsr223JvmScriptEngineBase(factory) {
 
     private val daemon by lazy {
-        val libPath = KotlinPathsFromHomeDir(KotlinArtifacts.instance.kotlincDirectory)
+        val libPath = KotlinPathsFromHomeDir(KotlinPluginLayout.kotlinc)
         val classPath = libPath.classPath(KotlinPaths.ClassPaths.CompilerWithScripting)
         assert(classPath.all { it.toPath().exists() })
         val compilerId = CompilerId.makeCompilerId(classPath)

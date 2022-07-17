@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
@@ -18,8 +17,6 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdk
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TripleFunction;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -192,11 +189,12 @@ public class UnknownSdkTracker {
                  fixProposals.add(invalidSdk.buildFix(myProject, localSdkFix, downloadableSdkFix));
                }
 
-               var allMissingSdks = ImmutableSet.<UnknownSdk>builder()
-                 .addAll(downloadFixes.keySet())
-                 .addAll(localFixes.keySet())
-                 .addAll(fixable)
-                 .build();
+               var missingSdkSets = new HashSet<UnknownSdk>();
+               missingSdkSets.addAll(downloadFixes.keySet());
+               missingSdkSets.addAll(localFixes.keySet());
+               missingSdkSets.addAll(fixable);
+
+               var allMissingSdks = Set.copyOf(missingSdkSets);
 
                for (UnknownSdk unknownSdk : allMissingSdks) {
                  String name = unknownSdk.getSdkName();

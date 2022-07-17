@@ -8,10 +8,15 @@ import com.jetbrains.python.ift.PythonLessonsBundle
 import training.dsl.LearningDslBase
 import training.dsl.LessonSample
 import training.dsl.LessonUtil
+import training.dsl.TaskTestContext
 import training.learn.lesson.general.assistance.EditorCodingAssistanceLesson
 
 class PythonEditorCodingAssistanceLesson(sample: LessonSample) :
   EditorCodingAssistanceLesson(sample) {
+
+  // TODO: remove when PY-53671 will be fixed
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
+
   override val errorIntentionText: String
     get() = PyPsiBundle.message("QFIX.auto.import.import.name", "math")
   private val errorAlternateIntentionText: String

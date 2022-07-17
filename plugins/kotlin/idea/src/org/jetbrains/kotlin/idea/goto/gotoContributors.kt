@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.goto
 
@@ -8,9 +8,10 @@ import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
+import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
-import org.jetbrains.kotlin.idea.decompiler.builtIns.KotlinBuiltInFileType
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -24,16 +25,16 @@ class KotlinGotoClassContributor : GotoClassContributor {
     override fun getQualifiedNameSeparator() = "."
 
     override fun getNames(project: Project, includeNonProjectItems: Boolean): Array<String> {
-        val classes = KotlinClassShortNameIndex.getInstance().getAllKeys(project)
-        val typeAliases = KotlinTypeAliasShortNameIndex.getInstance().getAllKeys(project)
+        val classes = KotlinClassShortNameIndex.getAllKeys(project)
+        val typeAliases = KotlinTypeAliasShortNameIndex.getAllKeys(project)
         return (classes + typeAliases).toTypedArray()
     }
 
     override fun getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array<NavigationItem> {
         val globalScope = if (includeNonProjectItems) GlobalSearchScope.allScope(project) else GlobalSearchScope.projectScope(project)
-        val scope = KotlinSourceFilterScope.projectSourceAndClassFiles(globalScope, project)
-        val classesOrObjects = KotlinClassShortNameIndex.getInstance().get(name, project, scope)
-        val typeAliases = KotlinTypeAliasShortNameIndex.getInstance().get(name, project, scope)
+        val scope = KotlinSourceFilterScope.projectFiles(globalScope, project)
+        val classesOrObjects = KotlinClassShortNameIndex.get(name, project, scope)
+        val typeAliases = KotlinTypeAliasShortNameIndex.get(name, project, scope)
 
         if (classesOrObjects.isEmpty() && typeAliases.isEmpty()) return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY
 
@@ -48,33 +49,33 @@ class KotlinGotoClassContributor : GotoClassContributor {
 * */
 class KotlinGotoSymbolContributor : GotoClassContributor {
     override fun getNames(project: Project, includeNonProjectItems: Boolean): Array<String> = listOf(
-        KotlinFunctionShortNameIndex.getInstance(),
-        KotlinPropertyShortNameIndex.getInstance(),
-        KotlinClassShortNameIndex.getInstance(),
-        KotlinTypeAliasShortNameIndex.getInstance(),
-        KotlinJvmNameAnnotationIndex.getInstance()
+        KotlinFunctionShortNameIndex,
+        KotlinPropertyShortNameIndex,
+        KotlinClassShortNameIndex,
+        KotlinTypeAliasShortNameIndex,
+        KotlinJvmNameAnnotationIndex
     ).flatMap {
         StubIndex.getInstance().getAllKeys(it.key, project)
     }.toTypedArray()
 
     override fun getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array<NavigationItem> {
         val baseScope = if (includeNonProjectItems) GlobalSearchScope.allScope(project) else GlobalSearchScope.projectScope(project)
-        val noLibrarySourceScope = KotlinSourceFilterScope.projectSourceAndClassFiles(baseScope, project)
+        val noLibrarySourceScope = KotlinSourceFilterScope.projectFiles(baseScope, project)
 
         val result = ArrayList<NavigationItem>()
-        result += KotlinFunctionShortNameIndex.getInstance().get(name, project, noLibrarySourceScope).filter {
+        result += KotlinFunctionShortNameIndex.get(name, project, noLibrarySourceScope).filter {
             val method = LightClassUtil.getLightClassMethod(it)
             method == null || it.name != method.name
         }
-        result += KotlinPropertyShortNameIndex.getInstance().get(name, project, noLibrarySourceScope).filter {
+        result += KotlinPropertyShortNameIndex.get(name, project, noLibrarySourceScope).filter {
             LightClassUtil.getLightClassBackingField(it) == null ||
                     it.containingClass()?.isInterface() ?: false
         }
-        result += KotlinClassShortNameIndex.getInstance().get(name, project, noLibrarySourceScope).filter {
+        result += KotlinClassShortNameIndex.get(name, project, noLibrarySourceScope).filter {
             it is KtEnumEntry || it.containingFile.virtualFile?.fileType == KotlinBuiltInFileType
         }
-        result += KotlinTypeAliasShortNameIndex.getInstance().get(name, project, noLibrarySourceScope)
-        result += KotlinJvmNameAnnotationIndex.getInstance().get(name, project, noLibrarySourceScope)
+        result += KotlinTypeAliasShortNameIndex.get(name, project, noLibrarySourceScope)
+        result += KotlinJvmNameAnnotationIndex.get(name, project, noLibrarySourceScope)
 
         return result.toTypedArray()
     }
@@ -96,12 +97,4 @@ class KotlinGotoSymbolContributor : GotoClassContributor {
     override fun getQualifiedNameSeparator(): String = "."
 }
 
-class KotlinGotoPrimeSymbolContributor : AbstractPrimeSymbolNavigationContributor(KotlinPrimeSymbolNameIndex.KEY)
-
-// TODO: it has to be dropped as soon as JvmFileClassUtil.getLiteralStringFromAnnotation becomes public in compiler
-private fun JvmFileClassUtil.getLiteralStringFromAnnotation(annotation: KtAnnotationEntry): String? {
-    val argumentExpression = annotation.valueArguments.firstOrNull()?.getArgumentExpression() ?: return null
-    val stringTemplate = argumentExpression as? KtStringTemplateExpression ?: return null
-    val singleEntry = stringTemplate.entries.singleOrNull() as? KtLiteralStringTemplateEntry ?: return null
-    return singleEntry.text
-}
+class KotlinGotoPrimeSymbolContributor : AbstractPrimeSymbolNavigationContributor(KotlinPrimeSymbolNameIndex.key)

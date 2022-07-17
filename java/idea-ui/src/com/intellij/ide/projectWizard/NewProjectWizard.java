@@ -15,25 +15,27 @@
  */
 package com.intellij.ide.projectWizard;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Set;
 import java.util.function.Predicate;
+
+import static com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter.NPW_PREFIX;
 
 /**
  * @author Dmitry Avdeev
@@ -54,6 +56,12 @@ public class NewProjectWizard extends AbstractProjectWizard {
   }
 
   protected void init(@NotNull ModulesProvider modulesProvider) {
+    if (isNewWizard()) {
+      JRootPane pane = getRootPane();
+      if (pane != null) {
+        pane.putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, Boolean.TRUE);
+      }
+    }
     myWizardContext.setModulesProvider(modulesProvider);
     ProjectTypeStep projectTypeStep = new ProjectTypeStep(myWizardContext, this, modulesProvider);
     Disposer.register(getDisposable(), projectTypeStep);
@@ -63,9 +71,9 @@ public class NewProjectWizard extends AbstractProjectWizard {
       chooseTemplateStep = new ChooseTemplateStep(myWizardContext, projectTypeStep);
       mySequence.addCommonStep(chooseTemplateStep);
     }
-    //hacky: new wizard module ID should starts with newWizard, to be removed later, on migrating on new API.
+    // hacky: module builder ID and module type id should start with [NPW_PREFIX], to be removed later, on migrating on new API.
     Predicate<Set<String>> predicate = strings -> !isNewWizard() ||
-                                                  !ContainerUtil.exists(strings, type -> type.startsWith("newWizard"));
+                                                  !ContainerUtil.exists(strings, type -> type.startsWith(NPW_PREFIX));
     mySequence.addCommonFinishingStep(new ProjectSettingsStep(myWizardContext), predicate);
     for (ModuleWizardStep step : mySequence.getAllSteps()) {
       addStep(step);
@@ -76,8 +84,9 @@ public class NewProjectWizard extends AbstractProjectWizard {
     super.init();
   }
 
-  private static boolean isNewWizard() {
-    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
+  @Override
+  public @Nullable Dimension getInitialSize() {
+    return new Dimension(800, 600);
   }
 
   @Override

@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -28,7 +29,7 @@ import javax.swing.*;
 /**
  * @author Bas Leijdekkers
  */
-public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
+public class EqualsReplaceableByObjectsCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
   public boolean checkNotNull;
 
   private static final EquivalenceChecker EQUIVALENCE = new NoSideEffectExpressionEquivalenceChecker();
@@ -97,13 +98,13 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
   private class EqualsReplaceableByObjectsCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final String methodName = expression.getMethodExpression().getReferenceName();
       if (!HardcodedMethodConstants.EQUALS.equals(methodName)) {
         return;
       }
       final PsiExpression qualifierExpression = getQualifierExpression(expression);
-      if (qualifierExpression instanceof PsiThisExpression || qualifierExpression instanceof PsiSuperExpression) {
+      if (qualifierExpression instanceof PsiQualifiedExpression) {
         return;
       }
       if (isNotNullExpressionOrConstant(qualifierExpression)) {

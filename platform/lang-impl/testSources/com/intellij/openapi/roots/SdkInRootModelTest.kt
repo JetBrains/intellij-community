@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots
 
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -197,7 +197,7 @@ class SdkInRootModelTest {
     val sdk = projectModel.createSdk("my sdk")
     val model = createModifiableModel(module, object : RootConfigurationAccessor() {
       override fun getProjectSdk(project: Project): Sdk = sdk
-      override fun getProjectSdkName(project: Project): String? = "my sdk"
+      override fun getProjectSdkName(project: Project): String = "my sdk"
     })
     model.inheritSdk()
     assertThat(model.sdk).isEqualTo(sdk)
@@ -214,7 +214,7 @@ class SdkInRootModelTest {
   fun `set project sdk from accessor by name`() {
     val sdk = projectModel.createSdk("my sdk")
     val model = createModifiableModel(module, object : RootConfigurationAccessor() {
-      override fun getProjectSdkName(project: Project): String? = "my sdk"
+      override fun getProjectSdkName(project: Project): String = "my sdk"
     })
     model.inheritSdk()
     assertThat(model.sdk).isNull()

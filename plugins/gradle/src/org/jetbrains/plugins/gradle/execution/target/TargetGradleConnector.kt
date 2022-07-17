@@ -133,6 +133,11 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
       }
       distribution = TargetGradleDistribution(defaultDistribution)
     }
+
+    if (distribution !is TargetGradleDistribution) {
+      distribution = TargetGradleDistribution(distribution!!)
+    }
+
     synchronized(connections) {
       if (stopped) {
         throw IllegalStateException("Tooling API client has been disconnected. No other connections may be used.")

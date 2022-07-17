@@ -14,44 +14,44 @@ fun test() {
     val (a, b) = 1 to 2
 
     val (a) =
-            b
+        b
 
     val (
-            a,
+        a,
     ) =
-            b
+        b
 
     val (a
     ) =
-            b
+        b
 
     val (a) = b
 
     val (
-            a,
+        a,
     ) = b
 
     val (a, b
     ) = 1 to 2
 
     val (a,
-            b) = 1 to 2
+        b) = 1 to 2
 
     val (
-            a, b
+        a, b
     ) = 1 to 2
 
     val (
-            a, b,
+        a, b,
     ) = 1 to 2
 
     val (a, b, c,
-            d, f
+        d, f
     ) = 1 to 2
 
     val (
-            a, b, c,
-            d, f,
+        a, b, c,
+        d, f,
     ) = 1 to 2
 
     val (a, b/**/) = 1 to 2
@@ -68,7 +68,7 @@ fun test() {
     val (a/**/, b/**//**/) = 1 to 2
 
     val (a/**//**/) =
-            b
+        b
 
     val (a) = b
 
@@ -85,20 +85,20 @@ fun test() {
             /**/b) = 1 to 2
 
     val (
-            a, b // fe
+        a, b // fe
             /**/)/**/ = 1 to 2
 
     val (
-            a, b, // awd
+        a, b, // awd
     ) = 1 to 2
 
     val (a, b, c,
-            d, f // awd
+        d, f // awd
             /*
         */) = 1 to 2
 
     val (
-            a, b, c,
-            d, f, // awd
+        a, b, c,
+        d, f, // awd
     ) = 1 to 2
 }

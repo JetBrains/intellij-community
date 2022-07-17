@@ -7,11 +7,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 
 public class CoverageListRootNode extends CoverageListNode {
-  private List<AbstractTreeNode<?>> myTopLevelPackages;
+  private volatile List<AbstractTreeNode<?>> myTopLevelPackages;
 
   public CoverageListRootNode(Project project, @NotNull PsiNamedElement classOrPackage,
                               CoverageSuitesBundle bundle,
@@ -19,7 +18,11 @@ public class CoverageListRootNode extends CoverageListNode {
     super(project, classOrPackage, bundle, stateBean);
   }
 
-  private List<AbstractTreeNode<?>> getTopLevelPackages(CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean, Project project) {
+  public synchronized void reset() {
+    myTopLevelPackages = null;
+  }
+
+  private synchronized List<AbstractTreeNode<?>> getTopLevelPackages(CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean, Project project) {
     if (myTopLevelPackages == null) {
       myTopLevelPackages = bundle.getCoverageEngine().createCoverageViewExtension(project, bundle, stateBean).createTopLevelNodes();
       for (AbstractTreeNode abstractTreeNode : myTopLevelPackages) {
@@ -31,7 +34,7 @@ public class CoverageListRootNode extends CoverageListNode {
 
   @NotNull
   @Override
-  public Collection<? extends AbstractTreeNode<?>> getChildren() {
+  public List<? extends AbstractTreeNode<?>> getChildren() {
     if (myStateBean.myFlattenPackages) {
       return getTopLevelPackages(myBundle, myStateBean, myProject);
     }

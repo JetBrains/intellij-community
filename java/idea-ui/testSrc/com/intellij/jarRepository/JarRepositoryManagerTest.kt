@@ -30,7 +30,7 @@ class JarRepositoryManagerTest : UsefulTestCase() {
   override fun setUp() {
     super.setUp()
     myFixture = runInEdtAndGet {
-      IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().fixture.apply { setUp() }
+      IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(getTestName(false)).fixture.apply { setUp() }
     }
     myProject = myFixture.project
     myMavenRepo = FileUtil.createTempDirectory("maven", "repo")

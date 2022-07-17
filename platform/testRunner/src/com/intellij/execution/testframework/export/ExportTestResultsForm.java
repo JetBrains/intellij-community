@@ -60,8 +60,9 @@ public class ExportTestResultsForm {
     myCustomTemplateField.addBrowseFolderListener(ExecutionBundle.message("export.test.results.custom.template.chooser.title"), null, null,
                                                   new FileChooserDescriptor(true, false, false, false, false, false) {
                                  @Override
-                                 public boolean isFileSelectable(VirtualFile file) {
-                                   return "xsl".equalsIgnoreCase(file.getExtension()) || "xslt".equalsIgnoreCase(file.getExtension());
+                                 public boolean isFileSelectable(@Nullable VirtualFile file) {
+                                   return file != null &&
+                                          ("xsl".equalsIgnoreCase(file.getExtension()) || "xslt".equalsIgnoreCase(file.getExtension()));
                                  }
                                }, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
 

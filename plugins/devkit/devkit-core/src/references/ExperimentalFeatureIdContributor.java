@@ -88,7 +88,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
       final DomFixedChildDescription description = extension.getGenericInfo().getFixedChildDescription("description");
       if (description == null) return null;
       final DomElement element = ContainerUtil.getFirstItem(description.getValues(extension));
-      return element instanceof GenericDomValue ? ((GenericDomValue)element).getStringValue() : null;
+      return element instanceof GenericDomValue ? ((GenericDomValue<?>)element).getStringValue() : null;
     }
   }
 }

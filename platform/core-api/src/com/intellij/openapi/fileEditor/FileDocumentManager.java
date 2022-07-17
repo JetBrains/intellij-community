@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.core.CoreBundle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,6 +110,18 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * @return the documents that have unsaved changes.
    */
   public abstract Document @NotNull [] getUnsavedDocuments();
+
+  /**
+   * Feeds all documents that have unsaved changes to the processor passed
+   * @param processor - Processor to collect all the unsaved documents. Return false to stop processing or true to continue.
+   * @return false if processing has been stopped before all the unsaved documents where processed
+   */
+  public boolean processUnsavedDocuments(Processor<? super Document> processor) {
+    for (Document doc : getUnsavedDocuments()) {
+      if (!processor.process(doc)) return false;
+    }
+    return true;
+  }
 
   /**
    * Checks if the document has unsaved changes.

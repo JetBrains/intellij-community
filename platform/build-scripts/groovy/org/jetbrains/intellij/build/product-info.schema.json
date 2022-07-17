@@ -3,8 +3,9 @@
   "$id": "http://jetbrains.org/intellij/schema/product.schema.json",
   "title": "IntelliJ-based IDE installation",
   "description": "Meta-information about installation of an IDE based on IntelliJ Platform",
-  "version": "0.1",
+  "version": "0.2",
   "type": "object",
+  "additionalProperties": false,
   "required": [
     "name", "version", "buildNumber", "productCode", "launch"
   ],
@@ -43,6 +44,7 @@
       "items": {
         "type": "object",
         "required": ["os", "launcherPath", "vmOptionsFilePath"],
+        "additionalProperties": false,
         "minItems": 1,
         "properties": {
           "os": {
@@ -75,6 +77,7 @@
       "items": {
         "type": "object",
         "required": ["key", "value"],
+        "additionalProperties": false,
         "minItems": 0,
         "properties": {
           "key": {
@@ -84,6 +87,27 @@
             "type": "string"
           }
         }
+      }
+    },
+    "bundledPlugins": {
+      "description": "Plugins bundled into this distribution",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fileExtensions": {
+      "description": "File extensions reported to be handled by this distribution",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "modules": {
+      "description": "Product modules (non-removable bundled plugins) contained in this distribution, see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules",
+      "type": "array",
+      "items": {
+        "type": "string"
       }
     }
   }

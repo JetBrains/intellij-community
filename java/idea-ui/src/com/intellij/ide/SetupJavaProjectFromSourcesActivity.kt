@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.google.common.collect.ArrayListMultimap
@@ -14,7 +14,7 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl
 import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleManager
@@ -33,30 +33,38 @@ import com.intellij.openapi.vfs.*
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isOpenedByPlatformProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
+import com.intellij.util.SystemProperties
 import java.io.File
 import javax.swing.event.HyperlinkEvent
 
-private val NOTIFICATION_GROUP = NotificationGroup("Build Script Found", NotificationDisplayType.STICKY_BALLOON, true)
+private val NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Build Script Found")
+private val SETUP_JAVA_PROJECT_IS_DISABLED = SystemProperties.getBooleanProperty("idea.java.project.setup.disabled", false)
 
 private const val SCAN_DEPTH_LIMIT = 5
 private const val MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE = 3
-private val LOG = logger<SetupJavaProjectFromSourcesActivity>()
 
 internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
-  override fun runActivity(project: Project) {
+  init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
+  override fun runActivity(project: Project) {
+    if (SETUP_JAVA_PROJECT_IS_DISABLED) {
       return
     }
+
     if (!project.isOpenedByPlatformProcessor()) {
       return
     }
+    val projectDir = project.baseDir ?: return
 
     // todo get current project structure, and later setup from sources only if it wasn't manually changed by the user
 
     val title = JavaUiBundle.message("task.searching.for.project.sources")
     ProgressManager.getInstance().run(object: Task.Backgroundable(project, title, true) {
       override fun run(indicator: ProgressIndicator) {
-        val projectDir = project.baseDir
         val importers = searchImporters(projectDir)
         if (!importers.isEmpty) {
           showNotificationToImport(project, projectDir, importers)
@@ -119,7 +127,9 @@ internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
       content = formatContent(providersAndFiles, projectDirectory)
     }
 
-    val notification = NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION).setListener(showFileInProjectViewListener)
+    val notification = NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION)
+      .setSuggestionType(true)
+      .setListener(showFileInProjectViewListener)
 
     if (providersAndFiles.keySet().all { it.canImportProjectAfterwards() }) {
       val actionName = JavaUiBundle.message("build.script.found.notification.import", providersAndFiles.keySet().size)

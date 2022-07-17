@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.execution.ExecutionException;
@@ -23,7 +23,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -77,10 +76,10 @@ public class WindowsDefenderChecker {
 
     RealtimeScanningStatus scanningStatus = getRealtimeScanningEnabled();
     if (scanningStatus == RealtimeScanningStatus.SCANNING_ENABLED) {
-      final Collection<String> excludedProcesses = getExcludedProcesses();
-      final List<File> processesToCheck = getProcessesToCheck();
+      Collection<String> excludedProcesses = getExcludedProcesses();
+      List<Path> processesToCheck = getProcessesToCheck();
       if (excludedProcesses != null &&
-          ContainerUtil.all(processesToCheck, (exe) -> excludedProcesses.contains(exe.getName().toLowerCase(Locale.ENGLISH))) &&
+          ContainerUtil.all(processesToCheck, exe -> excludedProcesses.contains(exe.getFileName().toString().toLowerCase(Locale.ENGLISH))) &&
           excludedProcesses.contains("java.exe")) {
         LOG.info("Windows Defender status: all relevant processes excluded from real-time scanning");
         return new CheckResult(RealtimeScanningStatus.SCANNING_DISABLED, Collections.emptyMap());
@@ -112,14 +111,13 @@ public class WindowsDefenderChecker {
     return new CheckResult(scanningStatus, Collections.emptyMap());
   }
 
-  @NotNull
-  protected List<File> getProcessesToCheck() {
-    List<File> result = new ArrayList<>();
-    File ideStarter = Restarter.getIdeStarter();
+  protected @NotNull List<Path> getProcessesToCheck() {
+    List<Path> result = new ArrayList<>();
+    Path ideStarter = Restarter.getIdeStarter();
     if (ideStarter != null) {
       result.add(ideStarter);
     }
-    File fsNotifier = NativeFileWatcherImpl.getFSNotifierExecutable();
+    Path fsNotifier = NativeFileWatcherImpl.getFSNotifierExecutable();
     if (fsNotifier != null) {
       result.add(fsNotifier);
     }
@@ -171,8 +169,7 @@ public class WindowsDefenderChecker {
    * match foo\baz\bar but not foo\baz\quux\bar)). The behavior of wildcards with respect to case-sensitivity is undocumented.
    * Returns a list of patterns, one for each exclusion path, that emulate how Windows Defender would interpret that path.
    */
-  @Nullable
-  private static List<Pattern> getExcludedPatterns() {
+  private static @Nullable List<Pattern> getExcludedPatterns() {
     final Collection<String> paths = getWindowsDefenderProperty("ExclusionPath");
     if (paths == null) return null;
     if (paths.size() > 0) {
@@ -185,24 +182,21 @@ public class WindowsDefenderChecker {
     return ContainerUtil.map(paths, path -> wildcardsToRegex(expandEnvVars(path)));
   }
 
-  @Nullable
-  private static Collection<String> getExcludedProcesses() {
+  private static @Nullable Collection<String> getExcludedProcesses() {
     final Collection<String> processes = getWindowsDefenderProperty("ExclusionProcess");
     if (processes == null) return null;
     return ContainerUtil.map(processes, process -> process.toLowerCase());
   }
 
   /** Runs a powershell command to determine whether realtime scanning is enabled or not. */
-  @NotNull
-  private static RealtimeScanningStatus getRealtimeScanningEnabled() {
+  private static @NotNull RealtimeScanningStatus getRealtimeScanningEnabled() {
     final Collection<String> output = getWindowsDefenderProperty("DisableRealtimeMonitoring");
     if (output == null) return RealtimeScanningStatus.ERROR;
     if (output.size() > 0 && output.iterator().next().startsWith("False")) return RealtimeScanningStatus.SCANNING_ENABLED;
     return RealtimeScanningStatus.SCANNING_DISABLED;
   }
 
-  @Nullable
-  private static Collection<String> getWindowsDefenderProperty(final String propertyName) {
+  private static @Nullable Collection<String> getWindowsDefenderProperty(final String propertyName) {
     try {
       ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine(
         "powershell", "-inputformat", "none", "-outputformat", "text", "-NonInteractive", "-Command",
@@ -220,8 +214,7 @@ public class WindowsDefenderChecker {
   }
 
   /** Returns a list of paths that might impact build performance if Windows Defender were configured to scan them. */
-  @NotNull
-  protected List<Path> getImportantPaths(@NotNull Project project) {
+  protected @NotNull List<Path> getImportantPaths(@NotNull Project project) {
     String homeDir = System.getProperty("user.home");
     String gradleUserHome = System.getenv("GRADLE_USER_HOME");
     String projectDir = project.getBasePath();
@@ -242,8 +235,7 @@ public class WindowsDefenderChecker {
 
 
   /** Expands references to environment variables (strings delimited by '%') in 'path' */
-  @NotNull
-  private static String expandEnvVars(@NotNull String path) {
+  private static @NotNull String expandEnvVars(@NotNull String path) {
     Matcher m = WINDOWS_ENV_VAR_PATTERN.matcher(path);
     StringBuilder result = new StringBuilder();
     while (m.find()) {
@@ -263,8 +255,7 @@ public class WindowsDefenderChecker {
    * https://docs.microsoft.com/en-us/windows/security/threat-protection/windows-defender-antivirus/configure-extension-file-exclusions-windows-defender-antivirus
    * for more details.
    */
-  @NotNull
-  private static Pattern wildcardsToRegex(@NotNull String path) {
+  private static @NotNull Pattern wildcardsToRegex(@NotNull String path) {
     Matcher m = WINDOWS_DEFENDER_WILDCARD_PATTERN.matcher(path);
     StringBuilder sb = new StringBuilder();
     int previousWildcardEnd = 0;
@@ -286,8 +277,7 @@ public class WindowsDefenderChecker {
    * Checks whether each of the given paths in {@code paths} is matched by some pattern in {@code excludedPatterns},
    * returning a map of the results.
    */
-  @NotNull
-  private static Map<Path, Boolean> checkPathsExcluded(@NotNull List<? extends Path> paths, @NotNull List<Pattern> excludedPatterns) {
+  private static @NotNull Map<Path, Boolean> checkPathsExcluded(@NotNull List<? extends Path> paths, @NotNull List<Pattern> excludedPatterns) {
     Map<Path, Boolean> result = new HashMap<>();
     for (Path path : paths) {
       if (!path.toFile().exists()) continue;

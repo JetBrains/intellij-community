@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.openapi.project.Project
@@ -11,10 +11,10 @@ import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.container.ComponentProvider
 import org.jetbrains.kotlin.container.get
 import org.jetbrains.kotlin.context.ProjectContext
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTrace
@@ -22,17 +22,20 @@ import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
 import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
 
 class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
+
     val Project.analysisCompletedHandler: UastAnalysisHandlerExtension?
         get() = getExtensions(AnalysisHandlerExtension.extensionPointName)
                 .filterIsInstance<UastAnalysisHandlerExtension>()
                 .firstOrNull()
 
-    override fun getBindingContext(element: KtElement): BindingContext {
-        return element.project.analysisCompletedHandler?.getBindingContext() ?: BindingContext.EMPTY
+    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
+    override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {
+        @Suppress("DEPRECATION")
+        return element.project.analysisCompletedHandler?.getTypeMapper()
     }
 
-    override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {
-        return element.project.analysisCompletedHandler?.getTypeMapper()
+    override fun getBindingContext(element: KtElement): BindingContext {
+        return element.project.analysisCompletedHandler?.getBindingContext() ?: BindingContext.EMPTY
     }
 
     override fun isJvmElement(psiElement: PsiElement) = true
@@ -41,7 +44,7 @@ class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
         return element.project.analysisCompletedHandler?.getLanguageVersionSettings() ?: LanguageVersionSettingsImpl.DEFAULT
     }
 
-    override fun getReferenceVariants(ktElement: KtElement, nameHint: String): Sequence<DeclarationDescriptor> =
+    override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> =
         emptySequence() // Not supported
 }
 
@@ -54,6 +57,7 @@ class UastAnalysisHandlerExtension : AnalysisHandlerExtension {
 
     fun getLanguageVersionSettings() = languageVersionSettings
 
+    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
     fun getTypeMapper(): KotlinTypeMapper? {
         if (typeMapper != null) return typeMapper
         val bindingContext = context ?: return null

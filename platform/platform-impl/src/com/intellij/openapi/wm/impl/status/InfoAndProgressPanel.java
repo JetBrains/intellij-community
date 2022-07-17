@@ -1,10 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.ui.NavBarLocation;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.notification.EventLog;
@@ -14,6 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.TitledIndicator;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.ui.panel.ProgressPanelBuilder;
@@ -24,13 +28,13 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.AnimatedIcon;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.InplaceButton;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -41,6 +45,7 @@ import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,13 +58,12 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 
-public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
+public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget, UISettingsListener {
   public static final Object FAKE_BALLOON = new Object();
 
   private final ProcessPopup myPopup;
   private final ProcessBalloon myBalloon = new ProcessBalloon(3);
 
-  private final StatusPanel myInfoPanel = new StatusPanel();
   private final JPanel myRefreshAndInfoPanel = new JPanel();
   private final InlineProgressPanel myInlinePanel = new InlineProgressPanel();
   private final NotNullLazyValue<AsyncProcessIcon> myProgressIcon = NotNullLazyValue.lazy(() -> {
@@ -79,7 +83,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     });
 
     icon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    icon.setBorder(WidgetBorder.INSTANCE);
+    icon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border());
     icon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"));
     return icon;
   });
@@ -90,15 +94,18 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   private final Map<ProgressIndicatorEx, Set<MyInlineProgressIndicator>> myOriginalToInlines = new HashMap<>();
 
   private final MergingUpdateQueue myUpdateQueue;
-  private final Alarm myQueryAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myQueryAlarm = new Alarm();
 
   private boolean myShouldClosePopupAndOnProcessFinish;
 
-  private final JLabel myRefreshIcon = new JLabel(new AnimatedIcon.FS());
+  private final @NotNull JLabel myRefreshIcon;
+  private final @NotNull StatusPanel myStatusPanel;
 
   private String myCurrentRequestor;
   private boolean myDisposed;
   private WeakReference<Balloon> myLastShownBalloon;
+  private JComponent myCentralComponent;
+  private boolean myShowNavBar;
 
   private final Set<InlineProgressIndicator> myDirtyIndicators = new ReferenceOpenHashSet<>();
   private final Update myUpdateIndicators = new Update("UpdateIndicators", false, 1) {
@@ -115,16 +122,25 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   };
 
-  InfoAndProgressPanel() {
+  InfoAndProgressPanel(UISettings uiSettings) {
     setOpaque(false);
     setBorder(JBUI.Borders.empty());
 
-    myRefreshIcon.setVisible(false);
-
     myRefreshAndInfoPanel.setLayout(new BorderLayout());
     myRefreshAndInfoPanel.setOpaque(false);
-    myRefreshAndInfoPanel.add(myRefreshIcon, BorderLayout.WEST);
-    myRefreshAndInfoPanel.add(myInfoPanel, BorderLayout.CENTER);
+
+    myShowNavBar = ExperimentalUI.isNewUI() && uiSettings.getNavBarLocation() == NavBarLocation.BOTTOM &&
+                   uiSettings.getShowNavigationBar();
+
+    myRefreshIcon = new JLabel(new AnimatedIcon.FS());
+    myRefreshIcon.setVisible(false);
+
+    myStatusPanel = new StatusPanel();
+
+    if (!myShowNavBar) {
+      myRefreshAndInfoPanel.add(myRefreshIcon, BorderLayout.WEST);
+      myRefreshAndInfoPanel.add(myStatusPanel, BorderLayout.CENTER);
+    }
 
     myUpdateQueue = new MergingUpdateQueue("Progress indicator", 50, true, MergingUpdateQueue.ANY_COMPONENT);
     myPopup = new ProcessPopup(this);
@@ -183,6 +199,23 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   public void install(@NotNull StatusBar statusBar) {
   }
 
+  @ApiStatus.Experimental
+  public void setCentralComponent(@Nullable JComponent component) {
+    if (myShowNavBar) {
+      BorderLayout layout = (BorderLayout)myRefreshAndInfoPanel.getLayout();
+      Component c = layout.getLayoutComponent(BorderLayout.CENTER);
+      if (c != null) {
+        myRefreshAndInfoPanel.remove(c);
+        myCentralComponent = null;
+      }
+
+      if (component != null) {
+        myRefreshAndInfoPanel.add(component, BorderLayout.CENTER);
+      }
+    }
+    myCentralComponent = component;
+  }
+
   @Override
   public void dispose() {
     setRefreshVisible(false);
@@ -196,6 +229,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
       myDisposed = true;
     }
+
     GuiUtils.removePotentiallyLeakingReferences(myRefreshIcon);
     myInfos.clear();
   }
@@ -340,33 +374,44 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
-  public @NotNull Pair<@NlsContexts.StatusBarText String, String> setText(@Nullable @NlsContexts.StatusBarText String text, @Nullable String requestor) {
-    if (StringUtil.isEmpty(text) && !Objects.equals(requestor, myCurrentRequestor) && !EventLog.LOG_REQUESTOR.equals(requestor)) {
-      return new Pair<>(myInfoPanel.getText(), myCurrentRequestor);
+  @Nullable
+  @NlsContexts.StatusBarText
+  public String setText(@Nullable @NlsContexts.StatusBarText String text, @Nullable String requestor) {
+    if (myShowNavBar) return text;
+
+    if (Strings.isEmpty(text) &&!Objects.equals(requestor, myCurrentRequestor) && !EventLog.LOG_REQUESTOR.equals(requestor)) {
+      return myStatusPanel.getText();
     }
 
-    boolean logMode = myInfoPanel.updateText(EventLog.LOG_REQUESTOR.equals(requestor) ? "" : text);
+    boolean logMode = myStatusPanel.updateText(EventLog.LOG_REQUESTOR.equals(requestor) ? "" : text);
     myCurrentRequestor = logMode ? EventLog.LOG_REQUESTOR : requestor;
-    return new Pair<>(text, requestor);
+    return text;
   }
 
   void setRefreshVisible(boolean visible) {
-    UIUtil.invokeLaterIfNeeded(() -> myRefreshIcon.setVisible(visible));
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (!myShowNavBar) myRefreshIcon.setVisible(visible);
+    });
   }
 
   void setRefreshToolTipText(@NlsContexts.Tooltip String tooltip) {
-    myRefreshIcon.setToolTipText(tooltip);
+    if (!myShowNavBar) {
+      myRefreshIcon.setToolTipText(tooltip);
+    }
   }
 
   public BalloonHandler notifyByBalloon(@NotNull MessageType type,
                                         @NotNull @PopupContent String htmlBody,
                                         @Nullable Icon icon,
                                         @Nullable HyperlinkListener listener) {
-    Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
-      htmlBody.replace("\n", "<br>"),
-      icon != null ? icon : type.getDefaultIcon(),
-      type.getPopupBackground(),
-      listener).createBalloon();
+    Balloon balloon = JBPopupFactory.getInstance()
+      .createHtmlTextBalloonBuilder(htmlBody.replace("\n", "<br>"),
+                                    icon != null ? icon : type.getDefaultIcon(),
+                                    type.getTitleForeground(),
+                                    type.getPopupBackground(),
+                                    listener)
+      .setBorderColor(type.getBorderColor())
+      .createBalloon();
 
     SwingUtilities.invokeLater(() -> {
       Balloon oldBalloon = SoftReference.dereference(myLastShownBalloon);
@@ -479,6 +524,35 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
+  @Override
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
+    myShowNavBar = ExperimentalUI.isNewUI() && uiSettings.getShowNavigationBar() &&
+                   uiSettings.getNavBarLocation() == NavBarLocation.BOTTOM;
+
+    BorderLayout layout = (BorderLayout)myRefreshAndInfoPanel.getLayout();
+    Component c = layout.getLayoutComponent(BorderLayout.CENTER);
+    if (c != null) myRefreshAndInfoPanel.remove(c);
+
+    c = layout.getLayoutComponent(BorderLayout.WEST);
+    if (c != null) myRefreshAndInfoPanel.remove(c);
+
+    if (myShowNavBar) {
+      if (myCentralComponent != null) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myRefreshAndInfoPanel.add(myCentralComponent, BorderLayout.CENTER);
+          myCentralComponent.updateUI();
+        });
+      }
+    }
+    else {
+      myRefreshAndInfoPanel.add(myRefreshIcon, BorderLayout.WEST);
+      myRefreshAndInfoPanel.add(myStatusPanel, BorderLayout.CENTER);
+
+      myRefreshIcon.updateUI();
+      myStatusPanel.updateUI();
+    }
+  }
+
   private class ProgressPanelProgressIndicator extends MyInlineProgressIndicator {
     private final ProgressPanel myProgressPanel;
     private final InplaceButton myCancelButton;
@@ -489,7 +563,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       super(false, task, original);
 
       myProgressPanel = Objects.requireNonNull(ProgressPanel.getProgressPanel(myProgress));
-      UIUtil.putClientProperty(myComponent, ProcessPopup.KEY, myProgressPanel);
+      ClientProperty.put(myComponent, ProcessPopup.KEY, myProgressPanel);
 
       myCancelButton = Objects.requireNonNull(myProgressPanel.getCancelButton());
       myCancelButton.setPainting(task.isCancellable());
@@ -573,7 +647,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
-  class MyInlineProgressIndicator extends InlineProgressIndicator {
+  class MyInlineProgressIndicator extends InlineProgressIndicator implements TitledIndicator {
     private ProgressIndicatorEx myOriginal;
     PresentationModeProgressPanel myPresentationModeProgressPanel;
     Balloon myPresentationModeBalloon;
@@ -762,6 +836,11 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     public boolean showInPresentationMode() {
       return !isProcessWindowOpen();
     }
+
+    @Override
+    public void setTitle(@NotNull @NlsContexts.ProgressTitle String title) {
+      setProcessNameValue(title);
+    }
   }
 
   private void runQuery() {
@@ -790,7 +869,9 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       @Override
       public void updateUI() {
         super.updateUI();
-        setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
+        if (!ExperimentalUI.isNewUI()) {
+          setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
+        }
       }
     };
 

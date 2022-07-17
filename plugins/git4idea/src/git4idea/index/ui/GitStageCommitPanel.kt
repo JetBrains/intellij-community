@@ -86,8 +86,6 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   override fun getDisplayedUnversionedFiles(): List<FilePath> = emptyList()
   override fun getIncludedUnversionedFiles(): List<FilePath> = emptyList()
 
-  override fun includeIntoCommit(items: Collection<*>) = Unit
-
   private inner class InclusionState(val includedRoots: Collection<VirtualFile>, val trackerState: GitStageTracker.State) {
     private val stagedStatuses: Set<GitFileStatus> = trackerState.getStaged()
     val conflictedRoots: Set<VirtualFile> = trackerState.rootStates.filter { it.value.hasConflictedFiles() }.keys

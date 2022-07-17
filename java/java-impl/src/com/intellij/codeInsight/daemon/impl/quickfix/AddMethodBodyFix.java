@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -15,6 +15,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public final class AddMethodBodyFix implements IntentionActionWithFixAllOption {
   private final PsiMethod myMethod;
@@ -59,6 +61,12 @@ public final class AddMethodBodyFix implements IntentionActionWithFixAllOption {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     PsiUtil.setModifierProperty(myMethod, PsiModifier.ABSTRACT, false);
+    if (Objects.requireNonNull(myMethod.getContainingClass()).isInterface() &&
+        !myMethod.hasModifierProperty(PsiModifier.STATIC) &&
+        !myMethod.hasModifierProperty(PsiModifier.DEFAULT) &&
+        !myMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
+      PsiUtil.setModifierProperty(myMethod, PsiModifier.DEFAULT, true);
+    }
     CreateFromUsageUtils.setupMethodBody(myMethod);
     CreateFromUsageUtils.setupEditor(myMethod, editor);
   }

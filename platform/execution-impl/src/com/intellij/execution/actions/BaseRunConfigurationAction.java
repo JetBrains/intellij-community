@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.actions;
 
@@ -17,8 +17,6 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,13 +32,18 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public abstract class BaseRunConfigurationAction extends ActionGroup implements UpdateInBackground {
+public abstract class BaseRunConfigurationAction extends ActionGroup {
   protected static final Logger LOG = Logger.getInstance(BaseRunConfigurationAction.class);
 
   protected BaseRunConfigurationAction(@NotNull Supplier<String> text, @NotNull Supplier<String> description, final Icon icon) {
     super(text, description, icon);
     setPopup(true);
     setEnabledInModalContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -107,22 +110,6 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
   
   protected boolean isEnabledFor(RunConfiguration configuration, ConfigurationContext context) {
     return isEnabledFor(configuration);
-  }
-
-  @Override
-  public boolean canBePerformed(@NotNull DataContext dataContext) {
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project != null && DumbService.isDumb(project)) {
-      return false;
-    }
-
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
-    final RunnerAndConfigurationSettings existing = findExisting(context);
-    if (existing == null) {
-      final List<ConfigurationFromContext> fromContext = getConfigurationsFromContext(context);
-      return fromContext.size() <= 1 || dataContext.getData(ExecutorAction.getOrderKey()) != null;
-    }
-    return true;
   }
 
   @Override
@@ -208,6 +195,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
     if (!success) {
       recordUpdateTimeout();
       approximatePresentationByPreviousAvailability(event, hadAnythingRunnable);
+      event.getPresentation().setPerformGroup(false);
     }
   }
 
@@ -236,6 +224,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
     }
     if (configuration == null){
       presentation.setEnabledAndVisible(false);
+      presentation.setPerformGroup(false);
     }
     else{
       presentation.setEnabledAndVisible(true);
@@ -246,6 +235,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
       final List<ConfigurationFromContext> fromContext = getConfigurationsFromContext(context);
       if (existing == null && fromContext.isEmpty()) {
         presentation.setEnabledAndVisible(false);
+        presentation.setPerformGroup(false);
         return;
       }
       if ((existing == null || dataContext.getData(ExecutorAction.getOrderKey()) != null) && !fromContext.isEmpty()) {
@@ -254,7 +244,10 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
         context.setConfiguration(configurationFromContext.getConfigurationSettings());
       }
       final String name = suggestRunActionName(configuration.getConfiguration());
-      updatePresentation(presentation, existing != null || fromContext.size() <= 1 || dataContext.getData(ExecutorAction.getOrderKey()) != null ? name : "", context);
+
+      boolean performGroup = existing != null || fromContext.size() <= 1 || dataContext.getData(ExecutorAction.getOrderKey()) != null;
+      updatePresentation(presentation, performGroup ? name : "", context);
+      presentation.setPerformGroup(performGroup);
     }
   }
 

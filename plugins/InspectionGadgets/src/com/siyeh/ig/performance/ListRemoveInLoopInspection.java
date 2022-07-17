@@ -31,7 +31,7 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!LIST_REMOVE.test(call)) return;
         PsiExpression listExpression = call.getMethodExpression().getQualifierExpression();
         if (listExpression == null) return;

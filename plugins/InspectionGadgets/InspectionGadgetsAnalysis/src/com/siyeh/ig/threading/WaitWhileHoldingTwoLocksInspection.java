@@ -41,12 +41,12 @@ public class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       checkErrorsIn(method);
     }
 
     @Override
-    public void visitClassInitializer(PsiClassInitializer initializer) {
+    public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
       checkErrorsIn(initializer);
     }
 
@@ -55,7 +55,7 @@ public class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
         private int m_numLocksHeld;
 
         @Override
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
           // Do not recurse into
         }
 

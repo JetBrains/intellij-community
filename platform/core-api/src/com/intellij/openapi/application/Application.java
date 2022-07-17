@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ import java.util.concurrent.Future;
  * </table>
  * <p>
  * Obtaining locks manually is not recommended. The recommended way to obtain read and write locks is to run so-called
- * "read actions" and "write actions" via {@link #runReadAction} and {@link #runWriteAction}, respectively.
+ * "read actions" and write-actions via {@link #runReadAction} and {@link #runWriteAction}, respectively.
  * <p>
  * The recommended way to obtain Write Intent lock is to schedule execution on so-called "write thread" (i.e. thread with Write Intent lock)
  * via {@link #invokeLaterOnWriteThread} or {@link AppUIExecutor#onWriteThread} asynchronous API.
@@ -50,7 +51,6 @@ import java.util.concurrent.Future;
  * See also <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>.
  */
 public interface Application extends ComponentManager {
-
   /**
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
    * with {@link ModalityState#defaultModalityState()} modality state.
@@ -84,7 +84,7 @@ public interface Application extends ComponentManager {
 
   /**
    * Runs the specified read action. Can be called from any thread. The action is executed immediately
-   * if no write action is currently running, or blocked until the currently running write action completes.<p></p>
+   * if no write action is currently running, or blocked until the currently running write action completes.
    * <p>
    * See also {@link ReadAction#run} for a more lambda-friendly version.
    *
@@ -95,19 +95,20 @@ public interface Application extends ComponentManager {
   /**
    * Runs the specified computation in a read action. Can be called from any thread. The action is executed
    * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.<p></p>
+   * completes.
    * <p>
    * See also {@link ReadAction#compute} for a more lambda-friendly version.
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
    */
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   <T> T runReadAction(@NotNull Computable<T> computation);
 
   /**
    * Runs the specified computation in a read action. Can be called from any thread. The action is executed
    * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.<p></p>
+   * completes.
    * <p>
    * See also {@link ReadAction#compute} for a more lambda-friendly version.
    *
@@ -115,11 +116,12 @@ public interface Application extends ComponentManager {
    * @return the result returned by the computation.
    * @throws E re-frown from ThrowableComputable
    */
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
    * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
-   * immediately if no read actions are currently running, or blocked until all read actions complete.<p></p>
+   * immediately if no read actions are currently running, or blocked until all read actions complete.
    * <p>
    * See also {@link WriteAction#run} for a more lambda-friendly version.
    *
@@ -128,21 +130,22 @@ public interface Application extends ComponentManager {
   void runWriteAction(@NotNull Runnable action);
 
   /**
-   * Runs the specified computation in a write action. Must be called from the Swing dispatch thread.
+   * Runs the specified computation in a write-action. Must be called from the Swing dispatch thread.
    * The action is executed immediately if no read actions or write actions are currently running,
-   * or blocked until all read actions and write actions complete.<p></p>
+   * or blocked until all read actions and write actions complete.
    * <p>
    * See also {@link WriteAction#compute} for a more lambda-friendly version.
    *
    * @param computation the computation to run
    * @return the result returned by the computation.
    */
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   <T> T runWriteAction(@NotNull Computable<T> computation);
 
   /**
-   * Runs the specified computation in a write action. Must be called from the Swing dispatch thread.
+   * Runs the specified computation in a write-action. Must be called from the Swing dispatch thread.
    * The action is executed immediately if no read actions or write actions are currently running,
-   * or blocked until all read actions and write actions complete.<p></p>
+   * or blocked until all read actions and write actions complete.
    * <p>
    * See also {@link WriteAction#compute} for a more lambda-friendly version.
    *
@@ -150,6 +153,7 @@ public interface Application extends ComponentManager {
    * @return the result returned by the computation.
    * @throws E re-frown from ThrowableComputable
    */
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
@@ -161,17 +165,17 @@ public interface Application extends ComponentManager {
   boolean hasWriteAction(@NotNull Class<?> actionClass);
 
   /**
-   * Asserts whether the read access is allowed.
+   * Asserts whether read access is allowed.
    */
   void assertReadAccessAllowed();
 
   /**
-   * Asserts whether the write access is allowed.
+   * Asserts whether write access is allowed.
    */
   void assertWriteAccessAllowed();
 
   /**
-   * Asserts whether the read access is not allowed.
+   * Asserts whether read access is not allowed.
    */
   @ApiStatus.Experimental
   void assertReadAccessNotAllowed();
@@ -188,17 +192,12 @@ public interface Application extends ComponentManager {
   void assertIsNonDispatchThread();
 
   /**
-   * Asserts whether the method is being called from under the Write Intent lock
+   * Asserts whether the method is being called from under the write-intent lock.
    */
   @ApiStatus.Experimental
   void assertIsWriteThread();
 
-  /**
-   * @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead
-   * Adds an {@link ApplicationListener}.
-   *
-   * @param listener the listener to add
-   */
+  /** @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead */
   @Deprecated
   void addApplicationListener(@NotNull ApplicationListener listener);
 
@@ -210,17 +209,13 @@ public interface Application extends ComponentManager {
    */
   void addApplicationListener(@NotNull ApplicationListener listener, @NotNull Disposable parent);
 
-  /**
-   * @deprecated Instead, just call {@code Disposer.dispose(disposable);} on disposable you've passed to {@link #addApplicationListener(ApplicationListener, Disposable)}
-   * Removes an {@link ApplicationListener}.
-   *
-   * @param listener the listener to remove
-   */
+  /** @deprecated call {@code Disposer.dispose(disposable);} on disposable passed to {@link #addApplicationListener(ApplicationListener, Disposable)} */
   @Deprecated
   void removeApplicationListener(@NotNull ApplicationListener listener);
 
   /**
-   * Saves all open documents, settings of all opened projects and application settings.
+   * Saves all open documents, settings of all open projects, and application settings.
+   *
    * @see #saveSettings()
    */
   void saveAll();
@@ -261,7 +256,7 @@ public interface Application extends ComponentManager {
   boolean isReadAccessAllowed();
 
   /**
-   * Checks if the current thread is the Swing dispatch thread and has IW lock acquired.
+   * Checks if the current thread is the event dispatch thread and has IW lock acquired.
    *
    * @see #isWriteThread()
    * @return {@code true} if the current thread is the Swing dispatch thread with IW lock, {@code false} otherwise.
@@ -279,15 +274,16 @@ public interface Application extends ComponentManager {
   boolean isWriteThread();
 
   /**
-   * @return a facade, which lets to call all those invokeLater() with a ActionCallback handle returned.
+   * @return a facade, which lets to call all those `invokeLater()` with an `ActionCallback` handle returned.
+   * @deprecated use corresponding {@link Application#invokeLater} methods
    */
-  @NotNull
-  ModalityInvokator getInvokator();
+  @Deprecated
+  @NotNull ModalityInvokator getInvokator();
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
    * AWT event dispatching thread under Write Intent lock, with {@link ModalityState#defaultModalityState()} modality state.
-   * This will happen after all pending AWT events have been processed.<p/>
+   * This will happen after all pending AWT events have been processed.
    * <p>
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
    * for the reasons described in {@link ModalityState} documentation.
@@ -300,7 +296,7 @@ public interface Application extends ComponentManager {
    * Causes {@code runnable.run()} to be executed asynchronously on the
    * AWT event dispatching thread under Write Intent lock - unless the expiration condition is fulfilled.
    * This will happen after all pending AWT events have been processed and in {@link ModalityState#defaultModalityState()} modality state
-   * (or a state with less modal dialogs open).<p/>
+   * (or a state with less modal dialogs open).
    * <p>
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
    * for the reasons described in {@link ModalityState} documentation.
@@ -366,52 +362,43 @@ public interface Application extends ComponentManager {
    *
    * @return the current modality state.
    */
-  @NotNull
-  ModalityState getCurrentModalityState();
+  @NotNull ModalityState getCurrentModalityState();
 
   /**
    * Please use {@link ModalityState#stateForComponent(Component)} instead.
    *
    * @return the modality state for the dialog to which the specified component belongs.
    */
-  @NotNull
-  ModalityState getModalityStateForComponent(@NotNull Component c);
+  @NotNull ModalityState getModalityStateForComponent(@NotNull Component c);
 
   /**
    * Please use {@link ModalityState#defaultModalityState()} instead.
    *
    * @return the modality state for the current thread.
    */
-  @NotNull
-  ModalityState getDefaultModalityState();
+  @NotNull ModalityState getDefaultModalityState();
 
   /**
    * Please use {@link ModalityState#NON_MODAL} instead.
    *
    * @return the modality state for no modal dialogs.
    */
-  @NotNull
-  ModalityState getNoneModalityState();
+  @NotNull ModalityState getNoneModalityState();
 
   /**
    * Please use {@link ModalityState#any()} instead, and only if you absolutely must, after carefully reading its documentation.
    *
    * @return modality state which is always applicable
    */
-  @NotNull
-  ModalityState getAnyModalityState();
+  @NotNull ModalityState getAnyModalityState();
 
   /**
-   * Returns the time of IDE start, in milliseconds since midnight, January 1, 1970 UTC.
-   *
-   * @return the IDE's start time.
+   * Returns the time of IDE start, in milliseconds since midnight, January 1, 1970 (UTC).
    */
   long getStartTime();
 
   /**
    * Returns the time in milliseconds during which IDE received no input events.
-   *
-   * @return the idle time of IDE.
    */
   long getIdleTime();
 
@@ -419,7 +406,7 @@ public interface Application extends ComponentManager {
    * Checks if IDE is currently running unit tests. No UI should be shown when unit
    * tests are being executed.
    * This method may also be used for additional debug checks or logging in test mode.
-   * <p></p>
+   * 
    * Please avoid doing things differently depending on the result of this method, because this leads to
    * testing something synthetic instead of what really happens in production.
    * So you'll be able to catch less of production bugs and might instead lose your time on debugging test-only issues.
@@ -428,7 +415,8 @@ public interface Application extends ComponentManager {
    * <ul>
    *   <li>To wait for an {@code invokeLater} in tests, you can call {@code PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()}</li>
    *   <li>To wait for asynchronous non-blocking read operations, you can call {@code NonBlockingReadActionImpl.waitForAsyncTaskCompletion()}</li>
-   *   <li>To wait for other asynchronous operations, you can track their {@link Future}/{@link org.jetbrains.concurrency.Promise Promise}/etc callbacks and call {@code PlatformTestUtil.waitFor*}</li>
+   *   <li>To wait for other asynchronous operations, you can track their {@link Future}/{@link org.jetbrains.concurrency.Promise Promise}/etc
+   *       callbacks and call {@code PlatformTestUtil.waitFor*}</li>
    *   <li>To emulate user interaction with a simple yes/no dialog, use {@code TestDialogManager.setTestDialog(...)}</li>
    *   <li>For other UI interaction, try {@link com.intellij.ui.UiInterceptors UiInterceptors}</li>
    * </ul>
@@ -466,8 +454,7 @@ public interface Application extends ComponentManager {
    * @param action to be executed
    * @return future result
    */
-  @NotNull
-  Future<?> executeOnPooledThread(@NotNull Runnable action);
+  @NotNull Future<?> executeOnPooledThread(@NotNull Runnable action);
 
   /**
    * Requests pooled thread to execute the action.
@@ -482,12 +469,9 @@ public interface Application extends ComponentManager {
    * @param action to be executed
    * @return future result
    */
-  @NotNull
-  <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action);
+  @NotNull <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action);
 
-  /**
-   * @deprecated Use {@link #isDisposed()}.
-   */
+  /** @deprecated use {@link #isDisposed()} instead */
   @Deprecated
   default boolean isDisposeInProgress() {
     return isDisposed();
@@ -512,26 +496,24 @@ public interface Application extends ComponentManager {
    */
   boolean isActive();
 
-  /**
-   * @deprecated Use {@link #runReadAction(Runnable)} instead
-   */
-  @NotNull
+  /** @deprecated use {@link #runReadAction(Runnable)} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  AccessToken acquireReadActionLock();
+  @NotNull AccessToken acquireReadActionLock();
+
+  /** @deprecated use {@link #runWriteAction}, {@link WriteAction#run(ThrowableRunnable)}, or {@link WriteAction#compute} instead */
+  @Deprecated
+  @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
 
   /**
-   * @deprecated use {@link #runWriteAction}, {@link WriteAction#run(ThrowableRunnable)} or {@link WriteAction#compute(ThrowableComputable)} instead
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
-
-  /**
-   * Checks if IDE is running in <a href="http://www.jetbrains.org/intellij/sdk/docs/reference_guide/internal_actions/enabling_internal.html">Internal Mode</a> to enable additional features for plugin development.
+   * Checks if IDE is running in
+   * <a href="http://www.jetbrains.org/intellij/sdk/docs/reference_guide/internal_actions/enabling_internal.html">Internal Mode</a>
+   * to enable additional features for plugin development.
    */
   boolean isInternal();
 
   boolean isEAP();
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  CoroutineScope getCoroutineScope();
 }

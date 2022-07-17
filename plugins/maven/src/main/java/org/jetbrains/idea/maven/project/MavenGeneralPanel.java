@@ -20,6 +20,9 @@ import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Objects;
+
+import static com.intellij.openapi.util.text.StringUtil.nullize;
 
 public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservable {
   private JCheckBox checkboxWorkOffline;
@@ -44,6 +47,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
   private JCheckBox useMavenConfigCheckBox;
   private JBLabel mavenConfigWarningLabel;
   private boolean isShowAdvancedSettingsCheckBox = false;
+  private MavenGeneralSettings myInitialSettings;
 
   public MavenGeneralPanel() {
     fillOutputLevelCombobox();
@@ -72,10 +76,10 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
   }
 
   private void fillUseMavenConfigGroup() {
-    useMavenConfigCheckBox.addChangeListener(e -> mavenConfigWarningLabel.setVisible(useMavenConfigCheckBox.isSelected()));
     mavenConfigWarningLabel.setIcon(AllIcons.General.BalloonWarning12);
     mavenConfigWarningLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     mavenConfigWarningLabel.setVerticalTextPosition(SwingConstants.TOP);
+    mavenConfigWarningLabel.setVisible(false);
   }
 
   public void showCheckBoxWithAdvancedSettings() {
@@ -109,9 +113,13 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     data.setUseMavenConfig(useMavenConfigCheckBox.isSelected());
 
     data.endUpdate();
+
+    mavenConfigWarningLabel.setVisible(useMavenConfigCheckBox.isSelected() && isModifiedNotOverridableData(data));
   }
 
   protected void initializeFormData(MavenGeneralSettings data, Project project) {
+    myInitialSettings = data;
+
     checkboxWorkOffline.setSelected(data.isWorkOffline());
 
     mavenPathsForm.initializeFormData(data, project);
@@ -128,9 +136,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     ComboBoxUtil.select(pluginUpdatePolicyComboModel, data.getPluginUpdatePolicy());
 
     showDialogWithAdvancedSettingsCheckBox.setSelected(data.isShowDialogWithAdvancedSettings());
-
     useMavenConfigCheckBox.setSelected(data.isUseMavenConfig());
-    mavenConfigWarningLabel.setVisible(useMavenConfigCheckBox.isSelected());
   }
 
   @Nls
@@ -169,5 +175,16 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     watcher.registerComponent("failPolicy", failPolicyCombo);
     watcher.registerComponent("showDialogWithAdvancedSettings", showDialogWithAdvancedSettingsCheckBox);
     watcher.registerComponent("useMavenConfigCheckBox", useMavenConfigCheckBox);
+  }
+
+  private boolean isModifiedNotOverridableData(MavenGeneralSettings data) {
+    return !Objects.equals(nullize(myInitialSettings.getThreads()), nullize(data.getThreads()))
+           || !Objects.equals(myInitialSettings.getChecksumPolicy(), data.getChecksumPolicy())
+           || !Objects.equals(myInitialSettings.getFailureBehavior(), data.getFailureBehavior())
+           || !Objects.equals(myInitialSettings.getOutputLevel(), data.getOutputLevel())
+           || !Objects.equals(myInitialSettings.isWorkOffline(), data.isWorkOffline())
+           || !Objects.equals(myInitialSettings.isPrintErrorStackTraces(), data.isPrintErrorStackTraces())
+           || !Objects.equals(myInitialSettings.isAlwaysUpdateSnapshots(), data.isAlwaysUpdateSnapshots())
+           || !Objects.equals(myInitialSettings.isNonRecursive(), data.isNonRecursive());
   }
 }

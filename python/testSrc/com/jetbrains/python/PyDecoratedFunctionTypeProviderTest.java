@@ -264,6 +264,68 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
     checkMultiFileTest("str", "(int) -> str", Context.USER_INITIATED);
   }
 
+  // PY-49935
+  public void testParamSpec() {
+    doTest("int", "(x: int, y: str) -> int",
+           "from typing import Callable, ParamSpec, TypeVar\n" +
+           "\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "R = TypeVar(\"R\")\n" +
+           "\n" +
+           "\n" +
+           "def log_to_database():\n" +
+           "    print('42')\n" +
+           "\n" +
+           "\n" +
+           "def add_logging(f: Callable[P, R]) -> Callable[P, R]:\n" +
+           "    def inner(*args: P.args, **kwargs: P.kwargs) -> R:\n" +
+           "        log_to_database()\n" +
+           "        return f(*args, **kwargs)\n" +
+           "\n" +
+           "    return inner\n" +
+           "\n" +
+           "\n" +
+           "@add_logging\n" +
+           "def takes_int_str(x: int, y: str) -> int:\n" +
+           "    return x + len(y)\n" +
+           "\n" +
+           "\n" +
+           "\n" +
+           "value = takes_int_str(1, \"A\")\n" +
+           "dec_func = takes_int_str\n");
+  }
+
+  // PY-49935
+  public void testParamSpecAndConcatenate() {
+    doTest("int", "(x: int, y: str) -> int",
+           "from typing import Concatenate, Callable, ParamSpec, TypeVar\n" +
+           "\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "R = TypeVar(\"R\")\n" +
+           "\n" +
+           "\n" +
+           "class Request:\n" +
+           "    def foo(self):\n" +
+           "        pass\n" +
+           "\n" +
+           "\n" +
+           "def with_request(f: Callable[Concatenate[Request, P], R]) -> Callable[P, R]:\n" +
+           "    def inner(*args: P.args, **kwargs: P.kwargs) -> R:\n" +
+           "        return f(Request(), *args, **kwargs)\n" +
+           "\n" +
+           "    return inner\n" +
+           "\n" +
+           "\n" +
+           "@with_request\n" +
+           "def takes_int_str(request: Request, x: int, y: str) -> int:\n" +
+           "    request.foo()\n" +
+           "    return x + len(y)\n" +
+           "\n" +
+           "\n" +
+           "value = takes_int_str(1, \"A\")\n" +
+           "dec_func = takes_int_str\n");
+  }
+
   private void doTest(@NotNull String expectedValueType, @NotNull String expectedFuncType, @NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     checkTypes(expectedValueType, expectedFuncType, allContexts());

@@ -47,16 +47,37 @@ object CompletableFutureUtil {
    */
   fun <T> ProgressManager.submitIOTask(progressIndicator: ProgressIndicator,
                                        task: (indicator: ProgressIndicator) -> T): CompletableFuture<T> =
+    submitIOTask(progressIndicator, false, task)
+
+  /**
+   * Submit a [task] to IO thread pool under correct [ProgressIndicator]
+   */
+  fun <T> ProgressManager.submitIOTask(progressIndicator: ProgressIndicator,
+                                       cancelIndicatorOnFutureCancel: Boolean = false,
+                                       task: (indicator: ProgressIndicator) -> T): CompletableFuture<T> =
     CompletableFuture.supplyAsync(Supplier { runProcess(Computable { task(progressIndicator) }, progressIndicator) },
                                   ProcessIOExecutorService.INSTANCE)
+      .whenComplete { _, e: Throwable? ->
+        if (cancelIndicatorOnFutureCancel && e != null && isCancellation(e) && !progressIndicator.isCanceled) {
+          progressIndicator.cancel()
+        }
+      }
 
   /**
    * Submit a [task] to IO thread pool under correct [ProgressIndicator] acquired from [indicatorProvider] and release the indicator when task is completed
    */
   fun <T> ProgressManager.submitIOTask(indicatorProvider: ProgressIndicatorsProvider,
+                                       task: (indicator: ProgressIndicator) -> T): CompletableFuture<T> =
+    submitIOTask(indicatorProvider, false, task)
+
+  /**
+   * Submit a [task] to IO thread pool under correct [ProgressIndicator] acquired from [indicatorProvider] and release the indicator when task is completed
+   */
+  fun <T> ProgressManager.submitIOTask(indicatorProvider: ProgressIndicatorsProvider,
+                                       cancelIndicatorOnFutureCancel: Boolean = false,
                                        task: (indicator: ProgressIndicator) -> T): CompletableFuture<T> {
     val indicator = indicatorProvider.acquireIndicator()
-    return submitIOTask(indicator, task).whenComplete { _, _ ->
+    return submitIOTask(indicator, cancelIndicatorOnFutureCancel, task).whenComplete { _, _ ->
       indicatorProvider.releaseIndicator(indicator)
     }
   }

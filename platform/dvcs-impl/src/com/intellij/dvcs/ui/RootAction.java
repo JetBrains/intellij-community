@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * It is available only in projects with multiple roots.
  */
 public class RootAction<T extends Repository> extends ActionGroup implements PopupElementWithAdditionalInfo, DumbAware,
-                                                                             UpdateInBackground.Recursive, AlwaysVisibleActionGroup {
+                                                                             ActionUpdateThreadAware.Recursive, AlwaysVisibleActionGroup {
 
   @NotNull protected final T myRepository;
   @NotNull private final ActionGroup myGroup;

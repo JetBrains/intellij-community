@@ -1,12 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeInsight.hints.*
-import org.jetbrains.kotlin.idea.core.util.isOneLiner
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetails
+import org.jetbrains.kotlin.idea.codeInsight.hints.PsiInlayInfoDetail
+import org.jetbrains.kotlin.idea.codeInsight.hints.TextInlayInfoDetail
+import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -14,35 +16,41 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext.USED_AS_RESULT_OF_LAMBDA
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-@Suppress("UnstableApiUsage")
-fun provideLambdaReturnValueHints(expression: KtExpression): InlayInfoDetails? {
-    if (expression is KtWhenExpression || expression is KtBlockExpression) {
-        return null
+fun KtExpression.isLambdaReturnValueHintsApplicable(): Boolean {
+    if (this is KtWhenExpression || this is KtBlockExpression) {
+        return false
     }
 
-    if (expression is KtIfExpression && !expression.isOneLiner()) {
-        return null
+    if (this is KtIfExpression && !this.isOneLiner()) {
+        return false
     }
 
-    if (expression.getParentOfType<KtIfExpression>(true)?.isOneLiner() == true) {
-        return null
+    if (this.getParentOfType<KtIfExpression>(true)?.isOneLiner() == true) {
+        return false
     }
 
-    if (!KtPsiUtil.isStatement(expression)) {
-        if (!allowLabelOnExpressionPart(expression)) {
-            return null
+    if (!KtPsiUtil.isStatement(this)) {
+        if (!allowLabelOnExpressionPart(this)) {
+            return false
         }
-    } else if (forceLabelOnExpressionPart(expression)) {
+    } else if (forceLabelOnExpressionPart(this)) {
+        return false
+    }
+    val functionLiteral = this.getParentOfType<KtFunctionLiteral>(true)
+    val body = functionLiteral?.bodyExpression ?: return false
+    if (body.statements.size == 1 && body.statements[0] == this) {
+        return false
+    }
+
+    return true
+}
+
+fun provideLambdaReturnValueHints(expression: KtExpression): InlayInfoDetails? {
+    if (!expression.isLambdaReturnValueHintsApplicable()) {
         return null
     }
 
-    val functionLiteral = expression.getParentOfType<KtFunctionLiteral>(true)
-    val body = functionLiteral?.bodyExpression ?: return null
-    if (body.statements.size == 1 && body.statements[0] == expression) {
-        return null
-    }
-
-    val bindingContext = expression.analyze(BodyResolveMode.PARTIAL_WITH_CFA)
+    val bindingContext = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL_WITH_CFA)
     if (bindingContext[USED_AS_RESULT_OF_LAMBDA, expression] == true) {
         val lambdaExpression = expression.getStrictParentOfType<KtLambdaExpression>() ?: return null
         val lambdaName = lambdaExpression.getNameOfFunctionThatTakesLambda() ?: "lambda"

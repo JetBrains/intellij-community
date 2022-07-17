@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.UtilBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
@@ -62,7 +61,7 @@ public class StringUtil extends StringUtilRt {
       myIsSkipStyleTag = isSkipStyleTag;
     }
 
-    public void parse(@NotNull Reader in) throws IOException {
+    void parse(@NotNull Reader in) throws IOException {
       myBuffer.setLength(0);
       new ParserDelegator().parse(in, this, Boolean.TRUE);
     }
@@ -100,7 +99,7 @@ public class StringUtil extends StringUtilRt {
       }
     }
 
-    public @NotNull String getText() {
+    @NotNull String getText() {
       return myBuffer.toString();
     }
   }
@@ -126,13 +125,11 @@ public class StringUtil extends StringUtilRt {
    * @deprecated use {@link Object#toString()} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @Contract(pure = true)
-  public static @NotNull <T> Function<T, String> createToStringFunction(@SuppressWarnings("unused") @NotNull Class<T> cls) {
+  public static @NotNull <T> Function<T, String> createToStringFunction(@NotNull Class<T> cls) {
     return Object::toString;
   }
-
-  public static final @NotNull java.util.function.Function<String, String> TRIMMER = StringUtil::trim;
 
   // Unlike String.replace(CharSequence,CharSequence) does not allocate intermediate objects on non-match
   // TODO revise when JDK9 arrives - its String.replace(CharSequence, CharSequence) is more optimized
@@ -152,7 +149,7 @@ public class StringUtil extends StringUtilRt {
    */
   @Contract(pure = true)
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull String replaceChar(@NotNull String buffer, char oldChar, char newChar) {
     return buffer.replace(oldChar, newChar);
   }
@@ -196,7 +193,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Implementation copied from {@link String#indexOf(String, int)} except character comparisons made case insensitive
+   * Implementation copied from {@link String#indexOf(String, int)} except character comparisons made case-insensitive
    */
   @Contract(pure = true)
   public static int indexOfIgnoreCase(@NotNull CharSequence where, @NotNull CharSequence what, int fromIndex) {
@@ -416,40 +413,51 @@ public class StringUtil extends StringUtilRt {
     return a[s1.length() - 1][s2.length() - 1];
   }
 
+  /**
+   * NOTE: This method only works somewhat well for sentences in the English language.
+   * Other languages have other capitalization rules. Do not use it for non-English text.
+   */
   @Contract(pure = true)
   public static @NotNull String wordsToBeginFromUpperCase(@NotNull String s) {
-    return fixCapitalization(s, ArrayUtil.mergeArrays(ourPrepositions, ourOtherNonCapitalizableWords), true);
+    return fixCapitalization(s, ourLowerCaseWords, true, true);
   }
 
   @Contract(pure = true)
   public static @NotNull String wordsToBeginFromLowerCase(@NotNull String s) {
-    return fixCapitalization(s, ourPrepositions, false);
+    return fixCapitalization(s, ArrayUtilRt.EMPTY_STRING_ARRAY, false, true);
   }
 
+  /**
+   * Does not actually convert to title case, but just capitalizes all words.
+   * This is probably not correct for any language.
+   * For actual (English) title case see {@link #wordsToBeginFromUpperCase(String)}.
+   */
   @Contract(pure = true)
   public static @NotNull String toTitleCase(@NotNull String s) {
-    return fixCapitalization(s, ArrayUtilRt.EMPTY_STRING_ARRAY, true);
+    return fixCapitalization(s, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false);
   }
 
-  private static @NotNull String fixCapitalization(@NotNull String s, String @NotNull [] prepositions, boolean title) {
+  @SuppressWarnings("AssignmentToForLoopParameter")
+  private static @NotNull String fixCapitalization(@NotNull String s, String @NotNull [] wordsToIgnore, boolean title, boolean mnemonics) {
     StringBuilder buffer = null;
-    for (int i = 0; i < s.length(); i++) {
+    final int length = s.length();
+    for (int i = 0; i < length; i++) {
       char prevChar = i == 0 ? ' ' : s.charAt(i - 1);
       char currChar = s.charAt(i);
       if (!Character.isLetterOrDigit(prevChar) && prevChar != '\'') {
         if (Character.isLetterOrDigit(currChar)) {
           if (title || Character.isUpperCase(currChar)) {
-            int j = i;
-            for (; j < s.length(); j++) {
-              if (!Character.isLetterOrDigit(s.charAt(j))) {
-                break;
-              }
+            int start = i;
+            for (i++; i < length; i++) {
+              final char c = s.charAt(i);
+              if (mnemonics && (c == '&' || c == '_')) continue;
+              if (!Character.isLetterOrDigit(c)) break;
             }
-            if (!title && j > i + 1 && !Character.isLowerCase(s.charAt(i + 1))) {
+            if (!title && i > start + 1 && !Character.isLowerCase(s.charAt(start + 1))) {
               // filter out abbreviations like I18n, SQL and CSS
               continue;
             }
-            char prevPrevChar = i > 1 ? s.charAt(i - 2) : 0;
+            char prevPrevChar = start > 1 ? s.charAt(start - 2) : 0;
             if (prevChar == '.' && (prevPrevChar == ' ' || prevPrevChar == '*')) {
               // file extension like .java or *.java; don't change its capitalization
               continue;
@@ -458,11 +466,15 @@ public class StringUtil extends StringUtilRt {
               // special string like ~java or _java; keep it as is
               continue;
             }
-            if (!isPreposition(s, i, j - 1, prepositions)) {
-              if (buffer == null) {
-                buffer = new StringBuilder(s);
+            if (!isPreposition(s, start, i - 1, ourOtherNonCapitalizableWords)) {
+              boolean firstWord = start == 0 || isPunctuation(prevPrevChar);
+              boolean lastWord = i >= length - 1|| isPunctuation(s.charAt(i + 1));
+              if (!title || firstWord || lastWord || !isPreposition(s, start, i - 1, wordsToIgnore)) {
+                if (buffer == null) {
+                  buffer = new StringBuilder(s);
+                }
+                buffer.setCharAt(start, title ? toUpperCase(currChar) : toLowerCase(currChar));
               }
-              buffer.setCharAt(i, title ? toUpperCase(currChar) : toLowerCase(currChar));
             }
           }
         }
@@ -471,9 +483,13 @@ public class StringUtil extends StringUtilRt {
     return buffer == null ? s : buffer.toString();
   }
 
-  private static final String[] ourPrepositions = {
-    "a", "an", "and", "as", "at", "but", "by", "down", "for", "from", "if", "in", "into", "not", "of", "on", "onto", "or", "out", "over",
-    "per", "nor", "the", "to", "up", "upon", "via", "with"
+  private static boolean isPunctuation(char c) {
+    return c == '.' || c == '!' || c == ':' || c == '?';
+  }
+
+  private static final String[] ourLowerCaseWords = {
+    "a", "an", "and", "as", "at", "but", "by", "down", "for", "from", "in", "into", "near",
+    "nor", "of", "on", "onto", "or", "out", "over", "per", "so", "the", "to", "until", "unto", "up", "upon", "via", "with"
   };
 
   private static final String[] ourOtherNonCapitalizableWords = {
@@ -482,18 +498,11 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean isPreposition(@NotNull String s, int firstChar, int lastChar, String @NotNull [] prepositions) {
-    for (String preposition : prepositions) {
-      boolean found = false;
+    outer: for (String preposition : prepositions) {
       if (lastChar - firstChar + 1 == preposition.length()) {
-        found = true;
         for (int j = 0; j < preposition.length(); j++) {
-          if (toLowerCase(s.charAt(firstChar + j)) != toLowerCase(preposition.charAt(j))) {
-            found = false;
-            break;
-          }
+          if (toLowerCase(s.charAt(firstChar + j)) != toLowerCase(preposition.charAt(j))) continue outer;
         }
-      }
-      if (found) {
         return true;
       }
     }
@@ -841,7 +850,7 @@ public class StringUtil extends StringUtilRt {
           StringBuilder sb = new StringBuilder(count);
           for (int pos = idx + suffixLen; pos < length && count > 0; ++pos) {
             char chl = s.charAt(pos);
-            if (!(radix == 0x10 && StringUtil.isHexDigit(chl) || radix == 8 && StringUtil.isOctalDigit(chl))) {
+            if (!(radix == 0x10 && isHexDigit(chl) || radix == 8 && isOctalDigit(chl))) {
               break;
             }
             sb.append(chl);
@@ -875,7 +884,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Pluralize English word. Could be used when e.g. generating collection name by element type.
+   * Pluralize English word. Could be used when e.g., generating collection name by element type.
    * Do not use this method in localized context, as it works for English language only.
    *
    * @param word word to pluralize
@@ -894,15 +903,15 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String capitalizeWords(@NotNull String text,
-                                                @NotNull String tokenizerDelim,
+                                                @NotNull String tokenizerDelimiters,
                                                 boolean allWords,
-                                                boolean leaveOriginalDelims) {
-    final StringTokenizer tokenizer = new StringTokenizer(text, tokenizerDelim, leaveOriginalDelims);
+                                                boolean leaveOriginalDelimiters) {
+    final StringTokenizer tokenizer = new StringTokenizer(text, tokenizerDelimiters, leaveOriginalDelimiters);
     final StringBuilder out = new StringBuilder(text.length());
     boolean toCapitalize = true;
     while (tokenizer.hasMoreTokens()) {
       final String word = tokenizer.nextToken();
-      if (!leaveOriginalDelims && out.length() > 0) {
+      if (!leaveOriginalDelimiters && out.length() > 0) {
         out.append(' ');
       }
       out.append(toCapitalize ? capitalize(word) : word);
@@ -916,27 +925,6 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static @NotNull String decapitalize(@NotNull String s) {
     return Introspector.decapitalize(s);
-  }
-
-  /**
-   * The same as {@link Introspector#decapitalize(String)}, but enables to ignore abbreveations in the beginning (e.g., URLMapping).
-   *
-   * @param s                  string to process
-   * @param ignoreAbbreviation whether abbreveation should be ignored
-   * @return decapitalized string
-   */
-  @Contract(pure = true)
-  public static @NotNull String decapitalize(@NotNull String s, boolean ignoreAbbreviation) {
-    if (s == null || s.length() == 0) {
-      return s;
-    }
-    if (!ignoreAbbreviation && s.length() > 1
-        && Character.isUpperCase(s.charAt(1)) && Character.isUpperCase(s.charAt(0))) {
-      return s;
-    }
-    char chars[] = s.toCharArray();
-    chars[0] = Character.toLowerCase(chars[0]);
-    return new String(chars);
   }
 
   @Contract(pure = true)
@@ -1007,14 +995,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int stringHashCodeIgnoreWhitespaces(@NotNull CharSequence chars) {
-    int h = 0;
-    for (int off = 0; off < chars.length(); off++) {
-      char c = chars.charAt(off);
-      if (!isWhiteSpace(c)) {
-        h = 31 * h + c;
-      }
-    }
-    return h;
+    return Strings.stringHashCodeIgnoreWhitespaces(chars);
   }
 
   /**
@@ -1242,7 +1223,7 @@ public class StringUtil extends StringUtilRt {
    */
   @Contract(pure = true)
   public static boolean isWhiteSpace(char c) {
-    return c == '\n' || c == '\t' || c == ' ';
+    return Strings.isWhiteSpace(c);
   }
 
   @Contract(pure = true)
@@ -1325,23 +1306,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull Iterable<String> tokenize(@NotNull String s, @NotNull String separators) {
-    final com.intellij.util.text.StringTokenizer tokenizer = new com.intellij.util.text.StringTokenizer(s, separators);
-    return () -> new Iterator<String>() {
-      @Override
-      public boolean hasNext() {
-        return tokenizer.hasMoreTokens();
-      }
-
-      @Override
-      public String next() {
-        return tokenizer.nextToken();
-      }
-
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-    };
+    return tokenize(new StringTokenizer(s, separators));
   }
 
   @Contract(pure = true)
@@ -1405,7 +1370,7 @@ public class StringUtil extends StringUtilRt {
 
   /**
    * @param text text to get word ranges in.
-   * @param separatorsSet if not null, only these characters will be considered as separators (i.e. not a part of word).
+   * @param separatorsSet if not null, only these characters will be considered as separators (i.e., not a part of word).
    *                   Otherwise {@link Character#isJavaIdentifierPart(char)} will be used to determine whether a symbol is part of word.
    * @return ranges ranges of words in passed text.
    */
@@ -1577,30 +1542,10 @@ public class StringUtil extends StringUtilRt {
    * @deprecated use NlsMessages#formatDurationApproximateNarrow for localized output
    */
   @Contract(pure = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @NotNull @NonNls String formatDuration(long duration, @NotNull String unitSeparator) {
     return Formats.formatDuration(duration, unitSeparator);
-  }
-
-  /**
-   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull @NonNls String formatDurationPadded(long millis, @NotNull String unitSeparator) {
-    return Formats.formatDurationPadded(millis, unitSeparator);
-  }
-
-  /**
-   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull @NonNls String formatDurationApproximate(long duration) {
-    return Formats.formatDurationApproximate(duration);
   }
 
   /**
@@ -1638,24 +1583,6 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static boolean containsChar(final @NotNull String value, final char ch) {
     return Strings.containsChar(value, ch);
-  }
-
-  /**
-   * @deprecated use #capitalize(String)
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(value = "null -> null; !null -> !null", pure = true)
-  public static String firstLetterToUpperCase(final @Nullable String displayString) {
-    if (displayString == null || displayString.isEmpty()) return displayString;
-    char firstChar = displayString.charAt(0);
-    char uppedFirstChar = toUpperCase(firstChar);
-
-    if (uppedFirstChar == firstChar) return displayString;
-
-    char[] buffer = displayString.toCharArray();
-    buffer[0] = uppedFirstChar;
-    return new String(buffer);
   }
 
   /**
@@ -1770,11 +1697,19 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean endsWith(@NotNull CharSequence text, int start, int end, @NotNull CharSequence suffix) {
+    if (start < 0 || end > text.length()) {
+      throw new IllegalArgumentException("invalid offsets: start="+start+"; end="+end+"; text.length()="+text.length());
+    }
     int suffixLen = suffix.length();
-    if (end < suffixLen) return false;
+    int delta = end - suffixLen;
+    if (delta < start) {
+      return false;
+    }
 
-    for (int i = end - 1; i >= end - suffixLen && i >= start; i--) {
-      if (text.charAt(i) != suffix.charAt(i + suffixLen - end)) return false;
+    for (int i = 0; i < suffixLen; i++) {
+      if (text.charAt(delta + i) != suffix.charAt(i)) {
+        return false;
+      }
     }
 
     return true;
@@ -2179,23 +2114,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static boolean isEscapedBackslash(char @NotNull [] chars, int startOffset, int backslashOffset) {
-    if (chars[backslashOffset] != '\\') {
-      return true;
-    }
-    boolean escaped = false;
-    for (int i = startOffset; i < backslashOffset; i++) {
-      if (chars[i] == '\\') {
-        escaped = !escaped;
-      }
-      else {
-        escaped = false;
-      }
-    }
-    return escaped;
-  }
-
-  @Contract(pure = true)
   public static boolean isEscapedBackslash(@NotNull CharSequence text, int startOffset, int backslashOffset) {
     if (text.charAt(backslashOffset) != '\\') {
       return true;
@@ -2548,7 +2466,7 @@ public class StringUtil extends StringUtilRt {
 
   /**
    * Splits string by lines, keeping all line separators at the line ends and in the empty lines.
-   * <br> E.g. splitting text
+   * <br> E.g., splitting text
    * <blockquote>
    *   foo\r\n<br>
    *   \n<br>
@@ -2596,7 +2514,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean isDecimalDigit(char c) {
-    return c >= '0' && c <= '9';
+    return Strings.isDecimalDigit(c);
   }
 
   @Contract("null -> false")
@@ -2657,84 +2575,12 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean equalsIgnoreWhitespaces(@Nullable CharSequence s1, @Nullable CharSequence s2) {
-    if (s1 == null ^ s2 == null) {
-      return false;
-    }
-
-    if (s1 == null) {
-      return true;
-    }
-
-    int len1 = s1.length();
-    int len2 = s2.length();
-
-    int index1 = 0;
-    int index2 = 0;
-    while (index1 < len1 && index2 < len2) {
-      if (s1.charAt(index1) == s2.charAt(index2)) {
-        index1++;
-        index2++;
-        continue;
-      }
-
-      boolean skipped = false;
-      while (index1 != len1 && isWhiteSpace(s1.charAt(index1))) {
-        skipped = true;
-        index1++;
-      }
-      while (index2 != len2 && isWhiteSpace(s2.charAt(index2))) {
-        skipped = true;
-        index2++;
-      }
-
-      if (!skipped) return false;
-    }
-
-    for (; index1 != len1; index1++) {
-      if (!isWhiteSpace(s1.charAt(index1))) return false;
-    }
-    for (; index2 != len2; index2++) {
-      if (!isWhiteSpace(s2.charAt(index2))) return false;
-    }
-
-    return true;
+    return Strings.equalsIgnoreWhitespaces(s1, s2);
   }
 
   @Contract(pure = true)
   public static boolean equalsTrimWhitespaces(@NotNull CharSequence s1, @NotNull CharSequence s2) {
-    int start1 = 0;
-    int end1 = s1.length();
-    int end2 = s2.length();
-
-    while (start1 < end1) {
-      char c = s1.charAt(start1);
-      if (!isWhiteSpace(c)) break;
-      start1++;
-    }
-
-    while (start1 < end1) {
-      char c = s1.charAt(end1 - 1);
-      if (!isWhiteSpace(c)) break;
-      end1--;
-    }
-
-    int start2 = 0;
-    while (start2 < end2) {
-      char c = s2.charAt(start2);
-      if (!isWhiteSpace(c)) break;
-      start2++;
-    }
-
-    while (start2 < end2) {
-      char c = s2.charAt(end2 - 1);
-      if (!isWhiteSpace(c)) break;
-      end2--;
-    }
-
-    CharSequence ts1 = new CharSequenceSubSequence(s1, start1, end1);
-    CharSequence ts2 = new CharSequenceSubSequence(s2, start2, end2);
-
-    return equals(ts1, ts2);
+    return Strings.equalsTrimWhitespaces(s1, s2);
   }
 
   /**
@@ -2769,30 +2615,12 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static int compare(char c1, char c2, boolean ignoreCase) {
     // duplicating String.equalsIgnoreCase logic
-    int d = c1 - c2;
-    if (d == 0 || !ignoreCase) {
-      return d;
-    }
-    // If characters don't match but case may be ignored,
-    // try converting both characters to uppercase.
-    // If the results match, then the comparison scan should
-    // continue.
-    char u1 = StringUtilRt.toUpperCase(c1);
-    char u2 = StringUtilRt.toUpperCase(c2);
-    d = u1 - u2;
-    if (d != 0) {
-      // Unfortunately, conversion to uppercase does not work properly
-      // for the Georgian alphabet, which has strange rules about case
-      // conversion.  So we need to make one last check before
-      // exiting.
-      d = StringUtilRt.toLowerCase(u1) - StringUtilRt.toLowerCase(u2);
-    }
-    return d;
+    return Strings.compare(c1, c2, ignoreCase);
   }
 
   @Contract(pure = true)
   public static @NotNull String formatLinks(@NotNull String message) {
-    Pattern linkPattern = Pattern.compile("http://[a-zA-Z0-9./\\-+]+");
+    Pattern linkPattern = Pattern.compile("http://[a-zA-Z\\d./\\-+]+");
     StringBuffer result = new StringBuffer();
     Matcher m = linkPattern.matcher(message);
     while (m.find()) {
@@ -2908,21 +2736,12 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String convertLineSeparators(@NotNull String text) {
-    return StringUtilRt.convertLineSeparators(text);
-  }
-
-  @Contract(pure = true)
-  public static @NotNull String convertLineSeparators(@NotNull String text, boolean keepCarriageReturn) {
-    return StringUtilRt.convertLineSeparators(text, keepCarriageReturn);
+    return Strings.convertLineSeparators(text);
   }
 
   @Contract(pure = true)
   public static @NotNull String convertLineSeparators(@NotNull String text, @NotNull String newSeparator) {
     return StringUtilRt.convertLineSeparators(text, newSeparator);
-  }
-
-  public static @NotNull String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, int @Nullable [] offsetsToKeep) {
-    return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep);
   }
 
   @Contract(pure = true)
@@ -3054,7 +2873,7 @@ public class StringUtil extends StringUtilRt {
       return false;
   }
 
-  private static final Pattern UNICODE_CHAR = Pattern.compile("\\\\u[0-9a-fA-F]{4}");
+  private static final Pattern UNICODE_CHAR = Pattern.compile("\\\\u[\\da-fA-F]{4}");
 
   public static String replaceUnicodeEscapeSequences(String text) {
     if (text == null) return null;
@@ -3084,7 +2903,7 @@ public class StringUtil extends StringUtilRt {
     private int i;
     private boolean myDefused;
 
-    public BombedCharSequence(@NotNull CharSequence sequence) {
+    protected BombedCharSequence(@NotNull CharSequence sequence) {
       delegate = sequence;
     }
 
@@ -3207,6 +3026,11 @@ public class StringUtil extends StringUtilRt {
     return c == ' ' || c == '\t';
   }
 
+  /**
+   * @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatAndList(java.util.Collection)} instead to get properly localized concatenation
+   */
+  @SuppressWarnings("HardCodedStringLiteral")
+  @Deprecated
   @Nls
   @NotNull
   public static String naturalJoin(List<String> strings) {
@@ -3214,6 +3038,6 @@ public class StringUtil extends StringUtilRt {
     if (strings.size() == 1) return strings.get(0);
     String lastWord = strings.get(strings.size() - 1);
     String leadingWords = join(strings.subList(0, strings.size() - 1), ", ");
-    return UtilBundle.message("natural.join", leadingWords, lastWord);
+    return leadingWords + " and " + lastWord;
   }
 }

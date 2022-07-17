@@ -335,6 +335,11 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     doTest();
   }
 
+  // PY-53200
+  public void testSuperMethodWithExistingParameterList() {
+    doTest();
+  }
+
   public void testLocalVarInDictKey() {  // PY-2558
     doTest();
   }
@@ -1878,6 +1883,16 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
       assertContainsElements(variants, "class_attr");
       assertDoesntContain(variants, "inst_attr");
     });
+  }
+
+  // PY-53200
+  public void testMethodNamesSuggestedWithoutParameterListIfItIsAlreadyExist() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "something_a", "something_b");
   }
 
   private void doTestHasattrContributor(String[] inList, String[] notInList) {

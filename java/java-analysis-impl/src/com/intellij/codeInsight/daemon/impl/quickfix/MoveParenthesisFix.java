@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -11,6 +11,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -97,7 +98,7 @@ public final class MoveParenthesisFix implements IntentionAction, HighPriorityAc
     return parentCopy;
   }
 
-  public static boolean registerFix(HighlightInfo info, PsiCallExpression callExpression, final CandidateInfo[] candidates) {
+  public static boolean registerFix(HighlightInfo info, PsiCallExpression callExpression, final CandidateInfo[] candidates, TextRange fixRange) {
     PsiExpressionList parent = ObjectUtils.tryCast(callExpression.getParent(), PsiExpressionList.class);
     if (parent == null) return false;
     PsiCallExpression parentCall = ObjectUtils.tryCast(parent.getParent(), PsiCallExpression.class);
@@ -131,7 +132,7 @@ public final class MoveParenthesisFix implements IntentionAction, HighPriorityAc
       fix = new MoveParenthesisFix(parentCall, pos, shift);
     }
     if (fix == null) return false;
-    QuickFixAction.registerQuickFixAction(info, null, fix);
+    QuickFixAction.registerQuickFixAction(info, fixRange, fix);
     return true;
   }
 }

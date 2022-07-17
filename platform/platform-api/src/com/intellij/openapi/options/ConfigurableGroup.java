@@ -2,7 +2,6 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.NlsContexts;
-import org.jetbrains.annotations.ApiStatus;
 
 public interface ConfigurableGroup extends Configurable.Composite {
   @NlsContexts.ConfigurableName
@@ -11,7 +10,6 @@ public interface ConfigurableGroup extends Configurable.Composite {
   /**
    * @deprecated unused
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default String getShortName() { return null; }
 }

@@ -32,6 +32,7 @@
       "align_attributes": true,
       "align_text": false,
       "attribute_wrap": "normal",
+      "block_comment_add_space": false,
       "block_comment_at_first_column": true,
       "continuation_indent_size": 8,
       "do_not_align_children_of_min_lines": 0,

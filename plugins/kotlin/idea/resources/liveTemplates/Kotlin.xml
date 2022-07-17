@@ -9,7 +9,7 @@
         </context>
     </template>
 
-    <template resource-bundle="messages.KotlinBundle" key="livetemplate.description.main"
+    <template resource-bundle="messages.KotlinBundle" key="livetemplate.description.maina"
               name="maina" toReformat="true" toShortenFQNames="true"
               value="fun main(args: Array&lt;String&gt;) {&#10;  $END$&#10;}">
         <context>
@@ -17,7 +17,7 @@
         </context>
     </template>
 
-    <template resource-bundle="messages.KotlinBundle" key="livetemplate.description.main"
+    <template resource-bundle="messages.KotlinBundle" key="livetemplate.description.maina"
               name="maino" toReformat="true" toShortenFQNames="true"
               value="@JvmStatic&#10;fun main(args: Array&lt;String&gt;) {&#10;  $END$&#10;}">
         <context>
@@ -225,7 +225,7 @@
         </context>
     </template>
 
-    <template resource-bundle="messages.KotlinBundle" key="livetemplate.description.main"
+    <template resource-bundle="messages.KotlinBundle" key="livetemplate.description.maina"
               name="psvma" toReformat="true" toShortenFQNames="true"
               value="fun main(args: Array&lt;String&gt;) {&#10;  $END$&#10;}">
         <context>
@@ -233,7 +233,7 @@
         </context>
     </template>
 
-    <template resource-bundle="messages.KotlinBundle" key="livetemplate.description.main"
+    <template resource-bundle="messages.KotlinBundle" key="livetemplate.description.maina"
               name="psvmo" toReformat="true" toShortenFQNames="true"
               value="@JvmStatic&#10;fun main(args: Array&lt;String&gt;) {&#10;  $END$&#10;}">
         <context>

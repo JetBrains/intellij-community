@@ -156,7 +156,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
   private static class ImplicitArrayToStringVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (!isImplicitArrayToStringCall(expression)) {
         return;
@@ -165,7 +165,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
     }
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       if (!isImplicitArrayToStringCall(expression)) {
         return;
@@ -174,7 +174,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
     }
 
     @Override
-    public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {
+    public void visitArrayAccessExpression(@NotNull PsiArrayAccessExpression expression) {
       super.visitArrayAccessExpression(expression);
       if (!isImplicitArrayToStringCall(expression)) {
         return;
@@ -183,7 +183,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (isExplicitArrayToStringCall(expression)) {
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();

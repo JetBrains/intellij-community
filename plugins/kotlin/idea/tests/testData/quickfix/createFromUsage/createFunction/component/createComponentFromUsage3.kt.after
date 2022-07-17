@@ -1,5 +1,5 @@
 // "Create extension function 'Any.component2'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class FooIterator<T> {
     operator fun hasNext(): Boolean { return false }
     operator fun next(): Any {

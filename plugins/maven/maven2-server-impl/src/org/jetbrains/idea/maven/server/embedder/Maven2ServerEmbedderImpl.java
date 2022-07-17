@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.server.embedder;
 
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
@@ -19,7 +18,6 @@ import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
 import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
-import org.apache.maven.artifact.resolver.ResolutionListener;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
@@ -61,7 +59,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements MavenServerEmbedder {
   private final MavenEmbedder myImpl;
@@ -96,10 +98,14 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
     settings.setWorkOffline(facadeSettings.isOffline());
     settings.setUsePluginRegistry(false);
 
-    settings.setMavenHome(facadeSettings.getMavenHome());
-    settings.setUserSettingsFile(facadeSettings.getUserSettingsFile());
-    settings.setGlobalSettingsFile(facadeSettings.getGlobalSettingsFile());
-    settings.setLocalRepository(facadeSettings.getLocalRepository());
+    String mavenHomePath = facadeSettings.getMavenHomePath();
+    if (mavenHomePath != null) {
+      settings.setMavenHomePath(facadeSettings.getMavenHomePath());
+    }
+
+    settings.setUserSettingsPath(facadeSettings.getUserSettingsPath());
+    settings.setGlobalSettingsPath(facadeSettings.getGlobalSettingsPath());
+    settings.setLocalRepositoryPath(facadeSettings.getLocalRepositoryPath());
 
     if (commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots")) {
       settings.setSnapshotUpdatePolicy(MavenEmbedderSettings.UpdatePolicy.ALWAYS_UPDATE);
@@ -275,29 +281,23 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
                                                                @NotNull final Collection<String> activeProfiles,
                                                                @NotNull final Collection<String> inactiveProfiles, MavenToken token) {
     MavenServerUtil.checkToken(token);
-    return ContainerUtilRt.map2List(files, new Function<File, MavenServerExecutionResult>() {
-      @Override
-      public MavenServerExecutionResult fun(final File file) {
-        try {
-          return doExecute(new Executor<MavenServerExecutionResult>() {
-            @NotNull
-            @Override
-            public MavenServerExecutionResult execute() throws Exception {
-              DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
-              MavenExecutionResult result = myImpl.resolveProject(file,
-                                                                  new ArrayList<String>(activeProfiles),
-                                                                  new ArrayList<String>(inactiveProfiles),
-                                                                  Collections.<ResolutionListener>singletonList(listener));
-              return createExecutionResult(file, result, listener.getRootNode());
-            }
-          });
-        }
-        catch (MavenServerProcessCanceledException e) {
-          throw new RuntimeException(e);
-        }
-        catch (RemoteException e) {
-          throw new RuntimeException(e);
-        }
+    return ContainerUtilRt.map2List(files, file -> {
+      try {
+        return doExecute(new Executor<MavenServerExecutionResult>() {
+          @NotNull
+          @Override
+          public MavenServerExecutionResult execute() throws Exception {
+            DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
+            MavenExecutionResult result = myImpl.resolveProject(file,
+                                                                new ArrayList<String>(activeProfiles),
+                                                                new ArrayList<String>(inactiveProfiles),
+                                                                Collections.singletonList(listener));
+            return createExecutionResult(file, result, listener.getRootNode());
+          }
+        });
+      }
+      catch (MavenServerProcessCanceledException | RemoteException e) {
+        throw new RuntimeException(e);
       }
     });
   }
@@ -336,15 +336,13 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
     return new MavenServerExecutionResult(data, problems, unresolvedArtifacts);
   }
 
-  private Collection<String> collectActivatedProfiles(MavenProject mavenProject) {
+  private static Collection<String> collectActivatedProfiles(MavenProject mavenProject) {
     // for some reason project's active profiles do not contain parent's profiles - only local and settings'.
     // parent's profiles do not contain settings' profiles.
 
     List<Profile> profiles = new ArrayList<Profile>();
     while (mavenProject != null) {
-      if (profiles != null) {
-        profiles.addAll(mavenProject.getActiveProfiles());
-      }
+      profiles.addAll(mavenProject.getActiveProfiles());
       mavenProject = mavenProject.getParent();
     }
     return collectProfilesIds(profiles);
@@ -389,16 +387,39 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
       return Maven2ModelConverter.convertArtifacts(myImpl.resolveTransitively(toResolve, convertRepositories(remoteRepositories)),
                                                    new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
     }
-    catch (ArtifactResolutionException e) {
-      Maven2ServerGlobals.getLogger().info(e);
-    }
-    catch (ArtifactNotFoundException e) {
+    catch (ArtifactResolutionException | ArtifactNotFoundException e) {
       Maven2ServerGlobals.getLogger().info(e);
     }
     catch (Exception e) {
       throw rethrowException(e);
     }
     return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public MavenArtifactResolveResult resolveArtifactTransitively(@NotNull List<MavenArtifactInfo> artifacts,
+                                                                @NotNull List<MavenRemoteRepository> remoteRepositories,
+                                                                MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    try {
+      Set<Artifact> toResolve = new LinkedHashSet<Artifact>();
+      for (MavenArtifactInfo each : artifacts) {
+        toResolve.add(createArtifact(each));
+      }
+
+      return new MavenArtifactResolveResult(
+        Maven2ModelConverter.convertArtifacts(myImpl.resolveTransitively(toResolve, convertRepositories(remoteRepositories)),
+                                                   new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile())
+        , null);
+    }
+    catch (ArtifactResolutionException | ArtifactNotFoundException e) {
+      Maven2ServerGlobals.getLogger().info(e);
+    }
+    catch (Exception e) {
+      throw rethrowException(e);
+    }
+    return new MavenArtifactResolveResult(Collections.emptyList(), null);
   }
 
   @NotNull
@@ -576,13 +597,7 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
 
   @NotNull
   private <T> T doExecute(final Executor<T> executor) throws MavenServerProcessCanceledException, RemoteException {
-    Future<T> future = ExecutorManager.execute(new Callable<T>() {
-      @Override
-      @NotNull
-      public T call() throws Exception {
-        return executor.execute();
-      }
-    });
+    Future<T> future = ExecutorManager.execute(() -> executor.execute());
 
     MavenServerProgressIndicator indicator = myCurrentIndicator;
     while (true) {
@@ -614,13 +629,14 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
     return rethrowException(throwable);
   }
 
+
+  @NotNull
   @Override
-  public void customize(@Nullable MavenWorkspaceMap workspaceMap,
-                        boolean failOnUnresolvedDependency,
-                        @NotNull MavenServerConsole console,
-                        @NotNull MavenServerProgressIndicator indicator,
-                        boolean alwaysUpdateSnapshots,
-                        @Nullable Properties userProperties, MavenToken token) {
+  public MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
+                                                                           boolean failOnUnresolvedDependency,
+                                                                           boolean alwaysUpdateSnapshots,
+                                                                           @Nullable Properties userProperties,
+                                                                           MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
       ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
@@ -630,7 +646,7 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
       ((CustomWagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
       myImpl.setUserProperties(userProperties);
 
-      setConsoleAndIndicator(console, indicator);
+      return null;
     }
     catch (Exception e) {
       throw rethrowException(e);
@@ -649,7 +665,7 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
         new DefaultArtifact(groupId, artifactId, VersionRange.createFromVersion(""), Artifact.SCOPE_COMPILE, "pom", null,
                             new DefaultArtifactHandler("pom"));
       ArtifactRepositoryLayout repositoryLayout = getComponent(ArtifactRepositoryLayout.class);
-      List versions = getComponent(ArtifactMetadataSource.class).retrieveAvailableVersions(
+      List<?> versions = getComponent(ArtifactMetadataSource.class).retrieveAvailableVersions(
         artifact,
         new DefaultArtifactRepository(
           "local",
@@ -713,25 +729,13 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
   @Override
   public void clearCaches(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
-    withProjectCachesDo(new Function<Map, Object>() {
-      @Override
-      public Object fun(Map map) {
-        map.clear();
-        return null;
-      }
-    });
+    withProjectCachesDo(map -> map.clear());
   }
 
   @Override
   public void clearCachesFor(final MavenId projectId, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
-    withProjectCachesDo(new Function<Map, Object>() {
-      @Override
-      public Object fun(Map map) {
-        map.remove(projectId.getKey());
-        return null;
-      }
-    });
+    withProjectCachesDo(map -> map.remove(projectId.getKey()));
   }
 
   @Override
@@ -740,27 +744,55 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
     return null;
   }
 
-  private void withProjectCachesDo(Function<Map, ?> func) throws RemoteException {
+  private void withProjectCachesDo(Consumer<? super Map> func) throws RemoteException {
     MavenProjectBuilder builder = myImpl.getComponent(MavenProjectBuilder.class);
     Field field;
     try {
       field = builder.getClass().getDeclaredField("rawProjectCache");
       field.setAccessible(true);
-      func.fun(((Map)field.get(builder)));
+      func.accept(((Map)field.get(builder)));
 
       field = builder.getClass().getDeclaredField("processedProjectCache");
       field.setAccessible(true);
-      func.fun(((Map)field.get(builder)));
+      func.accept(((Map)field.get(builder)));
     }
-    catch (NoSuchFieldException e) {
-      Maven2ServerGlobals.getLogger().info(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (NoSuchFieldException | IllegalAccessException e) {
       Maven2ServerGlobals.getLogger().info(e);
     }
     catch (Exception e) {
       throw rethrowException(e);
     }
+  }
+
+  @Override
+  public Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories,
+                                                         MavenToken token) throws RemoteException {
+    return Collections.emptySet();
+  }
+
+  @Override
+  public Collection<MavenArchetype> getArchetypes(MavenToken token) throws RemoteException {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public Collection<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) throws RemoteException {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public Collection<MavenArchetype> getRemoteArchetypes(MavenToken token, @NotNull String url) throws RemoteException {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId,
+                                                              @NotNull String artifactId,
+                                                              @NotNull String version,
+                                                              @NotNull List<MavenRemoteRepository> repositories,
+                                                              @Nullable String url, MavenToken token) throws RemoteException {
+    return Collections.emptyMap();
   }
 
   private interface Executor<T> {

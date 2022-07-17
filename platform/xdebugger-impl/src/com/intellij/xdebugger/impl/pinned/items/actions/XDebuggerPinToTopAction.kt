@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.pinned.items.actions
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.pinned.items.*
@@ -10,6 +14,7 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import icons.PlatformDebuggerImplIcons
 import java.awt.event.MouseEvent
+import java.util.Collections
 
 class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
 
@@ -21,18 +26,11 @@ class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
                     event,
                     XDebuggerPinToTopAction::class.java.name,
                     Presentation(),
-                    object : DataContext {
-                        override fun getData(dataId: String): Any? {
-                            if (XDebuggerTree.XDEBUGGER_TREE_KEY.`is`(dataId)) {
-                                return node.tree
-                            }
-                            if (CommonDataKeys.PROJECT.`is`(dataId)) {
-                                return node.tree.project
-                            }
-                            return null
-                        }
-
-                    }
+                    SimpleDataContext.builder()
+                      .add(XDebuggerTree.XDEBUGGER_TREE_KEY, node.tree)
+                      .add(CommonDataKeys.PROJECT, node.tree.project)
+                      .add(XDebuggerTree.SELECTED_NODES, Collections.singletonList(node))
+                      .build()
                 )
             )
         }

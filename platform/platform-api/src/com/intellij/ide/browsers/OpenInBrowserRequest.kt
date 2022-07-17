@@ -35,8 +35,8 @@ abstract class OpenInBrowserRequest @JvmOverloads constructor(open val file: Psi
 
 enum class ReloadMode(@param:PropertyKey(resourceBundle = IdeBundle.BUNDLE) private val key: String) {
   DISABLED("web.preview.reload.mode.disabled"),
-  RELOAD_ON_CHANGE("web.preview.reload.mode.on.change"),
-  RELOAD_ON_SAVE("web.preview.reload.mode.on.save");
+  RELOAD_ON_SAVE("web.preview.reload.mode.on.save"),
+  RELOAD_ON_CHANGE("web.preview.reload.mode.on.change");
 
   val title: @NlsContexts.ListItem String
     get() = IdeBundle.message(key)

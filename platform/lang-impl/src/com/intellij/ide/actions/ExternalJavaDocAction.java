@@ -34,10 +34,15 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-public class ExternalJavaDocAction extends AnAction implements UpdateInBackground {
+public class ExternalJavaDocAction extends AnAction {
 
   public ExternalJavaDocAction() {
     setInjectedContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -72,7 +77,7 @@ public class ExternalJavaDocAction extends AnAction implements UpdateInBackgroun
     }
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.javadoc.external");
     Project project = dataContext.getData(CommonDataKeys.PROJECT);
-    final Component contextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    final Component contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<String> urls;
       if (StringUtil.isEmptyOrSpaces(docUrl)) {

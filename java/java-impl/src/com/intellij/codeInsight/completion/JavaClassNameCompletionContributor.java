@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.completion.JavaCompletionUtil.JavaLookupElementHighlighter;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil.JavaModuleScope;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -35,10 +36,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.codeInsight.completion.JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
@@ -138,6 +136,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
       scope = filterByScope ? psiFile.getResolveScope() : GlobalSearchScope.allScope(project);
     }
 
+    JavaLookupElementHighlighter highlighter = JavaCompletionUtil.getHighlighterForPlace(insertedElement);
+
     Processor<PsiClass> classProcessor = new Processor<>() {
       @Override
       public boolean process(PsiClass psiClass) {
@@ -165,7 +165,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
               element.setLookupString(prefix + element.getLookupString());
 
               JavaConstructorCallElement.wrap(element, insertedElement).forEach(
-                e -> consumer.consume(JavaCompletionUtil.highlightIfNeeded(null, e, e.getObject(), insertedElement)));
+                e -> consumer.consume(highlighter.highlightIfNeeded(null, e, e.getObject())));
             }
           }
         }
@@ -234,12 +234,13 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
                                                                           boolean withInners,
                                                                           InsertHandler<JavaPsiClassReferenceElement> insertHandler,
                                                                           Condition<? super PsiClass> condition) {
+    String name = psiClass.getName();
+    if (name == null) return Collections.emptyList();
     List<JavaPsiClassReferenceElement> result = new SmartList<>();
     if (condition.value(psiClass)) {
       result.add(AllClassesGetter.createLookupItem(psiClass, insertHandler));
     }
-    String name = psiClass.getName();
-    if (withInners && name != null) {
+    if (withInners) {
       for (PsiClass inner : psiClass.getInnerClasses()) {
         if (inner.hasModifierProperty(PsiModifier.STATIC)) {
           for (JavaPsiClassReferenceElement lookupInner : createClassLookupItems(inner, true, insertHandler, condition)) {

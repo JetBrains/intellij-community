@@ -36,6 +36,14 @@ class MockRunManager : RunManagerEx() {
     get() = null
     set(_) {}
 
+  override fun shouldSetRunConfigurationFromContext(): Boolean {
+    return true
+  }
+
+  override fun isRunWidgetActive(): Boolean {
+    return false
+  }
+
   override fun createConfiguration(runConfiguration: RunConfiguration, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
     throw UnsupportedOperationException()
   }

@@ -21,6 +21,6 @@ class KotlinCallHierarchyProvider : HierarchyProvider {
     override fun createHierarchyBrowser(target: PsiElement) = KotlinCallHierarchyBrowser(target)
 
     override fun browserActivated(hierarchyBrowser: HierarchyBrowser) {
-        (hierarchyBrowser as KotlinCallHierarchyBrowser).changeView(CallHierarchyBrowserBase.CALLER_TYPE)
+        (hierarchyBrowser as KotlinCallHierarchyBrowser).changeView(CallHierarchyBrowserBase.getCallerType())
     }
 }

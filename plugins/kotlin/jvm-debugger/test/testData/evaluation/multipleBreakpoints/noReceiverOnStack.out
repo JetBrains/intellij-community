@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JVM_WITH_IR_EVALUATOR, JVM_IR_WITH_IR_EVALUATOR
 LineBreakpoint created at noReceiverOnStack.kt:19
 LineBreakpoint created at noReceiverOnStack.kt:24
 LineBreakpoint created at noReceiverOnStack.kt:29

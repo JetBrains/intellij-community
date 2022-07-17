@@ -1,19 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.FakeFileType;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,19 +20,30 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-class OverrideFileTypeAction extends AnAction {
+class OverrideFileTypeAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    e.getPresentation().setEnabled(file != null && !file.isDirectory());
+    VirtualFile[] files = getContextFiles(e, file -> OverrideFileTypeManager.getInstance().getFileValue(file) == null);
+    boolean enabled = files.length != 0;
+    Presentation presentation = e.getPresentation();
+    presentation.setDescription(enabled
+                                ? ActionsBundle.message("action.OverrideFileTypeAction.verbose.description", files[0].getName(), files.length - 1)
+                                : ActionsBundle.message("action.OverrideFileTypeAction.description"));
+    presentation.setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (file == null) return;
+    VirtualFile[] files = getContextFiles(e, file->OverrideFileTypeManager.getInstance().getFileValue(file) == null);
+    if (files.length == 0) return;
     DefaultActionGroup group = new DefaultActionGroup();
     // although well-behaved types have unique names, file types coming from plugins can be wild
     Map<String, List<String>> duplicates = Arrays.stream(FileTypeManager.getInstance().getRegisteredFileTypes())
@@ -42,10 +52,7 @@ class OverrideFileTypeAction extends AnAction {
 
     for (FileType type : ContainerUtil.sorted(Arrays.asList(FileTypeManager.getInstance().getRegisteredFileTypes()),
                                               (f1,f2)->f1.getDisplayName().compareToIgnoreCase(f2.getDisplayName()))) {
-      if (type instanceof InternalFileType) continue;
-      if (type instanceof DirectoryFileType) continue;
-      if (type instanceof UnknownFileType) continue;
-      if (type instanceof FakeFileType) continue;
+      if (!OverrideFileTypeManager.isOverridable(type)) continue;
       boolean hasDuplicate = duplicates.get(type.getDisplayName()).size() > 1;
       String dupHint = null;
       if (hasDuplicate) {
@@ -57,7 +64,7 @@ class OverrideFileTypeAction extends AnAction {
       }
       @NlsActions.ActionText
       String displayText = type.getDisplayName() + StringUtil.notNullize(dupHint);
-      group.add(new ChangeToThisFileTypeAction(displayText, file, type));
+      group.add(new ChangeToThisFileTypeAction(displayText, files, type));
     }
     JBPopupFactory.getInstance()
       .createActionGroupPopup(ActionsBundle.message("group.OverrideFileTypeAction.title"),
@@ -65,28 +72,47 @@ class OverrideFileTypeAction extends AnAction {
       .showInBestPositionFor(e.getDataContext());
   }
 
-  private static class ChangeToThisFileTypeAction extends AnAction {
-    private final VirtualFile myFile;
+  @NotNull
+  static VirtualFile @NotNull [] getContextFiles(@NotNull AnActionEvent e, @NotNull Predicate<? super VirtualFile> additionalPredicate) {
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    if (files == null) return VirtualFile.EMPTY_ARRAY;
+    return Arrays.stream(files)
+      .filter(file -> file != null && ChangeToThisFileTypeAction.isOverridableFile(file))
+      .filter(additionalPredicate)
+      .toArray(count -> VirtualFile.ARRAY_FACTORY.create(count));
+  }
+
+  private static class ChangeToThisFileTypeAction extends DumbAwareAction {
+    private final @NotNull VirtualFile @NotNull [] myFiles;
     private final FileType myType;
 
     ChangeToThisFileTypeAction(@NotNull @NlsActions.ActionText String displayText,
-                               @NotNull VirtualFile file,
+                               @NotNull VirtualFile @NotNull [] files,
                                @NotNull FileType type) {
-      super(displayText,
-            ActionsBundle.message("action.ChangeToThisFileTypeAction.description", file.getName(), type.getDescription()), type.getIcon());
-      myFile = file;
+      super(displayText, ActionsBundle.message("action.ChangeToThisFileTypeAction.description", type.getDescription()), type.getIcon());
+      myFiles = files;
       myType = type;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      OverrideFileTypeManager.getInstance().addFile(myFile, myType);
+      for (VirtualFile file : myFiles) {
+        if (isOverridableFile(file)) {
+          OverrideFileTypeManager.getInstance().addFile(file, myType);
+        }
+      }
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean enabled = myFile.isValid() && !myFile.isDirectory();
+      boolean enabled = ContainerUtil.exists(myFiles, file -> isOverridableFile(file));
       e.getPresentation().setEnabled(enabled);
+    }
+    private static boolean isOverridableFile(@NotNull VirtualFile file) {
+      return file.isValid()
+             && !file.isDirectory()
+             && (file instanceof VirtualFileWithId)
+             && OverrideFileTypeManager.isOverridable(file.getFileType());
     }
   }
 }

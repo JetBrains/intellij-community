@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -9,20 +9,42 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
+/**
+ * Represents coverage framework inside IntelliJ.
+ */
 public abstract class CoverageRunner {
   public static final ExtensionPointName<CoverageRunner> EP_NAME = ExtensionPointName.create("com.intellij.coverageRunner");
 
+  /**
+   * Loads coverage data from {@code sessionDataFile} into IntelliJ presentation, {@link ProjectData}.
+   * 
+   * @param baseCoverageSuite suite where coverage would be loaded. 
+   *                          Can be used to retrieve additional information about configuration which was run with coverage.
+   */
   @Nullable
   public abstract ProjectData loadCoverageData(@NotNull final File sessionDataFile, @Nullable final CoverageSuite baseCoverageSuite);
 
+  /**
+   * When multiple coverage runners are available for one {@link CoverageEngine}, 
+   * {@link #getPresentableName()} is used to render coverage runner in UI.
+   */
   @NotNull
   @NonNls
   public abstract String getPresentableName();
 
+  /**
+   * @return unique id to serialize/deserialize used coverage runner.
+   */
   @NotNull
   @NonNls
   public abstract String getId();
 
+  /**
+   * Used to compose file name where coverage framework should save coverage data.
+   * It is also used to check if runner can load data from disk without actual loading.
+   * 
+   * @return file extension of the file where coverage framework stores coverage data.
+   */
   @NotNull
   @NonNls
   public abstract String getDataFileExtension();
@@ -32,6 +54,9 @@ public abstract class CoverageRunner {
     return new String[]{getDataFileExtension()};
   }
 
+  /**
+   * @return true if coverage runner works with the languages which corresponds to {@link CoverageEngine}.
+   */
   public abstract boolean acceptsCoverageEngine(@NotNull final CoverageEngine engine);
 
   public static <T extends CoverageRunner> T getInstance(@NotNull Class<T> coverageRunnerClass) {
@@ -44,6 +69,10 @@ public abstract class CoverageRunner {
     return null;
   }
 
+  /**
+   * @return true if coverage framework can collect coverage information per test. 
+   *         Then IntelliJ would allow e.g., seeing what tests cover selected line.
+   */
   public boolean isCoverageByTestApplicable() {
     return false;
   }

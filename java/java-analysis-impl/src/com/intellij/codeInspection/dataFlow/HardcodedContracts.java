@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -206,6 +204,15 @@ public final class HardcodedContracts {
     String className = owner.getQualifiedName();
     if (className == null) return Collections.emptyList();
 
+    if (method.isConstructor()) {
+      if (className.equals("java.util.concurrent.ArrayBlockingQueue") && paramCount == 3) {
+        return List.of(singleConditionContract(ContractValue.argument(0), RelationType.LT,
+                                               ContractValue.argument(2).specialField(SpecialField.COLLECTION_SIZE), fail()),
+                       singleConditionContract(ContractValue.argument(0), RelationType.LE,
+                                               ContractValue.constant(0, PsiType.INT), fail()));
+      }
+    }
+
     ContractProvider provider = HARDCODED_CONTRACTS.mapFirst(method);
     if (provider != null) {
       List<MethodContract> contracts = provider.getContracts(call, paramCount);
@@ -236,8 +243,6 @@ public final class HardcodedContracts {
       }
     }
     else if (isJunit(className) || isTestng(className) ||
-             className.startsWith("com.google.common.truth.") ||
-             className.startsWith("org.assertj.core.api.") ||
              className.equals("org.hamcrest.MatcherAssert") ||
              className.equals("org.hamcrest.junit.MatcherAssert")) {
       return handleTestFrameworks(method, paramCount, className, methodName, call);
@@ -326,7 +331,7 @@ public final class HardcodedContracts {
                                                            String className,
                                                            String methodName,
                                                            @Nullable PsiMethodCallExpression call) {
-    if (("assertThat".equals(methodName) || "assumeThat".equals(methodName) || "that".equals(methodName)) && call != null) {
+    if (call != null && ("assertThat".equals(methodName) || "assumeThat".equals(methodName) || "that".equals(methodName))) {
       return handleAssertThat(paramCount, call);
     }
 
@@ -439,57 +444,8 @@ public final class HardcodedContracts {
           return Collections.singletonList(new StandardMethodContract(constraints, fail()));
         }
       }
-      if (args.length == 1) {
-        PsiType type = args[0].getType();
-        return SyntaxTraverser.psiApi().parents(call)
-          .skip(1)
-          .takeWhile(e -> !(e instanceof PsiStatement) && !(e instanceof PsiMember))
-          .filter(PsiMethodCallExpression.class)
-          .takeWhile(c -> {
-            String name = c.getMethodExpression().getReferenceName();
-            return name != null && (name.startsWith("is") || name.equals("describedAs") || name.equals("as"));
-          })
-          .filterMap(c -> constraintFromAssertJMatcher(type, c))
-          .toList();
-      }
     }
     return Collections.emptyList();
-  }
-
-  private static @Nullable MethodContract constraintFromAssertJMatcher(PsiType type, PsiMethodCallExpression call) {
-    if (!call.getArgumentList().isEmpty()) return null;
-    String name = call.getMethodExpression().getReferenceName();
-    if (name == null) return null;
-    switch (name) {
-      case "isNotNull":
-        return new StandardMethodContract(new ValueConstraint[]{NULL_VALUE}, fail());
-      case "isNull":
-        return new StandardMethodContract(new ValueConstraint[]{NOT_NULL_VALUE}, fail());
-      case "isPresent":
-      case "isNotEmpty":
-        return emptyCheck(type, false);
-      case "isNotPresent":
-      case "isEmpty":
-        return emptyCheck(type, true);
-      case "isTrue":
-        if (PsiType.BOOLEAN.equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
-          return new StandardMethodContract(new ValueConstraint[]{FALSE_VALUE}, fail());
-        }
-        return null;
-      case "isFalse":
-        if (PsiType.BOOLEAN.equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
-          return new StandardMethodContract(new ValueConstraint[]{TRUE_VALUE}, fail());
-        }
-        return null;
-    }
-    return null;
-  }
-
-  private static @Nullable MethodContract emptyCheck(PsiType type, boolean isEmpty) {
-    SpecialField field = SpecialField.fromQualifierType(DfTypes.typedObject(type, Nullability.UNKNOWN));
-    if (field == null) return null;
-    return singleConditionContract(ContractValue.argument(0).specialField(field), isEmpty ? RelationType.NE : RelationType.EQ,
-                                   field == SpecialField.OPTIONAL_VALUE ? ContractValue.nullValue() : ContractValue.zero(), fail());
   }
 
   private static @NotNull List<MethodContract> failIfNull(int argIndex, int argCount, boolean returnArg) {

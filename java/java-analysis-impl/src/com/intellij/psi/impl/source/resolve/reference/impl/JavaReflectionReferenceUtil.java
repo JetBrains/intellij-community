@@ -21,6 +21,8 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMapper;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -29,8 +31,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.invoke.MethodType;
 import java.util.*;
 import java.util.function.Function;
+
+import static com.intellij.psi.CommonClassNames.*;
+import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
+import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 /**
  * @author Pavel.Dolgov
@@ -43,6 +50,34 @@ public final class JavaReflectionReferenceUtil {
 
   public static final String METHOD_TYPE = "methodType";
   public static final String GENERIC_METHOD_TYPE = "genericMethodType";
+  private static final CallMatcher LIST_FACTORY = anyOf(
+    staticCall(JAVA_UTIL_LIST, "of"),
+    staticCall(JAVA_UTIL_ARRAYS, "asList")
+  );
+  private static final CallMatcher.Simple METHOD_TYPE_MATCHER = staticCall(JAVA_LANG_INVOKE_METHOD_TYPE, METHOD_TYPE);
+  public static final CallMatcher METHOD_TYPE_WITH_METHOD_TYPE_MATCHER =
+    METHOD_TYPE_MATCHER.parameterTypes(JAVA_LANG_CLASS, JAVA_LANG_INVOKE_METHOD_TYPE);
+  public static final CallMatcher METHOD_TYPE_WITH_LIST_MATCHER =
+    METHOD_TYPE_MATCHER.parameterTypes(JAVA_LANG_CLASS, JAVA_UTIL_LIST);
+  public static final CallMatcher METHOD_TYPE_WITH_CLASSES_MATCHER = anyOf(
+    METHOD_TYPE_MATCHER.parameterCount(3),
+    METHOD_TYPE_MATCHER.parameterCount(1),
+    METHOD_TYPE_MATCHER.parameterTypes(JAVA_LANG_CLASS, JAVA_LANG_CLASS)
+  );
+  public static final CallMatcher METHOD_TYPE_WITH_ARRAY_MATCHER =
+    METHOD_TYPE_MATCHER.parameterTypes(JAVA_LANG_CLASS, JAVA_LANG_CLASS + "<?>[]");
+  public static final CallMatcher GENERIC_METHOD_TYPE_MATCHER = staticCall(JAVA_LANG_INVOKE_METHOD_TYPE, GENERIC_METHOD_TYPE);
+  private static final CallMapper<ReflectiveSignature> SIGNATURE_MAPPER = new CallMapper<ReflectiveSignature>()
+    .register(METHOD_TYPE_WITH_CLASSES_MATCHER,
+              call -> composeMethodSignatureFromTypes(call.getArgumentList().getExpressions()))
+    .register(METHOD_TYPE_WITH_LIST_MATCHER,
+              call -> composeMethodSignatureFromReturnTypeAndList(call.getArgumentList().getExpressions()))
+    .register(METHOD_TYPE_WITH_ARRAY_MATCHER,
+              call -> composeMethodSignatureFromReturnTypeAndArray(call.getArgumentList().getExpressions()))
+    .register(METHOD_TYPE_WITH_METHOD_TYPE_MATCHER,
+              call -> composeMethodSignatureFromReturnTypeAndMethodType(call.getArgumentList().getExpressions()))
+    .register(GENERIC_METHOD_TYPE_MATCHER,
+              call -> composeGenericMethodSignature(call.getArgumentList().getExpressions()));
 
   public static final String FIND_VIRTUAL = "findVirtual";
   public static final String FIND_STATIC = "findStatic";
@@ -468,6 +503,31 @@ public final class JavaReflectionReferenceUtil {
     return null;
   }
 
+  @Nullable
+  public static List<PsiExpression> getListComponents(@Nullable PsiExpression maybeList) {
+    maybeList = PsiUtil.skipParenthesizedExprDown(maybeList);
+    if (LIST_FACTORY.matches(maybeList) && maybeList instanceof PsiMethodCallExpression) {
+      final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)maybeList;
+      final PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
+      if (expressions.length == 0) {
+        return Collections.emptyList();
+      }
+      final PsiExpression firstArgument = PsiUtil.skipParenthesizedExprDown(expressions[0]);
+      if (MethodCallUtils.isVarArgCall(callExpression)) {
+        final List<PsiExpression> varargs = getVarargs(firstArgument);
+        if (varargs != null) {
+          return varargs;
+        }
+      }
+      // Skip calls with explicit arrays, for example: List.of(new Class<?>[0])
+      if (isVarargAsArray(firstArgument)) {
+        return null;
+      }
+      return Arrays.asList(expressions);
+    }
+    return null;
+  }
+
   @Contract("null -> false")
   public static boolean isVarargAsArray(@Nullable PsiExpression maybeArray) {
     final PsiType type = maybeArray != null ? maybeArray.getType() : null;
@@ -482,27 +542,108 @@ public final class JavaReflectionReferenceUtil {
    */
   @Nullable
   public static ReflectiveSignature composeMethodSignature(@Nullable PsiExpression methodTypeExpression) {
-    final PsiExpression typeDefinition = findDefinition(methodTypeExpression);
+    return composeMethodSignature(methodTypeExpression, true);
+  }
+
+  @Nullable
+  private static ReflectiveSignature composeMethodSignature(@Nullable PsiExpression methodTypeExpression, boolean allowRecursion) {
+    final PsiExpression typeDefinition = findDefinition(PsiUtil.skipParenthesizedExprDown(methodTypeExpression));
+    if (METHOD_TYPE_WITH_METHOD_TYPE_MATCHER.matches(typeDefinition) && !allowRecursion) {
+      return null;
+    }
     if (typeDefinition instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)typeDefinition;
-      final String referenceName = methodCallExpression.getMethodExpression().getReferenceName();
+      return SIGNATURE_MAPPER.mapFirst((PsiMethodCallExpression)typeDefinition);
+    }
+    return null;
+  }
 
-      Function<PsiExpression[], ReflectiveSignature> composer = null;
-      if (METHOD_TYPE.equals(referenceName)) {
-        composer = JavaReflectionReferenceUtil::composeMethodSignatureFromTypes;
-      }
-      else if (GENERIC_METHOD_TYPE.equals(referenceName)) {
-        composer = JavaReflectionReferenceUtil::composeGenericMethodSignature;
-      }
-
-      if (composer != null) {
-        final PsiMethod method = methodCallExpression.resolveMethod();
-        if (method != null) {
-          final PsiClass psiClass = method.getContainingClass();
-          if (psiClass != null && JAVA_LANG_INVOKE_METHOD_TYPE.equals(psiClass.getQualifiedName())) {
-            final PsiExpression[] arguments = methodCallExpression.getArgumentList().getExpressions();
-            return composer.apply(arguments);
+  @Nullable
+  private static ReflectiveSignature composeMethodSignatureFromReturnTypeAndMethodType(
+    PsiExpression @NotNull [] arguments
+  ) {
+    if (arguments.length == 2) {
+      final PsiExpression methodType = findInnermostMethodType(arguments[1]);
+      if (methodType != null) {
+        final ReflectiveSignature signature = composeMethodSignature(methodType, false);
+        if (signature != null) {
+          final String text = getTypeText(arguments[0]);
+          if (text != null) {
+            return signature.withReturnType(text);
           }
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Find innermost {@link MethodType} for a {@link MethodType#methodType(Class, MethodType)} call
+   *
+   * <p>
+   * Examples:
+   * <ol>
+   *   <li>
+   *     For {@code MethodType.methodType(void.class, MethodType.methodType(String.class)}
+   *     will return {@link PsiExpression} for {@code MethodType.methodType(String.class)}
+   *   </li>
+   *   <li>
+   *     For {@code MethodType.methodType(void.class, MethodType.methodType(String.class, MethodType.methodType(List.class))}
+   *     will return {@link PsiExpression} for {@code MethodType.methodType(List.class)}
+   *   </li>
+   * </ol>
+   *
+   * @param methodType the origin {@link MethodType}
+   * @return innermost {@link MethodType} as {@link PsiExpression} or {@code null}, if unable to resolve or there are too many nested calls
+   */
+  @Nullable
+  public static PsiExpression findInnermostMethodType(@Nullable PsiExpression methodType) {
+    methodType = findDefinition(methodType);
+    int preventEndlessLoop = 5;
+    while (METHOD_TYPE_WITH_METHOD_TYPE_MATCHER.matches(methodType)) {
+      if (--preventEndlessLoop == 0) {
+        return null;
+      }
+      methodType = PsiUtil.skipParenthesizedExprDown(methodType);
+      if (!(methodType instanceof PsiMethodCallExpression)) {
+        return null;
+      }
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)methodType;
+      final PsiExpression[] expressions = call.getArgumentList().getExpressions();
+      if (expressions.length != 2) {
+        return null;
+      }
+      methodType = findDefinition(expressions[1]);
+    }
+
+    return METHOD_TYPE_MATCHER.matches(methodType) ? methodType : null;
+  }
+
+  @Nullable
+  private static ReflectiveSignature composeMethodSignatureFromReturnTypeAndList(PsiExpression @NotNull [] arguments) {
+    if (arguments.length == 2) {
+      final PsiExpression returnType = findDefinition(arguments[0]);
+      if (returnType != null) {
+        final PsiExpression list = arguments[1];
+        final List<PsiExpression> components = getListComponents(list);
+        if (components != null) {
+          final List<PsiExpression> signature = ContainerUtil.prepend(components, returnType);
+          return ReflectiveSignature.create(ContainerUtil.map(signature, typeExpression -> getTypeText(typeExpression)));
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static ReflectiveSignature composeMethodSignatureFromReturnTypeAndArray(PsiExpression @NotNull [] arguments) {
+    if (arguments.length == 2) {
+      final PsiExpression returnType = findDefinition(arguments[0]);
+      if (returnType != null) {
+        final PsiExpression array = arguments[1];
+        final List<PsiExpression> components = getVarargs(array);
+        if (components != null) {
+          final List<PsiExpression> signature = ContainerUtil.prepend(components, returnType);
+          return ReflectiveSignature.create(ContainerUtil.map(signature, typeExpression -> getTypeText(typeExpression)));
         }
       }
     }
@@ -732,6 +873,10 @@ public final class JavaReflectionReferenceUtil {
 
     public @NotNull Icon getIcon() {
       return myIcon != null ? myIcon : PlatformIcons.METHOD_ICON;
+    }
+
+    public ReflectiveSignature withReturnType(@NotNull String returnType) {
+      return new ReflectiveSignature(this.myIcon, returnType, this.myArgumentTypes);
     }
 
     @Override

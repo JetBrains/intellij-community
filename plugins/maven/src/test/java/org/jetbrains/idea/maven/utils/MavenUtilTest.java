@@ -2,14 +2,15 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenTestCase;
+import com.intellij.maven.testFramework.MavenTestCase;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 public class MavenUtilTest extends MavenTestCase {
-
 
   public void testFindLocalRepoSchema12() throws IOException {
     VirtualFile file = createProjectSubFile("testsettings.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
@@ -20,7 +21,6 @@ public class MavenUtilTest extends MavenTestCase {
                                                                 "</settings>");
     assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
   }
-
 
   public void testFindLocalRepoSchema10() throws IOException {
     VirtualFile file = createProjectSubFile("testsettings.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
@@ -72,5 +72,15 @@ public class MavenUtilTest extends MavenTestCase {
     } finally {
       MavenServerUtil.removeProperty("testSystemPropertiesRepoPath");
     }
+  }
+
+  public void testGetRepositoryFromSettingsWithBadSymbols() throws IOException {
+    VirtualFile file = createProjectSubFile("testsettings.xml");
+    String str = "<settings> " +
+                 "<!-- Bad UTF-8 symbol: ü -->" +
+                 "  <localRepository>mytestpath</localRepository>" +
+                 "</settings>";
+    Files.writeString(file.toNioPath(), str, StandardCharsets.ISO_8859_1);
+    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
   }
 }

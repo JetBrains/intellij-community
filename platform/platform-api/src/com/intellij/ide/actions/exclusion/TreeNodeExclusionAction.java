@@ -2,10 +2,7 @@
 package com.intellij.ide.actions.exclusion;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.tree.TreeCollector.TreePathRoots;
@@ -35,7 +32,7 @@ abstract class TreeNodeExclusionAction<T extends TreeNode> extends AnAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    final Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     final Presentation presentation = e.getPresentation();
     if (!(component instanceof JTree) || !exclusionProcessor.isActionEnabled(myIsExclude)) {
       presentation.setEnabledAndVisible(false);
@@ -67,8 +64,13 @@ abstract class TreeNodeExclusionAction<T extends TreeNode> extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final JTree tree = (JTree)e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    final JTree tree = (JTree)e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     LOG.assertTrue(tree != null);
     final TreePath[] paths = tree.getSelectionPaths();
     LOG.assertTrue(paths != null);

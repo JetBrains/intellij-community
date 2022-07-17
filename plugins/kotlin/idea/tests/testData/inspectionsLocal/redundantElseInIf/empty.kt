@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 class SomeException : RuntimeException()
 fun foo(): Int = 1
 

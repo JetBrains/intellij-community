@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.toolWindow.ToolWindowHeader;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -82,7 +83,9 @@ public final class IdeBackgroundUtil {
 
   private static boolean suppressBackground(@NotNull JComponent component) {
     String type = getComponentType(component);
-    if (type == null) return false;
+    if (type == null) {
+      return false;
+    }
     String spec = System.getProperty(TARGET_PROP, "*");
     boolean allInclusive = spec.startsWith("*");
     return allInclusive ? spec.contains("-" + type) : !spec.contains(type);
@@ -104,7 +107,7 @@ public final class IdeBackgroundUtil {
            component instanceof ActionToolbar ? "toolbar" :
            component instanceof StatusBar ? "statusbar" :
            component instanceof JMenuBar || component instanceof JMenu? "menubar" :
-           component instanceof Stripe ? "stripe" :
+           component.getClass().getSimpleName().endsWith(".Stripe") ? "stripe" :
            component instanceof EditorsSplitters ? "frame" :
            component instanceof EditorComponentImpl ? "editor" :
            component instanceof EditorGutterComponentEx ? "editor" :
@@ -157,7 +160,7 @@ public final class IdeBackgroundUtil {
   }
 
   public static @NotNull Color getIdeBackgroundColor() {
-    return new JBColor(() -> {
+    return JBColor.lazy(() -> {
       Color light = ColorUtil.darker(UIUtil.getPanelBackground(), 3);
       return StartupUiUtil.isUnderDarcula() ? Gray._40 : light;
     });
@@ -394,7 +397,9 @@ public final class IdeBackgroundUtil {
   private static final class MyTransform implements BiFunction<JComponent, Graphics2D, Graphics2D> {
     @Override
     public Graphics2D apply(JComponent c, Graphics2D g) {
-      if (Boolean.TRUE.equals(ComponentUtil.getClientProperty(c, NO_BACKGROUND))) return g;
+      if (Boolean.TRUE.equals(ClientProperty.get(c, NO_BACKGROUND))) {
+        return g;
+      }
       String type = getComponentType(c);
       if (type == null) return g;
       if ("frame".equals(type)) return withFrameBackground(g, c);

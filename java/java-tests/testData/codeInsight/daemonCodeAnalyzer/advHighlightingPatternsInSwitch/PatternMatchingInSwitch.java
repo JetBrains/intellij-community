@@ -21,17 +21,17 @@ class Main {
     };
 
     int i4 = switch(o) {
-      case String s, <error descr="Illegal fall-through to a pattern">X x</error> -> x.f();
+      case String s, X x -> <error descr="Cannot resolve symbol 'x'">x</error>.f();
       default -> 1;
     };
 
     int i5 = switch(o) {
-      case String s, <error descr="Illegal fall-through to a pattern">X x</error> -> x.f();
+      case String s, X x -> <error descr="Cannot resolve symbol 'x'">x</error>.f();
       default -> 1;
     };
 
     int i6 = switch(o) {
-      case X x, <error descr="Illegal fall-through to a pattern">String s</error> -> x.f();
+      case X x, String s -> <error descr="Cannot resolve symbol 'x'">x</error>.f();
       default -> 1;
     };
     return i1 + i2 + i3 + i4 + i5 + i6;
@@ -153,6 +153,8 @@ class Main {
         break;
       case <error descr="Incompatible types. Found: 'Sub5', required: 'I'">Sub5 s5</error>:
         System.out.println("s5");
+      case ((((<error descr="Incompatible types. Found: 'Sub5', required: 'I'">Sub5 s5</error>)) && Math.random() > 0.5)):
+        System.out.println("");
       default:
         System.out.println("s");
     }
@@ -160,6 +162,7 @@ class Main {
     str = switch (i) {
       case Sub1 s2 -> "s1";
       case <error descr="Incompatible types. Found: 'Sub5', required: 'I'">Sub5 s5</error> -> "s5";
+      case ((((<error descr="Incompatible types. Found: 'Sub5', required: 'I'">Sub5 s5</error>)) && Math.random() > 0.5)) -> "";
       default -> "s";
     };
 
@@ -177,13 +180,29 @@ class Main {
     switch (list1) {
       case <error descr="'java.util.List<capture<? extends java.lang.Number>>' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> l</error>:
         break;
+      case ((((<error descr="'java.util.List<capture<? extends java.lang.Number>>' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> l</error>)) && Math.random() > 0.5)):
+        break;
     }
+
+    switch (list1.get(0)) {
+      case null: {}
+      default: {}
+    }
+
+    switch (new int[0]) {
+      case null: {}
+      default: {}
+    }
+    
+
     switch (list2) {
       case List<? extends Number> l:
         break;
     }
     switch (o) {
       case <error descr="'java.lang.Object' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> ll</error>:
+        break;
+      case ((((<error descr="'java.lang.Object' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> ll</error>)) && Math.random() > 0.5)):
         break;
       case default:
         break;
@@ -207,15 +226,30 @@ class Main {
 
     switch (o) {
       case <error descr="Unexpected type. Found: 'int', required: 'class or array'">int ii</error>: break;
+      case ((((<error descr="Unexpected type. Found: 'long', required: 'class or array'">long l</error>)) && Math.random() > 0.5)): break;
       default: break;
     }
     str = switch (o) {
       case <error descr="Unexpected type. Found: 'int', required: 'class or array'">int ii</error> -> "";
+      case ((((<error descr="Unexpected type. Found: 'long', required: 'class or array'">long l</error>)) && Math.random() > 0.5)) -> "";
       default -> "";
     };
   }
 
+  private static final int constant = 1;
   void duplicateLabels(Integer i) {
+    String str;
+    switch (i) {
+      case <error descr="Duplicate label '1'">1</error>:
+        break;
+      case <error descr="Duplicate label '1'">Main.constant</error>:
+        break;
+    }
+    str = switch (i) {
+      case <error descr="Duplicate label '1'">1</error> -> "";
+      case <error descr="Duplicate label '1'">constant</error> -> "";
+    };
+
     // A switch label may not use more than one default label
     switch (i) {
       case 1, <error descr="Duplicate default label">default</error>:
@@ -224,7 +258,6 @@ class Main {
       <error descr="Duplicate default label">default</error>:
         System.out.println("s");
     }
-    String str;
     str = switch (i) {
       case 1, <error descr="Duplicate default label">default</error> -> "s1";
       <error descr="Duplicate default label">default</error> -> "s";
@@ -261,6 +294,18 @@ class Main {
     str = switch (i) {
       case 1, <error descr="Duplicate label 'null'">null</error> -> "s";
       case <error descr="Duplicate label 'null'">null</error> -> "null";
+    };
+
+    // total pattern duplicates
+    switch (i) {
+      case <error descr="Duplicate total pattern">Object o</error>:
+        break;
+      case <error descr="Duplicate total pattern">((Integer ii && true))</error>:
+        break;
+    }
+    str = switch (i) {
+      case ((Integer ii && false)) -> "";
+      case Number n -> "";
     };
   }
 
@@ -679,7 +724,7 @@ class Main {
     }
   }
 
-  void completeness(Day d, I i, I2 i2, I3 i3) {
+  void completeness(Day d, I i, I2 i2, I3 i3, AorBorC abc, J1 j, II<Integer> ii) {
     // old style switch, no completeness check
     switch (d) {
       case MONDAY, TUESDAY -> System.out.println("ok");
@@ -781,7 +826,7 @@ class Main {
         break;
     }
     str = switch(<error descr="'switch' expression does not cover all possible input values">i</error>) {
-      case I ii && ii != null -> "ok";
+      case I in && in != null -> "ok";
     };
 
     switch (i3) {
@@ -790,6 +835,25 @@ class Main {
       case Sub11 s:
         break;
       case Sub12 s && true:
+        break;
+    }
+
+    str = switch (abc) {
+      case A a -> "1";
+      case B b -> "2";
+      case C c -> "3";
+    };
+    str = switch (abc) {
+      case A a -> "1";
+      case C c -> "2";
+      case AorB ab -> "3";
+      case BorC bc -> "4";
+    };
+
+    switch (j) {
+      case R1 r1:
+        break;
+      case R2 r2:
         break;
     }
 
@@ -822,6 +886,10 @@ class Main {
     }
     str = switch (<error descr="'switch' expression does not have any case clauses">i2</error>) {
     };
+
+    switch (<error descr="'switch' statement does not cover all possible input values">ii</error>) {
+      case BB b -> {}
+    }
   }
 }
 
@@ -873,3 +941,19 @@ final class Sub11 extends Sub10 {
 
 final class Sub12 extends Sub10 {
 }
+
+sealed interface AorBorC {}
+sealed interface AorB extends AorBorC {}
+sealed interface BorC extends AorBorC {}
+sealed interface AorC extends AorBorC {}
+final class A implements AorB, AorC {}
+final class B implements AorB, BorC {}
+final class C implements AorC, BorC {}
+sealed interface J1 {}
+sealed interface J2 extends J1 permits R1 {}
+record R1() implements J1, J2 {}
+record R2() implements J1 {}
+
+sealed interface II<T> {}
+final class AA implements II<String> {}
+final class BB<T> implements II<Object> {}

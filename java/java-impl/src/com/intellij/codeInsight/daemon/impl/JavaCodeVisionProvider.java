@@ -5,42 +5,51 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaCodeVisionSettings;
 import com.intellij.codeInsight.hints.*;
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
-import com.intellij.codeInsight.hints.presentation.MouseButton;
+import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
-import com.intellij.codeInsight.hints.presentation.SequencePresentation;
-import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.BlockInlayPriority;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.SmartList;
-import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
+
+import static com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector.CLASS_LOCATION;
+import static com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector.METHOD_LOCATION;
+import static com.intellij.codeInsight.hints.InlayHintsUtilsKt.addCodeVisionElement;
 
 public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVisionSettings> {
   private static final String CODE_LENS_ID = "JavaLens";
   private static final SettingsKey<JavaCodeVisionSettings> KEY = new SettingsKey<>(CODE_LENS_ID);
 
+  @Override
+  public @NotNull InlayGroup getGroup() {
+    return InlayGroup.CODE_VISION_GROUP;
+  }
+
   interface InlResult {
     void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event);
 
-    @NotNull
-    String getRegularText();
+    @NotNull String getRegularText();
+
+    @NotNull String getCaseId();
   }
 
   @Nullable
@@ -49,12 +58,14 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
                                              @NotNull Editor editor,
                                              @NotNull JavaCodeVisionSettings settings,
                                              @NotNull InlayHintsSink __) {
+    if ( Registry.is("editor.codeVision.new") && !ApplicationManager.getApplication().isUnitTestMode()) {
+      return null;
+    }
     return new FactoryInlayHintsCollector(editor) {
       @Override
       public boolean collect(@NotNull PsiElement element, @NotNull Editor editor, @NotNull InlayHintsSink sink) {
         if (!(element instanceof PsiMember) || element instanceof PsiTypeParameter) return true;
-        PsiElement prevSibling = element.getPrevSibling();
-        if (!(prevSibling instanceof PsiWhiteSpace && prevSibling.textContains('\n'))) return true;
+        if (!isFirstInLine(element)) return true;
         PsiMember member = (PsiMember)element;
         if (member.getName() == null) return true;
 
@@ -65,14 +76,18 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
             hints.add(new InlResult() {
               @Override
               public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
-               JavaCodeVisionUsageCollector.USAGES_CLICKED_EVENT_ID.log(element.getProject());
+                JavaCodeVisionUsageCollector.USAGES_CLICKED_EVENT_ID.log(element.getProject());
                 GotoDeclarationAction.startFindUsages(editor, element.getProject(), element, new RelativePoint(event));
               }
 
-              @NotNull
               @Override
-              public String getRegularText() {
+              public @NotNull String getRegularText() {
                 return usagesHint;
+              }
+
+              @Override
+              public @NotNull String getCaseId() {
+                return JavaCodeVisionConfigurable.USAGES_CASE_ID;
               }
             });
           }
@@ -87,15 +102,19 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
                 @Override
                 public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
                   GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.SUBCLASSED_CLASS.getNavigationHandler();
-                  JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(), "class");
+                  JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(), CLASS_LOCATION);
                   navigationHandler.navigate(event, ((PsiClass)element).getNameIdentifier());
                 }
 
-                @NotNull
                 @Override
-                public String getRegularText() {
+                public @NotNull String getRegularText() {
                   return isInterface ? JavaBundle.message("code.vision.implementations.hint", inheritors) :
                          JavaBundle.message("code.vision.inheritors.hint", inheritors);
+                }
+
+                @Override
+                public @NotNull String getCaseId() {
+                  return JavaCodeVisionConfigurable.INHERITORS_CASE_ID;
                 }
               });
             }
@@ -108,16 +127,20 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
               hints.add(new InlResult() {
                 @Override
                 public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
-                  JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(), "method");
+                  JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(), METHOD_LOCATION);
                   GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.OVERRIDDEN_METHOD.getNavigationHandler();
                   navigationHandler.navigate(event, ((PsiMethod)element).getNameIdentifier());
                 }
 
-                @NotNull
                 @Override
-                public String getRegularText() {
+                public @NotNull String getRegularText() {
                   return isAbstractMethod ? JavaBundle.message("code.vision.implementations.hint", overridings) :
                          JavaBundle.message("code.vision.overrides.hint", overridings);
+                }
+
+                @Override
+                public @NotNull String getCaseId() {
+                  return JavaCodeVisionConfigurable.INHERITORS_CASE_ID;
                 }
               });
             }
@@ -125,23 +148,25 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
         }
 
         if (!hints.isEmpty()) {
-          PresentationFactory factory = getFactory();
-          Document document = editor.getDocument();
           int offset = getAnchorOffset(element);
-          int line = document.getLineNumber(offset);
-          int startOffset = document.getLineStartOffset(line);
-          int column = offset - startOffset;
-          List<InlayPresentation> presentations = new SmartList<>();
-          presentations.add(factory.textSpacePlaceholder(column, true));
+
           for (InlResult inlResult : hints) {
-            presentations.add(createPresentation(factory, element, editor, inlResult));
-            presentations.add(factory.textSpacePlaceholder(1, true));
+            InlayPresentation presentation = createPresentation(getFactory(), element, editor, inlResult);
+            int priority = inlResult.getCaseId() == JavaCodeVisionConfigurable.USAGES_CASE_ID
+                           ? BlockInlayPriority.CODE_VISION_USAGES
+                           : BlockInlayPriority.CODE_VISION_INHERITORS;
+
+            addCodeVisionElement(sink, editor, offset, priority, presentation);
           }
-          SequencePresentation shiftedPresentation = new SequencePresentation(presentations);
-          InlayPresentation withSettings = addSettings(element.getProject(), factory, shiftedPresentation);
-          sink.addBlockElement(startOffset, true, true, BlockInlayPriority.CODE_VISION, withSettings);
         }
         return true;
+      }
+
+      private boolean isFirstInLine(PsiElement element) {
+        PsiElement prevSibling = element.getPrevSibling();
+        return ((prevSibling instanceof PsiWhiteSpace &&
+                  (prevSibling.textContains('\n') || prevSibling.getTextRange().getStartOffset() == 0)) ||
+                 element.getTextRange().getStartOffset() == 0);
       }
     };
   }
@@ -177,29 +202,20 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
                                                       @NotNull InlResult result) {
     InlayPresentation text = factory.smallTextWithoutBackground(result.getRegularText());
     SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
-    return factory.referenceOnHover(text, (event, translated) -> {
+    InlayPresentation presentation = factory.referenceOnHover(text, (event, translated) -> {
       PsiElement actual = pointer.getElement();
       if (actual != null) {
         result.onClick(editor, actual, event);
       }
     });
-  }
+    String caseId = result.getCaseId();
 
-  private static @NotNull InlayPresentation addSettings(@NotNull Project project,
-                                                        @NotNull PresentationFactory factory,
-                                                        @NotNull InlayPresentation presentation) {
-    JPopupMenu popupMenu = new JPopupMenu();
-    JMenuItem item = new JMenuItem(JavaBundle.message("button.text.settings"));
-    item.addActionListener(e -> {
-      JavaCodeVisionUsageCollector.SETTINGS_CLICKED_EVENT_ID.log(project);
-      InlayHintsConfigurable.showSettingsDialogForLanguage(project, JavaLanguage.INSTANCE, model -> model.getId().equals(CODE_LENS_ID));
-    });
-    popupMenu.add(item);
-
-    return factory.onClick(presentation, MouseButton.Right, (e, __) -> {
-      JBPopupMenu.showByEvent(e, popupMenu);
-      return Unit.INSTANCE;
-    });
+    return new MenuOnClickPresentation(presentation, element.getProject(), () ->
+      InlayHintsUtils.INSTANCE.getDefaultInlayHintsProviderCasePopupActions(
+        KEY, JavaBundle.messagePointer("title.code.vision.inlay.hints"),
+        caseId, JavaCodeVisionConfigurable.getCaseName(caseId)
+      )
+    );
   }
 
   @NotNull
@@ -244,5 +260,22 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
   @Override
   public boolean isVisibleInSettings() {
     return true;
+  }
+
+  @Nls
+  @Nullable
+  @Override
+  public String getProperty(@NotNull String key) {
+    return JavaBundle.message(key);
+  }
+
+  @NotNull
+  @Override
+  public PsiFile createFile(@NotNull Project project,
+                            @NotNull FileType fileType,
+                            @NotNull Document document) {
+    PsiFile file = InlayHintsProvider.super.createFile(project, fileType, document);
+    file.putUserData(PsiSearchScopeUtil.USE_SCOPE_KEY, new LocalSearchScope(file));
+    return file;
   }
 }

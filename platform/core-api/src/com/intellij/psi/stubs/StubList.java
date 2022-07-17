@@ -286,9 +286,6 @@ abstract class StubList extends AbstractList<StubBase<?>> {
       }
 
       MostlyUShortIntList prev = myTempJoinedChildrenMap.put(parentId, ids);
-      if (parentId == 311133) {
-        new RuntimeException(Thread.currentThread() + "; prev=" + prev).printStackTrace();
-      }
       assert prev == null: parentId;
 
       myStubData.set(childrenStartIndex(parentId), IN_TEMP_MAP);

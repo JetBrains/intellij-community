@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.text.LiteralFormatUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -19,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspection {
+public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField") public boolean ignoreReferences = true;
   @SuppressWarnings("PublicField") public boolean ignoreComplexLiterals = false;
@@ -65,7 +67,7 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
   }
 
   static String getLiteralText(PsiLiteralExpression firstArgument) {
-    final String text = firstArgument.getText();
+    final String text = LiteralFormatUtil.removeUnderscores(firstArgument.getText());
     final char c = text.charAt(text.length() - 1);
     return c == 'd' || c == 'D' || c == 'f' || c == 'F'
            ? text.substring(0, text.length() - 1)
@@ -131,7 +133,7 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
   private class UnpredictableBigDecimalConstructorCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
       if (!ConstructionUtils.isReferenceTo(classReference, "java.math.BigDecimal")) {

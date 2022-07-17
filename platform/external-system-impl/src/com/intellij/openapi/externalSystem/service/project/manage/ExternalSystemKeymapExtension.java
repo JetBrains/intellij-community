@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -49,6 +49,13 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public final class ExternalSystemKeymapExtension implements KeymapExtension {
+  /**
+   * Provides keymap group for keymap configuration dialog.
+   * This group should contain actions to run external system tasks or other build system actions.
+   * <p>
+   * Note: infrastructure for actions list configuration should be implemented on plugin side,
+   * if that needed.
+   */
   @FunctionalInterface
   public interface ActionsProvider {
     ExtensionPointName<ActionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.externalSystemKeymapProvider");

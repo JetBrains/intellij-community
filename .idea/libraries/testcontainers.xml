@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="testcontainers" type="repository">
-    <properties maven-id="org.testcontainers:testcontainers:1.15.1">
+    <properties maven-id="org.testcontainers:testcontainers:1.16.0">
       <exclude>
         <dependency maven-id="junit:junit" />
         <dependency maven-id="org.slf4j:slf4j-api" />
@@ -10,21 +10,19 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/testcontainers/testcontainers/1.15.1/testcontainers-1.15.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/testcontainers/testcontainers/1.16.0/testcontainers-1.16.0.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/rnorth/duct-tape/duct-tape/1.0.8/duct-tape-1.0.8.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/rnorth/visible-assertions/visible-assertions/2.1.2/visible-assertions-2.1.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-api/3.2.7/docker-java-api-3.2.7.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport-zerodep/3.2.7/docker-java-transport-zerodep-3.2.7.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport/3.2.7/docker-java-transport-3.2.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-api/3.2.11/docker-java-api-3.2.11.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport-zerodep/3.2.11/docker-java-transport-zerodep-3.2.11.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport/3.2.11/docker-java-transport-3.2.11.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/testcontainers/testcontainers/1.15.1/testcontainers-1.15.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/testcontainers/testcontainers/1.16.0/testcontainers-1.16.0-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/rnorth/duct-tape/duct-tape/1.0.8/duct-tape-1.0.8-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/rnorth/visible-assertions/visible-assertions/2.1.2/visible-assertions-2.1.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-api/3.2.7/docker-java-api-3.2.7-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport-zerodep/3.2.7/docker-java-transport-zerodep-3.2.7-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport/3.2.7/docker-java-transport-3.2.7-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-api/3.2.11/docker-java-api-3.2.11-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport-zerodep/3.2.11/docker-java-transport-zerodep-3.2.11-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport/3.2.11/docker-java-transport-3.2.11-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

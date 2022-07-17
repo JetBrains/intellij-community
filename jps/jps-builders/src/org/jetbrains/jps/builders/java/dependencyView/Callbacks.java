@@ -2,7 +2,6 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
@@ -11,7 +10,7 @@ import java.util.Collections;
 import java.util.concurrent.Future;
 
 /**
- * @author: db
+ * @author db
  */
 public final class Callbacks {
 
@@ -100,7 +99,6 @@ public final class Callbacks {
    * To be removed in later releases
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public interface ConstantAffectionResolver {
     Future<ConstantAffection> request(
       final String ownerClassName, final String fieldName, int accessFlags, boolean fieldRemoved, boolean accessChanged

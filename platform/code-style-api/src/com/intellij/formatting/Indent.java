@@ -253,6 +253,10 @@ public abstract class Indent {
     return Formatter.getInstance().getSmartIndent(type);
   }
 
+  public static Indent getSmartIndent(Type type, boolean relativeToDirectParent) {
+    return Formatter.getInstance().getSmartIndent(type, relativeToDirectParent);
+  }
+
   public static final class Type {
     private final String myName;
 

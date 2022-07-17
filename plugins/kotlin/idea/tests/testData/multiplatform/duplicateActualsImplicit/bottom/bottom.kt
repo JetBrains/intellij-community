@@ -1,6 +1,6 @@
 package foo
 
-class <!ACTUAL_MISSING!>ActualInMiddleCompatibleInBottom<!>
-actual class CompatibleInMiddleActualInBottom
+class ActualInMiddleCompatibleInBottom
+actual class <!LINE_MARKER("descr='Has expects in top module'")!>CompatibleInMiddleActualInBottom<!>
 
-class <!ACTUAL_MISSING!>CompatibleInMiddleAndBottom<!>
+class CompatibleInMiddleAndBottom

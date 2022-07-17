@@ -37,7 +37,7 @@ class NestingDepthVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitBlockStatement(PsiBlockStatement statement) {
+  public void visitBlockStatement(@NotNull PsiBlockStatement statement) {
     final PsiElement parent = statement.getParent();
     final boolean isAlreadyCounted = parent instanceof PsiDoWhileStatement ||
                                      parent instanceof PsiWhileStatement ||
@@ -52,7 +52,7 @@ class NestingDepthVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitLambdaExpression(PsiLambdaExpression expression) {
+  public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
     if (expression.getBody() instanceof PsiCodeBlock) {
       enterScope(expression);
     }
@@ -72,7 +72,7 @@ class NestingDepthVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitForeachStatement(PsiForeachStatement statement) {
+  public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
     enterScope(statement);
     super.visitForeachStatement(statement);
   }
@@ -112,7 +112,7 @@ class NestingDepthVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitSwitchExpression(PsiSwitchExpression expression) {
+  public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
     enterScope(expression);
     super.visitSwitchExpression(expression);
   }

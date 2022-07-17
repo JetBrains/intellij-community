@@ -13,11 +13,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.search.declarationsSearch.findSuperDescriptors
 import org.jetbrains.kotlin.psi.*
@@ -73,6 +74,7 @@ class GotoSuperActionHandler : CodeInsightActionHandler {
         }
     }
 
+    @Nls
     private fun getTitle(descriptor: DeclarationDescriptor): String? =
         when (descriptor) {
             is ClassDescriptor -> KotlinBundle.message("goto.super.chooser.class.title")

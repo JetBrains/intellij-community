@@ -3,7 +3,9 @@ package com.intellij.stats.completion
 
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface CompletionStatsPolicy {
     companion object {
         val Instance = LanguageExtension<CompletionStatsPolicy>("com.intellij.stats.completion.policy")

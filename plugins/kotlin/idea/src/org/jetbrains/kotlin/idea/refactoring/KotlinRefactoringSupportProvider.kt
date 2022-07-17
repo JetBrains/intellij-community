@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignatu
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractInterfaceHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperclassHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ExtractKotlinFunctionHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceConstant.KotlinIntroduceConstantHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinIntroduceLambdaParameterHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinIntroduceParameterHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty.KotlinIntroducePropertyHandler
@@ -31,6 +32,8 @@ class KotlinRefactoringSupportProvider : RefactoringSupportProvider() {
 
     override fun getIntroduceFunctionalParameterHandler() = KotlinIntroduceLambdaParameterHandler()
 
+    override fun getIntroduceConstantHandler() = KotlinIntroduceConstantHandler()
+
     fun getIntroducePropertyHandler(): RefactoringActionHandler = KotlinIntroducePropertyHandler()
 
     fun getIntroduceTypeParameterHandler(): RefactoringActionHandler = KotlinIntroduceTypeParameterHandler
@@ -38,7 +41,7 @@ class KotlinRefactoringSupportProvider : RefactoringSupportProvider() {
     fun getExtractFunctionHandler(): RefactoringActionHandler = ExtractKotlinFunctionHandler()
 
     fun getExtractFunctionToScopeHandler(): RefactoringActionHandler =
-        ExtractKotlinFunctionHandler(true, ExtractKotlinFunctionHandler.InteractiveExtractionHelper)
+        ExtractKotlinFunctionHandler(allContainersEnabled = true)
 
     override fun getChangeSignatureHandler() = KotlinChangeSignatureHandler()
 

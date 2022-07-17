@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -93,7 +93,7 @@ public final class FunctionalInterfaceSuggester {
         right[parameters.length] = interfaceMethod.getReturnType();
 
         final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
-        final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(aClass.getProject())
+        final PsiSubstitutor substitutor = PsiResolveHelper.getInstance(aClass.getProject())
           .inferTypeArguments(typeParameters, left, right, PsiUtil.getLanguageLevel(method));
         if (PsiUtil.isRawSubstitutor(aClass, substitutor)) {
           return Collections.emptyList();
@@ -151,7 +151,7 @@ public final class FunctionalInterfaceSuggester {
       @Override
       public boolean processInReadAction(PsiMember member) {
         if (member instanceof PsiClass &&
-            Java15APIUsageInspection.getLastIncompatibleLanguageLevel(member, PsiUtil.getLanguageLevel(element)) == null) {
+            LanguageLevelUtil.getLastIncompatibleLanguageLevel(member, PsiUtil.getLanguageLevel(element)) == null) {
           if (!JavaPsiFacade.getInstance(project).getResolveHelper().isAccessible(member, element, null)) {
             return true;
           }
@@ -229,7 +229,7 @@ public final class FunctionalInterfaceSuggester {
           left[parameters.length] = returnExpressions.isEmpty() ? PsiType.VOID : returnExpressions.get(0).getType();
           right[parameters.length] = returnType;
 
-          final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(project)
+          final PsiSubstitutor substitutor = PsiResolveHelper.getInstance(project)
             .inferTypeArguments(interface2Consider.getTypeParameters(), left, right, PsiUtil.getLanguageLevel(expression));
 
           PsiType type = JavaPsiFacade.getElementFactory(project).createType(interface2Consider, substitutor);
@@ -326,7 +326,7 @@ public final class FunctionalInterfaceSuggester {
     @NotNull final PsiType[] right) {
     final Project project = interface2Consider.getProject();
 
-    final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(project)
+    final PsiSubstitutor substitutor = PsiResolveHelper.getInstance(project)
       .inferTypeArguments(interface2Consider.getTypeParameters(), left, right, PsiUtil.getLanguageLevel(expression));
 
     final PsiType type = JavaPsiFacade.getElementFactory(project).createType(interface2Consider, substitutor);

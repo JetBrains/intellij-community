@@ -14,7 +14,9 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.asJava.elements.KtLightPsiArrayInitializerMemberValue
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.codegen.forTestCompile.ForTestCompileRuntime
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.completion.test.assertInstanceOf
 import org.jetbrains.kotlin.idea.facet.configureFacet
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
@@ -27,7 +29,7 @@ import org.junit.runner.RunWith
 class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinJdkAndLibraryProjectDescriptor(KotlinArtifacts.instance.kotlinStdlib)
+        KotlinJdkAndLibraryProjectDescriptor(KotlinArtifacts.kotlinStdlib)
 
     fun testIsHiddenByDeprecated() {
         myFixture.configureByText(
@@ -471,7 +473,7 @@ class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testKotlinAnnotationWithStringArrayLiteral() {
-        configureKotlinVersion("1.2")
+        configureKotlinVersion(IdeKotlinVersion.get("1.2.0"))
         myFixture.configureByText(
             "AnnotatedClass.kt", """
             annotation class Anno(val params: Array<String>)
@@ -918,11 +920,11 @@ class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
             )
         }
 
-    private fun configureKotlinVersion(version: String) {
+    private fun configureKotlinVersion(version: IdeKotlinVersion) {
         WriteAction.run<Throwable> {
             val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
             val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = false)
-            facet.configureFacet(version, null, modelsProvider)
+            facet.configureFacet(version, null, modelsProvider, emptySet())
             modelsProvider.commit()
         }
     }

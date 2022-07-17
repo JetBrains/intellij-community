@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.lang.jvm.JvmParameter
 import com.intellij.openapi.extensions.ExtensionPointName
 
 val EP_NAME: ExtensionPointName<JvmElementActionsFactory> = ExtensionPointName.create(
@@ -52,5 +53,17 @@ fun createAddFieldActions(target: JvmClass, request: CreateFieldRequest): List<I
 fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> {
   return createActions {
     it.createChangeParametersActions(target, request)
+  }
+}
+
+fun createChangeTypeActions(target: JvmMethod, request: ChangeTypeRequest): List<IntentionAction> {
+  return createActions {
+    it.createChangeTypeActions(target, request)
+  }
+}
+
+fun createChangeTypeActions(target: JvmParameter, request: ChangeTypeRequest): List<IntentionAction> {
+  return createActions {
+    it.createChangeTypeActions(target, request)
   }
 }

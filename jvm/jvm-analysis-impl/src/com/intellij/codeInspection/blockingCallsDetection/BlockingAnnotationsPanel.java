@@ -21,8 +21,6 @@ import com.intellij.ui.CommonActionsPanel;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +38,6 @@ import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 
 class BlockingAnnotationsPanel {
   private final Project myProject;
-  private String myDefaultAnnotation;
   private final Set<String> myDefaultAnnotations;
   private final JBTable myTable;
   private final JPanel myComponent;
@@ -50,13 +47,11 @@ class BlockingAnnotationsPanel {
 
   BlockingAnnotationsPanel(Project project,
                            @NlsContexts.ColumnName String name,
-                           String defaultAnnotation,
                            List<String> annotations,
                            List<String> defaultAnnotations,
                            @NlsContexts.StatusText String customEmptyText,
                            @NlsContexts.StatusText String customAddLinkText) {
     myProject = project;
-    myDefaultAnnotation = defaultAnnotation;
     myDefaultAnnotations = new HashSet<>(defaultAnnotations);
     myCustomEmptyText = customEmptyText;
     myCustomAddLinkText = customAddLinkText;
@@ -83,17 +78,12 @@ class BlockingAnnotationsPanel {
                                            int column) {
         if (value == null) return;
         if (!isAnnotationAccessible((String)value)) {
-          append((String)value, SimpleTextAttributes.ERROR_ATTRIBUTES);
-          setIcon(AllIcons.General.Error);
+          append((String)value, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          setIcon(AllIcons.General.Warning);
         }
         else {
           append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          if (value.equals(myDefaultAnnotation)) {
-            setIcon(AllIcons.Actions.Forward);
-          }
-          else {
-            setIcon(EmptyIcon.ICON_16);
-          }
+          setIcon(AllIcons.Nodes.Annotationtype);
         }
       }
     }, null));
@@ -115,30 +105,28 @@ class BlockingAnnotationsPanel {
       }
     };
 
-    final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTable);
-    toolbarDecorator.setAddAction(actionButton -> chooseAnnotation(name))
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTable);
+    toolbarDecorator
+      .setAddAction(actionButton -> chooseAnnotation(name))
       .setRemoveAction(actionButton ->  {
         String selectedValue = getSelectedAnnotation();
         if (selectedValue == null) return;
-        if (myDefaultAnnotation.equals(selectedValue)) myDefaultAnnotation = (String)myTable.getValueAt(0, 0);
         myTableModel.removeRow(myTable.getSelectedRow());
       })
       .setRemoveActionUpdater(e -> !myProject.isDefault() && !myDefaultAnnotations.contains(getSelectedAnnotation()))
       .setAddActionUpdater(e -> !myProject.isDefault());
 
-    final JPanel panel = toolbarDecorator.createPanel();
+    JPanel panel = toolbarDecorator.createPanel();
     myComponent = new JPanel(new BorderLayout());
-    final BorderLayoutPanel withBorder = simplePanel()
+    BorderLayoutPanel withBorder = simplePanel()
       .addToTop(simplePanel(new JLabel(name + ":")).withBorder(empty(10, 0)))
       .addToCenter(panel);
     myComponent.add(withBorder, BorderLayout.CENTER);
-    myComponent.setPreferredSize(new JBDimension(myComponent.getPreferredSize().width, 200));
 
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.setRowSelectionAllowed(true);
+    myTable.setVisibleRowCount(3);
     myTable.setShowGrid(false);
-
-    selectAnnotation(myDefaultAnnotation);
   }
 
   private boolean isAnnotationAccessible(String annotationFqn) {

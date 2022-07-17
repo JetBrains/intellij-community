@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.instrumentation.SaveHook;
 import com.intellij.rt.coverage.util.ProjectDataLoader;
@@ -23,9 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 public final class IDEACoverageRunner extends JavaCoverageRunner {
@@ -37,26 +34,13 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     File sourceMapFile = new File(JavaCoverageEnabledConfiguration.getSourceMapPath(sessionDataFile.getPath()));
     if (sourceMapFile.exists()) {
       try {
-        loadSourceMap(projectData, sourceMapFile);
+        SaveHook.loadAndApplySourceMap(projectData, sourceMapFile);
       }
       catch (IOException e) {
         LOG.warn("Error reading source map associated with coverage data", e);
       }
     }
     return projectData;
-  }
-
-  public void loadSourceMap(ProjectData projectData, File sourceMapFile) throws IOException {
-    Map map = SaveHook.loadSourceMapFromFile(new HashMap(), sourceMapFile);
-    for (Object o : map.entrySet()) {
-      @SuppressWarnings("unchecked") Map.Entry<String, String> entry = (Map.Entry<String, String>)o;
-      String className = entry.getKey();
-      String source = entry.getValue();
-      ClassData data = projectData.getClassData(className);
-      if (data != null) {
-        data.setSource(source);
-      }
-    }
   }
 
   @Override
@@ -79,39 +63,27 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                      @Nullable final Project project) {
     String agentPath = handleSpacesInAgentPath(PathUtil.getJarPathForClass(ProjectData.class));
     if (agentPath == null) return;
-    List<Function<TargetEnvironmentRequest, JavaTargetParameter>> targetParameters =
+    List<Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>> targetParameters =
       javaParameters.getTargetDependentParameters().asTargetParameters();
-    targetParameters.add(request -> {
-      return createArgumentTargetParameter(agentPath, sessionDataFilePath,
-                                           patterns, excludePatterns,
-                                           collectLineInfo, isSampling, sourceMapPath);
-    });
+    targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> createArgumentTargetParameter(agentPath, sessionDataFilePath,
+                                                                                                                                           patterns, excludePatterns,
+                                                                                                                                           collectLineInfo, isSampling, sourceMapPath));
     if (!Registry.is("idea.coverage.thread.safe.enabled")) {
-      targetParameters.add(request -> {
-        return JavaTargetParameter.fixed("-Didea.coverage.thread-safe.enabled=false");
-      });
+      targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Didea.coverage.thread-safe.enabled=false"));
     }
     if (isSampling && Registry.is("idea.coverage.new.sampling.enabled")) {
-      targetParameters.add(request -> {
-        return JavaTargetParameter.fixed("-Didea.new.sampling.coverage=true");
-      });
+      targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Didea.new.sampling.coverage=true"));
     }
     if (!isSampling && Registry.is("idea.coverage.new.tracing.enabled")) {
-      targetParameters.add(request -> {
-        return JavaTargetParameter.fixed("-Didea.new.tracing.coverage=true");
-      });
+      targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Didea.new.tracing.coverage=true"));
       if (collectLineInfo && !Registry.is("idea.coverage.new.test.tracking.enabled")) {
-        targetParameters.add(request -> {
-          return JavaTargetParameter.fixed("-Didea.new.test.tracking.coverage=false");
-        });
+        targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Didea.new.test.tracking.coverage=false"));
       }
     }
     if (project != null) {
       final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
       if (optionsProvider.ignoreEmptyPrivateConstructors()) {
-        targetParameters.add(request -> {
-          return JavaTargetParameter.fixed("-Dcoverage.ignore.private.constructor.util.class=true");
-        });
+        targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Dcoverage.ignore.private.constructor.util.class=true"));
       }
     }
   }
@@ -128,7 +100,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
       final File tempFile = createTempFile();
       tempFile.deleteOnExit();
       Ref<Boolean> writeOnceRef = new Ref<>(false);
-      String tempFilePath = tempFile.getCanonicalPath();
+      String tempFilePath = tempFile.getAbsolutePath();
 
       TargetPaths targetPaths = TargetPaths.ordered(builder -> {
         builder

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
@@ -36,7 +37,7 @@ import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CachedNumberConstructorCallInspection extends BaseInspection {
+public class CachedNumberConstructorCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   static final Set<String> cachedNumberTypes = new HashSet<>();
 

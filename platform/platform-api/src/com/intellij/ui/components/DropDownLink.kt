@@ -17,6 +17,7 @@ import java.util.function.Consumer
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JList
 import javax.swing.KeyStroke.getKeyStroke
+import javax.swing.ListCellRenderer
 
 open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) : ActionLink() {
 
@@ -50,7 +51,7 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
   constructor(item: T, items: List<T>, onChoose: Consumer<T> = Consumer { }) : this(item, { link ->
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(items)
-      .setRenderer(LinkCellRenderer(link))
+      .setRenderer(link.createRenderer())
       .setItemChosenCallback {
         onChoose.accept(it)
         link.selectedItem = it
@@ -82,6 +83,8 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
   protected open fun itemToString(item: T) = item.toString()
 
   protected open fun popupPoint() = Point(0, height + scale(4))
+
+  open fun createRenderer(): ListCellRenderer<in T> = LinkCellRenderer(this)
 }
 
 

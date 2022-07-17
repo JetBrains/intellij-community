@@ -200,7 +200,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     val changelistId = if (!isInitialized) initialChangeListId else null
     initialChangeListId = null
 
-    setBaseRevision(vcsContent) {
+    setBaseRevisionContent(vcsContent) {
       if (changelistId != null) {
         activeChangeListTracker.runUnderChangeList(changelistId) {
           documentTracker.writeLock {
@@ -314,6 +314,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     override fun beforeDocumentChange(event: DocumentEvent) {
       if (hasUndoInCommand) return
       if (undoManager.isUndoOrRedoInProgress) return
+      if (CommandProcessor.getInstance().currentCommand == null) return
       hasUndoInCommand = true
 
       registerUndoAction(true)

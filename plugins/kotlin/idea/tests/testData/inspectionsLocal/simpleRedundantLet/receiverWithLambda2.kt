@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PROBLEM: none
 // This should be reported. However, in order to avoid too complicate logic, the intention ignore this case.
 

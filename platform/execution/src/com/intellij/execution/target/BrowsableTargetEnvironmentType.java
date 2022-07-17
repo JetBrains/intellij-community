@@ -16,7 +16,7 @@ public interface BrowsableTargetEnvironmentType {
                                                               @NlsContexts.DialogTitle String title,
                                                               @NotNull TextComponentAccessor<T> textComponentAccessor,
                                                               @NotNull T component,
-                                                              @NotNull Supplier<TargetEnvironmentConfiguration> configurationSupplier);
+                                                              @NotNull Supplier<? extends TargetEnvironmentConfiguration> configurationSupplier);
 
   /**
    * When configurable contains both connection parameters and components using them (text fields with browsing in this case),

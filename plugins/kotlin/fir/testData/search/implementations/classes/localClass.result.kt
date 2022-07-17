@@ -1,0 +1,1 @@
+FirLightClassForSymbol: B

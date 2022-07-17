@@ -177,7 +177,7 @@ public final class ExternalDiffToolUtil {
   }
 
   public static void execute(@Nullable Project project,
-                             @NotNull ExternalDiffSettings settings,
+                             @NotNull ExternalDiffSettings.ExternalTool externalTool,
                              @NotNull List<? extends DiffContent> contents,
                              @NotNull List<String> titles,
                              @Nullable String windowTitle)
@@ -204,20 +204,19 @@ public final class ExternalDiffToolUtil {
       patterns.put("%3", files.get(1).getPath());
     }
 
-
-    execute(settings.getDiffExePath(), settings.getDiffParameters(), patterns);
+    execute(externalTool.getProgramPath(), externalTool.getArgumentPattern(), patterns);
   }
 
   @RequiresEdt
   public static void executeMerge(@Nullable Project project,
-                                  @NotNull ExternalDiffSettings settings,
+                                  @NotNull ExternalDiffSettings.ExternalTool externalTool,
                                   @NotNull ThreesideMergeRequest request,
                                   @Nullable JComponent parentComponent) throws IOException, ExecutionException {
     request.onAssigned(true);
     try {
       boolean success = false;
       try {
-        success = tryExecuteMerge(project, settings, request, parentComponent);
+        success = tryExecuteMerge(project, externalTool, request, parentComponent);
       }
       finally {
         request.applyResult(success ? MergeResult.RESOLVED : MergeResult.CANCEL);
@@ -229,7 +228,7 @@ public final class ExternalDiffToolUtil {
   }
 
   public static boolean tryExecuteMerge(@Nullable Project project,
-                                        @NotNull ExternalDiffSettings settings,
+                                        @NotNull ExternalDiffSettings.ExternalTool externalTool,
                                         @NotNull ThreesideMergeRequest request,
                                         @Nullable JComponent parentComponent) throws IOException, ExecutionException {
     boolean success;
@@ -258,9 +257,9 @@ public final class ExternalDiffToolUtil {
       patterns.put("%3", inputFiles.get(1).getPath());
       patterns.put("%4", outputFile.getPath());
 
-      final Process process = execute(settings.getMergeExePath(), settings.getMergeParameters(), patterns);
+      final Process process = execute(externalTool.getProgramPath(), externalTool.getArgumentPattern(), patterns);
 
-      if (settings.isMergeTrustExitCode()) {
+      if (externalTool.isMergeTrustExitCode()) {
         final Ref<Boolean> resultRef = new Ref<>();
 
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {

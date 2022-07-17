@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -11,7 +11,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,18 +18,13 @@ import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import static com.intellij.util.BitUtil.isSet;
 
 public abstract class Decompressor {
   /**
@@ -116,13 +110,6 @@ public abstract class Decompressor {
     }
 
     //<editor-fold desc="Implementation">
-    /** @deprecated please use {@link #withZipExtensions()} instead */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-    public @NotNull Decompressor withUnixPermissionsAndSymlinks() {
-      return new CommonsZip(mySource);
-    }
-
     private final Path mySource;
     private ZipFile myZip;
     private Enumeration<? extends ZipEntry> myEntries;
@@ -177,7 +164,7 @@ public abstract class Decompressor {
         if (myEntry == null) return null;
         int platform = myEntry.getPlatform();
         if (SystemInfo.isWindows) {
-          // Unix permissions are ignored on Windows
+          // UNIX permissions are ignored on Windows
           if (platform == ZipArchiveEntry.PLATFORM_UNIX) {
             return new Entry(myEntry.getName(), type(myEntry), 0, myZip.getUnixSymlink(myEntry));
           }
@@ -192,7 +179,7 @@ public abstract class Decompressor {
           if (platform == ZipArchiveEntry.PLATFORM_FAT) {
             // DOS attributes are converted into Unix permissions
             long attributes = myEntry.getExternalAttributes();
-            @SuppressWarnings("OctalInteger") int unixMode = isSet(attributes, Entry.DOS_READ_ONLY) ? 0444 : 0644;
+            @SuppressWarnings("OctalInteger") int unixMode = (attributes & Entry.DOS_READ_ONLY) != 0 ? 0444 : 0644;
             return new Entry(myEntry.getName(), type(myEntry), unixMode, myZip.getUnixSymlink(myEntry));
           }
         }
@@ -230,7 +217,7 @@ public abstract class Decompressor {
     /** An entry name (separators converted to '/' and trimmed); handle with care */
     public final String name;
     public final Type type;
-    /** Depending on a source, could be a POSIX permissions, DOS attributes, or just 0 */
+    /** Depending on the source, could be POSIX permissions, DOS attributes, or just {@code 0} */
     public final int mode;
     public final @Nullable String linkTarget;
 
@@ -250,19 +237,18 @@ public abstract class Decompressor {
     }
   }
 
-  private @Nullable Predicate<Entry> myFilter = null;
-  private @Nullable List<String> myPathsPrefix = null;
+  private @Nullable Predicate<? super Entry> myFilter = null;
+  private @Nullable List<String> myPathPrefix = null;
   private boolean myOverwrite = true;
   private boolean myAllowEscapingSymlinks = true;
-  private @Nullable BiConsumer<Entry, ? super Path> myPostProcessor;
+  private BiConsumer<? super Entry, ? super Path> myPostProcessor;
 
-  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public Decompressor filter(@Nullable Predicate<? super String> filter) {
     myFilter = filter != null ? e -> filter.test(e.type == Entry.Type.DIR ? e.name + '/' : e.name) : null;
     return this;
   }
 
-  public Decompressor entryFilter(@Nullable Predicate<Entry> filter) {
+  public Decompressor entryFilter(@Nullable Predicate<? super Entry> filter) {
     myFilter = filter;
     return this;
   }
@@ -282,23 +268,23 @@ public abstract class Decompressor {
     return this;
   }
 
-  public Decompressor postProcessor(@Nullable BiConsumer<Entry, ? super Path> consumer) {
+  public Decompressor postProcessor(@Nullable BiConsumer<? super Entry, ? super Path> consumer) {
     myPostProcessor = consumer;
     return this;
   }
 
   /**
-   * Extracts only items whose paths starts with the normalized prefix of {@code prefix + '/'} <br/>
-   * Paths are normalized before comparison. <br/>
-   * The prefix test is applied after {@link #filter} predicate is tested. <br/>
-   * Some entries may clash, so use {@link #overwrite} to control it. <br/>
-   * Some items with path that does not start from the prefix could be ignored
+   * Extracts only items whose path starts with the normalized prefix of {@code prefix + '/'}.
+   * Paths are normalized before comparison.
+   * The prefix test is applied after {@link #filter} predicate is tested.
+   * Some entries may clash, so use {@link #overwrite} to control it.
+   * Some items with a path that does not start from the prefix could be ignored.
    *
-   * @param prefix prefix to remove from every archive entry paths
+   * @param prefix a prefix to remove from every archive entry path
    * @return self
    */
   public Decompressor removePrefixPath(@Nullable String prefix) throws IOException {
-    myPathsPrefix = prefix != null ? normalizePathAndSplit(prefix) : null;
+    myPathPrefix = prefix != null ? normalizePathAndSplit(prefix) : null;
     return this;
   }
 
@@ -315,8 +301,8 @@ public abstract class Decompressor {
           continue;
         }
 
-        if (myPathsPrefix != null) {
-          entry = mapPathPrefix(entry, myPathsPrefix);
+        if (myPathPrefix != null) {
+          entry = mapPathPrefix(entry, myPathPrefix);
           if (entry == null) continue;
         }
 
@@ -408,29 +394,18 @@ public abstract class Decompressor {
     return FileUtilRt.splitPath(StringUtil.trimLeading(canonicalPath, '/'), '/');
   }
 
-  @SuppressWarnings("OctalInteger")
   private static void setAttributes(int mode, Path outputFile) throws IOException {
     if (SystemInfo.isWindows) {
       DosFileAttributeView attrs = Files.getFileAttributeView(outputFile, DosFileAttributeView.class);
       if (attrs != null) {
-        if (isSet(mode, Entry.DOS_READ_ONLY)) attrs.setReadOnly(true);
-        if (isSet(mode, Entry.DOS_HIDDEN)) attrs.setHidden(true);
+        if ((mode & Entry.DOS_READ_ONLY) != 0) attrs.setReadOnly(true);
+        if ((mode & Entry.DOS_HIDDEN) != 0) attrs.setHidden(true);
       }
     }
     else {
       PosixFileAttributeView attrs = Files.getFileAttributeView(outputFile, PosixFileAttributeView.class);
       if (attrs != null) {
-        Set<PosixFilePermission> permissions = EnumSet.noneOf(PosixFilePermission.class);
-        if (isSet(mode, 0400)) permissions.add(PosixFilePermission.OWNER_READ);
-        if (isSet(mode, 0200)) permissions.add(PosixFilePermission.OWNER_WRITE);
-        if (isSet(mode, 0100)) permissions.add(PosixFilePermission.OWNER_EXECUTE);
-        if (isSet(mode, 040)) permissions.add(PosixFilePermission.GROUP_READ);
-        if (isSet(mode, 020)) permissions.add(PosixFilePermission.GROUP_WRITE);
-        if (isSet(mode, 010)) permissions.add(PosixFilePermission.GROUP_EXECUTE);
-        if (isSet(mode, 04)) permissions.add(PosixFilePermission.OTHERS_READ);
-        if (isSet(mode, 02)) permissions.add(PosixFilePermission.OTHERS_WRITE);
-        if (isSet(mode, 01)) permissions.add(PosixFilePermission.OTHERS_EXECUTE);
-        attrs.setPermissions(permissions);
+        attrs.setPermissions(PosixFilePermissionsUtil.fromUnixMode(mode));
       }
     }
   }
@@ -455,21 +430,4 @@ public abstract class Decompressor {
     ensureValidPath(entryName);
     return outputDir.resolve(StringUtil.trimLeading(entryName, '/'));
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated please use {@link #filter(Predicate)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SuppressWarnings({"LambdaUnfriendlyMethodOverload", "UnnecessaryFullyQualifiedName"})
-  public Decompressor filter(com.intellij.openapi.util.@Nullable Condition<? super String> filter) {
-    return filter(filter == null ? null : (Predicate<? super String>)(it -> filter.value(it)));
-  }
-
-  /** @deprecated please use {@link #postProcessor(Consumer)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public Decompressor postprocessor(com.intellij.util.@Nullable Consumer<? super File> consumer) {
-    return postProcessor(consumer == null ? null : path -> consumer.consume(path.toFile()));
-  }
-  //</editor-fold>
 }

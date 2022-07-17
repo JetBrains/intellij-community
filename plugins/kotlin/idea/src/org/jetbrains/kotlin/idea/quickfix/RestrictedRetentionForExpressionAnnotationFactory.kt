@@ -8,8 +8,9 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -69,7 +70,7 @@ object RestrictedRetentionForExpressionAnnotationFactory : KotlinIntentionAction
     }
 
     private class ChangeRetentionToSourceFix(retentionAnnotation: KtAnnotationEntry) :
-        KotlinQuickFixAction<KtAnnotationEntry>(retentionAnnotation) {
+      KotlinQuickFixAction<KtAnnotationEntry>(retentionAnnotation) {
 
         override fun getText() = KotlinBundle.message("change.existent.retention.to.source")
 
@@ -93,7 +94,7 @@ object RestrictedRetentionForExpressionAnnotationFactory : KotlinIntentionAction
     }
 
     private class RemoveExpressionTargetFix(expressionTargetArgument: KtValueArgument) :
-        KotlinQuickFixAction<KtValueArgument>(expressionTargetArgument) {
+      KotlinQuickFixAction<KtValueArgument>(expressionTargetArgument) {
 
         override fun getText() = KotlinBundle.message("remove.expression.target")
 

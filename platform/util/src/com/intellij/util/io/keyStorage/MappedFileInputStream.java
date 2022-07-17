@@ -11,12 +11,14 @@ import java.io.InputStream;
 final class MappedFileInputStream extends InputStream {
   private final ResizeableMappedFile raf;
   private final long limit;
+  private final boolean myCheckAccess;
   private int cur;
 
-  MappedFileInputStream(@NotNull ResizeableMappedFile raf, final long pos, final long limit) {
+  MappedFileInputStream(@NotNull ResizeableMappedFile raf, final long pos, final long limit, boolean checkAccess) {
     this.raf = raf;
     this.cur = (int)pos;
     this.limit = limit;
+    myCheckAccess = checkAccess;
   }
 
   @Override
@@ -37,7 +39,7 @@ final class MappedFileInputStream extends InputStream {
     int retval = -1;
     if( cur < limit )
     {
-        retval = raf.get(cur++);
+        retval = raf.get(cur++, myCheckAccess);
     }
     return retval;
   }
@@ -53,7 +55,7 @@ final class MappedFileInputStream extends InputStream {
 
       if( available() > 0 )
       {
-        raf.get(cur, b, offset, length);
+        raf.get(cur, b, offset, length, myCheckAccess);
         cur += length;
       }
 

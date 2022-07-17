@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Convert to 'also'
 class Employee(val firstName: String, val manager: Employee?)
 

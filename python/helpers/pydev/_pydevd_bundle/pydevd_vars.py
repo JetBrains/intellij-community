@@ -8,6 +8,7 @@ from _pydev_bundle.pydev_imports import quote
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, NUMPY_NUMERIC_TYPES, NUMPY_FLOATING_POINT_TYPES
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
+from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
 
 try:
@@ -52,7 +53,7 @@ def _iter_frames(initialFrame):
 
 def dump_frames(thread_id):
     sys.stdout.write('dumping frames\n')
-    if thread_id != get_current_thread_id(threading.currentThread()):
+    if thread_id != get_current_thread_id(threading.current_thread()):
         raise VariableError("find_frame: must execute on same thread")
 
     curFrame = get_frame()
@@ -93,7 +94,7 @@ def get_additional_frames_by_id(thread_id):
 def find_frame(thread_id, frame_id):
     """ returns a frame on the thread that has a given frame_id """
     try:
-        curr_thread_id = get_current_thread_id(threading.currentThread())
+        curr_thread_id = get_current_thread_id(threading.current_thread())
         if thread_id != curr_thread_id:
             try:
                 return get_custom_frame(thread_id, frame_id)  # I.e.: thread_id could be a stackless frame id + thread_id.
@@ -181,7 +182,7 @@ def getVariable(thread_id, frame_id, scope, attrs):
            not the frame (as we don't care about the frame in this case).
     """
     if scope == 'BY_ID':
-        if thread_id != get_current_thread_id(threading.currentThread()):
+        if thread_id != get_current_thread_id(threading.current_thread()):
             raise VariableError("getVariable: must execute on same thread")
 
         try:
@@ -259,7 +260,23 @@ def get_offset(attrs):
     return offset
 
 
-def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs):
+def _resolve_default_variable_fields(var, resolver, offset):
+    return resolver.get_dictionary(VariableWithOffset(var, offset) if offset else var)
+
+
+def _resolve_custom_variable_fields(var, var_expr, resolver, offset, type_renderer, frame_info=None):
+    val_dict = OrderedDict()
+    if type_renderer.is_default_children or type_renderer.append_default_children:
+        default_val_dict = _resolve_default_variable_fields(var, resolver, offset)
+        if len(val_dict) == 0:
+            return default_val_dict
+        for (name, value) in default_val_dict.items():
+            val_dict[name] = value
+
+    return val_dict
+
+
+def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs, user_type_renderers={}):
     """
     Resolve compound variable in debugger scopes by its name and attributes
 
@@ -268,6 +285,7 @@ def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs):
     :param scope: can be BY_ID, EXPRESSION, GLOBAL, LOCAL, FRAME
     :param attrs: after reaching the proper scope, we have to get the attributes until we find
             the proper location (i.e.: obj\tattr1\tattr2)
+    :param user_type_renderers: a dictionary with user type renderers
     :return: a dictionary of variables's fields
 
     :note: PyCharm supports progressive loading of large collections and uses the `attrs`
@@ -281,9 +299,20 @@ def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs):
 
     var = getVariable(thread_id, frame_id, scope, attrs)
 
+    var_expr = ".".join(attrs.split('\t'))
+
     try:
         _type, _typeName, resolver = get_type(var)
-        return _typeName, resolver.get_dictionary(VariableWithOffset(var, offset) if offset else var)
+
+        type_renderer = try_get_type_renderer_for_var(var, user_type_renderers)
+        if type_renderer is not None and offset == 0:
+            frame_info = (thread_id, frame_id)
+            return _typeName, _resolve_custom_variable_fields(
+                var, var_expr, resolver, offset, type_renderer, frame_info
+            )
+
+        return _typeName, _resolve_default_variable_fields(var, resolver, offset)
+
     except:
         sys.stderr.write('Error evaluating: thread_id: %s\nframe_id: %s\nscope: %s\nattrs: %s\n' % (
             thread_id, frame_id, scope, orig_attrs,))
@@ -308,19 +337,24 @@ def resolve_var_object(var, attrs):
     return var
 
 
-def resolve_compound_var_object_fields(var, attrs):
+def resolve_compound_var_object_fields(var, attrs, user_type_renderers={}):
     """
     Resolve compound variable by its object and attributes
 
     :param var: an object of variable
     :param attrs: a sequence of variable's attributes separated by \t (i.e.: obj\tattr1\tattr2)
+    :param user_type_renderers: a dictionary with user type renderers
     :return: a dictionary of variables's fields
     """
+    namespace = var
+
     offset = get_offset(attrs)
 
     attrs = attrs.split('\t', 1)[1] if offset else attrs
 
     attr_list = attrs.split('\t')
+
+    var_expr = ".".join(attr_list)
 
     for k in attr_list:
         type, _typeName, resolver = get_type(var)
@@ -328,7 +362,14 @@ def resolve_compound_var_object_fields(var, attrs):
 
     try:
         type, _typeName, resolver = get_type(var)
-        return resolver.get_dictionary(VariableWithOffset(var, offset) if offset else var)
+
+        type_renderer = try_get_type_renderer_for_var(var, user_type_renderers)
+        if type_renderer is not None and offset == 0:
+            return _resolve_custom_variable_fields(
+                var, var_expr, resolver, offset, type_renderer
+            )
+
+        return _resolve_default_variable_fields(var, resolver, offset)
     except:
         traceback.print_exc()
 
@@ -457,11 +498,17 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=SEN
 
         if attr[:7] == "Globals":
             attr = attr[8:]
+            if is_complex(attr):
+                Exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_globals)
+                return value
             if attr in frame.f_globals:
                 frame.f_globals[attr] = value
                 return frame.f_globals[attr]
         else:
             if pydevd_save_locals.is_save_locals_available():
+                if is_complex(attr):
+                    Exec('%s=%s' % (attr, expression), frame.f_locals, frame.f_locals)
+                    return value
                 frame.f_locals[attr] = value
                 pydevd_save_locals.save_locals(frame)
                 return frame.f_locals[attr]
@@ -474,6 +521,12 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=SEN
     except Exception:
         traceback.print_exc()
 
+def is_complex(attr):
+    complex_indicators = ['[', ']', '.']
+    for indicator in complex_indicators:
+        if attr.find(indicator) != -1:
+            return True
+    return False
 
 MAXIMUM_ARRAY_SIZE = float('inf')
 

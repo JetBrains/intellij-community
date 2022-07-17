@@ -11,6 +11,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
@@ -18,8 +19,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -30,7 +31,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.regex.Pattern;
 
-public class ConflictsDialog extends DialogWrapper{
+public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBase {
   private static final int SHOW_CONFLICTS_EXIT_CODE = 4;
   private static final int MAX_CONFLICTS_SHOWN = 20;
   @NonNls private static final String EXPAND_LINK = "expand";
@@ -74,8 +75,7 @@ public class ConflictsDialog extends DialogWrapper{
   /**
    * @deprecated use other CTORs
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public ConflictsDialog(Project project, String... conflictDescriptions) {
     super(project, true);
     myProject = project;
@@ -101,6 +101,7 @@ public class ConflictsDialog extends DialogWrapper{
     return new Action[]{okAction, new MyShowConflictsInUsageViewAction(), new CancelAction()};
   }
 
+  @Override
   public boolean isShowConflicts() {
     return getExitCode() == SHOW_CONFLICTS_EXIT_CODE;
   }
@@ -122,7 +123,7 @@ public class ConflictsDialog extends DialogWrapper{
     }
 
     JEditorPane messagePane = new JEditorPane();
-    messagePane.setEditorKit(UIUtil.getHTMLEditorKit());
+    messagePane.setEditorKit(HTMLEditorKitBuilder.simple());
     messagePane.setText(buf.toString());
     messagePane.setEditable(false);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane,
@@ -144,6 +145,7 @@ public class ConflictsDialog extends DialogWrapper{
     return panel;
   }
 
+  @Override
   public void setCommandName(@NlsContexts.Command String commandName) {
     myCommandName = commandName;
   }

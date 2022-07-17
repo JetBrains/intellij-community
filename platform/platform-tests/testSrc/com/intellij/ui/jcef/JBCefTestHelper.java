@@ -1,18 +1,42 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.util.ui.UIUtil;
-import junit.framework.TestCase;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
-import java.util.concurrent.Callable;
+import javax.swing.*;
+import java.awt.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
 public class JBCefTestHelper {
+  /**
+   * Shows the browser in a frame in waits for a load completion.
+   */
+  public static void showAndWaitForLoad(@NotNull JBCefBrowserBase browser, @NotNull String frameTitle) {
+    invokeAndWaitForLoad(browser, () -> show(browser, frameTitle));
+  }
+
+  /**
+   * Shows the browser in a frame asynchronously.
+   */
+  public static void showAsync(@NotNull JBCefBrowserBase browser, @NotNull String frameTitle) {
+    EventQueue.invokeLater(() -> show(browser, frameTitle));
+  }
+
+  private static void show(@NotNull JBCefBrowserBase browser, @NotNull String frameTitle) {
+    JFrame frame = new JFrame(frameTitle);
+    frame.setSize(640, 480);
+    frame.setLocationRelativeTo(null);
+    frame.add(browser.getComponent(), BorderLayout.CENTER);
+    frame.setVisible(true);
+  }
+
   /**
    * Invokes and waits for a load completion. Either the runnable should load URL/HTML or the browser should be created with initial URL/HTML.
    */
@@ -34,7 +58,7 @@ public class JBCefTestHelper {
   /**
    * Invokes and waits for the condition to become true.
    */
-  public static void invokeAndWaitForCondition(@NotNull Runnable runnable, @NotNull Callable<Boolean> condition) {
+  public static void invokeAndWaitForCondition(@NotNull Runnable runnable, @NotNull BooleanSupplier condition) {
     CountDownLatch latch = new CountDownLatch(1);
 
     invokeAndWaitForLatch(latch, () -> {
@@ -43,28 +67,29 @@ public class JBCefTestHelper {
     });
 
     try {
-      while (!condition.call()) {
+      while (!condition.getAsBoolean()) {
         //noinspection BusyWait
         Thread.sleep(100);
       }
-    } catch (Throwable e) {
+    }
+    catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
   }
 
   public static void invokeAndWaitForLatch(@NotNull CountDownLatch latch, @NotNull Runnable runnable) {
     UIUtil.invokeLaterIfNeeded(runnable);
-
-    TestCase.assertTrue(await(latch));
+    await(latch);
   }
 
-  public static boolean await(@NotNull CountDownLatch latch) {
+  public static void await(@NotNull CountDownLatch latch) {
     try {
-      return latch.await(5, TimeUnit.SECONDS);
+      if (!latch.await(5, TimeUnit.SECONDS)) {
+        Assert.fail("timeout");
+      }
     }
     catch (InterruptedException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
-    return false;
   }
 }

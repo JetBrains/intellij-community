@@ -23,7 +23,7 @@ public class OutputWrapper extends OutputStream {
   }
 
   @Override
-  public void write(int b) {
+  public synchronized void write(int b) {
     if (myBuffer == null) {
       myBuffer = new StringBuilder();
     }
@@ -31,7 +31,7 @@ public class OutputWrapper extends OutputStream {
   }
 
   @Override
-  public void write(byte[] b, int off, int len) {
+  public synchronized void write(byte[] b, int off, int len) {
     if (myBuffer == null) {
       myBuffer = new StringBuilder();
     }
@@ -39,7 +39,7 @@ public class OutputWrapper extends OutputStream {
   }
 
   @Override
-  public void flush() {
+  public synchronized void flush() {
     doFlush();
   }
 

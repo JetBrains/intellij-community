@@ -3,7 +3,7 @@ package org.editorconfig
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 @Suppress("MemberVisibilityCanBePrivate")
 object EditorConfigRegistry {
@@ -15,18 +15,21 @@ object EditorConfigRegistry {
               ReplaceWith("EDITORCONFIG_DOTNET_SUPPORT_KEY", "org.editorconfig.EditorConfigRegistry.EDITORCONFIG_DOTNET_SUPPORT_KEY"))
   const val EDITORCONFIG_CSHARP_SUPPORT_KEY = EDITORCONFIG_DOTNET_SUPPORT_KEY
 
+  private var forceSkipProjectRootInTest = false
+
+  @TestOnly
+  @JvmStatic
+  fun setSkipProjectRootInTest(skip : Boolean) {
+    forceSkipProjectRootInTest = skip
+  }
+
   @JvmStatic
   fun shouldStopAtProjectRoot() =
-    Registry.`is`(EDITORCONFIG_STOP_AT_PROJECT_ROOT_KEY, false) or ApplicationManager.getApplication().isUnitTestMode
+    Registry.`is`(EDITORCONFIG_STOP_AT_PROJECT_ROOT_KEY, false) or
+      (ApplicationManager.getApplication().isUnitTestMode && !forceSkipProjectRootInTest)
 
   @JvmStatic
   fun shouldSupportBreadCrumbs() = Registry.`is`(EDITORCONFIG_BREADCRUMBS_SUPPORT_KEY, false)
-
-  @JvmStatic
-  @Deprecated("Calling this C# is too narrow. Use shouldSupportDotNet instead",
-              ReplaceWith("shouldSupportDotNet()", "org.editorconfig.EditorConfigRegistry.shouldSupportDotNet"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  fun shouldSupportCSharp() = shouldSupportDotNet()
 
   @JvmStatic
   fun shouldSupportDotNet() = Registry.`is`(EDITORCONFIG_DOTNET_SUPPORT_KEY, false)

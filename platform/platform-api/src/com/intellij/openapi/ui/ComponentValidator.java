@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.execution.ui.TagButton;
@@ -19,11 +19,7 @@ import com.intellij.ui.EditorTextComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.JBEmptyBorder;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBValue;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +39,7 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -59,7 +56,7 @@ public class ComponentValidator {
    * ComponentWithBrowseButton isn't a {@link ErrorBorderCapable} component so it needs a special provider.
    * Suitable for {@link ComponentWithBrowseButton} and it's descendants.
    */
-  public static final Function<JComponent, JComponent> CWBB_PROVIDER = c -> ((ComponentWithBrowseButton)c).getChildComponent();
+  public static final Function<JComponent, JComponent> CWBB_PROVIDER = c -> ((ComponentWithBrowseButton<?>)c).getChildComponent();
 
   private final Disposable parentDisposable;
   private Supplier<? extends ValidationInfo> validator;
@@ -86,8 +83,7 @@ public class ComponentValidator {
   /**
    * @deprecated Use {@link ComponentValidator#withValidator(Supplier)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public ComponentValidator withValidator(@NotNull Consumer<? super ComponentValidator> validator) {
     this.validator = () -> {
       validator.accept(this);
@@ -173,11 +169,15 @@ public class ComponentValidator {
    * Convenient wrapper for mostly used scenario.
    */
   public ComponentValidator andRegisterOnDocumentListener(@NotNull JTextComponent textComponent) {
-    textComponent.getDocument().addDocumentListener(new DocumentAdapter() {
+    DocumentAdapter listener = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
         getInstance(textComponent).ifPresent(ComponentValidator::revalidate); // Don't use 'this' to avoid cyclic references.
       }
+    };
+    textComponent.getDocument().addDocumentListener(listener);
+    Disposer.register(parentDisposable, () -> {
+      textComponent.getDocument().removeDocumentListener(listener);
     });
     return this;
   }
@@ -224,16 +224,33 @@ public class ComponentValidator {
     return validationInfo;
   }
 
+  private boolean needResetForInfo(@Nullable ValidationInfo info) {
+    if (info == null && validationInfo != null) return true;
+    else if (info != null && validationInfo != null) {
+      if (info.warning != validationInfo.warning) return true;
+      if (tipComponent != null && !Objects.equals(info.message, validationInfo.message)) {
+        String message = HtmlChunk.div().attr("width", MAX_WIDTH.get()).addRaw(trimMessage(info.message, tipComponent)).
+                           wrapWith(HtmlChunk.html()).toString();
+        View v = BasicHTML.createHTMLView(tipComponent, message);
+
+        Dimension size = tipComponent.getPreferredSize();
+        JBInsets.removeFrom(size, tipComponent.getInsets());
+
+        if (v.getPreferredSpan(View.Y_AXIS) != size.height) return true;
+      }
+    }
+    return false;
+  }
+
   public void updateInfo(@Nullable ValidationInfo info) {
     if (disableValidation) return;
 
-    boolean resetInfo = info == null && validationInfo != null;
-    boolean hasNewInfo = info != null && !info.equals(validationInfo) && StringUtil.isNotEmpty(info.message);
-
-    if (resetInfo) {
+    boolean hasNewInfo = info != null && !info.equals(validationInfo);
+    if (needResetForInfo(info)) {
       reset();
     }
-    else if (hasNewInfo) {
+
+    if (hasNewInfo) {
       validationInfo = info;
 
       if (popup != null && popup.isVisible() && tipComponent != null) {
@@ -248,18 +265,21 @@ public class ComponentValidator {
           component.repaint();
         }
 
-        popupBuilder = createPopupBuilder(validationInfo, editorPane -> {
-          tipComponent = editorPane;
-          editorPane.addHyperlinkListener(hyperlinkListener);
-          editorPane.addMouseListener(new TipComponentMouseListener());
-          popupSize = editorPane.getPreferredSize();
-        }).setCancelOnMouseOutCallback(e -> e.getID() == MouseEvent.MOUSE_PRESSED && !withinComponent(info, e));
+        if (!StringUtil.isEmptyOrSpaces(info.message)) {
+          // create popup if there is something to show to user
+          popupBuilder = createPopupBuilder(validationInfo, editorPane -> {
+            tipComponent = editorPane;
+            editorPane.addHyperlinkListener(hyperlinkListener);
+            editorPane.addMouseListener(new TipComponentMouseListener());
+            popupSize = editorPane.getPreferredSize();
+          }).setCancelOnMouseOutCallback(e -> e.getID() == MouseEvent.MOUSE_PRESSED && !withinComponent(info, e));
 
-        getFocusable(component).ifPresent(fc -> {
-          if (fc.hasFocus()) {
-            showPopup();
-          }
-        });
+          getFocusable(component).ifPresent(fc -> {
+            if (fc.hasFocus()) {
+              showPopup();
+            }
+          });
+        }
       }
     }
   }
@@ -269,7 +289,7 @@ public class ComponentValidator {
     JEditorPane tipComponent = new JEditorPane();
     tipComponent.setContentType("text/html");
     tipComponent.setEditable(false);
-    tipComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+    tipComponent.setEditorKit(HTMLEditorKitBuilder.simple());
 
     EditorKit kit = tipComponent.getEditorKit();
     if (kit instanceof HTMLEditorKit) {
@@ -385,7 +405,7 @@ public class ComponentValidator {
   }
 
   private static Optional<Component> getFocusable(Component source) {
-    return (source instanceof JComboBox && !((JComboBox)source).isEditable() ||
+    return (source instanceof JComboBox && !((JComboBox<?>)source).isEditable() ||
             source instanceof JCheckBox ||
             source instanceof JRadioButton ||
             source instanceof TagButton) ?

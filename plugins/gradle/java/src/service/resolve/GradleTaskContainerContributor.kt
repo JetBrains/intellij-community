@@ -1,10 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
-import com.intellij.psi.ResolveState
+import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
@@ -17,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
 
 class GradleTaskContainerContributor : NonCodeMembersContributor() {
 
-  override fun getParentClassName(): String? = GRADLE_API_TASK_CONTAINER
+  override fun getParentClassName(): String = GRADLE_API_TASK_CONTAINER
 
   override fun processDynamicElements(qualifierType: PsiType,
                                       aClass: PsiClass?,
@@ -36,6 +33,10 @@ class GradleTaskContainerContributor : NonCodeMembersContributor() {
     val data = GradleExtensionsContributor.getExtensionsFor(file) ?: return
 
     val name = processor.getName(state)
+    val gradleProjectType = JavaPsiFacade.getInstance(place.project).findClass(GradleCommonClassNames.GRADLE_API_PROJECT, place.resolveScope)
+    if (name in (gradleProjectType?.methods?.map(PsiMethod::getName) ?: emptyList())) {
+      return
+    }
     val tasks = if (name == null) data.tasksMap.values else listOf(data.tasksMap[name] ?: return)
     if (tasks.isEmpty()) return
 

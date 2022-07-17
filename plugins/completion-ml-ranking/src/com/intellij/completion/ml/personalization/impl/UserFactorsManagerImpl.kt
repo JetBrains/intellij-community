@@ -17,10 +17,10 @@
 package com.intellij.completion.ml.personalization.impl
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.completion.ml.common.PrefixMatchingType
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.completion.ml.personalization.UserFactor
 import com.intellij.completion.ml.personalization.UserFactorsManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.textMatching.PrefixMatchingType
 
 /**
  * @author Vitaliy.Bibaev

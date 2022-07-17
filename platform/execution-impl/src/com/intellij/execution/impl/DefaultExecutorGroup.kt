@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
+import com.intellij.execution.Executor.ActionWrapper
 import com.intellij.execution.ExecutorRegistryImpl
 import com.intellij.execution.executors.ExecutorGroup
 import com.intellij.execution.executors.RunExecutorSettings
@@ -30,7 +31,7 @@ abstract class DefaultExecutorGroup<Settings : RunExecutorSettings> : ExecutorGr
    * It is possible to customize disabled presentation in [ExecutorGroupWrapper.updateDisabledActionPresentation],
    * e.g for IntelliJ Profiler ExecutorGroup clocks with green triangle is used as a presentation icon and "Profile" as a presentation text
    */
-  protected abstract class ExecutorGroupWrapper(origin: ActionGroup) : EmptyAction.MyDelegatingActionGroup(origin) {
+  protected abstract class ExecutorGroupWrapper(origin: ActionGroup) : ActionGroupWrapper(origin) {
     abstract fun groupShouldBeVisible(e: AnActionEvent): Boolean
     abstract fun updateDisabledActionPresentation(eventPresentation: Presentation)
 
@@ -52,7 +53,7 @@ abstract class DefaultExecutorGroup<Settings : RunExecutorSettings> : ExecutorGr
     /**
      * We intentionally decided to hide disabled actions from the drop-down list by default
      */
-    private class HideDisabledActionWrapper(origin: AnAction) : EmptyAction.MyDelegatingAction(origin) {
+    private class HideDisabledActionWrapper(origin: AnAction) : AnActionWrapper(origin) {
       override fun update(e: AnActionEvent) {
         super.update(e)
         e.presentation.isEnabledAndVisible = e.presentation.isEnabled

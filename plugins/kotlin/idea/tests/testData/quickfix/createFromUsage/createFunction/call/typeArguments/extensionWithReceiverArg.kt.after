@@ -1,5 +1,5 @@
 // "Create extension function 'List<T>.foo'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class A<T>(val items: List<T>) {
     fun test(): Int {

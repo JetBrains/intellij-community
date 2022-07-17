@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -67,6 +67,10 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     doTest("Bar1");
   }
 
+  public void testMethodNameUsedInMethodRefs() {
+    doTest("bar1");
+  }
+
   public void testRenameParamUniqueName() {
     configureByFile();
     final HashSet<String> result = new HashSet<>();
@@ -110,6 +114,10 @@ public class RenameLocalTest extends LightRefactoringTestCase {
 
   public void testRenameResource() {
     doTest("r1");
+  }
+  
+  public void testRecordCanonicalConstructor() {
+    doTest("Bar");
   }
 
   public void testRenameResourceInPlace() {

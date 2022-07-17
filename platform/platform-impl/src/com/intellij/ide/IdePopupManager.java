@@ -44,6 +44,15 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS || e.getID() == WindowEvent.WINDOW_DEACTIVATED) {
       if (!isPopupActive()) return false;
 
+      Window sourceWindow = ((WindowEvent)e).getWindow();
+      if (SystemInfo.isLinux && !sourceWindow.isShowing()) {
+        // Ignore focusLost/deactivated events caused by some window closing on Linux.
+        // Normally, in such cases another IDE window is focused, and 'opposite' event property should point to that window.
+        // On Linux however, due to current JDK implementation, 'opposite' property is null in this case,
+        // and the following code mistakenly assumes focus is transferred to another application.
+        return false;
+      }
+
       Window focused = ((WindowEvent)e).getOppositeWindow();
       if (focused == null) {
         focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
@@ -57,7 +66,6 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
       }
 
       Component ultimateParentForFocusedComponent = UIUtil.findUltimateParent(focused);
-      Window sourceWindow = ((WindowEvent)e).getWindow();
       Component ultimateParentForEventWindow = UIUtil.findUltimateParent(sourceWindow);
 
       boolean shouldCloseAllPopup = false;

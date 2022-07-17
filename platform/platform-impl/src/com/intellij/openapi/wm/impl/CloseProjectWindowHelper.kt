@@ -5,10 +5,10 @@ import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -33,10 +33,11 @@ open class CloseProjectWindowHelper {
 
   open fun windowClosing(project: Project?) {
     val numberOfOpenedProjects = getNumberOfOpenedProjects()
+    val isLightEditActive = LightEditService.getInstance().project != null
     // Exit on Linux and Windows if the only opened project frame is closed.
     // On macOS behaviour is different - to exit app, quit action should be used, otherwise welcome frame is shown.
     // If welcome screen is disabled, behaviour on all OS is the same.
-    if (numberOfOpenedProjects > 1 || (numberOfOpenedProjects == 1 && couldReturnToWelcomeScreen(project))) {
+    if (numberOfOpenedProjects > 1 || isLightEditActive || (numberOfOpenedProjects == 1 && couldReturnToWelcomeScreen(project))) {
       closeProjectAndShowWelcomeFrameIfNoProjectOpened(project)
     }
     else {
@@ -49,7 +50,7 @@ open class CloseProjectWindowHelper {
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {
     runInAutoSaveDisabledMode {
       if (project != null && project.isOpen) {
-        ProjectManagerEx.getInstanceEx().closeAndDispose(project)
+        ProjectManager.getInstance().closeAndDispose(project)
       }
 
       val app = ApplicationManager.getApplication()
@@ -67,6 +68,6 @@ open class CloseProjectWindowHelper {
 
   private fun couldReturnToWelcomeScreen(project: Project?): Boolean {
     return project?.let { SHOW_WELCOME_FRAME_FOR_PROJECT.get(project) }
-           ?: (isShowWelcomeScreen && !PlatformUtils.isPyCharmDs() && !PlatformUtils.isDataGrip())
+           ?: (isShowWelcomeScreen && !PlatformUtils.isDataSpell() && !PlatformUtils.isDataGrip())
   }
 }

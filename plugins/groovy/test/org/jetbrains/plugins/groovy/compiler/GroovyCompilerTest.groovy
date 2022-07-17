@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
@@ -36,6 +36,9 @@ import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
+
+import java.nio.file.Files
+
 /**
  * @author peter
  */
@@ -47,7 +50,7 @@ abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   }
 
   @Override protected void setUp() {
-    new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log").delete()
+    Files.deleteIfExists(TestLoggerFactory.testLogDir.resolve("../log/build-log/build.log"))
     super.setUp()
     Logger.getInstance(GroovyCompilerTest.class).info(testStartMessage)
     addGroovyLibrary(module)
@@ -250,10 +253,10 @@ class Bar extends Foo {
     println "Idea log"
     TestLoggerFactory.dumpLogToStdout(getTestStartMessage())
 
-    def makeLog = new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log")
-    if (makeLog.exists()) {
+    def makeLog = TestLoggerFactory.testLogDir.resolve("../log/build-log/build.log")
+    if (Files.exists(makeLog)) {
       println "\n\nServer Log:"
-      println makeLog.text
+      println Files.readString(makeLog)
     }
     System.out.flush()
   }

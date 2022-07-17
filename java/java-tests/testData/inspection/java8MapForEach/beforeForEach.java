@@ -114,4 +114,11 @@ public class Test {
       //long comment
     }
   }
+
+  void expressionStatement(Map<String, String> map) {
+    for (Map.Entry<String, String> entry : map.entrySet()) {
+      String value = entry.getValue();
+      entry.getValue();
+    }
+  }
 }

@@ -1,85 +1,66 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.assertions.Assertions.assertThat
-import kotlinx.coroutines.*
+import com.intellij.util.getValue
+import com.intellij.util.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(JUnit4::class)
 class PooledCoroutineContextTest : UsefulTestCase() {
-  @Test
-  fun `log error`() = runBlocking<Unit> {
-    val errorMessage = "don't swallow me"
-    val loggedErrors = loggedErrorsAfterThrowingFromGlobalScope(RuntimeException(errorMessage))
-
-    assertThat(loggedErrors).anyMatch { errorMessage in it.message.orEmpty() }
-  }
 
   @Test
-  fun `do not log ProcessCanceledException`() = runBlocking<Unit> {
-    val errorMessage = "ignore me"
-    val loggedErrors = loggedErrorsAfterThrowingFromGlobalScope(ProcessCanceledException(RuntimeException(errorMessage)))
-
-    assertThat(loggedErrors).noneMatch { errorMessage in it.cause?.message.orEmpty() }
+  fun `log error`() {
+    val exception = RuntimeException()
+    assertTrue(exception === loggedErrorsAfterThrowingFromGlobalScope(exception))
   }
 
-  private suspend fun loggedErrorsAfterThrowingFromGlobalScope(exception: Throwable): List<Throwable> {
-    // cannot use assertThatThrownBy here, because AssertJ doesn't support Kotlin coroutines
-    val loggedErrors = mutableListOf<Throwable>()
-    withLoggedErrorsRecorded(loggedErrors) {
-      GlobalScope.launch(Dispatchers.ApplicationThreadPool) {
-        throw exception
-      }.join()
-    }
-
-    return loggedErrors
+  @Test
+  fun `do not log ProcessCanceledException`() {
+    val exception = ProcessCanceledException()
+    assertNull(loggedErrorsAfterThrowingFromGlobalScope(exception))
   }
 
-  private suspend fun <T> withLoggedErrorsRecorded(loggedErrors: List<Throwable>,
-                                                   block: suspend () -> T): T {
-    val savedInstance = LoggedErrorProcessor.getInstance()
-    val synchronizedLoggedErrors = Collections.synchronizedList(loggedErrors)
-    LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-      override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
-        synchronizedLoggedErrors.add(t)
-        return false
+  private fun loggedErrorsAfterThrowingFromGlobalScope(exception: Throwable): Throwable? = withNoopThreadUncaughtExceptionHandler {
+    loggedError {
+      runBlocking {
+        @Suppress("EXPERIMENTAL_API_USAGE")
+        GlobalScope.launch(Dispatchers.IO) {
+          throw exception
+        }.join()
       }
-    })
-    return try {
-      withNoopThreadUncaughtExceptionHandler { block() }
-    }
-    finally {
-      LoggedErrorProcessor.setNewInstance(savedInstance)
     }
   }
 
-  private suspend fun <T> withNoopThreadUncaughtExceptionHandler(block: suspend () -> T): T {
+  private fun loggedError(block: () -> Unit): Throwable? {
+    var throwable by AtomicReference<Throwable?>()
+    LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): MutableSet<Action> {
+        throwable = t
+        return Action.NONE
+      }
+    }, block)
+    return throwable
+  }
+
+  private fun <T> withNoopThreadUncaughtExceptionHandler(block: () -> T): T {
     val savedHandler = Thread.getDefaultUncaughtExceptionHandler()
     Thread.setDefaultUncaughtExceptionHandler { _, _ -> }
-    return try {
-      block()
+    try {
+      return block()
     }
     finally {
       Thread.setDefaultUncaughtExceptionHandler(savedHandler)
-    }
-  }
-
-  @Test
-  fun `error must be propagated to parent context if available`() = runBlocking {
-    class MyCustomException : RuntimeException()
-
-    try {
-      withContext(Dispatchers.ApplicationThreadPool) {
-        throw MyCustomException()
-      }
-    }
-    catch (ignored: MyCustomException) {
     }
   }
 }

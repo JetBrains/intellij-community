@@ -1,14 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.script.AbstractScriptElementBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.tree
 import java.util.function.Consumer
 
-@Suppress("unused")
 abstract class AbstractGradleBuildScriptBuilderCore<BSB : GradleBuildScriptBuilderCore<BSB>>(
   override val gradleVersion: GradleVersion
 ) : GradleBuildScriptBuilderCore<BSB>, AbstractScriptElementBuilder() {
@@ -23,8 +21,6 @@ abstract class AbstractGradleBuildScriptBuilderCore<BSB : GradleBuildScriptBuild
   private val dependencies = ScriptTreeBuilder()
   private val repositories = ScriptTreeBuilder()
   private val postfixes = ScriptTreeBuilder()
-
-  protected abstract val scriptBuilder: ScriptBuilder
 
   protected abstract fun apply(action: BSB.() -> Unit): BSB
 
@@ -68,8 +64,7 @@ abstract class AbstractGradleBuildScriptBuilderCore<BSB : GradleBuildScriptBuild
   override fun withPostfix(configure: ScriptTreeBuilder.() -> Unit) = applyAndMerge(postfixes, configure)
   override fun withPostfix(configure: Consumer<ScriptTreeBuilder>) = withPostfix(configure::accept)
 
-  override fun generate() = scriptBuilder.generate(generateTree())
-  fun generateTree() = tree {
+  override fun generateTree() = tree {
     join(imports).ln()
     callIfNotEmpty("buildscript") {
       join(buildScriptPrefixes).ln()

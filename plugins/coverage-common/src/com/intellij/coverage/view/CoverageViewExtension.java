@@ -36,10 +36,18 @@ public abstract class CoverageViewExtension {
     myCoverageViewManager = CoverageViewManager.getInstance(myProject);
   }
 
+  /**
+   * @deprecated This method is not used in CoverageView.
+   */
   @Nullable
+  @Deprecated
   public abstract @Nls String getSummaryForNode(@NotNull AbstractTreeNode<?> node);
 
+  /**
+   * @deprecated This method is not used in CoverageView.
+   */
   @Nullable
+  @Deprecated
   public abstract @Nls String getSummaryForRootNode(@NotNull AbstractTreeNode<?> childNode);
 
   @Nullable
@@ -89,7 +97,7 @@ public abstract class CoverageViewExtension {
 
   /**
    * @return extra actions which will be added to {@link CoverageView} toolbar menu
-   * directly after all еру default actions (Flatten Packages, Generate Coverage Report)
+   * directly after all the default actions (Flatten Packages, Generate Coverage Report)
    */
   @ApiStatus.Experimental
   @NotNull

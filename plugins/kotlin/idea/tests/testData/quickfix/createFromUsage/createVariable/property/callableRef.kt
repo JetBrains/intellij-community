@@ -1,7 +1,7 @@
 // "Create property 'foo'" "false"
-// ACTION: Rename reference
-// ACTION: Create function 'foo'
 // ACTION: Add 'f =' to argument
+// ACTION: Create function 'foo'
+// ACTION: Rename reference
 // ERROR: Unresolved reference: foo
 fun test(f: (Int) -> Int) {}
 

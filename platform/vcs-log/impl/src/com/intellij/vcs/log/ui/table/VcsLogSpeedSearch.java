@@ -2,10 +2,15 @@
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.data.LoadingDetails;
+import com.intellij.vcs.log.ui.table.column.VcsLogMetadataColumn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractList;
+import java.util.List;
 import java.util.ListIterator;
 
 public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
@@ -32,7 +37,33 @@ public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
   @Nullable
   @Override
   protected String getElementText(@NotNull Object row) {
-    return myComponent.getModel().getCommitMetadata((Integer)row).getSubject();
+    throw new UnsupportedOperationException("Getting row text in a Log is unsupported since we match columns separately.");
+  }
+
+  @Override
+  protected boolean isMatchingElement(Object row, String pattern) {
+    return isMatchingMetadata(pattern, getCommitMetadata((Integer)row));
+  }
+
+  protected boolean isMatchingMetadata(String pattern, @Nullable VcsCommitMetadata metadata) {
+    return isMatchingMetadata(pattern, metadata, getColumnsForSpeedSearch());
+  }
+
+  protected boolean isMatchingMetadata(String pattern, @Nullable VcsCommitMetadata metadata, @NotNull List<VcsLogMetadataColumn> columns) {
+    if (metadata == null) return false;
+    return columns.stream().anyMatch(column -> compare(column.getValue(myComponent.getModel(), metadata), pattern));
+  }
+
+  @Nullable
+  protected VcsCommitMetadata getCommitMetadata(int row) {
+    VcsCommitMetadata metadata = myComponent.getModel().getCommitMetadata(row);
+    if (metadata instanceof LoadingDetails) return null;
+    return metadata;
+  }
+
+  @NotNull
+  protected List<VcsLogMetadataColumn> getColumnsForSpeedSearch() {
+    return ContainerUtil.filterIsInstance(myComponent.getVisibleColumns(), VcsLogMetadataColumn.class);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -6,12 +6,12 @@ import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.serviceContainer.BaseKeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
 
-class DependencyCollectorBean : BaseKeyedLazyInstance<DependencyCollector>() {
+internal class DependencyCollectorBean : BaseKeyedLazyInstance<DependencyCollector>() {
   @Attribute("kind")
   @JvmField
   @RequiredElement
@@ -46,7 +46,7 @@ interface DependencyCollector {
  * Marks a plugin as supporting a given dependency. The `coordinate` attribute specifies the name or coordinate of the supported
  * library/dependency, in the same format as returned from [DependencyCollector.collectDependencies] for the respective dependency kind.
  */
-class DependencySupportBean : PluginAware {
+internal class DependencySupportBean : PluginAware {
   private var pluginDescriptor: PluginDescriptor? = null
 
   @Attribute("kind")
@@ -76,10 +76,10 @@ class DependencySupportBean : PluginAware {
   }
 }
 
-const val DEPENDENCY_SUPPORT_FEATURE = "dependencySupport"
+internal const val DEPENDENCY_SUPPORT_FEATURE = "dependencySupport"
 
-class DependencyFeatureCollector : StartupActivity.Background {
-  override fun runActivity(project: Project) {
+internal class DependencyFeatureCollector : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
     PluginFeatureService.instance.collectFeatureMapping(
       DEPENDENCY_SUPPORT_FEATURE,
       DependencySupportBean.EP_NAME,

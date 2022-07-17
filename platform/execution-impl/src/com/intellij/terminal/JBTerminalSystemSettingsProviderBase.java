@@ -92,9 +92,6 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   @Override
   public @NotNull TerminalActionPresentation getClearBufferActionPresentation() {
     List<KeyStroke> strokes = getKeyStrokesByActionId("Terminal.ClearBuffer");
-    if (strokes.isEmpty()) {
-      return super.getClearBufferActionPresentation();
-    }
     return new TerminalActionPresentation(IdeBundle.message("terminal.action.ClearBuffer.text"), strokes);
   }
 
@@ -277,7 +274,8 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   @Override
   public int caretBlinkingMs() {
-    return EditorSettingsExternalizable.getInstance().getBlinkPeriod();
+    EditorSettingsExternalizable instance = EditorSettingsExternalizable.getInstance();
+    return instance.isBlinkCaret() ? instance.getBlinkPeriod() : 0;
   }
 
   public @NotNull CursorShape getCursorShape() {

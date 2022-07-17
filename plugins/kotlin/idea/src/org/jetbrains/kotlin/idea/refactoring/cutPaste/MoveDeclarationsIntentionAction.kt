@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.cutPaste
 
@@ -13,8 +13,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.refactoring.BaseRefactoringIntentionAction
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.util.range
+import com.intellij.refactoring.suggested.range
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class MoveDeclarationsIntentionAction(
     private val processor: MoveDeclarationsProcessor,
@@ -31,7 +31,7 @@ class MoveDeclarationsIntentionAction(
     override fun getFamilyName() = KotlinBundle.message("family.name.update.usages.on.declarations.cut.paste")
 
     override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
-        return PsiModificationTracker.SERVICE.getInstance(processor.project).modificationCount == modificationCount
+        return PsiModificationTracker.getInstance(processor.project).modificationCount == modificationCount
     }
 
     override fun invoke(project: Project, editor: Editor, element: PsiElement) {
@@ -42,7 +42,7 @@ class MoveDeclarationsIntentionAction(
         val range = bounds.range ?: return false
         if (editor.caretModel.offset != range.endOffset) return false
 
-        if (PsiModificationTracker.SERVICE.getInstance(processor.project).modificationCount != modificationCount) return false
+        if (PsiModificationTracker.getInstance(processor.project).modificationCount != modificationCount) return false
 
         val hintText = "$text? ${KeymapUtil.getFirstKeyboardShortcutText(
             ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)

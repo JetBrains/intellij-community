@@ -5,4 +5,4 @@ import java.sql.Date as SqlDate
  */
 fun foo(){}
 
-// EXIST: { lookupString: "SqlDate", itemText: "SqlDate", tailText: " (java.sql.Date)" }
+// EXIST: { lookupString: "SqlDate", itemText: "SqlDate", tailText: " (java.sql.Date)", icon: "fileTypes/javaClass.svg"}

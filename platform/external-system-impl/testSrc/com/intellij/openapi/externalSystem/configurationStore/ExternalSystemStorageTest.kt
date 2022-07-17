@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.StoreReloadManager
@@ -19,9 +19,11 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
+import com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
@@ -48,9 +50,11 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.util.io.*
 import com.intellij.util.ui.UIUtil
+import com.intellij.workspaceModel.ide.WorkspaceModel.Companion.getInstance
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.externalSystemOptions
+import com.intellij.workspaceModel.storage.MutableEntityStorage.Companion.from
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
@@ -64,6 +68,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 
 class ExternalSystemStorageTest {
   companion object {
@@ -133,7 +138,7 @@ class ExternalSystemStorageTest {
             propertyManager.setExternalOptions(systemId, moduleData, projectData)
 
             val externalOptionsFromBuilder = modelsProvider.actualStorageBuilder
-              .entities(ModuleEntity::class.java).singleOrNull()?.externalSystemOptions
+              .entities(ModuleEntity::class.java).singleOrNull()?.exModuleOptions
             assertEquals("GRADLE", externalOptionsFromBuilder?.externalSystem)
           }
         }
@@ -222,6 +227,23 @@ class ExternalSystemStorageTest {
   }
 
   @Test
+  fun `check mavenized will be applied to the single diff`() {
+    loadProjectAndCheckResults("twoRegularModules") { project ->
+      val moduleManager = ModuleManager.getInstance(project)
+      val initialStorage = getInstance(project).entityStorage.current
+      val storageBuilder = from(initialStorage)
+      for (module in moduleManager.modules) {
+        val modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module)
+        modulePropertyManager as ExternalSystemModulePropertyManagerBridge
+        modulePropertyManager.setMavenized(true, storageBuilder)
+      }
+      val externalSystemModuleOptionsEntity = initialStorage.entities(ExternalSystemModuleOptionsEntity::class.java).singleOrNull()
+      assertNull(externalSystemModuleOptionsEntity)
+      assertEquals(2, storageBuilder.entities(ExternalSystemModuleOptionsEntity::class.java).count())
+    }
+  }
+
+  @Test
   fun `load mixed modules`() = loadProjectAndCheckResults("mixedModules") { project ->
     val modules = ModuleManager.getInstance(project).modules.sortedBy { it.name }
     assertThat(modules).hasSize(2)
@@ -255,6 +277,8 @@ class ExternalSystemStorageTest {
     assertThat(ExternalSystemModulePropertyManager.getInstance(module).isMavenized()).isTrue()
     val facet = FacetManager.getInstance(module).allFacets.single()
     assertThat(facet.name).isEqualTo("regular")
+    //suppressed until https://youtrack.jetbrains.com/issue/IDEA-294031 being fixed
+    @Suppress("AssertBetweenInconvertibleTypes")
     assertThat(facet.type).isEqualTo(MockFacetType.getInstance())
     assertThat(facet.externalSource).isNull()
   }
@@ -689,6 +713,23 @@ class ExternalSystemStorageTest {
     checkFacetAndSubFacet(module, "web", null, MOCK_EXTERNAL_SOURCE)
   }
 
+  @Test(expected = Test.None::class)
+  fun `get modifiable models of renamed module`() = loadProjectAndCheckResults("singleModuleWithImportedSubFacet") { project ->
+    runWriteActionAndWait {
+      val newModule = ModuleManager.getInstance(project).newModule("myModule", EmptyModuleType.EMPTY_MODULE)
+
+      val provider = IdeModifiableModelsProviderImpl(project)
+
+      val anotherModifiableModel = provider.modifiableModuleModel
+      anotherModifiableModel.renameModule(newModule, "newName")
+
+      // Assert no exceptions
+      provider.getModifiableRootModel(newModule)
+
+      anotherModifiableModel.dispose()
+    }
+  }
+
   private fun createFacetAndSubFacet(module: Module, name: String, facetSource: ProjectModelExternalSource?,
                                      subFacetSource: ProjectModelExternalSource?) {
     val facetManager = FacetManager.getInstance(module)
@@ -828,18 +869,13 @@ class ExternalSystemStorageTest {
 
   private fun isFolderWithoutFiles(root: File): Boolean = root.walk().none { it.isFile }
 
-  private inline fun suppressLogs(action: () -> Unit) {
-    val oldInstance = LoggedErrorProcessor.getInstance()
-    try {
-      LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean =
-          message == null || !message.contains("Trying to load multiple modules with the same name.")
-      })
-
+  private fun suppressLogs(action: () -> Unit) {
+    LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> =
+        if (message.contains("Trying to load multiple modules with the same name.")) Action.NONE
+        else Action.ALL
+    }) {
       action()
-    }
-    finally {
-      LoggedErrorProcessor.setNewInstance(oldInstance)
     }
   }
 }

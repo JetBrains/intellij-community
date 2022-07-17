@@ -106,6 +106,9 @@ public class StringFlowUtil {
           return parent;
         }
       }
+      if (next instanceof UArrayAccessExpression) {
+        return parent;
+      }
       parent = next;
     }
   }

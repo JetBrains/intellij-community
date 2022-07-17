@@ -48,7 +48,7 @@ public class FileUtilRt {
     }
 
     // do not use getName to avoid extra String creation (File.getName() calls substring)
-    final String path = file.getPath();
+    String path = file.getPath();
     return StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip");
   }
 
@@ -123,9 +123,9 @@ public class FileUtilRt {
     static {
       boolean initSuccess = false;
       try {
-        final Class<?> pathClass = Class.forName("java.nio.file.Path");
-        final Class<?> visitorClass = Class.forName("java.nio.file.FileVisitor");
-        final Class<?> filesClass = Class.forName("java.nio.file.Files");
+        Class<?> pathClass = Class.forName("java.nio.file.Path");
+        Class<?> visitorClass = Class.forName("java.nio.file.FileVisitor");
+        Class<?> filesClass = Class.forName("java.nio.file.Files");
         ourNoSuchFileExceptionClass = Class.forName("java.nio.file.NoSuchFileException");
         ourAccessDeniedExceptionClass = Class.forName("java.nio.file.AccessDeniedException");
         ourFileToPathMethod = Class.forName("java.io.File").getMethod("toPath");
@@ -231,8 +231,8 @@ public class FileUtilRt {
 
   @Contract("null, _, _, _ -> null; !null,_,_,_->!null")
   protected static String toCanonicalPath(@Nullable String path,
-                                          final char separatorChar,
-                                          final boolean removeLastSlash,
+                                          char separatorChar,
+                                          boolean removeLastSlash,
                                           @Nullable SymlinkResolver resolver) {
     if (path == null || path.isEmpty()) {
       return path;
@@ -361,7 +361,7 @@ public class FileUtilRt {
   }
 
   @Contract("_, _, _, null -> true")
-  private static boolean processDots(@NotNull StringBuilder result, int dots, int start, SymlinkResolver symlinkResolver) {
+  private static boolean processDots(@NotNull StringBuilder result, int dots, int start, @Nullable SymlinkResolver symlinkResolver) {
     if (dots == 2) {
       int pos = -1;
       if (!StringUtilRt.endsWith(result, "/../") && !"../".contentEquals(result)) {
@@ -437,18 +437,18 @@ public class FileUtilRt {
   }
 
   @NotNull
-  public static String toSystemDependentName(@NotNull String fileName) {
-    return toSystemDependentName(fileName, File.separatorChar);
+  public static String toSystemDependentName(@NotNull String path) {
+    return toSystemDependentName(path, File.separatorChar);
   }
 
   @NotNull
-  public static String toSystemDependentName(@NotNull String fileName, final char separatorChar) {
-    return fileName.replace('/', separatorChar).replace('\\', separatorChar);
+  public static String toSystemDependentName(@NotNull String path, char separatorChar) {
+    return path.replace('/', separatorChar).replace('\\', separatorChar);
   }
 
   @NotNull
-  public static String toSystemIndependentName(@NotNull String fileName) {
-    return fileName.replace('\\', '/');
+  public static String toSystemIndependentName(@NotNull String path) {
+    return path.replace('\\', '/');
   }
 
   /**
@@ -462,6 +462,7 @@ public class FileUtilRt {
    * @return the relative path from the {@code base} to the {@code file}, or {@code null}
    */
   @Nullable
+  @Contract(pure = true)
   public static String getRelativePath(File base, File file) {
     if (base == null || file == null) return null;
 
@@ -473,11 +474,13 @@ public class FileUtilRt {
   }
 
   @Nullable
+  @Contract(pure = true)
   public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, char separator) {
     return getRelativePath(basePath, filePath, separator, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
   @Nullable
+  @Contract(pure = true)
   public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, char separator, boolean caseSensitive) {
     basePath = ensureEnds(basePath, separator);
 
@@ -510,7 +513,8 @@ public class FileUtilRt {
   }
 
   @NotNull
-  private static String ensureEnds(@NotNull String s, final char endsWith) {
+  @Contract(pure = true)
+  private static String ensureEnds(@NotNull String s, char endsWith) {
     return StringUtilRt.endsWithChar(s, endsWith) ? s : s + endsWith;
   }
 
@@ -532,7 +536,7 @@ public class FileUtilRt {
 
   @NotNull
   public static File createTempDirectory(@NotNull String prefix, @Nullable String suffix, boolean deleteOnExit) throws IOException {
-    final File dir = new File(getTempDirectory());
+    File dir = new File(getTempDirectory());
     return createTempDirectory(dir, prefix, suffix, deleteOnExit);
   }
 
@@ -583,7 +587,7 @@ public class FileUtilRt {
 
   @NotNull
   public static File createTempFile(@NonNls @NotNull String prefix, @NonNls @Nullable String suffix, boolean deleteOnExit) throws IOException {
-    final File dir = new File(getTempDirectory());
+    File dir = new File(getTempDirectory());
     return createTempFile(dir, prefix, suffix, true, deleteOnExit);
   }
 
@@ -680,7 +684,7 @@ public class FileUtilRt {
 
   @NotNull
   private static File normalizeFile(@NotNull File temp) throws IOException {
-    final File canonical = temp.getCanonicalFile();
+    File canonical = temp.getCanonicalFile();
     return SystemInfoRt.isWindows && canonical.getAbsolutePath().contains(" ") ? temp.getAbsoluteFile() : canonical;
   }
 
@@ -694,9 +698,9 @@ public class FileUtilRt {
 
   @NotNull
   private static String calcCanonicalTempPath() {
-    final File file = new File(System.getProperty("java.io.tmpdir"));
+    File file = new File(System.getProperty("java.io.tmpdir"));
     try {
-      final String canonical = file.getCanonicalPath();
+      String canonical = file.getCanonicalPath();
       if (!SystemInfoRt.isWindows || !canonical.contains(" ")) {
         return canonical;
       }
@@ -712,10 +716,15 @@ public class FileUtilRt {
 
   @NotNull
   public static File generateRandomTemporaryPath() throws IOException {
-    File file = new File(getTempDirectory(), UUID.randomUUID().toString());
+    return generateRandomTemporaryPath("", "");
+  }
+
+  @NotNull
+  public static File generateRandomTemporaryPath(@NotNull String prefix, @NotNull String suffix) throws IOException {
+    File file = new File(getTempDirectory(), prefix + UUID.randomUUID() + suffix);
     int i = 0;
     while (file.exists() && i < 5) {
-      file = new File(getTempDirectory(), UUID.randomUUID().toString());
+      file = new File(getTempDirectory(), prefix + UUID.randomUUID() + suffix);
       ++i;
     }
     if (file.exists()) {
@@ -741,7 +750,7 @@ public class FileUtilRt {
 
   @NotNull
   public static String loadFile(@NotNull File file, @Nullable String encoding, boolean convertLineSeparators) throws IOException {
-    final String s = new String(loadFileText(file, encoding));
+    String s = new String(loadFileText(file, encoding));
     return convertLineSeparators ? StringUtilRt.convertLineSeparators(s) : s;
   }
 
@@ -1127,6 +1136,7 @@ public class FileUtilRt {
   }
 
   public static boolean pathsEqual(@Nullable String path1, @Nullable String path2) {
+    //noinspection StringEquality
     if (path1 == path2) {
       return true;
     }
@@ -1143,17 +1153,4 @@ public class FileUtilRt {
       return path1.equalsIgnoreCase(path2);
     }
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated please use {@code FileFilters#EVERYTHING} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static final FileFilter ALL_FILES = new FileFilter() {
-    @Override
-    public boolean accept(File file) {
-      return true;
-    }
-  };
-
-  //</editor-fold>
 }

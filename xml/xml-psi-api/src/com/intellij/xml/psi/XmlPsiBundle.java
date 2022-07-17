@@ -26,4 +26,8 @@ public final class XmlPsiBundle extends DynamicBundle {
   public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
+
+  public static boolean hasKey(String key) {
+    return INSTANCE.containsKey(key);
+  }
 }

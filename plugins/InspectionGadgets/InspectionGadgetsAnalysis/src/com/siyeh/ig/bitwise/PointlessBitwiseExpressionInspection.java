@@ -223,7 +223,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
   private class PointlessBitwiseVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
       PsiExpression complemented = unwrapComplement(expression);
       if (complemented == null) return;

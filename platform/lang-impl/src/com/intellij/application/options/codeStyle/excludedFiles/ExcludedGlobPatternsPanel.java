@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.CodeStyleBundle;
@@ -8,6 +8,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.components.BrowserLink;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,7 @@ public class ExcludedGlobPatternsPanel extends ExcludedFilesPanelBase {
     c.weightx = 1;
     c.gridx = 1;
     c.fill = GridBagConstraints.HORIZONTAL;
-    c.insets = JBUI.emptyInsets();
+    c.insets = JBInsets.emptyInsets();
     myPatternsField = new ExpandableTextField(s -> toStringList(s), strings -> StringUtil.join(strings, PATTERN_SEPARATOR));
     add(myPatternsField, c);
     c.gridy = 1;

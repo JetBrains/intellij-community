@@ -14,7 +14,7 @@ class OneToAbstractOneParent<Parent : WorkspaceEntityBase, Child : WorkspaceEnti
     if (connectionId == null) {
       connectionId = ConnectionId.create(thisRef.javaClass, childClass, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
     }
-    return thisRef.snapshot.extractAbstractOneToOneChild(connectionId!!, thisRef.id.asParent())
+    return thisRef.snapshot.extractAbstractOneToOneChild(connectionId!!, thisRef)
   }
 }
 
@@ -29,7 +29,7 @@ class MutableOneToAbstractOneParent<Parent : WorkspaceEntityBase, Child : Worksp
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
     }
-    return thisRef.diff.extractAbstractOneToOneChild(connectionId!!, thisRef.id.asParent())
+    return thisRef.diff!!.extractAbstractOneToOneChild(connectionId!!, thisRef)
   }
 
   override fun setValue(thisRef: ModifParent, property: KProperty<*>, value: Child?) {
@@ -39,6 +39,6 @@ class MutableOneToAbstractOneParent<Parent : WorkspaceEntityBase, Child : Worksp
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
     }
-    thisRef.diff.updateOneToAbstractOneChildOfParent(connectionId!!, thisRef.id.asParent(), value)
+    thisRef.diff!!.updateOneToAbstractOneChildOfParent(connectionId!!, thisRef, value)
   }
 }

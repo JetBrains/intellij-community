@@ -2,7 +2,8 @@
 
 package org.jetbrains.kotlin.idea.completion.smart
 
-import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.EmptyDeclarativeInsertHandler
+import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.OffsetKey
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.*
@@ -10,14 +11,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.isAlmostEverything
@@ -34,7 +33,6 @@ import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isBooleanOrNullableBoolean
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.utils.addIfNotNull
-import java.util.*
 
 interface InheritanceItemsSearcher {
     fun search(nameFilter: (String) -> Boolean, consumer: (LookupElement) -> Unit)
@@ -104,8 +102,7 @@ class SmartCompletion(
     }
 
     val descriptorsToSkip: Set<DeclarationDescriptor> by lazy<Set<DeclarationDescriptor>> {
-        val parent = expressionWithType.parent
-        when (parent) {
+        when (val parent = expressionWithType.parent) {
             is KtBinaryExpression -> {
                 if (parent.right == expressionWithType) {
                     val operationToken = parent.operationToken
@@ -259,12 +256,14 @@ class SmartCompletion(
                         val whenExpression = entry.parent as KtWhenExpression
                         val entries = whenExpression.entries
                         if (whenExpression.elseExpression == null && entry == entries.last() && entries.size != 1) {
-                            val lookupElement = LookupElementBuilder.create("else").bold().withTailText(" ->")
-                            items.add(object : LookupElementDecorator<LookupElement>(lookupElement) {
-                                override fun handleInsert(context: InsertionContext) {
-                                    WithTailInsertHandler("->", spaceBefore = true, spaceAfter = true).handleInsert(context, delegate)
-                                }
-                            })
+                            val lookupElement = LookupElementBuilder.create("else")
+                                .bold()
+                                .withTailText(" ->")
+                                .withInsertHandler(
+                                    WithTailInsertHandler("->", spaceBefore = true, spaceAfter = true).asPostInsertHandler
+                                )
+
+                            items.add(lookupElement)
                         }
                     }
                 }
@@ -291,10 +290,10 @@ class SmartCompletion(
 
     private fun postProcess(item: LookupElement): LookupElement {
         if (forBasicCompletion) return item
-
         return if (item.getUserData(KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY) == null) {
-            object : LookupElementDecorator<LookupElement>(item) {
-                override fun handleInsert(context: InsertionContext) {
+            LookupElementDecorator.withDelegateInsertHandler(
+                item,
+                InsertHandler { context, element ->
                     if (context.completionChar == Lookup.REPLACE_SELECT_CHAR) {
                         val offset = context.offsetMap.tryGetOffset(OLD_ARGUMENTS_REPLACEMENT_OFFSET)
                         if (offset != null) {
@@ -302,9 +301,9 @@ class SmartCompletion(
                         }
                     }
 
-                    super.handleInsert(context)
+                    element.handleInsert(context)
                 }
-            }
+            )
         } else {
             item
         }
@@ -389,7 +388,7 @@ class SmartCompletion(
         while (true) {
             val infos =
                 ExpectedInfos(bindingContext, resolutionFacade, indicesHelper, useOuterCallsExpectedTypeCount = count).calculate(expression)
-            if (count == 2 /* use two outer calls maximum */ || infos.none { it.fuzzyType?.isAlmostEverything() ?: false }) {
+            if (count == 2 /* use two outer calls maximum */ || infos.none { it.fuzzyType?.isAlmostEverything() == true }) {
                 return if (forBasicCompletion)
                     infos.map { it.copy(tail = null) }
                 else
@@ -401,8 +400,7 @@ class SmartCompletion(
     }
 
     private fun implicitlyTypedDeclarationFromInitializer(expression: KtExpression): KtDeclaration? {
-        val parent = expression.parent
-        when (parent) {
+        when (val parent = expression.parent) {
             is KtVariableDeclaration -> if (expression == parent.initializer && parent.typeReference == null) return parent
             is KtNamedFunction -> if (expression == parent.initializer && parent.typeReference == null) return parent
         }
@@ -433,8 +431,7 @@ class SmartCompletion(
                     presentation.itemText = "::" + presentation.itemText
                 }
 
-                override fun handleInsert(context: InsertionContext) {
-                }
+                override fun getDelegateInsertHandler() = EmptyDeclarativeInsertHandler
             }
 
             return lookupElement.assignSmartCompletionPriority(SmartCompletionItemPriority.CALLABLE_REFERENCE)
@@ -476,9 +473,7 @@ class SmartCompletion(
     }
 
     private fun MutableCollection<LookupElement>.addArrayLiteralsInAnnotationsCompletions() {
-        if (expression.languageVersionSettings.supportsFeature(LanguageFeature.ArrayLiteralsInAnnotations)) {
-            this.addAll(ArrayLiteralsInAnnotationItems.collect(expectedInfos, expression))
-        }
+        this.addAll(ArrayLiteralsInAnnotationItems.collect(expectedInfos, expression))
     }
 
     companion object {

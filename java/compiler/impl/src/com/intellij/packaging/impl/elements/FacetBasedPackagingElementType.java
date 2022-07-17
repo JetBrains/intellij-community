@@ -14,7 +14,6 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,18 +26,6 @@ import java.util.function.Supplier;
 
 public abstract class FacetBasedPackagingElementType<E extends PackagingElement<?>, F extends Facet> extends PackagingElementType<E> {
   private final FacetTypeId<F> myFacetType;
-
-  /**
-   * @deprecated This constructor is meant to provide the binary compatibility with the external plugins.
-   * Please use the constructor that accepts a messagePointer for {@link PackagingElementType#myPresentableName}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected FacetBasedPackagingElementType(@NotNull @NonNls String id,
-                                           @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName,
-                                           FacetTypeId<F> facetType) {
-    this(id, () -> presentableName, facetType);
-  }
 
   protected FacetBasedPackagingElementType(@NotNull @NonNls String id,
                                            @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> presentableName,

@@ -13,9 +13,9 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -27,8 +27,9 @@ import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
@@ -36,9 +37,6 @@ import org.jetbrains.kotlin.idea.codeInsight.ReviewAddedImports.reviewAddedImpor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.core.util.end
-import org.jetbrains.kotlin.idea.core.util.range
-import org.jetbrains.kotlin.idea.core.util.start
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.idea.util.*
@@ -60,7 +58,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.findFunction
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
-import org.jetbrains.kotlin.types.ErrorUtils
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
@@ -265,8 +263,8 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
 
             val kind = KotlinReferenceData.Kind.fromDescriptor(descriptor) ?: continue
             val isQualifiable = KotlinReferenceData.isQualifiable(ktElement, descriptor)
-            val relativeStart = ktElement.range.start
-            val relativeEnd = ktElement.range.end
+            val relativeStart = ktElement.textRange.startOffset
+            val relativeEnd = ktElement.textRange.endOffset
             add(KotlinReferenceData(relativeStart, relativeEnd, fqName, isQualifiable, kind))
         }
     }
@@ -427,7 +425,8 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
                 })
                 .inSmartMode(project)
                 .wrapProgress(indicator)
-                .expireWhen { smartPsiElementPointer.element == null || Disposer.isDisposed(project) }
+                .expireWhen { smartPsiElementPointer.element == null }
+                .expireWith(KotlinPluginDisposable.getInstance(project))
                 .executeSynchronously()?.let { mainReference ->
                     runReadAction {
                         val textRange = mainReference.element.textRange
@@ -437,8 +436,8 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
                             val itTextRange = it.element.textRange
                             val refTextRange = mainReference.element.textRange
                             val originalTextRange = elementByTextRange.originalTextRange
-                            val offset = originalTextRange.start - refTextRange.start
-                            val range = TextRange(itTextRange.start + offset, itTextRange.end + offset)
+                            val offset = originalTextRange.startOffset - refTextRange.startOffset
+                            val range = TextRange(itTextRange.startOffset + offset, itTextRange.endOffset + offset)
                             range to it
                         }
                     }
@@ -458,7 +457,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
             """
             package $fakePackageName
             
-            ${buildDummySourceScope(sourcePackageName, imports, fakePackageName, file, transferableData, ctxFile)}
+            ${buildDummySourceScope(sourcePackageName, indicator, imports, fakePackageName, file, transferableData, ctxFile)}
              
             """.trimIndent()
 
@@ -522,6 +521,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
 
     private fun buildDummySourceScope(
         sourcePkgName: String,
+        indicator: ProgressIndicator,
         imports: List<String>,
         fakePkgName: String,
         file: KtFile,
@@ -557,13 +557,16 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
                 )
         }
 
-        val dummyFileImports = project.runReadActionInSmartMode {
+        val dummyFileImports = ReadAction.nonBlocking(Callable {
             dummyImportsFile.collectDescendantsOfType<KtImportDirective>().mapNotNull { directive ->
                 val importedReference =
                     directive.importedReference?.getQualifiedElementSelector()?.mainReference?.resolve() as? KtNamedDeclaration
                 importedReference?.let { directive.text }
             }
-        }
+        }).inSmartMode(project)
+            .wrapProgress(indicator)
+            .expireWith(KotlinPluginDisposable.getInstance(project))
+            .executeSynchronously()
 
         val dummyFileImportsSet = dummyFileImports.toSet()
         val filteredImports = imports.filter {
@@ -667,7 +670,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
 
     private fun findReference(element: PsiElement, desiredRange: TextRange): KtReference? = runReadAction {
         for (current in element.parentsWithSelf) {
-            val range = current.range
+            val range = current.textRange
             if (current is KtElement && range == desiredRange) {
                 current.mainReference?.let { return@runReadAction it }
             }
@@ -819,7 +822,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
 
     private fun PsiElement.isInCopiedArea(fileCopiedFrom: KtFile, textRanges: List<TextRange>): Boolean =
         runReadAction {
-            if (containingFile != fileCopiedFrom) false else textRanges.any { this.range in it }
+            if (containingFile != fileCopiedFrom) false else textRanges.any { this.textRange in it }
         }
 
     companion object {

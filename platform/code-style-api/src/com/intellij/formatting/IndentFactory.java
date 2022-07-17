@@ -35,4 +35,5 @@ interface IndentFactory {
   Indent getIndent(@NotNull Indent.Type type, boolean relativeToDirectParent, boolean enforceIndentToChildren);
   Indent getIndent(@NotNull Indent.Type type, int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren);
   Indent getSmartIndent(@NotNull Indent.Type type);
+  Indent getSmartIndent(@NotNull Indent.Type type, boolean relativeToDirectParent);
 }

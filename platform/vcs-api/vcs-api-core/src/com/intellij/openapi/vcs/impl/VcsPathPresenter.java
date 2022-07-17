@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.SystemDependent;
 
 public abstract class VcsPathPresenter {
   public static VcsPathPresenter getInstance(Project project) {
@@ -20,7 +21,8 @@ public abstract class VcsPathPresenter {
    * @param file the file for which the path is requested.
    * @return the relative path.
    */
-  public abstract @NlsContexts.Label @NotNull String getPresentableRelativePathFor(VirtualFile file);
+  public abstract @NlsContexts.Label @SystemDependent @NotNull String getPresentableRelativePathFor(VirtualFile file);
 
-  public abstract @NlsContexts.Label @NotNull String getPresentableRelativePath(ContentRevision fromRevision, ContentRevision toRevision);
+  public abstract @NlsContexts.Label @SystemDependent @NotNull String getPresentableRelativePath(ContentRevision fromRevision,
+                                                                                                 ContentRevision toRevision);
 }

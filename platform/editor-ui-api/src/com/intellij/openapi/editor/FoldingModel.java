@@ -100,8 +100,7 @@ public interface FoldingModel {
    * @deprecated Passing {@code false} for {@code moveCaretFromCollapsedRegion} might leave caret in an inconsistent state
    * after the operation. Use {@link #runBatchFoldingOperation(Runnable)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaretFromCollapsedRegion);
 
   default void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation) {

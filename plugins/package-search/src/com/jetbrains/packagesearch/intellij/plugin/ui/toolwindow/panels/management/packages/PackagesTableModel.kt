@@ -1,28 +1,46 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ActionsColumn
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.NameColumn
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ScopeColumn
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.VersionColumn
 
 internal class PackagesTableModel(
-    var onlyStable: Boolean,
-    vararg val columns: ColumnInfo<PackagesTableItem<*>, *>
-) : ListTableModel<PackagesTableItem<*>>(*columns) {
+    val nameColumn: NameColumn,
+    val scopeColumn: ScopeColumn,
+    val versionColumn: VersionColumn,
+    val actionsColumn: ActionsColumn
+) : ListTableModel<PackagesTableItem<*>>(nameColumn, scopeColumn, versionColumn, actionsColumn) {
+
+    val columns by lazy { arrayOf(nameColumn, scopeColumn, versionColumn, actionsColumn) }
 
     override fun getRowCount() = items.size
     override fun getColumnCount() = columns.size
     override fun getColumnClass(columnIndex: Int): Class<out Any> = columns[columnIndex].javaClass
 
-    fun replaceItemMatching(packageModel: PackageModel, itemProducer: (PackagesTableItem<*>) -> PackagesTableItem<*>) {
-        val newItems = mutableListOf<PackagesTableItem<*>>()
-        newItems.addAll(items.takeWhile { it.packageModel != packageModel })
-        if (newItems.size == items.size) {
-            logDebug("PackagesTableModel#replaceItem()") { "Could not replace with model ${packageModel.identifier}: not found" }
-            return
-        }
-        newItems.add(itemProducer(items[newItems.size]))
-        newItems.addAll(items.subList(newItems.size, items.size - 1))
-        items = newItems
+    fun columnIndexOf(info: ColumnInfo<PackagesTableItem<*>, *>) = when (info) {
+        nameColumn -> 0
+        scopeColumn -> 1
+        versionColumn -> 2
+        actionsColumn -> 3
+        else -> error("Column not known")
     }
 }

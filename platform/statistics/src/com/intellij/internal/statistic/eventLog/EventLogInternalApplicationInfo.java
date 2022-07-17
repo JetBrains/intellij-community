@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
@@ -12,8 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
-
 @ApiStatus.Internal
 public class EventLogInternalApplicationInfo implements EventLogApplicationInfo {
   private static final DataCollectorDebugLogger LOG =
@@ -22,15 +20,22 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   private final boolean myIsTest;
   private final DataCollectorSystemEventLogger myEventLogger;
   private final EventLogAppConnectionSettings myConnectionSettings;
-  private final String myRecorderId;
 
+  /**
+   * @deprecated EventLogApplicationInfo should not depend on recorderId
+   * use {@link EventLogInternalApplicationInfo#EventLogInternalApplicationInfo(boolean)}
+   */
+  @Deprecated(forRemoval = true)
   public EventLogInternalApplicationInfo(@NotNull String recorderId, boolean isTest) {
+    this(isTest);
+  }
+
+  public EventLogInternalApplicationInfo(boolean isTest) {
     myIsTest = isTest;
-    myRecorderId = recorderId;
     myConnectionSettings = new EventLogAppConnectionSettings();
     myEventLogger = new DataCollectorSystemEventLogger() {
       @Override
-      public void logErrorEvent(@NotNull String eventId, @NotNull Throwable exception) {
+      public void logErrorEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull Throwable exception) {
         EventLogSystemLogger.logSystemError(recorderId, eventId, exception.getClass().getName(), -1);
       }
     };
@@ -39,12 +44,18 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   @NotNull
   @Override
   public String getTemplateUrl() {
-    if (ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(EventLogEndpointSubstitutor.EP_NAME.getName())) {
-      EventLogEndpointSubstitutor validSubstitutor = EventLogEndpointSubstitutor.EP_NAME
-          .findFirstSafe(substitutor -> PluginInfoDetectorKt.getPluginInfo(substitutor.getClass()).isAllowedToInjectIntoFUS());
-      return Optional.ofNullable(validSubstitutor)
-        .map(substitutor -> substitutor.getTemplateUrl(myRecorderId))
-        .orElseGet(EventLogInternalApplicationInfo::getDefaultTemplateUrl);
+    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
+    if (externalEventLogSettings != null) {
+      String result = externalEventLogSettings.getTemplateUrl();
+      return result == null ? getDefaultTemplateUrl() : result;
+    }
+    else if (ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(EventLogEndpointSubstitutor.EP_NAME.getName())) {
+      EventLogEndpointSubstitutor validSubstitutor = EventLogEndpointSubstitutor.EP_NAME.findFirstSafe(substitutor -> {
+        return PluginInfoDetectorKt.getPluginInfo(substitutor.getClass()).isAllowedToInjectIntoFUS();
+      });
+
+      String result = validSubstitutor == null ? null : validSubstitutor.getTemplateUrl();
+      return result == null ? getDefaultTemplateUrl() : result;
     }
     return getDefaultTemplateUrl();
   }

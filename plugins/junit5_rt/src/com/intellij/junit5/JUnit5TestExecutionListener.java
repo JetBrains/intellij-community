@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import com.intellij.junit4.ExpectedPatterns;
@@ -20,6 +6,7 @@ import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
+import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.CompositeTestSource;
@@ -51,7 +38,6 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private String myRootName;
   private boolean mySuccessful = true;
   private String myIdSuffix = "";
-  private final Set<TestIdentifier> myActiveRoots = new LinkedHashSet<>();
   private boolean mySendTree;
 
   public JUnit5TestExecutionListener() {
@@ -90,20 +76,10 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   public void testPlanExecutionStarted(TestPlan testPlan) {
     myTestPlan = testPlan;
     if (mySendTree) {
-      if (Boolean.parseBoolean(System.getProperty("idea.junit.show.engines", "true"))) {
-        myTestPlan.getRoots().stream().filter(root1 -> !myTestPlan.getChildren(root1).isEmpty()).forEach(myActiveRoots::add);
-      }
-      if (myActiveRoots.size() > 1) {
-        for (TestIdentifier root : myActiveRoots) {
-          sendTreeUnderRoot(root, new HashSet<>());
-        }
-      }
-      else { //skip engine node when one engine available
-        for (TestIdentifier root : myTestPlan.getRoots()) {
-          assert root.isContainer();
-          for (TestIdentifier testIdentifier : myTestPlan.getChildren(root)) {
-            sendTreeUnderRoot(testIdentifier, new HashSet<>());
-          }
+      for (TestIdentifier root : myTestPlan.getRoots()) {
+        assert root.isContainer();
+        for (TestIdentifier testIdentifier : myTestPlan.getChildren(root)) {
+          sendTreeUnderRoot(testIdentifier, new HashSet<>());
         }
       }
       myPrintStream.println("##teamcity[treeEnded]");
@@ -129,7 +105,8 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
                                  HashSet<TestIdentifier> visited) {
     final String idAndName = idAndName(root);
     if (root.isContainer()) {
-      myPrintStream.println("##teamcity[suiteTreeStarted" + idAndName + " " + getLocationHint(root) + "]");
+      boolean skipContainer = shouldSkipContainer(root);
+      if (!skipContainer) myPrintStream.println("##teamcity[suiteTreeStarted" + idAndName + " " + getLocationHint(root) + "]");
       for (TestIdentifier childIdentifier : myTestPlan.getChildren(root)) {
         if (visited.add(childIdentifier)) {
           sendTreeUnderRoot(childIdentifier, visited);
@@ -138,7 +115,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
           System.err.println("Identifier '" + getId(childIdentifier) + "' is reused");
         }
       }
-      myPrintStream.println("##teamcity[suiteTreeEnded" + idAndName + "]");
+      if (!skipContainer) myPrintStream.println("##teamcity[suiteTreeEnded" + idAndName + "]");
     }
     else if (root.isTest()) {
       myPrintStream.println("##teamcity[suiteTreeNode " + idAndName + " " + getLocationHint(root) + "]");
@@ -161,7 +138,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       testStarted(testIdentifier);
       myCurrentTestStart = System.currentTimeMillis();
     }
-    else if (hasNonTrivialParent(testIdentifier)) {
+    else if (!shouldSkipContainer(testIdentifier)) {
       myFinishCount = 0;
       myPrintStream.println("##teamcity[testSuiteStarted" + idAndName(testIdentifier) + getLocationHint(testIdentifier) + "]");
     }
@@ -191,7 +168,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       testFinished(testIdentifier, duration);
       myFinishCount++;
     }
-    else if (hasNonTrivialParent(testIdentifier)){
+    else if (!shouldSkipContainer(testIdentifier) || status == TestExecutionResult.Status.FAILED){
       String messageName = null;
       if (status == TestExecutionResult.Status.FAILED) {
         messageName = MapSerializerUtil.TEST_FAILED;
@@ -200,16 +177,20 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
         messageName = MapSerializerUtil.TEST_IGNORED;
       }
       if (messageName != null) {
+        final Set<TestIdentifier> descendants = myTestPlan != null ? myTestPlan.getDescendants(testIdentifier) : Collections.emptySet();
         if (status == TestExecutionResult.Status.FAILED) {
           String parentId = getParentId(testIdentifier);
           String nameAndId = " name='" + CLASS_CONFIGURATION +
                              "' nodeId='" + escapeName(getId(testIdentifier)) +
                              "' parentNodeId='" + escapeName(parentId) + "' ";
+          myPrintStream.println("##teamcity[testStarted " + nameAndId + " ]");
           testFailure(CLASS_CONFIGURATION, getId(testIdentifier), parentId, messageName, throwableOptional, 0, reason, true);
           myPrintStream.println("##teamcity[testFinished" + nameAndId + "]");
         }
+        else if (status == TestExecutionResult.Status.ABORTED && descendants.isEmpty()) {
+          testFailure(testIdentifier, MapSerializerUtil.TEST_IGNORED, throwableOptional, 0, reason, true);
+        }
 
-        final Set<TestIdentifier> descendants = myTestPlan != null ? myTestPlan.getDescendants(testIdentifier) : Collections.emptySet();
         if (!descendants.isEmpty() && myFinishCount == 0) {
           for (TestIdentifier childIdentifier : descendants) {
             testStarted(childIdentifier);
@@ -223,8 +204,13 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     }
   }
 
-  private boolean hasNonTrivialParent(TestIdentifier testIdentifier) {
-    return testIdentifier.getParentId().isPresent() || (myActiveRoots.size() > 1 && myActiveRoots.contains(testIdentifier));
+  private boolean shouldSkipContainer(TestIdentifier testIdentifier) {
+    UniqueId id = UniqueId.parse(testIdentifier.getUniqueId());
+    List<UniqueId.Segment> segments = id.getSegments();
+    if (segments.isEmpty()) return false;
+    UniqueId.Segment lastSegment = segments.get(segments.size() - 1);
+    return lastSegment.getType().equals("engine") || 
+           myRootName != null && myRootName.equals(lastSegment.getValue());
   }
 
   protected long getDuration() {
@@ -333,12 +319,9 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   private String getParentId(TestIdentifier testIdentifier) {
     Optional<TestIdentifier> parent = myTestPlan.getParent(testIdentifier);
-    if (myActiveRoots.size() <= 1 && !parent.flatMap(TestIdentifier::getParentId).isPresent()) {
-      return "0";
-    }
-
+    
     return parent
-      .map(identifier -> identifier.getUniqueId() + myIdSuffix)
+      .map(identifier -> shouldSkipContainer(identifier) ? getParentId(identifier) : identifier.getUniqueId() + myIdSuffix)
       .orElse("0");
   }
 

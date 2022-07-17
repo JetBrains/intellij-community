@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Change call to 'isBlank'
 
 val s: String? = ""

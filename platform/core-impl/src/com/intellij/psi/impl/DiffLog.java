@@ -18,16 +18,18 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   public DiffLog() { }
 
   private abstract static class LogEntry {
-    protected LogEntry() {
+    LogEntry() {
       ProgressIndicatorProvider.checkCanceled();
     }
     abstract void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl event);

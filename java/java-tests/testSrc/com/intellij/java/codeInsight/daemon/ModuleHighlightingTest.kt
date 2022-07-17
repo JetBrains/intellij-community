@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.intention.IntentionActionDelegate
+import com.intellij.codeInspection.IllegalDependencyOnInternalPackageInspection
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
@@ -11,8 +12,11 @@ import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescripto
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.JavaCompilerConfigurationProxy
 import com.intellij.psi.PsiManager
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
+import com.intellij.psi.util.PsiUtilCore
 import org.assertj.core.api.Assertions.assertThat
 import java.util.jar.JarFile
 
@@ -41,6 +45,16 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     assertEquals(TextRange(11, 18), TextRange(keywords[1].startOffset, keywords[1].endOffset))
   }
 
+  fun testDependencyOnIllegalPackage() {
+    addFile("a/secret/Secret.java", "package a.secret;\npublic class Secret {}", M4)
+    addFile("module-info.java", "module M4 { exports pkg.module; }", M4)
+    myFixture.enableInspections(IllegalDependencyOnInternalPackageInspection())
+    myFixture.configureByText("C.java", "package pkg;\n" +
+                                        "import a.secret.*;\n" +
+                                        "public class C {<error descr=\"Illegal dependency: module 'M4' doesn't export package 'a.secret'\">Secret</error> s; }")
+    myFixture.checkHighlighting()
+  }
+
   fun testWrongFileName() {
     highlight("M.java", """/* ... */ <error descr="Module declaration should be in a file named 'module-info.java'">module M</error> { }""")
   }
@@ -52,7 +66,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testFileDuplicateInTestRoot() {
     addTestFile("module-info.java", """module M.test { }""")
-    highlight("""<error descr="'module-info.java' already exists in the module">module M</error> { }""")
+    highlight("""module M { }""")
   }
 
   fun testWrongFileLocation() {
@@ -120,7 +134,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           requires <error descr="Module is not in dependencies: M3">M3</error>;
           requires <warning descr="Ambiguous module reference: lib.auto">lib.auto</warning>;
           requires lib.multi.release;
-          requires lib.named;
+          requires <warning descr="Ambiguous module reference: lib.named">lib.named</warning>;
           requires lib.claimed;
           requires all.fours;
         }""".trimIndent())
@@ -332,6 +346,30 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("test.java", highlightText, M_TEST, isTest = true)
   }
 
+  fun testPatchingJavaBase() {
+    highlight("Main.java", """
+      package <error descr="Package 'lang' exists in another module: java.base">java.lang</error>;
+      public class Main {}
+    """.trimIndent())
+    try {
+      JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, listOf("--patch-module=java.base=/src"))
+      highlight("Main.java", """
+       package java.lang;
+       public class Main {}
+     """.trimIndent())
+    }
+    finally {
+      JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, listOf())
+    }
+  }
+  
+  fun testNoModuleInfoSamePackageAsInAttachedLibraryWithModuleInfo() {
+    highlight("Main.java", """
+      package lib.named;
+      public class Main {}
+    """.trimIndent())
+  }
+
   fun testPrivateJdkPackage() {
     addFile("module-info.java", "module M { }")
     highlight("test.java", """
@@ -484,6 +522,44 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
+  fun testAutomaticModuleFromIdeaModule() {
+    highlight("module-info.java", """
+        module M {
+          requires ${M6.moduleName.replace('_', '.')};  // `light.idea.test.m6`
+          requires <error descr="Module not found: m42">m42</error>;
+        }""".trimIndent())
+
+    addFile("p/B.java", "package p; public class B {}", module = M6)
+    addFile("p/C.java", "package p; public class C {}", module = M4)
+    highlight("A.java", """
+        public class A extends p.B {
+          private <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.C c;
+        }
+        """.trimIndent())
+  }
+
+  fun testAutomaticModuleFromManifest() {
+    addResourceFile(JarFile.MANIFEST_NAME, "Automatic-Module-Name: m6.bar\n", module = M6)
+    highlight("module-info.java", "module M { requires m6.bar; }")
+
+    addFile("p/B.java", "package p; public class B {}", module = M6)
+    addFile("p/C.java", "package p; public class C {}", module = M4)
+    highlight("A.java", """
+        public class A extends p.B {
+          private <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.C c;
+        }
+        """.trimIndent())
+  }
+
+  fun testAutomaticModuleFromManifestHighlighting() {
+    addResourceFile(JarFile.MANIFEST_NAME, "Automatic-Module-Name: m6.bar\n", module = M6)
+    addFile("p/B.java", "package p; public class B {}", M7)
+    addFile("module-info.java", "module M4 { exports p; }", M7)
+    highlight("A.java", """
+        public class A extends p.B {}
+        """.trimIndent(), M6, false)
+  }
+
   fun testLightModuleDescriptorCaching() {
     val libClass = myFixture.javaFacade.findClass("pkg.lib2.LC2", ProjectScope.getLibrariesScope(project))!!
     val libModule = JavaModuleGraphUtil.findDescriptorByElement(libClass)!!
@@ -493,6 +569,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
     ProjectRootManager.getInstance(project).incModificationCount()
     assertNotSame(libModule, JavaModuleGraphUtil.findDescriptorByElement(libClass)!!)
+  }
+
+  fun testModuleInSources() {
+    val classInLibrary = myFixture.javaFacade.findClass("lib.named.C", GlobalSearchScope.allScope(project))!!
+    val elementInSources = classInLibrary.navigationElement
+    assertThat(JavaModuleGraphUtil.findDescriptorByFile(PsiUtilCore.getVirtualFile(elementInSources), project)).isNotNull
   }
 
   //<editor-fold desc="Helpers.">

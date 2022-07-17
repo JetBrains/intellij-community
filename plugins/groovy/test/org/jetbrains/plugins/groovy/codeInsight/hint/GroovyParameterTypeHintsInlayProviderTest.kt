@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.openapi.util.registry.Registry
@@ -17,7 +17,7 @@ class GroovyParameterTypeHintsInlayProviderTest : InlayHintsProviderTestCase() {
   private fun testTypeHints(text: String, settings:
   GroovyParameterTypeHintsInlayProvider.Settings = GroovyParameterTypeHintsInlayProvider.Settings(showInferredParameterTypes = true,
                                                                                                   showTypeParameterList = true)) {
-    testProvider("test.groovy", text, GroovyParameterTypeHintsInlayProvider(), settings)
+    doTestProvider("test.groovy", text, GroovyParameterTypeHintsInlayProvider(), settings)
   }
 
   override fun setUp() {
@@ -26,8 +26,15 @@ class GroovyParameterTypeHintsInlayProviderTest : InlayHintsProviderTestCase() {
   }
 
   override fun tearDown() {
-    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).resetToDefault()
-    super.tearDown()
+    try {
+      Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).resetToDefault()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun testSingleType() {

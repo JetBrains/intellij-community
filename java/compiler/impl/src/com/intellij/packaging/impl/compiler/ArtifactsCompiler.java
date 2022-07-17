@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.compiler;
 
 import com.intellij.openapi.compiler.CompileContext;
@@ -6,10 +6,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.impl.JpsBuildData;
 import com.intellij.task.impl.JpsProjectTaskRunner;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public final class ArtifactsCompiler {
@@ -18,7 +18,7 @@ public final class ArtifactsCompiler {
   public static void addWrittenPaths(final CompileContext context, Set<String> writtenPaths) {
     Set<String> paths = context.getUserData(WRITTEN_PATHS_KEY);
     if (paths == null) {
-      paths = new THashSet<>();
+      paths = new HashSet<>();
       context.putUserData(WRITTEN_PATHS_KEY, paths);
     }
     paths.addAll(writtenPaths);

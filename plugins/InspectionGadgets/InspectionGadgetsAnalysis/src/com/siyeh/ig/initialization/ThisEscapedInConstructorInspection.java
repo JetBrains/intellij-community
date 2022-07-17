@@ -45,7 +45,7 @@ public class ThisEscapedInConstructorInspection extends BaseInspection {
   private static class ThisExposedInConstructorInspectionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitThisExpression(PsiThisExpression expression) {
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
       super.visitThisExpression(expression);
       if (!isInInitializer(expression)) {
         return;

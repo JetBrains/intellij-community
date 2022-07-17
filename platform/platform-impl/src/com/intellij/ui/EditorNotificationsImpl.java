@@ -1,15 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ProjectTopics;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.internal.statistic.utils.PluginInfo;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
@@ -27,8 +25,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
-import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -37,16 +35,27 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
+import java.util.concurrent.CancellationException;
 
 public final class EditorNotificationsImpl extends EditorNotifications {
-  public static final ProjectExtensionPointName<Provider<?>> EP_PROJECT = new ProjectExtensionPointName<>("com.intellij.editorNotificationProvider");
+
+  /**
+   * @deprecated Please use {@link EditorNotificationProvider#EP_NAME} instead.
+   */
+  @Deprecated
+  public static final ProjectExtensionPointName<EditorNotificationProvider> EP_PROJECT = EditorNotificationProvider.EP_NAME;
+
+  private static final Key<Map<Class<? extends EditorNotificationProvider>, JComponent>> EDITOR_NOTIFICATION_PROVIDER =
+    Key.create("editor.notification.provider");
   private static final Key<Boolean> PENDING_UPDATE = Key.create("pending.notification.update");
 
-  private final MergingUpdateQueue myUpdateMerger;
+  private final @NotNull MergingUpdateQueue myUpdateMerger;
   private final @NotNull Project myProject;
 
   public EditorNotificationsImpl(@NotNull Project project) {
@@ -66,7 +75,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
         FileEditor editor = event.getNewEditor();
         if (file != null && editor != null && Boolean.TRUE.equals(editor.getUserData(PENDING_UPDATE))) {
           editor.putUserData(PENDING_UPDATE, null);
-          updateEditors(file, Collections.singletonList(editor));
+          updateEditor(file, editor);
         }
       }
     });
@@ -87,30 +96,33 @@ public final class EditorNotificationsImpl extends EditorNotifications {
         updateAllNotifications();
       }
     });
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> updateAllNotifications()));
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC,
+                         ((presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> updateAllNotifications()));
 
-    EP_PROJECT.getPoint(project).addExtensionPointListener(
-      new ExtensionPointListener<>() {
+    EditorNotificationProvider.EP_NAME
+      .getPoint(project)
+      .addExtensionPointListener(new ExtensionPointListener<>() {
         @Override
-        public void extensionAdded(@NotNull Provider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        public void extensionAdded(@NotNull EditorNotificationProvider extension,
+                                   @NotNull PluginDescriptor descriptor) {
           updateAllNotifications();
         }
 
         @Override
-        public void extensionRemoved(@NotNull Provider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        public void extensionRemoved(@NotNull EditorNotificationProvider extension,
+                                     @NotNull PluginDescriptor descriptor) {
           updateNotifications(extension);
         }
       }, false, null);
   }
 
   @Override
-  public void updateNotifications(@NotNull Provider<?> provider) {
-    Key<? extends JComponent> key = provider.getKey();
+  public void updateNotifications(@NotNull EditorNotificationProvider provider) {
     for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFilesWithRemotes()) {
       List<FileEditor> editors = getEditors(file);
 
       for (FileEditor editor : editors) {
-        updateNotification(editor, key, null, PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+        updateNotification(editor, provider, null);
       }
     }
   }
@@ -134,7 +146,9 @@ public final class EditorNotificationsImpl extends EditorNotifications {
         });
       }
 
-      if (!editors.isEmpty()) updateEditors(file, editors);
+      for (FileEditor editor : editors) {
+        updateEditor(file, editor);
+      }
     });
   }
 
@@ -144,78 +158,64 @@ public final class EditorNotificationsImpl extends EditorNotifications {
       editor -> !(editor instanceof TextEditor) || AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor()));
   }
 
-  private void updateEditors(@NotNull VirtualFile file, List<FileEditor> editors) {
-    ReadAction
-      .nonBlocking(() -> calcNotificationUpdates(file, editors))
-      .expireWith(myProject)
-      .expireWhen(() -> !file.isValid())
-      .coalesceBy(this, file)
-      .finishOnUiThread(ModalityState.any(), updates -> {
-        for (Runnable update : updates) {
-          update.run();
-        }
-      })
-      .submit(NonUrgentExecutor.getInstance());
-  }
-
-  private @NotNull List<Runnable> calcNotificationUpdates(@NotNull VirtualFile file, @NotNull List<? extends FileEditor> editors) {
-    List<Provider<?>> providers = DumbService.getDumbAwareExtensions(myProject, EP_PROJECT);
-    List<Runnable> updates = null;
-    for (FileEditor editor : editors) {
-      for (Provider<?> provider : providers) {
-        // light project is not disposed in tests
-        if (myProject.isDisposed()) {
-          return Collections.emptyList();
-        }
-
-        JComponent component = provider.createNotificationPanel(file, editor, myProject);
-        if (component instanceof EditorNotificationPanel) {
-          ((EditorNotificationPanel)component).setProviderKey(provider.getKey());
-          ((EditorNotificationPanel)component).setProject(myProject);
-        }
-        if (updates == null) {
-          updates = new SmartList<>();
-        }
-        updates.add(() -> {
-          updateNotification(editor, provider.getKey(), component, PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
-        });
-      }
+  private void updateEditor(@NotNull VirtualFile file,
+                            @NotNull FileEditor fileEditor) {
+    // light project is not disposed in tests
+    if (myProject.isDisposed()) {
+      return;
     }
-    return updates == null ? Collections.emptyList() : updates;
+
+    for (EditorNotificationProvider provider : EditorNotificationProvider.EP_NAME.getExtensions(myProject)) {
+      ReadAction.nonBlocking(() -> provider.collectNotificationData(myProject, file))
+        .expireWith(myProject)
+        .expireWhen(() -> !file.isValid() || DumbService.isDumb(myProject) && !DumbService.isDumbAware(provider))
+        .coalesceBy(this, provider, file)
+        .finishOnUiThread(ModalityState.any(), componentProvider -> {
+          JComponent component = componentProvider.apply(fileEditor);
+          updateNotification(fileEditor, provider, component);
+        })
+        .submit(NonUrgentExecutor.getInstance())
+        .onError(rejected -> {
+          if (rejected instanceof CancellationException) {
+            return;
+          }
+
+          Class<? extends EditorNotificationProvider> providerClass = provider.getClass();
+          PluginException pluginException = rejected instanceof PluginException ?
+                                            (PluginException)rejected :
+                                            PluginException.createByClass(rejected, providerClass);
+          Logger.getInstance(providerClass).error(pluginException);
+          throw pluginException;
+        });
+    }
   }
 
+  @RequiresEdt
   private void updateNotification(@NotNull FileEditor editor,
-                                  @NotNull Key<? extends JComponent> key,
-                                  @Nullable JComponent component,
-                                  PluginInfo pluginInfo) {
-    JComponent old = editor.getUserData(key);
+                                  @NotNull EditorNotificationProvider provider,
+                                  @Nullable JComponent component) {
+    Map<Class<? extends EditorNotificationProvider>, JComponent> panels = getNotificationPanels(editor);
+
+    Class<? extends EditorNotificationProvider> providerClass = provider.getClass();
+    JComponent old = panels.get(providerClass);
     if (old != null) {
       FileEditorManager.getInstance(myProject).removeTopComponent(editor, old);
     }
+
     if (component != null) {
-      FeatureUsageData data = new FeatureUsageData()
-        .addData("key", key.toString())
-        .addPluginInfo(pluginInfo);
-      FUCounterUsageLogger.getInstance().logEvent(myProject, "editor.notification.panel", "shown", data);
+      if (component instanceof EditorNotificationPanel) {
+        ((EditorNotificationPanel)component).setClassConsumer(handlerClass -> {
+          EditorNotificationUsagesCollectorKt.logHandlerInvoked(myProject,
+                                                                provider,
+                                                                handlerClass);
+        });
+      }
 
+      EditorNotificationUsagesCollectorKt.logNotificationShown(myProject, provider);
       FileEditorManager.getInstance(myProject).addTopComponent(editor, component);
-      @SuppressWarnings("unchecked") Key<JComponent> _key = (Key<JComponent>)key;
-      editor.putUserData(_key, component);
     }
-    else {
-      editor.putUserData(key, null);
-    }
-  }
 
-  @Override
-  public void logNotificationActionInvocation(@Nullable Key<?> providerKey, @Nullable Class<?> runnableClass) {
-    if (providerKey == null || runnableClass == null) return;
-
-    FeatureUsageData data = new FeatureUsageData()
-      .addData("key", providerKey.toString())
-      .addData("class_name", runnableClass.getName())
-      .addPluginInfo(PluginInfoDetectorKt.getPluginInfo(runnableClass));
-    FUCounterUsageLogger.getInstance().logEvent(myProject, "editor.notification.panel", "actionInvoked", data);
+    panels.put(providerClass, component);
   }
 
   @Override
@@ -237,7 +237,8 @@ public final class EditorNotificationsImpl extends EditorNotifications {
     });
   }
 
-  public static class RefactoringListenerProvider implements RefactoringElementListenerProvider {
+  static final class RefactoringListenerProvider implements RefactoringElementListenerProvider {
+
     @Override
     public @Nullable RefactoringElementListener getListener(final @NotNull PsiElement element) {
       if (element instanceof PsiFile) {
@@ -262,9 +263,30 @@ public final class EditorNotificationsImpl extends EditorNotifications {
     }
   }
 
+  @VisibleForTesting
+  public static @NotNull Map<Class<? extends EditorNotificationProvider>, JComponent> getNotificationPanels(@NotNull FileEditor editor) {
+    Map<Class<? extends EditorNotificationProvider>, JComponent> panels = editor.getUserData(EDITOR_NOTIFICATION_PROVIDER);
+    if (panels != null) {
+      return panels;
+    }
+
+    editor.putUserData(EDITOR_NOTIFICATION_PROVIDER, new WeakHashMap<>());
+    panels = editor.getUserData(EDITOR_NOTIFICATION_PROVIDER);
+    if (panels != null) {
+      return panels;
+    }
+
+    Class<? extends FileEditor> editorClass = editor.getClass();
+    PluginException pluginException = PluginException.createByClass("User data is not supported; editorClass='" + editorClass.getName() +
+                                                                    "'; key='" + EDITOR_NOTIFICATION_PROVIDER + "'",
+                                                                    null,
+                                                                    editorClass);
+    Logger.getInstance(editorClass).error(pluginException);
+    throw pluginException;
+  }
+
   @TestOnly
   public static void completeAsyncTasks() {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
-
 }

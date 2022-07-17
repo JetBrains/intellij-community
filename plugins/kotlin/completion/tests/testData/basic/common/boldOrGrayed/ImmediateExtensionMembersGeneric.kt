@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun <T> List<T>.forListT(){}
 fun <T> Collection<T>.forCollectionT(){}
 fun <T> T.forT() {}

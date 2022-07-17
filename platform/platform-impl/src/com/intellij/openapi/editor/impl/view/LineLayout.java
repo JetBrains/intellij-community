@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.openapi.editor.impl.FontInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
@@ -39,6 +38,7 @@ import java.util.stream.Stream;
  */
 abstract class LineLayout {
   private static final Logger LOG = Logger.getInstance(LineLayout.class);
+  private static final String WHITESPACE_CHARS = " \t";
 
   private LineLayout() {}
 
@@ -144,7 +144,7 @@ abstract class LineLayout {
     if (startOffsetInEditor >= 0) {
       // skipping indent
       int relLastOffset = 0;
-      while (relLastOffset < text.length && text[relLastOffset] == ' ' || text[relLastOffset] == '\t') relLastOffset++;
+      while (relLastOffset < text.length && WHITESPACE_CHARS.indexOf(text[relLastOffset]) >= 0) relLastOffset++;
       addRuns(runs, text, 0, relLastOffset, flags);
       // running bidi algorithm separately for text fragments corresponding to different lexer tokens
       IElementType lastToken = null;
@@ -152,20 +152,17 @@ abstract class LineLayout {
       while (!iterator.atEnd() && iterator.getStart() - startOffsetInEditor < textLength) {
         int iteratorRelStart = alignToCodePointBoundary(text, iterator.getStart() - startOffsetInEditor);
         int iteratorRelEnd = alignToCodePointBoundary(text, iterator.getEnd() - startOffsetInEditor);
-        IElementType currentToken = iterator.getTokenType();
         int relStartOffset = Math.max(relLastOffset, iteratorRelStart);
-        String lcPrefix = getLineCommentPrefix(currentToken);
-        // for line comments we process prefix and following text separately
-        if (!StringUtil.isEmpty(lcPrefix) && lcPrefix.length() <= iteratorRelEnd - iteratorRelStart &&
-            CharArrayUtil.regionMatches(text, relStartOffset, relStartOffset + lcPrefix.length(), lcPrefix) &&
-            !isInsideSurrogatePair(text, relStartOffset + lcPrefix.length())) {
+        int relEndOffset = Math.min(textLength, Math.max(relStartOffset, iteratorRelEnd));
+        IElementType currentToken = iterator.getTokenType();
+        int[] boundaries = getCommentPrefixAndOrSuffixBoundaries(text, relStartOffset, relEndOffset, currentToken);
+        if (boundaries != null) {
+          // for comments, we process prefixes and suffixes separately from comment text
           addRuns(runs, text, relLastOffset, relStartOffset, flags);
-          int textStartOffset = Math.min(textLength, Math.min(iteratorRelEnd,
-                                                              CharArrayUtil.shiftForward(text, relStartOffset + lcPrefix.length(), " \t")));
-          relLastOffset = Math.min(iteratorRelEnd, textLength);
+          addRuns(runs, text, relStartOffset, boundaries[0], flags);
+          addRuns(runs, text, boundaries[0], boundaries[1], flags);
           lastToken = null;
-          addRuns(runs, text, relStartOffset, textStartOffset, flags);
-          addRuns(runs, text, textStartOffset, relLastOffset, flags);
+          relLastOffset = boundaries[1];
         }
         else if (distinctTokens(lastToken, currentToken)) {
           addRuns(runs, text, relLastOffset, relStartOffset, flags);
@@ -199,13 +196,46 @@ abstract class LineLayout {
            Character.isHighSurrogate(text.charAt(offset - 1)) && Character.isLowSurrogate(text.charAt(offset)) ? offset - 1 : offset;
   }
 
-  private static String getLineCommentPrefix(IElementType token) {
+  private static int[] getCommentPrefixAndOrSuffixBoundaries(char[] text, int start, int end, IElementType token) {
     if (token == null) return null;
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(token.getLanguage());
-    if (!(commenter instanceof CodeDocumentationAwareCommenter) ||
-        !token.equals(((CodeDocumentationAwareCommenter)commenter).getLineCommentTokenType())) return null;
-    String prefix = commenter.getLineCommentPrefix();
-    return prefix == null ? null : StringUtil.trimTrailing(prefix); // some commenters (e.g. for Python) include space in comment prefix
+    if (!(commenter instanceof CodeDocumentationAwareCommenter)) return null;
+    CodeDocumentationAwareCommenter cdaCommenter = (CodeDocumentationAwareCommenter)commenter;
+    if (token.equals(cdaCommenter.getLineCommentTokenType())) {
+      String prefix = cdaCommenter.getLineCommentPrefix();
+      if (prefix != null) prefix = prefix.stripTrailing(); // some commenters (e.g. for Python) include space in comment prefix
+      if (isValidSuffixOrPrefix(prefix) && CharArrayUtil.regionMatches(text, start, end, prefix)) {
+        return new int[]{Math.min(end, CharArrayUtil.shiftForward(text, start + prefix.length(), WHITESPACE_CHARS)), end};
+      }
+    }
+    else if (token.equals(cdaCommenter.getBlockCommentTokenType())) {
+      String prefix = cdaCommenter.getBlockCommentPrefix();
+      String suffix = cdaCommenter.getBlockCommentSuffix();
+      if (!isValidSuffixOrPrefix(prefix) || !isValidSuffixOrPrefix(suffix)) return null;
+      int[] result = new int[]{start, end};
+      boolean hasPrefixOrSuffix = false;
+      if (CharArrayUtil.regionMatches(text, start, end, prefix)) {
+        result[0] = start + prefix.length();
+        hasPrefixOrSuffix = true;
+      }
+      if (CharArrayUtil.regionMatches(text, end - suffix.length(), end, suffix)) {
+        result[1] = end - suffix.length();
+        hasPrefixOrSuffix = true;
+      }
+      if (hasPrefixOrSuffix && result[0] < result[1]) {
+        result[0] = Math.min(result[1], CharArrayUtil.shiftForward(text, result[0], WHITESPACE_CHARS));
+        result[1] = Math.max(result[0], CharArrayUtil.shiftBackward(text, result[1] - 1, WHITESPACE_CHARS) + 1);
+        return result;
+      }
+    }
+    return null;
+  }
+
+  private static boolean isValidSuffixOrPrefix(String value) {
+    return value != null &&
+           !value.isEmpty() &&
+           !Character.isLowSurrogate(value.charAt(0)) &&
+           !Character.isHighSurrogate(value.charAt(value.length() - 1));
   }
 
   private static boolean distinctTokens(@Nullable IElementType token1, @Nullable IElementType token2) {
@@ -295,7 +325,7 @@ abstract class LineLayout {
   private static void addTextFragmentIfNeeded(Chunk chunk, char[] chars, int from, int to, FontInfo fontInfo, boolean isRtl) {
     if (to > from) {
       assert fontInfo != null;
-      chunk.fragments.add(TextFragmentFactory.createTextFragment(chars, from, to, isRtl, fontInfo));
+      TextFragmentFactory.createTextFragments(chunk.fragments, chars, from, to, isRtl, fontInfo);
     }
   }
 

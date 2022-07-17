@@ -11,6 +11,6 @@ interface D {
 interface E extends D, C {
   default void bar() {}
 }
-class F implements E {
-  void bar() {}
+abstract class F implements E {
+  public void bar() {}
 }

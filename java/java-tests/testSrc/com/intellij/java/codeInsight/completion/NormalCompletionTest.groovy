@@ -14,6 +14,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.psi.*
 import com.intellij.psi.augment.PsiAugmentProvider
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
@@ -204,9 +205,11 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     assertTrue("Exception not found", Arrays.binarySearch(myItems, "xxx") > 0)
   }
 
-  void testClassLiteralInArrayAnnoInitializer() throws Throwable { doTest() }
+  @NeedsIndex.ForStandardLibrary
+  void testClassLiteralInArrayAnnoInitializer() throws Throwable { doTest('\n') }
 
-  void testClassLiteralInArrayAnnoInitializer2() throws Throwable { doTest() }
+  @NeedsIndex.ForStandardLibrary
+  void testClassLiteralInArrayAnnoInitializer2() throws Throwable { doTest('\n') }
 
   void testReferenceParameters() throws Exception {
     configureByFile("ReferenceParameters.java")
@@ -995,6 +998,7 @@ public class ListUtils {
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
+  @NeedsIndex.SmartMode(reason = "Ordering requires smart mode")
   void testSuggestInaccessibleOnSecondInvocation() throws Throwable {
     configure()
     assertStringItems("_bar", "_goo")
@@ -1367,7 +1371,7 @@ class XInternalError {}
 @Anno(XInternal<caret>)
 """
     myFixture.complete(CompletionType.BASIC, 2)
-    assertFirstStringItems "XInternalError", "XInternalTimerServiceController"
+    assertFirstStringItems "XInternalError.class", "XInternalError", "XInternalTimerServiceController.class", "XInternalTimerServiceController"
   }
 
   @NeedsIndex.Full
@@ -1661,9 +1665,36 @@ class XInternalError {}
   }
 
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for equals() and hashCode())")
-  void testInvokeGenerateEqualsHashCodeOnOverrideCompletion() { doTest() }
+  void testInvokeGenerateEqualsHashCodeOnOverrideCompletion() {
+    configure()
+    assert myFixture.lookupElementStrings.size() == 2
+    lookup.setSelectedIndex(1)
+    type('\n')
+    checkResult()
+  }
+
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for 'toString()')")
-  void testInvokeGenerateToStringOnOverrideCompletion() { doTest() }
+  void testInvokeGenerateToStringOnOverrideCompletion() {
+    configure()
+    assert myFixture.lookupElementStrings.size() == 2
+    lookup.setSelectedIndex(1)
+    type('\n')
+    checkResult()
+  }
+
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for equals() and hashCode())")
+  void testDontGenerateEqualsHashCodeOnOverrideCompletion() {
+    configure()
+    type('\n')
+    checkResult()
+  }
+
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for 'toString()')")
+  void testDontGenerateToStringOnOverrideCompletion() {
+    configure()
+    type('\n')
+    checkResult()
+  }
 
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for getters and setters)")
   void testAccessorViaCompletion() {
@@ -2361,15 +2392,15 @@ class Abc {
                           "}")
   }
 
-  @NeedsIndex.ForStandardLibrary
+  @NeedsIndex.SmartMode(reason = "isEffectivelyDeprecated needs smart mode")
   void "test no final library classes in extends"() {
     myFixture.configureByText("X.java", "class StriFoo{}final class StriBar{}class X extends Stri<caret>")
     myFixture.completeBasic()
     assert myFixture.lookupElementStrings == [
       "StriFoo", // non-final project class
       "StringIndexOutOfBoundsException", "StringTokenizer", "StringConcatException", "StringReader", "StringWriter", // non-final library classes
-      "StriBar", // final project class (red)
-      "StringBufferInputStream"] // deprecated library class
+      "StringBufferInputStream", // deprecated library class
+      "StriBar"] // final project class (red)
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -2590,5 +2621,88 @@ class Abc {
                           "      }\n" +
                           "  }\n" +
                           "}")
+  }
+
+  void testVariableIntoScopeInAnnotation() {
+    String source = "public class Demo {\n" +
+                    "    public static void main(String[] args) {\n" +
+                    "        @SuppressWarnings(<caret>)\n" +
+                    "        final String code = \"println('Hello world')\";\n" +
+                    "    }\n" +
+                    "}"
+    myFixture.configureByText("Test.java", source)
+    myFixture.complete(CompletionType.SMART)
+    assert myFixture.lookupElementStrings == []
+    myFixture.checkResult(source)
+  }
+
+  void testLookupUpDownActions() {
+    myFixture.configureByText("Test.java", "class Test {<caret>}")
+    myFixture.completeBasic() // 'abstract' selected
+    myFixture.assertPreferredCompletionItems(0, "abstract", "boolean", "byte", "char", "class")
+    myFixture.performEditorAction("EditorLookupSelectionDown") // 'boolean' selected
+    myFixture.performEditorAction("EditorLookupSelectionDown") // 'byte' selected
+    myFixture.performEditorAction("EditorLookupSelectionUp") // 'boolean' selected
+    myFixture.type('\n')
+    myFixture.checkResult("class Test {boolean}")
+  }
+
+  void testPinyinMatcher() {
+    myFixture.configureByText("Test.java", "class Test {int get\u4F60\u597D() {return 0;} void test() {int \u4F60\u597D = 1;nh<caret>}}")
+    myFixture.completeBasic()
+    assert myFixture.getLookupElementStrings() == ['\u4F60\u597D', 'get\u4F60\u597D']
+    myFixture.type('\n')
+    myFixture.checkResult("class Test {int get\u4F60\u597D() {return 0;} void test() {int \u4F60\u597D = 1;\u4F60\u597D}}")
+  }
+
+  void testPinyinMatcher2() {
+    myFixture.configureByText("Test.java", "class Test {static void test() {int \u89D2\u8272 = 3;gj<caret>}}")
+    myFixture.completeBasic()
+    assert myFixture.getLookupElementStrings() == []
+    myFixture.type('\b')
+    myFixture.completeBasic()
+    myFixture.checkResult("class Test {static void test() {int \u89D2\u8272 = 3;\u89D2\u8272}}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void testClassLiteralCompletion() {
+    myFixture.configureByText("Test.java", "class Test {Class<? extends CharSequence> get() {return String<caret>}}")
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems(0, 'String', 'String.class', 'StringBuffer.class', 'StringBuffer', 'StringBuilder.class', 'StringBuilder', 'StringIndexOutOfBoundsException')
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void testClassLiteralCompletionClassExists() {
+    myFixture.configureByText("Test.java", "class Test {Class<? extends CharSequence> get() {return StringBu<caret>.class}}")
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResult("class Test {Class<? extends CharSequence> get() {return StringBuffer.class}}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void testClassLiteralCompletionNoBound() {
+    myFixture.configureByText("Test.java", "class Test {Class<?> get() {return String<caret>}}")
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems(0, 'String', 'String.class', 'StringBuffer.class', 'StringBuffer', 'StringBuilder.class', 'StringBuilder', 'StringIndexOutOfBoundsException.class', 'StringIndexOutOfBoundsException')
+  }
+
+  void testCompleteMethodWithoutParentheses() {
+    def settings = EditorSettingsExternalizable.getInstance()
+    settings.setInsertParenthesesAutomatically(false);
+    try {
+      myFixture.configureByText("Test.java", "class Test {void myMethod() { myMet<caret> }}")
+      myFixture.completeBasic()
+      myFixture.checkResult("class Test {void myMethod() { myMethod<caret> }}")
+    }
+    finally {
+      settings.setInsertParenthesesAutomatically(true)
+    }
+  }
+
+  void testNoPrimitiveTypeInElseIfCondition() {
+    myFixture.configureByText("Test.java", "class X {void a(Object obj) {if(obj instanceof String) {} else if (obj in<caret>)")
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == null
+    myFixture.checkResult("class X {void a(Object obj) {if(obj instanceof String) {} else if (obj instanceof )")
   }
 }

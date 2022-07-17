@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun test(list: List<Int>): List<Pair<IndexedValue<List<Int>>, IndexedValue<List<Int>>>> {
     return list

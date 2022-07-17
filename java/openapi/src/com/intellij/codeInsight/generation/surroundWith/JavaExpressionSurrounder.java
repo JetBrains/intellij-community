@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.lang.surroundWith.Surrounder;
@@ -27,6 +13,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
+/**
+ * Allow conveniently implement surrounders (Surround With) when it was called on java expression.
+ */
 public abstract class JavaExpressionSurrounder implements Surrounder {
   public static final ExtensionPointName<JavaExpressionSurrounder> EP_NAME = ExtensionPointName.create("com.intellij.javaExpressionSurrounder");
 
@@ -37,6 +26,9 @@ public abstract class JavaExpressionSurrounder implements Surrounder {
            isApplicable((PsiExpression)elements[0]);
   }
 
+  /**
+   * @return true iff the expression can be surrounded using this instance.
+   */
   public abstract boolean isApplicable(PsiExpression expr);
 
   @Override
@@ -49,5 +41,12 @@ public abstract class JavaExpressionSurrounder implements Surrounder {
     return surroundExpression(project, editor, (PsiExpression)elements[0]);
   }
 
+  /**
+   * Does the surrounding replacing some parent nodes.
+   *
+   * It is guaranteed that {@link JavaExpressionSurrounder#isApplicable)} is called and returned true before calling this method.
+   *
+   * @param expr expression on which the action was called
+   */
   public abstract TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException;
 }

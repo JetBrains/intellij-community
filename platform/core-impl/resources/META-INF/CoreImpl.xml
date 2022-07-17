@@ -42,7 +42,6 @@
                         serviceImplementation="com.intellij.diagnostic.PluginProblemReporterImpl"/>
     <applicationService serviceInterface="com.intellij.diagnostic.PerformanceWatcher"
                         serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl" preload="notHeadless"/>
-    <notificationGroup id="PerformanceWatcher" displayType="STICKY_BALLOON"/>
 
     <projectService serviceInterface="com.intellij.psi.PsiManager"
                     serviceImplementation="com.intellij.psi.impl.PsiManagerImpl" preload="true"/>
@@ -72,6 +71,8 @@
                     serviceImplementation="com.intellij.psi.impl.BlockSupportImpl"/>
     <applicationService serviceInterface="com.intellij.psi.PsiReferenceService"
                         serviceImplementation="com.intellij.psi.PsiReferenceServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileSetFactory"
+                        serviceImplementation="com.intellij.openapi.vfs.CompactVirtualFileSetFactory"/>
     <!-- must be a service because KotlinCodeBlockModificationListener requests it via constructor injection -->
     <projectService serviceImplementation="com.intellij.pom.tree.TreeAspect"/>
   </extensions>

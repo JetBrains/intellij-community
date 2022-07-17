@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
@@ -13,11 +13,20 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.StrictSuccess
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.WeakSuccess
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult
+import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.core.util.isMultiLine
+import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.inspections.PublicApiImplicitTypeInspection
 import org.jetbrains.kotlin.idea.inspections.UseExpressionBodyInspection
 import org.jetbrains.kotlin.idea.intentions.InfixCallToOrdinaryIntention
@@ -32,17 +41,16 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.*
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.UnificationResult.StronglyMatched
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.UnificationResult.WeaklyMatched
-import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.callUtil.getCalleeExpressionIfAny
+import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
+import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.isFlexible
@@ -68,6 +76,12 @@ private fun buildSignature(config: ExtractionGeneratorConfiguration, renderer: D
         fun TypeParameter.isReified() = originalDeclaration.hasModifier(KtTokens.REIFIED_KEYWORD)
         val shouldBeInline = config.descriptor.typeParameters.any { it.isReified() }
 
+        val optInAnnotation = if (config.generatorOptions.target != ExtractionTarget.FUNCTION || config.descriptor.optInMarkers.isEmpty()) {
+            ""
+        } else {
+            val innerText = config.descriptor.optInMarkers.joinToString(separator = ", ") { "${it.shortName().render()}::class" }
+            "@${OptInNames.OPT_IN_FQ_NAME.shortName().render()}($innerText)\n"
+        }
 
         val annotations = if (config.descriptor.annotations.isEmpty()) {
             ""
@@ -75,9 +89,10 @@ private fun buildSignature(config: ExtractionGeneratorConfiguration, renderer: D
             config.descriptor.annotations.joinToString(separator = "\n", postfix = "\n") { renderer.renderAnnotation(it) }
         }
         val extraModifiers = config.descriptor.modifiers.map { it.value } +
-                listOfNotNull(if (shouldBeInline) KtTokens.INLINE_KEYWORD.value else null)
+                listOfNotNull(if (shouldBeInline) KtTokens.INLINE_KEYWORD.value else null) +
+                listOfNotNull(if (config.generatorOptions.isConst) KtTokens.CONST_KEYWORD.value else null)
         val modifiers = if (visibility.isNotEmpty()) listOf(visibility) + extraModifiers else extraModifiers
-        modifier(annotations + modifiers.joinToString(separator = " "))
+        modifier(annotations + optInAnnotation + modifiers.joinToString(separator = " "))
 
         typeParams(
             config.descriptor.typeParameters.map {
@@ -177,7 +192,7 @@ class DuplicateInfo(
 )
 
 fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo> {
-    fun processWeakMatch(match: WeaklyMatched, newControlFlow: ControlFlow): Boolean {
+    fun processWeakMatch(match: WeakSuccess<*>, newControlFlow: ControlFlow): Boolean {
         val valueCount = controlFlow.outputValues.size
 
         val weakMatches = HashMap(match.weakMatches)
@@ -207,7 +222,7 @@ fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo> {
         return currentValuesToNew.size == valueCount && weakMatches.isEmpty()
     }
 
-    fun getControlFlowIfMatched(match: UnificationResult.Matched): ControlFlow? {
+    fun getControlFlowIfMatched(match: KotlinPsiUnificationResult.Success<*>): ControlFlow? {
         val analysisResult = extractionData.copy(originalRange = match.range).performAnalysis()
         if (analysisResult.status != AnalysisResult.Status.SUCCESS) return null
 
@@ -216,8 +231,8 @@ fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo> {
         if (controlFlow.outputValues.size != newControlFlow.outputValues.size) return null
 
         val matched = when (match) {
-            is StronglyMatched -> true
-            is WeaklyMatched -> processWeakMatch(match, newControlFlow)
+            is StrictSuccess -> true
+            is WeakSuccess -> processWeakMatch(match, newControlFlow)
             else -> throw AssertionError("Unexpected unification result: $match")
         }
 
@@ -286,13 +301,13 @@ private fun makeCall(
         return anchor.replaced(wrappedCall)
     }
 
-    if (rangeToReplace !is KotlinPsiRange.ListRange) return
+    if (rangeToReplace.isEmpty) return
 
-    val anchor = rangeToReplace.startElement
+    val anchor = rangeToReplace.elements.first()
     val anchorParent = anchor.parent!!
 
     anchor.nextSibling?.let { from ->
-        val to = rangeToReplace.endElement
+        val to = rangeToReplace.elements.last()
         if (to != anchor) {
             anchorParent.deleteChildRange(from, to)
         }
@@ -342,8 +357,8 @@ private fun makeCall(
         if (inlinableCall) {
             controlFlow.outputValueBoxer.getUnboxingExpressions(callText ?: return)
         } else {
-            val varNameValidator = NewDeclarationNameValidator(block, anchorInBlock, NewDeclarationNameValidator.Target.VARIABLES)
-            val resultVal = KotlinNameSuggester.suggestNamesByType(extractableDescriptor.returnType, varNameValidator, null).first()
+            val varNameValidator = Fe10KotlinNewDeclarationNameValidator(block, anchorInBlock, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE)
+            val resultVal = Fe10KotlinNameSuggester.suggestNamesByType(extractableDescriptor.returnType, varNameValidator, null).first()
             block.addBefore(psiFactory.createDeclaration("val $resultVal = $callText"), anchorInBlock)
             block.addBefore(newLine, anchorInBlock)
             controlFlow.outputValueBoxer.getUnboxingExpressions(resultVal)
@@ -570,8 +585,8 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
             if (!generatorOptions.inTempFile && defaultValue != null && descriptor.controlFlow.outputValueBoxer
                     .boxingRequired && lastExpression!!.isMultiLine()
             ) {
-                val varNameValidator = NewDeclarationNameValidator(body, lastExpression, NewDeclarationNameValidator.Target.VARIABLES)
-                val resultVal = KotlinNameSuggester.suggestNamesByType(defaultValue.valueType, varNameValidator, null).first()
+                val varNameValidator = Fe10KotlinNewDeclarationNameValidator(body, lastExpression, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE)
+                val resultVal = Fe10KotlinNameSuggester.suggestNamesByType(defaultValue.valueType, varNameValidator, null).first()
                 body.addBefore(psiFactory.createDeclaration("val $resultVal = ${lastExpression.text}"), lastExpression)
                 body.addBefore(psiFactory.createNewLine(), lastExpression)
                 psiFactory.createExpression(resultVal)
@@ -580,7 +595,6 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
         val returnExpression =
             descriptor.controlFlow.outputValueBoxer.getReturnExpression(getReturnArguments(defaultExpression), psiFactory) ?: return
 
-        @Suppress("NON_EXHAUSTIVE_WHEN")
         when (generatorOptions.target) {
             ExtractionTarget.LAZY_PROPERTY, ExtractionTarget.FAKE_LAMBDALIKE_FUNCTION -> {
                 // In the case of lazy property absence of default value means that output values are of OutputValue.Initializer type
@@ -590,6 +604,7 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
                 }
                 return
             }
+            else -> {}
         }
 
         when {
@@ -672,7 +687,10 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
         if (generatorOptions.delayInitialOccurrenceReplacement) {
             put(descriptor.extractionData.originalRange, replaceInitialOccurrence)
         }
-        putAll(duplicates.map { it.range to { makeCall(descriptor, declaration, it.controlFlow, it.range, it.arguments) } })
+        putAll(duplicates.map {
+            val smartListRange = KotlinPsiRange.SmartListRange(it.range.elements)
+            smartListRange to { makeCall(descriptor, declaration, it.controlFlow, smartListRange, it.arguments) }
+        })
     }
 
     if (descriptor.typeParameters.isNotEmpty()) {
@@ -692,7 +710,7 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
         }
         if ((declaration.descriptor as? PropertyDescriptor)?.let { DescriptorUtils.isOverride(it) } == true) {
             val scope = declaration.getResolutionScope()
-            val newName = KotlinNameSuggester.suggestNameByName(descriptor.name) {
+            val newName = Fe10KotlinNameSuggester.suggestNameByName(descriptor.name) {
                 it != descriptor.name && scope.getAllAccessibleVariables(Name.identifier(it)).isEmpty()
             }
             declaration.setName(newName)

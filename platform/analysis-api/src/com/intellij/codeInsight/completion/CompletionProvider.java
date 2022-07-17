@@ -3,7 +3,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,14 +15,6 @@ import org.jetbrains.annotations.NotNull;
 public abstract class CompletionProvider<V extends CompletionParameters> {
 
   protected CompletionProvider() {
-  }
-
-  /**
-   * @deprecated unused parameter
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected CompletionProvider(final boolean startInReadAction) {
   }
 
   protected abstract void addCompletions(@NotNull V parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result);

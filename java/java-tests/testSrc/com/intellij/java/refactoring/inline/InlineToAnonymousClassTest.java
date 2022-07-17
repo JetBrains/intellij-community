@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
@@ -255,13 +255,13 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     doTest(true, false);
   }
 
-  public void testSealed() {
-    setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+  public void testSealedNoMembers() {
+    setLanguageLevel(LanguageLevel.JDK_17);
     doTest(false, false);
   }
 
   public void testSealedParentChildWithMembers() {
-    setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+    setLanguageLevel(LanguageLevel.JDK_17);
     doTestCanBeInvokedOnReference(false);
   }
 
@@ -442,7 +442,8 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
       .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     PsiCall callToInline = InlineToAnonymousClassHandler.findCallToInline(getEditor());
     PsiClass classToInline = (PsiClass) element;
-    assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
+    assertNull(InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
+    assertTrue(new InlineToAnonymousClassHandler().canInlineElement(element));
     final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), classToInline, callToInline, inlineThisOnly,
                                                                                           false, searchInNonJavaFiles);
     UsageInfo[] usages = processor.findUsages();
@@ -493,9 +494,9 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
       .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     PsiCall callToInline = InlineToAnonymousClassHandler.findCallToInline(getEditor());
     PsiClass classToInline = (PsiClass) element;
-    assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
+    assertNull(InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
     final PsiClassType superType = InlineToAnonymousClassProcessor.getSuperType(classToInline);
-    assertTrue(superType != null);
+    assertNotNull(superType);
     assertEquals(canBeInvokedOnReference, InlineToAnonymousClassHandler.canBeInvokedOnReference(callToInline, superType));
   }
 

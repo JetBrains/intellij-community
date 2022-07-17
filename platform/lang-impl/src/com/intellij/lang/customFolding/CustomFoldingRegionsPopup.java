@@ -17,9 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Rustam Vishnyakov
- */
 public final class CustomFoldingRegionsPopup {
   public static void show(@NotNull final Collection<? extends FoldingDescriptor> descriptors,
                           @NotNull final Editor editor,

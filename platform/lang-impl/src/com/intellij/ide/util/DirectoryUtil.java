@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -26,7 +27,7 @@ public final class DirectoryUtil {
    * Creates the directory with the given path via PSI, including any
    * necessary but nonexistent parent directories. Must be run in write action.
    * @param path directory path in the local file system; separators must be '/'
-   * @return true if path exists or has been created as the result of this method call; false otherwise
+   * @return psiDirectory if path exists or has been created as the result of this method call; {@code null} otherwise
    */
   public static PsiDirectory mkdirs(PsiManager manager, String path) throws IncorrectOperationException{
     if (File.separatorChar != '/') {
@@ -85,7 +86,7 @@ public final class DirectoryUtil {
 
       if (StringUtil.endsWithChar(path, '/')) {
         path = path.substring(0, path.length() - 1);
-        if (SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':') {
+        if (SystemInfo.isWindows && path.length() == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(path)) {
           return null;
         }
       }

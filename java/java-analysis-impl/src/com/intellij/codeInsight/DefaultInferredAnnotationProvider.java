@@ -99,8 +99,11 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
   @Nullable
   private PsiAnnotation getHardcodedContractAnnotation(PsiMethod method) {
     PsiClass aClass = method.getContainingClass();
-    if (aClass != null && aClass.getQualifiedName() != null && aClass.getQualifiedName().startsWith("org.assertj.core.api.")) {
-      return createContractAnnotation(Collections.emptyList(), MutationSignature.pure());
+    if (aClass != null) {
+      String name = aClass.getQualifiedName();
+      if (name != null && name.startsWith("org.assertj.core.api.") && !name.equals("org.assertj.core.api.AbstractThrowableAssert")) {
+        return createContractAnnotation(Collections.emptyList(), MutationSignature.pure());
+      }
     }
     List<MethodContract> contracts = HardcodedContracts.getHardcodedContracts(method, null);
     return contracts.isEmpty() ? null : createContractAnnotation(contracts, HardcodedContracts.getHardcodedMutation(method));

@@ -2,13 +2,14 @@
 
 package org.jetbrains.kotlin.idea.actions.internal
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.kotlin.checkers.utils.CheckerTestUtil
 import org.jetbrains.kotlin.checkers.utils.DiagnosticsRenderingConfiguration
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
@@ -37,11 +38,11 @@ class CopyAsDiagnosticTestAction : AnAction() {
         clipboard.setContents(StringSelection(result)) { _, _ -> }
     }
 
-    override fun update(e: AnActionEvent) {
-        e.presentation.isVisible = ApplicationManager.getApplication().isInternal
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-        val editor = e.getData(CommonDataKeys.EDITOR)
-        val psiFile = e.getData(CommonDataKeys.PSI_FILE)
-        e.presentation.isEnabled = editor != null && psiFile is KtFile
+    override fun update(e: AnActionEvent) {
+        e.presentation.isEnabled = isApplicationInternalMode()
+                && e.getData(CommonDataKeys.EDITOR) != null
+                && e.getData(CommonDataKeys.PSI_FILE) is KtFile
     }
 }

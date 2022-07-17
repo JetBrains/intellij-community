@@ -174,7 +174,7 @@ public final class WorkingContextManager {
     });
   }
 
-  private synchronized boolean doEntryAction(String zipPostfix, String entryName, ThrowableConsumer<JBZipEntry, Exception> action) {
+  private synchronized boolean doEntryAction(String zipPostfix, String entryName, ThrowableConsumer<? super JBZipEntry, ? extends Exception> action) {
     if (!ENABLED) return false;
 
     try (JBZipFile archive = getTasksArchive(zipPostfix)) {

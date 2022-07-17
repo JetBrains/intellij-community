@@ -1,11 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
@@ -21,27 +22,57 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newBooleanMetric;
-import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newMetric;
 
 /**
  * @author Konstantin Bulenkov
  */
 final class UiInfoUsageCollector extends ApplicationUsagesCollector {
   private static final Logger LOG = Logger.getInstance(UiInfoUsageCollector.class);
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.info.features", 12);
+  private static final EnumEventField<VisibilityType> orientationField = EventFields.Enum("value", VisibilityType.class);
+  private static final EventId1<NavBarType> NAV_BAR = GROUP.registerEvent("Nav.Bar", EventFields.Enum("value", NavBarType.class));
+  private static final EventId1<VisibilityType> NAV_BAR_MEMBERS = GROUP.registerEvent("Nav.Bar.members", orientationField);
+  private static final EventId1<VisibilityType> TOOLBAR = GROUP.registerEvent("Toolbar", orientationField);
+  private static final EventId2<VisibilityType, VisibilityType> TOOLBAR_AND_NAV_BAR =
+    GROUP.registerEvent("Toolbar.and.NavBar",
+                        EventFields.Enum("toolbar", VisibilityType.class),
+                        EventFields.Enum("navbar", VisibilityType.class)
+    );
+  private static final EventId1<Boolean> RETINA = GROUP.registerEvent("Retina", EventFields.Enabled);
+  private static final EventId1<Boolean> SHOW_TOOLWINDOW = GROUP.registerEvent("QuickDoc.Show.Toolwindow", EventFields.Enabled);
+  private static final EventId1<Boolean> QUICK_DOC_AUTO_UPDATE = GROUP.registerEvent("QuickDoc.AutoUpdate", EventFields.Enabled);
+  private static final EventId1<String>
+    LOOK_AND_FEEL = GROUP.registerEvent("Look.and.Feel", EventFields.StringValidatedByEnum("value", "look_and_feel"));
+  private static final EventId1<Boolean> LAF_AUTODETECT = GROUP.registerEvent("laf.autodetect", EventFields.Enabled);
+  private static final EventId1<HidpiMode> HIDPI_MODE = GROUP.registerEvent("Hidpi.Mode", EventFields.Enum("value", HidpiMode.class));
+  private static final EventId1<Boolean> SCREEN_READER = GROUP.registerEvent("Screen.Reader", EventFields.Enabled);
+  private static final EventId1<Integer> QUICK_LISTS_COUNT = GROUP.registerEvent("QuickListsCount", EventFields.Int("value"));
+  private static final BooleanEventField SCALE_MODE_FIELD = EventFields.Boolean("scale_mode");
+  private static final FloatEventField SCALE_FIELD = EventFields.Float("scale");
+  private static final VarargEventId SCREEN_SCALE = GROUP.registerVarargEvent("Screen.Scale", SCALE_MODE_FIELD, SCALE_FIELD);
+  private static final EventId1<Integer> NUMBER_OF_MONITORS = GROUP.registerEvent("Number.Of.Monitors", EventFields.Int("value"));
+  private static final StringEventField SCREEN_RESOLUTION_FIELD = new StringEventField("value") {
+    private final List<String> rules =
+      List.of("{regexp#integer}x{regexp#integer}_({regexp#integer}%)", "{regexp#integer}x{regexp#integer}");
 
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "ui.info.features";
-  }
+    @NotNull
+    @Override
+    public List<String> getValidationRule() {
+      return rules;
+    }
+  };
+  private static final EventId2<Integer, String> SCREEN_RESOLUTION = GROUP.registerEvent("Screen.Resolution", EventFields.Int("display_id"),
+                                                                                         SCREEN_RESOLUTION_FIELD);
+
 
   @Override
-  public int getVersion() {
-    return 10;
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
   @NotNull
@@ -54,28 +85,32 @@ final class UiInfoUsageCollector extends ApplicationUsagesCollector {
   public static Set<MetricEvent> getDescriptors() {
     Set<MetricEvent> set = new HashSet<>();
 
-    addValue(set, "Nav.Bar", navbar() ? "visible" : "floating");
-    addValue(set, "Nav.Bar.members", UISettings.getInstance().getShowMembersInNavigationBar() ? "visible" : "hidden");
-    addValue(set, "Toolbar", toolbar() ? "visible" : "hidden");
+    set.add(NAV_BAR.metric(navbar() ? NavBarType.visible : NavBarType.floating));
+    set.add(
+      NAV_BAR_MEMBERS.metric(UISettings.getInstance().getShowMembersInNavigationBar() ? VisibilityType.visible : VisibilityType.hidden));
+    set.add(TOOLBAR.metric(toolbar() ? VisibilityType.visible : VisibilityType.hidden));
 
-    addValue(set, "Toolbar.and.NavBar", new FeatureUsageData().
-      addData("toolbar", toolbar() ? "visible" : "hidden").
-      addData("navbar", navbar() ? "visible" : "hidden")
-    );
+    set.add(TOOLBAR_AND_NAV_BAR.metric(
+      toolbar() ? VisibilityType.visible : VisibilityType.hidden,
+      navbar() ? VisibilityType.visible : VisibilityType.hidden
+    ));
 
-    addEnabled(set, "Retina", UIUtil.isRetina());
+    set.add(RETINA.metric(UIUtil.isRetina()));
 
     PropertiesComponent properties = PropertiesComponent.getInstance();
-    addEnabled(set, "QuickDoc.Show.Toolwindow", properties.isTrueValue("ShowDocumentationInToolWindow"));
-    addEnabled(set, "QuickDoc.AutoUpdate", properties.getBoolean("DocumentationAutoUpdateEnabled", true));
+    set.add(SHOW_TOOLWINDOW.metric(properties.isTrueValue("ShowDocumentationInToolWindow")));
+    set.add(QUICK_DOC_AUTO_UPDATE.metric(properties.getBoolean("DocumentationAutoUpdateEnabled", true)));
 
     UIManager.LookAndFeelInfo laf = LafManager.getInstance().getCurrentLookAndFeel();
-    addValue(set, "Look.and.Feel", StringUtil.notNullize(laf != null ? laf.getName() : null, "unknown"));
+    String value1 = StringUtil.notNullize(laf != null ? laf.getName() : null, "unknown");
+    set.add(LOOK_AND_FEEL.metric(value1));
+    set.add(LAF_AUTODETECT.metric(LafManager.getInstance().getAutodetect()));
 
-    addValue(set, "Hidpi.Mode", JreHiDpiUtil.isJreHiDPIEnabled() ? "per_monitor_dpi" : "system_dpi");
-    addEnabled(set, "Screen.Reader", ScreenReader.isActive());
+    HidpiMode value = JreHiDpiUtil.isJreHiDPIEnabled() ? HidpiMode.per_monitor_dpi : HidpiMode.system_dpi;
+    set.add(HIDPI_MODE.metric(value));
+    set.add(SCREEN_READER.metric(ScreenReader.isActive()));
 
-    set.add(newMetric("QuickListsCount", QuickListsManager.getInstance().getAllQuickLists().length));
+    set.add(QUICK_LISTS_COUNT.metric(QuickListsManager.getInstance().getAllQuickLists().length));
 
     addScreenScale(set);
     addNumberOfMonitors(set);
@@ -89,7 +124,7 @@ final class UiInfoUsageCollector extends ApplicationUsagesCollector {
     String info = rect.width + "x" + rect.height;
     float scale = JBUIScale.sysScale(conf);
     if (scale != 1f) {
-      info += " (" + (int)(scale * 100) +"%)";
+      info += " (" + (int)(scale * 100) + "%)";
     }
     return info;
   }
@@ -98,26 +133,13 @@ final class UiInfoUsageCollector extends ApplicationUsagesCollector {
     GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
     for (int i = 0; i < devices.length; i++) {
       String info = getDeviceScreenInfo(devices[i]);
-      FeatureUsageData data = new FeatureUsageData().addValue(info).addData("display_id", i);
-      set.add(newMetric("Screen.Resolution", data));
+      set.add(SCREEN_RESOLUTION.metric(i, info));
     }
   }
 
   private static void addNumberOfMonitors(Set<MetricEvent> set) {
     int numberOfMonitors = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length;
-    addValue(set, "Number.Of.Monitors", String.valueOf(numberOfMonitors));
-  }
-
-  private static void addValue(Set<? super MetricEvent> set, String key, FeatureUsageData data) {
-    set.add(newMetric(key, data));
-  }
-
-  private static void addValue(Set<? super MetricEvent> set, String key, String value) {
-    set.add(newMetric(key, new FeatureUsageData().addValue(value)));
-  }
-
-  private static void addEnabled(Set<? super MetricEvent> set, String key, boolean enabled) {
-    set.add(newBooleanMetric(key, enabled));
+    set.add(NUMBER_OF_MONITORS.metric(numberOfMonitors));
   }
 
   private static boolean toolbar() {
@@ -146,7 +168,7 @@ final class UiInfoUsageCollector extends ApplicationUsagesCollector {
       try {
         SwingUtilities.invokeAndWait(() -> {
           DisplayMode dm = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
-          isScaleMode.set(dm != null && JdkEx.getDisplayModeEx().isDefault(dm));
+          isScaleMode.set(dm != null && !JdkEx.getDisplayModeEx().isDefault(dm));
         });
       }
       catch (InvocationTargetException e) {
@@ -157,10 +179,17 @@ final class UiInfoUsageCollector extends ApplicationUsagesCollector {
       }
     }
 
-    FeatureUsageData data = new FeatureUsageData().addData("scale", scale);
+    ArrayList<EventPair<?>> data = new ArrayList<>();
+    data.add(SCALE_FIELD.with(scale));
     if (!isScaleMode.isNull()) {
-      data.addData("scale_mode", isScaleMode.get());
+      data.add(SCALE_MODE_FIELD.with(isScaleMode.get()));
     }
-    set.add(newMetric("Screen.Scale", data));
+    set.add(SCREEN_SCALE.metric(data));
   }
+
+  enum NavBarType {visible, floating}
+
+  enum VisibilityType {visible, hidden}
+
+  enum HidpiMode {per_monitor_dpi, system_dpi}
 }

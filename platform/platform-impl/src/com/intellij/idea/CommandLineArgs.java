@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ide.RecentProjectsManagerBase;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import org.jetbrains.annotations.NotNull;
 
 public final class CommandLineArgs {
@@ -15,7 +15,7 @@ public final class CommandLineArgs {
   public static void parse(String[] args) {
     for (String arg : args) {
       if (arg.equalsIgnoreCase(DISABLE_NON_BUNDLED_PLUGINS)) {
-        PluginManagerCore.ourDisableNonBundledPlugins = true;
+        IdeaPluginDescriptorImpl.disableNonBundledPlugins = true;
         break;
       }
       else if (arg.equalsIgnoreCase(DONT_REOPEN_PROJECTS)) {

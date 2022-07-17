@@ -137,7 +137,7 @@ public class PyEvaluator {
   }
 
   @Nullable
-  private Object evaluateBinary(@NotNull PyBinaryExpression expression) {
+  protected Object evaluateBinary(@NotNull PyBinaryExpression expression) {
     final PyElementType op = expression.getOperator();
     final Object lhs = evaluate(expression.getLeftExpression());
     final Object rhs = evaluate(expression.getRightExpression());
@@ -459,10 +459,10 @@ public class PyEvaluator {
       return !((String)result).isEmpty();
     }
     else if (result instanceof Collection) {
-      return !((Collection)result).isEmpty();
+      return !((Collection<?>)result).isEmpty();
     }
     else if (result instanceof Map) {
-      return !((Map)result).isEmpty();
+      return !((Map<?, ?>)result).isEmpty();
     }
 
     return null;

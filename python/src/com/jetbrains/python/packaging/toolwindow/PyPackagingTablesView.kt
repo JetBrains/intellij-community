@@ -1,17 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging.toolwindow
 
+import com.intellij.icons.AllIcons
+import com.intellij.ui.JBColor
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.packaging.PyPIPackageUtil
+import com.jetbrains.python.packaging.repository.PyPackageRepository
 import java.awt.Rectangle
+import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTable
 
 class PyPackagingTablesView(private val service: PyPackagingToolWindowService, private val container: JPanel) {
   private val repositories: MutableList<PyPackagingTableGroup<DisplayablePackage>> = mutableListOf()
-  private val installedPackages = PyPackagingTableGroup(message("python.toolwindow.packages.installed.label"), "",
-                                                PyPackagesTable(PyPackagesTableModel(), service, this))
-
+  private val installedPackages = PyPackagingTableGroup(
+    object : PyPackageRepository(message("python.toolwindow.packages.installed.label"), "", "") {},
+             PyPackagesTable(PyPackagesTableModel(), service, this))
+  private val invalidRepositories: MutableMap<String, JPanel> = mutableMapOf()
   init {
     installedPackages.addTo(container)
     installedPackages.expand()
@@ -21,7 +25,7 @@ class PyPackagingTablesView(private val service: PyPackagingToolWindowService, p
     updatePackages(installed, repoData)
     installedPackages.expand()
     installedPackages.updateHeaderText(installed.size)
-    val tableToData = repositories.map { repo -> repo to repoData.find { it.repoUrl == repo.repoUrl }!! }
+    val tableToData = repositories.map { repo -> repo to repoData.find { it.repository.name == repo.name }!! }
     tableToData.forEach { (table, data) ->
       table.updateHeaderText(data.packages.size + data.moreItems)
       table.expand()
@@ -45,32 +49,57 @@ class PyPackagingTablesView(private val service: PyPackagingToolWindowService, p
 
   private fun updatePackages(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>) {
     installedPackages.table.items = installed
+    val (validRepoData, invalid) = repoData.partition { it !is PyInvalidRepositoryViewData }
 
-    for (data in repoData) {
-      val existingRepo = findTableForRepo((data.repoUrl))
-      val withExpander = if (data.moreItems > 0) data.packages + listOf(ExpandResultNode(data.moreItems, PyPackageRepository(data.repoUrl))) else data.packages
+    for (data in validRepoData) {
+      val existingRepo = findTableForRepo(data.repository)
+      val withExpander = if (data.moreItems > 0) data.packages + listOf(ExpandResultNode(data.moreItems, data.repository)) else data.packages
 
       if (existingRepo != null) existingRepo.items = withExpander
       else {
         val newTable = PyPackagesTable(PyPackagesTableModel(), service, this)
         newTable.items = withExpander
 
-        val name = if (PyPIPackageUtil.isPyPIRepository(data.repoUrl)) message("python.toolwindow.packages.pypi.repo.label") else data.repoUrl
-        val newTableGroup = PyPackagingTableGroup(name, data.repoUrl, newTable)
+        val newTableGroup = PyPackagingTableGroup(data.repository, newTable)
 
         repositories.add(newTableGroup)
         newTableGroup.addTo(container)
       }
     }
-    val existingRepositories = repoData.map { it.repoUrl }
+    val existingRepositories = validRepoData.map { it.repository.name }
 
-    val invalidRepos = repositories.filter { it.repoUrl !in existingRepositories }
-    invalidRepos.forEach { it.removeFrom(container) }
-    repositories.removeAll(invalidRepos)
+    val removedRepositories = repositories.filter { it.name !in existingRepositories }
+    removedRepositories.forEach { it.removeFrom(container) }
+    repositories.removeAll(removedRepositories)
+
+    @Suppress("UNCHECKED_CAST")
+    refreshInvalidRepositories(invalid as List<PyInvalidRepositoryViewData>)
+  }
+
+  private fun refreshInvalidRepositories(invalid: List<PyInvalidRepositoryViewData>) {
+    val invalidRepoNames = invalid.map { it.repository.name }
+
+    invalidRepositories.forEach { container.remove(it.value) }
+    invalidRepositories.keys.removeIf { it !in invalidRepoNames }
+
+    invalid.asSequence()
+      .map { it.repository.name!! }
+      .filterNot { it in invalidRepositories }
+      .map {
+        val label = JLabel(message("python.toolwindow.packages.custom.repo.invalid", it)).apply {
+          foreground = JBColor.RED
+          icon = AllIcons.General.Error
+        }
+        it to headerPanel(label, null)
+      }
+      .forEach {
+        invalidRepositories[it.first] = it.second
+      }
+    invalidRepositories.forEach { container.add(it.value) }
   }
 
   private fun selectPackage(matchData: PyPackagesViewData) {
-    val tableWithMatch = findTableForRepo(matchData.repoUrl)!!.table
+    val tableWithMatch = findTableForRepo(matchData.repository)!!.table
     val exactMatch = matchData.exactMatch
 
     tableWithMatch.setRowSelectionInterval(exactMatch, exactMatch)
@@ -101,7 +130,7 @@ class PyPackagingTablesView(private val service: PyPackagingToolWindowService, p
       }
   }
 
-  private fun findTableForRepo(repoUrl: String) = repositories.find { it.repoUrl == repoUrl }
+  private fun findTableForRepo(repository: PyPackageRepository) = repositories.find { it.name == repository.name }
 
   fun addInstalled(newPackages: List<InstalledPackage>) {
     installedPackages.table.addRows(newPackages)
@@ -120,7 +149,7 @@ class PyPackagingTablesView(private val service: PyPackagingToolWindowService, p
     repositories.forEach {  repo ->
       val repoIndex = repo.items.indexOfFirst { it.name == deletedPackage.name }
       if (repoIndex != -1) {
-        repo.replace(repoIndex, InstallablePackage(deletedPackage.name, PyPackageRepository(repo.repoUrl)))
+        repo.replace(repoIndex, InstallablePackage(deletedPackage.name, deletedPackage.repository))
       }
     }
 

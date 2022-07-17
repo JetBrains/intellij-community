@@ -10,15 +10,19 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.ConvertToScopeIntention.ScopeFunction.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
+import org.jetbrains.kotlin.idea.base.util.useScope
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) : SelfTargetingIntention<KtExpression>(
     KtExpression::class.java,
@@ -54,10 +58,13 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         }
     }
 
+    private fun KtExpression.childOfBlock(): KtExpression? = PsiTreeUtil.findFirstParent(this) {
+        val parent = it.parent
+        parent is KtBlockExpression || parent is KtValueArgument
+    } as? KtExpression
+
     private fun KtExpression.tryGetExpressionToApply(referenceName: String): KtExpression? {
-        val childOfBlock = PsiTreeUtil.findFirstParent(this) {
-            it.parent is KtBlockExpression
-        } as? KtExpression ?: return null
+        val childOfBlock: KtExpression = childOfBlock() ?: return null
 
         return if (childOfBlock is KtProperty || childOfBlock.isTarget(referenceName)) childOfBlock else null
     }
@@ -76,7 +83,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         val expressionToApply = element.tryGetExpressionToApply(referenceName) ?: return false
         val (firstTarget, lastTarget) = expressionToApply.collectTargetElementsRange(referenceName, greedy = !dryRun) ?: return false
 
-        val refactoringTarget = tryGetFirstElementToRefactoring(expressionToApply, firstTarget) ?: return false
+        val refactoringTarget = tryGetFirstElementToRefactoring(expressionToApply, firstTarget, lastTarget, referenceElement) ?: return false
 
         if (dryRun) return true
 
@@ -115,10 +122,13 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         }
     }
 
-    private fun tryGetFirstElementToRefactoring(expressionToApply: KtExpression, firstTarget: PsiElement)
-            : RefactoringTargetAndItsValueExpression? {
-
-        val property by lazy(LazyThreadSafetyMode.NONE) { expressionToApply.prevProperty() }
+    private fun tryGetFirstElementToRefactoring(
+        expressionToApply: KtExpression,
+        firstTarget: PsiElement,
+        lastTarget: PsiElement,
+        referenceElement: PsiElement
+    ): RefactoringTargetAndItsValueExpression? {
+        val property = expressionToApply.prevProperty()
 
         val propertyOrFirst = when (scopeFunction) {
             ALSO, APPLY -> property
@@ -133,7 +143,9 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
 
         if (!isCorrectFirstOrProperty) return null
 
-        return RefactoringTargetAndItsValueExpression(propertyOrFirst, property?.nextSibling ?: firstTarget)
+        val targetElementValue =
+            property?.nextSibling?.takeIf { it.parent == referenceElement.parent && it.textOffset < lastTarget.textOffset } ?: firstTarget
+        return RefactoringTargetAndItsValueExpression(propertyOrFirst, targetElementValue)
     }
 
     private fun replaceReference(element: PsiElement, firstTarget: PsiElement, lastTarget: PsiElement, psiFactory: KtPsiFactory) {
@@ -146,7 +158,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         }
 
         val searchParameters = KotlinReferencesSearchParameters(
-            element, element.useScope, ignoreAccessScope = false
+            element, element.useScope(), ignoreAccessScope = false
         )
 
         val range = PsiTreeUtil.getElementsOfRange(firstTarget, lastTarget)
@@ -169,13 +181,12 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
                 if (name !== null) property to name else null
             }
             RUN, WITH -> {
-                val receiver = (this as? KtDotQualifiedExpression)
-                    ?.let { getLeftMostReceiverExpression() } as? KtNameReferenceExpression
-
-                val declaration = receiver?.mainReference?.resolve()
-                val name = receiver?.getReferencedName()
-
-                if (declaration !== null && declaration !is PsiPackage && name !== null) declaration to name else null
+                val receiver = safeAs<KtDotQualifiedExpression>()?.getLeftMostReceiverExpression() as? KtNameReferenceExpression
+                val declaration = receiver?.mainReference?.resolve()?.takeUnless { it is PsiPackage } ?: return null
+                val selector = receiver.getQualifiedExpressionForReceiver()?.selectorExpression
+                    ?.let { it.safeAs<KtCallExpression>()?.calleeExpression ?: it } as? KtNameReferenceExpression
+                if (selector?.mainReference?.resolve() is KtClassOrObject) return null
+                declaration to receiver.getReferencedName()
             }
         }
     }
@@ -247,9 +258,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         return !anyDescendantOfType<KtNameReferenceExpression> { it.text == scopeFunction.receiver }
     }
 
-    private fun KtExpression.prevProperty(): KtProperty? = PsiTreeUtil.findFirstParent(this) {
-        it.parent is KtBlockExpression
-    }
+    private fun KtExpression.prevProperty(): KtProperty? = childOfBlock()
         ?.siblings(forward = false, withItself = true)
         ?.firstOrNull { it is KtProperty && it.isLocal } as? KtProperty
 

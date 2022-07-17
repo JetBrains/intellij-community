@@ -116,7 +116,7 @@ public final class PluginLogoApi {
   private @Nullable Icon tryLoadIcon(@NotNull Path dirFile, boolean light, int width, int height) {
     try {
       Path iconFile = dirFile.resolve(PluginLogo.getIconFileName(light));
-      return Files.size(iconFile) > 0 ? loadFileIcon(iconFile.toUri().toURL(), Files.newInputStream(iconFile), width, height) : null;
+      return Files.size(iconFile) > 0 ? loadFileIcon(PluginLogo.toURL(iconFile), Files.newInputStream(iconFile), width, height) : null;
     }
     catch (NoSuchFileException ignore) {
       return null;
@@ -131,7 +131,7 @@ public final class PluginLogoApi {
 
   private @Nullable static Icon tryLoadIcon(@NotNull ZipFile zipFile, boolean light, int width, int height) throws IOException {
     ZipEntry iconEntry = zipFile.getEntry(PluginLogo.getIconFileName(light));
-    return iconEntry == null ? null : loadFileIcon(PluginLogo.toURL(new File(zipFile.getName())), zipFile.getInputStream(iconEntry), width, height);
+    return iconEntry == null ? null : loadFileIcon(PluginLogo.toURL(zipFile), zipFile.getInputStream(iconEntry), width, height);
   }
 
   private @NotNull static Icon loadFileIcon(@Nullable URL url, @NotNull InputStream stream, int width, int height) throws IOException {

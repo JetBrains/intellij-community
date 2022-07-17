@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("TestOnlyProblems")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.PluginException
@@ -8,10 +8,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
@@ -24,7 +21,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.util.SystemProperties
 import com.intellij.util.getErrorsAsString
 import io.github.classgraph.AnnotationEnumValue
 import io.github.classgraph.ClassGraph
@@ -67,14 +63,17 @@ private class CreateAllServicesAndExtensionsAction : AnAction("Create All Servic
     val message = (if (errors.isEmpty()) "No errors" else "${errors.size} errors were logged") + ". Check also that no logged errors."
     Notification("Error Report", "", message, NotificationType.INFORMATION).notify(null)
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
 
 private class CreateAllServicesAndExtensionsActivity : AppLifecycleListener {
-
   init {
-    if (!ApplicationManager.getApplication().isInternal
-        || !SystemProperties.`is`("ide.plugins.create.all.services.and.extensions")) {
-      throw ExtensionNotApplicableException.INSTANCE
+    if (!ApplicationManager.getApplication().isInternal ||
+        !java.lang.Boolean.getBoolean("ide.plugins.create.all.services.and.extensions")) {
+      throw ExtensionNotApplicableException.create()
     }
   }
 
@@ -94,6 +93,7 @@ fun performAction() {
   )
 }
 
+// external usage in [src/com/jetbrains/performancePlugin/commands/chain/generalCommandChain.kt]
 const val ACTION_ID = "CreateAllServicesAndExtensions"
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
@@ -125,7 +125,7 @@ private fun checkExtensionPoint(extensionPoint: ExtensionPointImpl<*>, taskExecu
   taskExecutor {
     extensionClass = extensionPoint.extensionClass
   }
-  
+
   extensionPoint.checkImplementations { extension ->
     taskExecutor {
       val extensionInstance: Any
@@ -147,74 +147,96 @@ private fun checkExtensionPoint(extensionPoint: ExtensionPointImpl<*>, taskExecu
 private fun checkLightServices(taskExecutor: (task: () -> Unit) -> Unit, errors: MutableList<Throwable>) {
   for (plugin in PluginManagerCore.getPluginSet().enabledPlugins) {
     // we don't check classloader for sub descriptors because url set is the same
-    if (plugin.classLoader !is PluginClassLoader) {
-      continue
-    }
-
+    val classLoader = plugin.pluginClassLoader as? PluginClassLoader ?: continue
     ClassGraph()
       .enableAnnotationInfo()
       .ignoreParentClassLoaders()
-      .overrideClassLoaders(plugin.classLoader)
+      .overrideClassLoaders(classLoader)
       .scan()
       .use { scanResult ->
         val lightServices = scanResult.getClassesWithAnnotation(Service::class.java.name)
         for (lightService in lightServices) {
           if (lightService.name == "org.jetbrains.plugins.grails.runner.GrailsConsole" ||
-              lightService.name == "com.jetbrains.rdserver.editors.MultiUserCaretSynchronizerProjectService") {
-            // wants EDT in constructor
-             continue
-          }
-
-          // not clear - from what classloader light service will be loaded in reality
-          val lightServiceClass = try {
-            loadLightServiceClass(lightService, plugin)
-          }
-          catch (e: Throwable) {
-            errors.add(e)
+              lightService.name == "com.jetbrains.rdserver.editors.MultiUserCaretSynchronizerProjectService" ||
+              lightService.name == "com.intellij.javascript.web.webTypes.nodejs.WebTypesNpmLoader") {
+            // wants EDT/read action in constructor
             continue
           }
 
-          val isProjectLevel: Boolean
-          val isAppLevel: Boolean
-          val annotationParameterValue = lightService.getAnnotationInfo(Service::class.java.name).parameterValues.find { it.name == "value" }
-          if (annotationParameterValue == null) {
-            isAppLevel = lightServiceClass.declaredConstructors.any { it.parameterCount == 0 }
-            isProjectLevel = lightServiceClass.declaredConstructors.any { it.parameterCount == 1 && it.parameterTypes.get(0) == Project::class.java }
+          try {
+            checkLightServiceOfModule(lightService = lightService, plugin = plugin, errors = errors, taskExecutor = taskExecutor)
           }
-          else {
-            val list = annotationParameterValue.value as Array<*>
-            isAppLevel = list.any { v -> (v as AnnotationEnumValue).valueName == Service.Level.APP.name }
-            isProjectLevel = list.any { v -> (v as AnnotationEnumValue).valueName == Service.Level.PROJECT.name }
+          catch (e: PluginException) {
+            errors.add(e)
           }
-
-          if (isAppLevel) {
-            taskExecutor {
-              try {
-                ApplicationManager.getApplication().getService(lightServiceClass)
-              }
-              catch (e: Throwable) {
-                errors.add(RuntimeException("Cannot create $lightServiceClass", e))
-              }
-            }
-          }
-          if (isProjectLevel) {
-            taskExecutor {
-              ProjectUtil.getOpenProjects().firstOrNull()?.getService(lightServiceClass)
-            }
+          catch (e: Throwable) {
+            errors.add(PluginException("Error on checking light services", e, plugin.pluginId))
           }
         }
       }
   }
 }
 
-private fun loadLightServiceClass(lightService: ClassInfo, mainDescriptor: IdeaPluginDescriptorImpl): Class<*> {
-  for (item in mainDescriptor.content.modules) {
-    val classLoader = item.requireDescriptor().classLoader as? PluginClassLoader ?: continue
-    if (lightService.name.startsWith(classLoader.packagePrefix!!)) {
+private fun checkLightServiceOfModule(lightService: ClassInfo,
+                                      plugin: IdeaPluginDescriptorImpl,
+                                      errors: MutableList<Throwable>,
+                                      taskExecutor: (task: () -> Unit) -> Unit) {
+  // not clear - from what classloader light service will be loaded in reality
+  val lightServiceClass = loadLightServiceClass(lightService, plugin) ?: return
+
+  val isProjectLevel: Boolean
+  val isAppLevel: Boolean
+  val annotationParameterValue = lightService.getAnnotationInfo(Service::class.java.name).parameterValues.find { it.name == "value" }
+  if (annotationParameterValue == null) {
+    isAppLevel = lightServiceClass.declaredConstructors.any { it.parameterCount == 0 }
+    isProjectLevel = lightServiceClass.declaredConstructors.any {
+      it.parameterCount == 1 && it.parameterTypes.get(0) == Project::class.java
+    }
+  }
+  else {
+    val list = annotationParameterValue.value as Array<*>
+    isAppLevel = list.any { v -> (v as AnnotationEnumValue).valueName == Service.Level.APP.name }
+    isProjectLevel = list.any { v -> (v as AnnotationEnumValue).valueName == Service.Level.PROJECT.name }
+  }
+
+  fun taskExecutorWithErrorHandling(task: () -> Unit) {
+    taskExecutor {
+      try {
+        task()
+      }
+      catch (e: Throwable) {
+        errors.add(PluginException("Cannot create $lightServiceClass", e, plugin.pluginId))
+      }
+    }
+  }
+
+  if (isAppLevel) {
+    taskExecutorWithErrorHandling {
+      ApplicationManager.getApplication().getService(lightServiceClass)
+    }
+  }
+  if (isProjectLevel) {
+    taskExecutorWithErrorHandling {
+      ProjectUtil.getOpenProjects().firstOrNull()?.getService(lightServiceClass)
+    }
+  }
+}
+
+private fun loadLightServiceClass(lightService: ClassInfo, plugin: IdeaPluginDescriptorImpl): Class<*>? {
+  for (item in plugin.content.modules) {
+    val descriptor = item.requireDescriptor()
+    if (lightService.name.startsWith(descriptor.packagePrefix!!)) {
+      // module is not loaded - dependency is not provided
+      val classLoader = descriptor.pluginClassLoader as? PluginClassLoader ?: return null
       return classLoader.loadClass(lightService.name, true)
     }
   }
 
   // ok, or no plugin dependencies at all, or all are disabled, resolve from main
-  return (mainDescriptor.classLoader as PluginClassLoader).loadClass(lightService.name, true)
+  try {
+    return (plugin.pluginClassLoader as PluginClassLoader).loadClass(lightService.name, true)
+  }
+  catch (e: Exception) {
+    throw PluginException("Cannot load $lightService", e, plugin.pluginId)
+  }
 }

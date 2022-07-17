@@ -1,7 +1,6 @@
 com.intellij.codeInspection.canBeFinal.CanBeFinalInspection
 com.intellij.codeInspection.dataFlow.DataFlowInspection
 com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
-com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection
 com.intellij.codeInspection.defUse.DefUseInspection
 com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection
 com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection
@@ -11,7 +10,6 @@ com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection
 com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection
 com.intellij.codeInspection.i18n.I18nInspection
 com.intellij.codeInspection.i18n.inconsistentResourceBundle.InconsistentResourceBundleInspection
-com.intellij.codeInspection.javaDoc.JavaDocLocalInspection
 com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal
 com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection
 com.intellij.codeInspection.nullable.NullableStuffInspection

@@ -66,6 +66,7 @@ public abstract class VariablesProcessor implements PsiScopeProcessor, ElementCl
     return myResultList.get(i);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY) {

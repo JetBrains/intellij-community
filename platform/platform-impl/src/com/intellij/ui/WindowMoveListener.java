@@ -2,8 +2,6 @@
 
 package com.intellij.ui;
 
-import com.intellij.openapi.progress.util.PotemkinProgress;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -66,90 +64,5 @@ public class WindowMoveListener extends WindowMouseListener {
       }
     }
     super.mouseClicked(event);
-  }
-
-  /**
-   * @author tav
-   */
-  @ApiStatus.Experimental
-  public static class ToolkitListener extends WindowMoveListener {
-    private final ToolkitListenerHelper myHelper;
-
-    public ToolkitListener(Component content) {
-      super(content);
-      myHelper = new ToolkitListenerHelper(this);
-    }
-
-    @Override
-    public void mousePressed(MouseEvent event) {
-      if (!ourIsResizing && hitTest(event)) {
-        super.mousePressed(event);
-      }
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent event) {
-      if (!ourIsResizing && hitTest(event)) {
-        super.mouseReleased(event);
-      }
-    }
-
-    @Override
-    public void mouseDragged(MouseEvent event) {
-      // Should not do hit test when drag has already been detected on the window,
-      // otherwise we can miss a drag event when it's slightly out of the window bounds.
-      if (!ourIsResizing/* && hitTest(event)*/) {
-        super.mouseDragged(event);
-      }
-    }
-
-    @Override
-    public void mouseMoved(MouseEvent event) {
-      if (hitTest(event)) {
-        super.mouseMoved(event);
-      }
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent event) {
-      if (hitTest(event)) {
-        PotemkinProgress.invokeLaterNotBlocking(event.getSource(), () -> super.mouseClicked(event));
-      }
-    }
-
-    private boolean hitTest(MouseEvent e) {
-      Rectangle bounds = getScreenBounds(myContent);
-      return bounds.contains(e.getLocationOnScreen());
-    }
-
-    @Override
-    protected void setCursor(@NotNull Component content, Cursor cursor) {
-      myHelper.setCursor(content, cursor, () -> super.setCursor(content, cursor));
-    }
-
-    @Override
-    protected void setBounds(Component comp, Rectangle bounds) {
-      myHelper.setBounds(comp, bounds, () -> super.setBounds(comp, bounds));
-    }
-
-    public void addTo(Component comp) {
-      myHelper.addTo(comp);
-    }
-
-    public void removeFrom(Component comp) {
-      myHelper.removeFrom(comp);
-    }
-
-    // tree lock free
-    private static Rectangle getScreenBounds(Component comp) {
-      Rectangle bounds = comp.getBounds();
-      Component ancestor = comp.getParent();
-      while (ancestor != null) {
-        Point loc = ancestor.getLocation();
-        bounds.setLocation(bounds.x + loc.x, bounds.y + loc.y);
-        ancestor = ancestor.getParent();
-      }
-      return bounds;
-    }
   }
 }

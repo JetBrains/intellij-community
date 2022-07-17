@@ -1,5 +1,5 @@
 // "Optimize imports" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 package ppp
 
 import ppp.invoke<caret>

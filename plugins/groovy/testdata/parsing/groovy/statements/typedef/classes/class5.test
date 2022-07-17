@@ -1,6 +1,6 @@
 class b {
  def a (def a, final b) {
-  interface a {}  
+  interface a {}
  }
 }
 -----
@@ -14,6 +14,8 @@ Groovy script
     Extends clause
       <empty list>
     Implements clause
+      <empty list>
+    Permits clause
       <empty list>
     PsiWhiteSpace(' ')
     Type definition body
@@ -54,11 +56,12 @@ Groovy script
             PsiElement(identifier)('a')
             Extends clause
               <empty list>
+            Permits clause
+              <empty list>
             PsiWhiteSpace(' ')
             Type definition body
               PsiElement({)('{')
               PsiElement(})('}')
-          PsiWhiteSpace('  ')
           PsiElement(new line)('\n ')
           PsiElement(})('}')
       PsiElement(new line)('\n')

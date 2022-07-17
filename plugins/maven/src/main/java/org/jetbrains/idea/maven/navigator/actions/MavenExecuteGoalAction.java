@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.navigator.actions;
 
 import com.intellij.ide.actions.runAnything.RunAnythingManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -33,5 +34,10 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
     if (project == null) return;
     RunAnythingManager runAnythingManager = RunAnythingManager.getInstance(project);
     runAnythingManager.show(HELP_COMMAND + " ", false, e);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

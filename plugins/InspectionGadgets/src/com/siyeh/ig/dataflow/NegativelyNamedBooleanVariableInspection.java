@@ -62,7 +62,7 @@ public class NegativelyNamedBooleanVariableInspection extends BaseInspection {
   private static class NegativelyNamedBooleanVariableVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitVariable(PsiVariable variable) {
+    public void visitVariable(@NotNull PsiVariable variable) {
       super.visitVariable(variable);
       if (!PsiType.BOOLEAN.equals(variable.getType())) {
         return;

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 interface T
 
 abstract class <caret>B: T {

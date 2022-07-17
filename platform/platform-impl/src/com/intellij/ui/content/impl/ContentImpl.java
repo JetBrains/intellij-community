@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.Disposable;
@@ -15,6 +15,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class ContentImpl extends UserDataHolderBase implements Content {
+  @NonNls public static final String PROP_CONTENT_MANAGER = "contentManager";
   private @NlsContexts.TabTitle String myDisplayName;
   private @NlsContexts.Tooltip String myDescription;
   private JComponent myComponent;
@@ -121,8 +122,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   @Override
   public String getTabName() {
-    if (myTabName != null) return myTabName;
-    return myDisplayName;
+    return myTabName == null ? myDisplayName : myTabName;
   }
 
   @Override
@@ -173,7 +173,9 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   public void setManager(@Nullable ContentManager manager) {
+    ContentManager oldValue = myManager;
     myManager = manager;
+    myChangeSupport.firePropertyChange(PROP_CONTENT_MANAGER, oldValue, myManager);
   }
 
   @Override

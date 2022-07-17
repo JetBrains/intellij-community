@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 /**
@@ -108,13 +108,16 @@ public interface IdeActions {
 
   String GROUP_MAIN_MENU = "MainMenu";
   String GROUP_MAIN_TOOLBAR = "MainToolBar";
+  String GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS = "ExperimentalToolbarActions";
   String GROUP_EXPERIMENTAL_TOOLBAR = "NewToolbarActions";
+  String GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN = "NewToolbarActionsXamarin";
   String GROUP_EDITOR_POPUP = "EditorPopupMenu";
   String GROUP_BASIC_EDITOR_POPUP = "BasicEditorPopupMenu";
   String GROUP_CONSOLE_EDITOR_POPUP = "ConsoleEditorPopupMenu";
   String GROUP_CUT_COPY_PASTE = "CutCopyPasteGroup";
   String GROUP_EDITOR_TAB_POPUP = "EditorTabPopupMenu";
   String GROUP_HELP_MENU = "HelpMenu";
+  String GROUP_INTENTIONS = "Intentions";
 
   String ACTION_CVS_ADD = "Cvs.Add";
   String ACTION_CVS_COMMIT = "Cvs.Commit";
@@ -140,6 +143,7 @@ public interface IdeActions {
   String ACTION_FIND_NEXT = "FindNext";
   String ACTION_FIND_PREVIOUS = "FindPrevious";
   String ACTION_FIND_WORD_AT_CARET = "FindWordAtCaret";
+  String ACTION_FIND_PREV_WORD_AT_CARET = "FindPrevWordAtCaret";
   String ACTION_SELECT_NEXT_OCCURENCE = "SelectNextOccurrence";
   String ACTION_SELECT_ALL_OCCURRENCES = "SelectAllOccurrences";
   String ACTION_UNSELECT_PREVIOUS_OCCURENCE = "UnselectPreviousOccurrence";
@@ -152,6 +156,7 @@ public interface IdeActions {
 
   String ACTION_FIND_USAGES = "FindUsages";
   String ACTION_FIND_IN_PATH = "FindInPath";
+  String ACTION_REPLACE_IN_PATH = "ReplaceInPath";
 
   String ACTION_TYPE_HIERARCHY = "TypeHierarchy";
   String ACTION_METHOD_HIERARCHY = "MethodHierarchy";
@@ -172,6 +177,7 @@ public interface IdeActions {
   String DIFF_VIEWER_POPUP = "Diff.ViewerPopupMenu";
   String DIFF_VIEWER_TOOLBAR = "Diff.ViewerToolbar";
   String GROUP_DIFF_EDITOR_GUTTER_POPUP = "Diff.EditorGutterPopupMenu";
+  String GROUP_DIFF_EDITOR_SETTINGS = "Diff.EditorGutterPopupMenu.EditorSettings";
 
   String ACTION_EXPAND_ALL = "ExpandAll";
   String ACTION_COLLAPSE_ALL = "CollapseAll";
@@ -200,12 +206,6 @@ public interface IdeActions {
   String GROUP_COMMANDER_POPUP = "CommanderPopupMenu";
   String GROUP_TESTTREE_POPUP = "TestTreePopupMenu";
   String GROUP_TESTSTATISTICS_POPUP = "TestStatisticsTablePopupMenu";
-
-  String GROUP_FAVORITES_VIEW_POPUP = "FavoritesViewPopupMenu";
-  String ADD_TO_FAVORITES = "AddToFavorites";
-  String ADD_NEW_FAVORITES_LIST = "AddNewFavoritesList";
-  String REMOVE_FAVORITES_LIST = "RemoveFavoritesList";
-  String REMOVE_ALL_FAVORITES_LISTS_BUT_THIS = "RemoveAllFavoritesListsButThis";
 
   String GROUP_SCOPE_VIEW_POPUP = "ScopeViewPopupMenu";
 
@@ -293,7 +293,7 @@ public interface IdeActions {
   String GROUP_WELCOME_SCREEN_LEARN_IDE = "WelcomeScreen.LearnIdeHelp";
 
   /** @deprecated please use {@link #GROUP_WELCOME_SCREEN_OPTIONS} (and the corresponding action group) instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   String GROUP_WELCOME_SCREEN_HELP = "WelcomeScreen.Help";
 
   String ACTION_KEYMAP_REFERENCE="Help.KeymapReference";
@@ -369,4 +369,6 @@ public interface IdeActions {
   String BREADCRUMBS_HIDE_BOTH = "EditorBreadcrumbsHideBoth";
 
   String ACTION_RESTORE_FONT_PREVIEW_TEXT = "RestoreFontPreviewTextAction";
+
+  String ACTION_FOCUS_EDITOR = "FocusEditor";
 }

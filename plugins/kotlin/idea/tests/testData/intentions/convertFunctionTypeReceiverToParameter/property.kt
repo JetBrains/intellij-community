@@ -1,3 +1,5 @@
+// AFTER-WARNING: Parameter 'any' is never used
+// AFTER-WARNING: The expression is unused
 interface E {
     val foo: Stri<caret>ng.() -> Unit
 }

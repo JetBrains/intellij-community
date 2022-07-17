@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.compiler.impl.*;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.Compiler;
@@ -36,7 +37,6 @@ import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -51,6 +51,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -78,11 +79,9 @@ public class CompilerManagerImpl extends CompilerManager {
   private final Set<LocalFileSystem.WatchRequest> myWatchRoots;
   private volatile ExternalJavacManager myExternalJavacManager;
 
-  @SuppressWarnings("MissingDeprecatedAnnotation")
   @NonInjectable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public CompilerManagerImpl(@NotNull Project project, @SuppressWarnings("unused") @NotNull MessageBus messageBus) {
+  @Deprecated(forRemoval = true)
+  public CompilerManagerImpl(@NotNull Project project, @NotNull MessageBus messageBus) {
     this(project);
   }
 
@@ -320,7 +319,12 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   public boolean isUpToDate(@NotNull CompileScope scope) {
-    return new CompileDriver(myProject).isUpToDate(scope);
+    return new CompileDriver(myProject).isUpToDate(scope, true).join();
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isUpToDateAsync(@NotNull CompileScope scope) {
+    return new CompileDriver(myProject).isUpToDate(scope, false);
   }
 
   @Override
@@ -366,18 +370,8 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   @Override
-  public @NotNull CompileScope createModuleCompileScope(final @NotNull Module module, final boolean includeDependentModules) {
-    return createModulesCompileScope(new Module[] {module}, includeDependentModules);
-  }
-
-  @Override
-  public @NotNull CompileScope createModulesCompileScope(final Module @NotNull [] modules, final boolean includeDependentModules) {
-    return createModulesCompileScope(modules, includeDependentModules, false);
-  }
-
-  @Override
-  public @NotNull CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies) {
-    return new ModuleCompileScope(myProject, modules, includeDependentModules, includeRuntimeDependencies);
+  public @NotNull CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests) {
+    return new ModuleCompileScope(myProject, Arrays.asList(modules), Collections.emptyList(), includeDependentModules, includeRuntimeDependencies, includeTests);
   }
 
   @Override
@@ -512,6 +506,7 @@ public class CompilerManagerImpl extends CompilerManager {
           manager = new ExternalJavacManager(
             compilerWorkingDir, ProcessIOExecutorService.INSTANCE, Registry.intValue("compiler.external.javac.keep.alive.timeout", 5*60*1000)
           );
+          manager.setWslExecutablePath(WSLDistribution.findWslExe());
           manager.start(listenPort);
           myExternalJavacManager = manager;
           IdeEventQueue.getInstance().addIdleListener(new IdleTask(manager), IdleTask.CHECK_PERIOD);

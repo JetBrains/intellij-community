@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBund
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinVariableNameFinder
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.safeCoroutineStackFrameProxy
 import org.jetbrains.kotlin.idea.debugger.safeLocation
+import org.jetbrains.kotlin.idea.debugger.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 
 /**
@@ -31,7 +32,7 @@ class CoroutinePreflightFrame(
     val frame: StackFrameProxyImpl,
     val threadPreCoroutineFrames: List<StackFrameProxyImpl>,
     val mode: SuspendExitMode,
-    firstFrameVariables: List<JavaValue> = coroutineInfoData.topFrameVariables()
+    firstFrameVariables: List<JavaValue>
 ) : CoroutineStackFrame(frame, null, firstFrameVariables) {
 
     override fun isInLibraryContent() = false
@@ -60,7 +61,14 @@ open class CoroutineStackFrame(
     private val spilledVariables: List<JavaValue> = emptyList(),
     private val includeFrameVariables: Boolean = true,
     location: Location? = frame.safeLocation(),
-) : KotlinStackFrame(safeCoroutineStackFrameProxy(location, spilledVariables, frame)) {
+) : KotlinStackFrame(
+    safeCoroutineStackFrameProxy(location, spilledVariables, frame),
+    if (spilledVariables.isEmpty() || includeFrameVariables) {
+        InlineStackTraceCalculator.calculateVisibleVariables(frame)
+    } else {
+        listOf()
+    }
+) {
 
     init {
         descriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER)

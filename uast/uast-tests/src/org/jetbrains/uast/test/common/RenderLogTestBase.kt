@@ -3,8 +3,8 @@ package org.jetbrains.uast.test.common
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
-import org.jetbrains.uast.*
 import com.intellij.testFramework.assertEqualsToFile
+import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.UastVisitor
 import org.junit.Assert
 import java.io.File
@@ -92,15 +92,17 @@ interface RenderLogTestBase {
                               uElement.getContainingUFile())
         }
 
+        val nodeContainingFile by lazy { node.withContainingElements.firstNotNullOf { it.sourcePsi }.containingFile!! }
+
         val uastAnchor = (node as? UDeclaration)?.uastAnchor
         if (uastAnchor != null) {
           Assert.assertEquals("should be appropriate sourcePsi for uastAnchor for ${node.javaClass} [${node.sourcePsi?.text}] ",
-                              node.sourcePsiElement!!.containingFile!!, uastAnchor.sourcePsi?.containingFile)
+            nodeContainingFile, uastAnchor.sourcePsi?.containingFile)
         }
 
         val anchorPsi = uastAnchor?.sourcePsi
         if (anchorPsi != null) {
-          Assert.assertEquals(anchorPsi.containingFile, node.sourcePsiElement!!.containingFile!!)
+          Assert.assertEquals(anchorPsi.containingFile, nodeContainingFile)
         }
 
         return false

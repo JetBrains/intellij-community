@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow.jvm;
 
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.dataFlow.java.JavaClassDef;
 import com.intellij.codeInspection.dataFlow.jvm.transfer.EnterFinallyTrap;
 import com.intellij.codeInspection.dataFlow.jvm.transfer.ExceptionTransfer;
 import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchAllTrap;
@@ -10,12 +11,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.TransferTarget;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -29,22 +25,21 @@ import java.util.Map;
  * A helper class to build CFG
  */
 public class TrapTracker {
-  private final @NotNull Project myProject;
   private @NotNull FList<Trap> myTrapStack = FList.emptyList();
   private final @NotNull DfaValueFactory myFactory;
   private final @NotNull Map<String, ExceptionTransfer> myExceptionCache;
 
+  /**
+   * @deprecated use {@link #TrapTracker(DfaValueFactory, TypeConstraints.TypeConstraintFactory)}
+   */
+  @Deprecated
   public TrapTracker(@NotNull DfaValueFactory factory, @NotNull PsiElement context) {
-    myFactory = factory;
-    myProject = factory.getProject();
-    GlobalSearchScope scope = context.getResolveScope();
-    myExceptionCache = FactoryMap.create(fqn -> new ExceptionTransfer(TypeConstraints.instanceOf(createClassType(scope, fqn))));
+    this(factory, JavaClassDef.typeConstraintFactory(context));
   }
 
-  private @NotNull PsiClassType createClassType(GlobalSearchScope scope, String fqn) {
-    PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(fqn, scope);
-    if (aClass != null) return JavaPsiFacade.getElementFactory(myProject).createType(aClass);
-    return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(fqn, scope);
+  public TrapTracker(@NotNull DfaValueFactory factory, @NotNull TypeConstraints.TypeConstraintFactory typeConstraintFactory) {
+    myFactory = factory;
+    myExceptionCache = FactoryMap.create(fqn -> new ExceptionTransfer(typeConstraintFactory.create(fqn).instanceOf()));
   }
 
   /**

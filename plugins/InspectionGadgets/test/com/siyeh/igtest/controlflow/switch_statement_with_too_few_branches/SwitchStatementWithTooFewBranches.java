@@ -78,4 +78,16 @@ class SwitchStatementWithTooFewBranches {
       case default -> System.out.println();
     }
   }
+
+  void test(ONE one) {
+    int x = switch(one) {
+      case A -> 1;
+    };
+    int y = <warning descr="'switch' expression has too few case labels (1), and should probably be replaced with an 'if' statement or conditional operator">switch</warning>(one) {
+      case A -> 1;
+      default -> 0;
+    };
+  }
+
+  enum ONE { A }
 }

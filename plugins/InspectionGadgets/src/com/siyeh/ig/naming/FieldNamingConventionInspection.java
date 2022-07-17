@@ -36,7 +36,7 @@ public class FieldNamingConventionInspection extends AbstractNamingConventionIns
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         String name = field.getName();
         checkName(field, name, holder);
       }

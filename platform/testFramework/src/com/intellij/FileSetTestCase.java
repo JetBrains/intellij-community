@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij;
 
@@ -6,8 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.text.CharArrayUtil;
 import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,6 +91,7 @@ public abstract class FileSetTestCase extends TestSuite {
     return testFile.getName();
   }
 
+  @SuppressWarnings({"JUnitTestCaseWithNoTests", "UnconstructableJUnitTestCase"})
   private class ActualTest extends LightPlatformTestCase {
     private final File myTestFile;
     private final String myTestName;
@@ -106,8 +109,15 @@ public abstract class FileSetTestCase extends TestSuite {
 
     @Override
     protected void tearDown() throws Exception {
-      FileSetTestCase.this.tearDown();
-      super.tearDown();
+      try {
+        FileSetTestCase.this.tearDown();
+      }
+      catch (Throwable e) {
+        addSuppressedException(e);
+      }
+      finally {
+        super.tearDown();
+      }
     }
 
     @Override
@@ -124,20 +134,19 @@ public abstract class FileSetTestCase extends TestSuite {
 
       content = StringUtil.replace(content, "\r", "");
 
+      int currentIndex = 0;
       int separatorIndex;
-      while ((separatorIndex = content.indexOf(getDelimiter())) >= 0) {
-        input.add(content.substring(0, separatorIndex));
-        content = content.substring(separatorIndex);
-        while (StringUtil.startsWithChar(content, '-') || StringUtil.startsWithChar(content, '\n')) content = content.substring(1);
+      String delimiter = getDelimiter();
+      while ((separatorIndex = content.indexOf(delimiter, currentIndex)) >= 0) {
+        input.add(content.substring(currentIndex, separatorIndex));
+        currentIndex = separatorIndex + delimiter.length();
+        currentIndex = CharArrayUtil.shiftForward(content, currentIndex, "-\n");
       }
 
-      String result = content;
+      assertFalse("No data found in source file", input.isEmpty());
 
-      assertTrue("No data found in source file", !input.isEmpty());
+      int expectedOffset = currentIndex;
 
-      while (StringUtil.startsWithChar(result, '-') || StringUtil.startsWithChar(result, '\n') || StringUtil.startsWithChar(result, '\r')) {
-        result = result.substring(1);
-      }
       myProject = getProject();
       String testName = myTestFile.getName();
       final int dotIdx = testName.indexOf('.');
@@ -145,10 +154,10 @@ public abstract class FileSetTestCase extends TestSuite {
         testName = testName.substring(0, dotIdx);
       }
 
-      final String transformed = StringUtil.replace(transform(testName, ArrayUtilRt.toStringArray(input)), "\r", "");
-      result = StringUtil.replace(result, "\r", "");
+      final String transformed = transform(testName, ArrayUtilRt.toStringArray(input));
+      String result = content.substring(0, expectedOffset) + transformed;
 
-      assertEquals(result.trim(),transformed.trim());
+      UsefulTestCase.assertSameLinesWithFile(myTestFile.getAbsolutePath(), result, true);
     }
 
     @NotNull

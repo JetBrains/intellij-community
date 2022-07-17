@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="kotlin.plugin.k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.plugin.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.analysis-api-providers" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.test" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.fir" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.fir.fir-fe10-binding" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.fir.frontend-independent.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.compose" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.testsFromCompiler" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.util.test-generator" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.util.test-generator-fir" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.tests-common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k2" scope="RUNTIME" />
+  </component>
+</module>

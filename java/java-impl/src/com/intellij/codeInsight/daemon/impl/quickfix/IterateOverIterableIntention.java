@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.impl.InvokeTemplateAction;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -53,6 +54,11 @@ public class IterateOverIterableIntention implements IntentionAction {
 
   public IterateOverIterableIntention(@Nullable PsiExpression expression) {
     myExpression = expression;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new IterateOverIterableIntention(PsiTreeUtil.findSameElementInCopy(myExpression, target));
   }
 
   @Override
@@ -159,9 +165,6 @@ public class IterateOverIterableIntention implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(file)) {
-      return;
-    }
     final TemplateImpl template = getTemplate();
     SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
@@ -169,17 +172,18 @@ public class IterateOverIterableIntention implements IntentionAction {
       LOG.assertTrue(iterableExpression != null);
       PsiElement element = PsiTreeUtil.skipSiblingsForward(iterableExpression, PsiWhiteSpace.class, PsiComment.class);
       if (PsiUtil.isJavaToken(element, JavaTokenType.SEMICOLON)) {
-        WriteAction.run(() -> element.delete());
+        element.delete();
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(file.getViewProvider().getDocument());
       }
       TextRange textRange = iterableExpression.getTextRange();
       selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
     }
-    new InvokeTemplateAction(template, editor, project, new HashSet<>()).perform();
+    new InvokeTemplateAction(template, editor, project, new HashSet<>()).performInCommand();
   }
 
   @Override
   public boolean startInWriteAction() {
-    return false;
+    return true;
   }
 
   @NotNull

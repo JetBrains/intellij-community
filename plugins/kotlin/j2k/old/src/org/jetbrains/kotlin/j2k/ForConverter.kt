@@ -145,8 +145,7 @@ class ForConverter(
 
                 if (left.resolve() == loopVar) {
                     val start = loopVar.initializer ?: return null
-                    val operationType = (update as? PsiExpressionStatement)?.expression?.isVariableIncrementOrDecrement(loopVar)
-                    val reversed = when (operationType) {
+                    val reversed = when ((update as? PsiExpressionStatement)?.expression?.isVariableIncrementOrDecrement(loopVar)) {
                         JavaTokenType.PLUSPLUS -> false
                         JavaTokenType.MINUSMINUS -> true
                         else -> return null

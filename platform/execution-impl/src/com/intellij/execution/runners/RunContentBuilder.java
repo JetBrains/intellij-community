@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.CommonBundle;
@@ -93,25 +93,48 @@ public final class RunContentBuilder extends RunTab {
       consoleContent.setActions(new DefaultActionGroup(), ActionPlaces.RUNNER_TOOLBAR, console.getComponent());
     }
     ActionGroup toolbar = createActionToolbar(contentDescriptor, consoleActionsToMerge);
-    if (Registry.is("debugger.new.tool.window.layout")) {
+    if (UIExperiment.isNewDebuggerUIEnabled()) {
+      var isVerticalToolbar = Registry.get("debugger.new.tool.window.layout.toolbar").isOptionEnabled("Vertical");
+
       mySupplier = new RunTabSupplier(toolbar) {
         {
-          setMoveToolbar(true);
+          setMoveToolbar(!isVerticalToolbar);
+        }
+
+        @Override
+        public @Nullable ActionGroup getToolbarActions() {
+          return isVerticalToolbar ? ActionGroup.EMPTY_GROUP : super.getToolbarActions();
         }
 
         @Override
         public @NotNull List<AnAction> getContentActions() {
-          return List.of(myUi.getOptions().getLayoutActions(), PinToolwindowTabAction.getPinAction());
+          return List.of(myUi.getOptions().getLayoutActions());
+        }
+
+        @NotNull
+        @Override
+        public String getMainToolbarPlace() {
+          return ActionPlaces.RUNNER_TOOLBAR;
+        }
+
+        @NotNull
+        @Override
+        public String getContentToolbarPlace() {
+          return ActionPlaces.RUNNER_TOOLBAR;
         }
       };
       if (myUi instanceof RunnerLayoutUiImpl) {
-        ((RunnerLayoutUiImpl)myUi).setLeftToolbarVisible(false);
+        ((RunnerLayoutUiImpl)myUi).setLeftToolbarVisible(isVerticalToolbar);
       }
-      // wrapped into DefaultActionGroup to prevent loading all actions instantly
-      DefaultActionGroup topToolbar = new DefaultActionGroup(
-        new EmptyWhenDuplicate(toolbar, group -> group instanceof RunTab.ToolbarActionGroup)
-      );
-      myUi.getOptions().setTopLeftToolbar(topToolbar, ActionPlaces.RUNNER_TOOLBAR);
+      if (isVerticalToolbar) {
+        myUi.getOptions().setLeftToolbar(toolbar, ActionPlaces.RUNNER_TOOLBAR);
+      } else {
+        // wrapped into DefaultActionGroup to prevent loading all actions instantly
+        DefaultActionGroup topToolbar = new DefaultActionGroup(
+          new EmptyWhenDuplicate(toolbar, group -> group instanceof RunTab.ToolbarActionGroup)
+        );
+        myUi.getOptions().setTopLeftToolbar(topToolbar, ActionPlaces.RUNNER_TOOLBAR);
+      }
     } else {
       myUi.getOptions().setLeftToolbar(toolbar, ActionPlaces.RUNNER_TOOLBAR);
     }
@@ -149,7 +172,7 @@ public final class RunContentBuilder extends RunTab {
   public static Content buildConsoleUiDefault(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
     Content consoleContent = ui.createContent(ExecutionConsole.CONSOLE_CONTENT_ID, console.getComponent(),
                                               CommonBundle.message("title.console"),
-                                              AllIcons.Debugger.Console,
+                                              null,
                                               console.getPreferredFocusableComponent());
 
     consoleContent.setCloseable(false);
@@ -171,16 +194,19 @@ public final class RunContentBuilder extends RunTab {
 
   @NotNull
   private ActionGroup createActionToolbar(@NotNull RunContentDescriptor contentDescriptor, AnAction @NotNull [] consoleActions) {
-    boolean isNewLayout = Registry.is("debugger.new.tool.window.layout");
+    boolean isNewLayout = UIExperiment.isNewDebuggerUIEnabled();
 
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
     final AnAction[] actions = contentDescriptor.getRestartActions();
+    final MoreActionGroup moreGroup = new MoreActionGroup();
     if (!isNewLayout) {
       actionGroup.addAll(actions);
     } else {
       for (AnAction action : actions) {
-        if (!Boolean.TRUE.equals(action.getTemplatePresentation().getClientProperty(RunTab.HIDE_FROM_TOOLBAR))) {
+        if (action.getTemplatePresentation().getClientProperty(RunTab.PREFERRED_PLACE) == PreferredPlace.MORE_GROUP) {
+          moreGroup.add(action);
+        } else {
           actionGroup.add(action);
         }
       }
@@ -213,16 +239,15 @@ public final class RunContentBuilder extends RunTab {
       actionGroup.add(PinToolwindowTabAction.getPinAction());
     } else {
       actionGroup.addSeparator();
-      MoreActionGroup more = new MoreActionGroup();
       for (AnAction action : myRunnerActions) {
-        if (Boolean.TRUE.equals(action.getTemplatePresentation().getClientProperty(RunTab.TAKE_OUT_OF_MORE_GROUP))) {
+        if (PreferredPlace.TOOLBAR == action.getTemplatePresentation().getClientProperty(RunTab.PREFERRED_PLACE)) {
           actionGroup.add(action);
         } else {
-          more.add(action);
+          moreGroup.add(action);
         }
       }
 
-      actionGroup.add(more);
+      actionGroup.add(moreGroup);
     }
     return actionGroup;
   }
@@ -277,9 +302,9 @@ public final class RunContentBuilder extends RunTab {
   private static class EmptyWhenDuplicate extends ActionGroup {
 
     private final @NotNull ActionGroup myDelegate;
-    private final @NotNull Predicate<ActionGroup> myDuplicatePredicate;
+    private final @NotNull Predicate<? super ActionGroup> myDuplicatePredicate;
 
-    private EmptyWhenDuplicate(@NotNull ActionGroup delegate, @NotNull Predicate<ActionGroup> isDuplicate) {
+    private EmptyWhenDuplicate(@NotNull ActionGroup delegate, @NotNull Predicate<? super ActionGroup> isDuplicate) {
       myDelegate = delegate;
       myDuplicatePredicate = isDuplicate;
     }

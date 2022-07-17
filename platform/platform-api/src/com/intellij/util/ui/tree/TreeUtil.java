@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.ui.UISettings;
@@ -185,12 +185,21 @@ public final class TreeUtil {
 
   /**
    * @param tree   a tree, which viewable paths are processed
-   * @param mapper a function to convert a expanded tree path to a corresponding object
+   * @param mapper a function to convert an expanded tree path to a corresponding object
    * @return a list of objects which correspond to expanded paths under the specified root node
    */
   @NotNull
   public static <T> List<T> collectExpandedObjects(@NotNull JTree tree, @NotNull Function<? super TreePath, ? extends T> mapper) {
-    return collectVisibleRows(tree, tree::isExpanded, mapper);
+    int count = tree.getRowCount();
+    if (count == 0) return Collections.emptyList(); // tree is empty
+    List<T> list = new ArrayList<>();
+    for (int row = 0; row < count; row++) {
+      if (tree.isExpanded(row)) {
+        TreePath path = getVisiblePathWithValidation(tree, row, count);
+        ContainerUtil.addIfNotNull(list, mapper.apply(path));
+      }
+    }
+    return list;
   }
 
   @Nullable
@@ -236,13 +245,29 @@ public final class TreeUtil {
   /**
    * @param tree   a tree, which viewable paths are processed
    * @param root   an ascendant tree path to filter expanded tree paths
-   * @param mapper a function to convert a expanded tree path to a corresponding object
+   * @param mapper a function to convert an expanded tree path to a corresponding object
    * @return a list of objects which correspond to expanded paths under the specified root node
    */
   @NotNull
   public static <T> List<T> collectExpandedObjects(@NotNull JTree tree, @NotNull TreePath root, @NotNull Function<? super TreePath, ? extends T> mapper) {
-    if (!tree.isVisible(root)) return Collections.emptyList(); // invisible path should not be expanded
-    return collectVisibleRows(tree, path -> tree.isExpanded(path) && root.isDescendant(path), mapper);
+    int count = tree.getRowCount();
+    if (count == 0) return Collections.emptyList(); // tree is empty
+    int row = tree.getRowForPath(root);
+    if (row < 0) {
+      return !tree.isRootVisible() && root.equals(getVisiblePathWithValidation(tree, 0, count).getParentPath())
+             ? collectExpandedObjects(tree, mapper) // collect expanded objects under a hidden root
+             : Collections.emptyList(); // root path is not visible
+    }
+    if (!tree.isExpanded(row)) return Collections.emptyList(); // root path is not expanded
+    List<T> list = new ArrayList<>(count);
+    ContainerUtil.addIfNotNull(list, mapper.apply(root));
+    int depth = root.getPathCount();
+    for (row++; row < count; row++) {
+      TreePath path = getVisiblePathWithValidation(tree, row, count);
+      if (depth >= path.getPathCount()) break; // not a descendant of a root path
+      if (tree.isExpanded(row)) ContainerUtil.addIfNotNull(list, mapper.apply(path));
+    }
+    return list;
   }
 
   /**
@@ -370,8 +395,7 @@ public final class TreeUtil {
   /**
    * @deprecated use {@link #promiseSelectFirstLeaf}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public static TreePath getFirstLeafNodePath(@NotNull JTree tree) {
     final TreeModel model = tree.getModel();
@@ -428,15 +452,13 @@ public final class TreeUtil {
   }
 
   /** @deprecated use TreeUtil#treeTraverser() or TreeUtil#treeNodeTraverser() directly */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static boolean traverse(@NotNull TreeNode node, @NotNull Traverse traverse) {
     return treeNodeTraverser(node).traverse(TreeTraversal.POST_ORDER_DFS).processEach(traverse::accept);
   }
 
   /** @deprecated use TreeUtil#treeTraverser() or TreeUtil#treeNodeTraverser() directly */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static boolean traverseDepth(@NotNull TreeNode node, @NotNull Traverse traverse) {
     return treeNodeTraverser(node).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(traverse::accept);
   }
@@ -740,7 +762,6 @@ public final class TreeUtil {
       }
       done.run();
     };
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(builder == null ? scroll : () -> builder.getReady(TreeUtil.class).doWhenDone(scroll));
   }
 
@@ -792,7 +813,6 @@ public final class TreeUtil {
     return lastRow - firstRow + 1;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static void installActions(@NotNull final JTree tree) {
     TreeUI ui = tree.getUI();
     if (ui != null && ui.getClass().getName().equals("com.intellij.ui.tree.ui.DefaultTreeUI")) return;
@@ -905,7 +925,7 @@ public final class TreeUtil {
    * @see AbstractTreeNode#isAlwaysExpand
    */
   private static boolean isAlwaysExpand(@NotNull TreePath path) {
-    AbstractTreeNode<?> node = getLastUserObject(AbstractTreeNode.class, path);
+    AbstractTreeNode<?> node = getAbstractTreeNode(path);
     return node != null && node.isAlwaysExpand();
   }
 
@@ -973,7 +993,7 @@ public final class TreeUtil {
    * if this method is called on inappropriate background thread.
    *
    * @param tree a tree, which nodes should be expanded
-   * @return a promise that will be succeed when all nodes are expanded
+   * @return a promise that will be succeeded when all nodes are expanded
    */
   @NotNull
   public static Promise<?> promiseExpandAll(@NotNull JTree tree) {
@@ -983,7 +1003,7 @@ public final class TreeUtil {
   /**
    * Expands n levels of the tree counting from the root
    * @param tree to expand nodes of
-   * @param levels depths of the expantion
+   * @param levels depths of the expansion
    */
   public static void expand(@NotNull JTree tree, int levels) {
     promiseExpand(tree, levels);
@@ -1008,7 +1028,7 @@ public final class TreeUtil {
    *
    * @param tree  a tree, which nodes should be expanded
    * @param depth a depth starting from the root node
-   * @return a promise that will be succeed when all needed nodes are expanded
+   * @return a promise that will be succeeded when all needed nodes are expanded
    */
   @NotNull
   public static Promise<?> promiseExpand(@NotNull JTree tree, int depth) {
@@ -1319,7 +1339,7 @@ public final class TreeUtil {
   }
 
   /**
-   * @return an user object retrieved from the last component of the specified {@code path}
+   * @return a user object retrieved from the last component of the specified {@code path}
    */
   @Nullable
   public static Object getLastUserObject(@Nullable TreePath path) {
@@ -1331,15 +1351,33 @@ public final class TreeUtil {
     return path == null ? null : getUserObject(type, path.getLastPathComponent());
   }
 
-  @Nullable
-  public static TreePath getSelectedPathIfOne(@NotNull JTree tree) {
-    TreePath[] paths = tree.getSelectionPaths();
+  public static @Nullable AbstractTreeNode<?> getAbstractTreeNode(@Nullable Object node) {
+    return getUserObject(AbstractTreeNode.class, node);
+  }
+
+  public static @Nullable AbstractTreeNode<?> getAbstractTreeNode(@Nullable TreePath path) {
+    return getLastUserObject(AbstractTreeNode.class, path);
+  }
+
+  public static @Nullable TreePath getSelectedPathIfOne(@Nullable JTree tree) {
+    TreePath[] paths = tree == null ? null : tree.getSelectionPaths();
     return paths != null && paths.length == 1 ? paths[0] : null;
   }
 
+  /**
+   * @param tree      a tree, which selection is requested
+   * @param predicate a predicate that validates selected paths
+   * @return an array with all selected paths if all of them are valid
+   */
+  public static TreePath @Nullable [] getSelectedPathsIfAll(@Nullable JTree tree, @NotNull Predicate<? super TreePath> predicate) {
+    TreePath[] paths = tree == null ? null : tree.getSelectionPaths();
+    if (paths == null || paths.length == 0) return null;
+    for (TreePath path : paths) if (path == null || !predicate.test(path)) return null;
+    return paths;
+  }
+
   /** @deprecated use TreeUtil#treePathTraverser() */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @FunctionalInterface
   public interface Traverse{
     boolean accept(Object node);
@@ -1415,6 +1453,20 @@ public final class TreeUtil {
   }
 
   /**
+   * Promises to expand a node (specified by the path) in the given tree.
+   * <strong>NB!:</strong>
+   * The returned promise may be resolved immediately,
+   * if this method is called on inappropriate background thread.
+   *
+   * @param tree a tree, which nodes should be expanded
+   * @param path a tree path to a node that should be expanded
+   * @return a promise that will be succeeded only if path is found and expanded
+   */
+  public static @NotNull Promise<TreePath> promiseExpand(@NotNull JTree tree, @NotNull TreePath path) {
+    return promiseExpand(tree, new TreeVisitor.ByTreePath<>(path, node -> node));
+  }
+
+  /**
    * Promises to expand a node in the specified tree.
    * <strong>NB!:</strong>
    * The returned promise may be resolved immediately,
@@ -1422,7 +1474,7 @@ public final class TreeUtil {
    *
    * @param tree    a tree, which nodes should be expanded
    * @param visitor a visitor that controls expanding of tree nodes
-   * @return a promise that will be succeed only if path is found and expanded
+   * @return a promise that will be succeeded only if path is found and expanded
    */
   @NotNull
   public static Promise<TreePath> promiseExpand(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
@@ -1437,7 +1489,7 @@ public final class TreeUtil {
    *
    * @param tree     a tree, which nodes should be expanded
    * @param visitors visitors to control expanding of tree nodes
-   * @return a promise that will be succeed only if paths are found and expanded
+   * @return a promise that will be succeeded only if paths are found and expanded
    */
   @NotNull
   public static Promise<List<TreePath>> promiseExpand(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
@@ -1456,6 +1508,20 @@ public final class TreeUtil {
   }
 
   /**
+   * Promises to make visible a node (specified by the path) in the given tree.
+   * <strong>NB!:</strong>
+   * The returned promise may be resolved immediately,
+   * if this method is called on inappropriate background thread.
+   *
+   * @param tree a tree, which nodes should be made visible
+   * @param path a tree path to a node that should be made visible
+   * @return a promise that will be succeeded only if path is found and made visible
+   */
+  public static @NotNull Promise<TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreePath path) {
+    return promiseMakeVisible(tree, new TreeVisitor.ByTreePath<>(path, node -> node));
+  }
+
+  /**
    * Promises to make visible a node in the specified tree.
    * <strong>NB!:</strong>
    * The returned promise may be resolved immediately,
@@ -1463,7 +1529,7 @@ public final class TreeUtil {
    *
    * @param tree    a tree, which nodes should be made visible
    * @param visitor a visitor that controls expanding of tree nodes
-   * @return a promise that will be succeed only if path is found and made visible
+   * @return a promise that will be succeeded only if path is found and made visible
    */
   @NotNull
   public static Promise<TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
@@ -1501,7 +1567,7 @@ public final class TreeUtil {
    *
    * @param tree     a tree, which nodes should be made visible
    * @param visitors visitors to control expanding of tree nodes
-   * @return a promise that will be succeed only if path are found and made visible
+   * @return a promise that will be succeeded only if path are found and made visible
    */
   @NotNull
   @SuppressWarnings("unused")
@@ -1562,6 +1628,20 @@ public final class TreeUtil {
   }
 
   /**
+   * Promises to select a node (specified by the path) in the given tree.
+   * <strong>NB!:</strong>
+   * The returned promise may be resolved immediately,
+   * if this method is called on inappropriate background thread.
+   *
+   * @param tree a tree, which nodes should be selected
+   * @param path a tree path to a node that should be selected
+   * @return a promise that will be succeeded only if path is found and selected
+   */
+  public static @NotNull Promise<TreePath> promiseSelect(@NotNull JTree tree, @NotNull TreePath path) {
+    return promiseSelect(tree, new TreeVisitor.ByTreePath<>(path, node -> node));
+  }
+
+  /**
    * Promises to select a node in the specified tree.
    * <strong>NB!:</strong>
    * The returned promise may be resolved immediately,
@@ -1569,7 +1649,7 @@ public final class TreeUtil {
    *
    * @param tree    a tree, which nodes should be selected
    * @param visitor a visitor that controls expanding of tree nodes
-   * @return a promise that will be succeed only if path is found and selected
+   * @return a promise that will be succeeded only if path is found and selected
    */
   @NotNull
   public static Promise<TreePath> promiseSelect(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
@@ -1584,7 +1664,7 @@ public final class TreeUtil {
    *
    * @param tree     a tree, which nodes should be selected
    * @param visitors visitors to control expanding of tree nodes
-   * @return a promise that will be succeed only if paths are found and selected
+   * @return a promise that will be succeeded only if paths are found and selected
    */
   @NotNull
   public static Promise<List<TreePath>> promiseSelect(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
@@ -1675,7 +1755,7 @@ public final class TreeUtil {
    * if this method is called on inappropriate background thread.
    *
    * @param tree a tree, which node should be selected
-   * @return a promise that will be succeed when first visible node is selected
+   * @return a promise that will be succeeded when first visible node is selected
    */
   @NotNull
   public static Promise<TreePath> promiseSelectFirst(@NotNull JTree tree) {
@@ -1695,7 +1775,7 @@ public final class TreeUtil {
    * if this method is called on inappropriate background thread.
    *
    * @param tree a tree, which node should be selected
-   * @return a promise that will be succeed when first leaf node is made visible and selected
+   * @return a promise that will be succeeded when first leaf node is made visible and selected
    */
   @NotNull
   public static Promise<TreePath> promiseSelectFirstLeaf(@NotNull JTree tree) {
@@ -1747,7 +1827,7 @@ public final class TreeUtil {
    *
    * @param tree    a tree, which nodes should be processed
    * @param visitor a visitor that controls processing of tree nodes
-   * @return a promise that will be succeed when visiting is finished
+   * @return a promise that will be succeeded when visiting is finished
    */
   @NotNull
   public static Promise<TreePath> promiseVisit(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
@@ -1833,13 +1913,7 @@ public final class TreeUtil {
     TreePath parent = null;
     int count = tree.getRowCount();
     for (int row = 0; row < count; row++) {
-      if (count != tree.getRowCount()) {
-        throw new ConcurrentModificationException("tree is modified");
-      }
-      TreePath path = tree.getPathForRow(row);
-      if (path == null) {
-        throw new NullPointerException("path is not found at row " + row);
-      }
+      TreePath path = getVisiblePathWithValidation(tree, row, count);
       if (parent == null || !parent.isDescendant(path)) {
         switch (visitor.visit(path)) {
           case INTERRUPT:
@@ -1876,20 +1950,13 @@ public final class TreeUtil {
   }
 
   /**
-   * @param tree   a tree, which visible paths are processed
-   * @param filter a predicate to filter visible tree paths
-   * @param mapper a function to convert a visible tree path to a corresponding object
-   * @return a list of objects which correspond to filtered visible paths
+   * @param tree a tree, which nodes should be iterated
+   * @param lead a starting tree path
+   * @return next tree path with the same parent, or {@code null} if it is not found
    */
-  @NotNull
-  private static <T> List<T> collectVisibleRows(@NotNull JTree tree,
-                                                @NotNull Predicate<? super TreePath> filter,
-                                                @NotNull Function<? super TreePath, ? extends T> mapper) {
-    int count = tree.getRowCount();
-    if (count == 0) return Collections.emptyList();
-    List<T> list = new ArrayList<>(count);
-    visitVisibleRows(tree, path -> filter.test(path) ? mapper.apply(path) : null, list::add);
-    return list;
+  public static @Nullable TreePath nextVisibleSibling(@NotNull JTree tree, @Nullable TreePath lead) {
+    TreePath parent = lead == null ? null : lead.getParentPath();
+    return parent == null ? null : nextVisiblePath(tree, lead, path -> parent.equals(path.getParentPath()));
   }
 
   /**
@@ -1934,6 +2001,16 @@ public final class TreeUtil {
       TreePath path = tree.getPathForRow(row);
       if (path != null && predicate.test(path)) return path;
     }
+  }
+
+  /**
+   * @param tree a tree, which nodes should be iterated
+   * @param lead a starting tree path
+   * @return previous tree path with the same parent, or {@code null} if it is not found
+   */
+  public static @Nullable TreePath previousVisibleSibling(@NotNull JTree tree, @Nullable TreePath lead) {
+    TreePath parent = lead == null ? null : lead.getParentPath();
+    return parent == null ? null : previousVisiblePath(tree, lead, path -> parent.equals(path.getParentPath()));
   }
 
   /**
@@ -1988,5 +2065,18 @@ public final class TreeUtil {
     if (!Registry.is("ide.tree.ui.cyclic.scrolling.allowed")) return false;
     UISettings settings = UISettings.getInstanceOrNull();
     return settings != null && settings.getCycleScrolling();
+  }
+
+  /**
+   * @param tree  a tree, which paths should be requested
+   * @param row   an index of a visible tree path
+   * @param count an expected amount of visible tree paths
+   * @return a requested tree path
+   */
+  private static @NotNull TreePath getVisiblePathWithValidation(@NotNull JTree tree, int row, int count) {
+    if (count != tree.getRowCount()) throw new ConcurrentModificationException("tree is modified");
+    TreePath path = tree.getPathForRow(row);
+    if (path == null) throw new NullPointerException("path is not found at row " + row);
+    return path;
   }
 }

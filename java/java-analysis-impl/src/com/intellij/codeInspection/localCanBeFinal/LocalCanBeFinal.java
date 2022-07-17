@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.localCanBeFinal;
 
 import com.intellij.codeInspection.*;
@@ -116,7 +116,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     final List<ProblemDescriptor> problems = new ArrayList<>();
     final HashSet<PsiVariable> result = new HashSet<>();
     body.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitCodeBlock(PsiCodeBlock block) {
+      @Override public void visitCodeBlock(@NotNull PsiCodeBlock block) {
         if (block.getParent() instanceof PsiLambdaExpression && block != body) {
           final List<ProblemDescriptor> descriptors = checkCodeBlock(block, manager, onTheFly);
           if (descriptors != null) {
@@ -125,14 +125,30 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
           return;
         }
         super.visitCodeBlock(block);
+        Set<PsiVariable> declared = getDeclaredVariables(block);
+        if (declared.isEmpty()) return;
         PsiElement anchor = block;
-        if (block.getParent() instanceof PsiSwitchStatement) {
+        if (block.getParent() instanceof PsiSwitchBlock) {
           anchor = block.getParent();
+
+          //special case: switch legs
+          Set<PsiReferenceExpression> writeRefs = 
+            SyntaxTraverser.psiTraverser().withRoot(block)
+              .filter(PsiReferenceExpression.class)
+              .filter(ref -> PsiUtil.isOnAssignmentLeftHand(ref)).toSet();
+
+          for (PsiReferenceExpression ref : writeRefs) {
+            PsiElement resolve = ref.resolve();
+            if (resolve instanceof PsiVariable && declared.contains(resolve) && ((PsiVariable)resolve).hasInitializer()) {
+              declared.remove(resolve);
+            }
+          }
         }
+
         int from = flow.getStartOffset(anchor);
         int end = flow.getEndOffset(anchor);
         List<PsiVariable> ssa = ControlFlowUtil.getSSAVariables(flow, from, end, true);
-        HashSet<PsiElement> declared = getDeclaredVariables(block);
+       
         for (PsiVariable psiVariable : ssa) {
           if (declared.contains(psiVariable)) {
             result.add(psiVariable);
@@ -141,12 +157,15 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       }
 
       @Override
-      public void visitResourceVariable(PsiResourceVariable variable) {
+      public void visitResourceVariable(@NotNull PsiResourceVariable variable) {
+        if (PsiTreeUtil.getParentOfType(variable, PsiClass.class) != PsiTreeUtil.getParentOfType(body, PsiClass.class)) {
+          return;
+        }
         result.add(variable);
       }
 
       @Override
-      public void visitCatchSection(PsiCatchSection section) {
+      public void visitCatchSection(@NotNull PsiCatchSection section) {
         super.visitCatchSection(section);
         if (!REPORT_CATCH_PARAMETERS) return;
         final PsiParameter parameter = section.getParameter();
@@ -163,7 +182,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         }
       }
 
-      @Override public void visitForeachStatement(PsiForeachStatement statement) {
+      @Override public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
         super.visitForeachStatement(statement);
         if (!REPORT_FOREACH_PARAMETERS) return;
         final PsiParameter param = statement.getIterationParameter();
@@ -180,24 +199,24 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         }
       }
 
-      private HashSet<PsiElement> getDeclaredVariables(PsiCodeBlock block) {
-        final HashSet<PsiElement> result = new HashSet<>();
+      private Set<PsiVariable> getDeclaredVariables(PsiCodeBlock block) {
+        final HashSet<PsiVariable> result = new HashSet<>();
         PsiElement[] children = block.getChildren();
         for (PsiElement child : children) {
           child.accept(new JavaElementVisitor() {
-            @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+            @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
               visitReferenceElement(expression);
             }
 
-            @Override public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+            @Override public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
               PsiElement[] declaredElements = statement.getDeclaredElements();
               for (PsiElement declaredElement : declaredElements) {
-                if (declaredElement instanceof PsiVariable) result.add(declaredElement);
+                if (declaredElement instanceof PsiVariable) result.add((PsiVariable)declaredElement);
               }
             }
 
             @Override
-            public void visitForStatement(PsiForStatement statement) {
+            public void visitForStatement(@NotNull PsiForStatement statement) {
               super.visitForStatement(statement);
               final PsiStatement initialization = statement.getInitialization();
               if (!(initialization instanceof PsiDeclarationStatement)) {
@@ -207,7 +226,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
               final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
               for (final PsiElement declaredElement : declaredElements) {
                 if (declaredElement instanceof PsiVariable) {
-                  result.add(declaredElement);
+                  result.add((PsiVariable)declaredElement);
                 }
               }
             }
@@ -217,7 +236,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         return result;
       }
 
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         if (expression.getParent() instanceof PsiMethodCallExpression) {
           super.visitReferenceExpression(expression);
         }

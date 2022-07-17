@@ -1,7 +1,7 @@
 // OUT_OF_CODE_BLOCK: TRUE
+// TYPE: }
 // SKIP_ANALYZE_CHECK
 // ERROR: Function declaration must have a name
-
 fun test() {<caret>
 
     val someThing: Any? = null
@@ -11,4 +11,3 @@ fun test() {<caret>
         // Some comment
     }
 
-// TYPE: }

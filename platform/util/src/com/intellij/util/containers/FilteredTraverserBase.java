@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.WeakHashMap;
 
 import static com.intellij.openapi.util.Conditions.not;
 
@@ -643,15 +644,17 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     }
 
     S map(T t) {
-      if (reverse == null) reverse = ContainerUtil.createWeakMap();
+      if (reverse == null) reverse = new WeakHashMap<>();
       S s = mapInner.fun(t);
-      reverse.put(s, t);
+      if (s != null && t != null) {
+        reverse.put(s, t);
+      }
       return s;
     }
 
     @NotNull
     T reverse(S s) {
-      T t = reverse.get(s);
+      T t = s==null?null:reverse.get(s);
       if (t == null) {
         throw new IllegalStateException("unable to reverse map for: " + s);
       }

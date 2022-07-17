@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main.collectors;
 
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
-import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
-import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.StructField;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -82,33 +82,33 @@ public class ImportCollector {
   /**
    * Check whether the package-less name ClassName is shaded by variable in a context of
    * the decompiled class
-   * @param classToName - pkg.name.ClassName - class to find shortname for
+   * @param classToName - pkg.name.ClassName - class to find the nested name for
    * @return ClassName if the name is not shaded by local field, pkg.name.ClassName otherwise
    */
-  public String getShortNameInClassContext(String classToName) {
-    String shortName = getShortName(classToName);
-    if (setFieldNames.contains(shortName)) {
+  public String getNestedNameInClassContext(String classToName) {
+    String nestedName = getNestedName(classToName);
+    if (setFieldNames.contains(nestedName)) {
       return classToName;
     }
     else {
-      return shortName;
+      return nestedName;
     }
   }
 
-  public String getShortName(String fullName) {
-    return getShortName(fullName, true);
+  public String getNestedName(String fullName) {
+    return getNestedName(fullName, true);
   }
 
-  public String getShortName(String fullName, boolean imported) {
+  public String getNestedName(String fullName, boolean imported) {
     ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName.replace('.', '/')); //todo[r.sh] anonymous classes?
 
-    String result = null;
+    String nestedName;
     if (node != null && node.classStruct.isOwn()) {
-      result = node.simpleName;
+      nestedName = node.simpleName;
 
       while (node.parent != null && node.type == ClassNode.CLASS_MEMBER) {
         //noinspection StringConcatenationInLoop
-        result = node.parent.simpleName + '.' + result;
+        nestedName = node.parent.simpleName + '.' + nestedName;
         node = node.parent;
       }
 
@@ -117,19 +117,30 @@ public class ImportCollector {
         fullName = fullName.replace('/', '.');
       }
       else {
-        return result;
+        return nestedName;
       }
     }
     else {
-      fullName = fullName.replace('$', '.');
+      fullName = fullName.replace('/', '.');
+      int lastDot = fullName.lastIndexOf('.');
+      if (lastDot != -1) {
+        nestedName = fullName.substring(lastDot + 1).replace("$", ".");
+      } else {
+        nestedName = fullName;
+      }
     }
 
-    String shortName = fullName;
+    String outerShortName = fullName;
     String packageName = "";
 
     int lastDot = fullName.lastIndexOf('.');
     if (lastDot >= 0) {
-      shortName = fullName.substring(lastDot + 1);
+      int firstNestedDot = nestedName.indexOf(".");
+      if (firstNestedDot >= 0) {
+        outerShortName = nestedName.substring(0, firstNestedDot);
+      } else {
+        outerShortName = nestedName;
+      }
       packageName = fullName.substring(0, lastDot);
     }
 
@@ -140,23 +151,21 @@ public class ImportCollector {
     // 2) class with the same short name in the default package
     // 3) inner class with the same short name in the current class, a super class, or an implemented interface
     boolean existsDefaultClass =
-      (context.getClass(currentPackageSlash + shortName) != null && !packageName.equals(currentPackagePoint)) || // current package
-      (context.getClass(shortName) != null && !currentPackagePoint.isEmpty()) || // default package
-      setInnerClassNames.contains(shortName); // inner class
+      (context.getClass(currentPackageSlash + outerShortName) != null && !packageName.equals(currentPackagePoint)) || // current package
+      (context.getClass(outerShortName) != null && !currentPackagePoint.isEmpty()) || // default package
+      setInnerClassNames.contains(outerShortName); // inner class
 
-    if (existsDefaultClass ||
-        (mapSimpleNames.containsKey(shortName) && !packageName.equals(mapSimpleNames.get(shortName)))) {
-      //  don't return full name because if the class is a inner class, full name refers to the parent full name, not the child full name
-      return result == null ? fullName : (packageName + "." + result);
+    if (existsDefaultClass || (mapSimpleNames.containsKey(outerShortName) && !packageName.equals(mapSimpleNames.get(outerShortName)))) {
+      return packageName + "." + nestedName;
     }
-    else if (!mapSimpleNames.containsKey(shortName)) {
-      mapSimpleNames.put(shortName, packageName);
+    else if (!mapSimpleNames.containsKey(outerShortName)) {
+      mapSimpleNames.put(outerShortName, packageName);
       if (!imported) {
-        setNotImportedNames.add(shortName);
+        setNotImportedNames.add(outerShortName);
       }
     }
 
-    return result == null ? shortName : result;
+    return nestedName;
   }
 
   public void writeImports(TextBuffer buffer, boolean addSeparator) {

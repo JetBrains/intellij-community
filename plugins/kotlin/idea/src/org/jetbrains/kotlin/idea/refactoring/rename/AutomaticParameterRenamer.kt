@@ -10,7 +10,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamer
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
@@ -43,7 +43,7 @@ class AutomaticParameterRenamer(element: KtParameter, newName: String) : Automat
 
     override fun getDialogTitle() = KotlinBundle.message("text.rename.parameters.title")
 
-    override fun getDialogDescription() = RefactoringBundle.message("rename.parameters.hierarchy")
+    override fun getDialogDescription() = RefactoringBundle.message("title.rename.parameters.hierarchy")
 
     override fun entityName() = KotlinBundle.message("text.parameter")
 

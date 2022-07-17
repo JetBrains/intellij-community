@@ -15,15 +15,16 @@
  */
 package com.intellij.testFramework;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
+
+import java.lang.annotation.*;
 
 /**
  * Mark {@link com.intellij.testFramework.UsefulTestCase} implementations using this annotation if they require UI environment to run
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
+@DisabledIfSystemProperty(named = "java.awt.headless", matches = "true", disabledReason = "Test is disabled in headless environment")
+@Inherited
 public @interface SkipInHeadlessEnvironment {
 }

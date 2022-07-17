@@ -74,6 +74,7 @@ class PySdkPathsTest {
     updateSdkPaths(sdk)
 
     checkRoots(sdk, module, listOf(moduleRoot), emptyList())
+    assertThat(getPathsToTransfer(sdk)).doesNotContain(moduleRoot)
   }
 
   @Test
@@ -87,6 +88,7 @@ class PySdkPathsTest {
     updateSdkPaths(sdk)
 
     checkRoots(sdk, module, listOf(moduleRoot), emptyList())
+    assertThat(getPathsToTransfer(sdk)).doesNotContain(moduleRoot)
   }
 
   @Test
@@ -237,7 +239,10 @@ class PySdkPathsTest {
 
     mockPythonPluginDisposable()
     updateSdkPaths(sdk)
+    checkRoots(sdk, module, listOf(moduleRoot, entryPath), emptyList())
 
+    // Subsequent updates should keep already set up source roots
+    updateSdkPaths(sdk)
     checkRoots(sdk, module, listOf(moduleRoot, entryPath), emptyList())
 
     val simpleSdk = PythonMockSdk.create().also {

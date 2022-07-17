@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-@State(name = "SetterTemplates", storages = @Storage("setterTemplates.xml"))
+@State(name = "SetterTemplates", storages = @Storage("setterTemplates.xml"), category = SettingsCategory.CODE)
 public final class SetterTemplatesManager extends TemplatesManager {
   private static final String DEFAULT = "defaultSetter.vm";
   private static final String BUILDER = "builderSetter.vm";

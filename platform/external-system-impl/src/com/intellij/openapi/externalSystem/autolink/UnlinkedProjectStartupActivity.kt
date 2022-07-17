@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.application.ModalityState
@@ -6,8 +6,9 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.externalSystem.autoimport.AsyncFileChangeListenerBase
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Companion.LOG
+import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
+import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware.Companion.EP_NAME
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.ModuleManager
@@ -18,17 +19,18 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isConfiguredByPlatformProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.asCompletableFuture
 import java.util.concurrent.CompletableFuture
 
+@VisibleForTesting
 class UnlinkedProjectStartupActivity : StartupActivity.Background {
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("UnlinkedProjectTracker.backgroundExecutor", 1)
 
@@ -38,8 +40,8 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
     showNotificationWhenNonEmptyProjectUnlinked(project)
     showNotificationWhenBuildToolPluginEnabled(project, externalProjectPath)
     showNotificationWhenNewBuildFileCreated(project, externalProjectPath)
-    if (!project.isNewExternalProject()) {
-      if (project.isEnabledAutoLink() && !project.isNewPlatformProject() && project.isOpenedWithEmptyModel()) {
+    if (!isNewExternalProject(project)) {
+      if (isEnabledAutoLink(project) && !isNewPlatformProject(project) && isOpenedWithEmptyModel(project)) {
         linkProjectIfUnlinkedProjectsFound(project, externalProjectPath)
       }
       else {
@@ -48,25 +50,25 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
     }
   }
 
-  private fun Project.isEnabledAutoLink(): Boolean {
-    return ExternalSystemUnlinkedProjectSettings.getInstance(this).isEnabledAutoLink
-           && !Registry.`is`("external.system.auto.import.disabled")
+  private fun isEnabledAutoLink(project: Project): Boolean {
+    return ExternalSystemUnlinkedProjectSettings.getInstance(project).isEnabledAutoLink &&
+           !Registry.`is`("external.system.auto.import.disabled")
   }
 
-  private fun Project.isNewExternalProject(): Boolean {
-    return ExternalSystemUtil.isNewProject(this)
+  private fun isNewExternalProject(project: Project): Boolean {
+    return ExternalSystemUtil.isNewProject(project)
   }
 
-  private fun Project.isNewPlatformProject(): Boolean {
-    return isNewProject()
+  private fun isNewPlatformProject(project: Project): Boolean {
+    return project.isNewProject()
   }
 
-  private fun Project.isOpenedWithEmptyModel(): Boolean {
-    return isConfiguredByPlatformProcessor() || isEmptyModel()
+  private fun isOpenedWithEmptyModel(project: Project): Boolean {
+    return project.isConfiguredByPlatformProcessor() || isEmptyModel(project)
   }
 
-  private fun Project.isEmptyModel(): Boolean {
-    val moduleManager = ModuleManager.getInstance(this)
+  private fun isEmptyModel(project: Project): Boolean {
+    val moduleManager = ModuleManager.getInstance(project)
     return moduleManager.modules.isEmpty()
   }
 
@@ -78,7 +80,7 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
         val unlinkedProject = unlinkedProjects.keys.single()
         if (LOG.isDebugEnabled) {
           val projectId = unlinkedProject.getProjectId(externalProjectPath)
-          LOG.debug("Auto-linked ${projectId.readableName} project")
+          LOG.debug("Auto-linked ${projectId.debugName} project")
         }
         unlinkedProject.linkAndLoadProjectWithLoadingConfirmation(project, externalProjectPath)
       }
@@ -188,7 +190,7 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
           .finishOnUiThread(ModalityState.defaultModalityState()) { buildFiles ->
             if (LOG.isDebugEnabled && buildFiles.isNotEmpty()) {
               val projectId = unlinkedProjectAware.getProjectId(externalProjectPath)
-              LOG.debug("Found unlinked ${projectId.readableName} project; buildFiles=${buildFiles.map(VirtualFile::getPath)}")
+              LOG.debug("Found unlinked ${projectId.debugName} project; buildFiles=${buildFiles.map(VirtualFile::getPath)}")
             }
             complete(buildFiles)
           }
@@ -228,9 +230,8 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
   }
 
   private fun showNotificationWhenNewBuildFileCreated(project: Project, externalProjectPath: String) {
-    val asyncNewFilesListener = NewBuildFilesListener(project, externalProjectPath)
-    val fileManager = VirtualFileManager.getInstance()
-    fileManager.addAsyncFileListener(asyncNewFilesListener, project)
+    val listener = NewBuildFilesListener(project, externalProjectPath)
+    installAsyncVirtualFileListener(listener, project)
   }
 
   private fun ExternalSystemUnlinkedProjectAware.getBuildFiles(project: Project, externalProjectPath: String): List<VirtualFile> {
@@ -240,10 +241,10 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
     return externalProjectDir.children.filter { isBuildFile(project, it) }
   }
 
-  inner class NewBuildFilesListener(
+  private inner class NewBuildFilesListener(
     private val project: Project,
     private val externalProjectPath: String
-  ) : AsyncFileChangeListenerBase() {
+  ) : VirtualFileChangesListener {
     private lateinit var buildFiles: MutableSet<VirtualFile>
 
     override fun init() {

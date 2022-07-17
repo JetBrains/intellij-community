@@ -69,22 +69,22 @@ Groovy script
     Open block
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      Call expression
-        Parenthesized expression
-          PsiElement(()('(')
-          Reference expression
-            PsiElement(identifier)('String')
-          PsiErrorElement:')' or ',' expected, got 'home'
-            <empty list>
-        PsiWhiteSpace(' ')
-        Command arguments
-          Reference expression
-            PsiElement(identifier)('home')
-      PsiElement(new line)('\n    ')
       Method call
         Reference expression
-          Reference expression
-            PsiElement(identifier)('simplePlugins')
+          Parenthesized expression
+            PsiElement(()('(')
+            Reference expression
+              Call expression
+                Reference expression
+                  PsiElement(identifier)('String')
+                PsiWhiteSpace(' ')
+                Command arguments
+                  Reference expression
+                    PsiElement(identifier)('home')
+              PsiElement(new line)('\n    ')
+              PsiElement(identifier)('simplePlugins')
+            PsiErrorElement:')' expected, got '.'
+              <empty list>
           PsiElement(.)('.')
           PsiElement(identifier)('each')
         PsiWhiteSpace(' ')

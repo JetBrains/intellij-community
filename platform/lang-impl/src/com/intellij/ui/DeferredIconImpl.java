@@ -1,8 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.google.common.annotations.VisibleForTesting;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,8 +15,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.icons.CopyableIcon;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.scale.ScaleType;
-import com.intellij.ui.tabs.impl.TabLabel;
-import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SlowOperations;
@@ -25,12 +24,11 @@ import com.intellij.util.ui.JBScalableIcon;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.LinkedHashSet;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
@@ -38,7 +36,7 @@ import java.util.function.BiConsumer;
 public final class DeferredIconImpl<T> extends JBScalableIcon implements DeferredIcon, RetrievableIcon, IconWithToolTip, CopyableIcon {
   private static final Logger LOG = Logger.getInstance(DeferredIconImpl.class);
   private static final int MIN_AUTO_UPDATE_MILLIS = 950;
-  private static final RepaintScheduler ourRepaintScheduler = new RepaintScheduler();
+  private static final DeferredIconRepaintScheduler ourRepaintScheduler = new DeferredIconRepaintScheduler();
 
   private final @NotNull Icon myDelegateIcon;
 
@@ -165,9 +163,7 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
   Future<?> scheduleEvaluation(Component c, int x, int y) {
     myIsScheduled = true;
 
-    final Component target = getTarget(c);
-    final Component paintingParent = SwingUtilities.getAncestorOfClass(PaintingParent.class, c);
-    final Rectangle paintingParentRec = paintingParent == null ? null : ((PaintingParent)paintingParent).getChildRec(c);
+    DeferredIconRepaintScheduler.RepaintRequest repaintRequest = ourRepaintScheduler.createRepaintRequest(c, x, y);
     return ourIconCalculatingExecutor.submit(() -> {
       int oldWidth = myScaledDelegateIcon.getIconWidth();
       final Icon[] evaluated = new Icon[1];
@@ -204,14 +200,7 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
           return;
         }
 
-        Component actualTarget = target;
-        if (actualTarget != null && SwingUtilities.getWindowAncestor(actualTarget) == null) {
-          actualTarget = paintingParent;
-          if (actualTarget == null || SwingUtilities.getWindowAncestor(actualTarget) == null) {
-            actualTarget = null;
-          }
-        }
-
+        Component actualTarget = repaintRequest.getActualTarget();
         if (actualTarget == null) {
           return;
         }
@@ -221,46 +210,9 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
           TreeUtil.invalidateCacheAndRepaint(((JTree)actualTarget).getUI());
         }
 
-        if (c == actualTarget) {
-          c.repaint(x, y, getIconWidth(), getIconHeight());
-        }
-        else {
-          ourRepaintScheduler.pushDirtyComponent(actualTarget, paintingParentRec);
-        }
+        ourRepaintScheduler.scheduleRepaint(repaintRequest, getIconWidth(), getIconHeight(), false);
       }, ModalityState.any());
     });
-  }
-
-  private static Component getTarget(Component c) {
-    final Component target;
-
-    final Container list = SwingUtilities.getAncestorOfClass(JList.class, c);
-    if (list != null) {
-      target = list;
-    }
-    else {
-      final Container tree = SwingUtilities.getAncestorOfClass(JTree.class, c);
-      if (tree != null) {
-        target = tree;
-      }
-      else {
-        final Container table = SwingUtilities.getAncestorOfClass(JTable.class, c);
-        if (table != null) {
-          target = table;
-        }
-        else {
-          final Container box = SwingUtilities.getAncestorOfClass(JComboBox.class, c);
-          if (box != null) {
-            target = box;
-          }
-          else {
-            final Container tabLabel = SwingUtilities.getAncestorOfClass(TabLabel.class, c);
-            target = tabLabel == null ? c : tabLabel;
-          }
-        }
-      }
-    }
-    return target;
   }
 
   private void setDone(@NotNull Icon result) {
@@ -293,7 +245,8 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
   @Override
   public Icon evaluate() {
     Icon result;
-    try {
+    // Icon evaluation is not something that should be related to any client
+    try (AccessToken ignored = ClientId.withClientId((ClientId)null)) {
       result = nonNull(myEvaluator.apply(myParam));
     }
     catch (IndexNotReadyException e) {
@@ -356,56 +309,6 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
       myIsScheduled = false;
     }
     return myDone;
-  }
-
-  private static final class RepaintScheduler {
-    private final Alarm myAlarm = new Alarm();
-    private final Set<RepaintRequest> myQueue = new LinkedHashSet<>();
-
-    private void pushDirtyComponent(@NotNull Component c, final Rectangle rec) {
-      ApplicationManager.getApplication().assertIsDispatchThread(); // assert myQueue accessed from EDT only
-      myAlarm.cancelAllRequests();
-      myAlarm.addRequest(() -> {
-        for (RepaintRequest each : myQueue) {
-          Rectangle r = each.rectangle;
-          if (r == null) {
-            each.component.repaint();
-          }
-          else {
-            each.component.repaint(r.x, r.y, r.width, r.height);
-          }
-        }
-        myQueue.clear();
-      }, 50);
-
-      myQueue.add(new RepaintRequest(c, rec));
-    }
-  }
-
-  private static final class RepaintRequest {
-    final Component component;
-    final Rectangle rectangle;
-
-    private RepaintRequest(@NotNull Component component, @Nullable Rectangle rectangle) {
-      this.component = component;
-      this.rectangle = rectangle;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      RepaintRequest request = (RepaintRequest)o;
-      return component.equals(request.component) && Objects.equals(rectangle, request.rectangle);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = component.hashCode();
-      result = 31 * result + (rectangle != null ? rectangle.hashCode() : 0);
-      return result;
-    }
   }
 
   @Override

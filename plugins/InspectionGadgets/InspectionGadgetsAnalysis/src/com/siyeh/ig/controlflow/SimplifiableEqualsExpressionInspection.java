@@ -167,7 +167,7 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection imple
   private class SimplifiableEqualsExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (JavaTokenType.ANDAND.equals(tokenType)) {

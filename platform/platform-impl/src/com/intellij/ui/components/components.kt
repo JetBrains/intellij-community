@@ -202,7 +202,7 @@ private abstract class MyDialogWrapper(project: Project?,
                                        modality: IdeModalityType) : DialogWrapper(project, parent, true, modality), DialogManager {
   override fun performAction(action: (() -> List<ValidationInfo>?)?) {
     val validationInfoList = action?.invoke()
-    if (validationInfoList == null || validationInfoList.isEmpty()) {
+    if (validationInfoList.isNullOrEmpty()) {
       super.doOKAction()
     }
     else {

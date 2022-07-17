@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests.targets.java
 
 import com.intellij.execution.PsiLocation
@@ -205,16 +205,16 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
       conf.persistentData.setMainClass(alsoTestClass)
     }
 
-    @Suppress("SpellCheckingInspection", "GrazieInspection")
+    @Suppress("SpellCheckingInspection")
     doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"1\" />\n" +
                                                               "  <count name=\"failed\" value=\"1\" />\n" +
-                                                              "  <suite locationUrl=\"java:suite://AlsoTest\" name=\"AlsoTest\" status=\"failed\">\n" +
-                                                              "    <test locationUrl=\"java:test://AlsoTest/testShouldFail\" name=\"testShouldFail()\" metainfo=\"\" status=\"failed\">\n" +
-                                                              "      <diff actual=\"5\" expected=\"4\" />\n" +
-                                                              "      <output type=\"stdout\">Debugger: testShouldFail() reached</output>\n" +
-                                                              "      <output type=\"stderr\">org.opentest4j.AssertionFailedError: \n" +
+                                                              "  <root name=\"AlsoTest\" location=\"java:suite://AlsoTest\" />\n" +
+                                                              "  <test locationUrl=\"java:test://AlsoTest/testShouldFail\" name=\"testShouldFail()\" metainfo=\"\" status=\"failed\">\n" +
+                                                              "    <diff actual=\"5\" expected=\"4\" />\n" +
+                                                              "    <output type=\"stdout\">Debugger: testShouldFail() reached</output>\n" +
+                                                              "    <output type=\"stderr\">org.opentest4j.AssertionFailedError: \n" +
                                                               "\tat org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:54)\n" +
                                                               "\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:195)\n" +
                                                               "\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:152)\n" +
@@ -223,8 +223,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
                                                               "\tat AlsoTest.testShouldFail(AlsoTest.java:12)\n" +
                                                               "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n" +
                                                               "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(</output>\n" +
-                                                              "    </test>\n" +
-                                                              "  </suite>\n" +
+                                                              "  </test>\n" +
                                                               "</testrun>")
   }
 
@@ -234,7 +233,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
       conf.persistentData.dirName = "$testAppPath/tests"
     }
 
-    @Suppress("SpellCheckingInspection", "GrazieInspection")
+    @Suppress("SpellCheckingInspection")
     doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"2\" />\n" +
@@ -270,7 +269,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
       conf.persistentData.setPatterns(LinkedHashSet(listOf("^So.*")))
     }
 
-    @Suppress("SpellCheckingInspection", "GrazieInspection")
+    @Suppress("SpellCheckingInspection")
     doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"1\" />\n" +
@@ -315,16 +314,16 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
       conf.persistentData.setTestMethod(PsiLocation.fromPsiElement(getTestClass("AlsoTest").findMethodsByName("testShouldFail", false)[0]))
     }
 
-    @Suppress("SpellCheckingInspection", "GrazieInspection")
+    @Suppress("SpellCheckingInspection")
     doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"1\" />\n" +
                                                               "  <count name=\"failed\" value=\"1\" />\n" +
-                                                              "  <suite locationUrl=\"java:suite://AlsoTest\" name=\"AlsoTest\" status=\"failed\">\n" +
-                                                              "    <test locationUrl=\"java:test://AlsoTest/testShouldFail\" name=\"testShouldFail()\" metainfo=\"\" status=\"failed\">\n" +
-                                                              "      <diff actual=\"5\" expected=\"4\" />\n" +
-                                                              "      <output type=\"stdout\">Debugger: testShouldFail() reached</output>\n" +
-                                                              "      <output type=\"stderr\">org.opentest4j.AssertionFailedError: \n" +
+                                                              "  <root name=\"AlsoTest\" location=\"java:suite://AlsoTest\" />\n" +
+                                                              "  <test locationUrl=\"java:test://AlsoTest/testShouldFail\" name=\"testShouldFail()\" metainfo=\"\" status=\"failed\">\n" +
+                                                              "    <diff actual=\"5\" expected=\"4\" />\n" +
+                                                              "    <output type=\"stdout\">Debugger: testShouldFail() reached</output>\n" +
+                                                              "    <output type=\"stderr\">org.opentest4j.AssertionFailedError: \n" +
                                                               "\tat org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:54)\n" +
                                                               "\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:195)\n" +
                                                               "\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:152)\n" +
@@ -333,8 +332,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
                                                               "\tat AlsoTest.testShouldFail(AlsoTest.java:12)\n" +
                                                               "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n" +
                                                               "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(</output>\n" +
-                                                              "    </test>\n" +
-                                                              "  </suite>\n" +
+                                                              "  </test>\n" +
                                                               "</testrun>")
   }
 
@@ -344,7 +342,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
       conf.persistentData.tags = "selected"
     }
 
-    @Suppress("SpellCheckingInspection", "GrazieInspection")
+    @Suppress("SpellCheckingInspection")
     doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"1\" />\n" +
@@ -364,7 +362,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
       conf.persistentData.setUniqueIds("[engine:junit-jupiter]/[class:SomeTest]")
     }
 
-    @Suppress("SpellCheckingInspection", "GrazieInspection")
+    @Suppress("SpellCheckingInspection")
     doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"1\" />\n" +

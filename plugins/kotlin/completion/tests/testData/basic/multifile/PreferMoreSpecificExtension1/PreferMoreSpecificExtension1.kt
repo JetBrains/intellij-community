@@ -8,5 +8,5 @@ class C {
     }
 }
 
-// EXIST: { lookupString: "xxx", itemText: "xxx", tailText: "() for C in dependency", typeText: "Int" }
+// EXIST: { lookupString: "xxx", itemText: "xxx", tailText: "() for C in dependency", typeText: "Int", icon: "nodes/function.svg"}
 // NOTHING_ELSE

@@ -5,9 +5,11 @@ import com.intellij.application.options.editor.checkBox
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.Configurable.NoScroll
+import com.intellij.openapi.options.ConfigurableEP
+import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -22,15 +24,34 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsSetting
 import com.intellij.ui.EnumComboBoxModel
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
-class VcsGeneralSettingsConfigurable(val project: Project)
-  : BoundSearchableConfigurable(message("configurable.VcsGeneralConfigurationConfigurable.display.name"),
-                                "project.propVCSSupport.Confirmation"), NoScroll, Configurable.WithEpDependencies {
-  override fun getDependencies() = listOf(VcsEP.EP_NAME)
+/**
+ * EP that allows appending options to the bottom of *File | Settings | Version Control | Confirmation* settings panel.
+ *
+ * @see com.intellij.openapi.options.UiDslUnnamedConfigurable
+ */
+internal class GeneralVcsSettingsProviderEP(project: Project) : ConfigurableEP<UnnamedConfigurable>(project) {
+  companion object {
+    val VCS_SETTINGS_EP_NAME = ExtensionPointName<GeneralVcsSettingsProviderEP>("com.intellij.generalVcsSettingsExtension")
+  }
+}
+
+class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
+  message("configurable.VcsGeneralConfigurationConfigurable.display.name"),
+  "project.propVCSSupport.Confirmation"
+), Configurable.WithEpDependencies {
+
+  override fun createConfigurables(): List<UnnamedConfigurable> =
+    GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME.getExtensions(project).mapNotNull { it.createConfigurable() }
+
+  override fun getDependencies() = listOf(VcsEP.EP_NAME, GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME)
 
   override fun createPanel(): DialogPanel {
     val vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project)
@@ -48,15 +69,15 @@ class VcsGeneralSettingsConfigurable(val project: Project)
     VcsEP.EP_NAME.addChangeListener({ updateActiveVcses() }, disposable)
 
     return panel {
-      titledRow(message("settings.general.confirmation.group.title")) {
-        fullRow {
+      group(message("settings.general.confirmation.group.title")) {
+        row {
           val addConfirmation = vcsManager.getConfirmation(VcsConfiguration.StandardConfirmation.ADD)
 
           label(message("settings.border.when.files.are.created"))
             .withApplicableVcsesTooltip(addConfirmation, vcsListeners)
+            .gap(RightGap.SMALL)
           val addComboBox = comboBox(
             EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java),
-            { addConfirmation.value }, { addConfirmation.value = it },
             renderer = listCellRenderer { value, _, _ ->
               setText(when (value) {
                         VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("radio.after.creation.show.options")
@@ -65,20 +86,21 @@ class VcsGeneralSettingsConfigurable(val project: Project)
                         else -> ""
                       })
             })
+            .bindItem({ addConfirmation.value }, { addConfirmation.value = it })
             .withApplicableVcsesTooltip(addConfirmation, vcsListeners)
 
-          checkBox(message("checkbox.including.files.created.outside.ide", ApplicationNamesInfo.getInstance().fullProductName),
-                   vcsConfiguration::ADD_EXTERNAL_FILES_SILENTLY)
-            .enableIf(OptionEnabledPredicate(addComboBox.component))
-            .withLargeLeftGap()
-        }
-        fullRow {
+          checkBox(message("checkbox.including.files.created.outside.ide", ApplicationNamesInfo.getInstance().fullProductName))
+            .bindSelected(vcsConfiguration::ADD_EXTERNAL_FILES_SILENTLY)
+            .enabledIf(OptionEnabledPredicate(addComboBox.component))
+        }.layout(RowLayout.PARENT_GRID)
+
+        row {
           val removeConfirmation = vcsManager.getConfirmation(VcsConfiguration.StandardConfirmation.REMOVE)
 
           label(message("settings.when.files.are.deleted"))
             .withApplicableVcsesTooltip(removeConfirmation, vcsListeners)
+            .gap(RightGap.SMALL)
           comboBox(EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java),
-                   { removeConfirmation.value }, { removeConfirmation.value = it },
                    renderer = listCellRenderer { value, _, _ ->
                      setText(when (value) {
                                VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("radio.after.deletion.show.options")
@@ -87,79 +109,90 @@ class VcsGeneralSettingsConfigurable(val project: Project)
                                else -> ""
                              })
                    })
+            .bindItem({ removeConfirmation.value }, { removeConfirmation.value = it })
             .withApplicableVcsesTooltip(removeConfirmation, vcsListeners)
-        }
-        fullRow {
-          label(message("settings.general.show.options.before.command.label"))
+        }.layout(RowLayout.PARENT_GRID)
 
+        row(message("settings.general.show.options.before.command.label")) {
           for (setting in vcsManager.allOptions) {
-            checkBox(setting.displayName, { setting.value }, { setting.value = it })
-              .withLargeLeftGap()
+            checkBox(setting.displayName)
+              .bindSelected({ setting.value }, { setting.value = it })
               .withApplicableVcsesTooltip(setting, vcsListeners)
               .visibleIf(OptionVisibleForVcsesPredicate(project, setting, vcsListeners))
           }
         }
+
         if (project.isDefault || ProjectLevelVcsManager.getInstance(project).allSupportedVcss.any { it.editFileProvider != null }) {
-          fullRow {
+          row {
             checkBox(cdShowReadOnlyStatusDialog(project))
           }
         }
       }
 
-      titledRow(message("settings.general.changes.group.title")) {
-        fullRow {
-          val checkBox = checkBox(message("vcs.config.track.changed.on.server"),
-                                  vcsConfiguration::CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND)
+      group(message("settings.general.changes.group.title")) {
+        row {
+          val checkBox = checkBox(message("vcs.config.track.changed.on.server"))
+            .bindSelected(vcsConfiguration::CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND)
+            .gap(RightGap.SMALL)
             .onApply {
               if (!project.isDefault) {
                 RemoteRevisionsCache.getInstance(project).updateAutomaticRefreshAlarmState(true)
               }
             }
-          spinner(vcsConfiguration::CHANGED_ON_SERVER_INTERVAL,
-                  5, 48 * 10 * 60, 5)
-            .enableIf(checkBox.selected)
+          spinner(5..48 * 10 * 60, 5)
+            .bindIntValue(vcsConfiguration::CHANGED_ON_SERVER_INTERVAL)
+            .enabledIf(checkBox.selected)
+            .gap(RightGap.SMALL)
           @Suppress("DialogTitleCapitalization")
           label(message("settings.check.every.minutes"))
         }
-        fullRow {
-          val checkBox = checkBox(message("settings.checkbox.show.changed.in.last"),
-                                  { contentAnnotationSettings.isShow }, { contentAnnotationSettings.isShow = it })
+        row {
+          val checkBox = checkBox(message("settings.checkbox.show.changed.in.last"))
+            .bindSelected({ contentAnnotationSettings.isShow }, { contentAnnotationSettings.isShow = it })
             .comment(message("settings.checkbox.show.changed.in.last.comment"))
-          spinner({ contentAnnotationSettings.limitDays }, { contentAnnotationSettings.limitDays = it },
-                  1, VcsContentAnnotationSettings.ourMaxDays, 1)
-            .enableIf(checkBox.selected)
+            .gap(RightGap.SMALL)
+          spinner(1..VcsContentAnnotationSettings.ourMaxDays, 1)
+            .bindIntValue({ contentAnnotationSettings.limitDays }, { contentAnnotationSettings.limitDays = it })
+            .enabledIf(checkBox.selected)
+            .gap(RightGap.SMALL)
           @Suppress("DialogTitleCapitalization")
           label(message("settings.checkbox.measure.days"))
         }
-        fullRow {
+        row {
           checkBox(cdShowDirtyRecursively(project))
         }
       }
 
-      blockRow {
-        fullRow {
-          label(message("show.patch.in.explorer.after.creation.label"))
-          comboBox(EnumComboBoxModel(ShowPatchAfterCreationEnum::class.java),
-                   { ShowPatchAfterCreationEnum.getByState(vcsConfiguration.SHOW_PATCH_IN_EXPLORER) },
-                   { vcsConfiguration.SHOW_PATCH_IN_EXPLORER = it?.state })
-        }
-        fullRow {
-          checkBox(message("radio.restore.workspace.on.branch.switching"), vcsConfiguration::RELOAD_CONTEXT)
-            .comment(message("radio.restore.workspace.on.branch.switching.comment"))
-        }
-        fullRow {
-          val checkBox = checkBox(message("settings.checkbox.limit.history.to"), vcsConfiguration::LIMIT_HISTORY)
-          spinner(vcsConfiguration::MAXIMUM_HISTORY_ROWS, 10, 1000000, 10)
-            .enableIf(checkBox.selected)
-          @Suppress("DialogTitleCapitalization")
-          label(message("settings.checkbox.rows"))
-        }
+      row(message("show.patch.in.explorer.after.creation.label")) {
+        comboBox(EnumComboBoxModel(ShowPatchAfterCreationEnum::class.java))
+          .bindItem({ ShowPatchAfterCreationEnum.getByState(vcsConfiguration.SHOW_PATCH_IN_EXPLORER) },
+                    { vcsConfiguration.SHOW_PATCH_IN_EXPLORER = it?.state })
+      }
+      row {
+        checkBox(message("radio.restore.workspace.on.branch.switching"))
+          .bindSelected(vcsConfiguration::RELOAD_CONTEXT)
+          .comment(message("radio.restore.workspace.on.branch.switching.comment"))
+      }
+      row {
+        val checkBox = checkBox(message("settings.checkbox.limit.history.to"))
+          .bindSelected(vcsConfiguration::LIMIT_HISTORY)
+          .gap(RightGap.SMALL)
+        spinner(10..1000000, 10)
+          .bindIntValue(vcsConfiguration::MAXIMUM_HISTORY_ROWS)
+          .enabledIf(checkBox.selected)
+          .gap(RightGap.SMALL)
+        @Suppress("DialogTitleCapitalization")
+        label(message("settings.checkbox.rows"))
+      }
+
+      for (configurable in configurables) {
+        appendDslConfigurable(configurable)
       }
     }
   }
 
-  private fun <T : JComponent> CellBuilder<T>.withApplicableVcsesTooltip(setting: PersistentVcsSetting,
-                                                                         vcsListeners: MutableList<Runnable>): CellBuilder<T> {
+  private fun <T : JComponent> Cell<T>.withApplicableVcsesTooltip(setting: PersistentVcsSetting,
+                                                                  vcsListeners: MutableList<Runnable>): Cell<T> {
     vcsListeners.add(Runnable { updateApplicableVcsesTooltip(project, component, setting) })
     updateApplicableVcsesTooltip(project, component, setting)
     return this
@@ -178,8 +211,8 @@ private fun updateApplicableVcsesTooltip(project: Project, component: JComponent
 private enum class ShowPatchAfterCreationEnum(private val text: () -> @Nls String,
                                               val state: Boolean?) {
   ASK({ message("show.patch.in.explorer.after.creation.combobox.text.ask") }, null),
-  YES({ message("show.patch.in.explorer.after.creation.combobox.text.show.in.file.manager", RevealFileAction.getFileManagerName()) }, true),
-  NO({ message("show.patch.in.explorer.after.creation.combobox.text.no") }, false);
+  NO({ message("show.patch.in.explorer.after.creation.combobox.text.no") }, false),
+  YES({ message("show.patch.in.explorer.after.creation.combobox.text.show.in.file.manager", RevealFileAction.getFileManagerName()) }, true);
 
   override fun toString(): String = text()
 

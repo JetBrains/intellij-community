@@ -2,33 +2,29 @@
 
 package org.jetbrains.kotlin.idea.completion
 
-import com.intellij.codeInsight.completion.InsertionContext
-import com.intellij.codeInsight.completion.OffsetKey
-import com.intellij.codeInsight.completion.OffsetMap
-import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.*
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.completion.handlers.CastReceiverInsertHandler
-import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
-import org.jetbrains.kotlin.idea.completion.smart.isProbableKeyword
-import org.jetbrains.kotlin.idea.core.ImportableFqNameClassifier
+import org.jetbrains.kotlin.idea.completion.smart.KeywordProbability
+import org.jetbrains.kotlin.idea.completion.smart.keywordProbability
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.util.*
-import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.idea.util.getImplicitReceiversWithInstanceToExpression
+import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
@@ -54,22 +50,10 @@ tailrec fun <T : Any> LookupElement.getUserDataDeep(key: Key<T>): T? {
     }
 }
 
-enum class ItemPriority {
-    SUPER_METHOD_WITH_ARGUMENTS,
-    FROM_UNRESOLVED_NAME_SUGGESTION,
-    GET_OPERATOR,
-    DEFAULT,
-    IMPLEMENT,
-    OVERRIDE,
-    STATIC_MEMBER_FROM_IMPORTS,
-    STATIC_MEMBER
-}
-
-val ITEM_PRIORITY_KEY = Key<ItemPriority>("ITEM_PRIORITY_KEY")
 var LookupElement.isDslMember: Boolean? by UserDataProperty(Key.create("DSL_LOOKUP_ITEM"))
 
 fun LookupElement.assignPriority(priority: ItemPriority): LookupElement {
-    putUserData(ITEM_PRIORITY_KEY, priority)
+    this.priority = priority
     return this
 }
 
@@ -77,15 +61,9 @@ val STATISTICS_INFO_CONTEXT_KEY = Key<String>("STATISTICS_INFO_CONTEXT_KEY")
 
 val NOT_IMPORTED_KEY = Key<Unit>("NOT_IMPORTED_KEY")
 
-fun LookupElement.suppressAutoInsertion() = AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(this)
-
-fun LookupElement.withReceiverCast(): LookupElement {
-    return object : LookupElementDecorator<LookupElement>(this) {
-        override fun handleInsert(context: InsertionContext) {
-            super.handleInsert(context)
-            CastReceiverInsertHandler.postHandleInsert(context, delegate)
-        }
-    }
+fun LookupElement.withReceiverCast(): LookupElement = LookupElementDecorator.withDelegateInsertHandler(this) { context, element ->
+    element.handleInsert(context)
+    CastReceiverInsertHandler.postHandleInsert(context, element)
 }
 
 val KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY = Key<Unit>("KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY")
@@ -220,20 +198,8 @@ fun returnExpressionItems(bindingContext: BindingContext, position: KtElement): 
                     }
                 }
 
-                val isOnTopLevelInUnitFunction = isUnit && position.parent?.parent === parent
-
-                val isInsideLambda = position.getNonStrictParentOfType<KtFunctionLiteral>()?.let { parent.isAncestor(it) } == true
-
-                fun returnIsProbableInPosition(): Boolean = when {
-                    isInsideLambda -> false // for now we do not want to alter completion inside lambda bodies
-                    position.inReturnExpression() -> false
-                    position.isRightOperandInElvis() -> true
-                    position.isLastOrSingleStatement() && !position.isDirectlyInLoopBody() && !isOnTopLevelInUnitFunction -> true
-                    else -> false
-                }
-
-                if (returnIsProbableInPosition()) {
-                    blockBodyReturns.forEach { it.isProbableKeyword = true }
+                if (isLikelyInPositionForReturn(position, parent, isUnit)) {
+                    blockBodyReturns.forEach { it.keywordProbability = KeywordProbability.HIGH }
                 }
 
                 result.addAll(blockBodyReturns)
@@ -245,116 +211,9 @@ fun returnExpressionItems(bindingContext: BindingContext, position: KtElement): 
     return result
 }
 
-private fun KtElement.isDirectlyInLoopBody(): Boolean {
-    val loopContainer = when (val blockOrContainer = parent) {
-        is KtBlockExpression -> blockOrContainer.parent as? KtContainerNodeForControlStructureBody
-        is KtContainerNodeForControlStructureBody -> blockOrContainer
-        else -> null
-    }
-
-    return loopContainer?.parent is KtLoopExpression
-}
-
-fun KtElement.isRightOperandInElvis(): Boolean {
-    val elvisParent = parent as? KtBinaryExpression ?: return false
-    return elvisParent.operationToken == KtTokens.ELVIS && elvisParent.right === this
-}
-
-/**
- * Checks if expression is either last expression in a block, or a single expression in position where single
- * expressions are allowed (`when` entries, `for` and `while` loops, and `if`s).
- */
-private fun PsiElement.isLastOrSingleStatement(): Boolean =
-    when (val containingExpression = parent) {
-        is KtBlockExpression -> containingExpression.statements.lastOrNull() === this
-        is KtWhenEntry, is KtContainerNodeForControlStructureBody -> true
-        else -> false
-    }
-
-private fun KtElement.inReturnExpression(): Boolean = findReturnExpression(this) != null
-
-/**
- * If [expression] is directly relates to the return expression already, this return expression will be found.
- *
- * Examples:
- *
- * ```kotlin
- * return 10                                        // 10 is in return
- * return if (true) 10 else 20                      // 10 and 20 are in return
- * return 10 ?: 20                                  // 10 and 20 are in return
- * return when { true -> 10 ; else -> { 20; 30 } }  // 10 and 30 are in return, but 20 is not
- * ```
- */
-private tailrec fun findReturnExpression(expression: PsiElement?): KtReturnExpression? =
-    when (val parent = expression?.parent) {
-        is KtReturnExpression -> parent
-        is KtBinaryExpression -> if (parent.operationToken == KtTokens.ELVIS) findReturnExpression(parent) else null
-        is KtContainerNodeForControlStructureBody, is KtIfExpression -> findReturnExpression(parent)
-        is KtBlockExpression -> if (expression.isLastOrSingleStatement()) findReturnExpression(parent) else null
-        is KtWhenEntry -> findReturnExpression(parent.parent)
-        else -> null
-    }
-
 private fun KtDeclarationWithBody.returnType(bindingContext: BindingContext): KotlinType? {
     val callable = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, this] as? CallableDescriptor ?: return null
     return callable.returnType
-}
-
-private fun Name?.labelNameToTail(): String = if (this != null) "@" + render() else ""
-
-private fun createKeywordElementWithSpace(
-    keyword: String,
-    tail: String = "",
-    addSpaceAfter: Boolean = false,
-    lookupObject: KeywordLookupObject = KeywordLookupObject()
-): LookupElement {
-    val element = createKeywordElement(keyword, tail, lookupObject)
-    return if (addSpaceAfter) {
-        object : LookupElementDecorator<LookupElement>(element) {
-            override fun handleInsert(context: InsertionContext) {
-                WithTailInsertHandler.SPACE.handleInsert(context, delegate)
-            }
-        }
-    } else {
-        element
-    }
-}
-
-private fun createKeywordElement(
-    keyword: String,
-    tail: String = "",
-    lookupObject: KeywordLookupObject = KeywordLookupObject()
-): LookupElementBuilder {
-    var element = LookupElementBuilder.create(lookupObject, keyword + tail)
-    element = element.withPresentableText(keyword)
-    element = element.withBoldness(true)
-    if (tail.isNotEmpty()) {
-        element = element.withTailText(tail, false)
-    }
-    return element
-}
-
-fun breakOrContinueExpressionItems(position: KtElement, breakOrContinue: String): Collection<LookupElement> {
-    val result = ArrayList<LookupElement>()
-
-    parentsLoop@
-    for (parent in position.parentsWithSelf) {
-        when (parent) {
-            is KtLoopExpression -> {
-                if (result.isEmpty()) {
-                    result.add(createKeywordElement(breakOrContinue))
-                }
-
-                val label = (parent.parent as? KtLabeledExpression)?.getLabelNameAsName()
-                if (label != null) {
-                    result.add(createKeywordElement(breakOrContinue, tail = label.labelNameToTail()))
-                }
-            }
-
-            is KtDeclarationWithBody -> break@parentsLoop //TODO: support non-local break's&continue's when they are supported by compiler
-        }
-    }
-    return result
 }
 
 fun BasicLookupElementFactory.createLookupElementForType(type: KotlinType): LookupElement? {
@@ -392,11 +251,7 @@ private open class BaseTypeLookupElement(type: KotlinType, baseLookupElement: Lo
     override fun equals(other: Any?) = other is BaseTypeLookupElement && fullText == other.fullText
     override fun hashCode() = fullText.hashCode()
 
-    override fun renderElement(presentation: LookupElementPresentation) {
-        delegate.renderElement(presentation)
-    }
-
-    override fun handleInsert(context: InsertionContext) {
+    override fun getDelegateInsertHandler(): InsertHandler<LookupElement> = InsertHandler { context, _ ->
         context.document.replaceString(context.startOffset, context.tailOffset, fullText)
         context.tailOffset = context.startOffset + fullText.length
         shortenReferences(context, context.startOffset, context.tailOffset)
@@ -409,7 +264,7 @@ fun shortenReferences(
     endOffset: Int,
     shortenReferences: ShortenReferences = ShortenReferences.DEFAULT
 ) {
-    PsiDocumentManager.getInstance(context.project).commitAllDocuments()
+    PsiDocumentManager.getInstance(context.project).commitDocument(context.document)
     val file = context.file as KtFile
     val element = file.findElementAt(startOffset)?.parentsWithSelf?.find {
         it.startOffset == startOffset && it.endOffset == endOffset
@@ -476,7 +331,7 @@ fun LookupElement.decorateAsStaticMember(
             val addMemberImport = descriptorIsCallableExtension || importFromSameParentIsPresent()
 
             if (addMemberImport) {
-                psiDocumentManager.commitAllDocuments()
+                psiDocumentManager.commitDocument(context.document)
                 ImportInsertHelper.getInstance(context.project).importDescriptor(file, memberDescriptor)
                 psiDocumentManager.doPostponedOperationsAndUnblockDocument(context.document)
             }

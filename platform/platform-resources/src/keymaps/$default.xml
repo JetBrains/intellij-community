@@ -24,9 +24,6 @@
   <action id="SplitChooser.SplitCenter">
     <keyboard-shortcut first-keystroke="SPACE"/>
   </action>
-  <action id="FileChooser.TogglePathShowing">
-    <keyboard-shortcut first-keystroke="control P"/>
-  </action>
   <action id="ShowSettings">
     <keyboard-shortcut first-keystroke="control alt S"/>
   </action>
@@ -135,6 +132,9 @@
   </action>
   <action id="FindWordAtCaret">
     <keyboard-shortcut first-keystroke="control F3"/>
+  </action>
+  <action id="FindPrevWordAtCaret">
+    <keyboard-shortcut first-keystroke="control shift F3"/>
   </action>
   <action id="SelectNextOccurrence">
     <keyboard-shortcut first-keystroke="alt J"/>
@@ -276,6 +276,9 @@
   <action id="GotoAction">
     <keyboard-shortcut first-keystroke="control shift A"/>
   </action>
+  <action id="TextSearchAction">
+    <keyboard-shortcut first-keystroke="control shift alt E"/>
+  </action>
   <action id="RunInspection">
     <keyboard-shortcut first-keystroke="control shift alt I"/>
   </action>
@@ -358,6 +361,9 @@
   </action>
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="shift F11"/>
+  </action>
+  <action id="ShowTypeBookmarks">
+    <keyboard-shortcut first-keystroke="control shift F11"/>
   </action>
   <action id="HighlightUsagesInFile">
     <keyboard-shortcut first-keystroke="control shift F7"/> 
@@ -766,7 +772,7 @@
   <action id="XDebugger.AttachToProcess">
     <keyboard-shortcut first-keystroke="control alt F5"/>
   </action>
-  <action id="Debugger.EditTypeSource">
+  <action id="XDebugger.JumpToTypeSource">
     <keyboard-shortcut first-keystroke="shift F4"/>
   </action>
     <action id="ToggleBookmark">
@@ -914,7 +920,8 @@
   <action id="ActivateProjectToolWindow">
     <keyboard-shortcut first-keystroke="alt 1"/>
   </action>
-  <action id="ActivateFavoritesToolWindow">
+  <action id="ActivateFavoritesToolWindow"/>
+  <action id="ActivateBookmarksToolWindow">
     <keyboard-shortcut first-keystroke="alt 2"/>
   </action>
   <action id="ActivateFindToolWindow">
@@ -1007,9 +1014,6 @@
   <action id="EditorDeleteToWordEnd">
     <keyboard-shortcut first-keystroke="control DELETE"/>
   </action>
-  <action id="ProjectViewChangeView">
-    <keyboard-shortcut first-keystroke="alt F1"/>
-  </action>
   <action id="ChooseRunConfiguration">
     <keyboard-shortcut first-keystroke="alt shift F10"/>
   </action>
@@ -1054,14 +1058,11 @@
   </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
-    <keyboard-shortcut first-keystroke="control E"/>
-  </action>
-  <action id="AddToFavoritesPopup">
-    <keyboard-shortcut first-keystroke="alt shift F"/>
   </action>
   <action id="CodeInspection.OnEditor">
     <keyboard-shortcut first-keystroke="alt shift I"/>
   </action>
+
   <action id="FileChooser.GotoHome">
     <keyboard-shortcut first-keystroke="control 1"/>
   </action>
@@ -1077,6 +1078,15 @@
   <action id="FileChooser.NewFolder">
     <keyboard-shortcut first-keystroke="alt INSERT"/>
     <keyboard-shortcut first-keystroke="control N"/>
+  </action>
+  <action id="FileChooser.TogglePathBar">
+    <keyboard-shortcut first-keystroke="control P"/>
+  </action>
+  <action id="FileChooserList.Root">
+    <keyboard-shortcut first-keystroke="control BACK_SLASH"/>
+  </action>
+  <action id="FileChooserList.LevelUp">
+    <keyboard-shortcut first-keystroke="BACK_SPACE"/>
   </action>
 
   <action id="PopupHector">
@@ -1264,5 +1274,16 @@
   </action>
   <action id="ActivateNuGetToolWindow">
     <keyboard-shortcut first-keystroke="alt shift 7"/>
+  </action>
+
+  <action id="MainMenuButton.ShowMenu">
+    <keyboard-shortcut first-keystroke="alt BACK_SLASH"/>
+  </action>
+
+  <action id="EditorDecreaseFontSizeGlobal">
+    <keyboard-shortcut first-keystroke="alt shift COMMA"/>
+  </action>
+  <action id="EditorIncreaseFontSizeGlobal">
+    <keyboard-shortcut first-keystroke="alt shift PERIOD"/>
   </action>
 </keymap>

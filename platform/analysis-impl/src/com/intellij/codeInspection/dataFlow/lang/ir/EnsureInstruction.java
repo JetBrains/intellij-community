@@ -59,9 +59,7 @@ public class EnsureInstruction extends Instruction {
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     if (myTransferValue == null) return this;
-    var instruction = new EnsureInstruction(myProblem, myRelation, myCompareTo, myTransferValue.bindToFactory(factory));
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new EnsureInstruction(myProblem, myRelation, myCompareTo, myTransferValue.bindToFactory(factory));
   }
 
   public @Nullable UnsatisfiedConditionProblem getProblem() {

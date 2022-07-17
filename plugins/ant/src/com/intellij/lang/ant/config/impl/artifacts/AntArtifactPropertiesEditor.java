@@ -64,7 +64,7 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
         buildFileProperty.setPropertyValue(value);
       }
     };
-  private static final ColumnInfo[] PROPERTY_COLUMNS = new ColumnInfo[]{NAME_COLUMN, VALUE_COLUMN};
+  private static final ColumnInfo<BuildFileProperty, String>[] PROPERTY_COLUMNS = new ColumnInfo[]{NAME_COLUMN, VALUE_COLUMN};
   private static final Condition<BuildFileProperty> USER_PROPERTY_CONDITION =
     property -> !AntArtifactProperties.isPredefinedProperty(property.getPropertyName());
   private final AntArtifactProperties myProperties;

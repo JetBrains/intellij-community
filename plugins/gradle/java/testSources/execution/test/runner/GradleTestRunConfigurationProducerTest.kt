@@ -2,11 +2,11 @@
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.execution.RunManager
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiMethod
+import junit.framework.TestCase
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.settings.TestRunner
@@ -67,33 +67,28 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
                              projectData["project"]["pkg.TestCase"].element.containingFile.containingDirectory,
                              projectData["project"]["TestCase"]["test2"].element)
 
-      val contexts = (locations + locations).map { getContextByLocation(it) } // with duplicate locations
+      val contexts = locations.map { getContextByLocation(it) } // with duplicate locations
       val cfgFromCtx = contexts.map { getConfigurationFromContext(it) }
-      val configurations = cfgFromCtx.map { it.configuration as ExternalSystemRunConfiguration }
+      val configurations = cfgFromCtx.map { it.configuration as GradleRunConfiguration }
       val methodProd = getConfigurationProducer<TestMethodGradleConfigurationProducer>()
       val classProd = getConfigurationProducer<TestClassGradleConfigurationProducer>()
       val packageProd = getConfigurationProducer<AllInPackageGradleConfigurationProducer>()
+      val directoryProd = getConfigurationProducer<AllInDirectoryGradleConfigurationProducer>()
 
       for ((j, configuration) in configurations.withIndex()) {
         for ((k, context) in contexts.withIndex()) {
-          val cfgMatchesContext = j % locations.size == k % locations.size
-
-          val isPsiMethod = context.psiLocation is PsiMethod
-          assertEquals(isPsiMethod && cfgMatchesContext, methodProd.isConfigurationFromContext(configuration, context))
-
-          val isPsiClass = context.psiLocation is PsiClass
-          assertEquals(isPsiClass && cfgMatchesContext, classProd.isConfigurationFromContext(configuration, context))
-
-          val isPsiDir = context.psiLocation is PsiDirectory
-          assertEquals(isPsiDir && cfgMatchesContext, packageProd.isConfigurationFromContext(configuration, context))
+          val cfgMatchesContext = j == k
+          when (context.psiLocation) {
+            is PsiMethod -> assertEquals(cfgMatchesContext, methodProd.isConfigurationFromContext(configuration, context))
+            is PsiClass -> assertEquals(cfgMatchesContext, classProd.isConfigurationFromContext(configuration, context))
+            is PsiDirectory -> assertEquals(cfgMatchesContext, packageProd.isConfigurationFromContext(configuration, context))
+          }
         }
       }
 
       val context = getContextByLocation(*locations.toTypedArray())
-
-      assertFalse(methodProd.isConfigurationFromContext(configurations[0], context))
-      assertFalse(classProd.isConfigurationFromContext(configurations[1], context))
       assertFalse(packageProd.isConfigurationFromContext(configurations[2], context))
+      assertFalse(directoryProd.isConfigurationFromContext(configurations[2], context))
     }
   }
 
@@ -140,19 +135,19 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
   fun `test configuration tests for directory`() {
     val projectData = generateAndImportTemplateProject()
     assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
-      """:autoTest --tests * :automationTest --tests * :test --tests * --continue""",
+      """:autoTest :automationTest :test --continue""",
       projectData["project"].root
     )
     assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
-      """:test --tests *""",
+      """:test""",
       projectData["project"].root.subDirectory("src")
     )
     assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
-      """:test --tests *""",
+      """:test""",
       projectData["project"].root.subDirectory("src", "test")
     )
     assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
-      """:test --tests *""",
+      """:test""",
       projectData["project"].root.subDirectory("src", "test", "java")
     )
     assertConfigurationFromContext<AllInPackageGradleConfigurationProducer>(
@@ -160,11 +155,11 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
       projectData["project"].root.subDirectory("src", "test", "java", "pkg")
     )
     assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
-      """:autoTest --tests * :automationTest --tests * --continue""",
+      """:autoTest :automationTest --continue""",
       projectData["project"].root.subDirectory("automation")
     )
     assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
-      """:module:test --tests *""",
+      """:module:test""",
       projectData["module"].root
     )
   }
@@ -275,6 +270,144 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
       )
     } finally {
       gradleRCTemplate?.settings?.scriptParameters = ""
+    }
+  }
+
+  @Test
+  fun `test run configuration command line partition`() {
+    createAndAddRunConfiguration("task1 task2").apply {
+      assertSameElements(settings.taskNames, "task1", "task2")
+      assertEmpty(settings.scriptParameters)
+      assertEmpty(settings.vmOptions)
+    }
+    createAndAddRunConfiguration("task1 task2 --debug").apply {
+      assertSameElements(settings.taskNames, "task1", "task2")
+      assertEquals(settings.scriptParameters, "--debug")
+      assertEmpty(settings.vmOptions)
+    }
+    createAndAddRunConfiguration("task1 task2 --info").apply {
+      assertSameElements(settings.taskNames, "task1", "task2")
+      assertEquals(settings.scriptParameters, "--info")
+      assertEmpty(settings.vmOptions)
+    }
+    createAndAddRunConfiguration("--info -PmyKey=myVal -DmyKey=myVal").apply {
+      assertEmpty(settings.taskNames)
+      assertEquals(settings.scriptParameters, "--info -PmyKey=myVal -DmyKey=myVal")
+      assertEmpty(settings.vmOptions)
+    }
+    createAndAddRunConfiguration("my-Doc -DmyKey=myVal", vmOptions = "-ea -lorem").apply {
+      assertSameElements(settings.taskNames, "my-Doc")
+      assertEquals(settings.scriptParameters, "-DmyKey=myVal")
+      assertEquals(settings.vmOptions, "-ea -lorem")
+    }
+    createAndAddRunConfiguration("""test1 --tests Test test2 --tests="My test --debug" --continue --info""").apply {
+      assertSameElements(settings.taskNames, "test1", "--tests", "Test", "test2", """--tests="My test --debug"""")
+      assertEquals(settings.scriptParameters, "--continue --info")
+      assertEmpty(settings.vmOptions)
+    }
+    createAndAddRunConfiguration("--info task --ipsum --stacktrace --'dolor sit amet'").apply {
+      assertSameElements(settings.taskNames, "task", "--ipsum", "--'dolor sit amet'")
+      assertEquals(settings.scriptParameters, "--info --stacktrace")
+      assertEmpty(settings.vmOptions)
+    }
+    createAndAddRunConfiguration("build -x test").apply {
+      assertSameElements(settings.taskNames, "build")
+      assertEquals(settings.scriptParameters, "-x test")
+      assertEmpty(settings.vmOptions)
+    }
+  }
+
+  @Test
+  fun `test reusing configuration with options`() {
+    val projectData = generateAndImportTemplateProject()
+    val projectElement = projectData["project"].root
+    createAndAddRunConfiguration("build test --info -PmyKey=myVal -DmyKey=myVal")
+    createAndAddRunConfiguration("build --info -PmyKey=myVal -DmyKey=myVal")
+    createAndAddRunConfiguration("test --debug -PmyKey=myVal -DmyKey=myVal")
+    assertConfigurationForTask("build --info -PmyKey=myVal -DmyKey=myVal", "build", projectElement)
+    assertConfigurationForTask("test --debug -PmyKey=myVal -DmyKey=myVal", "test", projectElement)
+  }
+
+  @Test
+  fun `test configurations are not from context`() {
+    val projectData = generateAndImportTemplateProject()
+    createAndAddRunConfiguration("""build :test --tests "TestCase"""").let { configuration ->
+      runReadActionAndWait {
+        val context = getContextByLocation(projectData["project"]["TestCase"].element)
+        val producer = getConfigurationProducer<TestClassGradleConfigurationProducer>()
+        assertFalse(producer.isConfigurationFromContext(configuration, context))
+      }
+    }
+    createAndAddRunConfiguration("""a b c d e f :test --tests "TestCase"""").let { configuration ->
+      runReadActionAndWait {
+        val context = getContextByLocation(projectData["project"]["TestCase"].element)
+        val producer = getConfigurationProducer<TestClassGradleConfigurationProducer>()
+        assertFalse(producer.isConfigurationFromContext(configuration, context))
+      }
+    }
+    createAndAddRunConfiguration("""build :test --tests "TestCase.test1"""").let { configuration ->
+      runReadActionAndWait {
+        val context = getContextByLocation(projectData["project"]["TestCase"]["test1"].element)
+        val producer = getConfigurationProducer<TestMethodGradleConfigurationProducer>()
+        assertFalse(producer.isConfigurationFromContext(configuration, context))
+      }
+    }
+    createAndAddRunConfiguration("""a b c d e f :test --tests "TestCase.test1"""").let { configuration ->
+      runReadActionAndWait {
+        val context = getContextByLocation(projectData["project"]["TestCase"]["test1"].element)
+        val producer = getConfigurationProducer<TestMethodGradleConfigurationProducer>()
+        assertFalse(producer.isConfigurationFromContext(configuration, context))
+      }
+    }
+  }
+
+  @Test
+  fun `test cannot create configurationFromContext when no test sources are available`() {
+    val projectData = generateAndImportTemplateProject()
+
+    createProjectSubFile("src/java/org/example/application/ExampleMain.java", """
+      package org.example.application;
+      public class ExampleMain {
+        public static void main(String[] args) {}
+      }
+    """.trimIndent())
+
+    runReadActionAndWait {
+      val contextFromMain = getContextByLocation(projectData["project"].root.subDirectory("src", "java"))
+      // Verify that there is no configurationFromContext available when checking from /src/java/ directory and this is because
+      // there are no test sources under /src/java.
+      val fromMainContext = contextFromMain.configurationsFromContext?.firstOrNull()
+      TestCase.assertTrue(fromMainContext == null)
+
+      val contextFromTest = getContextByLocation(projectData["project"].root.subDirectory("src", "test"))
+      // Verify that there is a configurationFromContext available when checking from /src/test/ as it contains test sources.
+      val fromTestContext = contextFromTest.configurationsFromContext?.firstOrNull()
+      TestCase.assertTrue(fromTestContext != null)
+    }
+  }
+
+  @Test
+  fun `test class and method producers require different contexts`() {
+    val projectData = generateAndImportTemplateProject()
+
+    runReadActionAndWait {
+      val classContext = getContextByLocation(projectData["project"]["TestCase"].element)
+      val methodContext = getContextByLocation(projectData["project"]["TestCase"]["test1"].element)
+
+      val classConfigProducer = getConfigurationProducer<TestClassGradleConfigurationProducer>()
+      val methodConfigProducer = getConfigurationProducer<TestMethodGradleConfigurationProducer>()
+
+      val classConfiguration = classConfigProducer.createConfigurationFromContext(classContext)?.configuration as GradleRunConfiguration
+      val methodConfiguration = methodConfigProducer.createConfigurationFromContext(methodContext)?.configuration as GradleRunConfiguration
+
+      assertTrue(classConfigProducer.isConfigurationFromContext(classConfiguration, classContext))
+      assertTrue(methodConfigProducer.isConfigurationFromContext(methodConfiguration, methodContext))
+
+      assertNull(classConfigProducer.createConfigurationFromContext(methodContext))
+      assertNull(methodConfigProducer.createConfigurationFromContext(classContext))
+
+      assertFalse(classConfigProducer.isConfigurationFromContext(classConfiguration, methodContext))
+      assertFalse(methodConfigProducer.isConfigurationFromContext(methodConfiguration, classContext))
     }
   }
 }

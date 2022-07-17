@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -70,7 +70,6 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   private void saveProjectAndNotify(@NotNull Project project) {
     getMainProjectCodeStyle().getModificationTracker().incModificationCount();
     project.save();
-    myProject.getMessageBus().syncPublisher(CodeStyleSettingsMigrationListener.TOPIC).codeStyleSettingsMigrated(project);
   }
 
   @Override
@@ -83,7 +82,9 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   @NotNull
   @Override
   public CodeStyleSettings getMainProjectCodeStyle() {
-    return mySettingsMap.get(MAIN_PROJECT_CODE_STYLE_NAME);
+    synchronized (myStateLock) {
+      return mySettingsMap.get(MAIN_PROJECT_CODE_STYLE_NAME);
+    }
   }
 
   private void initDefaults() {
@@ -147,8 +148,7 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
     }
   }
 
-  @Override
-  protected void checkState() {
+  private void checkState() {
     if (mySettingsExist && !myIsLoaded) {
       LOG.error("Invalid state: project settings exist but not loaded yet. The call may cause settings damage.");
     }
@@ -180,7 +180,7 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   }
 
   @Override
-  protected Collection<CodeStyleSettings> enumSettings() {
+  protected @NotNull Collection<CodeStyleSettings> enumSettings() {
     return Collections.unmodifiableCollection(mySettingsMap.values());
   }
 

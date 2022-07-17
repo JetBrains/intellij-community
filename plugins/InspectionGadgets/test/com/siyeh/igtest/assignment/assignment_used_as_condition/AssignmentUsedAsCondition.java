@@ -22,4 +22,11 @@ public class AssignmentUsedAsCondition {
     if (<error descr="Incompatible types. Found: 'int', required: 'boolean'">i = 8</error>);
     if (b &= true);
   }
+
+  void array() {
+    boolean[] arr = {true};
+    if (<warning descr="Assignment 'arr[0] = false' used as condition">arr[0] = false</warning>) {
+
+    }
+  }
 }

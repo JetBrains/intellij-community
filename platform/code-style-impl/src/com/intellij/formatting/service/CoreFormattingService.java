@@ -5,6 +5,8 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormatTextRanges;
 import com.intellij.formatting.FormattingRangesInfo;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.ImportOptimizer;
+import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -20,7 +22,8 @@ import java.util.Set;
 public final class CoreFormattingService implements FormattingService {
 
   private static final Set<Feature> FEATURES = EnumSet.of(Feature.AD_HOC_FORMATTING,
-                                                          Feature.FORMAT_FRAGMENTS);
+                                                          Feature.FORMAT_FRAGMENTS,
+                                                          Feature.OPTIMIZE_IMPORTS);
 
   @Override
   public boolean canFormat(@NotNull PsiFile file) {
@@ -39,10 +42,7 @@ public final class CoreFormattingService implements FormattingService {
     final PsiElement formatted =
       new CodeFormatterFacade(getSettings(file), element.getLanguage(), canChangeWhiteSpacesOnly)
         .processElement(treeElement).getPsi();
-    if (!canChangeWhiteSpacesOnly) {
-      return CoreCodeStyleUtil.postProcessElement(file, formatted);
-    }
-    return formatted;
+    return CoreCodeStyleUtil.postProcessElement(file, formatted, canChangeWhiteSpacesOnly);
   }
 
   @Override
@@ -53,18 +53,20 @@ public final class CoreFormattingService implements FormattingService {
     PsiFile file = element.getContainingFile();
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), element.getLanguage());
     final PsiElement formatted = codeFormatter.processRange(treeElement, range.getStartOffset(), range.getEndOffset()).getPsi();
-    return canChangeWhiteSpacesOnly ? formatted : CoreCodeStyleUtil.postProcessElement(file, formatted);
+    return CoreCodeStyleUtil.postProcessElement(file, formatted, canChangeWhiteSpacesOnly);
   }
 
   @Override
   public void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly, boolean quickFormat) {
-    List<CoreCodeStyleUtil.RangeFormatInfo> infos =
-      canChangeWhiteSpaceOnly ? null : CoreCodeStyleUtil.getRangeFormatInfoList(file, rangesInfo);
+    List<CoreCodeStyleUtil.RangeFormatInfo> infos = CoreCodeStyleUtil.getRangeFormatInfoList(file, rangesInfo);
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), file.getLanguage());
     codeFormatter.processText(file, (FormatTextRanges)rangesInfo, !canChangeWhiteSpaceOnly);
-    if (infos != null) {
-      CoreCodeStyleUtil.postProcessRanges(file, infos, range -> CoreCodeStyleUtil.postProcessText(file, range));
-    }
+    CoreCodeStyleUtil.postProcessRanges(infos, range -> CoreCodeStyleUtil.postProcessText(file, range, canChangeWhiteSpaceOnly));
+  }
+
+  @Override
+  public @NotNull Set<ImportOptimizer> getImportOptimizers(@NotNull PsiFile file) {
+    return LanguageImportStatements.INSTANCE.forFile(file);
   }
 
   private static CodeStyleSettings getSettings(@NotNull PsiFile file) {

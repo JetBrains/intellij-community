@@ -1,75 +1,47 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
-import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventId1;
-import com.intellij.internal.statistic.eventLog.events.EventId2;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.sun.management.OperatingSystemMXBean;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-final class IdeHeartbeatEventReporter implements Disposable {
-  private static final int UI_RESPONSE_LOGGING_INTERVAL_MS = 100_000;
-  private static final int TOLERABLE_UI_LATENCY = 100;
+public final class IdeHeartbeatEventReporter implements Disposable {
+  static final int UI_RESPONSE_LOGGING_INTERVAL_MS = 100_000;
 
   @Nullable
   private final ScheduledExecutorService myExecutor;
   @Nullable
   private final ScheduledFuture<?> myThread;
 
-  private volatile long myPreviousLoggedUIResponse = 0;
+  private long myLastCpuTime = -1;
+  private long myLastGcTime = -1;
+  private final List<GarbageCollectorMXBean> myGcBeans = ManagementFactory.getGarbageCollectorMXBeans();
 
   IdeHeartbeatEventReporter() {
-    ApplicationManager.getApplication().getMessageBus().connect(this)
-      .subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
-        final boolean isDebugEnabled = DebugAttachDetector.isDebugEnabled();
-
-        @Override
-        public void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
-          if (!isDebugEnabled) {
-            LifecycleUsageTriggerCollector.onFreeze(durationMs);
-          }
-        }
-
-        @Override
-        public void uiResponded(long latencyMs) {
-          final long currentTime = System.currentTimeMillis();
-          if (currentTime - myPreviousLoggedUIResponse >= UI_RESPONSE_LOGGING_INTERVAL_MS) {
-            myPreviousLoggedUIResponse = currentTime;
-            UILatencyLogger.LATENCY.log(latencyMs);
-          }
-          if (latencyMs >= TOLERABLE_UI_LATENCY && !isDebugEnabled) {
-            UILatencyLogger.LAGGING.log(latencyMs);
-          }
-        }
-      });
-
-    if (ApplicationManager.getApplication().isEAP()) {
-      myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("IDE Heartbeat", 1);
-      myThread = myExecutor.scheduleWithFixedDelay(
-        IdeHeartbeatEventReporter::recordHeartbeat,
-        TimeUnit.MINUTES.toMillis(5) /* don't execute during start-up */, UI_RESPONSE_LOGGING_INTERVAL_MS, TimeUnit.MILLISECONDS
-      );
-    }
-    else {
-      myExecutor = null;
-      myThread = null;
-    }
+    myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("IDE Heartbeat", 1);
+    myThread = myExecutor.scheduleWithFixedDelay(
+      this::recordHeartbeat,
+      Registry.intValue("ide.heartbeat.delay") /* don't execute during start-up */, UI_RESPONSE_LOGGING_INTERVAL_MS, TimeUnit.MILLISECONDS
+    );
   }
 
-  private static void recordHeartbeat() {
+  private void recordHeartbeat() {
     OperatingSystemMXBean mxBean = (OperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean();
 
     int systemCpuLoad = (int)Math.round(mxBean.getSystemCpuLoad() * 100);
@@ -78,7 +50,20 @@ final class IdeHeartbeatEventReporter implements Disposable {
     double swapSize = mxBean.getTotalSwapSpaceSize();
     int swapLoad = swapSize > 0 ? (int)((1 - mxBean.getFreeSwapSpaceSize() / swapSize) * 100) : 0;
 
-    UILatencyLogger.HEARTBEAT.log(systemCpuLoad, swapLoad);
+    long totalGcTime = myGcBeans.stream().mapToLong(GarbageCollectorMXBean::getCollectionTime).sum();
+    long thisGcTime = myLastGcTime == -1 ? 0 : totalGcTime - myLastGcTime;
+    myLastGcTime = thisGcTime;
+
+    long totalCpuTime = mxBean.getProcessCpuTime();
+    long thisCpuTime = totalCpuTime < 0 || myLastCpuTime < 0 ? -1 : totalCpuTime - myLastCpuTime;
+    myLastCpuTime = thisCpuTime;
+
+    // don't report total GC time in the first 5 minutes of IJ execution
+    UILatencyLogger.HEARTBEAT.log(
+      UILatencyLogger.SYSTEM_CPU_LOAD.with(systemCpuLoad),
+      UILatencyLogger.SWAP_LOAD.with(swapLoad),
+      UILatencyLogger.CPU_TIME.with((int) TimeUnit.NANOSECONDS.toMillis(thisCpuTime)),
+      UILatencyLogger.GC_TIME.with((int) thisGcTime));
   }
 
   @Override
@@ -91,13 +76,34 @@ final class IdeHeartbeatEventReporter implements Disposable {
     }
   }
 
-  static final class UILatencyLogger extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("performance", 60);
+  final static class Loader implements StartupActivity, StartupActivity.DumbAware {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      ApplicationManager.getApplication().getService(IdeHeartbeatEventReporter.class);
+    }
+  }
 
-    private static final EventId2<Integer, Integer> HEARTBEAT = GROUP.registerEvent(
-      "heartbeat", EventFields.Int("system_cpu_load"), EventFields.Int("swap_load"));
-    private static final EventId1<Long> LATENCY = GROUP.registerEvent("ui.latency", EventFields.DurationMs);
-    private static final EventId1<Long> LAGGING = GROUP.registerEvent("ui.lagging", EventFields.DurationMs);
+  public static final class UILatencyLogger extends CounterUsagesCollector {
+    private static final EventLogGroup GROUP = new EventLogGroup("performance", 65);
+
+    private static final IntEventField SYSTEM_CPU_LOAD = EventFields.Int("system_cpu_load");
+    private static final IntEventField SWAP_LOAD = EventFields.Int("swap_load");
+    private static final IntEventField CPU_TIME = EventFields.Int("cpu_time_ms");
+    private static final IntEventField GC_TIME = EventFields.Int("gc_time_ms");
+    private static final VarargEventId HEARTBEAT = GROUP.registerVarargEvent(
+      "heartbeat",
+      SYSTEM_CPU_LOAD,
+      SWAP_LOAD,
+      CPU_TIME,
+      GC_TIME);
+    public static final EventId1<Long> LATENCY = GROUP.registerEvent("ui.latency", EventFields.DurationMs);
+    public static final EventId1<Long> LAGGING = GROUP.registerEvent("ui.lagging", EventFields.DurationMs);
+    public static final BooleanEventField COLD_START = EventFields.Boolean("cold_start");
+    public static final VarargEventId POPUP_LATENCY = GROUP.registerVarargEvent("popup.latency",
+                                                                                EventFields.DurationMs,
+                                                                                EventFields.ActionPlace,
+                                                                                COLD_START,
+                                                                                EventFields.Language);
 
     @Override
     public EventLogGroup getGroup() {

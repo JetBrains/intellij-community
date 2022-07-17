@@ -3,20 +3,21 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.formatter.TrailingCommaVisitor
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaContext
@@ -24,6 +25,8 @@ import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaState
 import org.jetbrains.kotlin.idea.formatter.trailingComma.addTrailingCommaIsAllowedFor
 import org.jetbrains.kotlin.idea.formatter.trailingCommaAllowedInModule
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.isComma
 import org.jetbrains.kotlin.idea.util.isLineBreak
 import org.jetbrains.kotlin.idea.util.leafIgnoringWhitespaceAndComments
@@ -112,8 +115,8 @@ class TrailingCommaInspection(
 
         private fun reportProblem(
             commaOrElement: PsiElement,
-            message: String,
-            fixMessage: String,
+            @InspectionMessage message: String,
+            @IntentionFamilyName fixMessage: String,
             highlightType: ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             checkTrailingCommaSettings: Boolean = true,
         ) {
@@ -155,44 +158,23 @@ class TrailingCommaInspection(
         private fun commonParent(commaOwner: PsiElement, elementForTextRange: PsiElement): PsiElement =
             PsiTreeUtil.findCommonParent(commaOwner, elementForTextRange)
                 ?: throw KotlinExceptionWithAttachments("Common parent not found")
-                    .withAttachment("commaOwner", commaOwner.text)
+                    .withPsiAttachment("commaOwner", commaOwner)
                     .withAttachment("commaOwnerRange", commaOwner.textRange)
-                    .withAttachment("elementForTextRange", elementForTextRange.text)
+                    .withPsiAttachment("elementForTextRange", elementForTextRange)
                     .withAttachment("elementForTextRangeRange", elementForTextRange.textRange)
-                    .withAttachment("parent", commaOwner.parent.text)
+                    .withPsiAttachment("parent", commaOwner.parent)
                     .withAttachment("parentRange", commaOwner.parent.textRange)
 
         private fun ProblemHighlightType.applyCondition(condition: Boolean): ProblemHighlightType = when {
-            ApplicationManager.getApplication().isUnitTestMode -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+            isUnitTestMode() -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
             condition -> this
             else -> ProblemHighlightType.INFORMATION
         }
 
         private fun createQuickFix(
-            fixMessage: String,
+            @IntentionFamilyName fixMessage: String,
             commaOwner: KtElement,
-        ): LocalQuickFix = object : LocalQuickFix {
-            val commaOwnerPointer = commaOwner.createSmartPointer()
-
-            override fun getFamilyName(): String = fixMessage
-
-            override fun applyFix(project: Project, problemDescriptor: ProblemDescriptor) {
-                val element = commaOwnerPointer.element ?: return
-                val range = createFormatterTextRange(element)
-                val settings = CodeStyleSettingsManager.getInstance(project).cloneSettings(CodeStyle.getSettings(element.containingKtFile))
-                settings.kotlinCustomSettings.ALLOW_TRAILING_COMMA = true
-                settings.kotlinCustomSettings.ALLOW_TRAILING_COMMA_ON_CALL_SITE = true
-                CodeStyle.doWithTemporarySettings(project, settings, Runnable {
-                    CodeStyleManager.getInstance(project).reformatRange(element, range.startOffset, range.endOffset)
-                })
-            }
-        }
-
-        private fun createFormatterTextRange(commaOwner: KtElement): TextRange {
-            val startElement = TrailingCommaHelper.elementBeforeFirstElement(commaOwner) ?: commaOwner
-            val endElement = TrailingCommaHelper.elementAfterLastElement(commaOwner) ?: commaOwner
-            return TextRange.create(startElement.startOffset, endElement.endOffset)
-        }
+        ): LocalQuickFix = ReformatTrailingCommaFix(commaOwner, fixMessage)
 
         private val PsiElement.textRangeOfCommaOrSymbolAfter: TextRange
             get() {
@@ -210,4 +192,32 @@ class TrailingCommaInspection(
         this,
         "addCommaWarning",
     )
+
+    class ReformatTrailingCommaFix(commaOwner: KtElement, @IntentionFamilyName private val fixMessage: String) : LocalQuickFix {
+        val commaOwnerPointer = commaOwner.createSmartPointer()
+
+        override fun getFamilyName(): String = fixMessage
+
+        override fun applyFix(project: Project, problemDescriptor: ProblemDescriptor) {
+            val element = commaOwnerPointer.element ?: return
+            val range = createFormatterTextRange(element)
+            val settings = CodeStyleSettingsManager.getInstance(project).cloneSettings(CodeStyle.getSettings(element.containingKtFile))
+            settings.kotlinCustomSettings.ALLOW_TRAILING_COMMA = true
+            settings.kotlinCustomSettings.ALLOW_TRAILING_COMMA_ON_CALL_SITE = true
+            CodeStyle.doWithTemporarySettings(project, settings, Runnable {
+                CodeStyleManager.getInstance(project).reformatRange(element, range.startOffset, range.endOffset)
+            })
+        }
+
+        private fun createFormatterTextRange(commaOwner: KtElement): TextRange {
+            val startElement = TrailingCommaHelper.elementBeforeFirstElement(commaOwner) ?: commaOwner
+            val endElement = TrailingCommaHelper.elementAfterLastElement(commaOwner) ?: commaOwner
+            return TextRange.create(startElement.startOffset, endElement.endOffset)
+        }
+
+        override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
+            val element = commaOwnerPointer.element ?: return null
+            return ReformatTrailingCommaFix(PsiTreeUtil.findSameElementInCopy(element, target), fixMessage)
+        }
+    }
 }

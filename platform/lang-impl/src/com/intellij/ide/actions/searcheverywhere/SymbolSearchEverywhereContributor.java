@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -19,7 +18,7 @@ import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersS
 /**
  * @author Konstantin Bulenkov
  */
-public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor {
+public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor implements PossibleSlowContributor {
 
   private final PersistentSearchEverywhereContributorFilter<LanguageRef> myFilter;
 
@@ -47,11 +46,6 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
       model.setFilterItems(myFilter.getSelectedElements());
     }
     return model;
-  }
-
-  @Override
-  protected @Nullable SearchEverywhereCommandInfo getFilterCommand() {
-    return new SearchEverywhereCommandInfo("s", IdeBundle.message("search.everywhere.filter.symbols.description"), this);
   }
 
   @NotNull

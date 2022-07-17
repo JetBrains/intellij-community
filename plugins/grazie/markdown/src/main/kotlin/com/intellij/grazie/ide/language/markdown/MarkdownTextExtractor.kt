@@ -5,6 +5,7 @@ import com.intellij.grazie.ide.language.markdown.MarkdownPsiUtils.isMarkdownLink
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContentBuilder
 import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.utils.nbspToSpace
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
@@ -12,20 +13,25 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 
 class MarkdownTextExtractor : TextExtractor() {
+  private val toExclude =
+    setOf(MarkdownTokenTypes.EMPH, MarkdownTokenTypes.TILDE, MarkdownElementTypes.IMAGE)
+
   public override fun buildTextContent(root: PsiElement, allowedDomains: Set<TextContent.TextDomain>): TextContent? {
     if (allowedDomains.contains(TextContent.TextDomain.PLAIN_TEXT) &&
         (MarkdownPsiUtils.isHeaderContent(root) || MarkdownPsiUtils.isParagraph(root))) {
-      return TextContentBuilder.FromPsi
+      return nbspToSpace(TextContentBuilder.FromPsi
         .withUnknown { it.node.isMarkdownCodeType() }
         .excluding { e ->
-          e.elementType == MarkdownElementTypes.IMAGE ||
+          e.elementType in toExclude ||
           e.firstChild == null && e.parent.node.isMarkdownLinkType() && !isLinkText(e)
         }
-        .build(root, TextContent.TextDomain.PLAIN_TEXT)
+        .removingIndents(" \t").removingLineSuffixes(" \t")
+        .build(root, TextContent.TextDomain.PLAIN_TEXT))
     }
     return null
   }
 
   private fun isLinkText(e: PsiElement) =
-    (e.elementType == MarkdownTokenTypes.TEXT || e is PsiWhiteSpace) && e.parent.elementType == MarkdownElementTypes.LINK_TEXT
+    (e.elementType == MarkdownTokenTypes.TEXT || e.elementType == MarkdownTokenTypes.GFM_AUTOLINK || e is PsiWhiteSpace) &&
+    e.parent.elementType == MarkdownElementTypes.LINK_TEXT
 }

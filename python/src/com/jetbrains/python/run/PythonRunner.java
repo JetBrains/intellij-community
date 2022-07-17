@@ -12,9 +12,9 @@ import com.intellij.execution.runners.DefaultProgramRunnerKt;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,14 +53,13 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
     AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();
     execute(state, () -> {
       try {
-        boolean useTargetsAPI = Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations");
+        boolean useTargetsAPI = Registry.get("python.use.targets.api").asBoolean();
 
         ExecutionResult executionResult;
         RunProfile profile = env.getRunProfile();
         if (useTargetsAPI && state instanceof PythonCommandLineState) {
           // TODO [cloud-api.python] profile functionality must be applied here:
           //      - com.jetbrains.django.run.DjangoServerRunConfiguration.patchCommandLineFirst() - host:port is put in user data
-          //      - com.jetbrains.django.run.DjangoServerRunConfiguration.patchCommandLineForBuildout()
           executionResult = ((PythonCommandLineState)state).execute(env.getExecutor());
         }
         else if (!useTargetsAPI && state instanceof PythonCommandLineState && profile instanceof CommandLinePatcher) {
@@ -73,8 +72,8 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
           () -> promise.setResult(DefaultProgramRunnerKt.showRunContent(executionResult, env)),
           ModalityState.any());
       }
-      catch (ExecutionException | RuntimeException err) {
-        promise.setError(err);
+      catch (Exception e) {
+        promise.setError(e);
       }
     });
     return promise;

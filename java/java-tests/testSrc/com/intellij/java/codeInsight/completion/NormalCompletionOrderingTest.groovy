@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.java.codeInsight.completion
 
@@ -13,6 +11,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.ide.ui.UISettings
+import com.intellij.internal.DumpLookupElementWeights
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
@@ -390,7 +389,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   @NeedsIndex.ForStandardLibrary
   void testPreferKeywordsToVoidMethodsInExpectedTypeContext() {
-    checkPreferredItems 0, 'noo', 'new', 'null', 'noo2', 'clone', 'toString', 'notify', 'notifyAll'
+    checkPreferredItems 0, 'noo', 'new', 'null', 'noo2', 'new File', 'new File', 'new File', 'new File', 'clone', 'toString', 'notify', 'notifyAll'
   }
 
   void testPreferBetterMatchingConstantToMethods() {
@@ -622,7 +621,7 @@ interface TxANotAnno {}
   @NeedsIndex.ForStandardLibrary
   void testPreferClassesOfExpectedClassType() {
     myFixture.addClass "class XException extends Exception {}"
-    checkPreferredItems 0, 'XException', 'XClass', 'XIntf'
+    checkPreferredItems 0, 'XException.class', 'XException', 'XClass', 'XIntf'
   }
 
   void testNoNumberValueOf() {
@@ -724,7 +723,7 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'unmodifiableList', 'unmodifiableCollection'
   }
 
-  @NeedsIndex.Full
+  @NeedsIndex.SmartMode(reason = "isEffectivelyDeprecated needs smart mode")
   void testDispreferDeprecatedMethodWithUnresolvedQualifier() {
     myFixture.addClass("package foo; public class Assert { public static void assertTrue() {} }")
     myFixture.addClass("package bar; @Deprecated public class Assert { public static void assertTrue() {}; public static void assertTrue2() {} }")
@@ -773,7 +772,7 @@ class ContainerUtil extends ContainerUtilRt {
 
   @NeedsIndex.Full
   void testPreselectClosestExactPrefixItem() {
-    UISettings.instance.setSortLookupElementsLexicographically(true)
+    UISettings.getInstance().setSortLookupElementsLexicographically(true)
     myFixture.addClass 'package pack1; public class SameNamed {}'
     myFixture.addClass 'package pack2; public class SameNamed {}'
     checkPreferredItems 1, 'SameNamed', 'SameNamed'
@@ -978,5 +977,42 @@ class Foo {
     myFixture.configureByText("a.java", "class X { String getName() {return \"\";} void test() {System.out.println(this.n<caret>);}}")
     myFixture.completeBasic()
     assertStringItems "getName", "clone", "toString", "notify", "notifyAll", "finalize"
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test void context replace"() {
+    myFixture.configureByText("a.java", "class X { String getName() {return \"\";} void test() {this.n<caret>otify();}}")
+    myFixture.completeBasic()
+    assertStringItems "notify", "notifyAll", "getName", "clone", "toString", "finalize"
+  }
+
+  @NeedsIndex.Full
+  void "test import nested classes order"() {
+    myFixture.addClass("public class Cls { public static class TestImport {}}")
+    myFixture.addClass("public class Cls2 { public static class TestImport {}}")
+    myFixture.addClass("package demo;public class TestImport {}")
+    myFixture.addClass("public class TestImport {}")
+    myFixture.configureByText("a.java", "import demo.*;import static Cls2.*; class Test {TestIm<caret>}")
+    myFixture.completeBasic()
+    def elements = myFixture.lookupElements
+    assert elements.length == 4
+    def weights = DumpLookupElementWeights.getLookupElementWeights(lookup, false)
+    assert elements[0].as(JavaPsiClassReferenceElement).getQualifiedName() == "TestImport"
+    assert weights[0].contains("explicitlyImported=CLASS_DECLARED_IN_SAME_PACKAGE_TOP_LEVEL,") // same package
+    assert elements[1].as(JavaPsiClassReferenceElement).getQualifiedName() == "demo.TestImport"
+    assert weights[1].contains("explicitlyImported=CLASS_ON_DEMAND_TOP_LEVEL,") // on-demand import
+    assert elements[2].as(JavaPsiClassReferenceElement).getQualifiedName() == "Cls2.TestImport"
+    assert weights[2].contains("explicitlyImported=CLASS_ON_DEMAND_NESTED,") // same package, nested class imported
+    assert elements[3].as(JavaPsiClassReferenceElement).getQualifiedName() == "Cls.TestImport"
+    assert weights[3].contains("explicitlyImported=CLASS_DECLARED_IN_SAME_PACKAGE_NESTED,") // same package but nested class not imported
+  }
+
+  @NeedsIndex.SmartMode(reason = "Ordering requires smart mode")
+  void "test discourage experimental"() {
+    myFixture.addClass("package org.jetbrains.annotations;public class ApiStatus{public @interface Experimental {}}");
+    myFixture.addClass("class Cls {@org.jetbrains.annotations.ApiStatus.Experimental public void methodA() {} public void methodB() {}}")
+    myFixture.configureByText("a.java", "class Test {void t(Cls cls) {cls.me<caret>}}")
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ["methodB", "methodA"]
   }
 }

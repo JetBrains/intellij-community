@@ -11,6 +11,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
+import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.*;
@@ -74,7 +75,7 @@ import java.util.List;
 import java.util.*;
 
 /**
- * @author: Roman Chernyatchik
+ * @author Roman Chernyatchik
  */
 public class SMTestRunnerResultsForm extends TestResultsPanel
   implements TestFrameworkRunningModel, TestResultsViewer, SMTRunnerEventsListener {
@@ -303,8 +304,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     final RunProfile configuration = consoleProperties.getConfiguration();
     if (configuration instanceof RunConfiguration &&
         !(consoleProperties instanceof ImportedTestConsoleProperties) &&
-        !myDisposed) {
-      final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration, myHistoryFileName);
+        !isDisposed()) {
+      final MySaveHistoryTask backgroundable =
+        new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration, myHistoryFileName);
       Disposer.register(parentDisposable, new Disposable() {
         @Override
         public void dispose() {
@@ -508,6 +510,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     });
   }
 
+  private boolean isDisposed() {
+    return myDisposed || Disposer.isDisposed(this);
+  }
+
   @Override
   public void dispose() {
     super.dispose();
@@ -572,7 +578,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       update.run();
     }
-    else if (!myDisposed && myRequests.add(update)) {
+    else if (!isDisposed() && myRequests.add(update)) {
       myUpdateTreeRequests.addRequest(update, 50);
     }
 
@@ -813,8 +819,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
           String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
           DumbService.getInstance(getProject()).runReadActionInSmartMode(() -> {
             Project project = getProject();
-            TestStackTraceParser info =
-              new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage(), proxy.getLocator(), project);
+            TestStackTraceParser info = getStackTraceParser(proxy, url, project);
             TestStateStorage storage = TestStateStorage.getInstance(project);
             storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(),
                                                                 configurationName == null ? 0 : configurationName.hashCode(),
@@ -822,6 +827,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                                                 info.getErrorMessage(), info.getTopLocationLine()));
           });
         }
+      }
+    }
+
+    private TestStackTraceParser getStackTraceParser(@NotNull SMTestProxy proxy, @NotNull String url, @NotNull Project project) {
+      if (myConsoleProperties instanceof SMStacktraceParser) {
+        return ((SMStacktraceParser)myConsoleProperties).getTestStackTraceParser(url, proxy, project);
+      }
+      else {
+        return new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage(), proxy.getLocator(), project);
       }
     }
 

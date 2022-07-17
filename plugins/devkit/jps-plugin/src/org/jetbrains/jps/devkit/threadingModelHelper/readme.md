@@ -5,12 +5,14 @@ Instruments methods annotated with
 - `@RequiresBackgroundThread`
 - `@RequiresReadLock`
 - `@RequiresWriteLock` 
+- `@RequiresReadLockAbsence` 
 
 by inserting 
 - `Application#assertIsDispatchThread()` 
 - `Application#assertIsNonDispatchThread()` 
 - `Application#assertReadAccessAllowed()` 
 - `Application#assertWriteAccessAllowed()`
+- `Application#assertReadAccessNotAllowed()`
 
 calls accordingly. 
 

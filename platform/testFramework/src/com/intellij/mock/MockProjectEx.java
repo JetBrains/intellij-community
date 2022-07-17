@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
@@ -24,9 +24,8 @@ public class MockProjectEx extends MockProject implements ProjectEx {
   public void setProjectName(@NotNull String name) {
   }
 
-  @NotNull
   @Override
-  public final Disposable getEarlyDisposable() {
+  public final @NotNull Disposable getEarlyDisposable() {
     return this;
   }
 }

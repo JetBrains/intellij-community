@@ -5,10 +5,9 @@ import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 
-class KtThisDescriptor(private val descriptor: DeclarationDescriptor, private val dfType : DfType) : VariableDescriptor  {
+class KtThisDescriptor(val descriptor: DeclarationDescriptor, private val dfType : DfType) : VariableDescriptor  {
     override fun isStable(): Boolean {
         return true
     }

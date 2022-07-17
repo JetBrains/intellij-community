@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -11,14 +11,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.Alarm;
@@ -136,7 +135,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     mySplitter.setSplitterProportionKey(getSplitterProportionKey());
     mySplitter.setFirstComponent(myEditor.getComponent());
     mySplitter.setSecondComponent(myPreview.getComponent());
-    mySplitter.setDividerWidth(2);
+    mySplitter.setDividerWidth(ExperimentalUI.isNewUI() ? 1 : 2);
+    if (ExperimentalUI.isNewUI()) {
+      mySplitter.getDivider().setBackground(JBColor.border());
+    }
 
     myToolbarWrapper = createMarkdownToolbarWrapper(mySplitter);
 
@@ -147,7 +149,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     adjustEditorsVisibility();
 
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(mySplitter).addToTop(myToolbarWrapper);
-    if (!Registry.is("ide.text.editor.with.preview.show.floating.toolbar") || !myToolbarWrapper.isLeftToolbarEmpty()) {
+    if (!isShowFloatingToolbar()) {
       myComponent = panel;
       return myComponent;
     }
@@ -163,6 +165,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     return myComponent;
   }
 
+  protected boolean isShowFloatingToolbar() {
+    return Registry.is("ide.text.editor.with.preview.show.floating.toolbar") && myToolbarWrapper.isLeftToolbarEmpty();
+  }
+
   private void registerToolbarListeners(JComponent actualComponent, LayoutActionsFloatingToolbar toolbar) {
     UIUtil.addAwtListener(new MyMouseListener(toolbar), AWTEvent.MOUSE_MOTION_EVENT_MASK, toolbar);
     final var actualEditor = UIUtil.findComponentOfType(actualComponent, EditorComponentImpl.class);
@@ -170,7 +176,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       final var editorKeyListener = new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent event) {
-          toolbar.getVisibilityController().scheduleHide();
+          toolbar.scheduleHide();
         }
       };
       actualEditor.getEditor().getContentComponent().addKeyListener(editorKeyListener);
@@ -221,7 +227,6 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
-  @SuppressWarnings("unused")
   protected void onLayoutChange(Layout oldValue, Layout newValue) { }
 
   private void adjustEditorsVisibility() {
@@ -492,7 +497,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     public Icon getIcon(@Nullable TextEditorWithPreview editor) {
       if (this == SHOW_EDITOR) return AllIcons.General.LayoutEditorOnly;
       if (this == SHOW_PREVIEW) return AllIcons.General.LayoutPreviewOnly;
-      return editor != null && editor.myIsVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
+      boolean isVerticalSplit = editor != null && editor.myIsVerticalSplit;
+      if (ExperimentalUI.isNewUI()) {
+        return isVerticalSplit ? IconLoader.getIcon("expui/general/editorPreviewVertical.svg", AllIcons.class)
+                               : IconLoader.getIcon("expui/general/editorPreview.svg", AllIcons.class);
+      }
+      return isVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
     }
   }
 
@@ -624,18 +634,21 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
     @Override
     public void eventDispatched(AWTEvent event) {
-      var isMouseOutsideToolbar = toolbar.getMousePosition() == null;
-      if (myComponent.getMousePosition() != null) {
-        alarm.cancelAllRequests();
-        toolbar.getVisibilityController().scheduleShow();
-        if (isMouseOutsideToolbar) {
-          alarm.addRequest(() -> {
-            toolbar.getVisibilityController().scheduleHide();
-          }, 1400);
+      try {
+        var isMouseOutsideToolbar = toolbar.getMousePosition() == null;
+        if (myComponent.getMousePosition() != null) {
+          alarm.cancelAllRequests();
+          toolbar.scheduleShow();
+          if (isMouseOutsideToolbar) {
+            alarm.addRequest(() -> {
+              toolbar.scheduleHide();
+            }, 1400);
+          }
         }
-      }
-      else if (isMouseOutsideToolbar) {
-        toolbar.getVisibilityController().scheduleHide();
+        else if (isMouseOutsideToolbar) {
+          toolbar.scheduleHide();
+        }
+      } catch (NullPointerException ignore) { //EA-356093 problem inside OpenJDK
       }
     }
   }

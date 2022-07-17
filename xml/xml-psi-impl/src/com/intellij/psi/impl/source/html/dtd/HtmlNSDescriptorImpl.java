@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.html.dtd;
 
 import com.intellij.html.RelaxedHtmlNSDescriptor;
@@ -15,6 +15,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlNSTypeDescriptorProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +27,8 @@ import java.util.Map;
  */
 public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTypeDescriptorProvider {
   private final XmlNSDescriptor myDelegate;
-  private final boolean myRelaxed;
-  private final boolean myCaseSensitive;
+  protected final boolean myRelaxed;
+  protected final boolean myCaseSensitive;
 
   private static final SimpleFieldCache<Map<String, HtmlElementDescriptorImpl>, HtmlNSDescriptorImpl> myCachedDeclsCache =
     new SimpleFieldCache<>() {
@@ -100,10 +101,15 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     for (XmlElementDescriptor element : elements) {
       decls.put(
         element.getName(),
-        new HtmlElementDescriptorImpl(element, myRelaxed, myCaseSensitive)
+        createHtmlElementDescriptor(element)
       );
     }
     return decls;
+  }
+
+  @NotNull
+  protected HtmlElementDescriptorImpl createHtmlElementDescriptor(XmlElementDescriptor element) {
+    return new HtmlElementDescriptorImpl(element, myRelaxed, myCaseSensitive);
   }
 
   @Override
@@ -115,7 +121,8 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     return xmlElementDescriptor;
   }
 
-  private XmlElementDescriptor getElementDescriptorByName(String name) {
+  @ApiStatus.Internal
+  public XmlElementDescriptor getElementDescriptorByName(String name) {
     if (!myCaseSensitive) name = StringUtil.toLowerCase(name);
 
     return buildDeclarationMap().get(name);

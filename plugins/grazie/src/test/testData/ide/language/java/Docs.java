@@ -47,9 +47,7 @@ class ExampleClassWithNoTypos<T> {
 }
 
 /**
- * It is friend there
- *
- * <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic; it's just a documentation example.
+ * It is <warning descr="EN_A_VS_AN">an</warning> friend there
  *
  * </unopenedTag>
  *
@@ -92,4 +90,11 @@ class ForMultiLanguageSupport {
     // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <warning descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</warning>.
     // das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
     // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <warning descr="MANNSTUNDE">Mannstunden</warning>.
+
+  /**
+   * @throws Exception wenn ein Fehler auftritt
+   */
+  public static void main(String[] args) throws Exception {
+    throw new Exception("Hello World");
+  }
 }

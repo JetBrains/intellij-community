@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.analysis;
 
@@ -64,7 +64,7 @@ public class AnalysisScope {
   @Type protected int myType;
 
   private Set<? extends VirtualFile> myVFiles;  // initial files and directories the scope is configured on
-  private Set<? extends VirtualFile> myFilesSet; // set of files (not directories) this scope consists of. calculated in initFilesSet()
+  private VirtualFileSet myFilesSet; // set of files (not directories) this scope consists of. calculated in getFilesSet()
 
   private boolean myIncludeTestSource = true;
   private boolean myAnalyzeInjectedCode = true;
@@ -143,33 +143,28 @@ public class AnalysisScope {
   }
 
   public void setSearchInLibraries(boolean searchInLibraries) {
+    LOG.assertTrue(myFilesSet == null, "don't modify AnalysisScope after it has been used");
     mySearchInLibraries = searchInLibraries;
   }
 
   public void setIncludeTestSource(boolean includeTestSource) {
+    LOG.assertTrue(myFilesSet == null, "don't modify AnalysisScope after it has been used");
     myIncludeTestSource = includeTestSource;
   }
 
   public void setAnalyzeInjectedCode(boolean analyzeInjectedCode) {
+    LOG.assertTrue(myFilesSet == null, "don't modify AnalysisScope after it has been used");
     myAnalyzeInjectedCode = analyzeInjectedCode;
   }
 
-  @NotNull
-  protected PsiElementVisitor createFileSearcher(@NotNull Collection<? super VirtualFile> addTo) {
+  protected @NotNull Processor<? super VirtualFile> createFileSearcher(@NotNull Collection<? super VirtualFile> addTo) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText(AnalysisBundle.message("scanning.scope.progress.title"));
     }
-    return new PsiElementVisitor() {
-      @Override
-      public void visitFile(@NotNull PsiFile file) {
-        if (mySearchInLibraries || !(file instanceof PsiCompiledElement)) {
-          VirtualFile virtualFile = file.getVirtualFile();
-          if (virtualFile != null && !isFilteredOut(virtualFile)) {
-            addTo.add(virtualFile);
-          }
-        }
-      }
+    return virtualFile -> {
+      addTo.add(virtualFile);
+      return true;
     };
   }
 
@@ -216,7 +211,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  protected Set<VirtualFile> createFilesSet() {
+  protected VirtualFileSet createFilesSet() {
     VirtualFileSet fileSet = VfsUtilCore.createCompactVirtualFileSet();
     switch (myType) {
       case FILE:
@@ -248,6 +243,7 @@ public class AnalysisScope {
             }
           });
         }
+        fileSet.freeze();
         break;
       default:
         throw new IllegalStateException("Invalid type: "+myType+"; can't create file set off it");
@@ -286,8 +282,11 @@ public class AnalysisScope {
   }
 
   public boolean accept(@NotNull Processor<? super VirtualFile> processor) {
+    if (myFilesSet != null) {
+      return myFilesSet.process(processor);
+    }
     if (myType == VIRTUAL_FILES) {
-      return ((CompactVirtualFileSet)getFileSet()).process(file -> isFilteredOut(file) || processor.process(file));
+      return getFileSet().process(file -> isFilteredOut(file) || processor.process(file));
     }
     FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (myScope instanceof GlobalSearchScope) {
@@ -335,8 +334,8 @@ public class AnalysisScope {
   }
 
   @NotNull
-  private Collection<? extends VirtualFile> getFileSet() {
-    Set<? extends VirtualFile> fileSet = myFilesSet;
+  private VirtualFileSet getFileSet() {
+    VirtualFileSet fileSet = myFilesSet;
     if (fileSet == null) {
       myFilesSet = fileSet = createFilesSet();
     }
@@ -408,6 +407,7 @@ public class AnalysisScope {
       case MODULES:
         return myModules.contains(module);
       case CUSTOM:
+        if (module.isDisposed()) return false;
         for (VirtualFile file : ModuleRootManager.getInstance(module).getSourceRoots()) {
           if (myScope.contains(file)) return true;
         }
@@ -559,11 +559,6 @@ public class AnalysisScope {
   }
 
   public int getFileCount() {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) { //clear text after building analysis scope set
-      indicator.setText("");
-      indicator.setText2("");
-    }
     return getFileSet().size();
   }
 
@@ -574,9 +569,7 @@ public class AnalysisScope {
       files.freeze();
       myVFiles = files;
     }
-    else {
-      myFilesSet = null;
-    }
+    myFilesSet = null;
   }
 
   public boolean containsSources(boolean isTest) {
@@ -683,7 +676,7 @@ public class AnalysisScope {
       case FILE:
         return GlobalSearchScope.fileScope((PsiFile)myElement);
       case INVALID:
-        return GlobalSearchScope.EMPTY_SCOPE;
+        return LocalSearchScope.EMPTY;
       case MODULE:
         GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(myModule);
         return myIncludeTestSource ? moduleScope : GlobalSearchScope.notScope(GlobalSearchScopesCore.projectTestScope(myModule.getProject())).intersectWith(moduleScope);
@@ -710,7 +703,7 @@ public class AnalysisScope {
         };
       default:
         LOG.error("invalid type " + myType);
-        return GlobalSearchScope.EMPTY_SCOPE;
+        return LocalSearchScope.EMPTY;
     }
   }
 

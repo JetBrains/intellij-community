@@ -4,7 +4,6 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.ui.InputException
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
@@ -113,37 +112,49 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   override fun executionEnded() = Unit
 
   override fun beforeCommitChecksStarted() = ui.startBeforeCommitChecks()
-  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) = ui.endBeforeCommitChecks(result)
+  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) = ui.endBeforeCommitChecks(result)
 
-  private fun executeDefault(executor: CommitExecutor?): Boolean =
-    checkCommit(executor) &&
-    addUnversionedFiles() &&
-    saveCommitOptions() &&
-    run {
-      saveCommitMessage(true)
-      refreshChanges {
-        workflow.continueExecution {
-          updateWorkflow()
-          doExecuteDefault(executor)
-        }
-      }
-      true
-    }
+  private fun executeDefault(executor: CommitExecutor?): Boolean {
+    val proceed = checkCommit(executor) &&
+                  addUnversionedFiles() &&
+                  saveCommitOptionsOnCommit()
+    if (!proceed) return false
 
-  private fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean =
-    checkCommit(executor) &&
-    canExecute(executor) &&
-    saveCommitOptions() &&
-    run {
-      saveCommitMessage(true)
-      refreshChanges {
-        workflow.continueExecution {
-          updateWorkflow()
-          doExecuteCustom(executor, session)
-        }
+    saveCommitMessage(true)
+    logCommitEvent(executor)
+
+    refreshChanges {
+      workflow.continueExecution {
+        updateWorkflow()
+        doExecuteDefault(executor)
       }
-      true
     }
+    return true
+  }
+
+  private fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean {
+    val proceed = checkCommit(executor) &&
+                  canExecute(executor) &&
+                  saveCommitOptionsOnCommit()
+    if (!proceed) return false
+
+    saveCommitMessage(true)
+    logCommitEvent(executor)
+
+    refreshChanges {
+      workflow.continueExecution {
+        updateWorkflow()
+        doExecuteCustom(executor, session)
+      }
+    }
+    return true
+  }
+
+  private fun logCommitEvent(executor: CommitExecutor?) {
+    CommitSessionCollector.getInstance(project).logCommit(executor?.id,
+                                                          ui.getIncludedChanges().size,
+                                                          ui.getIncludedUnversionedFiles().size)
+  }
 
   protected open fun updateWorkflow() = Unit
 
@@ -151,38 +162,38 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   protected abstract fun addUnversionedFiles(): Boolean
 
-  protected fun addUnversionedFiles(changeList: LocalChangeList): Boolean =
-    workflow.addUnversionedFiles(changeList, getIncludedUnversionedFiles().mapNotNull { it.virtualFile }) { changes ->
-      ui.includeIntoCommit(changes)
+  protected fun addUnversionedFiles(changeList: LocalChangeList, inclusionModel: InclusionModel): Boolean {
+    val unversionedFiles = getIncludedUnversionedFiles().mapNotNull { it.virtualFile }
+    return workflow.addUnversionedFiles(changeList, unversionedFiles) { newChanges ->
+      inclusionModel.addInclusion(newChanges)
     }
-
-  protected open fun doExecuteDefault(executor: CommitExecutor?): Boolean = try {
-    workflow.executeDefault(executor)
   }
-  catch (e: InputException) { // TODO Looks like this catch is unnecessary - check
-    e.show()
-    false
+
+  protected open fun doExecuteDefault(executor: CommitExecutor?): Boolean {
+    return workflow.executeDefault(executor)
   }
 
   private fun canExecute(executor: CommitExecutor): Boolean = workflow.canExecute(executor, getIncludedChanges())
-  private fun doExecuteCustom(executor: CommitExecutor, session: CommitSession): Boolean = workflow.executeCustom(executor, session)
-
-  protected open fun saveCommitOptions() = try {
-    commitOptions.saveState()
-    true
+  private fun doExecuteCustom(executor: CommitExecutor, session: CommitSession): Boolean {
+    return workflow.executeCustom(executor, session)
   }
-  catch (ex: InputException) {
-    ex.show()
-    false
+
+  protected open fun saveCommitOptionsOnCommit(): Boolean {
+    commitOptions.saveState()
+    return true
   }
 
   protected abstract fun saveCommitMessage(success: Boolean)
 
-  private fun getVcsOptions(commitPanel: CheckinProjectPanel, vcses: Collection<AbstractVcs>, commitContext: CommitContext) =
+  private fun getVcsOptions(commitPanel: CheckinProjectPanel,
+                            vcses: Collection<AbstractVcs>,
+                            commitContext: CommitContext): Map<AbstractVcs, RefreshableOnComponent> =
     vcses.sortedWith(VCS_COMPARATOR)
-      .associateWith { it.checkinEnvironment?.createCommitOptions(commitPanel, commitContext) }
-      .filterValues { it != null }
-      .mapValues { it.value!! }
+      .mapNotNull { vcs ->
+        val optionsPanel = vcs.checkinEnvironment?.createCommitOptions(commitPanel, commitContext) ?: return@mapNotNull null
+        Pair(vcs, optionsPanel)
+      }
+      .toMap()
 
   private fun getBeforeOptions(handlers: Collection<CheckinHandler>): List<RefreshableOnComponent> =
     handlers.mapNotNullLoggingErrors(LOG) { it.beforeCheckinConfigurationPanel }

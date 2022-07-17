@@ -39,9 +39,9 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
   ) : ChoiceVariantIntentionAction(), HighPriorityAction {
 
     @NlsSafe
-    private lateinit var suggestion: String
+    private var suggestion: String? = null
 
-    override fun getName(): String = suggestion
+    override fun getName(): String = suggestion ?: ""
 
     override fun getTooltipText(): String = SpellCheckerBundle.message("change.to.tooltip", suggestion)
 
@@ -55,6 +55,8 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
     }
 
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
+      val suggestion = suggestion ?: return
+
       val myEditor = editor ?: LazyEditor(file)
 
       val myElement = pointer.element ?: return
@@ -68,7 +70,7 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
       myEditor.document.replaceString(myRange.startOffset, myRange.endOffset, suggestion)
     }
 
-    override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
+    override fun getFileModifierForPreview(target: PsiFile): FileModifier {
       return this
     }
 

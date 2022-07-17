@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -149,6 +150,16 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  public static boolean hasVisibleToolwindowToolbars(@NotNull ToolWindow toolWindow) {
+    Iterator<ActionToolbar> iterator = iterateToolbars(Collections.singletonList(toolWindow.getContentManager().getComponent())).iterator();
+    return iterator.hasNext() && iterator.next().getComponent().isVisible();
+  }
+
+  @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return isSelected();
   }
@@ -195,17 +206,30 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
 
     OptionsGroup(ToolWindow toolWindow) {
       getTemplatePresentation().setText(IdeBundle.message("group.view.options"));
-      setPopup(true);
       myToolWindow = toolWindow;
     }
 
     @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      if (e.getPresentation().isVisible()) {
+        int trimmedSize = ActionGroupUtil.getVisibleActions(this, e).take(4).size();
+        e.getPresentation().setPopupGroup(trimmedSize > 3);
+      }
+    }
+
+    @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      if (e == null) return EMPTY_ARRAY;
+      return Utils.getOrCreateUpdateSession(e)
+        .compute(this, "getChildrenImpl", ActionUpdateThread.EDT, this::getChildrenImpl);
+    }
+
+    private AnAction @NotNull [] getChildrenImpl() {
       ContentManager contentManager = myToolWindow.getContentManagerIfCreated();
       Content selectedContent = contentManager == null ? null : contentManager.getSelectedContent();
       JComponent contentComponent = selectedContent == null ? null : selectedContent.getComponent();
-      if (contentComponent == null || e == null) return EMPTY_ARRAY;
-      UpdateSession session = Utils.getOrCreateUpdateSession(e);
+      if (contentComponent == null) return EMPTY_ARRAY;
       List<AnAction> result = new SmartList<>();
       for (final ActionToolbar toolbar : iterateToolbars(Collections.singletonList(contentComponent))) {
         JComponent c = toolbar.getComponent();
@@ -216,7 +240,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
 
         List<AnAction> actions = toolbar.getActions();
         for (AnAction action : actions) {
-          if (action instanceof ToggleAction && !result.contains(action) && session.presentation(action).isVisible()) {
+          if (action instanceof ToggleAction && !result.contains(action)) {
             result.add(action);
           }
           else if (action instanceof Separator) {
@@ -227,7 +251,6 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
         }
       }
       boolean popup = ContainerUtil.count(result, it -> !(it instanceof Separator)) > 3;
-      setPopup(popup);
       if (!popup && !result.isEmpty()) result.add(Separator.getInstance());
       return result.toArray(AnAction.EMPTY_ARRAY);
     }

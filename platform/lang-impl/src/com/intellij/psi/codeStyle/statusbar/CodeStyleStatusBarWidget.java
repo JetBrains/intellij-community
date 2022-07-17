@@ -112,7 +112,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
 
   @Nullable
   @Override
-  protected ListPopup createPopup(DataContext context) {
+  protected ListPopup createPopup(@NotNull DataContext context) {
     WidgetState state = getWidgetState(context.getData(CommonDataKeys.VIRTUAL_FILE));
     Editor editor = getEditor();
     PsiFile psiFile = getPsiFile();
@@ -163,7 +163,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     Project project = getProject();
     ReadAction
       .nonBlocking(() -> CodeStyleSettingsManager.getInstance(project))
-      .expireWith(project)
+      .expireWith(this)
       .finishOnUiThread(ModalityState.any(),
                         manager -> {
                           manager.addListener(this);

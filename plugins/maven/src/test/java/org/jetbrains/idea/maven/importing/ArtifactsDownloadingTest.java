@@ -118,7 +118,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertFalse(sources.exists());
     assertFalse(javadoc.exists());
 
-    MavenProject project = myProjectsTree.getRootProjects().get(0);
+    MavenProject project = getProjectsTree().getRootProjects().get(0);
     MavenArtifact dep = project.getDependencies().get(0);
     downloadArtifacts(Arrays.asList(project), Arrays.asList(dep));
 
@@ -147,7 +147,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                   "  </dependency>" +
                   "</dependencies>");
 
-    MavenProject project = myProjectsTree.getRootProjects().get(0);
+    MavenProject project = getProjectsTree().getRootProjects().get(0);
     MavenArtifactDownloader.DownloadResult unresolvedArtifacts = downloadArtifacts(Arrays.asList(project), null);
     assertUnorderedElementsAreEqual(unresolvedArtifacts.resolvedSources, new MavenId("junit", "junit", "4.0"));
     assertUnorderedElementsAreEqual(unresolvedArtifacts.resolvedDocs, new MavenId("junit", "junit", "4.0"));
@@ -189,7 +189,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                            "<mirrors>" +
                            "  <mirror>" +
                            "    <id>central</id>" +
-                           "    <url>" + VfsUtilCore.pathToUrl(remoteRepo) + "</url>" +
+                           "    <url>" + VfsUtilCore.pathToUrl(myPathTransformer.toRemotePath(remoteRepo)) + "</url>" +
                            "    <mirrorOf>*</mirrorOf>" +
                            "  </mirror>" +
                            "</mirrors>" +
@@ -206,7 +206,6 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
 
     createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-foo-sources.jar");
     createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-foo-javadoc.jar");
-
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -278,9 +277,6 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                     "</build>");
 
       File f = new File(getRepositoryPath(), "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar");
-      assertFalse(f.exists());
-
-      resolvePlugins();
 
       assertTrue(f.exists());
     }

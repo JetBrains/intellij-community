@@ -2,17 +2,17 @@
 package training.learn
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.KeyedLazyInstanceEP
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import training.lang.LangManager
 import training.lang.LangSupport
@@ -21,11 +21,8 @@ import training.learn.course.LearningCourse
 import training.learn.course.LearningCourseBase
 import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
-import training.ui.LearnToolWindowFactory
-import training.util.LEARNING_PANEL_OPENED_IN
-import training.util.WeakReferenceDelegator
-import training.util.courseCanBeUsed
-import training.util.switchOnExperimentalLessons
+import training.statistic.LessonStartingWay
+import training.util.*
 
 @Service(Service.Level.APP)
 class CourseManager internal constructor() : Disposable {
@@ -46,19 +43,22 @@ class CourseManager internal constructor() : Disposable {
     }
   }
 
-  val mapModuleVirtualFile: MutableMap<IftModule, VirtualFile> = ContainerUtil.createWeakMap()
-
   var unfoldModuleOnInit by WeakReferenceDelegator<IftModule>()
 
-  private val languageCourses: MultiMap<LangSupport, IftModule> = MultiMap.create()
-  private val commonCourses: MultiMap<String, IftModule> = MultiMap.create()
+  /**
+   * [isExternal] equals true if [module] comes from the third party plugin
+   */
+  private class ModuleInfo(val module: IftModule, val isExternal: Boolean)
+
+  private val languageCourses: MultiMap<LangSupport, ModuleInfo> = MultiMap.create()
+  private val commonCourses: MultiMap<String, ModuleInfo> = MultiMap.create()
 
   private var currentConfiguration = switchOnExperimentalLessons
 
   val modules: Collection<IftModule>
     get() {
       prepareLangModules()
-      return LangManager.getInstance().getLangSupport()?.let { languageCourses[it] } ?: emptyList()
+      return LangManager.getInstance().getLangSupport()?.let { languageCourses[it].map(ModuleInfo::module) } ?: emptyList()
     }
 
   val lessonsForModules: List<Lesson>
@@ -86,7 +86,7 @@ class CourseManager internal constructor() : Disposable {
     for (ep in listOf(COMMON_COURSE_MODULES_EP, COURSE_MODULES_EP)) {
       ep.addChangeListener(Runnable {
         clearModules()
-        for (toolWindow in LearnToolWindowFactory.learnWindowPerProject.values) {
+        for (toolWindow in getAllLearnToolWindows()) {
           toolWindow.reinitViews()
         }
       }, this)
@@ -98,32 +98,34 @@ class CourseManager internal constructor() : Disposable {
     commonCourses.clear()
   }
 
-  //TODO: remove this method or convert XmlModule to a Module
-  fun registerVirtualFile(module: IftModule, virtualFile: VirtualFile) {
-    mapModuleVirtualFile[module] = virtualFile
-  }
-
   /**
    * @param projectWhereToOpen -- where to open projectWhereToOpen
    * @param forceStartLesson -- force start lesson without check for passed status (passed lessons will be opened as completed text)
    */
-  fun openLesson(projectWhereToOpen: Project, lesson: Lesson?, forceStartLesson: Boolean = false) {
+  fun openLesson(projectWhereToOpen: Project,
+                 lesson: Lesson?,
+                 startingWay: LessonStartingWay,
+                 forceStartLesson: Boolean = false,
+                 forceOpenLearningProject: Boolean = false,
+  ) {
     LessonManager.instance.stopLesson()
     if (lesson == null) return //todo: remove null lessons
-    OpenLessonActivities.openLesson(projectWhereToOpen, lesson, forceStartLesson)
+    OpenLessonActivities.openLesson(OpenLessonParameters(projectWhereToOpen, lesson, forceStartLesson, startingWay, forceOpenLearningProject))
   }
 
   fun findLessonById(lessonId: String): Lesson? {
     return lessonsForModules.firstOrNull { it.id == lessonId }
   }
 
-  fun findLessonByName(lessonName: String): Lesson? {
-    return lessonsForModules.firstOrNull { it.name.equals(lessonName, ignoreCase = true) }
-  }
-
   fun findCommonModules(commonCourseId: String): Collection<IftModule> {
     if (commonCourses.isEmpty) reloadCommonModules()
-    return commonCourses[commonCourseId]
+    return commonCourses[commonCourseId].map(ModuleInfo::module)
+  }
+
+  fun isModuleExternal(module: IftModule): Boolean {
+    prepareLangModules()
+    if (commonCourses.isEmpty) reloadCommonModules()
+    return (languageCourses.values() + commonCourses.values()).any { it.isExternal && it.module.id == module.id }
   }
 
   private fun reloadLangModules() {
@@ -131,7 +133,7 @@ class CourseManager internal constructor() : Disposable {
     for (e in extensions) {
       val langSupport = LangManager.getInstance().getLangSupportById(e.language)
       if (langSupport != null) {
-        languageCourses.putValues(langSupport, e.instance.modules())
+        languageCourses.putValues(langSupport, createModules(e.instance, e.pluginDescriptor))
       }
     }
   }
@@ -140,9 +142,14 @@ class CourseManager internal constructor() : Disposable {
     val commonCoursesExtensions = COMMON_COURSE_MODULES_EP.extensions
     for (e in commonCoursesExtensions) {
       if (commonCourses[e.key].isEmpty()) {
-        commonCourses.put(e.key, e.instance.modules())
+        commonCourses.put(e.key, createModules(e.instance, e.pluginDescriptor))
       }
     }
+  }
+
+  private fun createModules(course: LearningCourse, pluginDescriptor: PluginDescriptor): Collection<ModuleInfo> {
+    val isExternal = !getPluginInfoByDescriptor(pluginDescriptor).isDevelopedByJetBrains()
+    return course.modules().map { ModuleInfo(it, isExternal) }
   }
 
   private fun prepareLangModules() {

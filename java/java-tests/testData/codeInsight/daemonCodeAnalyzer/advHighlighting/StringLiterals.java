@@ -28,7 +28,7 @@ public class a {
   };
 
   String s1 =  <error descr="Illegal escape character in string literal">"\xd"</error>;
-  String s11=  <error descr="Illegal line end in string literal">"\udX";</error><EOLError descr="';' expected"></EOLError>
+  String s11=  <error descr="Illegal escape character in string literal">"\udX"</error>;
   String s12=  <error descr="Illegal escape character in string literal">"c:\TEMP\test.jar"</error>;
   String s3 = "";
   String s4 = "\u0000";

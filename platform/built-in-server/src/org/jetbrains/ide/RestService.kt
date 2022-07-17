@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.github.benmanes.caffeine.cache.CacheLoader
@@ -27,6 +27,7 @@ import com.intellij.util.io.origin
 import com.intellij.util.io.referrer
 import com.intellij.util.net.NetUtils
 import com.intellij.util.text.nullize
+import com.intellij.xml.util.XmlStringUtil
 import io.netty.buffer.ByteBufInputStream
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
@@ -34,6 +35,8 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.builtInWebServer.isSignedRequest
+import org.jetbrains.ide.RestService.Companion.createJsonReader
+import org.jetbrains.ide.RestService.Companion.createJsonWriter
 import org.jetbrains.io.addCommonHeaders
 import org.jetbrains.io.addNoCache
 import org.jetbrains.io.response
@@ -50,14 +53,16 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Document your service using [apiDoc](http://apidocjs.com). To extract big example from source code, consider to use *.coffee file near your source file.
- * (or Python/Ruby, but coffee recommended because it's plugin is lightweight). See [AboutHttpService] for example.
+ * Document your service using [apiDoc](http://apidocjs.com).
+ * To extract a big example from source code, consider adding a *.coffee file near the sources
+ * (or Python/Ruby, but CoffeeScript is recommended because it's plugin is lightweight).
+ * See [AboutHttpService] for example.
  *
- * Don't create JsonReader/JsonWriter directly, use only provided [.createJsonReader], [.createJsonWriter] methods (to ensure that you handle in/out according to REST API guidelines).
+ * Don't create [JsonReader]/[JsonWriter] directly, use only provided [createJsonReader] and [createJsonWriter] methods
+ * (to ensure that you handle in/out according to REST API guidelines).
  *
- * @see [Best Practices for Designing a Pragmatic REST API](http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api).
+ * @see <a href="http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api">Best Practices for Designing a Pragmatic REST API</a>.
  */
-@Suppress("HardCodedStringLiteral")
 abstract class RestService : HttpRequestHandler() {
   companion object {
     @JvmField
@@ -123,7 +128,7 @@ abstract class RestService : HttpRequestHandler() {
     @Suppress("SameParameterValue")
     @JvmStatic
     fun getStringParameter(name: String, urlDecoder: QueryStringDecoder): String? {
-      return urlDecoder.parameters().get(name)?.lastOrNull()
+      return urlDecoder.parameters()[name]?.lastOrNull()
     }
 
     @JvmStatic
@@ -134,7 +139,7 @@ abstract class RestService : HttpRequestHandler() {
     @JvmOverloads
     @JvmStatic
     fun getBooleanParameter(name: String, urlDecoder: QueryStringDecoder, defaultValue: Boolean = false): Boolean {
-      val values = urlDecoder.parameters().get(name) ?: return defaultValue
+      val values = urlDecoder.parameters()[name] ?: return defaultValue
       // if just name specified, so, true
       val value = values.lastOrNull() ?: return true
       return value.toBoolean()
@@ -235,7 +240,7 @@ abstract class RestService : HttpRequestHandler() {
         LOG.error(e)
         status = HttpResponseStatus.INTERNAL_SERVER_ERROR
       }
-      status.send(context.channel(), request, ExceptionUtil.getThrowableText(e))
+      status.send(context.channel(), request, XmlStringUtil.escapeString(ExceptionUtil.getThrowableText(e)))
     }
 
     return true
@@ -309,6 +314,6 @@ abstract class RestService : HttpRequestHandler() {
   abstract fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String?
 }
 
-internal fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus {
+fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus {
   return if (Registry.`is`("ide.http.server.response.actual.status", true) || ApplicationManager.getApplication()?.isUnitTestMode == true) this else safeStatus
 }

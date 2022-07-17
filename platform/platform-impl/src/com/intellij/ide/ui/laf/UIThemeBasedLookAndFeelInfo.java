@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.UITheme;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.util.SVGLoader;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,21 +22,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
-  private final UITheme myTheme;
+
+  private final @NotNull UITheme myTheme;
   private boolean myInitialised;
 
   public UIThemeBasedLookAndFeelInfo(@NotNull UITheme theme) {
-    super(theme.getName(), theme.isDark() ? DarculaLaf.class.getName() : IntelliJLaf.class.getName());
+    super(theme.getName(), (theme.isDark() ? DarculaLaf.class : IntelliJLaf.class).getName());
     myTheme = theme;
   }
 
-  public UITheme getTheme() {
+  public final @NotNull UITheme getTheme() {
     return myTheme;
   }
 
@@ -45,6 +48,7 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     if (patcher != null) {
       IconLoader.installPathPatcher(patcher);
     }
+    SVGLoader.setSelectionColorPatcherProvider(myTheme.getSelectionColorPatcher());
 
     SVGLoader.SvgElementColorPatcherProvider colorPatcher = myTheme.getColorPatcher();
     if (colorPatcher != null) {
@@ -58,8 +62,12 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     myInitialised = true;
   }
 
-  public boolean isInitialised() {
+  public final boolean isInitialised() {
     return myInitialised;
+  }
+
+  protected @Nullable InputStream getResourceAsStream(@NotNull String path) {
+    return myTheme.getProviderClassLoader().getResourceAsStream(path);
   }
 
   protected void installEditorScheme() {
@@ -81,21 +89,25 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     }
   }
 
-  private boolean installBackgroundImage(@Nullable Map<String, Object> backgroundProps, String bgImageProperty) {
+  private boolean installBackgroundImage(@Nullable Map<String, Object> backgroundProps,
+                                         @NotNull @NonNls String bgImageProperty) {
     Object path = backgroundProps == null ? null : backgroundProps.get("image");
-    if (!(path instanceof String)) {
-      return false;
-    }
+    return path instanceof String &&
+           installBackgroundImage(backgroundProps, bgImageProperty, (String)path);
+  }
 
+  private boolean installBackgroundImage(@NotNull Map<String, Object> backgroundProps,
+                                         @NotNull @NonNls String bgImageProperty,
+                                         @NotNull @NonNls String path) {
     try {
-      Path tmpImage = FileUtil.createTempFile("ijBackgroundImage", path.toString().substring(((String)path).lastIndexOf(".")), true).toPath();
-      InputStream stream = myTheme.getResourceAsStream((String)path);
+      Path tmpImage = FileUtil.createTempFile("ijBackgroundImage", path.substring(path.lastIndexOf(".")), true).toPath();
+      InputStream stream = getResourceAsStream(path);
       if (stream == null) {
         throw new IllegalArgumentException("Can't load background: " + path);
       }
 
       try (stream) {
-        Files.copy(stream, tmpImage);
+        Files.copy(stream, tmpImage, StandardCopyOption.REPLACE_EXISTING);
       }
 
       Object transparency = backgroundProps.get("transparency");
@@ -108,6 +120,7 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
       String currentSpec = propertyComponent.getValue(bgImageProperty);
       propertyComponent.setValue("old." + bgImageProperty, currentSpec);
       propertyComponent.setValue(bgImageProperty, spec);
+
       return true;
     }
     catch (IOException e) {
@@ -137,6 +150,8 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
 
     unsetBackgroundProperties(IdeBackgroundUtil.EDITOR_PROP);
     unsetBackgroundProperties(IdeBackgroundUtil.FRAME_PROP);
+
+    myInitialised = false;
   }
 
   private void unsetBackgroundProperties(String backgroundPropertyKey) {

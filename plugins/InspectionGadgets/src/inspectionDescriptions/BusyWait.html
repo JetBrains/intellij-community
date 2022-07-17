@@ -5,7 +5,7 @@ Reports calls to <code>java.lang.Thread.sleep()</code> that occur inside loops.
   are indicative of "busy-waiting". Busy-waiting is often inefficient, and may result in unexpected deadlocks
   as busy-waiting threads do not release locked resources.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class X {
      volatile int x;
      public void waitX() throws Exception {
@@ -14,7 +14,7 @@ Reports calls to <code>java.lang.Thread.sleep()</code> that occur inside loops.
       }
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 

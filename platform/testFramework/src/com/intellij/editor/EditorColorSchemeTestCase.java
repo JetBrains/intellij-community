@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.editor;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -8,13 +8,12 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.input.DOMBuilder;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
@@ -25,7 +24,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,13 +60,8 @@ public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
     return Pair.create(targetScheme, targetAttrs);
   }
 
-  public static void assertXmlOutputEquals(String expected, Element root) throws IOException {
-    StringWriter writer = new StringWriter();
-    Format format = Format.getPrettyFormat();
-    format.setLineSeparator("\n");
-    new XMLOutputter(format).output(root, writer);
-    String actual = writer.toString();
-    assertEquals(expected, actual);
+  public static void assertXmlOutputEquals(String expected, Element root) {
+    assertEquals(expected, JDOMUtil.write(root));
   }
 
   protected Element serialize(@NotNull EditorColorsScheme scheme) {

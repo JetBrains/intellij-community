@@ -8,12 +8,13 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.Alarm
+import com.intellij.util.application
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import git4idea.config.GitExecutableListener
 import git4idea.config.GitExecutableManager
 import git4idea.config.HasGitRootsPredicate
@@ -27,7 +28,7 @@ import javax.swing.JLabel
 
 class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
   companion object {
-    fun RowBuilder.createGpgSignRow(project: Project, disposable: Disposable) {
+    fun Panel.createGpgSignRow(project: Project, disposable: Disposable) {
       val panel = GpgSignConfigurableRow(project, disposable)
       with(panel) {
         createRow()
@@ -39,7 +40,7 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
     foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
   }
   private val errorLabel: JLabel = JBLabel().apply {
-    foreground = DialogWrapper.ERROR_FOREGROUND_COLOR
+    foreground = UIUtil.getErrorForeground()
   }
 
   private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, disposable)
@@ -54,34 +55,31 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
     updatePresentation()
 
     val connection = project.messageBus.connect(disposable)
-    connection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED,
-                         VcsRepositoryMappingListener { scheduleUpdate() })
-    connection.subscribe(GitExecutableManager.TOPIC,
-                         GitExecutableListener { scheduleUpdate() })
-    connection.subscribe(GitConfigListener.TOPIC,
-                         object : GitConfigListener {
-                           override fun notifyConfigChanged(repository: GitRepository) {
-                             scheduleUpdate()
-                           }
-                         })
+    connection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener { scheduleUpdate() })
+    connection.subscribe(GitConfigListener.TOPIC, object : GitConfigListener {
+      override fun notifyConfigChanged(repository: GitRepository) {
+        scheduleUpdate()
+      }
+    })
+
+    application.messageBus.connect(disposable).subscribe(GitExecutableManager.TOPIC, GitExecutableListener { scheduleUpdate() })
 
     updateRepoList()
     reloadConfigs()
     reloadSecretKeys()
   }
 
-  private fun RowBuilder.createRow() {
+  private fun Panel.createRow() {
     row {
-      cell(isFullWidth = true) {
-        button(message("settings.sign.gpg.configure.link.text")) {
-          openGpgConfigureDialog()
-        }
-          .enableIf(HasGitRootsPredicate(project, disposable))
-        statusLabel()
-          .withLargeLeftGap()
+      button(message("settings.sign.gpg.configure.link.text")) {
+        openGpgConfigureDialog()
       }
+        .enabledIf(HasGitRootsPredicate(project, disposable))
+      cell(statusLabel)
+    }
+    indent {
       row {
-        errorLabel()
+        cell(errorLabel)
       }
     }
   }
@@ -95,6 +93,7 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
   }
 
   private fun scheduleUpdate() {
+    if (alarm.isDisposed) return
     alarm.cancelAllRequests()
     alarm.addRequest(Runnable {
       updateRepoList()

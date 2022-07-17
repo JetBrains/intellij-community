@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.java.parser.JavaParser;
@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentMostlySingularMultiMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -46,7 +48,8 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   private final Map<Object, List<PsiFile>> myExternalAnnotationsCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
   private final Map<AnnotationData, AnnotationData> myAnnotationDataCache = ContainerUtil.createWeakKeyWeakValueMap(); // guarded by myAnnotationDataCache
-  private final Map<PsiFile, Pair<MostlySingularMultiMap<String, AnnotationData>, Long>> myAnnotationFileToDataAndModStampCache = ContainerUtil.createConcurrentSoftMap();
+  private final Map<PsiFile, Pair<MostlySingularMultiMap<String, AnnotationData>, Long>> myAnnotationFileToDataAndModStampCache =
+    CollectionFactory.createConcurrentSoftMap();
 
   public BaseExternalAnnotationsManager(@NotNull PsiManager psiManager) {
     myPsiManager = psiManager;
@@ -215,11 +218,22 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       SAXParser saxParser = Holder.FACTORY.newSAXParser();
       saxParser.parse(new InputSource(new CharSequenceReader(escapeAttributes(fileText))), handler);
     }
+    catch (SAXParseException e) {
+      if (externalAnnotationsManager != null) {
+        externalAnnotationsManager.reportXmlParseError(virtualFile, e);
+      } else {
+        LOG.error(virtualFile.getPath(), e);
+      }
+    }
     catch (IOException | ParserConfigurationException | SAXException e) {
       LOG.error(virtualFile.getPath(), e);
     }
 
     return handler.getResult();
+  }
+
+  protected void reportXmlParseError(@NotNull VirtualFile file, @NotNull SAXParseException exception) {
+    LOG.error(file.getPath(), exception);
   }
 
   private interface Holder {

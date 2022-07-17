@@ -13,9 +13,11 @@ import org.jetbrains.kotlin.cfg.pseudocode.getContainingPseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.sideEffectFree
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -25,7 +27,7 @@ class RemoveUnusedValueFix(expression: KtBinaryExpression) : KotlinQuickFixActio
     }
 
     private fun showDialog(variable: KtProperty, project: Project, element: KtBinaryExpression, rhs: KtExpression) {
-        if (ApplicationManager.getApplication().isUnitTestMode) return doRemove(RemoveMode.KEEP_INITIALIZE, element, rhs)
+        if (isUnitTestMode()) return doRemove(RemoveMode.KEEP_INITIALIZE, element, rhs)
 
         val message = "<html><body>${KotlinBundle.message(
             "there.are.possible.side.effects.found.in.expressions.assigned.to.the.variable.0",

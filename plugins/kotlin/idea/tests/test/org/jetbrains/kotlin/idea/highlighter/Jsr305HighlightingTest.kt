@@ -6,27 +6,22 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.stubs.createFacet
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.load.java.ReportLevel
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
-import org.jetbrains.kotlin.utils.ReportLevel
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
-import java.io.File
 
 @TestRoot("idea/tests")
 @TestMetadata("testData/highlighterJsr305/project")
 @RunWith(JUnit38ClassRunner::class)
 class Jsr305HighlightingTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        val foreignAnnotationsJar = AdditionalKotlinArtifacts.jsr305
+        val foreignAnnotationsJar = TestKotlinArtifacts.jsr305
         check(foreignAnnotationsJar.exists()) { "${foreignAnnotationsJar.path} does not exist" }
         val libraryJar = KotlinCompilerStandalone(
             listOf(IDEA_TEST_DATA_DIR.resolve("highlighterJsr305/library")),
@@ -35,14 +30,14 @@ class Jsr305HighlightingTest : KotlinLightCodeInsightFixtureTestCase() {
 
         return object : KotlinJdkAndLibraryProjectDescriptor(
             listOf(
-                KotlinArtifacts.instance.kotlinStdlib,
+                KotlinArtifacts.kotlinStdlib,
                 foreignAnnotationsJar,
                 libraryJar
             )
         ) {
             override fun configureModule(module: Module, model: ModifiableRootModel) {
                 super.configureModule(module, model)
-                module.createFacet(JvmPlatforms.jvm18)
+                module.createFacet(JvmPlatforms.jvm8)
                 val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project)?.getInitializedSettings(module)
 
                 facetSettings?.apply {

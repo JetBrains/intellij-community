@@ -11,7 +11,7 @@ public enum PluginEnabledState {
   ENABLED {
     @Override
     protected @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey() {
-      return PluginEnabler.isPerProjectEnabled() ? "plugins.configurable.enabled.for.all.projects" : "plugins.configurable.enabled";
+      return DynamicPluginEnabler.isPerProjectEnabled() ? "plugins.configurable.enabled.for.all.projects" : "plugins.configurable.enabled";
     }
   },
   ENABLED_FOR_PROJECT {
@@ -23,7 +23,7 @@ public enum PluginEnabledState {
   DISABLED {
     @Override
     protected @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey() {
-      return PluginEnabler.isPerProjectEnabled() ? "plugins.configurable.disabled.for.all.projects" : "plugins.configurable.disabled";
+      return DynamicPluginEnabler.isPerProjectEnabled() ? "plugins.configurable.disabled.for.all.projects" : "plugins.configurable.disabled";
     }
   },
   DISABLED_FOR_PROJECT {

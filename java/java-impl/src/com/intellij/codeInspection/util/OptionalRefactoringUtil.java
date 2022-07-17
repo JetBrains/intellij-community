@@ -7,7 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +125,7 @@ public final class OptionalRefactoringUtil {
         }
       }
       trueExpression =
-        targetType == null ? trueExpression : RefactoringUtil.convertInitializerToNormalExpression(trueExpression, targetType);
+        targetType == null ? trueExpression : CommonJavaRefactoringUtil.convertInitializerToNormalExpression(trueExpression, targetType);
       String typeArg = getMapTypeArgument(trueExpression, targetType, falseExpression);
       qualifier += "." + typeArg + "map(" + LambdaUtil.createLambda(var, trueExpression) + ")";
     }

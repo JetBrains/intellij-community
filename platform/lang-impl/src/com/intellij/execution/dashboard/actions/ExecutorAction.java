@@ -9,12 +9,14 @@ import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runToolbar.RunToolbarProcessData;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -25,16 +27,18 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.content.Content;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getLeafTargets;
 
 /**
  * @author konstantin.aleev
  */
-public abstract class ExecutorAction extends DumbAwareAction implements UpdateInBackground {
+public abstract class ExecutorAction extends DumbAwareAction {
   private static final Key<List<RunDashboardRunConfigurationNode>> RUNNABLE_LEAVES_KEY =
     Key.create("RUNNABLE_LEAVES_KEY");
 
@@ -43,6 +47,11 @@ public abstract class ExecutorAction extends DumbAwareAction implements UpdateIn
 
   protected ExecutorAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -118,13 +127,10 @@ public abstract class ExecutorAction extends DumbAwareAction implements UpdateIn
       settings.checkSettings(null);
       return true;
     }
-    catch (IndexNotReadyException ex) {
-      return true;
-    }
     catch (RuntimeConfigurationError ex) {
       return false;
     }
-    catch (RuntimeConfigurationException ex) {
+    catch (IndexNotReadyException | RuntimeConfigurationException ex) {
       return true;
     }
   }
@@ -143,16 +149,20 @@ public abstract class ExecutorAction extends DumbAwareAction implements UpdateIn
   }
 
   private void run(RunnerAndConfigurationSettings settings, ExecutionTarget target, RunContentDescriptor descriptor) {
+    runSubProcess(settings, target, descriptor, RunToolbarProcessData.prepareBaseSettingCustomization(settings, null));
+  }
+
+  private void runSubProcess(RunnerAndConfigurationSettings settings, ExecutionTarget target, RunContentDescriptor descriptor, @Nullable Consumer<? super ExecutionEnvironment> envCustomization) {
     RunConfiguration configuration = settings.getConfiguration();
     Project project = configuration.getProject();
+    RunManager runManager = RunManager.getInstance(project);
     if (configuration instanceof CompoundRunConfiguration) {
-      RunManager runManager = RunManager.getInstance(project);
       List<SettingsAndEffectiveTarget> subConfigurations =
         ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets();
       for (SettingsAndEffectiveTarget subConfiguration : subConfigurations) {
         RunnerAndConfigurationSettings subSettings = runManager.findSettings(subConfiguration.getConfiguration());
         if (subSettings != null) {
-          run(subSettings, subConfiguration.getTarget(), null);
+          runSubProcess(subSettings, subConfiguration.getTarget(), null, envCustomization);
         }
       }
     }
@@ -162,7 +172,8 @@ public abstract class ExecutorAction extends DumbAwareAction implements UpdateIn
         assert target != null : "No target for configuration of type " + configuration.getType().getDisplayName();
       }
       ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
-      ExecutionManager.getInstance(project).restartRunProfile(project, getExecutor(), target, settings, processHandler);
+
+      ExecutionManager.getInstance(project).restartRunProfile(project, getExecutor(), target, settings, processHandler, RunToolbarProcessData.prepareSuppressMainSlotCustomization(project, envCustomization));
     }
   }
 

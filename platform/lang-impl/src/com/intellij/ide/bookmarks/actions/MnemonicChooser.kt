@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks.actions
 
 import com.intellij.ide.bookmark.BookmarkType
@@ -12,6 +12,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.RegionPaintIcon
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.RenderingHints.*
@@ -19,13 +20,13 @@ import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import javax.swing.*
 
-private val ASSIGNED_FOREGROUND = namedColor("AssignedMnemonic.foreground", 0x000000, 0xBBBBBB)
-private val ASSIGNED_BACKGROUND = namedColor("AssignedMnemonic.background", 0xF7C777, 0x665632)
-private val ASSIGNED_BORDER = namedColor("AssignedMnemonic.borderColor", ASSIGNED_BACKGROUND)
+private val ASSIGNED_FOREGROUND = namedColor("BookmarkMnemonicAssigned.buttonForeground", 0x000000, 0xBBBBBB)
+private val ASSIGNED_BACKGROUND = namedColor("BookmarkMnemonicAssigned.buttonBackground", 0xF7C777, 0x665632)
+private val ASSIGNED_BORDER = namedColor("BookmarkMnemonicAssigned.borderColor", ASSIGNED_BACKGROUND)
 
-private val CURRENT_FOREGROUND = namedColor("CurrentMnemonic.foreground", 0xFFFFFF, 0xFEFEFE)
-private val CURRENT_BACKGROUND = namedColor("CurrentMnemonic.background", 0x389FD6, 0x345F85)
-private val CURRENT_BORDER = namedColor("CurrentMnemonic.borderColor", CURRENT_BACKGROUND)
+private val CURRENT_FOREGROUND = namedColor("BookmarkMnemonicCurrent.buttonForeground", 0xFFFFFF, 0xFEFEFE)
+private val CURRENT_BACKGROUND = namedColor("BookmarkMnemonicCurrent.buttonBackground", 0x389FD6, 0x345F85)
+private val CURRENT_BORDER = namedColor("BookmarkMnemonicCurrent.borderColor", CURRENT_BACKGROUND)
 
 private val SHARED_CURSOR by lazy { Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) }
 private val SHARED_LAYOUT by lazy {
@@ -34,6 +35,8 @@ private val SHARED_LAYOUT by lazy {
   }
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("This class will be removed soon", ReplaceWith("com.intellij.ide.bookmark.actions.BookmarkTypeChooser"), DeprecationLevel.ERROR)
 internal class MnemonicChooser(
   private val manager: BookmarkManager,
   private val current: BookmarkType?,
@@ -89,9 +92,9 @@ internal class MnemonicChooser(
         putClientProperty("JButton.borderColor", ASSIGNED_BORDER)
       }
       else -> {
-        putClientProperty("JButton.textColor", UIManager.getColor("AvailableMnemonic.foreground"))
-        putClientProperty("JButton.backgroundColor", UIManager.getColor("AvailableMnemonic.background"))
-        putClientProperty("JButton.borderColor", UIManager.getColor("AvailableMnemonic.borderColor"))
+        putClientProperty("JButton.textColor", UIManager.getColor("BookmarkMnemonicAvailable.buttonForeground"))
+        putClientProperty("JButton.backgroundColor", UIManager.getColor("BookmarkMnemonicAvailable.buttonBackground"))
+        putClientProperty("JButton.borderColor", UIManager.getColor("BookmarkMnemonicAvailable.borderColor"))
       }
     }
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, true), "released")

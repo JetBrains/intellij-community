@@ -16,7 +16,6 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -29,7 +28,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   private Ref<? extends UsageView> myUsageView;
   private final Collection<T> myData;
 
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myAlarm = new Alarm();
   private final Object lock = new Object();
 
   private volatile boolean myCanceled;
@@ -79,8 +78,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   /**
    * @deprecated Use {@link #BackgroundUpdaterTaskBase(Project, String, Comparator)} and {@link #updateComponent(T)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean updateComponent(@NotNull T element, @Nullable Comparator comparator) {
     if (tryAppendUsage(element)) return true;
     if (myCanceled) return false;

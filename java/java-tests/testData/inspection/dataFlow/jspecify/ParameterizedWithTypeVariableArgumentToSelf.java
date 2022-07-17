@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import org.jspecify.annotations.DefaultNonNull;
+import org.jspecify.nullness.NullMarked;
 
-@DefaultNonNull
+@NullMarked
 interface ParameterizedWithTypeVariableArgumentToSelf<E> {
   default Lib<E> get() {
     return doGet();

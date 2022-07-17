@@ -15,10 +15,16 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public final class ProtocolParser {
   private ProtocolParser() {
   }
+
+  public static final String DUMMY_RET_VAL = "_dummy_ret_val";
+  public static final String DUMMY_IPYTHON_HIDDEN = "_dummy_ipython_val";
+  public static final String DUMMY_SPECIAL_VAR = "_dummy_special_var";
+  public static final Set<String> HIDDEN_TYPES = Set.of(DUMMY_RET_VAL, DUMMY_IPYTHON_HIDDEN, DUMMY_SPECIAL_VAR);
 
   public static PySignature parseCallSignature(String payload) throws PyDebuggerException {
     final XppReader reader = openReader(payload, true);
@@ -267,6 +273,12 @@ public final class ProtocolParser {
     }
 
     final String name = readString(reader, "name", null);
+    final String isErrorOnEval = readString(reader, "isErrorOnEval", "");
+    if (HIDDEN_TYPES.contains(name)) {
+      return new PyDebugValue(name, null, "", "", false, null, false,
+                              false, "True".equals(isErrorOnEval), null, frameAccessor);
+    }
+
     final String type = readString(reader, "type", null);
     final String qualifier = readString(reader, "qualifier", ""); //to be able to get the fully qualified type if necessary
 
@@ -274,15 +286,16 @@ public final class ProtocolParser {
     final String isContainer = readString(reader, "isContainer", "");
     final String isReturnedValue = readString(reader, "isRetVal", "");
     final String isIPythonHidden = readString(reader, "isIPythonHidden", "");
-    final String isErrorOnEval = readString(reader, "isErrorOnEval", "");
+    String typeRendererId = readString(reader, "typeRendererId", "");
     String shape = readString(reader, "shape", "");
 
     if (value.startsWith(type + ": ")) {  // drop unneeded prefix
       value = value.substring(type.length() + 2);
     }
     if (shape.isEmpty()) shape = null;
+    if (typeRendererId.isEmpty()) typeRendererId = null;
     return new PyDebugValue(name, type, qualifier, value, "True".equals(isContainer), shape, "True".equals(isReturnedValue),
-                            "True".equals(isIPythonHidden), "True".equals(isErrorOnEval), frameAccessor);
+                            "True".equals(isIPythonHidden), "True".equals(isErrorOnEval), typeRendererId, frameAccessor);
   }
 
   public static ArrayChunk parseArrayValues(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
@@ -301,7 +314,7 @@ public final class ProtocolParser {
       result.setType(readString(reader, "type", null));
       result.setMax(readString(reader, "max", null));
       result.setMin(readString(reader, "min", null));
-      result.setValue(new PyDebugValue(slice, null, null, null, false, null, false, false, false, frameAccessor));
+      result.setValue(new PyDebugValue(slice, null, null, null, false, null, false, false, false, null, frameAccessor));
       reader.moveUp();
     }
     if ("headerdata".equals(reader.peekNextChild())) {

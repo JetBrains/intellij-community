@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
@@ -23,21 +23,20 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -74,7 +73,7 @@ public final class OfflineDescriptorResolveResult {
 
   @NotNull
   static OfflineDescriptorResolveResult resolve(@NotNull OfflineProblemDescriptor descriptor,
-                                                @NotNull InspectionToolWrapper wrapper,
+                                                @NotNull InspectionToolWrapper<?,?> wrapper,
                                                 @NotNull InspectionToolPresentation presentation) {
     final RefEntity element = descriptor.getRefElement(presentation.getContext().getRefManager());
     final CommonProblemDescriptor resolvedDescriptor =
@@ -86,7 +85,7 @@ public final class OfflineDescriptorResolveResult {
   @Nullable
   private static CommonProblemDescriptor createDescriptor(@Nullable RefEntity element,
                                                           @NotNull OfflineProblemDescriptor offlineDescriptor,
-                                                          @NotNull InspectionToolWrapper toolWrapper,
+                                                          @NotNull InspectionToolWrapper<?,?> toolWrapper,
                                                           @NotNull InspectionToolPresentation presentation) {
     if (toolWrapper instanceof GlobalInspectionToolWrapper) {
       final LocalInspectionToolWrapper localTool = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
@@ -99,8 +98,8 @@ public final class OfflineDescriptorResolveResult {
       return createRerunGlobalToolDescriptor((GlobalInspectionToolWrapper)toolWrapper, element, offlineDescriptor);
     }
     Project project = presentation.getContext().getProject();
-    final InspectionManager inspectionManager = InspectionManager.getInstance(project);
-    if (toolWrapper instanceof LocalInspectionToolWrapper && !(toolWrapper.getTool() instanceof UnfairLocalInspectionTool)) {
+    if (Registry.is("offline.inspections.results.verify") && 
+        toolWrapper instanceof LocalInspectionToolWrapper && !(toolWrapper.getTool() instanceof UnfairLocalInspectionTool)) {
       if (element instanceof RefElement) {
         final PsiElement psiElement = ((RefElement)element).getPsiElement();
         if (psiElement != null) {
@@ -108,7 +107,6 @@ public final class OfflineDescriptorResolveResult {
             () -> runLocalTool(psiElement,
                                offlineDescriptor,
                                (LocalInspectionToolWrapper)toolWrapper,
-                               inspectionManager,
                                presentation.getContext()), new DaemonProgressIndicator());
           if (descriptor != null) return descriptor;
         }
@@ -150,8 +148,10 @@ public final class OfflineDescriptorResolveResult {
     }
     else if (element instanceof RefModule) {
       return inspectionManager.createProblemDescriptor(offlineDescriptor.getDescription(), ((RefModule)element).getModule(), fixes);
-    } else {
-      return inspectionManager.createProblemDescriptor(offlineDescriptor.getDescription(), fixes);
+    }
+    else {
+      return inspectionManager.createProblemDescriptor(offlineDescriptor.getDescription(), 
+                                                       ContainerUtil.filter(fixes, f -> !(f instanceof LocalQuickFix)).toArray(QuickFix.EMPTY_ARRAY));
     }
   }
 
@@ -172,10 +172,8 @@ public final class OfflineDescriptorResolveResult {
   private static ProblemDescriptor runLocalTool(@NotNull PsiElement psiElement,
                                                 @NotNull OfflineProblemDescriptor offlineProblemDescriptor,
                                                 @NotNull LocalInspectionToolWrapper toolWrapper,
-                                                @NotNull InspectionManager inspectionManager,
                                                 @NotNull GlobalInspectionContextImpl context) {
     PsiFile containingFile = psiElement.getContainingFile();
-    final ProblemsHolder holder = new ProblemsHolder(inspectionManager, containingFile, false);
     final LocalInspectionTool localTool = toolWrapper.getTool();
     TextRange textRange = psiElement.getTextRange();
     LOG.assertTrue(textRange != null,
@@ -184,42 +182,40 @@ public final class OfflineDescriptorResolveResult {
                    "isPhysical = " + psiElement.isPhysical() + ", " +
                    "containingFile = " + containingFile.getName() + ", " +
                    "inspection = " + toolWrapper.getShortName());
-    final int startOffset = textRange.getStartOffset();
-    final int endOffset = textRange.getEndOffset();
-    LocalInspectionToolSession session = new LocalInspectionToolSession(containingFile, startOffset, endOffset);
-    final PsiElementVisitor visitor = localTool.buildVisitor(holder, true, session);
-    localTool.inspectionStarted(session, false);
-    final PsiElement[] elementsInRange = getElementsIntersectingRange(containingFile, startOffset, endOffset);
+    PsiElement[] elementsInRange = getElementsIntersectingRange(containingFile, textRange.getStartOffset(), textRange.getEndOffset());
+    Collection<PsiFile> injectedFiles = new HashSet<>();
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(context.getProject());
     for (PsiElement element : elementsInRange) {
       List<Pair<PsiElement, TextRange>> injectedPsiFiles = injectedLanguageManager.getInjectedPsiFiles(element);
       if (injectedPsiFiles != null) {
-        for (Pair<PsiElement, TextRange> file : injectedPsiFiles) {
-          file.getFirst().accept(new PsiRecursiveElementWalkingVisitor() {
-            @Override
-            public void visitElement(@NotNull PsiElement element) {
-              element.accept(visitor);
-              super.visitElement(element);
-            }
-          });
+        for (Pair<PsiElement, TextRange> pair : injectedPsiFiles) {
+          injectedFiles.add(pair.getFirst().getContainingFile());
         }
       }
-      element.accept(visitor);
     }
-    localTool.inspectionFinished(session, holder);
-    if (holder.hasResults()) {
-      final List<ProblemDescriptor> list = holder.getResults();
-      final int idx = offlineProblemDescriptor.getProblemIndex();
-      int curIdx = 0;
-      for (ProblemDescriptor descriptor : list) {
-        final PsiNamedElement member = BatchModeDescriptorsUtil.getContainerElement(descriptor.getPsiElement(), localTool, context);
-        final PsiElement element = psiElement instanceof LightElement ? psiElement.getNavigationElement() : psiElement;
-        if (psiElement instanceof PsiFile || element.equals(member)) {
-          if (curIdx == idx) {
-            return descriptor;
-          }
-          curIdx++;
+    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
+      InspectionEngine.inspectEx(Collections.singletonList(toolWrapper), containingFile, textRange, containingFile.getTextRange(), true,
+                                 false, true, new DaemonProgressIndicator(), PairProcessor.alwaysTrue());
+    List<ProblemDescriptor> list = new ArrayList<>();
+    map.values().forEach(problemsList -> list.addAll(problemsList));
+    for (PsiFile injectedFile : injectedFiles) {
+      Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> injectedMap =
+        InspectionEngine.inspectEx(Collections.singletonList(toolWrapper), injectedFile, injectedFile.getTextRange(),
+                                   injectedFile.getTextRange(), true,
+                                   false, true, new DaemonProgressIndicator(), PairProcessor.alwaysTrue());
+      list.addAll(ContainerUtil.flatten(injectedMap.values()));
+    }
+
+    final int idx = offlineProblemDescriptor.getProblemIndex();
+    int curIdx = 0;
+    for (ProblemDescriptor descriptor : list) {
+      final PsiNamedElement member = BatchModeDescriptorsUtil.getContainerElement(descriptor.getPsiElement(), localTool, context);
+      final PsiElement element = psiElement instanceof LightElement ? psiElement.getNavigationElement() : psiElement;
+      if (psiElement instanceof PsiFile || element.equals(member)) {
+        if (curIdx == idx) {
+          return descriptor;
         }
+        curIdx++;
       }
     }
 

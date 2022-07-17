@@ -11,6 +11,7 @@ import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.ListSelection;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -83,6 +84,11 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
     presentation.setEnabled(project != null && file != null && isEnabled(getRepositoryManager(project).getRepositoryForFileQuick(file)));
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private boolean isEnabled(@Nullable T repository) {
     return repository != null && !repository.isFresh() && !noBranchesToCompare(repository);
   }
@@ -107,7 +113,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
     if (file.isDirectory()) {
       String dialogTitle = VcsBundle.message("history.dialog.title.difference.between.versions.in",
                                              revNumTitle1, revNumTitle2, filePath.getName());
-      CompareWithLocalDialog.showDialog(project, dialogTitle, CompareWithLocalDialog.LocalContent.AFTER, () -> {
+      CompareWithLocalDialog.showChanges(project, dialogTitle, CompareWithLocalDialog.LocalContent.AFTER, () -> {
         return getDiffChanges(project, file, compare);
       });
     }

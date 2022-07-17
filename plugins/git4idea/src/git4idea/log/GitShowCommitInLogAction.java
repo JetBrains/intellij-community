@@ -15,6 +15,7 @@
  */
 package git4idea.log;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -76,6 +77,11 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
   @Nullable
   protected VcsKey getVcsKey(@NotNull AnActionEvent event) {
     return event.getData(VcsDataKeys.VCS);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

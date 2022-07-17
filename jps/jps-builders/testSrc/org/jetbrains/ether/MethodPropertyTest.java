@@ -2,7 +2,7 @@
 package org.jetbrains.ether;
 
 /**
- * @author: db
+ * @author db
  */
 public class MethodPropertyTest extends IncrementalTestCase {
   public MethodPropertyTest() {

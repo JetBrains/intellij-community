@@ -34,7 +34,7 @@ public class XmlHighlightsExtractorTest extends LightPlatformTestCase {
     List<HighlightData> highlights = new ArrayList<>();
     String s = new HighlightsExtractor(map, INLINE_ELEMENT_DESCRIPTORS, COLOR_KEY_MAPPING).extractHighlights(page.getDemoText(),
                                                                                                              highlights);
-    assertEquals(8, highlights.size());
+    assertEquals(10, highlights.size());
     assertEquals("<?xml version='1.0' encoding='ISO-8859-1'  ?>\n" +
                  "<!DOCTYPE index>\n" +
                  "<!-- Some xml example -->\n" +
@@ -52,6 +52,7 @@ public class XmlHighlightsExtractorTest extends LightPlatformTestCase {
                  "        ]]>\n" +
                  "   </withCData>\n" +
                  "   <indexitem text=\"project\" target=\"project.management\"/>\n" +
+                 "   <custom-tag>hello</custom_tag>\n" +
                  "   <pf:foo pf:bar=\"bar\"/>\n" +
                  "</index>", s);
   }
