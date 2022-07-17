@@ -54,7 +54,7 @@ internal class ProjectsTabFactory : WelcomeTabFactory {
   override fun isApplicable(): Boolean = !PlatformUtils.isDataSpell()
 }
 
-private class ProjectsTab(private val parentDisposable: Disposable) :
+class ProjectsTab(private val parentDisposable: Disposable) :
   DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.projects.title"), WelcomeScreenEventCollector.TabType.TabNavProject) {
   private val wrapper = Wrapper()
   private val recentProjectsPanel: JComponent
