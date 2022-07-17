@@ -81,7 +81,7 @@ private fun buildAndSignWithMacBuilderHost(sitFile: Path,
   else {
     Path.of((if (context.applicationInfo.isEAP) customizer.dmgImagePathForEAP else null) ?: customizer.dmgImagePath)
   }
-  val jetSignClient = context.proprietaryBuildTools.signTool?.commandLineClient(context)
+  val jetSignClient = context.proprietaryBuildTools.signTool?.commandLineClient(context, OsFamily.MACOS, macHostProperties.architecture)
   check(jetSignClient != null) {
     "JetSign client is missing, cannot proceed with signing"
   }
@@ -155,7 +155,9 @@ private fun signSitLocally(sourceFile: Path,
       if (notarize) "yes" else "no",
       customizer.bundleIdentifier,
       customizer.publishArchive.toString(), // compress-input
-      context.proprietaryBuildTools.signTool?.takeIf { sign }?.commandLineClient(context)?.toString() ?: "null"
+      context.proprietaryBuildTools.signTool?.takeIf { sign }
+        ?.commandLineClient(context, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
+        ?.toString() ?: "null"
     ),
     workingDir = tempDir,
     timeoutMillis = TimeUnit.HOURS.toMillis(3)

@@ -49,4 +49,6 @@ data class MacHostProperties(
    * More info in SIGNING IDENTITIES (https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man1/codesign.1.html)
    */
   val codesignString: String?,
+
+  val architecture: JvmArchitecture = JvmArchitecture.x64
 )
