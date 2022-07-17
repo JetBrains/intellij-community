@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.resolveCandidates
+import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.isParameterComment
 import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.toCommentedParameterName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassConstructorDescriptor
@@ -105,4 +106,4 @@ private fun KtExpression.isAnnotatedWithComment(valueParameter: ValueParameterDe
     (descriptor is JavaMethodDescriptor || descriptor is JavaClassConstructorDescriptor) &&
             prevLeafs
                 .takeWhile { it is PsiWhiteSpace || it is PsiComment }
-                .any { it is PsiComment && it.text == valueParameter.toCommentedParameterName() }
+                .any { it is PsiComment && it.isParameterComment(valueParameter) }

@@ -5676,39 +5676,101 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/inconsistentCommentForJavaParameter")
-    public static class InconsistentCommentForJavaParameter extends AbstractLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class InconsistentCommentForJavaParameter extends AbstractLocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/inconsistentCommentForJavaParameter")
+        public static class Uncategorized extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("annotation.kt")
+            public void testAnnotation() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/annotation.kt");
+            }
+
+            @TestMetadata("comment.kt")
+            public void testComment() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/comment.kt");
+            }
+
+            @TestMetadata("na.kt")
+            public void testNa() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/na.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/simple.kt");
+            }
+
+            @TestMetadata("superSecondaryCtorCall.kt")
+            public void testSuperSecondaryCtorCall() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/superSecondaryCtorCall.kt");
+            }
+
+            @TestMetadata("superTypeCall.kt")
+            public void testSuperTypeCall() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/superTypeCall.kt");
+            }
         }
 
-        @TestMetadata("annotation.kt")
-        public void testAnnotation() throws Exception {
-            runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/annotation.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace")
+        public static class Whitespace extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("comment.kt")
-        public void testComment() throws Exception {
-            runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/comment.kt");
-        }
+            @TestMetadata("notSameName1.kt")
+            public void testNotSameName1() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/notSameName1.kt");
+            }
 
-        @TestMetadata("na.kt")
-        public void testNa() throws Exception {
-            runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/na.kt");
-        }
+            @TestMetadata("notSameName2.kt")
+            public void testNotSameName2() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/notSameName2.kt");
+            }
 
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/simple.kt");
-        }
+            @TestMetadata("notSameName3.kt")
+            public void testNotSameName3() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/notSameName3.kt");
+            }
 
-        @TestMetadata("superSecondaryCtorCall.kt")
-        public void testSuperSecondaryCtorCall() throws Exception {
-            runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/superSecondaryCtorCall.kt");
-        }
+            @TestMetadata("notSameName4.kt")
+            public void testNotSameName4() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/notSameName4.kt");
+            }
 
-        @TestMetadata("superTypeCall.kt")
-        public void testSuperTypeCall() throws Exception {
-            runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/superTypeCall.kt");
+            @TestMetadata("notSameName5.kt")
+            public void testNotSameName5() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/notSameName5.kt");
+            }
+
+            @TestMetadata("sameName1.kt")
+            public void testSameName1() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/sameName1.kt");
+            }
+
+            @TestMetadata("sameName2.kt")
+            public void testSameName2() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/sameName2.kt");
+            }
+
+            @TestMetadata("sameName3.kt")
+            public void testSameName3() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/sameName3.kt");
+            }
+
+            @TestMetadata("sameName4.kt")
+            public void testSameName4() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/sameName4.kt");
+            }
+
+            @TestMetadata("sameName5.kt")
+            public void testSameName5() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/sameName5.kt");
+            }
         }
     }
 

@@ -57,16 +57,27 @@ class AddNamesInCommentToJavaCallArgumentsIntention : SelfTargetingIntention<KtC
         }
 
         fun ValueParameterDescriptor.toCommentedParameterName(): String =
-            "/* ${if (isVararg) "...$name" else name.asString()} = */"
+            parameterComment(if (isVararg) "...$name" else name.asString())
 
-        fun KtValueArgument.hasBlockCommentWithName(): Boolean =
+        private fun parameterComment(parameter: String): String = "/* $parameter = */"
+
+        fun PsiComment.isParameterComment(parameter: ValueParameterDescriptor): Boolean {
+            if (this.elementType != KtTokens.BLOCK_COMMENT) return false
+            val parameterName = text
+                .removePrefix("/*").removeSuffix("*/").trim()
+                .takeIf { it.endsWith("=") }?.removeSuffix("=")?.trim()
+                ?: return false
+            return parameterComment(parameterName) == parameter.toCommentedParameterName()
+        }
+
+        private fun KtValueArgument.hasBlockCommentWithName(): Boolean =
             blockCommentWithName() != null
 
         fun KtValueArgument.blockCommentWithName(): PsiComment? =
             siblings(forward = false, withSelf = false)
                 .takeWhile { it is PsiWhiteSpace || it is PsiComment }
                 .filterIsInstance<PsiComment>()
-                .firstOrNull { it.elementType == KtTokens.BLOCK_COMMENT && it.text.endsWith("= */") }
+                .firstOrNull { it.elementType == KtTokens.BLOCK_COMMENT && it.text.removeSuffix("*/").trim().endsWith("=") }
 
         fun List<KtValueArgument>.resolve(
             resolvedCall: ResolvedCall<out CallableDescriptor>
