@@ -16,17 +16,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("IntentionDescriptionNotFoundInspection")
 class KotlinInlayHintToggleAction : IntentionAction, HighPriorityAction {
-    private val hintTypes = arrayOf(
-        HintType.RANGES,
-        HintType.PROPERTY_HINT,
-        HintType.LOCAL_VARIABLE_HINT,
-        HintType.FUNCTION_HINT,
-        HintType.PARAMETER_TYPE_HINT,
-        HintType.PARAMETER_HINT,
-        HintType.LAMBDA_RETURN_EXPRESSION,
-        HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER,
-        HintType.SUSPENDING_CALL,
-    )
     @IntentionName
     private var lastOptionName = ""
 
@@ -39,7 +28,7 @@ class KotlinInlayHintToggleAction : IntentionAction, HighPriorityAction {
         var element = findElement(editor, file)
 
         while (element != null) {
-            for (hintType in hintTypes) {
+            for (hintType in Holder.hintTypes) {
                 if (!hintType.isApplicable(element)) continue
                 findSetting(hintType, project)?.let {
                     val enabled = it.second.isEnabled(hintType)
@@ -56,7 +45,7 @@ class KotlinInlayHintToggleAction : IntentionAction, HighPriorityAction {
         var element = findElement(editor, file)
 
         while(element != null) {
-            for (hintType in hintTypes) {
+            for (hintType in Holder.hintTypes) {
                 if (toggleHintSetting(hintType, project, element)) return
             }
             element = element.parent
@@ -71,6 +60,19 @@ class KotlinInlayHintToggleAction : IntentionAction, HighPriorityAction {
 
     override fun startInWriteAction(): Boolean = false
 
+    private object Holder {
+        val hintTypes: Array<HintType> = arrayOf(
+            HintType.RANGES,
+            HintType.PROPERTY_HINT,
+            HintType.LOCAL_VARIABLE_HINT,
+            HintType.FUNCTION_HINT,
+            HintType.PARAMETER_TYPE_HINT,
+            HintType.PARAMETER_HINT,
+            HintType.LAMBDA_RETURN_EXPRESSION,
+            HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER,
+            HintType.SUSPENDING_CALL,
+        )
+    }
 }
 
 internal fun toggleHintSetting(
