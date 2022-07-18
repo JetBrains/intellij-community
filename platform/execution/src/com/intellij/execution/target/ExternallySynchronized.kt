@@ -9,7 +9,5 @@ import java.nio.file.Path
  */
 @ApiStatus.Experimental
 interface ExternallySynchronized {
-  val synchronizedVolumes: List<SynchronizedVolume>
-
-  data class SynchronizedVolume(override val localRootPath: Path, val targetPath: String): TargetEnvironment.MappingWithLocalPath
+  val synchronizedVolumes: List<TargetEnvironment.SynchronizedVolume>
 }

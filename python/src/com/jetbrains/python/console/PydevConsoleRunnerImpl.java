@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.configurations.EncodingEnvironmentUtil;
@@ -639,7 +640,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       // Use all modules otherwise
       modules = ModuleManager.getInstance(myProject).getModules();
     }
-    PythonScripts.ensureProjectAndModuleDirsAreOnTarget(targetEnvironmentRequest, myProject, modules);
+    PythonScripts.ensureProjectSdkAndModuleDirsAreOnTarget(targetEnvironmentRequest, myProject, modules);
   }
 
   private static class PyRemoteSocketToLocalHostProviderStub implements PyRemoteSocketToLocalHostProvider {
