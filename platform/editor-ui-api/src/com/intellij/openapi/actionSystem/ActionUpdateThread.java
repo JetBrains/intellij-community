@@ -4,7 +4,8 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.util.SlowOperations;
 
 /**
- * Specifies the thread and the way {@link AnAction#update(AnActionEvent)} and {@link ActionGroup#getChildren(AnActionEvent)} are called.
+ * Specifies the thread and the way {@link AnAction#update(AnActionEvent)}, {@link ActionGroup#getChildren(AnActionEvent)}
+ * or other update-like method shall be called.
  * <p>
  * The update session is run on a background thread.
  * That is why {@link #BGT} the preferred value for all actions:

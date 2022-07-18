@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface ActionUpdateThreadAware {
   /**
-   * Specifies the thread and the way {@link AnAction#update(AnActionEvent)} or other update-like method shall be called.
+   * Specifies the thread and the way {@link AnAction#update(AnActionEvent)},
+   * {@link ActionGroup#getChildren(AnActionEvent)} or other update-like method shall be called.
    */
   default @NotNull ActionUpdateThread getActionUpdateThread() {
     if (this instanceof UpdateInBackground && ((UpdateInBackground)this).isUpdateInBackground()) {
