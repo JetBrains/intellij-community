@@ -510,7 +510,7 @@ public final class HighlightMethodUtil {
       if (toolTip == null) {
         if ((parameters.length == 0 || !parameters[parameters.length - 1].isVarArgs()) &&
             parameters.length != expressions.length) {
-          toolTip = createMismatchedArgumentCountTooltip(parameters, expressions);
+          toolTip = createMismatchedArgumentCountTooltip(parameters.length, expressions.length);
         }
         else {
           toolTip = mismatchedExpressions.isEmpty() ? description : createMismatchedArgumentsHtmlTooltip(candidateInfo, list);
@@ -1060,7 +1060,7 @@ public final class HighlightMethodUtil {
     PsiExpression[] expressions = list.getExpressions();
     if ((parameters.length == 0 || !parameters[parameters.length - 1].isVarArgs()) &&
         parameters.length != expressions.length) {
-      return createMismatchedArgumentCountTooltip(parameters, expressions);
+      return createMismatchedArgumentCountTooltip(parameters.length, expressions.length);
     }
 
     HtmlBuilder message = new HtmlBuilder();
@@ -1072,8 +1072,8 @@ public final class HighlightMethodUtil {
   }
 
   @NotNull
-  private static @NlsContexts.Tooltip String createMismatchedArgumentCountTooltip(PsiParameter @NotNull [] parameters, PsiExpression[] expressions) {
-    return HtmlChunk.text(JavaAnalysisBundle.message("arguments.count.mismatch", parameters.length, expressions.length))
+  public static @NlsContexts.Tooltip String createMismatchedArgumentCountTooltip(int expected, int actual) {
+    return HtmlChunk.text(JavaAnalysisBundle.message("arguments.count.mismatch", expected, actual))
       .wrapWith("html").toString();
   }
 
