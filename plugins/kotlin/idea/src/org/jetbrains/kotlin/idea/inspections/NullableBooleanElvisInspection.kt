@@ -41,7 +41,7 @@ class NullableBooleanElvisInspection : AbstractKotlinInspection(), CleanupLocalI
 
                 holder.registerProblemWithoutOfflineInformation(
                     expression,
-                    KotlinBundle.message("equality.cehck.0.be.used.instead.of.elvis.for.nullable.boolean.check", verb),
+                    KotlinBundle.message("equality.check.0.be.used.instead.of.elvis.for.nullable.boolean.check", verb),
                     isOnTheFly,
                     highlightType,
                     ReplaceWithEqualityCheckFix()

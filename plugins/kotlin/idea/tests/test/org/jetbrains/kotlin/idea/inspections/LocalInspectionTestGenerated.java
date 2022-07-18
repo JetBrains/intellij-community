@@ -7732,9 +7732,34 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/nullableBooleanElvis/inIf3.kt");
         }
 
+        @TestMetadata("inIfWithBinaryExpression.kt")
+        public void testInIfWithBinaryExpression() throws Exception {
+            runTest("testData/inspectionsLocal/nullableBooleanElvis/inIfWithBinaryExpression.kt");
+        }
+
+        @TestMetadata("inIfWithCallExpression.kt")
+        public void testInIfWithCallExpression() throws Exception {
+            runTest("testData/inspectionsLocal/nullableBooleanElvis/inIfWithCallExpression.kt");
+        }
+
+        @TestMetadata("inIfWithIfExpression.kt")
+        public void testInIfWithIfExpression() throws Exception {
+            runTest("testData/inspectionsLocal/nullableBooleanElvis/inIfWithIfExpression.kt");
+        }
+
+        @TestMetadata("inIfWithNullableCallExpression.kt")
+        public void testInIfWithNullableCallExpression() throws Exception {
+            runTest("testData/inspectionsLocal/nullableBooleanElvis/inIfWithNullableCallExpression.kt");
+        }
+
         @TestMetadata("notInIf.kt")
         public void testNotInIf() throws Exception {
             runTest("testData/inspectionsLocal/nullableBooleanElvis/notInIf.kt");
+        }
+
+        @TestMetadata("notInIfWithThisExpression.kt")
+        public void testNotInIfWithThisExpression() throws Exception {
+            runTest("testData/inspectionsLocal/nullableBooleanElvis/notInIfWithThisExpression.kt");
         }
 
         @TestMetadata("notInIfWithTrue.kt")

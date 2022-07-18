@@ -251,6 +251,64 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis")
+    public static class NullableBooleanElvis extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("inIf.kt")
+        public void testInIf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/inIf.kt");
+        }
+
+        @TestMetadata("inIf2.kt")
+        public void testInIf2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/inIf2.kt");
+        }
+
+        @TestMetadata("inIf3.kt")
+        public void testInIf3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/inIf3.kt");
+        }
+
+        @TestMetadata("inIfWithBinaryExpression.kt")
+        public void testInIfWithBinaryExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/inIfWithBinaryExpression.kt");
+        }
+
+        @TestMetadata("inIfWithCallExpression.kt")
+        public void testInIfWithCallExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/inIfWithCallExpression.kt");
+        }
+
+        @TestMetadata("inIfWithIfExpression.kt")
+        public void testInIfWithIfExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/inIfWithIfExpression.kt");
+        }
+
+        @TestMetadata("inIfWithNullableCallExpression.kt")
+        public void testInIfWithNullableCallExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/inIfWithNullableCallExpression.kt");
+        }
+
+        @TestMetadata("notInIf.kt")
+        public void testNotInIf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/notInIf.kt");
+        }
+
+        @TestMetadata("notInIfWithThisExpression.kt")
+        public void testNotInIfWithThisExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/notInIfWithThisExpression.kt");
+        }
+
+        @TestMetadata("notInIfWithTrue.kt")
+        public void testNotInIfWithTrue() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/notInIfWithTrue.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
