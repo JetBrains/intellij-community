@@ -263,14 +263,17 @@
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
+
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.dom.impl.I18nReferenceContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.ExperimentalFeatureIdContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.AdvancedSettingsIdContributor"/>
-    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
+    <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.references.IconsXmlReferencesContributor"/>
+    <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.IconsUastReferencesContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.RegistryKeyIdReferenceContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.NotificationGroupIdReferenceContributor"/>
-    <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
+
+    <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesQueryExecutor"/>
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
 
     <stacktrace.fold substring="at com.intellij.ide.IdeEventQueue"/>
