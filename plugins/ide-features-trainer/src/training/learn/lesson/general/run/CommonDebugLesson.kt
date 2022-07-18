@@ -355,7 +355,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       }
       val intro = LessonsBundle.message("debug.workflow.run.to.cursor.intro", code(debuggingMethodName), code("return"))
       val actionPart = if (!UIExperiment.isNewDebuggerUIEnabled()) {
-        LessonsBundle.message("debug.workflow.run.to.cursor.press", action(it), icon(AllIcons.Actions.RunToCursor))
+        LessonsBundle.message("debug.workflow.run.to.cursor.press.or.click", action(it), icon(AllIcons.Actions.RunToCursor))
       }
       else LessonsBundle.message("debug.workflow.run.to.cursor.press", action(it))
       val alternative = LessonsBundle.message("debug.workflow.run.to.cursor.alternative", LessonUtil.actionName(it))
