@@ -42,6 +42,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
@@ -366,20 +367,6 @@ public final class FSRecords {
     }
   }
 
-  static <T> T readAndHandleErrors(@NotNull ThrowableComputable<T, ? extends Exception> action) {
-    try {
-      return read(action);
-    }
-    catch (ProcessCanceledException e) {
-      // long reads like processXXX can be safely cancelled
-      throw e;
-    }
-    catch (Throwable e) {
-      handleError(e);
-      throw new RuntimeException(e);
-    }
-  }
-
   static <T> T writeAndHandleErrors(@NotNull ThrowableComputable<T, ?> action) {
     w.lock();
     try {
@@ -538,12 +525,15 @@ public final class FSRecords {
   }
 
   static void storeSymlinkTarget(int id, @Nullable String symlinkTarget) {
-    writeAndHandleErrors(() -> {
+    try {
       ourConnection.markDirty();
       try (DataOutputStream stream = writeAttribute(id, ourSymlinkTargetAttr)) {
         IOUtil.writeUTF(stream, StringUtil.notNullize(symlinkTarget));
       }
-    });
+    } catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
 
@@ -920,12 +910,15 @@ public final class FSRecords {
     return new DataOutputStream(ourContentAccessor.new ContentOutputStream(fileId, readOnly)) {
       @Override
       public void close() {
-        writeAndHandleErrors(() -> {
+        try {
           super.close();
           if (((PersistentFSContentAccessor.ContentOutputStream)out).isModified()) {
             incModCount(fileId);
           }
-        });
+        }
+        catch (IOException e){
+         handleError(e);
+        }
       }
     };
   }
@@ -956,20 +949,24 @@ public final class FSRecords {
   }
 
   static synchronized void dispose() {
-    writeAndHandleErrors(() -> {
-      try {
-        InvertedNameIndex.clear();
-        ourConnection.doForce();
-        ourConnection.closeFiles();
-      }
-      finally {
-        ourConnection = null;
-        ourContentAccessor = null;
-        ourAttributeAccessor = null;
-        ourTreeAccessor = null;
-        ourRecordAccessor = null;
-      }
-    });
+    Lock openCloseLock = PersistentFSConnector.ourOpenCloseLock;
+    openCloseLock.lock();
+    try {
+      InvertedNameIndex.clear();
+      ourConnection.doForce();
+      ourConnection.closeFiles();
+    }
+    catch (IOException e) {
+      handleError(e);
+    }
+    finally {
+      ourConnection = null;
+      ourContentAccessor = null;
+      ourAttributeAccessor = null;
+      ourTreeAccessor = null;
+      ourRecordAccessor = null;
+      openCloseLock.unlock();
+    }
   }
 
   public static void invalidateCaches() {

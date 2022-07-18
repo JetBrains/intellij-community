@@ -25,19 +25,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class PersistentFSConnector {
+  static final Lock ourOpenCloseLock = new ReentrantLock();
+
   private static final Logger LOG = Logger.getInstance(PersistentFSConnector.class);
   private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
   private static final AtomicInteger INITIALIZATION_COUNTER = new AtomicInteger();
   private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT = new StorageLockContext(false, true);
 
   static @NotNull PersistentFSConnection connect(@NotNull String cachesDir, int version, boolean useContentHashes) {
-    return FSRecords.writeAndHandleErrors(() -> {
+    ourOpenCloseLock.lock();
+    try {
       return init(cachesDir, version, useContentHashes);
-    });
+    }
+    finally {
+      ourOpenCloseLock.unlock();
+    }
   }
 
   private static @NotNull PersistentFSConnection init(@NotNull String cachesDir, int expectedVersion, boolean useContentHashes) {
