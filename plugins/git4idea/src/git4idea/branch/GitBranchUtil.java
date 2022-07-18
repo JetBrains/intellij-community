@@ -3,6 +3,7 @@ package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -246,6 +247,11 @@ public final class GitBranchUtil {
     if (project.isDisposed()) return null;
     return DvcsUtil.guessRepositoryForFile(project, GitUtil.getRepositoryManager(project), file,
                                            GitVcsSettings.getInstance(project).getRecentRootPath());
+  }
+
+  @Nullable
+  public static GitRepository guessRepositoryForOperation(@NotNull Project project, @NotNull DataContext dataContext) {
+    return DvcsUtil.guessRepositoryForOperation(project, GitUtil.getRepositoryManager(project), dataContext);
   }
 
   @Nullable

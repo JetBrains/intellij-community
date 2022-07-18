@@ -2,16 +2,11 @@
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.push.PushSupport;
-import com.intellij.dvcs.repo.AbstractRepositoryManager;
-import com.intellij.dvcs.repo.RepoStateException;
-import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.repo.RepositoryManager;
+import com.intellij.dvcs.repo.*;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.ide.file.BatchFileChangeListener;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -265,6 +260,54 @@ public final class DvcsUtil {
                                                                @NotNull AbstractRepositoryManager<T> manager,
                                                                @Nullable @NonNls String recentRootPath) {
     return guessCurrentRepositoryQuick(project, manager, recentRootPath);
+  }
+
+  @Nullable
+  @RequiresEdt
+  public static <T extends Repository> T guessRepositoryForOperation(@NotNull Project project,
+                                                                     @NotNull AbstractRepositoryManager<T> manager) {
+    DataContext dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR, FileEditorManager.getInstance(project).getSelectedEditor())
+      .build();
+
+    return guessRepositoryForOperation(project, manager, dataContext);
+  }
+
+  @Nullable
+  @CalledInAny
+  public static <T extends Repository> T guessRepositoryForOperation(@NotNull Project project,
+                                                                     @NotNull AbstractRepositoryManager<T> manager,
+                                                                     @NotNull DataContext dataContext) {
+    VirtualFile file = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
+    T repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, file));
+    if (repository != null) return repository;
+
+    file = getSelectedFile(dataContext);
+    repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, file));
+    if (repository != null) return repository;
+
+    repository = manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), null));
+    if (repository != null) return repository;
+
+    return null;
+  }
+
+  @Nullable
+  @CalledInAny
+  public static Repository guessRepositoryForOperation(@NotNull Project project,
+                                                       @NotNull DataContext dataContext) {
+    VcsRepositoryManager manager = VcsRepositoryManager.getInstance(project);
+
+    VirtualFile file = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
+    Repository repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, file));
+    if (repository != null) return repository;
+
+    VirtualFile selectedFile = getSelectedFile(dataContext);
+    repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, selectedFile));
+    if (repository != null) return repository;
+
+    return null;
   }
 
   @Nullable

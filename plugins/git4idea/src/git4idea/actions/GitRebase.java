@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
-import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -13,6 +12,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitRebaseParams;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseDialog;
@@ -58,7 +58,8 @@ public class GitRebase extends DumbAwareAction {
     ArrayList<GitRepository> repositories = new ArrayList<>(getRepositories(project));
     repositories.removeAll(getRebasingRepositories(project));
     List<VirtualFile> roots = new ArrayList<>(getRootsFromRepositories(sortRepositories(repositories)));
-    VirtualFile defaultRoot = DvcsUtil.guessVcsRoot(project, e.getData(CommonDataKeys.VIRTUAL_FILE));
+    GitRepository selectedRepo = GitBranchUtil.guessRepositoryForOperation(project, e.getDataContext());
+    VirtualFile defaultRoot = selectedRepo != null ? selectedRepo.getRoot() : null;
     final GitRebaseDialog dialog = new GitRebaseDialog(project, roots, defaultRoot);
     if (dialog.showAndGet()) {
       VirtualFile root = dialog.gitRoot();

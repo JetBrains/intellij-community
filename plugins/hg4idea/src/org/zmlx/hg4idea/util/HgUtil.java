@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.util;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -490,6 +491,11 @@ public abstract class HgUtil {
     return DvcsUtil.guessWidgetRepository(project,
                                           HgUtil.getRepositoryManager(project),
                                           HgProjectSettings.getInstance(project).getRecentRootPath());
+  }
+
+  @Nullable
+  public static HgRepository guessRepositoryForOperation(@NotNull Project project, @NotNull DataContext dataContext) {
+    return DvcsUtil.guessRepositoryForOperation(project, HgUtil.getRepositoryManager(project), dataContext);
   }
 
   @Nullable
