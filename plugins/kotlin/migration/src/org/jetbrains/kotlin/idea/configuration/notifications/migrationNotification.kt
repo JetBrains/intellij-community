@@ -47,11 +47,11 @@ internal fun showMigrationNotification(project: Project, migrationInfo: Migratio
         .getNotificationGroup("Kotlin Migration")
         .createNotification(
             KotlinMigrationBundle.message("configuration.migration.title.kotlin.migration"),
-            "${KotlinMigrationBundle.message("configuration.migration.text.migrations.for.kotlin.code.are.available")}<br/><br/>$detectedChangeMessage",
+            "${KotlinMigrationBundle.message("configuration.migration.text.update.your.code.to.replace.deprecated")}<br/><br/>$detectedChangeMessage",
             NotificationType.WARNING
         )
         .setSuggestionType(true)
-        .addAction(NotificationAction.createExpiring(KotlinMigrationBundle.message("configuration.migration.text.run.migrations")) { notificationAction, notification ->
+        .addAction(NotificationAction.createExpiring(KotlinMigrationBundle.message("configuration.migration.text.scan.for.deprecations")) { notificationAction, notification ->
             val notificationProject = notificationAction.project ?: return@createExpiring
             val projectContext = SimpleDataContext.getProjectContext(notificationProject)
             val migrationAction = ActionManager.getInstance().getAction(CodeMigrationAction.ACTION_ID)
