@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.psi.impl;
 
 import com.intellij.model.Symbol;
@@ -11,10 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PsiSymbolServiceImpl implements PsiSymbolService {
+
   @Contract(pure = true)
-  @NotNull
   @Override
-  public Symbol asSymbol(@NotNull PsiElement element) {
+  public @NotNull Symbol asSymbol(@NotNull PsiElement element) {
     // consider all PsiElements obtained from references (or other APIs) as Symbols,
     // because that's what usually was meant
     return new Psi2Symbol(element);
@@ -26,16 +26,15 @@ public final class PsiSymbolServiceImpl implements PsiSymbolService {
   }
 
   @Contract(pure = true)
-  @Nullable
   @Override
-  public PsiElement extractElementFromSymbol(@NotNull Symbol symbol) {
+  public @Nullable PsiElement extractElementFromSymbol(@NotNull Symbol symbol) {
     if (symbol instanceof Psi2Symbol) {
       return ((Psi2Symbol)symbol).getElement();
     }
     else {
       // If the Symbol is brand new,
       // then the client should implement proper Symbol-based APIs,
-      // hence we consider brand new Symbol implementations as inapplicable for old APIs
+      // hence we consider brand-new Symbol implementations as inapplicable for old APIs
       return null;
     }
   }
