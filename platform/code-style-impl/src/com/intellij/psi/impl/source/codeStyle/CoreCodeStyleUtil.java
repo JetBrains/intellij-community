@@ -207,7 +207,7 @@ public class CoreCodeStyleUtil {
 
   private static class ProcessingUnderProgressInfo {
 
-    private static final long DURATION_TIME = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
+    private static final long DURATION_TIME = TimeUnit.SECONDS.toMillis(5);
 
     private int  myCount;
     private long myEndTime;

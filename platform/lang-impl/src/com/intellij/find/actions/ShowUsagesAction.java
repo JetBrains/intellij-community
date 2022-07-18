@@ -570,8 +570,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         long current = System.nanoTime();
         UsageViewStatisticsCollector.logSearchFinished(project,
            actionHandler.getTargetClass(), searchScope, actionHandler.getTargetLanguage(), usages.size(),
-           TimeUnit.MILLISECONDS.convert(current - firstUsageAddedTS.get(), TimeUnit.NANOSECONDS),
-           TimeUnit.MILLISECONDS.convert(current - searchStarted, TimeUnit.NANOSECONDS),
+           TimeUnit.NANOSECONDS.toMillis(current - firstUsageAddedTS.get()),
+           TimeUnit.NANOSECONDS.toMillis(current - searchStarted),
            tooManyResults.get(),
            CodeNavigateSource.ShowUsagesPopup);
       },
