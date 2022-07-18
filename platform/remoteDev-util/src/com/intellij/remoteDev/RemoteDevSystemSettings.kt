@@ -18,34 +18,34 @@ object RemoteDevSystemSettings {
   private const val defaultJreUrlLocation = "https://download.jetbrains.com/idea/jbr/"
 
   fun getProductsUrl(productCode: String): OsRegistryConfigProvider.OsRegistrySystemSetting<String> {
-    val systemValue = osRegistryConfigProvider.get(productsInfoUrlKey)
-    if (systemValue != null) {
-      return OsRegistryConfigProvider.OsRegistrySystemSetting(systemValue.value.replace(productCodePlaceholder, productCode), systemValue.osOriginLocation)
-    }
+    //val systemValue = osRegistryConfigProvider.get(productsInfoUrlKey)
+    //if (systemValue != null) {
+    //  return OsRegistryConfigProvider.OsRegistrySystemSetting(systemValue.value.replace(productCodePlaceholder, productCode), systemValue.osOriginLocation)
+    //}
     return OsRegistryConfigProvider.OsRegistrySystemSetting(defaultProductsUrl(productCode), null)
   }
 
   fun getPgpPublicKeyUrl(): OsRegistryConfigProvider.OsRegistrySystemSetting<String?> {
-    val systemValue = osRegistryConfigProvider.get(pgpPublicKeyUrlKey)
-    if (systemValue != null) {
-      return OsRegistryConfigProvider.OsRegistrySystemSetting(systemValue.value, systemValue.osOriginLocation)
-    }
+    //val systemValue = osRegistryConfigProvider.get(pgpPublicKeyUrlKey)
+    //if (systemValue != null) {
+    //  return OsRegistryConfigProvider.OsRegistrySystemSetting(systemValue.value, systemValue.osOriginLocation)
+    //}
     return OsRegistryConfigProvider.OsRegistrySystemSetting(null, null)
   }
 
   fun getClientDownloadUrl(): OsRegistryConfigProvider.OsRegistrySystemSetting<URI> {
-    val systemValue = osRegistryConfigProvider.get(clientDownloadUrlKey)
-    if (systemValue != null) {
-      return OsRegistryConfigProvider.OsRegistrySystemSetting(URI(systemValue.value), systemValue.osOriginLocation)
-    }
+    //val systemValue = osRegistryConfigProvider.get(clientDownloadUrlKey)
+    //if (systemValue != null) {
+    //  return OsRegistryConfigProvider.OsRegistrySystemSetting(URI(systemValue.value), systemValue.osOriginLocation)
+    //}
     return OsRegistryConfigProvider.OsRegistrySystemSetting(URI(defaultClientUrlLocation), null)
   }
 
   fun getJreDownloadUrl(): OsRegistryConfigProvider.OsRegistrySystemSetting<URI> {
-    val systemValue = osRegistryConfigProvider.get(jreDownloadUrlKey)
-    if (systemValue != null) {
-      return OsRegistryConfigProvider.OsRegistrySystemSetting(URI(systemValue.value), systemValue.osOriginLocation)
-    }
+    //val systemValue = osRegistryConfigProvider.get(jreDownloadUrlKey)
+    //if (systemValue != null) {
+    //  return OsRegistryConfigProvider.OsRegistrySystemSetting(URI(systemValue.value), systemValue.osOriginLocation)
+    //}
     return OsRegistryConfigProvider.OsRegistrySystemSetting(URI(defaultJreUrlLocation), null)
   }
 
