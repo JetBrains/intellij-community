@@ -81,8 +81,12 @@ public interface IntentionPreviewInfo {
   };
 
   /**
-   * Diff preview where old text and new text are explicitly displayed.
-   * Could be used to generate fake diff previews (e.g. when changes are to be applied to another file)
+   * Diff preview where original text and new text are explicitly displayed.
+   * Could be used to generate custom diff previews (e.g. when changes are to be applied to another file).
+   * <p>
+   * In most of the cases, original text could be empty, so simply the new text will be displayed.
+   * However, sometimes you may provide carefully crafted original and new text, in order to get some diff highlighting
+   * (added/removed parts).
    */
   class CustomDiff implements IntentionPreviewInfo {
     private final @NotNull FileType myFileType;
@@ -91,6 +95,8 @@ public interface IntentionPreviewInfo {
     private final @Nullable String myFileName;
 
     /**
+     * Construct a custom diff. Please prefer another constructor and specify a file name if it's applicable.
+     *
      * @param type         file type, used for highlighting
      * @param origText     original file text
      * @param modifiedText changed file text
@@ -130,7 +136,21 @@ public interface IntentionPreviewInfo {
   }
 
   /**
-   * HTML description
+   * HTML description. Here are some advices:
+   * <ul>
+   *   <li>If you want to display icon, use {@link HtmlChunk#icon(String, Icon)}. Though be careful, as converting it to text
+   *   and back (e.g., via {@link HtmlChunk#raw(String)}) would make the icon invalid. In general, avoid using {@link HtmlChunk#raw(String)}.
+   *   Consider using {@link HtmlChunk#template(String, Map.Entry[])} if necessary</li>
+   *   <li>Note that the description pane has fixed width (300 px for default font, see
+   *   {@link com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor#MIN_WIDTH IntentionPreviewPopupUpdateProcessor#MIN_WIDTH}).
+   *   Try to make the description not very long to avoid vertical scrollbar, as it's hardly possible to scroll it.</li>
+   *   <li>In general, any user interaction with the description pane is hardly possible, as if you move the mouse it’s likely
+   *   that preview for another item will be displayed. Also, preview is mostly useful for keyboard users, as it’s usually
+   *   displayed as a reaction on Alt+Enter. So adding clickable links or buttons there is not a good idea.</li>
+   *   <li>When possible, use generic preview methods available in {@link IntentionPreviewInfo} (e.g., {@link #rename(PsiFile, String)},
+   *   {@link #navigate(NavigatablePsiElement)}, {@link #movePsi(PsiNamedElement, PsiNamedElement)}). They provide uniform
+   *   preview for common cases. Ask if you think that you need a new common method.</li>
+   * </ul>
    */
   class Html implements IntentionPreviewInfo {
     private final @NotNull HtmlChunk myContent;

@@ -546,7 +546,8 @@ public abstract class HtmlChunk {
   /**
    * Creates a chunk that represents a piece of raw HTML. Should be used with care!
    * The purpose of this method is to be able to externalize the text with embedded link. E.g.:
-   * {@code "Click <a href=\"...\">here</a> for details"}.
+   * {@code "Click <a href=\"...\">here</a> for details"}. As an alternative, consider using
+   * {@link #template(String, Map.Entry[])}.
    * 
    * @param rawHtml raw HTML content. It's the responsibility of the caller to balance tags and escape HTML entities.
    * @return the HtmlChunk that represents the supplied content.
