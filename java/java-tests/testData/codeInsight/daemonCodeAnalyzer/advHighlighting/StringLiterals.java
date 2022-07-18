@@ -17,7 +17,7 @@
 // string literal
 public class a {
   char c1 =  <error descr="Empty character literal">''</error>;
-  char c2 =  <error descr="Illegal escape character in character literal">'\dd'</error>;
+  char c2 =  '<error descr="Illegal escape character in character literal">\d</error>d';
   char c4 =  <error descr="Too many characters in character literal">'xxx'</error>;
   char c5 =  <error descr="Too many characters in character literal">'\78'</error>;
   char c6 =  <error descr="Too many characters in character literal">'\78'</error>;
@@ -35,14 +35,14 @@ public class a {
 
   String s5 = "<error descr="Illegal escape character in string literal">\u000d</error>";
   String s6 = "<error descr="Illegal escape character in string literal">\u000a</error>";
-  String s7 = <error descr="Illegal escape character in string literal">"\
-  "</error>;
+  String s7 = "<error descr="Illegal escape character in string literal">\
+</error>  ";
   String s8 = "<error descr="Illegal Unicode escape sequence">\ubad</error><error descr="Illegal Unicode escape sequence">\ubad</error> <error descr="Illegal Unicode escape sequence">\ubad</error> <error descr="Illegal Unicode escape sequence">\ubad</error>";
-  char c7 = <error descr="Illegal escape character in character literal">'\u000d'</error>;
-  char c8  = <error descr="Illegal escape character in character literal">'\u000a'</error>;
+  char c7 = '<error descr="Illegal escape character in character literal">\u000d</error>';
+  char c8  = '<error descr="Illegal escape character in character literal">\u000a</error>';
   char c9 = '<error descr="Illegal Unicode escape sequence">\u</error>';
-  char c10 = <error descr="Illegal escape character in character literal">'\
- '</error>;
+  char c10 = '<error descr="Illegal escape character in character literal">\
+</error> ';
 
   String perverts = "\uuuuuuuuuuuu1234";
   String perverts2 = "<error descr="Illegal Unicode escape sequence">\uuuuuuuuuuuu123</error>";

@@ -87,12 +87,17 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
   }
 
   public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder out, int @Nullable [] sourceOffsets) {
+    return parseStringCharacters(chars, out, sourceOffsets, true);
+  }
+
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder out, int @Nullable [] sourceOffsets,
+                                              boolean textBlock) {
     LOG.assertTrue(sourceOffsets == null || sourceOffsets.length == chars.length() + 1);
     if (noEscape(chars, sourceOffsets)) {
       out.append(chars);
       return true;
     }
-    return parseStringCharactersWithEscape(chars, out, sourceOffsets);
+    return parseStringCharactersWithEscape(chars, textBlock, out, sourceOffsets);
   }
 
   /**
@@ -110,18 +115,19 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
       return chars;
     }
     StringBuilder out = new StringBuilder(chars.length());
-    return parseStringCharactersWithEscape(chars, out, sourceOffsets) ? out : null;
+    return parseStringCharactersWithEscape(chars, true, out, sourceOffsets) ? out : null;
   }
 
   private static boolean noEscape(@NotNull String chars, int @Nullable [] sourceOffsets) {
-    if (chars.indexOf('\\') < 0) {
-      if (sourceOffsets != null) Arrays.setAll(sourceOffsets, IntUnaryOperator.identity());
-      return true;
-    }
-    return false;
+    if (chars.indexOf('\\') >= 0) return false;
+    if (sourceOffsets != null) Arrays.setAll(sourceOffsets, IntUnaryOperator.identity());
+    return true;
   }
 
-  static boolean parseStringCharactersWithEscape(@NotNull String chars, @NotNull StringBuilder out, int @Nullable [] sourceOffsets) {
+  static boolean parseStringCharactersWithEscape(@NotNull String chars,
+                                                 boolean textBlock,
+                                                 @NotNull StringBuilder out,
+                                                 int @Nullable [] sourceOffsets) {
     int index = 0;
     final int outOffset = out.length();
     while (index < chars.length()) {
@@ -134,7 +140,7 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
         out.append(c);
         continue;
       }
-      index = parseEscapedSymbol(false, chars, index, out);
+      index = parseEscapedSymbol(false, chars, index, textBlock, out);
       if (index == -1) return false;
       if (sourceOffsets != null) {
         sourceOffsets[out.length() - outOffset] = index;
@@ -143,17 +149,19 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
     return true;
   }
 
-  private static int parseEscapedSymbol(boolean isAfterEscapedBackslash, @NotNull String chars, int index, @NotNull StringBuilder out) {
+  private static int parseEscapedSymbol(boolean isAfterEscapedBackslash, @NotNull String chars, int index,
+                                        boolean textBlock,
+                                        @NotNull StringBuilder out) {
     if (index == chars.length()) return -1;
     char c = chars.charAt(index++);
-    if (parseEscapedChar(c, out)) {
+    if (parseEscapedChar(c, textBlock, out)) {
       return index;
     }
     switch (c) {
       case '\\':
         boolean isUnicodeSequenceStart = isAfterEscapedBackslash && index < chars.length() && chars.charAt(index) == 'u';
         if (isUnicodeSequenceStart) {
-          index = parseUnicodeEscape(true, chars, index, out);
+          index = parseUnicodeEscape(true, chars, index, textBlock, out);
         }
         else {
           out.append('\\');
@@ -173,7 +181,7 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
 
       case 'u':
         if (isAfterEscapedBackslash) return -1;
-        index = parseUnicodeEscape(false, chars, index - 1, out);
+        index = parseUnicodeEscape(false, chars, index - 1, textBlock, out);
         break;
 
       default:
@@ -182,7 +190,9 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
     return index;
   }
 
-  private static int parseUnicodeEscape(boolean isAfterEscapedBackslash, @NotNull String s, int index, @NotNull StringBuilder out) {
+  private static int parseUnicodeEscape(boolean isAfterEscapedBackslash, @NotNull String s, int index,
+                                        boolean textBlock,
+                                        @NotNull StringBuilder out) {
     int len = s.length();
     // uuuuu1234 is valid too
     do {
@@ -194,8 +204,8 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
       char c = s.charAt(index);
       if (c == '+' || c == '-') return -1;
       int code = Integer.parseInt(s.substring(index, index + 4), 16);
-      // line separators are invalid here
-      if (code == 0x000a || code == 0x000d) return -1;
+      // unicode escaped line separators are invalid here when not a text block
+      if (!textBlock && (code == 0x000a || code == 0x000d)) return -1;
       char escapedChar = (char)code;
       if (escapedChar == '\\') {
         if (isAfterEscapedBackslash) {
@@ -205,12 +215,12 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
         }
         else {
           // u005cxyz
-          return parseEscapedSymbol(true, s, index + 4, out);
+          return parseEscapedSymbol(true, s, index + 4, textBlock, out);
         }
       }
       if (isAfterEscapedBackslash) {
         // e.g. \u005c\u006e is converted to newline
-        if (parseEscapedChar(escapedChar, out)) return index + 4;
+        if (parseEscapedChar(escapedChar, textBlock, out)) return index + 4;
         return -1;
       }
       // just single unicode escape sequence
@@ -222,7 +232,7 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
     }
   }
 
-  private static boolean parseEscapedChar(char c, @NotNull StringBuilder out) {
+  private static boolean parseEscapedChar(char c, boolean textBlock, @NotNull StringBuilder out) {
     switch (c) {
       case 'b':
         out.append('\b');
@@ -257,7 +267,7 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
         return true;
 
       case '\n':
-        return true;
+        return textBlock; // escaped newline only valid inside text block
     }
     return false;
   }

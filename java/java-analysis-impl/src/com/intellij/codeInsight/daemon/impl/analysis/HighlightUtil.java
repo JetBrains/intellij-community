@@ -1218,63 +1218,96 @@ public final class HighlightUtil {
       }
     }
     else if (type == JavaTokenType.CHARACTER_LITERAL) {
-      int newLineEscape = text.indexOf("\\\n");
-      if (newLineEscape >= 0) {
-        String message = JavaErrorBundle.message("illegal.escape.character.in.character.literal");
+      if (!StringUtil.startsWithChar(text, '\'')) {
+        return null;
+      }
+      if (!StringUtil.endsWithChar(text, '\'') || text.length() == 1) {
+        String message = JavaErrorBundle.message("unclosed.char.literal");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
       }
-      if (value == null) {
-        if (!StringUtil.startsWithChar(text, '\'')) {
-          return null;
-        }
-        if (!StringUtil.endsWithChar(text, '\'') || text.length() == 1) {
-          String message = JavaErrorBundle.message("unclosed.char.literal");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-        }
 
-        CharSequence chars = CodeInsightUtilCore.parseStringCharacters(rawText, null);
-        if (chars == null) {
-          String message = JavaErrorBundle.message("illegal.escape.character.in.character.literal");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-        }
-        int length = chars.length();
-        if (length > 3) {
-          String message = JavaErrorBundle.message("too.many.characters.in.character.literal");
-          HighlightInfo info =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-          QuickFixAction.registerQuickFixAction(info, getFixFactory().createConvertToStringLiteralAction());
-          return info;
-        }
-        else if (length == 2) {
-          String message = JavaErrorBundle.message("empty.character.literal");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-        }
+      int rawLength = rawText.length();
+      StringBuilder chars = new StringBuilder(rawLength);
+      int[] offsets = new int[rawLength + 1];
+      final boolean success = CodeInsightUtilCore.parseStringCharacters(rawText, chars, offsets, false);
+      if (!success) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(expression, calculateErrorRange(rawText, offsets[chars.length()]))
+          .descriptionAndTooltip(JavaErrorBundle.message("illegal.escape.character.in.character.literal"))
+          .create();
+      }
+      int length = chars.length();
+      if (length > 3) {
+        String message = JavaErrorBundle.message("too.many.characters.in.character.literal");
+        HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+        QuickFixAction.registerQuickFixAction(info, getFixFactory().createConvertToStringLiteralAction());
+        return info;
+      }
+      else if (length == 2) {
+        String message = JavaErrorBundle.message("empty.character.literal");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+      }
+      if (file != null && containsUnescaped(text, "\\s")) {
+        HighlightInfo info = checkFeature(expression, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
+        if (info != null) return info;
       }
     }
     else if (type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.TEXT_BLOCK_LITERAL) {
       if (type == JavaTokenType.STRING_LITERAL) {
-        if (value == null) {
-          for (PsiElement element = expression.getFirstChild(); element != null; element = element.getNextSibling()) {
-            if (element instanceof OuterLanguageElement) {
-              return null;
-            }
+        for (PsiElement element = expression.getFirstChild(); element != null; element = element.getNextSibling()) {
+          if (element instanceof OuterLanguageElement) {
+            return null;
           }
+        }
 
-          if (!StringUtil.startsWithChar(text, '\"')) return null;
-          if (StringUtil.endsWithChar(text, '\"')) {
-            if (text.length() == 1) {
-              String message = JavaErrorBundle.message("illegal.line.end.in.string.literal");
-              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-            }
-          }
-          else {
+        if (!StringUtil.startsWithChar(text, '\"')) return null;
+        if (StringUtil.endsWithChar(text, '\"')) {
+          if (text.length() == 1) {
             String message = JavaErrorBundle.message("illegal.line.end.in.string.literal");
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
           }
-          int length = rawText.length();
-          StringBuilder chars = new StringBuilder(length);
-          int[] offsets = new int[length + 1];
-          boolean success = CodeInsightUtilCore.parseStringCharacters(rawText, chars, offsets);
+        }
+        else {
+          String message = JavaErrorBundle.message("illegal.line.end.in.string.literal");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+        }
+        int length = rawText.length();
+        StringBuilder chars = new StringBuilder(length);
+        int[] offsets = new int[length + 1];
+        boolean success = CodeInsightUtilCore.parseStringCharacters(rawText, chars, offsets, false);
+        if (!success) {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .range(expression, calculateErrorRange(rawText, offsets[chars.length()]))
+            .descriptionAndTooltip(JavaErrorBundle.message("illegal.escape.character.in.string.literal"))
+            .create();
+        }
+        if (file != null && containsUnescaped(text, "\\s")) {
+          HighlightInfo info = checkFeature(expression, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
+          if (info != null) return info;
+        }
+      }
+      else {
+        if (!text.endsWith("\"\"\"")) {
+          String message = JavaErrorBundle.message("text.block.unclosed");
+          int p = expression.getTextRange().getEndOffset();
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(p, p).endOfLine().descriptionAndTooltip(message).create();
+        }
+        else {
+          int i = 3;
+          char c = text.charAt(i);
+          while (PsiLiteralUtil.isTextBlockWhiteSpace(c)) {
+            i++;
+            c = text.charAt(i);
+          }
+          if (c != '\n' && c != '\r') {
+            String message = JavaErrorBundle.message("text.block.new.line");
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          }
+          final int rawLength = rawText.length();
+          StringBuilder chars = new StringBuilder(rawLength);
+          int[] offsets = new int[rawLength + 1];
+          boolean success = CodeInsightUtilCore.parseStringCharacters(rawText, chars, offsets, true);
           if (!success) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
               .range(expression, calculateErrorRange(rawText, offsets[chars.length()]))
@@ -1282,44 +1315,6 @@ public final class HighlightUtil {
               .create();
           }
         }
-        else if (text.contains("\\\n")) {
-          String message = JavaErrorBundle.message("illegal.escape.character.in.string.literal");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-        }
-      }
-      else {
-        if (value == null) {
-          if (!text.endsWith("\"\"\"")) {
-            String message = JavaErrorBundle.message("text.block.unclosed");
-            int p = expression.getTextRange().getEndOffset();
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(p, p).endOfLine().descriptionAndTooltip(message).create();
-          }
-          else {
-            StringBuilder chars = new StringBuilder(rawText.length());
-            int[] offsets = new int[rawText.length() + 1];
-            boolean success = CodeInsightUtilCore.parseStringCharacters(rawText, chars, offsets);
-            if (!success) {
-              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                .range(expression, calculateErrorRange(rawText, offsets[chars.length()]))
-                .descriptionAndTooltip(JavaErrorBundle.message("illegal.escape.character.in.string.literal"))
-                .create();
-            }
-            else {
-              String message = JavaErrorBundle.message("text.block.new.line");
-              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-            }
-          }
-        }
-        else {
-          if (file != null && containsUnescaped(text, "\\\n")) {
-            HighlightInfo info = checkFeature(expression, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
-            if (info != null) return info;
-          }
-        }
-      }
-      if (file != null && containsUnescaped(text, "\\s")) {
-        HighlightInfo info = checkFeature(expression, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
-        if (info != null) return info;
       }
     }
 
@@ -2747,6 +2742,7 @@ public final class HighlightUtil {
               if (illegalEscapeConsumer != null) illegalEscapeConsumer.accept(startOfUnicodeEscape, i + j);
               return result.toString();
             }
+            value <<= 4;
             c = text.charAt(i + j);
             if ('0' <= c && c <= '9') value += c - '0';
             else if ('a' <= c && c <= 'f') value += (c - 'a') + 10;

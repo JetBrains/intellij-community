@@ -401,9 +401,13 @@ public final class PsiLiteralUtil {
     while (true) {
       char c = rawText.charAt(start++);
       if (c == '\n') break;
-      if (!Character.isWhitespace(c) || start == rawText.length()) return null;
+      if (!isTextBlockWhiteSpace(c) || start == rawText.length()) return null;
     }
     return rawText.substring(start, rawText.length() - 3).split("\n", -1);
+  }
+
+  public static boolean isTextBlockWhiteSpace(char c) {
+    return c == ' ' || c == '\t' || c == '\f';
   }
 
   /**

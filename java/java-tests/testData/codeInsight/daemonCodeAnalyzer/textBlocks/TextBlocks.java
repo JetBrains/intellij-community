@@ -16,6 +16,10 @@ class C {
     \
     """;
 
+  String valid3 = """\u000Ahello""";
+  String valid4 = """\u0020\u0020\u0020\u000Dhello""";
+  String valid5 = \u0022\u0022\u0022\u0020\u0020\u0020\u000Ahello""";
+
   String backSlash1 = """
     \u005c\""";
 }
