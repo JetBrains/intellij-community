@@ -4,6 +4,7 @@ package com.jetbrains.python.target
 import com.intellij.execution.target.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.remote.RemoteSdkPropertiesHolder
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
@@ -11,6 +12,7 @@ import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import org.jdom.Element
+import java.nio.file.Path
 
 /**
  * Aims to replace [com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase].
@@ -22,6 +24,16 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
                                                                                   TargetBasedSdkAdditionalData,
                                                                                   RemoteSdkProperties by b,
                                                                                   PyRemoteSdkAdditionalDataMarker {
+  /**
+   * [local, remote] mapping for paths added by user
+   */
+  val pathsAddedByUser: Map<Path, String> get() = this.addedPathFiles.asMappings
+
+  /**
+   * [local, remote] mapping for paths explicitly removed by user
+   */
+  val pathsRemovedByUser: Map<Path, String> get() = this.excludedPathFiles.asMappings
+
   /**
    * The source of truth for the target configuration.
    */
@@ -85,6 +97,8 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
    */
   // TODO [targets] Review the usages and probably deprecate this property as it does not seem to be sensible
   override fun getSdkId(): String = targetEnvironmentConfiguration?.displayName + interpreterPath
+
+  private val Collection<VirtualFile>.asMappings get() = associate { it.toNioPath() to b.pathMappings.convertToRemote(it.path) }
 
   companion object {
     private const val DEFAULT_PYCHARM_HELPERS_DIR_NAME = ".pycharm_helpers"

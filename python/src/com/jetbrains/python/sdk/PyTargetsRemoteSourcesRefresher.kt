@@ -26,11 +26,9 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.ZipUtil
 import com.intellij.util.io.deleteWithParentsIfEmpty
 import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.run.buildTargetedCommandLine
-import com.jetbrains.python.run.execute
-import com.jetbrains.python.run.prepareHelperScriptExecution
+import com.jetbrains.python.run.*
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
+import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import java.nio.file.Files
 import java.nio.file.attribute.FileTime
 import java.time.Instant
@@ -61,6 +59,7 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project
     val downloadVolume = TargetEnvironment.DownloadRoot(localRootPath = localRemoteSourcesRoot, targetRootPath = TargetPath.Temporary())
     targetEnvRequest.downloadVolumes += downloadVolume
 
+    pyRequest.targetEnvironmentRequest.ensureProjectSdkAndModuleDirsAreOnTarget(project, sdk)
     val execution = prepareHelperScriptExecution(helperPackage = PythonHelper.REMOTE_SYNC, helpersAwareTargetRequest = pyRequest)
 
     val stateFilePath = localRemoteSourcesRoot / STATE_FILE
@@ -81,7 +80,9 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project
       // If sdk is target that supports local VFS, there is no reason to copy editable packages to remote_sources
       // since their paths should be available locally (to be edited)
       // Such packages are in user content roots, so we report them to remote_sync script
-      val moduleRoots = project.modules.flatMap { it.rootManager.contentRoots.asList() }.mapNotNull { targetWithVfs.getTargetPathFromVfs(it) }
+      val moduleRoots = project.modules.flatMap { it.rootManager.contentRoots.asList() }.mapNotNull {
+        targetWithVfs.getTargetPathFromVfs(it)
+      }
       if (moduleRoots.isNotEmpty()) {
         execution.addParameter("--project-roots")
         for (root in moduleRoots) {
@@ -119,6 +120,14 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project
     }
 
     val pathMappings = PathMappingSettings()
+
+    // Preserve mappings for paths added by user and explicitly excluded by user
+    // We may lose these mappings otherwise
+    (sdk.sdkAdditionalData as? PyTargetAwareAdditionalData)?.let { pyData ->
+      (pyData.pathsAddedByUser + pyData.pathsRemovedByUser).forEach { (localPath, remotePath) ->
+        pathMappings.add(PathMappingSettings.PathMapping(localPath.toString(), remotePath))
+      }
+    }
     for (root in stateFile.roots) {
       val remoteRootPath = root.path
       val localRootName = remoteRootPath.hashCode().toString()
@@ -165,6 +174,7 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project
 
     @SerializedName("invalid_entries")
     var invalidEntries: List<String> = emptyList()
+    override fun toString(): String = path
   }
 
   companion object {

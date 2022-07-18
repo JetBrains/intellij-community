@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.targetAdditionalData
 import java.nio.file.Path
 
 private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
@@ -214,17 +215,21 @@ fun TargetedCommandLine.execute(env: TargetEnvironment, indicator: ProgressIndic
   return output
 }
 
+
 /**
  * Checks whether the base directory of [project] is registered in [this] request. Adds it if it is not.
- * You can also provide [modules] to add its content roots
+ * You can also provide [modules] to add its content roots and [Sdk] for which user added custom paths
  */
-fun TargetEnvironmentRequest.ensureProjectAndModuleDirsAreOnTarget(project: Project, vararg modules: Module) {
+fun TargetEnvironmentRequest.ensureProjectSdkAndModuleDirsAreOnTarget(project: Project, sdk: Sdk?, vararg modules: Module) {
+  sdk?.targetAdditionalData?.pathsAddedByUser?.forEach { (local, remote) ->
+    uploadVolumes += UploadRoot(localRootPath = local, targetRootPath = TargetPath.Persistent(remote))
+  }
   fun TargetEnvironmentRequest.addPathToVolume(basePath: Path) {
     if (uploadVolumes.none { it.localRootPath.isAncestor(basePath) }) {
       uploadVolumes += UploadRoot(localRootPath = basePath, targetRootPath = TargetPath.Temporary())
     }
   }
-  for(module in modules) {
+  for (module in modules) {
     ModuleRootManager.getInstance(module).contentRoots.forEach {
       try {
         addPathToVolume(it.toNioPath())
