@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -325,7 +325,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   public String toString() {
     List<Runnable> queued = new ArrayList<>(myTaskQueue);
     return "BoundedExecutor(" + myMaxThreads + ")" + (isShutdown() ? " SHUTDOWN " : "") +
-           "; inProgress: " + getTasksInProgress(myStatus.get()) + (queued.isEmpty() ? "" : "; queue: " + queued.size() + "[" + ContainerUtil.map(queued, BoundedTaskExecutor::info) + "]") +
+           "; inProgress: " + getTasksInProgress(myStatus.get()) + (queued.isEmpty() ? "" : "; queue: " + queued.size()) +
            "; name: " + myName;
   }
 }
