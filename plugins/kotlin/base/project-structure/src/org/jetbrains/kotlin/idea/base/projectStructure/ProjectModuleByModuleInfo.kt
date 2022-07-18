@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import java.nio.file.Path
@@ -72,7 +71,7 @@ internal class KtSourceModuleByModuleInfo(
             }
 
             ModuleDependencyCollector.getInstance(ideaModule.project)
-                .collectModuleDependencies(ideaModule, moduleInfo.platform, sourceRootType, includeTransitive = true)
+                .collectModuleDependencies(ideaModule, moduleInfo.platform, sourceRootType, includeExportedDependencies = true)
                 .asSequence()
                 .filterNot { it == moduleInfo }
                 .map(provider::getKtModuleByModuleInfo)
