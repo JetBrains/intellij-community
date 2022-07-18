@@ -1,102 +1,94 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal.statistic.updater;
+package com.intellij.internal.statistic.updater
 
-import com.intellij.concurrency.JobScheduler;
-import com.intellij.ide.ApplicationInitializedListener;
-import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
-import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.startup.ProjectPostStartupActivity
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+internal class StatisticsStateCollectorsScheduler : ApplicationInitializedListener {
+  companion object {
+    private val LOG_APPLICATION_STATES_INITIAL_DELAY = 10.minutes
+    private val LOG_APPLICATION_STATES_DELAY = 24.hours
+    private val LOG_APPLICATION_STATE_SMART_MODE_DELAY = 1.minutes
+    private val LOG_PROJECTS_STATES_INITIAL_DELAY = 5.minutes
+    private val LOG_PROJECTS_STATES_DELAY = 12.hours
+    private const val REDUCE_DELAY_FLAG_KEY = "fus.internal.reduce.initial.delay"
 
-final class StatisticsStateCollectorsScheduler implements ApplicationInitializedListener {
-  public static final int LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN = 10;
-  public static final int LOG_APPLICATION_STATES_DELAY_IN_MIN = 24 * 60;
-  private static final int LOG_APPLICATION_STATE_SMART_MODE_DELAY_IN_SECONDS = 60;
-  public static final int LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN = 5;
-  public static final int LOG_PROJECTS_STATES_DELAY_IN_MIN = 12 * 60;
-  private static final String REDUCE_DELAY_FLAG_KEY = "fus.internal.reduce.initial.delay";
-
-  private final Map<Project, Future<?>> persistStatisticsSessionsMap = Collections.synchronizedMap(new HashMap<>());
-  private final AtomicBoolean allowExecution = new AtomicBoolean(true);
-
-  @Override
-  public void componentsInitialized() {
-    runStatesLogging();
+    private val allowExecution = AtomicBoolean(true)
   }
 
-  private void runStatesLogging() {
+  override fun componentsInitialized() {
     if (!StatisticsUploadAssistant.isSendAllowed()) {
-      return;
+      return
     }
 
+    allowExecution.set(true)
+
     // avoid overlapping logging from periodic scheduler and OneTimeLogger (long indexing case)
-    JobScheduler.getScheduler().schedule(() -> allowExecution.set(false),
-                                         LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN, TimeUnit.MINUTES);
-
-    JobScheduler.getScheduler().scheduleWithFixedDelay(() -> FUStateUsagesLogger.create().logApplicationStates(),
-                                                       LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN,
-                                                       LOG_APPLICATION_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
-
-    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        // Smart mode is not available when LightEdit is active
-        if (LightEdit.owns(project)) {
-          return;
-        }
-
-        //wait until initial indexation will be finished
-        DumbService.getInstance(project).runWhenSmart(() -> {
-          boolean reduceInitialDelay = Boolean.parseBoolean(System.getProperty(REDUCE_DELAY_FLAG_KEY));
-          ScheduledFuture<?> future = JobScheduler.getScheduler()
-            .scheduleWithFixedDelay(() -> FUStateUsagesLogger.create().logProjectStates(project, new EmptyProgressIndicator()),
-                                    reduceInitialDelay ? 0 : LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN,
-                                    LOG_PROJECTS_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
-          persistStatisticsSessionsMap.put(project, future);
-        });
-
-        if (allowExecution.get()) {
-          DumbService.getInstance(project).runWhenSmart(() -> {
-            // wait until all projects will exit dumb mode
-            if (ContainerUtil.exists(ProjectManager.getInstance().getOpenProjects(),
-                                     p -> !p.isDisposed() && p.isInitialized() && DumbService.getInstance(p).isDumb())) {
-              return;
-            }
-            scheduleLogging();
-          });
-        }
+    ApplicationManager.getApplication().coroutineScope.launch {
+      delay(LOG_APPLICATION_STATES_INITIAL_DELAY)
+      allowExecution.set(false)
+      FUStateUsagesLogger.create().logApplicationStates()
+      while (true) {
+        delay(LOG_APPLICATION_STATES_DELAY)
+        FUStateUsagesLogger.create().logApplicationStates()
       }
-
-      @Override
-      public void projectClosed(@NotNull Project project) {
-        Future<?> future = persistStatisticsSessionsMap.remove(project);
-        if (future != null) {
-          future.cancel(true);
-        }
-      }
-    });
+    }
   }
 
-  // check and execute only once because several projects can exit dumb mode at the same time
-  private void scheduleLogging() {
-    if (allowExecution.getAndSet(false)) {
-      JobScheduler.getScheduler().schedule(() -> FUStateUsagesLogger.create().logApplicationStatesOnStartup(),
-                                           LOG_APPLICATION_STATE_SMART_MODE_DELAY_IN_SECONDS, TimeUnit.SECONDS);
+  internal class MyStartupActivity : ProjectPostStartupActivity {
+    override suspend fun execute(project: Project) {
+      // smart mode is not available when LightEdit is active
+      if (LightEdit.owns(project)) {
+        return
+      }
+
+      // wait until initial indexation will be finished
+      DumbService.getInstance(project).runWhenSmart {
+        project.coroutineScope.launch {
+          val reduceInitialDelay = System.getProperty(REDUCE_DELAY_FLAG_KEY).toBoolean()
+          if (!reduceInitialDelay) {
+            delay(LOG_PROJECTS_STATES_INITIAL_DELAY)
+          }
+          FUStateUsagesLogger.create().logProjectStates(project, EmptyProgressIndicator())
+
+          while (true) {
+            delay(LOG_PROJECTS_STATES_DELAY)
+            FUStateUsagesLogger.create().logProjectStates(project, EmptyProgressIndicator())
+          }
+        }
+      }
+      if (allowExecution.get()) {
+        DumbService.getInstance(project).runWhenSmart {
+          // wait until all projects will exit dumb mode
+          if (ProjectManager.getInstance().openProjects.any { p -> !p.isDisposed && p.isInitialized && DumbService.getInstance(p).isDumb }) {
+            return@runWhenSmart
+          }
+          scheduleLogging(project)
+        }
+      }
+    }
+
+    // check and execute only once because several projects can exit dumb mode at the same time
+    private fun scheduleLogging(project: Project) {
+      if (allowExecution.getAndSet(false)) {
+        project.coroutineScope.launch {
+          delay(LOG_APPLICATION_STATE_SMART_MODE_DELAY)
+          FUStateUsagesLogger.create().logApplicationStatesOnStartup()
+        }
+      }
     }
   }
 }
