@@ -78,8 +78,8 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.serialization.json.Json
-import kotlin.time.Duration
-import kotlin.time.seconds
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.seconds
 
 @Service(Service.Level.PROJECT)
 internal class PackageSearchProjectService(private val project: Project) {
@@ -121,9 +121,8 @@ internal class PackageSearchProjectService(private val project: Project) {
     ) { booleans -> emit(booleans.any { it }) }
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, false)
 
-    private val projectModulesSharedFlow = project.trustedProjectFlow.flatMapLatest { isProjectTrusted ->
-        if (isProjectTrusted) project.nativeModulesFlow else flowOf(emptyList())
-    }
+    private val projectModulesSharedFlow = project.trustedProjectFlow
+        .flatMapLatest { isProjectTrusted -> if (isProjectTrusted) project.nativeModulesFlow else flowOf(emptyList()) }
         .replayOnSignals(
             retryFromErrorChannel.receiveAsFlow().throttle(10.seconds),
             project.moduleChangesSignalFlow,
@@ -148,7 +147,7 @@ internal class PackageSearchProjectService(private val project: Project) {
     val isAvailable
         get() = projectModulesStateFlow.value.isNotEmpty()
 
-    private val knownRepositoriesFlow = timer(Duration.hours(1))
+    private val knownRepositoriesFlow = timer(1.hours)
         .mapLatestTimedWithLoading("knownRepositoriesFlow", knownRepositoriesLoadingFlow) { dataProvider.fetchKnownRepositories() }
         .catchAndLog(
             context = "${this::class.qualifiedName}#knownRepositoriesFlow",

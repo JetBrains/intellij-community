@@ -19,7 +19,6 @@ package com.jetbrains.packagesearch.intellij.plugin.data
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.codeInsight.navigation.fileLocation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.DigestUtil
@@ -27,7 +26,6 @@ import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.asDependency
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.key
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.DependencyUsageInfo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstalledDependency

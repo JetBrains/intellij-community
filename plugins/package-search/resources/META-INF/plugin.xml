@@ -105,11 +105,6 @@ Supports Maven and Gradle projects.
 
         <recoveryAction implementation="com.jetbrains.packagesearch.intellij.plugin.extensibility.DeletePackageSearchCachesAction"/>
 
-        <toolWindow id="Dependencies" anchor="bottom" secondary="false"
-                    icon="/icons/artifactSmall.svg"
-                    canCloseContents="true"
-                    factoryClass="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory"/>
-
         <registryKey id="packagesearch.plugin.debug.logging"
                      key="packagesearch.plugin.debug.logging"
                      defaultValue="false"
@@ -126,6 +121,8 @@ Supports Maven and Gradle projects.
                 implementationClass="com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger"/>
 
         <statistics.validation.customValidationRule implementation="com.jetbrains.packagesearch.intellij.plugin.fus.TopPackageIdValidationRule"/>
+
+        <backgroundPostStartupActivity implementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory"/>
 
         <!--suppress PluginXmlCapitalization -->
         <notificationGroup displayType="BALLOON"
