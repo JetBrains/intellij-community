@@ -43,8 +43,12 @@ public class PatternParser {
    * Must be called only if isPattern returned true
    */
   public PsiBuilder.@NotNull Marker parsePattern(final PsiBuilder builder) {
+    return parsePattern(builder, false);
+  }
+
+  private PsiBuilder.@NotNull Marker parsePattern(final PsiBuilder builder, boolean expectVar) {
     PsiBuilder.Marker guardPattern = builder.mark();
-    PsiBuilder.Marker primaryPattern = parsePrimaryPattern(builder);
+    PsiBuilder.Marker primaryPattern = parsePrimaryPattern(builder, expectVar);
     if (builder.getTokenType() != JavaTokenType.ANDAND) {
       guardPattern.drop();
       return primaryPattern;
@@ -58,7 +62,7 @@ public class PatternParser {
     return guardPattern;
   }
 
-  PsiBuilder.@NotNull Marker parsePrimaryPattern(final PsiBuilder builder) {
+  PsiBuilder.@NotNull Marker parsePrimaryPattern(final PsiBuilder builder, boolean expectVar) {
     if (builder.getTokenType() == JavaTokenType.LPARENTH) {
       PsiBuilder.Marker parenPattern = builder.mark();
       builder.advanceLexer();
@@ -69,7 +73,7 @@ public class PatternParser {
       done(parenPattern, JavaElementType.PARENTHESIZED_PATTERN);
       return parenPattern;
     }
-    return parseTypeOrRecordPattern(builder);
+    return parseTypeOrRecordPattern(builder, expectVar);
   }
 
   private void parseRecordStructurePattern(final PsiBuilder builder) {
@@ -88,7 +92,7 @@ public class PatternParser {
       }
 
       if (isPattern(builder)) {
-        parsePattern(builder);
+        parsePattern(builder, true);
         isFirst = false;
       }
       else {
@@ -105,12 +109,16 @@ public class PatternParser {
     recordStructure.done(JavaElementType.DECONSTRUCTION_LIST);
   }
 
-  private PsiBuilder.@NotNull Marker parseTypeOrRecordPattern(final PsiBuilder builder) {
+  private PsiBuilder.@NotNull Marker parseTypeOrRecordPattern(final PsiBuilder builder, boolean expectVar) {
     PsiBuilder.Marker pattern = builder.mark();
     PsiBuilder.Marker patternVariable = builder.mark();
     myParser.getDeclarationParser().parseModifierList(builder, PATTERN_MODIFIERS);
 
-    PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
+    int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD;
+    if (expectVar) {
+      flags |= ReferenceParser.VAR_TYPE;
+    }
+    PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, flags);
     assert type != null; // guarded by isPattern
     boolean isRecord = false;
     if (builder.getTokenType() == JavaTokenType.LPARENTH) {
