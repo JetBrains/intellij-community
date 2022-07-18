@@ -92,6 +92,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity;
@@ -119,7 +120,8 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -1909,8 +1911,10 @@ public final class BuildManager implements Disposable {
           public void changed(@NotNull VersionedStorageChange event) {
             boolean needFSRescan = false;
             for (EntityChange<SourceRootEntity> change : event.getChanges(SourceRootEntity.class)) {
-              final SourceRootEntity entity = getEntity(change); // added, changed or removed source root in some module
-              if (entity != null && !ModuleEntityUtils.isModuleUnloaded(entity.getContentRoot().getModule(), event.getStorageAfter())) {
+              final Pair<SourceRootEntity, EntityStorage> p = getEntityAndStorage(event, change);
+              final SourceRootEntity entity = p.first; // added, changed or removed source root in some module
+              final EntityStorage storage = p.second;  // storage state relevant to the change
+              if (entity != null && !ModuleEntityUtils.isModuleUnloaded(entity.getContentRoot().getModule(), storage)) {
                 needFSRescan = true;
                 break;
               }
@@ -1924,9 +1928,10 @@ public final class BuildManager implements Disposable {
             }
           }
 
-          private <T extends WorkspaceEntity> T getEntity(EntityChange<T> change) {
+          @NotNull
+          private <T extends WorkspaceEntity> Pair<T, EntityStorage> getEntityAndStorage(@NotNull VersionedStorageChange event, EntityChange<T> change) {
             final T entity = change.getNewEntity();
-            return entity != null? entity : change.getOldEntity();
+            return entity != null? Pair.create(entity, event.getStorageAfter()) : Pair.create(change.getOldEntity(), event.getStorageBefore());
           }
         });
 
