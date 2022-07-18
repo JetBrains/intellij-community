@@ -5,6 +5,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -17,6 +19,7 @@ import com.intellij.ui.ComboboxSpeedSearch
 import com.intellij.ui.IconManager
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import java.awt.event.ActionListener
@@ -24,6 +27,9 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.file.NoSuchFileException
 import java.util.*
+import java.util.concurrent.Callable
+import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.plaf.basic.BasicComboBoxEditor
@@ -32,14 +38,28 @@ import javax.swing.tree.DefaultMutableTreeNode
 internal class BrowseIconsComboBox(private val customActionsSchema: CustomActionsSchema,
                                    private val parentDisposable: Disposable,
                                    withNoneItem: Boolean) : ComboBox<IconInfo>() {
+  private val iconsLoadedFuture: CompletableFuture<Boolean>
+
   init {
-    model = DefaultComboBoxModel(createIconsList(withNoneItem).toTypedArray())
+    iconsLoadedFuture = loadIconsAsync(withNoneItem)
     isSwingPopup = false  // in this case speed search will filter the list of items
     setEditable(true)
     setEditor(createEditor())
     setRenderer(createRenderer())
     installSelectedIconValidator()
     ComboboxSpeedSearch.installSpeedSearch(this) { info: IconInfo -> info.text }
+  }
+
+  private fun loadIconsAsync(withNoneItem: Boolean): CompletableFuture<Boolean> {
+    val future = CompletableFuture<Boolean>()
+    ReadAction.nonBlocking(Callable { createIconsList(withNoneItem) })
+      .expireWith(parentDisposable)
+      .finishOnUiThread(ModalityState.any(), Consumer { icons ->
+        model = DefaultComboBoxModel(icons.toTypedArray())
+        future.complete(true)
+      })
+      .submit(AppExecutorUtil.getAppExecutorService())
+    return future
   }
 
   private fun createIconsList(withNoneItem: Boolean): List<IconInfo> {
@@ -162,6 +182,13 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
   }
 
   fun selectIconForNode(node: DefaultMutableTreeNode) {
+    if (iconsLoadedFuture.isDone) {
+      doSelectIconForNode(node)
+    }
+    else iconsLoadedFuture.thenAccept { doSelectIconForNode(node) }
+  }
+
+  private fun doSelectIconForNode(node: DefaultMutableTreeNode) {
     val pair = CustomizableActionsPanel.getActionIdAndIcon(node)
     val (actionId, icon) = pair.first to pair.second
     if (actionId != null && icon != null) {
