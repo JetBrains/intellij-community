@@ -122,7 +122,7 @@ public final class InspectionEngine {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map = inspectElements(toolWrappers, file, restrictRange, ignoreSuppressedElements, isOnTheFly, indicator, elements, foundDescriptorCallback);
     if (inspectInjectedPsi) {
       InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
-      List<Pair<PsiFile, PsiElement>> injectedFiles = new ArrayList<>();
+      Set<Pair<PsiFile, PsiElement>> injectedFiles = new HashSet<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiLanguageInjectionHost) {
           List<Pair<PsiElement, TextRange>> files = injectedLanguageManager.getInjectedPsiFiles(element);
@@ -134,7 +134,7 @@ public final class InspectionEngine {
           }
         }
       }
-      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(injectedFiles, indicator, pair -> {
+      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(injectedFiles), indicator, pair -> {
         PsiFile injectedFile = pair.getFirst();
         PsiElement host = pair.getSecond();
         List<PsiElement> injectedElements = new ArrayList<>();
