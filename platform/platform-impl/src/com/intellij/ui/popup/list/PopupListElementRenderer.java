@@ -298,12 +298,12 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (ExperimentalUI.isNewUI() && myComponent instanceof SelectablePanel) {
       ((SelectablePanel)myComponent).setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
 
-      if (myNextStepLabel.getIcon() != null) {
-        int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
-        Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
-        //noinspection UseDPIAwareBorders
-        myComponent.setBorder(new EmptyBorder(0, innerInsets.left + leftRightInset, 0, leftRightInset));
-      }
+      int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
+      Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
+      boolean hasNextIcon = myNextStepLabel.getIcon() != null && myNextStepLabel.isVisible();
+      //noinspection UseDPIAwareBorders
+      myComponent.setBorder(
+        new EmptyBorder(0, innerInsets.left + leftRightInset, 0, hasNextIcon ? leftRightInset : leftRightInset + leftRightInset));
     }
 
     if (step instanceof BaseListPopupStep) {
