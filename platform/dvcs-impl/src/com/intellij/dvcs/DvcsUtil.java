@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -273,8 +274,8 @@ public final class DvcsUtil {
   @RequiresEdt
   public static <T extends Repository> T guessWidgetRepository(@NotNull Project project,
                                                                @NotNull AbstractRepositoryManager<T> manager,
-                                                               @Nullable @NonNls String recentRootPath) {
-    VirtualFile file = getSelectedFile(project);
+                                                               @Nullable @NonNls @SystemIndependent String recentRootPath) {
+    VirtualFile file = getSelectedFile(project); // last active FileEditor
     T repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
     if (repository != null) return repository;
 
@@ -313,7 +314,7 @@ public final class DvcsUtil {
     T repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
     if (repository != null) return repository;
 
-    file = getSelectedFile(dataContext);
+    file = getSelectedFile(dataContext); // last active FileEditor
     repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
     if (repository != null) return repository;
 
@@ -380,15 +381,11 @@ public final class DvcsUtil {
    */
   @Nullable
   private static VirtualFile guessRootForVcs(@NotNull Project project,
-                                             @Nullable AbstractVcs vcs,
+                                             @NotNull AbstractVcs vcs,
                                              @Nullable @NonNls String defaultRootPathValue) {
     if (project.isDisposed()) return null;
     LOG.debug("Guessing vcs root...");
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    if (vcs == null) {
-      LOG.debug("Vcs not found.");
-      return null;
-    }
     String vcsName = vcs.getDisplayName();
     VirtualFile[] vcsRoots = vcsManager.getRootsUnderVcs(vcs);
     if (vcsRoots.length == 0) {
@@ -405,7 +402,7 @@ public final class DvcsUtil {
     // get remembered last visited repository root
     if (defaultRootPathValue != null) {
       VirtualFile recentRoot = VcsUtil.getVirtualFile(defaultRootPathValue);
-      if (recentRoot != null) {
+      if (ArrayUtil.contains(vcsRoots, recentRoot)) {
         LOG.debug("Returning the recent root: " + recentRoot);
         return recentRoot;
       }
@@ -441,42 +438,41 @@ public final class DvcsUtil {
   @Nullable
   private static VirtualFile getVcsRootForLibraryFile(@NotNull Project project, @NotNull VirtualFile file) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    // for a file inside .jar/.zip consider the .jar/.zip file itself
+
+    // For a file inside .jar/.zip, check VCS for the .jar/.zip file itself
     VirtualFile root = vcsManager.getVcsRootFor(VfsUtilCore.getVirtualFileForJar(file));
     if (root != null) {
       LOG.debug("Found root for zip/jar file: " + root);
       return root;
     }
 
-    // for other libs which don't have jars inside the project dir (such as JDK) take the owner module of the lib
+    // For libraries, check VCS for the owner module
     List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(file);
-    Set<VirtualFile> libraryRoots = new HashSet<>();
+    Set<VirtualFile> modulesVcsRoots = new HashSet<>();
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
-        VirtualFile moduleRoot = vcsManager.getVcsRootFor(entry.getOwnerModule().getModuleFile());
-        if (moduleRoot != null) {
-          libraryRoots.add(moduleRoot);
+        VirtualFile moduleVcsRoot = vcsManager.getVcsRootFor(entry.getOwnerModule().getModuleFile());
+        if (moduleVcsRoot != null) {
+          modulesVcsRoots.add(moduleVcsRoot);
         }
       }
     }
 
-    if (libraryRoots.isEmpty()) {
+    if (modulesVcsRoots.isEmpty()) {
       LOG.debug("No library roots");
       return null;
     }
 
-    // if the lib is used in several modules, take the top module
-    // (for modules of the same level we can't guess anything => take the first one)
-    Iterator<VirtualFile> libIterator = libraryRoots.iterator();
-    VirtualFile topLibraryRoot = libIterator.next();
-    while (libIterator.hasNext()) {
-      VirtualFile libRoot = libIterator.next();
-      if (VfsUtilCore.isAncestor(libRoot, topLibraryRoot, true)) {
-        topLibraryRoot = libRoot;
+    // If the lib is used in several modules under different VCS roots, take the topmost one.
+    // For modules not sharing ancestry, we can't guess anything => take the first one.
+    VirtualFile topRoot = null;
+    for (VirtualFile vcsRoot : modulesVcsRoots) {
+      if (topRoot == null || VfsUtilCore.isAncestor(vcsRoot, topRoot, true)) {
+        topRoot = vcsRoot;
       }
     }
-    LOG.debug("Several library roots, returning " + topLibraryRoot);
-    return topLibraryRoot;
+    LOG.debug("Several library roots, returning " + topRoot);
+    return topRoot;
   }
 
   /**
