@@ -285,7 +285,6 @@ public class MarkerType {
     }
   });
 
-  // Used in Kotlin, please don't make private
   public static String getSubclassedClassTooltip(@NotNull PsiClass aClass) {
     PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = getProcessor(5, true);
     ClassInheritorsSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(processor));
@@ -303,13 +302,11 @@ public class MarkerType {
     return getImplementationTooltip(aClass.isInterface() ? "tooltip.is.implemented.by" : "tooltip.is.subclassed.by", subclasses);
   }
 
-  // Used in Kotlin, please don't make private
   public static void navigateToSubclassedClass(MouseEvent e,
                                                @NotNull final PsiClass aClass) {
     navigateToSubclassedClass(e, aClass, new PsiClassOrFunctionalExpressionListCellRenderer());
   }
 
-  // Used in Kotlin, please don't make private
   public static void navigateToSubclassedClass(MouseEvent e,
                                                @NotNull final PsiClass aClass,
                                                PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
