@@ -190,9 +190,11 @@ internal class GitRebaseDialog(private val project: Project,
   private fun getTags() = tags[getSelectedRepo().root] ?: emptyList()
 
   private fun validateUpstream(): ValidationInfo? {
+    if (GitRebaseOption.ROOT in selectedOptions) return null
+
     val upstream = upstreamField.getText()
 
-    if (upstream.isNullOrEmpty() && GitRebaseOption.ROOT !in selectedOptions) {
+    if (upstream.isNullOrEmpty()) {
       return if (GitRebaseOption.ONTO in selectedOptions)
         ValidationInfo(GitBundle.message("rebase.dialog.error.upstream.not.selected"), upstreamField)
       else
@@ -516,6 +518,8 @@ internal class GitRebaseDialog(private val project: Project,
     else {
       updateUi()
     }
+
+    updateOkActionEnabled()
   }
 
   private fun moveNewBaseValue() {
