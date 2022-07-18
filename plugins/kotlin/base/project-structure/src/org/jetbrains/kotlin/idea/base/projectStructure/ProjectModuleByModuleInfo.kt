@@ -72,7 +72,7 @@ internal class KtSourceModuleByModuleInfo(
             }
 
             ModuleDependencyCollector.getInstance(ideaModule.project)
-                .collectModuleDependencies(ideaModule, moduleInfo.platform, sourceRootType, includeTransitive = false)
+                .collectModuleDependencies(ideaModule, moduleInfo.platform, sourceRootType, includeTransitive = true)
                 .asSequence()
                 .filterNot { it == moduleInfo }
                 .map(provider::getKtModuleByModuleInfo)
