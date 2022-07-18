@@ -78,21 +78,20 @@ public abstract class MethodThrowsFix extends LocalQuickFixAndIntentionActionOnP
     processMethod(project, copy);
     TextRange range = copy.getThrowsList().getTextRangeInParent();
     CodeStyleManager.getInstance(project).reformatRange(copy, range.getStartOffset(), range.getEndOffset(), true);
-    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, file.getName(), startElement.getText(), copy.getText());
+    String origText = startElement.getText();
+    String copyText = copy.getText();
+    PsiCodeBlock copyBody = copy.getBody();
+    PsiCodeBlock origBody = startElement.getBody();
+    if (copyBody != null && origBody != null) {
+      origText = origText.substring(0, origBody.getStartOffsetInParent() + 1);
+      copyText = copyText.substring(0, copyBody.getStartOffsetInParent() + 1);
+    }
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, file.getName(), origText, copyText);
   }
 
   public static class Add extends MethodThrowsFix {
     public Add(@NotNull PsiMethod method, @NotNull PsiClassType exceptionType, boolean showClassName) {
       super("fix.throws.list.add.exception", method, exceptionType, showClassName);
-    }
-
-    @Override
-    public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
-                       @Nullable Editor editor,
-                       @NotNull PsiElement startElement,
-                       @NotNull PsiElement endElement) {
-      processMethod(project, (PsiMethod)startElement);
     }
 
     @Override
