@@ -1,10 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.Unsafe
 import com.intellij.util.io.ByteBufferUtil
 import com.intellij.util.io.DirectByteBufferAllocator
 import com.intellij.util.io.ResizeableMappedFile
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -26,6 +30,12 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
     file.pagedFileStorage.isFillBuffersWithZeros = true
     _globalModCount = AtomicInteger(readGlobalModCount())
     recordCount = AtomicInteger((length() / RECORD_SIZE).toInt())
+
+    val corruptedRecordIds = checkCorruptedRecords()
+    if (corruptedRecordIds.isNotEmpty()) {
+      thisLogger().error("Storage corrupted, corrupted ids: $corruptedRecordIds")
+      throw IOException("Storage corrupted") // todo replace with granular rebuild
+    }
   }
 
   override fun getGlobalModCount(): Int = _globalModCount.get()
@@ -189,7 +199,7 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
   override fun isDirty(): Boolean = file.isDirty
 
   @Throws(IOException::class)
-  override fun processAllNames(operator: NameFlagsProcessor) = this.metadataReadLock.withLock {
+  override fun processAllRecords(operator: FsRecordProcessor) = this.metadataReadLock.withLock {
     // skip header
     file.force()
     // skip header
@@ -202,9 +212,11 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
         while (ch.read(buffer).also { limit = it } >= RECORD_SIZE) {
           offset = if (id == 1) RECORD_SIZE else 0 // skip header
           while (offset < limit) {
-            val nameId = buffer.getInt(offset + NAME_OFFSET)
-            val flags = buffer.getInt(offset + FLAGS_OFFSET)
-            operator.process(id, nameId, flags)
+
+            val recordBuffer = buffer.duplicate().order(buffer.order()).limit(offset + RECORD_SIZE).position(offset).mark().slice()
+            val record = LockFreeRecord(recordBuffer)
+
+            operator.process(id, record.nameId(), record.flags(), record.parent(), record.isSaved())
             id++
             offset += RECORD_SIZE
           }
@@ -215,6 +227,48 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
       }
       true
     }
+  }
+
+  fun checkCorruptedRecords(): IntArray {
+    val corruptedIds = IntArrayList()
+    processAllRecords { fileId, _, _, _, corrupted ->
+      if (corrupted) {
+        corruptedIds.add(fileId)
+      }
+    }
+    if (corruptedIds.isEmpty) return ArrayUtil.EMPTY_INT_ARRAY
+
+    // root parent == 0
+    val liveRecordsToParent = Int2IntOpenHashMap()
+    val orderedLiveKeys = IntArrayList()
+    processAllRecords { fileId, _, _, parentId, corrupted ->
+      if (!corrupted) {
+        liveRecordsToParent[fileId] = parentId
+        orderedLiveKeys.add(fileId)
+      }
+    }
+
+    val iter = orderedLiveKeys.intIterator()
+    while (iter.hasNext()) {
+      val id = iter.nextInt()
+
+      val path = IntArrayList()
+      path.add(id)
+
+      var parent = liveRecordsToParent[id]
+
+      while (parent != 0) {
+        path.add(parent)
+        if (corruptedIds.contains(parent)) {
+          corruptedIds.addAll(path)
+          break
+        }
+
+        parent = liveRecordsToParent[parent]
+      }
+    }
+
+    return corruptedIds.toIntArray()
   }
 
   private enum class AccessType {
@@ -319,6 +373,8 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
 
     fun modCountPre(): Int = data.getInt(MOD_COUNT_PRE_OFFSET)
     fun modCountAfter(): Int = data.getInt(MOD_COUNT_AFTER_OFFSET)
+
+    fun isSaved() = modCountPre() ==  modCountAfter()
 
     inline fun update(updater: ByteBuffer.() -> Unit) {
       val writeBuffer = DirectByteBufferAllocator.ALLOCATOR.allocate(RECORD_SIZE)

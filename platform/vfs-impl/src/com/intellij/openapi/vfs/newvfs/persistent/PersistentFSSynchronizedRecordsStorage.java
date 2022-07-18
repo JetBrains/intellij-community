@@ -325,7 +325,7 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
   }
 
   @Override
-  public boolean processAllNames(@NotNull NameFlagsProcessor operator) throws IOException {
+  public boolean processAllRecords(@NotNull PersistentFSRecordsStorage.FsRecordProcessor operator) throws IOException {
     return read(() -> {
       myFile.force();
       return myFile.readChannel(ch -> {
@@ -338,7 +338,8 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
             for (; offset < limit; offset += RECORD_SIZE) {
               int nameId = buffer.getInt(offset + NAME_OFFSET);
               int flags = buffer.getInt(offset + FLAGS_OFFSET);
-              operator.process(id, nameId, flags);
+              int parentId = buffer.getInt(offset + PARENT_OFFSET);
+              operator.process(id, nameId, flags, parentId, false);
               id ++;
             }
             buffer.position(0);

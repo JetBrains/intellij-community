@@ -1,23 +1,50 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.ResizeableMappedFile;
+import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 @ApiStatus.Internal
 abstract class PersistentFSRecordsStorage {
+  private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT_RW = new StorageLockContext(true, true, true);
+
   static boolean useLockFreeRecordsStorage = SystemProperties.getBooleanProperty("idea.use.lock.free.record.storage.for.vfs", false);
 
   static int recordsLength() {
     return useLockFreeRecordsStorage ? PersistentFSLockFreeRecordsStorage.RECORD_SIZE : PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
   }
 
-  static PersistentFSRecordsStorage createStorage(@NotNull ResizeableMappedFile file) throws IOException {
-    return useLockFreeRecordsStorage ? new PersistentFSLockFreeRecordsStorage(file) : new PersistentFSSynchronizedRecordsStorage(file);
+  static PersistentFSRecordsStorage createStorage(@NotNull Path file) throws IOException {
+    ResizeableMappedFile resizeableMappedFile = createFile(file, recordsLength());
+
+    return useLockFreeRecordsStorage
+           ? new PersistentFSLockFreeRecordsStorage(resizeableMappedFile)
+           : new PersistentFSSynchronizedRecordsStorage(resizeableMappedFile);
+  }
+
+  private static @NotNull ResizeableMappedFile createFile(@NotNull Path file, int recordLength) throws IOException {
+    int pageSize = PagedFileStorage.BUFFER_SIZE * recordLength / PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
+
+    boolean aligned = pageSize % recordLength == 0;
+    if (!aligned) {
+      String message = "Buffer size " + PagedFileStorage.BUFFER_SIZE + " is not aligned for record size " + recordLength;
+      Logger.getInstance(PersistentFSRecordsStorage.class).error(message);
+    }
+
+    return new ResizeableMappedFile(file, recordLength * 1024,
+                                    PERSISTENT_FS_STORAGE_CONTEXT_RW,
+                                    pageSize,
+                                    aligned,
+                                    IOUtil.useNativeByteOrderForByteBuffers());
   }
 
   abstract int allocateRecord();
@@ -76,15 +103,16 @@ abstract class PersistentFSRecordsStorage {
 
   abstract void cleanRecord(int fileId) throws IOException;
 
+  // TODO add a synchronization or requireement to be called on the loading
   @SuppressWarnings("UnusedReturnValue")
-  abstract boolean processAllNames(@NotNull NameFlagsProcessor processor) throws IOException;
+  abstract boolean processAllRecords(@NotNull PersistentFSRecordsStorage.FsRecordProcessor processor) throws IOException;
 
   abstract void force() throws IOException;
 
   abstract void close() throws IOException;
 
   @FunctionalInterface
-  interface NameFlagsProcessor {
-    void process(int fileId, int nameId, int flags);
+  interface FsRecordProcessor {
+    void process(int fileId, int nameId, int flags, int parentId, boolean corrupted);
   }
 }
