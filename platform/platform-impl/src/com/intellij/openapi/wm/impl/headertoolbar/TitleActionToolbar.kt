@@ -17,7 +17,8 @@ import java.awt.Dimension
 import javax.swing.Icon
 import javax.swing.UIManager
 
-private const val iconSize = 20
+private val iconSize: Int
+  get() = JBUI.scale(20)
 
 internal class TitleActionToolbar(place: String, actionGroup: ActionGroup, horizontal: Boolean)
   : ActionToolbarImpl(place, actionGroup, horizontal) {
