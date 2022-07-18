@@ -439,9 +439,9 @@ public class SwitchBlockHighlightingModel {
         PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
         if (labelElementList == null) continue;
         for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
-          HighlightInfo compatibilityInfo = checkLabelAndSelectorCompatibility(labelElement);
-          if (compatibilityInfo != null) {
-            results.add(compatibilityInfo);
+          List<HighlightInfo> compatibilityInfo = checkLabelAndSelectorCompatibility(labelElement);
+          if (!compatibilityInfo.isEmpty()) {
+            results.addAll(compatibilityInfo);
             continue;
           }
           fillElementsToCheckDuplicates(elementsToCheckDuplicates, labelElement);
@@ -465,67 +465,116 @@ public class SwitchBlockHighlightingModel {
       return results;
     }
 
-    @Nullable
-    private HighlightInfo checkLabelAndSelectorCompatibility(@NotNull PsiCaseLabelElement label) {
-      if (label instanceof PsiDefaultCaseLabelElement) return null;
+    private @NotNull List<HighlightInfo> checkLabelAndSelectorCompatibility(@NotNull PsiCaseLabelElement label) {
+      if (label instanceof PsiDefaultCaseLabelElement) return Collections.emptyList();
       if (isNullType(label)) {
         if (mySelectorType instanceof PsiPrimitiveType && !isNullType(mySelector)) {
-          return createError(label, JavaErrorBundle.message("incompatible.switch.null.type", "null",
-                                                            JavaHighlightUtil.formatType(mySelectorType)));
+          HighlightInfo error = createError(label, JavaErrorBundle.message("incompatible.switch.null.type", "null",
+                                                                           JavaHighlightUtil.formatType(mySelectorType)));
+          return listOfNotNull(error);
         }
-        return null;
+        return Collections.emptyList();
       }
       else if (label instanceof PsiPatternGuard) {
         PsiPattern pattern = ((PsiPatternGuard)label).getPattern();
         return checkLabelAndSelectorCompatibility(pattern);
       }
       else if (label instanceof PsiPattern) {
-        PsiPattern pattern = (PsiPattern)label;
-        PsiPatternVariable patternVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
-
-        if (patternVariable == null) return null;
-        PsiTypeElement typeElement = patternVariable.getTypeElement();
+        PsiPattern elementToReport = JavaPsiPatternUtil.getTypedPattern(label);
+        if (elementToReport == null) return Collections.emptyList();
+        PsiTypeElement typeElement = JavaPsiPatternUtil.getPatternTypeElement(elementToReport);
+        if (typeElement == null) return Collections.emptyList();
         PsiType patternType = typeElement.getType();
         if (!(patternType instanceof PsiClassType) && !(patternType instanceof PsiArrayType)) {
           String expectedTypes = JavaErrorBundle.message("switch.class.or.array.type.expected");
           String message = JavaErrorBundle.message("unexpected.type", expectedTypes, JavaHighlightUtil.formatType(patternType));
-          HighlightInfo info = createError(patternVariable, message);
+          HighlightInfo info = createError(elementToReport, message);
           PsiPrimitiveType primitiveType = ObjectUtils.tryCast(patternType, PsiPrimitiveType.class);
           if (primitiveType != null) {
             IntentionAction fix = getFixFactory().createReplacePrimitiveWithBoxedTypeAction(mySelectorType, typeElement);
             QuickFixAction.registerQuickFixAction(info, fix);
           }
-          return info;
+          return listOfNotNull(info);
         }
         if (!TypeConversionUtil.areTypesConvertible(mySelectorType, patternType)) {
-          return HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, patternVariable.getTextRange(), 0);
+          HighlightInfo error =
+            HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, elementToReport.getTextRange(), 0);
+          return listOfNotNull(error);
         }
         else if (JavaGenericsUtil.isUncheckedCast(patternType, mySelectorType)) {
-          return createError(patternVariable, JavaErrorBundle.message("unsafe.cast.in.instanceof", JavaHighlightUtil.formatType(mySelectorType),
-                                                                      JavaHighlightUtil.formatType(patternType)));
+          String message = JavaErrorBundle.message("unsafe.cast.in.instanceof", JavaHighlightUtil.formatType(mySelectorType),
+                                                   JavaHighlightUtil.formatType(patternType));
+          return listOfNotNull(createError(elementToReport, message));
         }
-        return null;
+        PsiDeconstructionPattern deconstructionPattern = JavaPsiPatternUtil.findDeconstructionPattern(elementToReport);
+        return createDeconstructionErrors(deconstructionPattern);
       }
       else if (label instanceof PsiExpression) {
         PsiExpression expr = (PsiExpression)label;
         HighlightInfo info = HighlightUtil.checkAssignability(mySelectorType, expr.getType(), expr, expr);
-        if (info != null) return info;
+        if (info != null) return listOfNotNull(info);
         if (label instanceof PsiReferenceExpression) {
           String enumConstName = evaluateEnumConstantName((PsiReferenceExpression)label);
           if (enumConstName != null) {
-            return createQualifiedEnumConstantInfo((PsiReferenceExpression)label);
+            HighlightInfo error = createQualifiedEnumConstantInfo((PsiReferenceExpression)label);
+            return listOfNotNull(error);
           }
         }
         Object constValue = evaluateConstant(expr);
         if (constValue == null) {
-          return createError(expr, JavaErrorBundle.message("constant.expression.required"));
+          HighlightInfo error = createError(expr, JavaErrorBundle.message("constant.expression.required"));
+          return listOfNotNull(error);
         }
         if (ConstantExpressionUtil.computeCastTo(constValue, mySelectorType) == null) {
-          return HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), label.getTextRange(), 0);
+          HighlightInfo error = HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), label.getTextRange(), 0);
+          return listOfNotNull(error);
         }
-        return null;
+        return Collections.emptyList();
       }
-      return createError(label, JavaErrorBundle.message("switch.constant.expression.required"));
+      HighlightInfo error = createError(label, JavaErrorBundle.message("switch.constant.expression.required"));
+      return listOfNotNull(error);
+    }
+
+    private static <T> List<@NotNull T> listOfNotNull(T... elements) {
+      List<T> list = new SmartList<>();
+      for (T element : elements) {
+        if (element != null) list.add(element);
+      }
+      return list;
+    }
+
+    static @NotNull List<HighlightInfo> createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern) {
+      if (deconstructionPattern == null) return Collections.emptyList();
+      PsiTypeElement typeElement = deconstructionPattern.getTypeElement();
+      PsiType deconstructionType = typeElement.getType();
+      PsiClass recordClass = PsiUtil.resolveClassInClassTypeOnly(deconstructionType);
+      if (recordClass == null || !recordClass.isRecord()) {
+        HighlightInfo error = createError(typeElement, JavaErrorBundle.message("switch.record.required", typeElement.getText()));
+        return new SmartList<>(error);
+      }
+      PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
+      PsiPattern[] patternComponents = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
+      if (recordComponents.length != patternComponents.length) {
+        String message = HighlightMethodUtil.createMismatchedArgumentCountTooltip(recordComponents.length, patternComponents.length);
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(deconstructionPattern.getDeconstructionList())
+          .description(message)
+          .escapedToolTip(message).create();
+        return new SmartList<>(info);
+      }
+
+      List<HighlightInfo> results = new SmartList<>();
+      for (int i = 0; i < recordComponents.length; i++) {
+        PsiType recordComponent = recordComponents[i].getType();
+        PsiType patternComponent = JavaPsiPatternUtil.getPatternType(patternComponents[i]);
+        if (patternComponent == null ||
+            !recordComponent.equals(patternComponent) && !JavaPsiPatternUtil.dominates(recordComponent, patternComponent)) {
+          HighlightInfo info =
+            HighlightUtil.createIncompatibleTypeHighlightInfo(recordComponent, patternComponent, patternComponents[i].getTextRange(), 0);
+          results.add(info);
+        }
+      }
+      return results;
     }
 
     @Override
