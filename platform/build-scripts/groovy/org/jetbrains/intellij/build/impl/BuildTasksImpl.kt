@@ -980,6 +980,7 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
   val dependenciesFile = copyDependenciesFile(context)
   crossPlatformZip(
     macX64DistDir = distDirs.first { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.x64 }.outDir,
+    macArm64DistDir = distDirs.first { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 }.outDir,
     linuxX64DistDir = distDirs.first { it.os == OsFamily.LINUX && it.arch == JvmArchitecture.x64 }.outDir,
     winX64DistDir = distDirs.first { it.os == OsFamily.WINDOWS && it.arch == JvmArchitecture.x64 }.outDir,
     targetFile = targetFile,
@@ -1043,6 +1044,7 @@ internal fun getLinuxFrameClass(context: BuildContext): String {
 }
 
 private fun crossPlatformZip(macX64DistDir: Path,
+                             macArm64DistDir: Path,
                              linuxX64DistDir: Path,
                              winX64DistDir: Path,
                              targetFile: Path,
@@ -1127,7 +1129,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
         }
       }
 
-      val commonFilter: (String) -> Boolean = { relPath ->
+      val commonFilter: (String) -> Boolean = { relPath: String ->
         !relPath.startsWith("bin/fsnotifier") &&
         !relPath.startsWith("bin/repair") &&
         !relPath.startsWith("bin/restart") &&
@@ -1144,6 +1146,11 @@ private fun crossPlatformZip(macX64DistDir: Path,
       out.dir(macX64DistDir, "", fileFilter = { _, relPath ->
         commonFilter.invoke(relPath) &&
         filterFileIfAlreadyInZip(relPath, macX64DistDir.resolve(relPath), zipFiles)
+      }, entryCustomizer = entryCustomizer)
+
+      out.dir(macArm64DistDir, "", fileFilter = { _, relPath ->
+        commonFilter.invoke(relPath) &&
+        filterFileIfAlreadyInZip(relPath, macArm64DistDir.resolve(relPath), zipFiles)
       }, entryCustomizer = entryCustomizer)
 
       out.dir(linuxX64DistDir, "", fileFilter = { _, relPath ->
