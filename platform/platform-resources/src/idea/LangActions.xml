@@ -395,6 +395,8 @@
       <action id="NavBarLocationTop" class="com.intellij.ide.actions.navbar.NavBarTopLocationAction"/>
       <action id="NavBarLocationBottom" class="com.intellij.ide.actions.navbar.NavBarBottomLocationAction"/>
       <action id="NavBarLocationHide" class="com.intellij.ide.actions.navbar.HideNavBarAction"/>
+      <separator/>
+      <action id="ShowMembersInNavigationBar" class="com.intellij.ide.actions.ShowNavigationBarMembersAction"/>
     </group>
 
     <action id="ViewMembersInNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarMembersAction">
