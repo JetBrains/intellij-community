@@ -1,14 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -26,14 +28,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
-  private final SmartPsiElementPointer myNewExpression;
+  private final SmartPsiElementPointer<PsiNewExpression> myNewExpression;
 
   public CreateClassFromNewFix(PsiNewExpression newExpression) {
     myNewExpression = SmartPointerManager.getInstance(newExpression.getProject()).createSmartPsiElementPointer(newExpression);
   }
 
   protected PsiNewExpression getNewExpression() {
-    return (PsiNewExpression)myNewExpression.getElement();
+    return myNewExpression.getElement();
   }
 
   @Override
@@ -47,6 +49,22 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
     PsiClass psiClass = CreateFromUsageUtils.createClass(referenceElement, getKind(), null);
     WriteAction.run(() -> setupClassFromNewExpression(psiClass, newExpression));
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiNewExpression element = myNewExpression.getElement();
+    if (element == null) return IntentionPreviewInfo.EMPTY;
+    PsiJavaCodeReferenceElement classReference = getReferenceElement(element);
+    if (classReference == null) return IntentionPreviewInfo.EMPTY;
+    String text;
+    if (getKind() == CreateClassKind.RECORD) {
+      text = "record" + " " + classReference.getReferenceName() + "()";
+    }
+    else {
+      text = "class" + " " + classReference.getReferenceName();
+    }
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", text + " {}");
   }
 
   @NotNull
