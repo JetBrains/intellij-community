@@ -49,7 +49,9 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
 
   @NotNull
   @RequiresEdt
-  private static VirtualFile getDefaultRoot(@NotNull Project project, @NotNull List<? extends VirtualFile> roots, VirtualFile @Nullable [] vFiles) {
+  private static VirtualFile getDefaultRoot(@NotNull Project project,
+                                            @NotNull List<? extends VirtualFile> roots,
+                                            VirtualFile @Nullable [] vFiles) {
     if (vFiles != null) {
       for (VirtualFile file : vFiles) {
         GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file);
@@ -102,9 +104,9 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   /**
    * Perform action for some repositories
    *
-   * @param project       a context project
-   * @param gitRoots      a git roots that affect the current project (sorted by {@link VirtualFile#getPresentableUrl()})
-   * @param defaultRoot   a guessed default root (based on the currently selected file list)
+   * @param project     a context project
+   * @param gitRoots    a git roots that affect the current project (sorted by {@link VirtualFile#getPresentableUrl()})
+   * @param defaultRoot a guessed default root (based on the currently selected file list)
    * @throws VcsException if there is a problem with running git (this exception is considered to be added to the end of the exception list)
    */
   protected abstract void perform(@NotNull Project project,

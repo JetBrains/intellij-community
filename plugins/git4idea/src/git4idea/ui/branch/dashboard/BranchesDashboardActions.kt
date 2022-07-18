@@ -344,7 +344,7 @@ internal object BranchesDashboardActions {
       GitBrancher.getInstance(e.project!!).compareAny(branchOne.branchName, branchTwo.branchName, commonRepositories.toList())
     }
 
-    private fun BranchesDashboardController.commonRepositories(branchOne: BranchInfo, branchTwo: BranchInfo): Collection<GitRepository>{
+    private fun BranchesDashboardController.commonRepositories(branchOne: BranchInfo, branchTwo: BranchInfo): Collection<GitRepository> {
       return getSelectedRepositories(branchOne) intersect getSelectedRepositories(branchTwo)
     }
   }
@@ -419,7 +419,8 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class ToggleFavoriteAction : BranchesActionBase(text = messagePointer("action.Git.Toggle.Favorite.title"), icon = AllIcons.Nodes.Favorite) {
+  class ToggleFavoriteAction : BranchesActionBase(text = messagePointer("action.Git.Toggle.Favorite.title"),
+                                                  icon = AllIcons.Nodes.Favorite) {
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project!!
       val branches = e.getData(GIT_BRANCHES)!!
@@ -462,7 +463,7 @@ internal object BranchesDashboardActions {
     override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }
 
-  class GroupingSettingsGroup: DefaultActionGroup(), DumbAware {
+  class GroupingSettingsGroup : DefaultActionGroup(), DumbAware {
     override fun update(e: AnActionEvent) {
       e.presentation.isPopupGroup = GroupBranchByRepositoryAction.isEnabledAndVisible(e)
     }

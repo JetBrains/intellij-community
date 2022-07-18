@@ -49,7 +49,8 @@ internal class GitToolbarWidgetFactory : MainToolbarProjectWidgetFactory, Dispos
   override fun getPosition(): Position = Position.Left
 }
 
-private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidget) : GitRepositoryChangeListener, GitIncomingOutgoingListener, ProjectManagerListener {
+private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidget)
+  : GitRepositoryChangeListener, GitIncomingOutgoingListener, ProjectManagerListener {
   private val swingExecutor: Executor = Executor { run -> SwingUtilities.invokeLater(run) }
 
   private var repository: GitRepository? = null
@@ -87,14 +88,15 @@ private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidge
     updateIcons()
   }
 
-  private fun GitRepository.calcText() : String = cutText(GitBranchUtil.getBranchNameOrRev(this))
+  private fun GitRepository.calcText(): String = cutText(GitBranchUtil.getBranchNameOrRev(this))
 
-  private fun GitRepository.calcTooltip() : String {
+  private fun GitRepository.calcTooltip(): String {
     if (state == Repository.State.DETACHED) {
       return GitBundle.message("git.status.bar.widget.tooltip.detached")
     }
 
-    var message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", GitVcs.DISPLAY_NAME.get(), GitBranchUtil.getBranchNameOrRev(this))
+    var message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", GitVcs.DISPLAY_NAME.get(),
+                                     GitBranchUtil.getBranchNameOrRev(this))
     if (!GitUtil.justOneGitRepository(project)) {
       message += "\n"
       message += DvcsBundle.message("tooltip.branch.widget.root.name.text", root.name)

@@ -81,8 +81,9 @@ public abstract class HgUtil {
     try (InputStream in = HgUtil.class.getClassLoader().getResourceAsStream("python/" + basename + extension);
          OutputStream out = new FileOutputStream(tempFile, false)) {
       int bytesRead;
-      while ((bytesRead = in.read(buffer)) != -1)
+      while ((bytesRead = in.read(buffer)) != -1) {
         out.write(buffer, 0, bytesRead);
+      }
     }
     tempFile.deleteOnExit();
     return tempFile;
@@ -114,7 +115,7 @@ public abstract class HgUtil {
 
   /**
    * Returns a temporary python file that will be deleted on exit.
-   *
+   * <p>
    * Also all compiled version of the python file will be deleted.
    *
    * @param base The basename of the file to copy
@@ -135,7 +136,8 @@ public abstract class HgUtil {
         }
       });
       return file;
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       return null;
     }
   }
@@ -143,6 +145,7 @@ public abstract class HgUtil {
 
   /**
    * Finds the nearest parent directory which is an hg root.
+   *
    * @param dir Directory which parent will be checked.
    * @return Directory which is the nearest hg root being a parent of this directory,
    * or {@code null} if this directory is not under hg.
@@ -199,6 +202,7 @@ public abstract class HgUtil {
   /**
    * Gets the Mercurial root for the given file path or null if non exists:
    * the root should not only be in directory mappings, but also the .hg repository folder should exist.
+   *
    * @see #getHgRootOrThrow(Project, FilePath)
    * @see #getHgRootOrNull(Project, FilePath)
    */
@@ -210,6 +214,7 @@ public abstract class HgUtil {
   /**
    * Gets the Mercurial root for the given file path or throws a VcsException if non exists:
    * the root should not only be in directory mappings, but also the .hg repository folder should exist.
+   *
    * @see #getHgRootOrNull(Project, FilePath)
    */
   @NotNull
@@ -234,12 +239,14 @@ public abstract class HgUtil {
   @Nullable
   public static String getNewBranchNameFromUser(@NotNull HgRepository repository,
                                                 @DialogTitle @NotNull String dialogTitle) {
-    return Messages.showInputDialog(repository.getProject(), HgBundle.message("hg4idea.branch.enter.name"), dialogTitle, Messages.getQuestionIcon(), "",
+    return Messages.showInputDialog(repository.getProject(), HgBundle.message("hg4idea.branch.enter.name"), dialogTitle,
+                                    Messages.getQuestionIcon(), "",
                                     new HgBranchReferenceValidator(repository));
   }
 
   /**
    * Groups the given files by their Mercurial repositories and returns the map of relative paths to files for each repository.
+   *
    * @param hgFiles files to be grouped.
    * @return key is repository, values is the non-empty list of relative paths to files, which belong to this repository.
    */
@@ -249,7 +256,7 @@ public abstract class HgUtil {
     if (hgFiles == null) {
       return map;
     }
-    for(HgFile file : hgFiles) {
+    for (HgFile file : hgFiles) {
       final VirtualFile repo = file.getRepo();
       List<String> files = map.get(repo);
       if (files == null) {
@@ -298,7 +305,8 @@ public abstract class HgUtil {
   }
 
   @NotNull
-  public static Map<VirtualFile, Collection<VirtualFile>> sortByHgRoots(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files) {
+  public static Map<VirtualFile, Collection<VirtualFile>> sortByHgRoots(@NotNull Project project,
+                                                                        @NotNull Collection<? extends VirtualFile> files) {
     Map<VirtualFile, Collection<VirtualFile>> sorted = new HashMap<>();
     HgRepositoryManager repositoryManager = getRepositoryManager(project);
     for (VirtualFile file : files) {
@@ -340,7 +348,7 @@ public abstract class HgUtil {
 
   /**
    * Convert {@link VcsVirtualFile} to the {@link LocalFileSystem local} Virtual File.
-   *
+   * <p>
    * TODO
    * It is a workaround for the following problem: VcsVirtualFiles returned from the {@link FileHistoryPanelImpl} contain the current path
    * of the file, not the path that was in certain revision. This has to be fixed by making {@link HgFileRevision} implement
@@ -425,7 +433,9 @@ public abstract class HgUtil {
     }
   }
 
-  public static byte @NotNull [] loadContent(@NotNull Project project, @Nullable HgRevisionNumber revisionNumber, @NotNull HgFile fileToCat) {
+  public static byte @NotNull [] loadContent(@NotNull Project project,
+                                             @Nullable HgRevisionNumber revisionNumber,
+                                             @NotNull HgFile fileToCat) {
     HgCommandResult result = new HgCatCommand(project).execute(fileToCat, revisionNumber, fileToCat.toFilePath().getCharset());
     return result != null && result.getExitValue() == 0 ? result.getBytesOutput() : ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
@@ -579,7 +589,8 @@ public abstract class HgUtil {
       userName = "";
       if (startEmailIndex >= 0 && startDomainIndex > startEmailIndex && startDomainIndex < endEmailIndex) {
         email = authorString.substring(startEmailIndex + 1, endEmailIndex).trim();
-      } else {
+      }
+      else {
         email = authorString;
       }
     }

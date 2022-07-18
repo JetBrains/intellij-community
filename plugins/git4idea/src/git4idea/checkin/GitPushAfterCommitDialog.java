@@ -74,8 +74,8 @@ public class GitPushAfterCommitDialog extends VcsPushDialog {
     TransactionGuard.getInstance().assertWriteSafeContext(modality);
 
     List<GitRepository> repositories = new ArrayList<>(selectedRepositories);
-    ModalityUiUtil.invokeLaterIfNeeded(
-      modality, project.getDisposed(), () -> new GitPushAfterCommitDialog(project, repositories, GitBranchUtil.getCurrentRepository(project)).showOrPush()
-    );
+    ModalityUiUtil.invokeLaterIfNeeded(modality, project.getDisposed(), () -> {
+      new GitPushAfterCommitDialog(project, repositories, GitBranchUtil.getCurrentRepository(project)).showOrPush();
+    });
   }
 }

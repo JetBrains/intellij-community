@@ -48,7 +48,7 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
 
   private sealed class Data {
     object Invisible : Data()
-    class Disabled(val description : @Nls String) : Data()
+    class Disabled(val description: @Nls String) : Data()
     class WithCommit(val repository: GitRepository, val hash: Hash, val name: String?) : Data()
     class NoCommit(val project: Project, val repositories: List<GitRepository>) : Data()
   }
@@ -81,7 +81,9 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
       }
       else listOf(manager.repositories.first())
 
-    if (repositories == null || repositories.any { it.isFresh }) return Data.Disabled(GitBundle.message("action.New.Branch.disabled.fresh.description"))
+    if (repositories == null || repositories.any { it.isFresh }) {
+      return Data.Disabled(GitBundle.message("action.New.Branch.disabled.fresh.description"))
+    }
     return Data.NoCommit(project, repositories)
   }
 
