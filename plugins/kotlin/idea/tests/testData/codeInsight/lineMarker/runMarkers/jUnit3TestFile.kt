@@ -6,9 +6,9 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
 
-interface <lineMarker descr="*">Some</lineMarker>
+interface <lineMarker descr="Is implemented by NotATest NotATest2 NotATest3  Click or press ... to navigate">Some</lineMarker>
 
-open class <lineMarker descr="*">NotATest</lineMarker>: Some {
+open class <lineMarker descr="Is subclassed by NotATest2 NotATest3  Click or press ... to navigate">NotATest</lineMarker>: Some {
 
 }
 

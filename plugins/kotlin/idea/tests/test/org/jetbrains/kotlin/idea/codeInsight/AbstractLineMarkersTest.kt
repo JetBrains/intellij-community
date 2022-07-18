@@ -15,9 +15,6 @@ import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
-import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
-import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
-import org.jetbrains.kotlin.idea.codeMetaInfo.models.LineMarkerCodeMetaInfo
 import org.jetbrains.kotlin.idea.highlighter.markers.TestableLineMarkerNavigator
 import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
 import org.jetbrains.kotlin.idea.test.*
@@ -37,7 +34,7 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
     protected fun doAndCheckHighlighting(
         psiFile: PsiFile,
         documentToAnalyze: Document,
-        expectedHighlighting: ExpectedHighlightingData,
+        expectedHighlighting: KotlinExpectedHighlightingData,
         expectedFile: File
     ): List<LineMarkerInfo<*>> {
         myFixture.doHighlighting()
@@ -67,7 +64,7 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
 
             val ktFile = myFixture.file as KtFile
 
-            val data = ExpectedHighlightingData(document, false, false, false)
+            val data = KotlinExpectedHighlightingData(document)
             data.init()
 
             PsiDocumentManager.getInstance(project).commitAllDocuments()
@@ -91,46 +88,12 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
         private const val LINE_MARKER_PREFIX = "LINEMARKER:"
         private const val TARGETS_PREFIX = "TARGETS"
 
-        class InnerLineMarkerConfiguration: AbstractCodeMetaInfoRenderConfiguration() {
-            override fun asString(codeMetaInfo: CodeMetaInfo): String {
-                if (codeMetaInfo !is InnerLineMarkerCodeMetaInfo) return ""
-                val params = mutableListOf<String>()
-
-                codeMetaInfo.lineMarker.lineMarkerTooltip?.apply {
-                    params.add("descr='${sanitizeLineMarkerTooltip(this)}'")
-                }
-
-                params.add(getAdditionalParams(codeMetaInfo))
-
-                return params.filter { it.isNotEmpty() }.joinToString("; ")
-            }
-        }
-
-        class InnerLineMarkerCodeMetaInfo(
-            override val renderConfiguration: AbstractCodeMetaInfoRenderConfiguration,
-            val lineMarker: LineMarkerInfo<*>
-        ) : CodeMetaInfo {
-            override val start: Int
-                get() = lineMarker.startOffset
-            override val end: Int
-                get() = lineMarker.endOffset
-
-            override val tag: String = "LINE_MARKER"
-
-            override val attributes: MutableList<String> = mutableListOf()
-
-            override fun asString(): String = renderConfiguration.asString(this)
-        }
-
-
         fun assertNavigationElements(project: Project, file: KtFile, markers: List<LineMarkerInfo<*>>) {
             val navigationDataComments = KotlinTestUtils.getLastCommentsInFile(
                 file, KotlinTestUtils.CommentType.BLOCK_COMMENT, false
             )
             if (navigationDataComments.isEmpty()) return
-
-            val markerConfiguration = InnerLineMarkerConfiguration()
-            val markerCodeMetaInfos = markers.map { InnerLineMarkerCodeMetaInfo(markerConfiguration, it) }
+            val markerCodeMetaInfos = markers.map { InnerLineMarkerCodeMetaInfo(InnerLineMarkerConfiguration.configuration, it) }
 
             for ((navigationCommentIndex, navigationComment) in navigationDataComments.reversed().withIndex()) {
                 val description = getLineMarkerDescription(navigationComment)
@@ -225,4 +188,5 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
             return markers
         }
     }
+
 }
