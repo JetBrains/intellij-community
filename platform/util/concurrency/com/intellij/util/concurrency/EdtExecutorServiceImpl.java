@@ -75,13 +75,13 @@ final class EdtExecutorServiceImpl extends EdtExecutorService {
 
   @Override
   public void shutdown() {
-    AppScheduledExecutorService.error();
+    AppScheduledExecutorService.notAllowedMethodCall();
   }
 
   @NotNull
   @Override
   public List<Runnable> shutdownNow() {
-    return AppScheduledExecutorService.error();
+    return AppScheduledExecutorService.notAllowedMethodCall();
   }
 
   @Override
@@ -96,7 +96,7 @@ final class EdtExecutorServiceImpl extends EdtExecutorService {
 
   @Override
   public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) {
-    AppScheduledExecutorService.error();
+    AppScheduledExecutorService.notAllowedMethodCall();
     return false;
   }
 
