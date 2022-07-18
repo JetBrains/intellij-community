@@ -20,12 +20,10 @@ import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ImageLoader;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.EditableModel;
-import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -36,9 +34,7 @@ import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
@@ -393,7 +389,7 @@ public class CustomizableActionsPanel {
     else {
       Icon icon;
       try {
-        icon = loadCustomIcon(path);
+        icon = CustomActionsSchema.loadCustomIcon(path);
       }
       catch (IOException e) {
         Messages.showErrorDialog(component, e.getLocalizedMessage(),
@@ -406,14 +402,6 @@ public class CustomizableActionsPanel {
       }
     }
     return true;
-  }
-
-  static @Nullable Icon loadCustomIcon(@NotNull String path) throws IOException {
-    String independentPath = path.replace(File.separatorChar, '/');
-    String urlString = independentPath.contains(":") ? independentPath : "file:" + independentPath;
-    URL url = new URL(null, urlString);
-    Image image = ImageLoader.loadCustomIcon(url);
-    return image != null ? new JBImageIcon(image) : null;
   }
 
   private class EditIconDialog extends DialogWrapper {

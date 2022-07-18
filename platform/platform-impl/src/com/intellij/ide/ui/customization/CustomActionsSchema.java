@@ -449,17 +449,12 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
         icon = reuseFrom.getTemplatePresentation().getIcon();
       }
       else {
-        Image image = null;
         try {
-          String urlString = iconPath.contains(":") ? iconPath : "file:" + iconPath;
-          URL url = new URL(null, urlString);
-          image = ImageLoader.loadCustomIcon(url);
+          icon = loadCustomIcon(iconPath);
         }
         catch (IOException e) {
           LOG.info(e.getMessage());
         }
-        if (image != null)
-          icon = new JBImageIcon(image);
       }
     }
     Presentation presentation = anAction.getTemplatePresentation();
@@ -473,6 +468,19 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     presentation.setIcon(icon);
     presentation.setDisabledIcon(icon != null ? IconLoader.getDisabledIcon(icon) : null);
     anAction.setDefaultIcon(iconPath == null);
+  }
+
+  /**
+   * @param path absolute path to the icon file, url of the icon file or url of the icon file inside jar.
+   * @throws IOException
+   */
+  @ApiStatus.Internal
+  public static @Nullable Icon loadCustomIcon(@NotNull String path) throws IOException {
+    String independentPath = FileUtil.toSystemIndependentName(path);
+    String urlString = independentPath.contains(":") ? independentPath : "file:" + independentPath;
+    URL url = new URL(null, urlString);
+    Image image = ImageLoader.loadCustomIcon(url);
+    return image != null ? new JBImageIcon(image) : null;
   }
 
   private static final class ActionUrlComparator implements Comparator<ActionUrl> {

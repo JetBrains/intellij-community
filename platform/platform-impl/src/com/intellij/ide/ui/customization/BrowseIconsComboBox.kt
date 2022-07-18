@@ -111,7 +111,7 @@ internal class BrowseIconsComboBox(private val parentDisposable: Disposable,
     ComponentValidator(parentDisposable).withValidator(Supplier {
       val path = (selectedItem as? IconInfo)?.iconPath ?: return@Supplier null
       try {
-        CustomizableActionsPanel.loadCustomIcon(path)
+        CustomActionsSchema.loadCustomIcon(path)
         null
       }
       catch (ex: FileNotFoundException) {
@@ -141,7 +141,7 @@ internal class BrowseIconsComboBox(private val parentDisposable: Disposable,
     val iconFile = FileChooser.chooseFile(descriptor, null, null)
     if (iconFile != null) {
       val icon = try {
-        CustomizableActionsPanel.loadCustomIcon(iconFile.path)
+        CustomActionsSchema.loadCustomIcon(iconFile.path)
       }
       catch (ex: IOException) {
         thisLogger().warn("Failed to load icon from disk, path: ${iconFile.path}", ex)
