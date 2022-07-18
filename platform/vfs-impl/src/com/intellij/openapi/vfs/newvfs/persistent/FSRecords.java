@@ -640,7 +640,13 @@ public final class FSRecords {
     }
 
     ParentFinder finder = new ParentFinder();
-    readAndHandleErrors(finder);
+    try {
+      finder.compute();
+    }
+    catch (Exception e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
     VirtualFileSystemEntry file = finder.findDescendantByIdPath();
     if (file != null) {
       LOG.assertTrue(file.getId() == id);
@@ -815,10 +821,8 @@ public final class FSRecords {
 
   @Nullable
   static DataInputStream readContent(int fileId) {
-    ThrowableComputable<DataInputStream, IOException> computable = readAndHandleErrors(() -> ourContentAccessor.readContent(fileId));
-    if (computable == null) return null;
     try {
-      return computable.compute();
+      return ourContentAccessor.readContent(fileId);
     }
     catch (OutOfMemoryError outOfMemoryError) {
       throw outOfMemoryError;
@@ -871,11 +875,23 @@ public final class FSRecords {
   }
 
   static int acquireFileContent(int fileId) {
-    return writeAndHandleErrors(() -> ourContentAccessor.acquireContentRecord(fileId));
+    try {
+      return ourContentAccessor.acquireContentRecord(fileId);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   static void releaseContent(int contentId) {
-    writeAndHandleErrors(() -> ourContentAccessor.releaseContentRecord(contentId));
+    try {
+      ourContentAccessor.releaseContentRecord(contentId);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   static int getContentId(int fileId) {
@@ -915,13 +931,23 @@ public final class FSRecords {
   }
 
   static void writeContent(int fileId, @NotNull ByteArraySequence bytes, boolean readOnly) {
-    writeAndHandleErrors(() -> {
+    try {
       ourContentAccessor.writeContent(fileId, bytes, readOnly);
-    });
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   static int storeUnlinkedContent(byte[] bytes) {
-    return writeAndHandleErrors(() -> ourContentAccessor.allocateContentRecordAndStore(bytes));
+    try {
+      return ourContentAccessor.allocateContentRecordAndStore(bytes);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull

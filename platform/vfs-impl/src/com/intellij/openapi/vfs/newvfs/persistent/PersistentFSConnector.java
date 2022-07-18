@@ -10,7 +10,10 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.*;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PersistentCharSequenceEnumerator;
+import com.intellij.util.io.SimpleStringPersistentEnumerator;
+import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.*;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -30,7 +33,6 @@ final class PersistentFSConnector {
   private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
   private static final AtomicInteger INITIALIZATION_COUNTER = new AtomicInteger();
   private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT = new StorageLockContext(false, true);
-  private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT_RW = new StorageLockContext(true, true, true);
 
   static @NotNull PersistentFSConnection connect(@NotNull String cachesDir, int version, boolean useContentHashes) {
     return FSRecords.writeAndHandleErrors(() -> {
@@ -117,17 +119,8 @@ final class PersistentFSConnector {
 
       SimpleStringPersistentEnumerator enumeratedAttributes = new SimpleStringPersistentEnumerator(enumeratedAttributesFile);
 
-      int pageSize = PagedFileStorage.BUFFER_SIZE * PersistentFSRecordsStorage.recordsLength() / PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
-      boolean aligned = pageSize % PersistentFSRecordsStorage.recordsLength() == 0;
-      if (!aligned) {
-        LOG.error("Buffer size " + PagedFileStorage.BUFFER_SIZE + " is not aligned for record size " + PersistentFSRecordsStorage.recordsLength());
-      }
-      records = PersistentFSRecordsStorage.createStorage(new ResizeableMappedFile(recordsFile,
-                                                                                  20 * 1024,
-                                                                                  PERSISTENT_FS_STORAGE_CONTEXT_RW,
-                                                                                  pageSize,
-                                                                                  aligned,
-                                                                                  IOUtil.useNativeByteOrderForByteBuffers()));
+
+      records = PersistentFSRecordsStorage.createStorage(recordsFile);
 
       boolean initial = records.length() == 0;
 
@@ -205,7 +198,7 @@ final class PersistentFSConnector {
                                                           @NotNull IntList freeFileIds) throws IOException {
     long start = System.nanoTime();
     InvertedNameIndex.clear();
-    records.processAllNames((fileId, nameId, flags) -> {
+    records.processAllRecords((fileId, nameId, flags, parentId, corrupted) -> {
       if (BitUtil.isSet(flags, PersistentFSRecordAccessor.FREE_RECORD_FLAG)) {
         freeFileIds.add(fileId);
       }
