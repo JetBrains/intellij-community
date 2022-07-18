@@ -12,8 +12,11 @@ import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
+import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinInnerClassInheritorsSearcher: QueryExecutorBase<PsiClass, ClassInheritorsSearch.SearchParameters>() {
@@ -23,7 +26,7 @@ class KotlinInnerClassInheritorsSearcher: QueryExecutorBase<PsiClass, ClassInher
         val baseClass = classToProcess.safeAs<KtLightClassForSourceDeclaration>() ?: return
 
         val kotlinOrigin = baseClass.kotlinOrigin
-        if (runReadAction { kotlinOrigin.isTopLevel() || kotlinOrigin.isLocal || !kotlinOrigin.isPrivate() }) return
+        if (runReadAction { kotlinOrigin.isTopLevel() || (!kotlinOrigin.isLocal && !kotlinOrigin.isPrivate()) }) return
 
         val progress = ProgressIndicatorProvider.getGlobalProgressIndicator()
         if (progress != null) {
@@ -37,18 +40,28 @@ class KotlinInnerClassInheritorsSearcher: QueryExecutorBase<PsiClass, ClassInher
             for (element in searchScope.scope) {
                 ProgressManager.checkCanceled()
                 if (!runReadAction {
-                    val declarations = element.safeAs<KtClassOrObject>()?.declarations ?: return@runReadAction true
-                    for (declaration in declarations) {
-                        val ktClassOrObject =
-                            declaration.safeAs<KtClassOrObject>()?.takeIf { it.superTypeListEntries.isNotEmpty() } ?: continue
-                        ktClassOrObject.toLightClass()?.let {
-                            if (it.isInheritor(classToProcess, true) && !consumer.process(it)) {
-                                return@runReadAction false
+                        val declarations =
+                            when (element) {
+                                is KtClassOrObject -> element.declarations
+                                is KtBlockExpression -> listOf(
+                                    *element.getChildrenAsPsiElements(
+                                        KtStubElementTypes.DECLARATION_TYPES,
+                                        KtDeclaration.ARRAY_FACTORY
+                                    )
+                                )
+                                else -> return@runReadAction true
+                            }
+                        for (declaration in declarations) {
+                            val ktClassOrObject =
+                                declaration.safeAs<KtClassOrObject>()?.takeIf { it.superTypeListEntries.isNotEmpty() } ?: continue
+                            ktClassOrObject.toLightClass()?.let {
+                                if (it.isInheritor(classToProcess, true) && !consumer.process(it)) {
+                                    return@runReadAction false
+                                }
                             }
                         }
-                    }
-                    true
-                }) break
+                        true
+                    }) break
             }
         } finally {
             progress?.popState()

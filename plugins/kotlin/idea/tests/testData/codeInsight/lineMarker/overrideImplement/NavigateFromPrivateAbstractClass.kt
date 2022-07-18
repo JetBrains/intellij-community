@@ -1,5 +1,5 @@
 class NavigateFromPrivateAbstractClass {
-    private abstract class <lineMarker>Base</lineMarker> {
+    private abstract class <lineMarker descr="Is subclassed by Impl in NavigateFromPrivateAbstractClass Impl2 in NavigateFromPrivateAbstractClass  Click or press ... to navigate">Base</lineMarker> {
         abstract fun <lineMarker>foo</lineMarker>()
     }
 
@@ -13,6 +13,11 @@ class NavigateFromPrivateAbstractClass {
 
 }
 
+fun foo() {
+    open class <lineMarker descr="Is subclassed by B in foo() in NavigateFromPrivateAbstractClass.kt C in foo() in NavigateFromPrivateAbstractClass.kt  Click or press ... to navigate">A</lineMarker> {}
+    class B : A() {}
+    class C : A() {}
+}
 /*
 LINEMARKER: descr='Is subclassed by Impl in NavigateFromPrivateAbstractClass Impl2 in NavigateFromPrivateAbstractClass  Click or press ... to navigate'
 TARGETS:
@@ -41,3 +46,11 @@ TARGETS:
 NavigateFromPrivateAbstractClass.kt
         abstract fun <1>foo()
 */
+
+/*
+LINEMARKER: descr='Is subclassed by B in foo() in NavigateFromPrivateAbstractClass.kt C in foo() in NavigateFromPrivateAbstractClass.kt  Click or press ... to navigate'
+TARGETS:
+NavigateFromPrivateAbstractClass.kt
+    class <1>B : A() {}
+    class <2>C : A() {}
+ */
