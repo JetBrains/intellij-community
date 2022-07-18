@@ -23,17 +23,17 @@ class IdeDownloaderTest {
 
   @Test
   fun completeParametersSetForIdeDownloaderShouldBeCorrectlyCreated() {
-    ProductInfoRequestParameters(code = "IC",
-                                 type = "eap",
+    ProductInfoRequestParameters(type = "IC",
+                                 snapshot = "eap",
                                  majorVersion = "222",
-                                 build = "10.20")
+                                 buildNumber = "10.20")
       .toString()
       .shouldBe("?code=IC&type=eap")
   }
 
   @Test
   fun defaultParameterForIdeDownloaderCreation() {
-    ProductInfoRequestParameters(code = "IU")
+    ProductInfoRequestParameters(type = "IU")
       .toString()
       .shouldBe("?code=IU&type=release")
   }
