@@ -6,10 +6,14 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MakeMethodFinalFix extends InspectionGadgetsFix {
 
@@ -33,25 +37,11 @@ public class MakeMethodFinalFix extends InspectionGadgetsFix {
 
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement().getParent();
-    if (element instanceof PsiMethod) {
-      if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) {
-        return;
-      }
-      final PsiMethod method = (PsiMethod)element;
-      final PsiModifierList modifierList = method.getModifierList();
-      WriteAction.run(() -> modifierList.setModifierProperty(PsiModifier.FINAL, true));
-      return;
-    }
-    final PsiElement parent = element.getParent();
-    if (parent instanceof PsiMethodCallExpression){
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parent;
-      final PsiMethod method = methodCall.resolveMethod();
-      if (method == null || !FileModificationService.getInstance().preparePsiElementsForWrite(method)) {
-        return;
-      }
+    PsiElement element = descriptor.getPsiElement().getParent();
+    PsiMethod method = findMethodToFix(element);
+    if (method != null) {
       WriteAction.run(() -> method.getModifierList().setModifierProperty(PsiModifier.FINAL, true));
-      if (isOnTheFly() && method.getContainingFile() != parent.getContainingFile()) {
+      if (isOnTheFly() && method.getContainingFile() != element.getContainingFile()) {
         method.navigate(true);
       }
     }
@@ -59,21 +49,31 @@ public class MakeMethodFinalFix extends InspectionGadgetsFix {
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    final PsiElement element = previewDescriptor.getPsiElement().getParent();
-    if (element instanceof PsiMethod) {
-      final PsiModifierList modifierList = ((PsiMethod)element).getModifierList();
-      modifierList.setModifierProperty(PsiModifier.FINAL, true);
+    PsiMethod method = findMethodToFix(previewDescriptor.getPsiElement().getParent());
+    if (method != null) {
+      method.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
       return IntentionPreviewInfo.DIFF;
+    }
+    return IntentionPreviewInfo.EMPTY;
+  }
+
+  private static @Nullable PsiMethod findMethodToFix(PsiElement element) {
+    if (element instanceof PsiMethod) {
+      if (element.isPhysical() && !FileModificationService.getInstance().preparePsiElementsForWrite(element)) {
+        return null;
+      }
+      return (PsiMethod)element;
     }
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiMethodCallExpression) {
-      final PsiMethod method = ((PsiMethodCallExpression)parent).resolveMethod();
-      if (method != null && method.getContainingFile() == parent.getContainingFile()) {
-        method.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
-        return IntentionPreviewInfo.DIFF;
+      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parent;
+      final PsiMethod method = methodCall.resolveMethod();
+      if (method == null || (element.isPhysical() && !FileModificationService.getInstance().preparePsiElementsForWrite(method))) {
+        return null;
       }
+      return method;
     }
-    return IntentionPreviewInfo.EMPTY;
+    return null;
   }
 
   @Override
