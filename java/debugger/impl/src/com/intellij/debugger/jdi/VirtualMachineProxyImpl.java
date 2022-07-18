@@ -18,7 +18,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
-import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;

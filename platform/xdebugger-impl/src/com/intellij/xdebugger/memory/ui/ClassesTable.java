@@ -349,7 +349,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     final TypeInfo selectedClass = myModel.getSelectedClassBeforeHide();
     int newSelectedIndex = -1;
     final boolean isInitialized = !myItems.isEmpty();
-    myItems = Collections.unmodifiableList(new ArrayList<>(class2Count.keySet()));
+    myItems = List.copyOf(class2Count.keySet());
 
     int i = 0;
     for (final TypeInfo ref : class2Count.keySet()) {

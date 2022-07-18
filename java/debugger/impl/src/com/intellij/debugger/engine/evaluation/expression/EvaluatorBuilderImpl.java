@@ -75,12 +75,10 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     private PsiClass myContextPsiClass;
     private CodeFragmentEvaluator myCurrentFragmentEvaluator;
     private final Set<JavaCodeFragment> myVisitedFragments = new HashSet<>();
-    @Nullable private final SourcePosition myPosition;
     @Nullable private final PsiClass myPositionPsiClass;
 
     private Builder(@Nullable SourcePosition position) {
-      myPosition = position;
-      myPositionPsiClass = JVMNameUtil.getClassAt(myPosition);
+      myPositionPsiClass = JVMNameUtil.getClassAt(position);
     }
 
     @Override

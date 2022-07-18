@@ -318,7 +318,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
     Map<XAttachHost, LinkedHashSet<RecentItem>> recentItems = project.getUserData(RECENT_ITEMS_KEY);
     return recentItems == null || !recentItems.containsKey(host)
            ? Collections.emptyList()
-           : Collections.unmodifiableList(new ArrayList<>(recentItems.get(host)));
+           : List.copyOf(recentItems.get(host));
   }
 
   public static class RecentItem {
