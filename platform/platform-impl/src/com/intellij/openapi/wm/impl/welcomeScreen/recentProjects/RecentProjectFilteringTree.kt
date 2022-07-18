@@ -487,11 +487,18 @@ class RecentProjectFilteringTree(
       private val projectProgressBar = JProgressBar().apply {
         isOpaque = false
       }
-      private val projectProgressBarPanel = JBUI.Panels.simplePanel().apply {
-        isOpaque = false
-        border = JBUI.Borders.empty(8)
-        preferredSize = JBUI.size(preferredSize).withWidth(PROGRESS_BAR_WIDTH)
+      private val projectProgressBarPanel = object : BorderLayoutPanel() {
+        init {
+          isOpaque = false
+          border = JBUI.Borders.empty(8)
+        }
 
+        override fun getPreferredSize(): Dimension {
+          val size = super.getPreferredSize()
+          size.width = PROGRESS_BAR_WIDTH
+          return size
+        }
+      }.apply {
         add(projectProgressLabel, BorderLayout.NORTH)
         add(projectProgressBar, BorderLayout.SOUTH)
       }
