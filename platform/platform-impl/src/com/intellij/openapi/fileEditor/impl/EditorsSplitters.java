@@ -440,7 +440,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       FileEditorManagerImpl manager = getManager();
       window.setForegroundAt(index, manager.getFileColor(file));
       var resultAttributes = new TextAttributes();
-      resultAttributes.setForegroundColor(getForegroundColorForFile(manager.getProject(), file));
+      resultAttributes.setForegroundColor(colorScheme.getColor(getForegroundColorForFile(manager.getProject(), file)));
       TextAttributes attributes = manager.isProblem(file) ? colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) : null;
       if (composite.isPreview()) {
         var italic = new TextAttributes(null, null, null, null, Font.ITALIC);
