@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.google.common.primitives.Ints;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -24,6 +25,11 @@ import java.util.Objects;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public abstract class FileHistorySingleCommitAction<T extends VcsCommitMetadata> extends AnAction implements DumbAware {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
