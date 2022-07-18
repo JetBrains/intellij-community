@@ -351,7 +351,7 @@ public class CustomizableActionsPanel {
 
   static boolean setCustomIcon(@NotNull CustomActionsSchema schema,
                                @NotNull DefaultMutableTreeNode node,
-                               @NotNull IconInfo selectedInfo,
+                               @NotNull ActionIconInfo selectedInfo,
                                @Nullable Component component) {
     Pair<String, Icon> pair = getActionIdAndIcon(node);
     String actionId = pair.first;
@@ -439,8 +439,8 @@ public class CustomizableActionsPanel {
     @Override
     protected void doOKAction() {
       Object selectedItem = myComboBox.getSelectedItem();
-      if (selectedItem instanceof IconInfo) {
-        IconInfo selectedInfo = (IconInfo)selectedItem;
+      if (selectedItem instanceof ActionIconInfo) {
+        ActionIconInfo selectedInfo = (ActionIconInfo)selectedItem;
         if (setCustomIcon(mySelectedSchema, myNode, selectedInfo, getContentPane())) {
           myActionsTree.repaint();
           CustomActionsSchema.setCustomizationSchemaForCurrentProjects();

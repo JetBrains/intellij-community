@@ -37,8 +37,8 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
 
   private val browseComboBox = BrowseIconsComboBox(customActionsSchema, disposable, withNoneItem)
 
-  private val selectedIcon: IconInfo?
-    get() = browseComboBox.selectedItem as? IconInfo
+  private val selectedIcon: ActionIconInfo?
+    get() = browseComboBox.selectedItem as? ActionIconInfo
   private val selectedTreePath: TreePath?
     get() = actionsTree.selectionPath
 

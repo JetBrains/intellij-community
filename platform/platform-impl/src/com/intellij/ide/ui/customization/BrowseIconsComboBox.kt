@@ -37,7 +37,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 
 internal class BrowseIconsComboBox(private val customActionsSchema: CustomActionsSchema,
                                    private val parentDisposable: Disposable,
-                                   withNoneItem: Boolean) : ComboBox<IconInfo>() {
+                                   withNoneItem: Boolean) : ComboBox<ActionIconInfo>() {
   private val iconsLoadedFuture: CompletableFuture<Boolean>
 
   init {
@@ -47,7 +47,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
     setEditor(createEditor())
     setRenderer(createRenderer())
     installSelectedIconValidator()
-    ComboboxSpeedSearch.installSpeedSearch(this) { info: IconInfo -> info.text }
+    ComboboxSpeedSearch.installSpeedSearch(this) { info: ActionIconInfo -> info.text }
   }
 
   private fun loadIconsAsync(withNoneItem: Boolean): CompletableFuture<Boolean> {
@@ -62,14 +62,14 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
     return future
   }
 
-  private fun createIconsList(withNoneItem: Boolean): List<IconInfo> {
+  private fun createIconsList(withNoneItem: Boolean): List<ActionIconInfo> {
     val defaultIcons = getDefaultIcons()
     val customIcons = getCustomIcons(customActionsSchema)
       .filter { info -> defaultIcons.find { it.iconPath == info.iconPath } == null }
     val availableIcons = getAvailableIcons()
       .filter { info -> defaultIcons.find { it.icon === info.icon } == null }
       .sortedWith(Comparator { a, b -> a.text.compareTo(b.text, ignoreCase = true) })
-    val icons: MutableList<IconInfo> = LinkedList()
+    val icons: MutableList<ActionIconInfo> = LinkedList()
     if (withNoneItem) icons.add(NONE)
     icons.addAll(defaultIcons)
     icons.add(SEPARATOR)
@@ -91,7 +91,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
       textField.addBrowseExtension(this@BrowseIconsComboBox::browseIconAndSelect, parentDisposable)
       textField.addExtension(object : ExtendableTextComponent.Extension {
         override fun getIcon(hovered: Boolean): Icon? {
-          return (selectedItem as? IconInfo)?.icon
+          return (selectedItem as? ActionIconInfo)?.icon
         }
 
         override fun isIconBeforeText() = true
@@ -100,9 +100,9 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
     }
   }
 
-  private fun createRenderer(): ListCellRenderer<IconInfo> = object : ColoredListCellRenderer<IconInfo>() {
-    override fun getListCellRendererComponent(list: JList<out IconInfo>,
-                                              value: IconInfo?,
+  private fun createRenderer(): ListCellRenderer<ActionIconInfo> = object : ColoredListCellRenderer<ActionIconInfo>() {
+    override fun getListCellRendererComponent(list: JList<out ActionIconInfo>,
+                                              value: ActionIconInfo?,
                                               index: Int,
                                               selected: Boolean,
                                               hasFocus: Boolean): Component {
@@ -120,8 +120,8 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
       else super.getListCellRendererComponent(list, value, index, selected, hasFocus)
     }
 
-    override fun customizeCellRenderer(list: JList<out IconInfo>,
-                                       value: IconInfo?,
+    override fun customizeCellRenderer(list: JList<out ActionIconInfo>,
+                                       value: ActionIconInfo?,
                                        index: Int,
                                        selected: Boolean,
                                        hasFocus: Boolean) {
@@ -134,7 +134,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
 
   private fun installSelectedIconValidator() {
     ComponentValidator(parentDisposable).withValidator(Supplier {
-      val path = (selectedItem as? IconInfo)?.iconPath ?: return@Supplier null
+      val path = (selectedItem as? ActionIconInfo)?.iconPath ?: return@Supplier null
       try {
         CustomActionsSchema.loadCustomIcon(path)
         null
@@ -173,7 +173,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
         IconManager.getInstance().stubIcon
       }
       if (icon != null) {
-        val info = IconInfo(icon, iconFile.name, null, iconFile.path)
+        val info = ActionIconInfo(icon, iconFile.name, null, iconFile.path)
         val separatorInd = model.getIndexOf(SEPARATOR)
         model.insertElementAt(info, separatorInd + 1)
         selectedIndex = separatorInd + 1
@@ -201,15 +201,15 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
     selectedIndex = 0
   }
 
-  private fun selectByCondition(predicate: (IconInfo) -> Boolean): Boolean {
+  private fun selectByCondition(predicate: (ActionIconInfo) -> Boolean): Boolean {
     val ind = (0 until model.size).find { predicate(model.getElementAt(it)) }
     return (ind != null).also {
       if (it) selectedIndex = ind!!
     }
   }
 
-  override fun getModel(): DefaultComboBoxModel<IconInfo> {
-    return super.getModel() as DefaultComboBoxModel<IconInfo>
+  override fun getModel(): DefaultComboBoxModel<ActionIconInfo> {
+    return super.getModel() as DefaultComboBoxModel<ActionIconInfo>
   }
 
   /**

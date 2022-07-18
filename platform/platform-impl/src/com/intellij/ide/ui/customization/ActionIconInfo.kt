@@ -10,18 +10,18 @@ import org.jetbrains.annotations.Nls
 import java.io.IOException
 import javax.swing.Icon
 
-internal val NONE = IconInfo(null, IdeBundle.message("default.icons.none.text"), "", null)
-internal val SEPARATOR = IconInfo(null, "", "", null)
+internal val NONE = ActionIconInfo(null, IdeBundle.message("default.icons.none.text"), "", null)
+internal val SEPARATOR = ActionIconInfo(null, "", "", null)
 
 /**
  * @param actionId id of the action that use this icon.
  * @param iconPath path or URL of the icon.
  * @param text template presentation text of the action or file name.
  */
-internal class IconInfo(val icon: Icon?,
-                        @Nls val text: String,
-                        val actionId: String?,
-                        val iconPath: String?) {
+internal class ActionIconInfo(val icon: Icon?,
+                              @Nls val text: String,
+                              val actionId: String?,
+                              val iconPath: String?) {
   val iconReference: String
     get() = iconPath ?: actionId ?: error("Either actionId or iconPath should be set")
 
@@ -30,7 +30,7 @@ internal class IconInfo(val icon: Icon?,
   }
 }
 
-internal fun getDefaultIcons(): List<IconInfo> {
+internal fun getDefaultIcons(): List<ActionIconInfo> {
   val icons = listOf(
     getIconInfo(AllIcons.Toolbar.Unknown, IdeBundle.message("default.icons.unknown.text")),
     getIconInfo(AllIcons.General.Add, IdeBundle.message("default.icons.add.text")),
@@ -46,12 +46,12 @@ internal fun getDefaultIcons(): List<IconInfo> {
   return icons.filterNotNull()
 }
 
-private fun getIconInfo(icon: Icon, @Nls text: String): IconInfo? {
+private fun getIconInfo(icon: Icon, @Nls text: String): ActionIconInfo? {
   val iconUrl = (icon as? IconLoader.CachedImageIcon)?.url
-  return iconUrl?.let { IconInfo(icon, text, null, it.toString()) }
+  return iconUrl?.let { ActionIconInfo(icon, text, null, it.toString()) }
 }
 
-internal fun getAvailableIcons(): List<IconInfo> {
+internal fun getAvailableIcons(): List<ActionIconInfo> {
   val actionManager = ActionManager.getInstance()
   return actionManager.getActionIdList("").mapNotNull { actionId ->
     val action = actionManager.getActionOrStub(actionId) ?: return@mapNotNull null
@@ -59,11 +59,11 @@ internal fun getAvailableIcons(): List<IconInfo> {
     val icon = presentation.getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON)
                ?: presentation.icon
                ?: return@mapNotNull null
-    IconInfo(icon, action.templateText.nullize() ?: actionId, actionId, null)
+    ActionIconInfo(icon, action.templateText.nullize() ?: actionId, actionId, null)
   }
 }
 
-internal fun getCustomIcons(schema: CustomActionsSchema): List<IconInfo> {
+internal fun getCustomIcons(schema: CustomActionsSchema): List<ActionIconInfo> {
   val actionManager = ActionManager.getInstance()
   return schema.iconCustomizations.mapNotNull { (actionId, iconReference) ->
     if (actionId == null || iconReference == null) return@mapNotNull null
@@ -76,7 +76,7 @@ internal fun getCustomIcons(schema: CustomActionsSchema): List<IconInfo> {
         null
       }
       if (icon != null) {
-        IconInfo(icon, iconReference.substringAfterLast("/"), actionId, iconReference)
+        ActionIconInfo(icon, iconReference.substringAfterLast("/"), actionId, iconReference)
       }
       else null
     }
