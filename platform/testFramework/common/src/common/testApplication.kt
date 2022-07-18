@@ -188,7 +188,11 @@ fun Application.cleanApplicationStateCatching(): List<Throwable> {
     { (serviceIfCreated<DocumentReferenceManager>() as? DocumentReferenceManagerImpl)?.cleanupForNextTest() },
     { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() },
     { UiInterceptors.clear() },
-    { CompletionProgressIndicator.cleanupForNextTest() },
+    {
+      runInEdtAndWait {
+        CompletionProgressIndicator.cleanupForNextTest()
+      }
+    },
   )
 }
 
@@ -227,7 +231,9 @@ fun Application.cleanupApplicationCaches() {
   val projectManager = ProjectManagerEx.getInstanceExIfCreated()
   if (projectManager != null && projectManager.isDefaultProjectInitialized) {
     val defaultProject = projectManager.defaultProject
-    (PsiManager.getInstance(defaultProject) as PsiManagerImpl).cleanupForNextTest()
+    runInEdtAndWait {
+      (PsiManager.getInstance(defaultProject) as PsiManagerImpl).cleanupForNextTest()
+    }
   }
   (serviceIfCreated<FileBasedIndex>() as? FileBasedIndexImpl)?.cleanupForNextTest()
   if (serviceIfCreated<VirtualFileManager>() != null) {
