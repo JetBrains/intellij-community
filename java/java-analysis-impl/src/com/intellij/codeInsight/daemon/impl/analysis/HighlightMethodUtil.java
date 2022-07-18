@@ -1731,9 +1731,11 @@ public final class HighlightMethodUtil {
         if (classReference != null && info != null) {
           ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info, getFixRange(list));
         }
+        TextRange textRange = constructorCall.getTextRange();
         QuickFixAction.registerQuickFixActions(
-          info, constructorCall.getTextRange(), QUICK_FIX_FACTORY.createCreateConstructorFromUsageFixes(constructorCall)
+          info, textRange, QUICK_FIX_FACTORY.createCreateConstructorFromUsageFixes(constructorCall)
         );
+        RemoveRedundantArgumentsFix.registerIntentions(list, info, getFixRange(list));
         holder.add(info);
         return;
       }
@@ -1890,6 +1892,7 @@ public final class HighlightMethodUtil {
       info, constructorCall.getTextRange(), QUICK_FIX_FACTORY.createCreateConstructorFromUsageFixes(constructorCall)
     );
     registerChangeParameterClassFix(constructorCall, list, info, fixRange);
+    RemoveRedundantArgumentsFix.registerIntentions(results, list, info, fixRange);
   }
 
   private static HighlightInfo buildAccessProblem(@NotNull PsiJavaCodeReferenceElement ref,
