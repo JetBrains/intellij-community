@@ -208,40 +208,20 @@ public final class GitBranchUtil {
   }
 
   /**
-   * Guesses the Git root on which a Git action is to be invoked.
-   * <ol>
-   *   <li>
-   *     Returns the root for the selected file. Selected file is determined by {@link DvcsUtil#getSelectedFile(Project)}.
-   *     If selected file is unknown (for example, no file is selected in the Project View or Changes View and no file is open in the editor),
-   *     continues guessing. Otherwise returns the Git root for the selected file. If the file is not under a known Git root,
-   *     but there is at least one git root,  continues guessing, otherwise
-   *     {@code null} will be returned - the file is definitely determined, but it is not under Git and no git roots exists in project.
-   *   </li>
-   *   <li>
-   *     Takes all Git roots registered in the Project. If there is only one, it is returned.
-   *   </li>
-   *   <li>
-   *     If there are several Git roots,
-   *   </li>
-   * </ol>
-   *
-   * <p>
-   *   NB: This method has to be accessed from the <b>read action</b>, because it may query
-   *   {@link com.intellij.openapi.fileEditor.FileEditorManager#getSelectedTextEditor()}.
-   * </p>
-   *
-   * @param project current project
-   * @return Git root that may be considered as "current".
-   * {@code null} is returned if a file not under Git was explicitly selected, if there are no Git roots in the project,
-   * or if the current Git root couldn't be determined.
+   * @deprecated Prefer {@link #guessWidgetRepository(Project)} or {@link #guessRepositoryForOperation(Project, DataContext)}.
    */
   @Nullable
+  @Deprecated
   @RequiresEdt
   public static GitRepository getCurrentRepository(@NotNull Project project) {
     return getRepositoryOrGuess(project, DvcsUtil.getSelectedFile(project));
   }
 
+  /**
+   * @deprecated Prefer {@link #guessRepositoryForOperation(Project, DataContext)}.
+   */
   @Nullable
+  @Deprecated
   @CalledInAny
   public static GitRepository getRepositoryOrGuess(@NotNull Project project, @Nullable VirtualFile file) {
     if (project.isDisposed()) return null;

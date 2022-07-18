@@ -476,7 +476,11 @@ public abstract class HgUtil {
     return project.getService(HgRepositoryManager.class);
   }
 
+  /**
+   * @deprecated Prefer {@link #guessWidgetRepository(Project)} or {@link #guessRepositoryForOperation(Project, DataContext)}.
+   */
   @Nullable
+  @Deprecated
   @RequiresEdt
   public static HgRepository getCurrentRepository(@NotNull Project project) {
     if (project.isDisposed()) return null;

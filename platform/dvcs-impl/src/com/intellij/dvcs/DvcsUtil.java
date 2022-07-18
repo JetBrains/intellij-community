@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -107,15 +108,22 @@ public final class DvcsUtil {
 
   /**
    * Returns the currently selected file, based on which VcsBranch or StatusBar components will identify the current repository root.
+   *
+   * @deprecated Prefer {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
    */
   @Nullable
+  @Deprecated
   @RequiresEdt
   public static VirtualFile getSelectedFile(@NotNull Project project) {
     FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor();
     return fileEditor == null ? null : fileEditor.getFile();
   }
 
+  /**
+   * @deprecated Prefer {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
+   */
   @Nullable
+  @Deprecated
   @CalledInAny
   public static VirtualFile getSelectedFile(@NotNull DataContext dataProvider) {
     FileEditor fileEditor = PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.getData(dataProvider);
@@ -254,6 +262,13 @@ public final class DvcsUtil {
     }
   }
 
+  /**
+   * Find the VCS root to use as a 'current' in a status bar widget.
+   * <p>
+   * Note: Do not call directly, use per-vcs utility method that provides correct {@code recentRootPath}.
+   *
+   * @param recentRootPath The last path that was shown in the widget
+   */
   @Nullable
   @RequiresEdt
   public static <T extends Repository> T guessWidgetRepository(@NotNull Project project,
@@ -269,6 +284,11 @@ public final class DvcsUtil {
     return null;
   }
 
+  /**
+   * Find the VCS root on which a repository-wide AnAction is to be invoked in an unspecified context.
+   * <p>
+   * Prefer using {@link #guessRepositoryForOperation(Project, AbstractRepositoryManager, DataContext)} whenever possible.
+   */
   @Nullable
   @RequiresEdt
   public static <T extends Repository> T guessRepositoryForOperation(@NotNull Project project,
@@ -281,6 +301,9 @@ public final class DvcsUtil {
     return guessRepositoryForOperation(project, manager, dataContext);
   }
 
+  /**
+   * Find the VCS root on which a repository-wide AnAction is to be invoked in a given context.
+   */
   @Nullable
   @CalledInAny
   public static <T extends Repository> T guessRepositoryForOperation(@NotNull Project project,
@@ -300,6 +323,9 @@ public final class DvcsUtil {
     return null;
   }
 
+  /**
+   * Find the VCS root on which a DVCS-generic repository-wide AnAction is to be invoked in a given context.
+   */
   @Nullable
   @CalledInAny
   public static Repository guessRepositoryForOperation(@NotNull Project project,
@@ -317,7 +343,11 @@ public final class DvcsUtil {
     return null;
   }
 
+  /**
+   * @deprecated Prefer {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
+   */
   @Nullable
+  @Deprecated
   @CalledInAny
   public static <T extends Repository> T guessRepositoryForFile(@NotNull Project project,
                                                                 @NotNull RepositoryManager<T> manager,
@@ -328,7 +358,11 @@ public final class DvcsUtil {
     return manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), defaultRootPathValue));
   }
 
+  /**
+   * @deprecated Prefer {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
+   */
   @Nullable
+  @Deprecated
   @RequiresEdt
   public static <T extends Repository> T guessCurrentRepositoryQuick(@NotNull Project project,
                                                                      @NotNull AbstractRepositoryManager<T> manager,
@@ -338,6 +372,12 @@ public final class DvcsUtil {
     return manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), defaultRootPathValue));
   }
 
+  /**
+   * Take configured VCS root in order:
+   * 1) Matching 'defaultRootPathValue' path
+   * 2) Matching {@link Project#getBaseDir()} or its ancestor
+   * 3) Any (typically - first one by {@link NewMappings#MAPPINGS_COMPARATOR})
+   */
   @Nullable
   private static VirtualFile guessRootForVcs(@NotNull Project project,
                                              @Nullable AbstractVcs vcs,
@@ -395,6 +435,9 @@ public final class DvcsUtil {
     return validRepositories;
   }
 
+  /**
+   * Check if passed file is a part of a project library, and find a relevant VCS mapping (ex: for its module).
+   */
   @Nullable
   private static VirtualFile getVcsRootForLibraryFile(@NotNull Project project, @NotNull VirtualFile file) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -436,7 +479,11 @@ public final class DvcsUtil {
     return topLibraryRoot;
   }
 
+  /**
+   * @deprecated Prefer {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
+   */
   @Nullable
+  @Deprecated
   public static VirtualFile guessVcsRoot(@NotNull Project project, @Nullable VirtualFile file) {
     VirtualFile root = null;
     if (file != null) {
