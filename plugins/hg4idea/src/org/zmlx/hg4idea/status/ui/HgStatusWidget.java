@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.status.ui;
 
-import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.ide.DataManager;
@@ -58,8 +57,7 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   @Override
   @RequiresEdt
   protected HgRepository guessCurrentRepository(@NotNull Project project) {
-    return DvcsUtil.guessCurrentRepositoryQuick(project, HgUtil.getRepositoryManager(project),
-                                                HgProjectSettings.getInstance(project).getRecentRootPath());
+    return HgUtil.guessWidgetRepository(project);
   }
 
   @NotNull

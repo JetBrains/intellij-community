@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
 
-import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
@@ -63,7 +62,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   @Override
   @RequiresEdt
   protected GitRepository guessCurrentRepository(@NotNull Project project) {
-    return DvcsUtil.guessCurrentRepositoryQuick(project, GitUtil.getRepositoryManager(project), mySettings.getRecentRootPath());
+    return GitBranchUtil.guessWidgetRepository(project);
   }
 
   @Nullable

@@ -260,6 +260,14 @@ public final class DvcsUtil {
   }
 
   @Nullable
+  @RequiresEdt
+  public static <T extends Repository> T guessWidgetRepository(@NotNull Project project,
+                                                               @NotNull AbstractRepositoryManager<T> manager,
+                                                               @Nullable @NonNls String recentRootPath) {
+    return guessCurrentRepositoryQuick(project, manager, recentRootPath);
+  }
+
+  @Nullable
   @CalledInAny
   public static <T extends Repository> T guessRepositoryForFile(@NotNull Project project,
                                                                 @NotNull RepositoryManager<T> manager,

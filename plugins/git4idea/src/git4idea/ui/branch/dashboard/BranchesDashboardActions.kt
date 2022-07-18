@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
-import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.diverged
@@ -21,10 +20,10 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.actions.BooleanPropertyToggleAction
 import com.intellij.vcs.log.util.VcsLogUtil.HEAD
-import git4idea.GitUtil
 import git4idea.actions.GitFetch
 import git4idea.actions.branch.GitBranchActionsUtil.calculateNewBranchInitialName
 import git4idea.branch.GitBranchType
+import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBrancher
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchResult
@@ -120,8 +119,7 @@ internal object BranchesDashboardActions {
     fun build(): ActionGroup? {
       val selectedBranches = tree.getSelectedBranches()
       val multipleBranchSelection = selectedBranches.size > 1
-      val guessRepo = DvcsUtil.guessCurrentRepositoryQuick(project, GitUtil.getRepositoryManager(project),
-                                                           GitVcsSettings.getInstance(project).recentRootPath) ?: return null
+      val guessRepo = GitBranchUtil.guessWidgetRepository(project) ?: return null
       if (multipleBranchSelection) {
         return MultipleLocalBranchActions()
       }

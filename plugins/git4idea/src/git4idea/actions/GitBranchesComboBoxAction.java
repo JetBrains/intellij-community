@@ -40,7 +40,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
       presentation.setEnabledAndVisible(false);
       return;
     }
-    GitRepository repo = GitBranchUtil.getCurrentRepository(project);
+    GitRepository repo = GitBranchUtil.guessWidgetRepository(project);
     if (repo == null) {
       presentation.setEnabledAndVisible(false);
       return;
@@ -65,7 +65,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
                                                  @NotNull JComponent component,
                                                  @Nullable Runnable disposeCallback) {
     Project project = Objects.requireNonNull(context.getData(CommonDataKeys.PROJECT));
-    GitRepository repo = Objects.requireNonNull(GitBranchUtil.getCurrentRepository(project));
+    GitRepository repo = Objects.requireNonNull(GitBranchUtil.guessWidgetRepository(project));
 
     ListPopup popup = GitBranchPopup.getInstance(project, repo, context).asListPopup();
     popup.addListener(new JBPopupListener() {

@@ -485,6 +485,14 @@ public abstract class HgUtil {
   }
 
   @Nullable
+  @RequiresEdt
+  public static HgRepository guessWidgetRepository(@NotNull Project project) {
+    return DvcsUtil.guessWidgetRepository(project,
+                                          HgUtil.getRepositoryManager(project),
+                                          HgProjectSettings.getInstance(project).getRecentRootPath());
+  }
+
+  @Nullable
   public static HgRepository getRepositoryForFile(@NotNull Project project, @Nullable VirtualFile file) {
     if (file == null || project.isDisposed()) return null;
 

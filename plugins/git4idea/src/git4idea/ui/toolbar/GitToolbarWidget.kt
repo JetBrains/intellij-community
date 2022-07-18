@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.toolbar
 
-import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
@@ -23,7 +22,6 @@ import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
 import git4idea.branch.GitBranchUtil
-import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
@@ -59,7 +57,7 @@ private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidge
   private val OUTGOING_CHANGES_ICON = DvcsImplIcons.Outgoing
 
   init {
-    repository = guessCurrentRepo(project)
+    repository = GitBranchUtil.guessWidgetRepository(project)
     updateWidget()
   }
 
@@ -114,11 +112,6 @@ private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidge
     } ?: emptyList()
 
     widget.rightIcons = icons
-  }
-
-  private fun guessCurrentRepo(project: Project): GitRepository? {
-    val settings = GitVcsSettings.getInstance(project)
-    return DvcsUtil.guessCurrentRepositoryQuick(project, GitUtil.getRepositoryManager(project), settings.recentRootPath)
   }
 }
 

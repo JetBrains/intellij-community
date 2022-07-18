@@ -248,6 +248,12 @@ public final class GitBranchUtil {
                                            GitVcsSettings.getInstance(project).getRecentRootPath());
   }
 
+  @Nullable
+  public static GitRepository guessWidgetRepository(@NotNull Project project) {
+    GitVcsSettings settings = GitVcsSettings.getInstance(project);
+    return DvcsUtil.guessWidgetRepository(project, GitUtil.getRepositoryManager(project), settings.getRecentRootPath());
+  }
+
   @NotNull
   public static Collection<String> getCommonBranches(Collection<? extends GitRepository> repositories,
                                                      boolean local) {
