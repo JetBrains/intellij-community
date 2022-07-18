@@ -53,6 +53,19 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
   }
 
   @Override
+  protected void setJavaSuite(JavaCoverageSuite suite) {
+    final CoverageRunner runner = suite.getRunner();
+    final JavaCoverageRunner javaRunner;
+    if (runner instanceof JavaCoverageRunner) {
+      javaRunner = (JavaCoverageRunner)runner;
+    }
+    else {
+      javaRunner = null;
+    }
+    myPackageAnnotator.setRunner(javaRunner);
+  }
+
+  @Override
   public void visitRootPackage(PsiPackage psiPackage) {
     if (myProjectData == null) return;
     myFlattenPackages = new ConcurrentHashMap<>();

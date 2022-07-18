@@ -328,4 +328,10 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   public String getDataFileExtension() {
     return "exec";
   }
+
+  @Override
+  public boolean shouldProcessUnloadedClasses() {
+    // All classes are already processed in JaCoCoCoverageRunner.loadReportToCoverageBuilder
+    return false;
+  }
 }

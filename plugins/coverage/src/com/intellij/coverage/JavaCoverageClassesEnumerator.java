@@ -44,31 +44,31 @@ public abstract class JavaCoverageClassesEnumerator {
    */
   protected void visitClassFiles(String topLevelClassName, List<File> files, String packageVMName, GlobalSearchScope scope) { }
 
+  protected void setJavaSuite(JavaCoverageSuite suite) { }
+
   public void visitSuite() {
     myCurrentRootsCount = 0;
     updateProgress();
-    final List<PsiPackage> packages = new ArrayList<>();
-    final List<PsiClass> classes = new ArrayList<>();
 
     for (CoverageSuite coverageSuite : mySuite.getSuites()) {
       final JavaCoverageSuite javaSuite = (JavaCoverageSuite)coverageSuite;
-      classes.addAll(javaSuite.getCurrentSuiteClasses(myProject));
-      packages.addAll(javaSuite.getCurrentSuitePackages(myProject));
-    }
+      setJavaSuite(javaSuite);
+      final List<PsiClass> classes = javaSuite.getCurrentSuiteClasses(myProject);
+      final List<PsiPackage> packages = javaSuite.getCurrentSuitePackages(myProject);
 
-    if (packages.isEmpty() && classes.isEmpty()) return;
-    for (PsiPackage psiPackage : packages) {
-      ProgressIndicatorProvider.checkCanceled();
-      visitRootPackage(psiPackage);
-    }
-    for (final PsiClass psiClass : classes) {
-      ProgressIndicatorProvider.checkCanceled();
-      ApplicationManager.getApplication().runReadAction(() -> {
-        final String packageName = ((PsiClassOwner)psiClass.getContainingFile()).getPackageName();
-        final PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
-        if (psiPackage == null) return;
-        visitClass(psiClass);
-      });
+      for (PsiPackage psiPackage : packages) {
+        ProgressIndicatorProvider.checkCanceled();
+        visitRootPackage(psiPackage);
+      }
+      for (final PsiClass psiClass : classes) {
+        ProgressIndicatorProvider.checkCanceled();
+        ApplicationManager.getApplication().runReadAction(() -> {
+          final String packageName = ((PsiClassOwner)psiClass.getContainingFile()).getPackageName();
+          final PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
+          if (psiPackage == null) return;
+          visitClass(psiClass);
+        });
+      }
     }
   }
 
