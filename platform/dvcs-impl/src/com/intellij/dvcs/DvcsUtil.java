@@ -275,7 +275,7 @@ public final class DvcsUtil {
                                                                @NotNull AbstractRepositoryManager<T> manager,
                                                                @Nullable @NonNls String recentRootPath) {
     VirtualFile file = getSelectedFile(project);
-    T repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, file));
+    T repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
     if (repository != null) return repository;
 
     repository = manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), recentRootPath));
@@ -310,11 +310,11 @@ public final class DvcsUtil {
                                                                      @NotNull AbstractRepositoryManager<T> manager,
                                                                      @NotNull DataContext dataContext) {
     VirtualFile file = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
-    T repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, file));
+    T repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
     if (repository != null) return repository;
 
     file = getSelectedFile(dataContext);
-    repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, file));
+    repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
     if (repository != null) return repository;
 
     repository = manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), null));
@@ -333,11 +333,11 @@ public final class DvcsUtil {
     VcsRepositoryManager manager = VcsRepositoryManager.getInstance(project);
 
     VirtualFile file = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
-    Repository repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, file));
+    Repository repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
     if (repository != null) return repository;
 
     VirtualFile selectedFile = getSelectedFile(dataContext);
-    repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, selectedFile));
+    repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, selectedFile));
     if (repository != null) return repository;
 
     return null;
@@ -480,20 +480,28 @@ public final class DvcsUtil {
   }
 
   /**
-   * @deprecated Prefer {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
+   * @deprecated Prefer {@link #findVcsRootFor}, {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
    */
   @Nullable
   @Deprecated
   public static VirtualFile guessVcsRoot(@NotNull Project project, @Nullable VirtualFile file) {
-    VirtualFile root = null;
+    return findVcsRootFor(project, file);
+  }
+
+  /**
+   * Find relevant VCS root for a given file, if any. Note that this root might not track the file itself.
+   */
+  @Nullable
+  public static VirtualFile findVcsRootFor(@NotNull Project project, @Nullable VirtualFile file) {
+    VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+    if (root != null) return root;
+
     if (file != null) {
-      root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
-      if (root == null) {
-        LOG.debug("Cannot get root by file. Trying with get by library: " + file);
-        root = getVcsRootForLibraryFile(project, file);
-      }
+      root = getVcsRootForLibraryFile(project, file);
+      if (root != null) return root;
     }
-    return root;
+
+    return null;
   }
 
   @NotNull
