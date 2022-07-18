@@ -16,19 +16,24 @@ import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+/**
+ * See [BrowsableTargetEnvironmentType.createBrowser]
+ */
 @Deprecated("Use overloaded method with Kotlin UI DSL 2 API")
 fun textFieldWithBrowseTargetButton(row: Row,
                                     targetType: BrowsableTargetEnvironmentType,
                                     targetSupplier: Supplier<out TargetEnvironmentConfiguration>,
                                     project: Project,
                                     @NlsContexts.DialogTitle title: String,
-                                    property: PropertyBinding<String>): CellBuilder<TextFieldWithBrowseButton> {
+                                    property: PropertyBinding<String>,
+                                    noLocalFs: Boolean = false): CellBuilder<TextFieldWithBrowseButton> {
   val textFieldWithBrowseButton = TextFieldWithBrowseButton()
   val browser = targetType.createBrowser(project,
                                          title,
                                          TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
                                          textFieldWithBrowseButton.textField,
-                                         targetSupplier)
+                                         targetSupplier,
+                                         noLocalFs)
   textFieldWithBrowseButton.addActionListener(browser)
   textFieldWithBrowseButton.text = property.get()
   return row.component(textFieldWithBrowseButton).withBinding(TextFieldWithBrowseButton::getText,
@@ -36,17 +41,21 @@ fun textFieldWithBrowseTargetButton(row: Row,
                                                               property)
 }
 
+/**
+ * See [BrowsableTargetEnvironmentType.createBrowser]
+ */
 fun com.intellij.ui.dsl.builder.Row.textFieldWithBrowseTargetButton(targetType: BrowsableTargetEnvironmentType,
-                                        targetSupplier: Supplier<out TargetEnvironmentConfiguration>,
-                                        project: Project,
-                                        @NlsContexts.DialogTitle title: String,
-                                        property: MutableProperty<String>): Cell<TextFieldWithBrowseButton> {
+                                                                    targetSupplier: Supplier<out TargetEnvironmentConfiguration>,
+                                                                    project: Project,
+                                                                    @NlsContexts.DialogTitle title: String,
+                                                                    property: MutableProperty<String>): Cell<TextFieldWithBrowseButton> {
   val textFieldWithBrowseButton = TextFieldWithBrowseButton()
   val browser = targetType.createBrowser(project,
                                          title,
                                          TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
                                          textFieldWithBrowseButton.textField,
-                                         targetSupplier)
+                                         targetSupplier,
+                                         false)
   textFieldWithBrowseButton.addActionListener(browser)
   return cell(textFieldWithBrowseButton)
     .bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, property)

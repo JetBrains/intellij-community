@@ -643,4 +643,3 @@ public final class PythonSdkType extends SdkType {
     return true;
   }
 }
-

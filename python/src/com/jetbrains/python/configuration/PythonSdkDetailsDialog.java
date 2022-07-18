@@ -41,7 +41,7 @@ import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
-import com.jetbrains.python.ui.ManualPathEntryDialog;
+import com.jetbrains.python.ui.remotePathEditor.ManualPathEntryDialog;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -554,8 +554,8 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         return remoteInterpreterManager.chooseRemoteFiles(myProject, (PyRemoteSdkAdditionalDataBase)sdkAdditionalData, false);
       }
       else if (sdkAdditionalData instanceof PyTargetAwareAdditionalData) {
-        // TODO [targets] Use proper file chooser dialog for corresponding target
-        ManualPathEntryDialog dialog = new ManualPathEntryDialog(myProject, Platform.UNIX);
+        var dialog = new ManualPathEntryDialog(myProject, Platform.UNIX,
+                                                                 ((PyTargetAwareAdditionalData)sdkAdditionalData).getTargetEnvironmentConfiguration());
         if (dialog.showAndGet()) {
           return new String[]{dialog.getPath()};
         }

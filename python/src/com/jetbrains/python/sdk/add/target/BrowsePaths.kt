@@ -34,6 +34,7 @@ fun TextFieldWithBrowseButton.withTargetBrowser(targetType: BrowsableTargetEnvir
                                          title,
                                          com.intellij.openapi.ui.TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
                                          textField,
-                                         targetSupplier)
+                                         targetSupplier,
+                                         true)
   addActionListener(browser)
 }
