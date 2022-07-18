@@ -144,17 +144,28 @@ object KotlinArtifactsDownloader {
         check(isUnitTestMode() || !EventQueue.isDispatchThread()) {
             "Don't call downloadMavenArtifact on UI thread"
         }
-        val prop = RepositoryLibraryProperties(
-            "$KOTLIN_MAVEN_GROUP_ID:$artifactId:$version",
-            if (artifactIsPom) ArtifactKind.POM.extension else ArtifactKind.ARTIFACT.extension,
-            /* includeTransitiveDependencies = */ true,
-        )
+
+        // KTIJ-22176 KTI-878. Since 1.7.20, 'kotlin-dist-for-jps-meta' doesn't depend on broken 'kotlin-annotation-processing'
+        val props =
+            if (artifactId == KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID && IdeKotlinVersion.get(version) < IdeKotlinVersion.get("1.7.20")) {
+                KOTLIN_DIST_FOR_JPS_META_DEPS
+            } else {
+                listOf(MavenArtifact(artifactId, artifactIsPom = artifactIsPom))
+            }.map {
+                RepositoryLibraryProperties(
+                    "$KOTLIN_MAVEN_GROUP_ID:${it.artifactId}:$version",
+                    if (it.artifactIsPom) ArtifactKind.POM.extension else ArtifactKind.ARTIFACT.extension,
+                    it.transitive,
+                )
+            }
 
         val repos = getMavenRepos(project) + additionalMavenRepos
         val downloadedArtifacts =
-            JarRepositoryManager.loadDependenciesSync(project, prop, false, false, null, repos, indicator)
+            props.flatMap { JarRepositoryManager.loadDependenciesSync(project, it, false, false, null, repos, indicator) }
 
-        return downloadedArtifacts.map { File(it.file.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl) }
+        return downloadedArtifacts
+            .map { File(it.file.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl).canonicalFile }
+            .distinct()
     }
 
     fun downloadArtifactForIdeFromSources(libraryFileName: String, artifactId: String, suffix: String = ".jar"): File {
@@ -225,4 +236,45 @@ object KotlinArtifactsDownloader {
             getMavenRepos(project).joinToString("\n") { it.url }.prependIndent()
         ) + "\n\n" + suggestion
     }
+
+    private val KOTLIN_DIST_FOR_JPS_META_DEPS = listOf(
+        MavenArtifact("jvm-abi-gen"),
+        MavenArtifact("kotlin-android-extensions-runtime"),
+        MavenArtifact("kotlin-android-extensions"),
+        MavenArtifact("kotlin-annotation-processing-runtime"),
+        MavenArtifact("kotlin-annotation-processing", transitive = false),
+        MavenArtifact("kotlin-annotations-jvm"),
+        MavenArtifact("kotlin-compiler"),
+        MavenArtifact("kotlin-daemon-client"),
+        MavenArtifact("kotlin-daemon"),
+        MavenArtifact("kotlin-main-kts"),
+        MavenArtifact("kotlin-parcelize-compiler"),
+        MavenArtifact("kotlin-parcelize-runtime"),
+        MavenArtifact("kotlin-reflect"),
+        MavenArtifact("kotlin-script-runtime"),
+        MavenArtifact("kotlin-scripting-common"),
+        MavenArtifact("kotlin-scripting-compiler-impl"),
+        MavenArtifact("kotlin-scripting-compiler"),
+        MavenArtifact("kotlin-scripting-js"),
+        MavenArtifact("kotlin-scripting-jvm"),
+        MavenArtifact("kotlin-stdlib-jdk7"),
+        MavenArtifact("kotlin-stdlib-jdk8"),
+        MavenArtifact("kotlin-stdlib-js"),
+        MavenArtifact("kotlin-stdlib"),
+        MavenArtifact("kotlin-test-js"),
+        MavenArtifact("kotlin-test-junit5"),
+        MavenArtifact("kotlin-test-junit"),
+        MavenArtifact("kotlin-test-testng"),
+        MavenArtifact("kotlin-test"),
+        MavenArtifact("trove4j"),
+        MavenArtifact("kotlinx-coroutines-core-jvm"),
+        MavenArtifact("annotations"),
+        MavenArtifact("kotlin-maven-serialization"),
+        MavenArtifact("kotlin-maven-sam-with-receiver"),
+        MavenArtifact("kotlin-maven-allopen"),
+        MavenArtifact("kotlin-maven-lombok"),
+        MavenArtifact("kotlin-maven-noarg"),
+    )
+
+    private data class MavenArtifact(val artifactId: String, val transitive: Boolean = true, val artifactIsPom: Boolean = false)
 }
