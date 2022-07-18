@@ -127,6 +127,10 @@
                      key="pointless.bitwise.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.bitwise.operation.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bitwise.PointlessBitwiseExpressionInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="NegativeIntConstantInLongContext" bundle="messages.InspectionGadgetsBundle"
+                     key="negative.int.constant.in.long.context.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.bitwise.NegativeIntConstantInLongContextInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ShiftOutOfRange" bundle="messages.InspectionGadgetsBundle"
                      key="shift.operation.by.inappropriate.constant.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.bitwise.operation.issues" enabledByDefault="true" level="WARNING"

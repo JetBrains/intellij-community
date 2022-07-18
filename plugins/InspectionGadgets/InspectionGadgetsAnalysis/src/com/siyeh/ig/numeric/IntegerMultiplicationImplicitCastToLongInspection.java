@@ -29,6 +29,7 @@ import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -119,7 +120,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       return hasMultiplication(expression.getOperands()[0]);
     }
 
-    return Arrays.stream(expression.getOperands()).anyMatch(operand -> hasMultiplication(operand));
+    return ContainerUtil.exists(expression.getOperands(), operand -> hasMultiplication(operand));
   }
 
   private static boolean hasMultiplication(PsiExpression expression) {
