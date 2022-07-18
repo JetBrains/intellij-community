@@ -48,7 +48,7 @@ import java.util.stream.Stream;
 public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Value> {
   private static final Logger LOG = Logger.getInstance(PersistentMapImpl.class);
   private static final boolean myDoTrace = SystemProperties.getBooleanProperty("idea.trace.persistent.map", false);
-  private static final int DEAD_KEY_NUMBER_MASK = 0xFFFFFFFF;
+  private static final long DEAD_KEY_NUMBER_MASK = 0xFFFFFFFFL;
 
   private final Path myStorageFile;
   private final boolean myIsReadOnly;
