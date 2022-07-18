@@ -477,7 +477,9 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   @ApiStatus.Internal
   public static @Nullable Icon loadCustomIcon(@NotNull String path) throws IOException {
     String independentPath = FileUtil.toSystemIndependentName(path);
-    String urlString = independentPath.contains(":") ? independentPath : "file:" + independentPath;
+    String urlString = independentPath.startsWith("file:") || independentPath.startsWith("jar:")
+                       ? independentPath
+                       : "file:" + independentPath;
     URL url = new URL(null, urlString);
     Image image = ImageLoader.loadCustomIcon(url);
     return image != null ? new JBImageIcon(image) : null;
