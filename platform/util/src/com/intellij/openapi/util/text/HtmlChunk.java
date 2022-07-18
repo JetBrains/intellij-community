@@ -534,13 +534,32 @@ public abstract class HtmlChunk {
     HtmlBuilder builder = new HtmlBuilder();
     Map<String, HtmlChunk> chunkMap = Stream.of(substitutions).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     for (int i = 0; i < parts.length; i++) {
+      String part = parts[i];
       if (i % 2 == 0) {
-        builder.append(parts[i]);
-      } else {
-        builder.append(parts[i].isEmpty() ? text("$") : Objects.requireNonNull(chunkMap.get(parts[i]), parts[i]));
+        builder.append(part);
+      }
+      else if (part.isEmpty()) {
+        builder.append("$");
+      }
+      else {
+        builder.append(Objects.requireNonNull(chunkMap.get(part), part));
       }
     }
     return builder.toFragment();
+  }
+
+  /**
+   * Substitutes a template where single variable is wrapped with <code>$...$</code>.
+   * See {@link #template(String, Map.Entry[])} for more details.
+   *
+   * @param template template string. Parts outside of <code>$...$</code> are considered to be plain text.
+   * @param variable a variable name (between <code>$...$</code>)
+   * @param substitution a substitution chunk for the variable.
+   * @return a {@code HtmlChunk} that represents a substituted template
+   */
+  public static @NotNull HtmlChunk template(@NotNull @Nls String template,
+                                            @NotNull @NonNls String variable, @NotNull HtmlChunk substitution) {
+    return template(template, new AbstractMap.SimpleImmutableEntry<>(variable, substitution));
   }
 
   /**

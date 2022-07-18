@@ -29,7 +29,7 @@ public class SettingsUtil {
           String pluginName = pluginDescriptor.getName();
           return description.substring(0, beforeBodyIdx) +
                  HtmlChunk.p().child(HtmlChunk.template(CodeInsightBundle.message("powered.by.plugin.full", "$name$"),
-                                                        Map.entry("name", HtmlChunk.link("settings://preferences.pluginManager?" + pluginName.replace(" ", "%20"), pluginName)))) +
+                                                        "name", HtmlChunk.link("settings://preferences.pluginManager?" + pluginName.replace(" ", "%20"), pluginName))) +
                  description.substring(beforeBodyIdx); 
         }
       }

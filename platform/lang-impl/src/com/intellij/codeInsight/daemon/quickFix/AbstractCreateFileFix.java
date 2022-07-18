@@ -173,7 +173,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     }
     HtmlChunk fileReference = fragment(icon("file", itemIcon), nbsp(), text(filePath.toString()));
     HtmlBuilder builder = new HtmlBuilder();
-    builder.append(template(CodeInsightBundle.message(myKey, "$file$"), Map.entry("file", fileReference)));
+    builder.append(template(CodeInsightBundle.message(myKey, "$file$"), "file", fileReference));
     if (filePath.getNameCount() > 1) {
       builder.br().append(CodeInsightBundle.message("intention.description.including.intermediate.directories"));
     }
@@ -181,7 +181,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
       HtmlChunk dirReference = fragment(icon("dir", AllIcons.Nodes.Folder), nbsp(), text(directoryPath));
       builder.br()
         .append(template(CodeInsightBundle.message("intention.description.inside.directory", "$directory$"),
-                         Map.entry("directory", dirReference)));
+                         "directory", dirReference));
     }
     return builder.toFragment();
   }
