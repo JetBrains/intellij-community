@@ -1380,10 +1380,6 @@
                      key="multiple.exceptions.declared.on.test.method.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.MultipleExceptionsDeclaredOnTestMethodInspection" cleanupTool="true"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="JUnitTestCaseWithNonTrivialConstructors" shortName="TestCaseWithConstructor"
-                     bundle="messages.InspectionGadgetsBundle" key="test.case.with.constructor.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.TestCaseWithConstructorInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableAssertion" bundle="messages.InspectionGadgetsBundle"
                      key="simplifiable.junit.assertion.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.test.frameworks.issues" enabledByDefault="true" level="WARNING"

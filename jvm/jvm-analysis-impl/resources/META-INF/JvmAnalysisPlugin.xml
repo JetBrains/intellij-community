@@ -23,6 +23,12 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.test.method.without.assertion.display.name"
                      implementationClass="com.intellij.codeInspection.test.TestMethodWithoutAssertionInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestCaseWithConstructor"
+                     suppressId="JUnitTestCaseWithNonTrivialConstructors"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.test.case.with.constructor.display.name"
+                     implementationClass="com.intellij.codeInspection.test.TestCaseWithConstructorInspection"/>
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="TestFailedLine"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
