@@ -19,7 +19,7 @@ final class DefaultFileOperations implements FileOperations {
     @NotNull
     @Override
     public Iterator<File> iterator() {
-      return Collections.<File>emptyList().iterator();
+      return Collections.emptyIterator();
     }
 
     @Override
