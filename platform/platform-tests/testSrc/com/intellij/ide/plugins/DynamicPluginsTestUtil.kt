@@ -21,11 +21,13 @@ internal fun loadDescriptorInTest(
   assertThat(dir).exists()
   PluginManagerCore.getAndClearPluginLoadingErrors()
 
+  val buildNumber = BuildNumber.fromString("2042.42")!!
   val result = loadDescriptorFromFileOrDir(
     file = dir,
     context = DescriptorListLoadingContext(
+      brokenPluginVersions = emptyMap(),
+      productBuildNumber = Supplier { buildNumber },
       disabledPlugins = disabledPlugins.mapTo(LinkedHashSet()) { PluginId.getId(it) },
-      result = createPluginLoadingResult(),
     ),
     pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
     isBundled = isBundled,
@@ -45,12 +47,7 @@ internal fun loadDescriptorInTest(
 
 @JvmOverloads
 internal fun createPluginLoadingResult(checkModuleDependencies: Boolean = false): PluginLoadingResult {
-  val buildNumber = BuildNumber.fromString("2042.42")!!
-  return PluginLoadingResult(
-    brokenPluginVersions = emptyMap(),
-    productBuildNumber = Supplier { buildNumber },
-    checkModuleDependencies = checkModuleDependencies,
-  )
+  return PluginLoadingResult(checkModuleDependencies = checkModuleDependencies)
 }
 
 @JvmOverloads

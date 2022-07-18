@@ -166,8 +166,7 @@ private fun getImplicitDependency(descriptor: IdeaPluginDescriptorImpl,
   }
 
   val pluginId = descriptor.pluginId
-  if (PluginManagerCore.CORE_ID == pluginId || PluginManagerCore.JAVA_PLUGIN_ID == pluginId ||
-      PluginManagerCore.hasModuleDependencies(descriptor)) {
+  if (PluginManagerCore.CORE_ID == pluginId || PluginManagerCore.JAVA_PLUGIN_ID == pluginId || hasModuleDependencies(descriptor)) {
     return null
   }
 

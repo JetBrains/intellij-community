@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
+@file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty", "OVERRIDE_DEPRECATION")
 package com.intellij.ide.plugins
 
 import com.intellij.AbstractBundle
@@ -123,7 +123,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   var isDeleted = false
 
-  @JvmField internal var isIncomplete = false
+  @JvmField internal var isIncomplete: PluginLoadingError? = null
 
   override fun getDescriptorPath() = descriptorPath
 
@@ -194,29 +194,23 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
     if (!isSub) {
       if (context.isPluginDisabled(id)) {
-        markAsIncomplete(context, disabledDependency = null, shortMessage = null)
+        markAsIncomplete(disabledDependency = null, shortMessage = null)
       }
       else {
         checkCompatibility(context)
-        if (isIncomplete) {
+        if (isIncomplete != null) {
           return
         }
 
         for (pluginDependency in dependencies.plugins) {
           if (context.isPluginDisabled(pluginDependency.id)) {
-            markAsIncomplete(context, pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
-          }
-          else if (context.result.isBroken(pluginDependency.id)) {
-            markAsIncomplete(context = context,
-                             disabledDependency = null,
-                             shortMessage = "plugin.loading.error.short.depends.on.broken.plugin",
-                             pluginId = pluginDependency.id)
+            markAsIncomplete(pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
           }
         }
       }
     }
 
-    if (!isIncomplete && moduleName == null) {
+    if (isIncomplete == null && moduleName == null) {
       processOldDependencies(descriptor = this,
                              context = context,
                              pathResolver = pathResolver,
@@ -234,16 +228,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     for (dependency in dependencies) {
       // context.isPluginIncomplete must be not checked here as another version of plugin maybe supplied later from another source
       if (context.isPluginDisabled(dependency.pluginId)) {
-        if (!dependency.isOptional && !isIncomplete) {
-          markAsIncomplete(context, dependency.pluginId, "plugin.loading.error.short.depends.on.disabled.plugin")
-        }
-      }
-      else if (context.result.isBroken(dependency.pluginId)) {
-        if (!dependency.isOptional && !isIncomplete) {
-          markAsIncomplete(context = context,
-                           disabledDependency = null,
-                           shortMessage = "plugin.loading.error.short.depends.on.broken.plugin",
-                           pluginId = dependency.pluginId)
+        if (!dependency.isOptional && isIncomplete == null) {
+          markAsIncomplete(dependency.pluginId, "plugin.loading.error.short.depends.on.disabled.plugin")
         }
       }
 
@@ -300,13 +286,12 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     }
 
     fun markAsIncompatible(error: PluginLoadingError) {
-      if (isIncomplete) {
+      if (isIncomplete != null) {
         return
       }
 
-      isIncomplete = true
+      isIncomplete = error
       isEnabled = false
-      context.result.addIncompletePlugin(plugin = this, error = error)
     }
 
     if (disableNonBundledPlugins) {
@@ -319,13 +304,13 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       return
     }
 
-    PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get())?.let {
+    PluginManagerCore.checkBuildNumberCompatibility(this, context.productBuildNumber.get())?.let {
       markAsIncompatible(it)
       return
     }
 
     // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve "Plugin Error" (IDEA-232675)"
-    if (context.result.isBroken(this)) {
+    if (context.isBroken(this)) {
       markAsIncompatible(PluginLoadingError(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.marked.as.broken", name, version) },
@@ -334,28 +319,25 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     }
   }
 
-  private fun markAsIncomplete(context: DescriptorListLoadingContext,
-                               disabledDependency: PluginId?,
+  private fun markAsIncomplete(disabledDependency: PluginId?,
                                @PropertyKey(resourceBundle = CoreBundle.BUNDLE) shortMessage: String?,
                                pluginId: PluginId? = disabledDependency) {
-    if (isIncomplete) {
+    if (isIncomplete != null) {
       return
     }
 
-    isIncomplete = true
-    isEnabled = false
-
-    val pluginError = if (shortMessage == null) {
-      null
+    if (shortMessage == null) {
+      isIncomplete = PluginLoadingError(plugin = this, detailedMessageSupplier = null, shortMessageSupplier = PluginLoadingError.DISABLED)
     }
     else {
-      PluginLoadingError(plugin = this,
-                         detailedMessageSupplier = null,
-                         shortMessageSupplier = { CoreBundle.message(shortMessage, pluginId!!) },
-                         isNotifyUser = false,
-                         disabledDependency = disabledDependency)
+      isIncomplete = PluginLoadingError(plugin = this,
+                                        detailedMessageSupplier = null,
+                                        shortMessageSupplier = { CoreBundle.message(shortMessage, pluginId!!) },
+                                        isNotifyUser = false,
+                                        disabledDependency = disabledDependency)
     }
-    context.result.addIncompletePlugin(this, pluginError)
+
+    isEnabled = false
   }
 
   @ApiStatus.Internal

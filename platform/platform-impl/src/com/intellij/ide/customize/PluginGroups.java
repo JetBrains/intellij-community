@@ -30,7 +30,7 @@ public class PluginGroups {
 
   private final Map<PluginId, PluginNode> myPluginsFromRepository = new HashMap<>();
   private final Set<PluginId> myDisabledPluginIds = new HashSet<>(DisabledPluginsState.loadDisabledPlugins());
-  private final SortedMap<PluginId, IdeaPluginDescriptorImpl> myEnabledPlugins = PluginDescriptorLoader.loadDescriptorsForDeprecatedWizard()
+  private final Map<PluginId, IdeaPluginDescriptorImpl> myEnabledPlugins = PluginDescriptorLoader.loadDescriptorsForDeprecatedWizard()
     .enabledPluginsById;
 
   private boolean myInitialized;

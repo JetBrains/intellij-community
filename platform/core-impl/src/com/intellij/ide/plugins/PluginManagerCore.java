@@ -404,18 +404,6 @@ public final class PluginManagerCore {
     return Paths.get(PathManager.getConfigPath()).resolve("updatedBrokenPlugins.db");
   }
 
-  static boolean hasModuleDependencies(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    for (PluginDependency dependency : descriptor.pluginDependencies) {
-      PluginId dependencyPluginId = dependency.getPluginId();
-      if (JAVA_PLUGIN_ID.equals(dependencyPluginId) ||
-          JAVA_MODULE_ID.equals(dependencyPluginId) ||
-          isModuleDependency(dependencyPluginId)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public static synchronized void invalidatePlugins() {
     pluginSet = null;
 
@@ -740,12 +728,12 @@ public final class PluginManagerCore {
   }
 
   static @NotNull PluginManagerState initializePlugins(@NotNull DescriptorListLoadingContext context,
+                                                       @NotNull PluginLoadingResult loadingResult,
                                                        @NotNull ClassLoader coreLoader,
                                                        boolean checkEssentialPlugins,
                                                        @Nullable Activity parentActivity) {
-    PluginLoadingResult loadingResult = context.result;
     Map<PluginId, PluginLoadingError> pluginErrorsById = loadingResult.copyPluginErrors$intellij_platform_core_impl();
-    List<Supplier<String>> globalErrors = loadingResult.copyGlobalErrors$intellij_platform_core_impl();
+    List<Supplier<String>> globalErrors = context.copyGlobalErrors$intellij_platform_core_impl();
 
     if (loadingResult.duplicateModuleMap != null) {
       for (Map.Entry<PluginId, List<IdeaPluginDescriptorImpl>> entry : loadingResult.duplicateModuleMap.entrySet()) {
@@ -756,7 +744,7 @@ public final class PluginManagerCore {
       }
     }
 
-    Map<PluginId, IdeaPluginDescriptorImpl> idMap = loadingResult.idMap;
+    Map<PluginId, IdeaPluginDescriptorImpl> idMap = loadingResult.getIdMap();
     if (checkEssentialPlugins && !idMap.containsKey(CORE_ID)) {
       throw new EssentialPluginMissingException(Collections.singletonList(CORE_ID + " (platform prefix: " +
                                                                           System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")"));
@@ -815,7 +803,7 @@ public final class PluginManagerCore {
       checkEssentialPluginsAreAvailable(idMap);
     }
 
-    PluginSet pluginSet = pluginSetBuilder.createPluginSet(context.result.incompletePlugins.values());
+    PluginSet pluginSet = pluginSetBuilder.createPluginSet(loadingResult.getIncompletePlugins());
     new ClassLoaderConfigurator(pluginSet, coreLoader).configure();
     return new PluginManagerState(pluginSet, disabledRequired, disabledAfterInit);
   }
@@ -973,13 +961,14 @@ public final class PluginManagerCore {
 
   @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
   static synchronized @NotNull PluginSet initializeAndSetPlugins(@NotNull DescriptorListLoadingContext context,
+                                                                 @NotNull PluginLoadingResult loadingResult,
                                                                  @NotNull ClassLoader coreLoader) {
     Activity activity = StartUpMeasurer.startActivity("plugin initialization");
-    PluginManagerState initResult = initializePlugins(context, coreLoader, !isUnitTestMode, activity);
+    PluginManagerState initResult = initializePlugins(context, loadingResult, coreLoader, !isUnitTestMode, activity);
 
     ourPluginsToDisable = initResult.effectiveDisabledIds;
     ourPluginsToEnable = initResult.disabledRequiredIds;
-    shadowedBundledPlugins = Java11Shim.INSTANCE.copyOf(context.result.shadowedBundledIds);
+    shadowedBundledPlugins = Java11Shim.INSTANCE.copyOf(loadingResult.shadowedBundledIds);
 
     activity.end();
     activity.setDescription("plugin count: " + initResult.pluginSet.enabledPlugins.size());
@@ -1063,13 +1052,13 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  public static boolean processAllNonOptionalDependencyIds(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                           @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
-                                                           @NotNull Function<? super PluginId, FileVisitResult> consumer) {
-    return processAllNonOptionalDependencies(rootDescriptor,
-                                             new HashSet<>(),
-                                             pluginIdMap,
-                                             (pluginId, __) -> consumer.apply(pluginId));
+  public static void processAllNonOptionalDependencyIds(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                                                        @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
+                                                        @NotNull Function<? super PluginId, FileVisitResult> consumer) {
+    processAllNonOptionalDependencies(rootDescriptor,
+                                      new HashSet<>(),
+                                      pluginIdMap,
+                                      (pluginId, __) -> consumer.apply(pluginId));
   }
 
   @ApiStatus.Internal

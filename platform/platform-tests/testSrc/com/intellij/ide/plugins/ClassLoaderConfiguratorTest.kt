@@ -154,15 +154,17 @@ internal class ClassLoaderConfiguratorTest {
 }
 
 private fun loadDescriptors(dir: Path): PluginLoadingResult {
-  val result = PluginLoadingResult(brokenPluginVersions = emptyMap(), productBuildNumber = Supplier { buildNumber })
-  val context = DescriptorListLoadingContext(disabledPlugins = Collections.emptySet(), result = result)
+  val result = PluginLoadingResult()
+  val context = DescriptorListLoadingContext(disabledPlugins = Collections.emptySet(),
+                                             brokenPluginVersions = emptyMap(),
+                                             productBuildNumber = Supplier { buildNumber })
 
   // constant order in tests
   val paths = dir.directoryStreamIfExists { it.sorted() }!!
   context.use {
-    for (file in paths) {
-      result.add(loadDescriptor(file, context) ?: continue, false)
-    }
+    result.addAll(descriptors = paths.map { loadDescriptor(file = it, parentContext = context) },
+                  overrideUseIfCompatible = false,
+                  productBuildNumber = buildNumber)
   }
   return result
 }

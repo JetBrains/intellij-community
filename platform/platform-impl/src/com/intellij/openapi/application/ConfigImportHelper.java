@@ -734,14 +734,14 @@ public final class ConfigImportHelper {
     }
   }
 
-  static class ConfigImportOptions {
+  static final class ConfigImportOptions {
     final Logger log;
     boolean headless;
     @Nullable ConfigImportSettings importSettings;
-    BuildNumber compatibleBuildNumber = null;
-    MarketplacePluginDownloadService downloadService = null;
+    BuildNumber compatibleBuildNumber;
+    MarketplacePluginDownloadService downloadService;
     Path bundledPluginPath = null;
-    Map<PluginId, Set<String>> brokenPluginVersions = null;
+    @Nullable Map<PluginId, Set<String>> brokenPluginVersions = null;
 
     ConfigImportOptions(Logger log) {
       this.log = log;
@@ -885,16 +885,17 @@ public final class ConfigImportHelper {
                                                                         options.brokenPluginVersions,
                                                                         options.compatibleBuildNumber);
 
-    for (IdeaPluginDescriptorImpl descriptor : result.idMap.values()) {
+    for (IdeaPluginDescriptorImpl descriptor : result.getIdMap().values()) {
       if (descriptor.isBundled()) {
         continue;
       }
 
-      boolean isBroken = result.isBroken(descriptor.getPluginId());
+      Set<String> brokenVersions = options.brokenPluginVersions == null ? null : options.brokenPluginVersions.get(descriptor.getPluginId());
+      boolean isBroken = brokenVersions != null && brokenVersions.contains(descriptor.getVersion());
       (isBroken ? pluginsToDownload : pluginsToMigrate).add(descriptor);
     }
 
-    for (IdeaPluginDescriptorImpl descriptor : result.incompletePlugins.values()) {
+    for (IdeaPluginDescriptorImpl descriptor : result.getIncompletePlugins()) {
       if (descriptor.isBundled()) {
         continue;
       }
@@ -1023,16 +1024,19 @@ public final class ConfigImportHelper {
 
   private static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor,
                                         @Nullable Map<PluginId, Set<String>> brokenPluginVersions) {
-    return brokenPluginVersions != null ?
-           brokenPluginVersions.get(descriptor.getPluginId()).contains(descriptor.getVersion()) :
-           PluginManagerCore.isBrokenPlugin(descriptor);
+    if (brokenPluginVersions == null) {
+      return PluginManagerCore.isBrokenPlugin(descriptor);
+    }
+    Set<String> versions = brokenPluginVersions.get(descriptor.getPluginId());
+    return versions != null && versions.contains(descriptor.getVersion());
   }
 
   private static boolean isEmptyDirectory(Path newPluginsDir) {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(newPluginsDir)) {
       for (Path path : stream) {
-        boolean hidden =
-          SystemInfo.isWindows ? Files.readAttributes(path, DosFileAttributes.class).isHidden() : path.getFileName().startsWith(".");
+        boolean hidden = SystemInfoRt.isWindows
+                         ? Files.readAttributes(path, DosFileAttributes.class).isHidden()
+                         : path.getFileName().startsWith(".");
         if (!hidden) {
           return false;
         }
