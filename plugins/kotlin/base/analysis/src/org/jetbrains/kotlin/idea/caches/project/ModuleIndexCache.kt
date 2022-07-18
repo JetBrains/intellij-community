@@ -41,8 +41,8 @@ private fun getDependents(module: Module): Set<Module> {
     while (true) {
         val current = walkingQueue.pollFirst() ?: break
         processedExporting.add(current)
-        result.addAll(index.plainUsages[current])
-        for (dependent in index.exportingUsages[current]) {
+        result.addAll(index.plainUsages(current))
+        for (dependent in index.exportingUsages(current)) {
             result.add(dependent)
             if (processedExporting.add(dependent)) {
                 walkingQueue.addLast(dependent)
@@ -52,25 +52,39 @@ private fun getDependents(module: Module): Set<Module> {
     return result
 }
 
-private class ModuleIndex {
-    val plainUsages = MultiMap.create<Module, Module>()
-    val exportingUsages = MultiMap.create<Module, Module>()
+private interface ModuleIndex {
+
+    fun plainUsages(module: Module): Collection<Module>
+
+    fun exportingUsages(module: Module): Collection<Module>
+}
+
+private class ModuleIndexImpl(private val plainUsages: MultiMap<Module, Module>, private val exportingUsages: MultiMap<Module, Module>): ModuleIndex {
+    override fun plainUsages(module: Module): Collection<Module> = plainUsages[module]
+
+    override fun exportingUsages(module: Module): Collection<Module> = exportingUsages[module]
 }
 
 private fun getModuleIndex(project: Project): ModuleIndex {
     return CachedValuesManager.getManager(project).getCachedValue(project) {
-        val index = ModuleIndex()
+        val plainUsages: MultiMap<Module, Module> = MultiMap.create()
+        val exportingUsages: MultiMap<Module, Module> = MultiMap.create()
+
         for (module in ModuleManager.getInstance(project).modules) {
             for (orderEntry in ModuleRootManager.getInstance(module).orderEntries) {
                 if (orderEntry is ModuleOrderEntry) {
                     val referenced = orderEntry.module
                     if (referenced != null) {
-                        val map = if (orderEntry.isExported) index.exportingUsages else index.plainUsages
+                        val map = if (orderEntry.isExported) exportingUsages else plainUsages
                         map.putValue(referenced, module)
                     }
                 }
             }
         }
-        CachedValueProvider.Result(index, ProjectRootModificationTracker.getInstance(project))
+        // TODO:
+        CachedValueProvider.Result(
+            ModuleIndexImpl(plainUsages = plainUsages, exportingUsages = exportingUsages),
+            ProjectRootModificationTracker.getInstance(project)
+        )
     }!!
 }

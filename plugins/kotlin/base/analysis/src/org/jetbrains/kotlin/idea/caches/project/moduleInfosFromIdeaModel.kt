@@ -47,10 +47,11 @@ import java.util.concurrent.ConcurrentHashMap
 fun getModuleInfosFromIdeaModel(project: Project, platform: TargetPlatform? = null): List<IdeaModuleInfo> {
     val ideaModelInfosCache = getIdeaModelInfosCache(project)
 
-    return if (platform != null)
+    return if (platform != null && !platform.isCommon()) {
         ideaModelInfosCache.forPlatform(platform)
-    else
+    } else {
         ideaModelInfosCache.allModules()
+    }
 }
 
 @Suppress("DEPRECATION")
@@ -112,8 +113,8 @@ private fun collectModuleInfosFromIdeaModel(
 
     //TODO: (module refactoring) include libraries that are not among dependencies of any module
     val ideaLibraries = ideaModules.flatMap { module ->
-        ModuleRootManager.getInstance(module).orderEntries.filterIsInstance<LibraryOrderEntry>().map {
-            it.library?.let { LibraryWrapper(it as LibraryEx) }
+        ModuleRootManager.getInstance(module).orderEntries.filterIsInstance<LibraryOrderEntry>().map { entry ->
+            entry.library?.let { LibraryWrapper(it as LibraryEx) }
         }
     }.filterNotNull().toSet()
 
@@ -178,7 +179,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
         Disposer.register(this, sdkCache)
     }
 
-    private fun ideaModules(): Array<out Module> = ModuleManager.getInstance(project).modules
+    private fun ideaModules(): Array<out Module> = runReadAction { ModuleManager.getInstance(project).modules }
 
     override fun dispose() = Unit
 
@@ -268,6 +269,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
         }
 
         private fun calculateLibrariesForModule(module: Module) {
+            checkCanceled()
             val orderEntries = ModuleRootManager.getInstance(module).orderEntries
             for (orderEntry in orderEntries) {
                 orderEntry.safeAs<LibraryOrderEntry>()?.library.safeAs<LibraryEx>()?.let(::get)
