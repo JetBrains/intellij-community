@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.util.IconLoader
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.Nls
+import java.io.IOException
 import javax.swing.Icon
 
 internal val NONE = IconInfo(null, IdeBundle.message("default.icons.none.text"), "", null)
@@ -22,7 +23,7 @@ internal class IconInfo(val icon: Icon?,
                         val actionId: String?,
                         val iconPath: String?) {
   val iconReference: String
-    get() = actionId ?: iconPath ?: error("Either actionId or iconPath should be set")
+    get() = iconPath ?: actionId ?: error("Either actionId or iconPath should be set")
 
   override fun toString(): String {
     return text
@@ -54,7 +55,31 @@ internal fun getAvailableIcons(): List<IconInfo> {
   val actionManager = ActionManager.getInstance()
   return actionManager.getActionIdList("").mapNotNull { actionId ->
     val action = actionManager.getActionOrStub(actionId) ?: return@mapNotNull null
-    val icon = action.templatePresentation.icon ?: return@mapNotNull null
+    val presentation = action.templatePresentation
+    val icon = presentation.getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON)
+               ?: presentation.icon
+               ?: return@mapNotNull null
     IconInfo(icon, action.templateText.nullize() ?: actionId, actionId, null)
+  }
+}
+
+internal fun getCustomIcons(schema: CustomActionsSchema): List<IconInfo> {
+  val actionManager = ActionManager.getInstance()
+  return schema.iconCustomizations.mapNotNull { (actionId, iconReference) ->
+    if (actionId == null || iconReference == null) return@mapNotNull null
+    val action = actionManager.getAction(iconReference)
+    if (action == null) {
+      val icon = try {
+        CustomActionsSchema.loadCustomIcon(iconReference)
+      }
+      catch (ex: IOException) {
+        null
+      }
+      if (icon != null) {
+        IconInfo(icon, iconReference.substringAfterLast("/"), actionId, iconReference)
+      }
+      else null
+    }
+    else null
   }
 }

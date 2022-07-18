@@ -412,6 +412,10 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return path == null ? "" : path;
   }
 
+  Map<String, String> getIconCustomizations() {
+    return Collections.unmodifiableMap(iconCustomizations);
+  }
+
   private void writeIcons(Element parent) {
     for (String actionId : iconCustomizations.keySet()) {
       Element action = new Element(ELEMENT_ACTION);

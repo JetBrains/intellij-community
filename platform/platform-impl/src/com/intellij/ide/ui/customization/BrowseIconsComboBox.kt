@@ -27,8 +27,10 @@ import java.util.*
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.plaf.basic.BasicComboBoxEditor
+import javax.swing.tree.DefaultMutableTreeNode
 
-internal class BrowseIconsComboBox(private val parentDisposable: Disposable,
+internal class BrowseIconsComboBox(private val customActionsSchema: CustomActionsSchema,
+                                   private val parentDisposable: Disposable,
                                    withNoneItem: Boolean) : ComboBox<IconInfo>() {
   init {
     model = DefaultComboBoxModel(createIconsList(withNoneItem).toTypedArray())
@@ -41,7 +43,9 @@ internal class BrowseIconsComboBox(private val parentDisposable: Disposable,
   }
 
   private fun createIconsList(withNoneItem: Boolean): List<IconInfo> {
-    val defaultIcons = getDefaultIcons().toMutableList()
+    val defaultIcons = getDefaultIcons()
+    val customIcons = getCustomIcons(customActionsSchema)
+      .filter { info -> defaultIcons.find { it.iconPath == info.iconPath } == null }
     val availableIcons = getAvailableIcons()
       .filter { info -> defaultIcons.find { it.icon === info.icon } == null }
       .sortedWith(Comparator { a, b -> a.text.compareTo(b.text, ignoreCase = true) })
@@ -49,6 +53,7 @@ internal class BrowseIconsComboBox(private val parentDisposable: Disposable,
     if (withNoneItem) icons.add(NONE)
     icons.addAll(defaultIcons)
     icons.add(SEPARATOR)
+    icons.addAll(customIcons)
     icons.addAll(availableIcons)
     return icons
   }
@@ -156,7 +161,20 @@ internal class BrowseIconsComboBox(private val parentDisposable: Disposable,
     }
   }
 
-  fun selectByCondition(predicate: (IconInfo) -> Boolean): Boolean {
+  fun selectIconForNode(node: DefaultMutableTreeNode) {
+    val pair = CustomizableActionsPanel.getActionIdAndIcon(node)
+    val (actionId, icon) = pair.first to pair.second
+    if (actionId != null && icon != null) {
+      val customIconRef = customActionsSchema.getIconPath(actionId)
+      if (StringUtil.isNotEmpty(customIconRef) && selectByCondition { info -> info.iconReference == customIconRef }
+          || selectByCondition { info -> info.actionId == actionId || info.icon == icon }) {
+        return
+      }
+    }
+    selectedIndex = 0
+  }
+
+  private fun selectByCondition(predicate: (IconInfo) -> Boolean): Boolean {
     val ind = (0 until model.size).find { predicate(model.getElementAt(it)) }
     return (ind != null).also {
       if (it) selectedIndex = ind!!

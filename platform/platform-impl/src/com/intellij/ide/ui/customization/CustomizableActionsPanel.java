@@ -415,20 +415,7 @@ public class CustomizableActionsPanel {
       isNodeInsideMenu = isInsideMenu(path);
       init();
       myNode = (DefaultMutableTreeNode)path.getLastPathComponent();
-
-      final String actionId = getActionId(myNode);
-      if (actionId != null) {
-        AnAction action = ActionManager.getInstance().getAction(actionId);
-        Icon icon = action.getTemplatePresentation().getIcon();
-        boolean selected = false;
-        if (icon != null) {
-          selected = myComboBox.selectByCondition(info -> info.getIconReference().equals(actionId))
-                     || myComboBox.selectByCondition(info -> info.getIcon() == icon);
-        }
-        if (!selected) {
-          myComboBox.setSelectedIndex(0);
-        }
-      }
+      myComboBox.selectIconForNode(myNode);
     }
 
     @Override
@@ -443,7 +430,7 @@ public class CustomizableActionsPanel {
 
     @Override
     protected JComponent createCenterPanel() {
-      myComboBox = new BrowseIconsComboBox(getDisposable(), isNodeInsideMenu);
+      myComboBox = new BrowseIconsComboBox(mySelectedSchema, getDisposable(), isNodeInsideMenu);
       JPanel northPanel = new JPanel(new BorderLayout());
       northPanel.add(myComboBox, BorderLayout.NORTH);
       return northPanel;

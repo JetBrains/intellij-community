@@ -32,22 +32,10 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
     this.model = DefaultTreeModel(root)
     isRootVisible = false
     cellRenderer = CustomizableActionsPanel.createDefaultRenderer()
-    addTreeSelectionListener { e ->
-      val selectedNode = e.path.lastPathComponent as DefaultMutableTreeNode
-      val pair = CustomizableActionsPanel.getActionIdAndIcon(selectedNode)
-      val (actionId, icon) = pair.first to pair.second
-      if (actionId != null && icon != null) {
-        val selected = browseComboBox.selectByCondition { info -> info.iconReference == actionId }
-                       || browseComboBox.selectByCondition { info -> info.icon == icon }
-        if (selected) {
-          return@addTreeSelectionListener
-        }
-      }
-      browseComboBox.selectedIndex = 0
-    }
+    addTreeSelectionListener { e -> browseComboBox.selectIconForNode(e.path.lastPathComponent as DefaultMutableTreeNode) }
   }
 
-  private val browseComboBox = BrowseIconsComboBox(disposable, withNoneItem)
+  private val browseComboBox = BrowseIconsComboBox(customActionsSchema, disposable, withNoneItem)
 
   private val selectedIcon: IconInfo?
     get() = browseComboBox.selectedItem as? IconInfo
