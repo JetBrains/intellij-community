@@ -53,9 +53,7 @@ import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlin.sequences.Sequence;
 import kotlinx.coroutines.BuildersKt;
-import kotlinx.coroutines.CompletableJob;
 import kotlinx.coroutines.GlobalScope;
-import kotlinx.coroutines.Job;
 import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.*;
 import sun.awt.AWTAccessor;
@@ -69,7 +67,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
-import static kotlinx.coroutines.JobKt.Job;
 
 @ApiStatus.Internal
 public class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx {
@@ -362,34 +359,14 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
     if (propagateContextOrCancellation()) {
-      // see com.intellij.util.concurrency.AppScheduledExecutorService#handleCommand
-      if (Propagation.propagateCancellation()) {
-        //noinspection TestOnlyProblems
-        Job job = Cancellation.currentJob();
-        CompletableJob childJob = Job(job);
-        expired = cancelIfExpired(expired, childJob);
-        runnable = new CancellationRunnable(childJob, runnable);
-      }
-      runnable = Propagation.handleContext(runnable);
+      Pair<Runnable, Condition<?>> captured = Propagation.capturePropagationAndCancellationContext(runnable, expired);
+      runnable = captured.getFirst();
+      expired = captured.getSecond();
     }
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, state);
     LaterInvocator.invokeLater(state, expired, wrapWithRunIntendedWriteAction(r));
   }
 
-  private static <T> @NotNull Condition<T> cancelIfExpired(@NotNull Condition<? super T> expiredCondition, @NotNull Job childJob) {
-    return t -> {
-      boolean expired = expiredCondition.value(t);
-      if (expired) {
-        // Cancel to avoid a hanging child job which will prevent completion of the parent one.
-        childJob.cancel(null);
-        return true;
-      }
-      else {
-        // Treat runnable as expired if its job was already cancelled.
-        return childJob.isCancelled();
-      }
-    };
-  }
 
   @Override
   public final void load() {

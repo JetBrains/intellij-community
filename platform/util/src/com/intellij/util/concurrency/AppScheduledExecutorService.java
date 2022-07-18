@@ -142,7 +142,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
 
     @Override
     public void execute(@NotNull Runnable command) {
-      executeRaw(handleCommand(command));
+      executeRaw(capturePropagationAndCancellationContext(command));
     }
 
     @Override
@@ -152,7 +152,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
 
     @Override
     protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-      return handleTask(callable);
+      return capturePropagationAndCancellationContext(callable);
     }
 
     @Override
@@ -227,17 +227,17 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     myLowMemoryWatcherManager.waitForInitComplete(timeout, unit);
   }
 
-  static @NotNull Runnable handleCommand(@NotNull Runnable command) {
+  static @NotNull Runnable capturePropagationAndCancellationContext(@NotNull Runnable command) {
     if (!propagateContextOrCancellation()) {
       return command;
     }
-    return Propagation.handleCommand(command);
+    return Propagation.capturePropagationAndCancellationContext(command);
   }
 
-  static <T> @NotNull FutureTask<T> handleTask(Callable<T> callable) {
+  static <T> @NotNull FutureTask<T> capturePropagationAndCancellationContext(@NotNull Callable<T> callable) {
     if (!propagateContextOrCancellation()) {
       return new FutureTask<>(callable);
     }
-    return Propagation.handleTask(callable);
+    return Propagation.capturePropagationAndCancellationContext(callable);
   }
 }

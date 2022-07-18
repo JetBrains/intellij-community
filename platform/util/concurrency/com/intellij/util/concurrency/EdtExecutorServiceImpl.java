@@ -50,7 +50,7 @@ final class EdtExecutorServiceImpl extends EdtExecutorService {
 
   @Override
   protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-    FutureTask<T> task = AppScheduledExecutorService.handleTask(callable);
+    FutureTask<T> task = AppScheduledExecutorService.capturePropagationAndCancellationContext(callable);
     if (shouldManifestExceptionsImmediately()) {
       return new FlippantFuture<>(task);
     }

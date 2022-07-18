@@ -4,7 +4,6 @@ package com.intellij.util.concurrency;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
-import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -261,28 +260,6 @@ class SchedulingWrapper implements ScheduledExecutorService {
     }
   }
 
-  final class CancellationScheduledFutureTask<V> extends MyScheduledFutureTask<V> {
-
-    private final @NotNull Job myJob;
-
-    CancellationScheduledFutureTask(@NotNull Job job, @NotNull Callable<V> callable, long ns) {
-      super(callable, ns);
-      myJob = job;
-    }
-
-    CancellationScheduledFutureTask(@NotNull Job job, @NotNull Runnable r, long ns, long period) {
-      super(r, null, ns, period);
-      myJob = job;
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      boolean result = super.cancel(mayInterruptIfRunning);
-      myJob.cancel(null);
-      return result;
-    }
-  }
-
   void futureDone(@NotNull Future<?> task) {
 
   }
@@ -345,7 +322,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
     if (!propagateContextOrCancellation()) {
       return new MyScheduledFutureTask<>(callable, ns);
     }
-    return Propagation.handleScheduledFutureTask(this, callable, ns);
+    return Propagation.capturePropagationAndCancellationContext(this, callable, ns);
   }
 
   @NotNull
@@ -388,7 +365,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
     if (!propagateContextOrCancellation()) {
       return new MyScheduledFutureTask<>(command, null, ns, period);
     }
-    return Propagation.handlePeriodicScheduledFutureTask(this, command, ns, period);
+    return Propagation.capturePropagationAndCancellationContext(this, command, ns, period);
   }
 
   /////////////////////// delegates for ExecutorService ///////////////////////////

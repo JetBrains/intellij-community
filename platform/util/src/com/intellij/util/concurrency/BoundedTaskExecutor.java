@@ -19,9 +19,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.util.concurrency.AppScheduledExecutorService.handleCommand;
-import static com.intellij.util.concurrency.AppScheduledExecutorService.handleTask;
-
 /**
  * ExecutorService which limits the number of tasks running simultaneously.
  * The number of submitted tasks is unrestricted.
@@ -127,18 +124,18 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   @Override
-  protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
+  protected <T> @NotNull RunnableFuture<T> newTaskFor(@NotNull Runnable runnable, T value) {
     return newTaskFor(Executors.callable(runnable, value));
   }
 
   @Override
-  protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-    return handleTask(callable);
+  protected <T> @NotNull RunnableFuture<T> newTaskFor(@NotNull Callable<T> callable) {
+    return AppScheduledExecutorService.capturePropagationAndCancellationContext(callable);
   }
 
   @Override
   public void execute(@NotNull Runnable command) {
-    executeRaw(handleCommand(command));
+    executeRaw(AppScheduledExecutorService.capturePropagationAndCancellationContext(command));
   }
 
   private void executeRaw(@NotNull Runnable task) {

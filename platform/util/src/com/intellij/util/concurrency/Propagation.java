@@ -5,6 +5,8 @@ import com.intellij.concurrency.ContextCallable;
 import com.intellij.concurrency.ContextRunnable;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.SchedulingWrapper.MyScheduledFutureTask;
 import kotlinx.coroutines.CompletableDeferred;
@@ -23,7 +25,7 @@ import static kotlinx.coroutines.JobKt.Job;
 @Internal
 public final class Propagation {
 
-  static class Holder {
+  private static class Holder {
     private static boolean propagateThreadContext = Registry.is("ide.propagate.context");
     private static boolean propagateThreadCancellation = Registry.is("ide.propagate.cancellation");
   }
@@ -54,99 +56,126 @@ public final class Propagation {
 
   private Propagation() { }
 
-  static boolean propagateThreadContext() {
+  static boolean isPropagateThreadContext() {
     return Holder.propagateThreadContext;
   }
 
-  public static boolean propagateCancellation() {
+  static boolean isPropagateCancellation() {
     return Holder.propagateThreadCancellation;
   }
 
-  static @NotNull Runnable handleCommand(@NotNull Runnable command) {
-    if (propagateCancellation()) {
+  static @NotNull Runnable capturePropagationAndCancellationContext(@NotNull Runnable command) {
+    if (isPropagateCancellation()) {
       //noinspection TestOnlyProblems
       Job currentJob = Cancellation.currentJob();
       CompletableJob childJob = Job(currentJob);
-      return handleContext(new CancellationRunnable(childJob, command));
+      command = new CancellationRunnable(childJob, command);
     }
-    else {
-      return handleContext(command);
+    return capturePropagationContext(command);
+  }
+  public static @NotNull Pair<Runnable,Condition<?>> capturePropagationAndCancellationContext(@NotNull Runnable command, @NotNull Condition<?> expired) {
+    if (isPropagateCancellation()) {
+      //noinspection TestOnlyProblems
+      Job currentJob = Cancellation.currentJob();
+      CompletableJob childJob = Job(currentJob);
+      expired = cancelIfExpired(expired, childJob);
+      command = new CancellationRunnable(childJob, command);
     }
+    return Pair.create(capturePropagationContext(command), expired);
+  }
+
+  private static <T> @NotNull Condition<T> cancelIfExpired(@NotNull Condition<? super T> expiredCondition, @NotNull Job childJob) {
+    return t -> {
+      boolean expired = expiredCondition.value(t);
+      if (expired) {
+        // Cancel to avoid a hanging child job which will prevent completion of the parent one.
+        childJob.cancel(null);
+        return true;
+      }
+      else {
+        // Treat runnable as expired if its job was already cancelled.
+        return childJob.isCancelled();
+      }
+    };
   }
 
   @Internal
-  public static @NotNull Runnable handleContext(@NotNull Runnable runnable) {
-    if (propagateThreadContext()) {
+  private static @NotNull Runnable capturePropagationContext(@NotNull Runnable runnable) {
+    if (isPropagateThreadContext()) {
       return ThreadContext.captureThreadContext(runnable);
     }
-    else {
-      return runnable;
-    }
+    return runnable;
   }
 
-  static <V> @NotNull FutureTask<V> handleTask(@NotNull Callable<V> callable) {
-    if (propagateCancellation()) {
+  static <V> @NotNull FutureTask<V> capturePropagationAndCancellationContext(@NotNull Callable<V> callable) {
+    if (isPropagateCancellation()) {
       //noinspection TestOnlyProblems
       Job currentJob = Cancellation.currentJob();
       CompletableDeferred<V> childDeferred = CompletableDeferred(currentJob);
       CancellationCallable<V> cancellationCallable = new CancellationCallable<>(childDeferred, callable);
-      return new CancellationFutureTask<>(childDeferred, handleTaskContext(cancellationCallable));
+      return new CancellationFutureTask<>(childDeferred, capturePropagationContext(cancellationCallable));
     }
-    else {
-      return new FutureTask<>(handleTaskContext(callable));
-    }
+    return new FutureTask<>(capturePropagationContext(callable));
   }
 
-  static <V> @NotNull MyScheduledFutureTask<V> handleScheduledFutureTask(
-    @NotNull SchedulingWrapper wrapper,
-    @NotNull Callable<V> callable,
-    long ns
-  ) {
-    if (propagateCancellation()) {
+  static <V> @NotNull MyScheduledFutureTask<V> capturePropagationAndCancellationContext(@NotNull SchedulingWrapper wrapper,
+                                                                                        @NotNull Callable<V> callable,
+                                                                                        long ns) {
+    if (isPropagateCancellation()) {
       //noinspection TestOnlyProblems
       Job currentJob = Cancellation.currentJob();
       CompletableDeferred<V> childDeferred = CompletableDeferred(currentJob);
       CancellationCallable<V> cancellationCallable = new CancellationCallable<>(childDeferred, callable);
-      return wrapper.new CancellationScheduledFutureTask<>(childDeferred, handleTaskContext(cancellationCallable), ns);
+      return new CancellationScheduledFutureTask<>(wrapper, childDeferred, capturePropagationContext(cancellationCallable), ns);
     }
-    else {
-      return wrapper.new MyScheduledFutureTask<>(handleTaskContext(callable), ns);
-    }
+    return wrapper.new MyScheduledFutureTask<>(capturePropagationContext(callable), ns);
   }
 
-  private static <V> @NotNull Callable<V> handleTaskContext(@NotNull Callable<V> callable) {
-    if (propagateThreadContext()) {
+  private static <V> @NotNull Callable<V> capturePropagationContext(@NotNull Callable<V> callable) {
+    if (isPropagateThreadContext()) {
       return new ContextCallable<>(false, callable);
     }
-    else {
-      return callable;
-    }
+    return callable;
   }
 
-  static @NotNull MyScheduledFutureTask<?> handlePeriodicScheduledFutureTask(
-    @NotNull SchedulingWrapper wrapper,
-    @NotNull Runnable runnable,
-    long ns,
-    long period
-  ) {
-    if (propagateCancellation()) {
+  static @NotNull MyScheduledFutureTask<?> capturePropagationAndCancellationContext(@NotNull SchedulingWrapper wrapper,
+                                                                                    @NotNull Runnable runnable,
+                                                                                    long ns,
+                                                                                    long period) {
+    if (isPropagateCancellation()) {
       //noinspection TestOnlyProblems
       Job currentJob = Cancellation.currentJob();
       CompletableJob childJob = Job(currentJob);
       PeriodicCancellationRunnable cancellationRunnable = new PeriodicCancellationRunnable(childJob, runnable);
-      return wrapper.new CancellationScheduledFutureTask<>(childJob, handleTaskContext(cancellationRunnable), ns, period);
+      return new CancellationScheduledFutureTask<>(wrapper, childJob, wrapWithPropagationContext(cancellationRunnable), ns, period);
     }
-    else {
-      return wrapper.new MyScheduledFutureTask<Void>(handleTaskContext(runnable), null, ns, period);
-    }
+    return wrapper.new MyScheduledFutureTask<Void>(wrapWithPropagationContext(runnable), null, ns, period);
   }
 
-  private static @NotNull Runnable handleTaskContext(@NotNull Runnable runnable) {
-    if (propagateThreadContext()) {
+  private static @NotNull Runnable wrapWithPropagationContext(@NotNull Runnable runnable) {
+    if (isPropagateThreadContext()) {
       return new ContextRunnable(false, runnable);
     }
-    else {
-      return runnable;
+    return runnable;
+  }
+  private static final class CancellationScheduledFutureTask<V> extends SchedulingWrapper.MyScheduledFutureTask<V> {
+    private final @NotNull Job myJob;
+
+    CancellationScheduledFutureTask(@NotNull SchedulingWrapper self, @NotNull Job job, @NotNull Callable<V> callable, long ns) {
+      self.super(callable, ns);
+      myJob = job;
+    }
+
+    CancellationScheduledFutureTask(@NotNull SchedulingWrapper self, @NotNull Job job, @NotNull Runnable r, long ns, long period) {
+      self.super(r, null, ns, period);
+      myJob = job;
+    }
+
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+      boolean result = super.cancel(mayInterruptIfRunning);
+      myJob.cancel(null);
+      return result;
     }
   }
 }
