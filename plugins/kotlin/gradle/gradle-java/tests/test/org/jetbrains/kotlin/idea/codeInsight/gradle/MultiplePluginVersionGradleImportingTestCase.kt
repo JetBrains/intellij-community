@@ -177,8 +177,8 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         )
     }
 
-    fun checkHighlightingOnAllModules() {
-        createHighlightingCheck().invokeOnAllModules()
+    fun checkHighlightingOnAllModules(testLineMarkers: Boolean = true) {
+        createHighlightingCheck(testLineMarkers).invokeOnAllModules()
     }
 }
 
