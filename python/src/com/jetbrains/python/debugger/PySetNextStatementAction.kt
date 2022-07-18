@@ -2,6 +2,7 @@
 package com.jetbrains.python.debugger
 
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -55,6 +56,8 @@ class PySetNextStatementAction : XDebuggerActionBase(true) {
   }
 
   override fun getHandler(debuggerSupport: DebuggerSupport): XDebuggerSuspendedActionHandler = setNextStatementActionHandler
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun isHidden(event: AnActionEvent): Boolean {
     val project = event.getData(CommonDataKeys.PROJECT)
