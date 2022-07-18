@@ -54,11 +54,12 @@ import java.util.regex.Pattern;
  * It also tries to deal with the "glued token" problem by removing or adding whitespace to the prefix/suffix.
  */
 final class XmlLanguageInjector implements MultiHostInjector {
-  private final Configuration myConfiguration;
   private volatile Trinity<Long, Pattern, Collection<String>> myXmlIndex;
+  private final Project myProject;
 
+  @SuppressWarnings("PublicConstructorInNonPublicClass")
   public XmlLanguageInjector(@NotNull Project project) {
-    myConfiguration = Configuration.getProjectInstance(project);
+    myProject = project;
   }
 
   @Override
@@ -100,7 +101,7 @@ final class XmlLanguageInjector implements MultiHostInjector {
     if (place instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)place;
 
-      List<BaseInjection> injections = myConfiguration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
+      List<BaseInjection> injections = getConfiguration().getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, injectionsSize = injections.size(); i < injectionsSize; i++) {
         final BaseInjection injection = injections.get(i);
@@ -166,7 +167,7 @@ final class XmlLanguageInjector implements MultiHostInjector {
         return;
       }
 
-      List<BaseInjection> injections = myConfiguration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
+      List<BaseInjection> injections = getConfiguration().getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = injections.size(); i < size; i++) {
         BaseInjection injection = injections.get(i);
@@ -197,6 +198,10 @@ final class XmlLanguageInjector implements MultiHostInjector {
         }
       }
     }
+  }
+
+  private Configuration getConfiguration() {
+    return Configuration.getProjectInstance(myProject);
   }
 
   // NOTE: local name of an xml entity or attribute value should match at least one string in the index
@@ -231,17 +236,19 @@ final class XmlLanguageInjector implements MultiHostInjector {
   }
 
   private Trinity<Long, Pattern, Collection<String>> getXmlAnnotatedElementsValue() {
+    Configuration configuration = getConfiguration();
+
     Trinity<Long, Pattern, Collection<String>> index = myXmlIndex;
-    if (index == null || myConfiguration.getModificationCount() != index.first.longValue()) {
+    if (index == null || configuration.getModificationCount() != index.first.longValue()) {
       final Map<ElementPattern<?>, BaseInjection> map = new HashMap<>();
-      for (BaseInjection injection : myConfiguration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID)) {
+      for (BaseInjection injection : configuration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID)) {
         for (InjectionPlace place : injection.getInjectionPlaces()) {
           if (!place.isEnabled() || place.getElementPattern() == null) continue;
           map.put(place.getElementPattern(), injection);
         }
       }
       final Collection<String> stringSet = PatternValuesIndex.buildStringIndex(map.keySet());
-      index = Trinity.create(myConfiguration.getModificationCount(), buildPattern(stringSet), stringSet);
+      index = Trinity.create(configuration.getModificationCount(), buildPattern(stringSet), stringSet);
       myXmlIndex = index;
     }
     return index;
