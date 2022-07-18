@@ -117,15 +117,15 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
                sortType: PermanentGraph.SortType,
                filters: VcsLogFilterCollection,
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>? {
-      TraceManager.getTracer("vcs").spanBuilder("computing history ").useWithScope {
+      TraceManager.getTracer("vcs").spanBuilder("computing history").useWithScope { scope ->
         val isInitial = commitCount == CommitCountStage.INITIAL
 
         val indexDataGetter = index.dataGetter
+        scope.setAttribute("File path", filePath.toString())
         if (indexDataGetter != null && index.isIndexed(root) && dataPack.isFull) {
           cancelLastTask(false)
           val visiblePack = filterWithIndex(indexDataGetter, dataPack, oldVisiblePack, sortType, filters, isInitial)
-          it.setAttribute("File path", filePath.toString())
-          it.setAttribute("Type", "index")
+          scope.setAttribute("Type", "index")
           if (checkNotEmpty(dataPack, visiblePack, true)) {
             return Pair(visiblePack, commitCount)
           }
@@ -135,8 +135,7 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
           if (vcs.vcsHistoryProvider != null) {
             try {
               val visiblePack = filterWithProvider(vcs, dataPack, sortType, filters, isInitial)
-              it.setAttribute("File path", filePath.toString())
-              it.setAttribute("Type", "history provider")
+              scope.setAttribute("Type", "history provider")
               checkNotEmpty(dataPack, visiblePack, false)
               return@filter Pair(visiblePack, commitCount)
             }

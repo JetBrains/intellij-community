@@ -487,7 +487,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     @NotNull private final AtomicInteger myNewIndexedCommits = new AtomicInteger();
     @NotNull private final AtomicInteger myOldCommits = new AtomicInteger();
     private volatile long myStartTime;
-    private Span mySpan = null;
+    private Span mySpan;
     private Scope myScope;
 
     IndexingRequest(@NotNull VirtualFile root,
@@ -513,7 +513,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      mySpan = TraceManager.INSTANCE.getTracer("vcs").spanBuilder("building graph").startSpan();
+      mySpan = TraceManager.INSTANCE.getTracer("vcs").spanBuilder("indexing").startSpan();
       myScope = mySpan.makeCurrent();
       myStartTime = getCurrentTimeMillis();
 
@@ -582,8 +582,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private void report() {
       String formattedTime = StopWatch.formatTime(getCurrentTimeMillis() - myStartTime);
       mySpan.setAttribute("Number of commits", myNewIndexedCommits.get());
+      mySpan.setAttribute("Root name", myRoot.getName());
       if (myFull) {
-        mySpan.setAttribute("Root name", myRoot.getName());
         LOG.info(formattedTime +
                  " for indexing " +
                  myNewIndexedCommits + " commits in " + myRoot.getName());

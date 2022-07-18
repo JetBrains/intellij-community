@@ -58,6 +58,9 @@ import static git4idea.history.GitCommitRequirements.DiffRenameLimit;
 public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
   private static final Logger LOG = Logger.getInstance(GitLogProvider.class);
   public static final Function<VcsRef, String> GET_TAG_NAME = ref -> ref.getType() == GitRefManager.TAG ? ref.getName() : null;
+
+  private static final Tracer TRACER = TraceManager.INSTANCE.getTracer("vcs");
+
   public static final it.unimi.dsi.fastutil.Hash.Strategy<VcsRef> DONT_CONSIDER_SHA = new it.unimi.dsi.fastutil.Hash.Strategy<>() {
     @Override
     public int hashCode(@Nullable VcsRef ref) {
@@ -77,7 +80,6 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
-  private static final Tracer myTracer = TraceManager.INSTANCE.getTracer("vcs");
 
   public GitLogProvider(@NotNull Project project) {
     myProject = project;
@@ -137,7 +139,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       }
     }
 
-    Span span = myTracer.spanBuilder("sorting commits").setAttribute("root name", root.getName()).startSpan();
+    Span span = TRACER.spanBuilder("sorting commits").setAttribute("root name", root.getName()).startSpan();
     List<VcsCommitMetadata> sortedCommits = VcsLogSorter.sortByDateTopoOrder(allDetails);
     sortedCommits = ContainerUtil.getFirstItems(sortedCommits, requirements.getCommitCount());
     span.end();
@@ -156,7 +158,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
                                                  @NotNull final Set<? extends VcsRef> manuallyReadBranches,
                                                  @Nullable final Set<String> currentTagNames,
                                                  @Nullable final DetailedLogData commitsFromTags) {
-    Span span = myTracer.spanBuilder("validating data").setAttribute("root name", root.getName()).startSpan();
+    Span span = TRACER.spanBuilder("validating data").setAttribute("root name", root.getName()).startSpan();
     final Set<Hash> refs = ContainerUtil.map2Set(allRefs, VcsRef::getCommitHash);
 
     PermanentGraphImpl.newInstance(sortedCommits, new GraphColorManager<>() {
@@ -256,7 +258,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @NotNull
   private Set<String> readCurrentTagNames(@NotNull VirtualFile root) throws VcsException {
-    Span span = myTracer.spanBuilder("reading tags").setAttribute("root name", root.getName()).startSpan();
+    Span span = TRACER.spanBuilder("reading tags").setAttribute("root name", root.getName()).startSpan();
     Set<String> tags = new HashSet<>();
     tags.addAll(GitBranchUtil.getAllTags(myProject, root));
     span.end();
@@ -284,7 +286,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   private DetailedLogData loadSomeCommitsOnTaggedBranches(@NotNull VirtualFile root,
                                                           int commitCount,
                                                           @NotNull Collection<String> unmatchedTags) throws VcsException {
-    Span span = myTracer.spanBuilder("loading commits on tagged branch").setAttribute("root name", root.getName()).startSpan();
+    Span span = TRACER.spanBuilder("loading commits on tagged branch").setAttribute("root name", root.getName()).startSpan();
     List<String> params = new ArrayList<>();
     params.add("--max-count=" + commitCount);
 
@@ -350,7 +352,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @NotNull
   private Set<VcsRef> readBranches(@NotNull GitRepository repository) {
-    Span span = myTracer.spanBuilder("readBranches").setAttribute("root name", repository.getRoot().getName()).startSpan();
+    Span span = TRACER.spanBuilder("readBranches").setAttribute("root name", repository.getRoot().getName()).startSpan();
     VirtualFile root = repository.getRoot();
     repository.update();
     GitBranchesCollection branches = repository.getBranches();
