@@ -18,10 +18,8 @@ import com.intellij.debugger.ui.breakpoints.InstrumentationTracker;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -572,12 +570,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       try {
         CompletableFuture.allOf(commands.toArray(CompletableFuture[]::new)).get(1, TimeUnit.SECONDS);
       }
-      catch (InterruptedException ignored) {
-      }
-      catch (TimeoutException e) {
-        Attachment threadDumpAttachment = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
-        threadDumpAttachment.setIncluded(true);
-        LOG.error("Timeout while preloading thread data", threadDumpAttachment);
+      catch (InterruptedException | TimeoutException ignored) {
       }
       catch (Exception e) {
         Throwable throwable = DebuggerUtilsAsync.unwrap(e);
