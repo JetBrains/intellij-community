@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.findCompilation
 import org.jetbrains.kotlin.idea.gradleTooling.getCompilations
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform.*
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -35,7 +36,7 @@ private fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesB
     val sourceSetDataNode = getSiblingKotlinModuleData(sourceSet, gradleModule, ideModule, resolverCtx)?.cast<GradleSourceSetData>()
         ?: return
 
-    val propagatedDependencies = mppModel.getCompilations(sourceSet)
+    val propagatedDependencies = findCompilationsToPropagateDependenciesFrom(sourceSet)
         .map { compilation -> resolveVisibleDependencies(compilation) }
         .dependencyIntersection()
         /*
@@ -71,7 +72,7 @@ private fun KotlinMppPopulateModuleDependenciesContext.isDependencyPropagationAl
     When a library only offers a JVM variant, then Android and JVM consume this variant of the library.
     This will be replaced later on by [KT-43450](https://youtrack.jetbrains.com/issue/KT-43450)
      */
-    if (sourceSet.actualPlatforms.platforms.toSet() == setOf(KotlinPlatform.JVM, KotlinPlatform.ANDROID)) {
+    if (sourceSet.actualPlatforms.platforms.toSet() == setOf(JVM, ANDROID)) {
         return true
     }
 
@@ -80,12 +81,32 @@ private fun KotlinMppPopulateModuleDependenciesContext.isDependencyPropagationAl
     This source set shall also just propagate platform dependencies
     */
     if (mppModel.sourceSetsByName.values.any { otherSourceSet -> sourceSet.name in otherSourceSet.declaredDependsOnSourceSets } &&
-        (sourceSet.actualPlatforms.platforms.singleOrNull() == KotlinPlatform.JVM ||
-                sourceSet.actualPlatforms.platforms.singleOrNull() == KotlinPlatform.ANDROID)
+        (sourceSet.actualPlatforms.platforms.singleOrNull() == JVM ||
+                sourceSet.actualPlatforms.platforms.singleOrNull() == ANDROID)
     ) return true
 
     return false
 }
+
+private fun KotlinMppPopulateModuleDependenciesContext.findCompilationsToPropagateDependenciesFrom(
+    sourceSet: KotlinSourceSet
+): Set<KotlinCompilation> {
+    return when (sourceSet.actualPlatforms.platforms.toSet()) {
+        /*
+        Sharing code between Android and JVM:
+        In this case, we discriminate the Android compilation and only propagate jvm dependencies.
+        This might lead to some libraries being propagated that are not available on Android, but at least gives
+        some coverage.
+
+        The dependency intersection cannot be built upon jvm + android, because the dependencies
+        in this case will have *different ids*: As example:
+        my-library-jvm (jvm) vs my-library-android-release (android)
+         */
+        setOf(JVM, ANDROID) -> mppModel.getCompilations(sourceSet).filter { compilation -> compilation.platform == JVM }
+        else -> mppModel.getCompilations(sourceSet)
+    }.toSet()
+}
+
 
 private fun KotlinMppPopulateModuleDependenciesContext.resolveVisibleDependencies(compilation: KotlinCompilation): CompilationDependencies {
     return compilation.associateCompilations.mapNotNull { coordinates -> mppModel.findCompilation(coordinates) }.plus(compilation)
@@ -101,6 +122,7 @@ private fun KotlinMppPopulateModuleDependenciesContext.resolveVisibleDependencie
  */
 private fun List<CompilationDependencies>.dependencyIntersection(): Set<KotlinDependency> {
     if (this.isEmpty()) return emptySet()
+    if (this.size == 1) return first()
 
     val idIntersection = map { dependencies -> dependencies.map { it.id }.toSet() }
         .reduce { acc, ids -> acc intersect ids }
