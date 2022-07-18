@@ -25,7 +25,7 @@ public class PsiDeconstructionListImpl extends CompositePsiElement implements Ps
   }
 
   @Override
-  public @NotNull PsiPattern @NotNull [] getRecordComponents() {
+  public @NotNull PsiPattern @NotNull [] getDeconstructionComponents() {
     PsiPattern[] children = PsiTreeUtil.getChildrenOfType(this, PsiPattern.class);
     if (children == null) {
       return PsiPattern.EMPTY;
@@ -43,7 +43,7 @@ public class PsiDeconstructionListImpl extends CompositePsiElement implements Ps
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    PsiPattern[] components = getRecordComponents();
+    PsiPattern[] components = getDeconstructionComponents();
     for (PsiPattern component : components) {
       component.processDeclarations(processor, state, null, place);
     }

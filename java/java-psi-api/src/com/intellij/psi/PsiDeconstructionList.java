@@ -8,5 +8,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface PsiDeconstructionList extends PsiElement {
   @NotNull
-  PsiPattern @NotNull [] getRecordComponents();
+  PsiPattern @NotNull [] getDeconstructionComponents();
 }
