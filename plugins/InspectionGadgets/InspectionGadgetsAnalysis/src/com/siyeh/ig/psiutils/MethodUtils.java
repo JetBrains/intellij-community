@@ -2,6 +2,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -18,6 +19,7 @@ import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
+import org.jetbrains.uast.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -347,6 +349,49 @@ public final class MethodUtils {
       else {
         return false;
       }
+    }
+    return true;
+  }
+
+  public static boolean isTrivial(@NotNull UMethod method, @Nullable Predicate<? super UExpression> trivialPredicate) {
+    if (method.getJavaPsi().hasModifier(JvmModifier.NATIVE)) return false;
+    return isTrivial(method.getUastBody(), trivialPredicate);
+  }
+
+  public static boolean isTrivial(@NotNull UClassInitializer initializer) {
+    return isTrivial(initializer.getUastBody(), null);
+  }
+
+  private static boolean isTrivial(@Nullable UExpression bodyExpression, @Nullable Predicate<? super UExpression> trivialPredicate) {
+    if (bodyExpression == null) return true;
+    final List<UExpression> expressions;
+    if (bodyExpression instanceof UBlockExpression) {
+      expressions = ((UBlockExpression)bodyExpression).getExpressions();
+    } else {
+      expressions = List.of(bodyExpression);
+    }
+    if (expressions.size() == 0) return true;
+    for (UExpression expression : expressions) {
+      ProgressManager.checkCanceled();
+      if (expression instanceof UastEmptyExpression || trivialPredicate != null && trivialPredicate.test(expression)) continue;
+      if (expression instanceof UReturnExpression) {
+        final UReturnExpression returnExpression = (UReturnExpression)expression;
+        final UExpression returnedExpression = returnExpression.getReturnExpression();
+        if (returnedExpression != null && !(UastUtils.skipParenthesizedExprDown(returnedExpression) instanceof ULiteralExpression)) {
+          return false;
+        }
+      }
+      else if (expression instanceof UIfExpression) {
+        final UIfExpression ifExpression = (UIfExpression)expression;
+        final UExpression condition = ifExpression.getCondition();
+        final Object result = condition.evaluate();
+        if (result == null || !result.equals(Boolean.FALSE)) return false;
+      }
+      else if (expression instanceof UCallExpression) {
+        final String methodName = ((UCallExpression)expression).getMethodName();
+        if (methodName != null && !methodName.equals(PsiKeyword.SUPER) && !methodName.equals("<init>")) return false;
+      }
+      else return false;
     }
     return true;
   }
