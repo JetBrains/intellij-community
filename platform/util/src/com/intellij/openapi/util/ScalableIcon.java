@@ -18,9 +18,9 @@ public interface ScalableIcon extends Icon {
    * Creates and returns a scaled instance of the icon.
    * The icon is scaled relative to its origin, that is {@code scale(1f)} will
    * return the icon in its original scale.
-   *
+   * <p>
    * To scale this instance by {@code n} times: {@code scale(n * getScale())}.
-   *
+   * <p>
    * Note that the methods {@link #getIconWidth()} and {@link #getIconHeight()}
    * should return the scaled size of the icon.
    *
