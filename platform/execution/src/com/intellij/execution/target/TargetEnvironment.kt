@@ -70,6 +70,12 @@ abstract class TargetEnvironment(
     val localRootPath: Path
   }
 
+  /**
+   * Unonditional map between local and remote root.
+   * Targets API do not create this mapping, it just exists
+   */
+  data class SynchronizedVolume(override val localRootPath: Path, val targetPath: String): MappingWithLocalPath
+
   data class UploadRoot @JvmOverloads constructor(
     override val localRootPath: Path,
 

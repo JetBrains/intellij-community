@@ -4,6 +4,7 @@ package com.jetbrains.python.target
 import com.intellij.execution.target.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.remote.RemoteSdkPropertiesHolder
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
@@ -11,6 +12,8 @@ import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import org.jdom.Element
+import java.nio.file.Path
+import java.util.*
 
 /**
  * Aims to replace [com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase].
@@ -22,6 +25,13 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
                                                                                   TargetBasedSdkAdditionalData,
                                                                                   RemoteSdkProperties by b,
                                                                                   PyRemoteSdkAdditionalDataMarker {
+
+  /**
+   * Persistent UUID of SDK.  Could be used to point to "this particular" SDK.
+   */
+  var uuid: UUID = UUID.randomUUID()
+    internal set
+
   /**
    * The source of truth for the target configuration.
    */
@@ -54,6 +64,7 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     b.save(rootElement)
     // store target configuration
     saveTargetBasedSdkAdditionalData(rootElement, targetState)
+    rootElement.setAttribute(SDK_UUID_FIELD_NAME, uuid.toString())
   }
 
   override fun load(element: Element?) {
@@ -78,6 +89,9 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     }
     targetState = loadedState
     _targetEnvironmentConfiguration = loadedConfiguration
+    element.getAttributeValue(SDK_UUID_FIELD_NAME)?.let {
+      uuid = UUID.fromString(it)
+    }
   }
 
   /**
@@ -92,10 +106,26 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
   // TODO [targets] Review the usages and probably deprecate this property as it does not seem to be sensible
   override fun getSdkId(): String = targetEnvironmentConfiguration?.displayName + interpreterPath
 
+  private val Collection<VirtualFile>.asMappings get() = associate { it.toNioPath() to b.pathMappings.convertToRemote(it.path) }
+
   companion object {
+    private const val SDK_UUID_FIELD_NAME = "SDK_UUID"
     private const val DEFAULT_PYCHARM_HELPERS_DIR_NAME = ".pycharm_helpers"
 
     private val LOG = logger<PyTargetAwareAdditionalData>()
+
+    /**
+     * [local, remote] mapping for paths added by user
+     */
+    @JvmStatic
+    val PyTargetAwareAdditionalData.pathsAddedByUser: Map<Path, String> get() = this.addedPathFiles.asMappings
+
+    /**
+     * [local, remote] mapping for paths explicitly removed by user
+     */
+    @JvmStatic
+    val PyTargetAwareAdditionalData.pathsRemovedByUser: Map<Path, String> get() = this.excludedPathFiles.asMappings
+
 
     /**
      * Loads target data if it exists in xml. Returns `null` otherwise.
