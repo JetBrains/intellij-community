@@ -207,13 +207,16 @@ public final class BuildDependenciesUtil {
         }
         else {
           Files.createDirectories(entryPath.getParent());
-
-          Files.copy(archive, entryPath);
-
-          // 73 == 0111
-          if (isPosix && (entry.getMode() & 73) != 0) {
-            //noinspection SpellCheckingInspection
-            Files.setPosixFilePermissions(entryPath, PosixFilePermissions.fromString("rwxr-xr-x"));
+          if (entry.isSymbolicLink()) {
+            Files.createSymbolicLink(entryPath, Path.of(entry.getLinkName()));
+          }
+          else {
+            Files.copy(archive, entryPath);
+            // 73 == 0111
+            if (isPosix && (entry.getMode() & 73) != 0) {
+              //noinspection SpellCheckingInspection
+              Files.setPosixFilePermissions(entryPath, PosixFilePermissions.fromString("rwxr-xr-x"));
+            }
           }
         }
       }
