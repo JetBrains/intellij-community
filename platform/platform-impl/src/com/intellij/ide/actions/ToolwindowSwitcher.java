@@ -25,6 +25,7 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.SelectablePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -165,7 +166,7 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
       myTextLabel.append(value.getStripeTitle());
       Icon icon = value.getIcon();
       if (icon instanceof ScalableIcon) {
-        icon = ((ScalableIcon)icon).scale(16f / icon.getIconWidth());
+        icon = ((ScalableIcon)icon).scaleToWidth(JBUIScale.scale(16f));
       }
       myTextLabel.setIcon(ObjectUtils.notNull(icon, EmptyIcon.ICON_16));
       myTextLabel.setForeground(UIUtil.getListForeground(isSelected, true));
