@@ -106,7 +106,6 @@
 + -com.intellij.resin-
 + -com-jetbrains-restWebServices-
 + -com-intellij-tcserver-
-+ -com-intellij-tapestry-
 + -com-intellij-jsp-
 + -com-intellij-jbpm-
 + -com-intellij-jboss-core-

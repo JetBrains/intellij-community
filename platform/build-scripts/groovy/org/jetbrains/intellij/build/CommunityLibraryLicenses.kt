@@ -563,7 +563,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "Maven", version = "2.2.1", url = "https://maven.apache.org/").apache(),
     LibraryLicense(name = "maven-2.2.1-uber", version = "2.2.1", libraryName = "maven-2.2.1-uber.jar",
                    url = "https://maven.apache.org/").apache(),
-    LibraryLicense(name = "Maven Model", libraryName = "maven-model", url = "https://maven.apache.org/").apache(),
     LibraryLicense(name = "Maven Resolver Provider",
                    url = "https://maven.apache.org/ref/3.6.1/maven-resolver-provider/", libraryName = "maven-resolver-provider",
                    additionalLibraryNames = listOf("org.apache.maven.resolver:maven-resolver-connector-basic",

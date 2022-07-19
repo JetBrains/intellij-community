@@ -604,7 +604,6 @@
     <action id="TableResult.GrowSelection" />
     <action id="TableResult.ShrinkSelection" />
     <action id="TableResult.UnselectPreviousOccurrence" />
-    <action id="TagDocumentationNavigation" />
     <action id="TodoViewGroupByShowPackages" />
     <action id="ToggleBookmark" />
     <action id="ToggleBookmarkWithMnemonic" />
