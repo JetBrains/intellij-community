@@ -140,6 +140,9 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
       JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(treeComponent, true);
       scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
       scrollPane.setOpaque(false);
+      var projectsPanel = JBUI.Panels.simplePanel(scrollPane)
+        .andTransparent()
+        .withBorder(JBUI.Borders.emptyTop(10));
       SearchTextField projectSearch = recentProjectTree.installSearchField();
 
       JPanel northPanel = JBUI.Panels.simplePanel()
@@ -157,7 +160,7 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
       northPanel.add(projectSearch, BorderLayout.CENTER);
       northPanel.add(projectActionsPanel, BorderLayout.EAST);
       recentProjectsPanel.add(northPanel, BorderLayout.NORTH);
-      recentProjectsPanel.add(scrollPane, BorderLayout.CENTER);
+      recentProjectsPanel.add(projectsPanel, BorderLayout.CENTER);
       recentProjectsPanel.add(createNotificationPanel(parentDisposable), BorderLayout.SOUTH);
 
       initDnD(treeComponent);
