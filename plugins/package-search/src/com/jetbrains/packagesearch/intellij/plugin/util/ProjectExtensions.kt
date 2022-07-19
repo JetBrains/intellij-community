@@ -1,26 +1,8 @@
-/*******************************************************************************
- * Copyright 2000-2022 JetBrains s.r.o. and contributors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************************/
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.ProjectTopics
-import com.intellij.facet.Facet
 import com.intellij.facet.FacetManager
-import com.intellij.facet.FacetManager.FACETS_TOPIC
-import com.intellij.facet.FacetManagerListener
 import com.intellij.ide.impl.TrustStateListener
 import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.ui.LafManager
@@ -38,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.Function
 import com.intellij.util.messages.Topic
@@ -54,6 +35,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateM
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateSource
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchCachesService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchProjectCachesService
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
@@ -64,19 +46,19 @@ import kotlinx.coroutines.flow.merge
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-internal val Project.packageSearchProjectService
-    get() = service<PackageSearchProjectService>()
+internal val Project.packageSearchProjectService: PackageSearchProjectService
+    get() = service()
 
-internal val packageSearchApplicationCaches
-    get() = service<PackageSearchCachesService>()
+internal val packageSearchApplicationCaches: PackageSearchCachesService
+    get() = service()
 
-internal val packageVersionNormalizer
+internal val packageVersionNormalizer: PackageVersionNormalizer
     get() = packageSearchApplicationCaches.normalizer
 
-internal val Project.packageSearchProjectCachesService
-    get() = service<PackageSearchProjectCachesService>()
+internal val Project.packageSearchProjectCachesService: PackageSearchProjectCachesService
+    get() = service()
 
-internal val Project.toolWindowManagerFlow
+internal val Project.toolWindowManagerFlow: Flow<ToolWindow>
     get() = messageBusFlow(ToolWindowManagerListener.TOPIC) {
         object : ToolWindowManagerListener {
             override fun toolWindowShown(toolWindow: ToolWindow) {
@@ -89,11 +71,13 @@ fun <L : Any, K> Project.messageBusFlow(
     topic: Topic<L>,
     initialValue: (suspend () -> K)? = null,
     listener: suspend ProducerScope<K>.() -> L
-) = callbackFlow {
-    initialValue?.let { send(it()) }
-    val connection = messageBus.simpleConnect()
-    connection.subscribe(topic, listener())
-    awaitClose { connection.disconnect() }
+): Flow<K> {
+    return callbackFlow {
+        initialValue?.let { send(it()) }
+        val connection = messageBus.simpleConnect()
+        connection.subscribe(topic, listener())
+        awaitClose { connection.disconnect() }
+    }
 }
 
 internal val Project.trustedProjectFlow: Flow<Boolean>
@@ -105,7 +89,7 @@ internal val Project.trustedProjectFlow: Flow<Boolean>
         }
     }.distinctUntilChanged()
 
-internal val Project.nativeModulesFlow
+internal val Project.nativeModulesFlow: Flow<List<Module>>
     get() = messageBusFlow(ProjectTopics.MODULES, { getNativeModules() }) {
         object : ModuleListener {
             override fun moduleAdded(project: Project, module: Module) {
@@ -126,7 +110,7 @@ internal val Project.nativeModulesFlow
         }
     }
 
-val Project.filesChangedEventFlow
+val Project.filesChangedEventFlow: Flow<MutableList<out VFileEvent>>
     get() = messageBusFlow(VirtualFileManager.VFS_CHANGES) {
         object : BulkFileListener {
             override fun after(events: MutableList<out VFileEvent>) {
@@ -137,7 +121,7 @@ val Project.filesChangedEventFlow
 
 internal fun Project.getNativeModules(): List<Module> = ModuleManager.getInstance(this).modules.toList()
 
-internal val Project.moduleChangesSignalFlow
+internal val Project.moduleChangesSignalFlow: Flow<Unit>
     get() = merge(
         *ModuleChangesSignalProvider.extensions(this),
         *FlowModuleChangesSignalProvider.extensions(this)
@@ -158,20 +142,19 @@ internal val Project.uiStateSource: UiStateSource
 val Project.dumbService: DumbService
     get() = DumbService.getInstance(this)
 
-suspend fun DumbService.awaitSmart(): Unit = suspendCoroutine {
-    runWhenSmart { it.resume(Unit) }
+suspend fun DumbService.awaitSmart() {
+    suspendCoroutine {
+        runWhenSmart { it.resume(Unit) }
+    }
 }
 
 internal val Project.moduleTransformers: List<CoroutineModuleTransformer>
     get() = CoroutineModuleTransformer.extensions(this) + ModuleTransformer.extensions(this)
 
-internal val Project.lookAndFeelFlow
+internal val Project.lookAndFeelFlow: Flow<LafManager>
     get() = messageBusFlow(LafManagerListener.TOPIC, { LafManager.getInstance()!! }) {
         LafManagerListener { trySend(it) }
     }
-
-internal val Project.toolWindowManager
-    get() = service<ToolWindowManager>()
 
 val <T : Any> ExtensionPointName<T>.extensionsFlow: Flow<List<T>>
     get() = callbackFlow {
@@ -189,48 +172,9 @@ val <T : Any> ExtensionPointName<T>.extensionsFlow: Flow<List<T>>
         awaitClose { removeExtensionPointListener(listener) }
     }
 
-fun Project.hasKotlinModules() = ModuleManager.getInstance(this).modules.any { it.hasKotlinFacet() }
+fun Project.hasKotlinModules(): Boolean = ModuleManager.getInstance(this).modules.any { it.hasKotlinFacet() }
 
 internal fun Module.hasKotlinFacet(): Boolean {
     val facetManager = FacetManager.getInstance(this)
     return facetManager.allFacets.any { it.typeId.toString() == "kotlin-language" }
 }
-
-internal val Project.facetChangesFlow
-    get() = messageBusFlow(FACETS_TOPIC, initialValue = {
-        logWarn { "Initial value" }
-    }) {
-        object : FacetManagerListener {
-            override fun facetAdded(facet: Facet<*>) {
-                logWarn { "Facet added: ${facet.name} in module ${facet.module.name}" }
-                trySend(Unit)
-            }
-
-            override fun facetRemoved(facet: Facet<*>) {
-                logWarn { "Facet removed: ${facet.name} in module ${facet.module.name}" }
-                trySend(Unit)
-            }
-
-            override fun facetRenamed(facet: Facet<*>, oldName: String) {
-                logWarn { "Facet renamed: ${facet.name} (was $oldName) in module ${facet.module.name}" }
-                trySend(Unit)
-            }
-
-            override fun facetConfigurationChanged(facet: Facet<*>) {
-                logWarn { "Facet changed: ${facet.name} in module ${facet.module.name}" }
-                trySend(Unit)
-            }
-
-            override fun beforeFacetAdded(facet: Facet<*>) {
-                trySend(Unit)
-            }
-
-            override fun beforeFacetRemoved(facet: Facet<*>) {
-                trySend(Unit)
-            }
-
-            override fun beforeFacetRenamed(facet: Facet<*>) {
-                trySend(Unit)
-            }
-        }
-    }
