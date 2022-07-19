@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.debugger.breakpoints
 
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.PositionUtil
@@ -16,7 +15,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.sun.jdi.AbsentInformationException
@@ -33,10 +31,7 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.debugger.safeAllLineLocations
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.*
 import javax.swing.Icon
 
 class KotlinFieldBreakpoint(
@@ -56,42 +51,20 @@ class KotlinFieldBreakpoint(
     private var breakpointType: BreakpointType = BreakpointType.FIELD
 
     override fun isValid(): Boolean {
-        if (!isPositionValid(xBreakpoint.sourcePosition)) return false
-
-        return runReadAction {
-            val field = getField()
-            field != null && field.isValid
-        }
-    }
-
-    private fun getField(): KtCallableDeclaration? {
-        val sourcePosition = sourcePosition
-        return getProperty(sourcePosition)
-    }
-
-    private fun getProperty(sourcePosition: SourcePosition?): KtCallableDeclaration? {
-        val property: KtProperty? = PositionUtil.getPsiElementAt(project, KtProperty::class.java, sourcePosition)
-        if (property != null) {
-            return property
-        }
-        val parameter: KtParameter? = PositionUtil.getPsiElementAt(project, KtParameter::class.java, sourcePosition)
-        if (parameter != null) {
-            return parameter
-        }
-        return null
+        return super.isValid() && evaluationElement != null
     }
 
     override fun reload() {
         super.reload()
 
-        val property = getProperty(sourcePosition) ?: return
-        val propertyName = property.name ?: return
-        setFieldName(propertyName)
+        val callable = evaluationElement ?: return
+        val callableName = callable.name ?: return
+        setFieldName(callableName)
 
-        if (property is KtProperty && property.isTopLevel) {
-            properties.myClassName = JvmFileClassUtil.getFileClassInfoNoResolve(property.getContainingKtFile()).fileClassFqName.asString()
+        if (callable is KtProperty && callable.isTopLevel) {
+            properties.myClassName = JvmFileClassUtil.getFileClassInfoNoResolve(callable.getContainingKtFile()).fileClassFqName.asString()
         } else {
-            val ktClass: KtClassOrObject? = PsiTreeUtil.getParentOfType(property, KtClassOrObject::class.java)
+            val ktClass: KtClassOrObject? = PsiTreeUtil.getParentOfType(callable, KtClassOrObject::class.java)
             if (ktClass is KtClassOrObject) {
                 val fqName = ktClass.fqName
                 if (fqName != null) {
@@ -105,9 +78,7 @@ class KotlinFieldBreakpoint(
     override fun createRequestForPreparedClass(debugProcess: DebugProcessImpl?, refType: ReferenceType?) {
         if (debugProcess == null || refType == null) return
 
-        val property = getProperty(sourcePosition) ?: return
-
-        breakpointType = computeBreakpointType(property)
+        breakpointType = evaluationElement?.let(::computeBreakpointType) ?: return
 
         val vm = debugProcess.virtualMachineProxy
         try {
@@ -362,12 +333,16 @@ class KotlinFieldBreakpoint(
     }
 
     private fun getFieldName(): String {
-        val declaration = getField()
-        return runReadAction { declaration?.name } ?: "unknown"
+        return runReadAction {
+            evaluationElement?.name ?: "unknown"
+        }
     }
 
-    override fun getEvaluationElement(): PsiElement? {
-        return getField()
+    override fun getEvaluationElement(): KtCallableDeclaration? {
+        return when (val callable = PositionUtil.getPsiElementAt(project, KtValVarKeywordOwner::class.java, sourcePosition)) {
+            is KtProperty -> callable
+            is KtParameter -> callable
+            else -> null
+        }
     }
-
 }
