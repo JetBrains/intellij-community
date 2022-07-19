@@ -75,6 +75,42 @@ class GradleEagernessInspectionTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
+  fun testEagerTask(gradleVersion: GradleVersion) {
+    testEmptyProject(gradleVersion) {
+      codeInsightFixture.enableInspections(GradleEagernessInspection::class.java)
+      testHighlighting("<warning>task</warning> myTask() {}")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testFindByName(gradleVersion: GradleVersion) {
+    testEmptyProject(gradleVersion) {
+      codeInsightFixture.enableInspections(GradleEagernessInspection::class.java)
+      testHighlighting("tasks.<warning>findByName</warning>('abc')")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testGetByName(gradleVersion: GradleVersion) {
+    testEmptyProject(gradleVersion) {
+      codeInsightFixture.enableInspections(GradleEagernessInspection::class.java)
+      testHighlighting("tasks.<warning>getByName</warning>('abc')")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testGetAt(gradleVersion: GradleVersion) {
+    testEmptyProject(gradleVersion) {
+      codeInsightFixture.enableInspections(GradleEagernessInspection::class.java)
+      testHighlighting("tasks<warning>['abc']</warning>")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
   fun testFixWithType(gradleVersion: GradleVersion) {
     testEmptyProject(gradleVersion) {
       codeInsightFixture.enableInspections(GradleEagernessInspection::class.java)
