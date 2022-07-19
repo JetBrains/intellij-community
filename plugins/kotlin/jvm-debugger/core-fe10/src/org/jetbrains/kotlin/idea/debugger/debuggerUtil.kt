@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.CompletableFuture
 
 fun Location.isInKotlinSources(): Boolean {
@@ -37,14 +38,14 @@ fun Location.isInKotlinSources(): Boolean {
 }
 
 fun ReferenceType.isInKotlinSources(): Boolean {
-    val fileExtension = safeSourceName()?.substringAfterLast('.')?.toLowerCase() ?: ""
+    val fileExtension = safeSourceName()?.substringAfterLast('.')?.lowercase(Locale.getDefault()) ?: ""
     return fileExtension in KOTLIN_FILE_EXTENSIONS || containsKotlinStrata()
 }
 
 fun ReferenceType.isInKotlinSourcesAsync(): CompletableFuture<Boolean> {
     return DebuggerUtilsAsync.sourceName(this)
         .thenApply {
-            val fileExtension = it?.substringAfterLast('.')?.toLowerCase() ?: ""
+            val fileExtension = it?.substringAfterLast('.')?.lowercase(Locale.getDefault()) ?: ""
             fileExtension in KOTLIN_FILE_EXTENSIONS
         }
         .exceptionally {
