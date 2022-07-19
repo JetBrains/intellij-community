@@ -1,8 +1,10 @@
 <html>
 <body>
-Reports cases where the static <code>Integer.compare()</code> method or similar methods can be used
+Reports expressions that can be replaced by a call to the <code>Integer.compare()</code> method or
+a similar method from the <code>Long</code>, <code>Short</code>, <code>Byte</code>, <code>Double</code> or <code>Float</code> classes,
 instead of more verbose or less efficient constructs.
-<p>If <code>x</code> and <code>y</code> are already boxed integers, then <code>x.compareTo(y)</code> is suggested.</p>
+<p>If <code>x</code> and <code>y</code> are boxed integers, then <code>x.compareTo(y)</code> is suggested,
+  if they are primitives <code>Integer.compare(x, y)</code> is suggested.</p>
 <p><b>Example:</b></p>
 <pre><code>
   public int compare(int x, int y) {
