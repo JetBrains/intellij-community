@@ -26,10 +26,10 @@ import com.sun.jdi.event.*
 import com.sun.jdi.request.EventRequest
 import com.sun.jdi.request.MethodEntryRequest
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.debugger.safeAllLineLocations
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.resolve.BindingContext
 import javax.swing.Icon
 
 class KotlinFieldBreakpoint(
@@ -108,7 +107,7 @@ class KotlinFieldBreakpoint(
 
         val property = getProperty(sourcePosition) ?: return
 
-        breakpointType = (computeBreakpointType(property) ?: return)
+        breakpointType = computeBreakpointType(property)
 
         val vm = debugProcess.virtualMachineProxy
         try {
@@ -172,22 +171,16 @@ class KotlinFieldBreakpoint(
         }
     }
 
-    private fun computeBreakpointType(property: KtCallableDeclaration): BreakpointType? {
+    private fun computeBreakpointType(property: KtCallableDeclaration): BreakpointType {
         return runReadAction {
-            val bindingContext = property.analyze()
-            var descriptor = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, property)
-            if (descriptor is ValueParameterDescriptor) {
-                descriptor = bindingContext.get(BindingContext.VALUE_PARAMETER_AS_PROPERTY, descriptor)
-            }
-
-            if (descriptor is PropertyDescriptor) {
-                if (bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, descriptor)!!) {
-                    BreakpointType.FIELD
-                } else {
-                    BreakpointType.METHOD
+            analyze(property) {
+                val hasBackingField = when (val symbol = property.getSymbol()) {
+                    is KtValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty?.hasBackingField ?: false
+                    is KtKotlinPropertySymbol -> symbol.hasBackingField
+                    else -> false
                 }
-            } else {
-                null
+
+                if (hasBackingField) BreakpointType.FIELD else BreakpointType.METHOD
             }
         }
     }
