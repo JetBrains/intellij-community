@@ -45,7 +45,7 @@ class InconsistentCommentForJavaParameterInspection: AbstractKotlinInspection() 
     }
 
     class CorrectNamesInCommentsToJavaCallArgumentsFix(private val commentedParameterName: String) : LocalQuickFix {
-        override fun getName() = KotlinBundle.message("intention.name.correct.parameter.name")
+        override fun getName() = KotlinBundle.message("intention.name.use.correct.parameter.name")
 
         override fun getFamilyName() = name
 

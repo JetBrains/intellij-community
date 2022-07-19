@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports inconsistent parameter name for <b>java</b> method specified in a comment block.
+Reports inconsistent parameter names for <b>Java</b> method calls specified in a comment block.
 <p><b>Examples:</b></p>
 <pre><code>
   // Java
@@ -14,7 +14,7 @@ Reports inconsistent parameter name for <b>java</b> method specified in a commen
       JavaService().invoke(/* name = */ "fix")
   }
 </code></pre>
-<p>The quick fix corrects parameter name in a comment block:</p>
+<p>The quick fix corrects the parameter name in the comment block:</p>
 <pre><code>
   fun main() {
       JavaService().invoke(/* command = */ "fix")
