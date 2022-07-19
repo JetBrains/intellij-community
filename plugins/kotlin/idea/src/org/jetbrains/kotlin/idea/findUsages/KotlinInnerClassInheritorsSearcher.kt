@@ -6,6 +6,7 @@ import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.util.Processor
@@ -39,32 +40,34 @@ class KotlinInnerClassInheritorsSearcher: QueryExecutorBase<PsiClass, ClassInher
         try {
             for (element in searchScope.scope) {
                 ProgressManager.checkCanceled()
-                if (!runReadAction {
-                        val declarations =
-                            when (element) {
-                                is KtClassOrObject -> element.declarations
-                                is KtBlockExpression -> listOf(
-                                    *element.getChildrenAsPsiElements(
-                                        KtStubElementTypes.DECLARATION_TYPES,
-                                        KtDeclaration.ARRAY_FACTORY
-                                    )
-                                )
-                                else -> return@runReadAction true
-                            }
-                        for (declaration in declarations) {
-                            val ktClassOrObject =
-                                declaration.safeAs<KtClassOrObject>()?.takeIf { it.superTypeListEntries.isNotEmpty() } ?: continue
-                            ktClassOrObject.toLightClass()?.let {
-                                if (it.isInheritor(classToProcess, true) && !consumer.process(it)) {
-                                    return@runReadAction false
-                                }
-                            }
-                        }
-                        true
-                    }) break
+                if (!runReadAction { processElementInScope(element, classToProcess, consumer) }) break
             }
         } finally {
             progress?.popState()
         }
+    }
+
+    private fun processElementInScope(element: PsiElement, classToProcess: PsiClass, consumer: Processor<in PsiClass>): Boolean {
+        val declarations =
+            when (element) {
+                is KtClassOrObject -> element.declarations
+                is KtBlockExpression -> listOf(
+                    *element.getChildrenAsPsiElements(
+                        KtStubElementTypes.DECLARATION_TYPES,
+                        KtDeclaration.ARRAY_FACTORY
+                    )
+                )
+                else -> return true
+            }
+        for (declaration in declarations) {
+            val ktClassOrObject =
+                declaration.safeAs<KtClassOrObject>()?.takeIf { it.superTypeListEntries.isNotEmpty() } ?: continue
+            ktClassOrObject.toLightClass()?.let {
+                if (it.isInheritor(classToProcess, true) && !consumer.process(it)) {
+                    return false
+                }
+            }
+        }
+        return true
     }
 }

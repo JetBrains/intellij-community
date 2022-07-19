@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -337,8 +338,9 @@ public class MarkerType {
                                         subclassUpdater.getCaption(inheritors.size()), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
   }
 
-  private static abstract class OverridingMembersUpdater extends BackgroundUpdaterTask {
-    private OverridingMembersUpdater(@Nullable Project project,
+  @IntellijInternalApi
+  public static abstract class OverridingMembersUpdater extends BackgroundUpdaterTask {
+    public OverridingMembersUpdater(@Nullable Project project,
                                      @NotNull @Nls String title,
                                      @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
       super(project, title, createComparatorWrapper((Comparator)renderer.getComparator()));
@@ -357,10 +359,11 @@ public class MarkerType {
     }
   }
 
-  private static final class SubclassUpdater extends OverridingMembersUpdater {
+  @IntellijInternalApi
+  public static final class SubclassUpdater extends OverridingMembersUpdater {
     private final PsiClass myClass;
 
-    private SubclassUpdater(@NotNull PsiClass aClass, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
+    public SubclassUpdater(@NotNull PsiClass aClass, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
       super(aClass.getProject(), JavaAnalysisBundle.message("subclasses.search.progress.title"), renderer);
       myClass = aClass;
     }
