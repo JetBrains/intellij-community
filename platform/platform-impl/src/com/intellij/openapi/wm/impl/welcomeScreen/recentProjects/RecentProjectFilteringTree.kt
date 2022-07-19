@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.ui.*
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.render.RenderingHelper
@@ -362,12 +363,12 @@ internal class RecentProjectFilteringTree(
                                ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
                                ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
       }
-      private val projectNamePanel = JBUI.Panels.simplePanel().apply {
+      private val projectNamePanel = JPanel(VerticalLayout(4)).apply {
         isOpaque = false
         border = JBUI.Borders.empty(4)
 
-        add(projectNameLabel, BorderLayout.NORTH)
-        add(projectPathLabel, BorderLayout.SOUTH)
+        add(projectNameLabel)
+        add(projectPathLabel)
       }
 
       init {
@@ -460,12 +461,12 @@ internal class RecentProjectFilteringTree(
       private val projectPathLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
         foreground = UIUtil.getInactiveTextColor()
       }
-      private val projectNamePanel = JBUI.Panels.simplePanel().apply {
+      private val projectNamePanel = JPanel(VerticalLayout(4)).apply {
         isOpaque = false
         border = JBUI.Borders.empty(4)
 
-        add(projectNameLabel, BorderLayout.NORTH)
-        add(projectPathLabel, BorderLayout.SOUTH)
+        add(projectNameLabel)
+        add(projectPathLabel)
       }
       private val projectIconLabel = JLabel().apply {
         border = JBUI.Borders.empty(8, 0, 0, 8)
