@@ -10,6 +10,7 @@ import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,10 +76,10 @@ public final class ActionHint {
    */
   @Nullable
   public IntentionAction findAndCheck(@NotNull Collection<? extends IntentionAction> actions, @NotNull Supplier<String> infoSupplier) {
-    IntentionAction result = actions.stream().filter(t -> {
+    IntentionAction result = ContainerUtil.find(actions, t -> {
       String text = t.getText();
       return myExactMatch ? text.equals(myExpectedText) : text.startsWith(myExpectedText);
-    }).findFirst().orElse(null);
+    });
     if(myShouldPresent) {
       if(result == null) {
         fail(exceptionHeader() + " not found\nAvailable actions: " +
