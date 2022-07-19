@@ -2,10 +2,13 @@
 package org.intellij.plugins.markdown.editor.images
 
 import com.intellij.openapi.command.executeCommand
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ReadOnlyFragmentModificationException
+import com.intellij.openapi.editor.ReadOnlyModificationException
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.images.ide.EditorImagePasteProvider
+import org.intellij.plugins.markdown.editor.runForEachCaret
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 
 internal class MarkdownImagePasteProvider: EditorImagePasteProvider() {
@@ -23,16 +26,10 @@ internal class MarkdownImagePasteProvider: EditorImagePasteProvider() {
           caretModel.moveToOffset(offset + textToInsert.length)
         }
       }
-    } catch (e: ReadOnlyModificationException) {
+    } catch (exception: ReadOnlyModificationException) {
       // do nothing
-    } catch (e: ReadOnlyFragmentModificationException) {
+    } catch (exception: ReadOnlyFragmentModificationException) {
       // do nothing
-    }
-  }
-
-  companion object {
-    private fun CaretModel.runForEachCaret(reverseOrder: Boolean = false, block: (Caret) -> Unit) {
-      runForEachCaret(block, reverseOrder)
     }
   }
 }
