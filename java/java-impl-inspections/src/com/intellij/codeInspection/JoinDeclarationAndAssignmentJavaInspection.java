@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
@@ -227,6 +228,17 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
 
         if (!FileModificationService.getInstance().prepareFileForWrite(assignmentExpression.getContainingFile())) return;
         WriteAction.run(() -> DeclarationJoinLinesHandler.joinDeclarationAndAssignment(context.myVariable, context.myAssignment));
+      }
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      Context context = getContext(previewDescriptor.getPsiElement());
+      if (context != null) {
+        DeclarationJoinLinesHandler.joinDeclarationAndAssignment(context.myVariable, context.myAssignment);
+        return IntentionPreviewInfo.DIFF;
+      } else {
+        return IntentionPreviewInfo.EMPTY;
       }
     }
   }
