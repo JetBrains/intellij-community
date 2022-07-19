@@ -7,15 +7,14 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.search.GlobalSearchScope
-import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
-import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils.findFilesWithExactPackage
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
@@ -23,7 +22,6 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import java.nio.file.Path
 import java.util.*
 
 object DebuggerUtils {
@@ -112,27 +110,6 @@ object DebuggerUtils {
 
     private fun String.getMethodNameWithoutMangling() =
         substringBefore('-')
-
-    fun isKotlinFakeLineNumber(location: Location): Boolean {
-        // The compiler inserts a fake line number for single-line inline function calls with a
-        // lambda parameter such as:
-        //
-        //   42.let { it + 1 }
-        //
-        // This is done so that a breakpoint can be set on the lambda and on the line even though
-        // the lambda is on the same line. When stepping, we do not want to stop at such fake line
-        // numbers. They cause us to step to line 1 of the current file.
-        try {
-            if (location.lineNumber("Kotlin") == 1 &&
-                location.sourceName("Kotlin") == "fake.kt" &&
-                Path.of(location.sourcePath("Kotlin")) == Path.of("kotlin/jvm/internal/FakeKt")
-            ) {
-                return true
-            }
-        } catch (ignored: AbsentInformationException) {
-        }
-        return false
-    }
 
     fun String.isGeneratedIrBackendLambdaMethodName() =
         matches(IR_BACKEND_LAMBDA_REGEX)

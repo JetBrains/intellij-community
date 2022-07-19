@@ -368,7 +368,7 @@ private fun fetchCallLocations(
 
         // Skip to the previous location if the call location lands on a synthetic fake.kt:1 line.
         // These lines are inserted by the compiler to force new line numbers for single line lambdas.
-        if (DebuggerUtils.isKotlinFakeLineNumber(allLocations[locationIndex])) {
+        if (isKotlinFakeLineNumber(allLocations[locationIndex])) {
             locationIndex = (locationIndex - 1).coerceAtLeast(0)
         }
         prev.callLocation = allLocations[locationIndex]

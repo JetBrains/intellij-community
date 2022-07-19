@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.base.psi.getTopParentWithEndOffset
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isKotlinFakeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -30,6 +29,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
 fun Location.isInKotlinSources(): Boolean {
@@ -251,6 +251,27 @@ fun findElementAtLine(file: KtFile, line: Int): PsiElement? {
 
         topMostElement
     }
+}
+
+fun isKotlinFakeLineNumber(location: Location): Boolean {
+    // The compiler inserts a fake line number for single-line inline function calls with a
+    // lambda parameter such as:
+    //
+    //   42.let { it + 1 }
+    //
+    // This is done so that a breakpoint can be set on the lambda and on the line even though
+    // the lambda is on the same line. When stepping, we do not want to stop at such fake line
+    // numbers. They cause us to step to line 1 of the current file.
+    try {
+        if (location.lineNumber("Kotlin") == 1 &&
+            location.sourceName("Kotlin") == "fake.kt" &&
+            Path.of(location.sourcePath("Kotlin")) == Path.of("kotlin/jvm/internal/FakeKt")
+        ) {
+            return true
+        }
+    } catch (ignored: AbsentInformationException) {
+    }
+    return false
 }
 
 fun findCallByEndToken(element: PsiElement): KtCallExpression? {

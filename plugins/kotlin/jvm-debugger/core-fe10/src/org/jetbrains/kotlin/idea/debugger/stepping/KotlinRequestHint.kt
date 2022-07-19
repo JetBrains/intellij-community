@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.debugger.stepping
 
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
-import com.intellij.debugger.engine.MethodFilter
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.MethodFilter
 import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
@@ -13,11 +13,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.sun.jdi.Location
 import com.sun.jdi.VMDisconnectedException
 import com.sun.jdi.request.StepRequest
-import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isKotlinFakeLineNumber
-import org.jetbrains.kotlin.idea.debugger.isOnSuspensionPoint
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.isKotlinFakeLineNumber
+import org.jetbrains.kotlin.idea.debugger.isOnSuspensionPoint
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.org.objectweb.asm.Type
 
