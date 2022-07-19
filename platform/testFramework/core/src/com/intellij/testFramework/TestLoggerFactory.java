@@ -168,14 +168,14 @@ public final class TestLoggerFactory implements Logger.Factory {
     StringBuilder sb = new StringBuilder();
     ExceptionUtil.findCauseAndSuppressed(t, ComparisonFailure.class).forEach(e -> {
       logComparisonFailure(sb,
-                           ((ComparisonFailure)t).getExpected(),
-                           ((ComparisonFailure)t).getActual());
+                           e.getExpected(),
+                           e.getActual());
     });
 
     ExceptionUtil.findCauseAndSuppressed(t, junit.framework.ComparisonFailure.class).forEach(e -> {
       logComparisonFailure(sb,
-                           ((junit.framework.ComparisonFailure)t).getExpected(),
-                           ((junit.framework.ComparisonFailure)t).getActual());
+                           e.getExpected(),
+                           e.getActual());
     });
 
     return sb.length() != 0 ? sb.toString() : null;
