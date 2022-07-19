@@ -37,14 +37,7 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     showNotificationWhenNonEmptyProjectUnlinked(project)
     showNotificationWhenBuildToolPluginEnabled(project, externalProjectPath)
     showNotificationWhenNewBuildFileCreated(project, externalProjectPath)
-    if (!isNewExternalProject(project)) {
-      if (isEnabledAutoLink(project) && !isNewPlatformProject(project) && isOpenedWithEmptyModel(project)) {
-        linkProjectIfUnlinkedProjectsFound(project, externalProjectPath)
-      }
-      else {
-        showNotificationIfUnlinkedProjectsFound(project, externalProjectPath)
-      }
-    }
+    linkAndLoadProjectIfUnlinkedProjectsFound(project, externalProjectPath)
   }
 
   private fun isEnabledAutoLink(project: Project): Boolean {
@@ -69,22 +62,23 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     return moduleManager.modules.isEmpty()
   }
 
-  private suspend fun linkProjectIfUnlinkedProjectsFound(project: Project, externalProjectPath: String) {
-    val buildFiles = findUnlinkedProjectBuildFiles(project, externalProjectPath)
-    val unlinkedProjects = buildFiles.filter { it.value.isNotEmpty() }
-    val linkedProjects = buildFiles.filter { it.key.isLinkedProject(project, externalProjectPath) }
-    if (unlinkedProjects.size == 1 && linkedProjects.isEmpty()) {
-      val unlinkedProject = unlinkedProjects.keys.single()
-      if (LOG.isDebugEnabled) {
-        val projectId = unlinkedProject.getProjectId(externalProjectPath)
-        LOG.debug("Auto-linked ${projectId.debugName} project")
+  private suspend fun linkAndLoadProjectIfUnlinkedProjectsFound(project: Project, externalProjectPath: String) {
+    if (!isNewExternalProject(project)) {
+      val isExpectedAutoLink = isEnabledAutoLink(project) && !isNewPlatformProject(project) && isOpenedWithEmptyModel(project)
+      val projects = findUnlinkedProjectBuildFiles(project, externalProjectPath)
+      val linkedProjects = projects.filter { it.key.isLinkedProject(project, externalProjectPath) }
+      val unlinkedProjects = projects.filter { it.key !in linkedProjects && it.value.isNotEmpty() }
+      if (isExpectedAutoLink && unlinkedProjects.size == 1 && linkedProjects.isEmpty()) {
+        val unlinkedProjectAware = unlinkedProjects.keys.single()
+        if (LOG.isDebugEnabled) {
+          val projectId = unlinkedProjectAware.getProjectId(externalProjectPath)
+          LOG.debug("Auto-linked ${projectId.debugName} project")
+        }
+        unlinkedProjectAware.linkAndLoadProjectWithLoadingConfirmation(project, externalProjectPath)
+        return
       }
-      unlinkedProject.linkAndLoadProjectWithLoadingConfirmation(project, externalProjectPath)
-    }
-    else {
-      val notificationAware = UnlinkedProjectNotificationAware.getInstance(project)
-      for ((unlinkedProjectAware, _) in unlinkedProjects) {
-        notificationAware.notify(unlinkedProjectAware, externalProjectPath)
+      for ((unlinkedProjectAware, buildFiles) in unlinkedProjects) {
+        showUnlinkedProjectsNotification(project, externalProjectPath, unlinkedProjectAware, buildFiles)
       }
     }
   }
@@ -101,10 +95,10 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     unlinkedProjectAware: ExternalSystemUnlinkedProjectAware
   ) {
     val buildFiles = findUnlinkedProjectBuildFiles(project, externalProjectPath, unlinkedProjectAware)
-    showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, unlinkedProjectAware, buildFiles)
+    showUnlinkedProjectsNotification(project, externalProjectPath, unlinkedProjectAware, buildFiles)
   }
 
-  private suspend fun showNotificationIfUnlinkedProjectsFound(
+  private suspend fun showUnlinkedProjectsNotification(
     project: Project,
     externalProjectPath: String,
     unlinkedProjectAware: ExternalSystemUnlinkedProjectAware,
@@ -220,7 +214,7 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
 
     override fun apply() {
       project.coroutineScope.launch {
-        showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, unlinkedProjectAware, buildFiles.toSet())
+        showUnlinkedProjectsNotification(project, externalProjectPath, unlinkedProjectAware, buildFiles.toSet())
       }
     }
 
