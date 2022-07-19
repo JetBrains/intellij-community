@@ -114,7 +114,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
   fun getCurrentSearchState() = currentSearchState.get()
 }
 
-internal class SearchEverywhereMLContextInfo(private val project: Project?) {
+internal class SearchEverywhereMLContextInfo(project: Project?) {
   val features: List<EventPair<*>> by lazy {
     SearchEverywhereContextFeaturesProvider().getContextFeatures(project)
   }
