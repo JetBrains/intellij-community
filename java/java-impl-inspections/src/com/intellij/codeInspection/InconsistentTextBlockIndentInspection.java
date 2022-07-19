@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
@@ -98,6 +99,12 @@ public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocal
       String newTextBlock = indentModel.indentWith(myDesiredIndentType, myTabSize);
       if (newTextBlock == null) return;
       TrailingWhitespacesInTextBlockInspection.replaceTextBlock(project, literalExpression, "\"\"\"\n" + newTextBlock + "\"\"\"");
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      applyFix(project, previewDescriptor);
+      return IntentionPreviewInfo.DIFF_NO_TRIM;
     }
   }
 
