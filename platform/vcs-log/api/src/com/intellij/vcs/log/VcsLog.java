@@ -25,7 +25,7 @@ public interface VcsLog {
   List<CommitId> getSelectedCommits();
 
   /**
-   * {@link VcsLogCommitSelection#getCachedMetadata()} instead.
+   * Use {@link VcsLogCommitSelection#getCachedMetadata()} instead.
    */
   @RequiresEdt
   @NotNull
