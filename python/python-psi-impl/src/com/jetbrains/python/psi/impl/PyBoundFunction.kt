@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.psi.impl;
+package com.jetbrains.python.psi.impl
 
-import com.jetbrains.python.psi.PyFunction;
+import com.intellij.psi.PsiElement
+import com.jetbrains.python.psi.PyFunction
 
-
-public class PyBoundFunction extends PyFunctionImpl {
-  public PyBoundFunction(PyFunction function) {
-    super(function.getNode());
-  }
-
-  @Override
-  public boolean isPhysical() {
-    return false;
-  }
+class PyBoundFunction(private val origin: PyFunction) : PyFunction by origin {
+  override fun isPhysical(): Boolean = false
+  override fun getOriginalElement(): PsiElement = origin
 }
