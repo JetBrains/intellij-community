@@ -344,10 +344,17 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     caret(position)
 
     highlightLineNumberByOffset(position.startOffset)
-    if (!UIExperiment.isNewDebuggerUIEnabled()) {
-      highlightButtonById("RunToCursor", clearHighlights = false)
+    task {
+      if (!UIExperiment.isNewDebuggerUIEnabled()) {
+        val runToCursorAction = getActionById("RunToCursor")
+        triggerAndFullHighlight {
+          usePulsation = true
+          clearPreviousHighlights = false
+        }.component { ui: ActionButton ->
+          ui.action == runToCursorAction && LessonUtil.checkToolbarIsShowing(ui)
+        }
+      }
     }
-    else task { }
 
     actionTask("RunToCursor") {
       proposeRestore {
