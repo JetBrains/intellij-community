@@ -19,26 +19,13 @@ import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.util.ui.JBUI
 import one.util.streamex.StreamEx
 import java.awt.Color
 
 internal class IntentionPreviewModel {
   companion object {
-    fun reformatRange(project: Project, psiFileCopy: PsiFile, lineFragment: LineFragment) {
-      val start = lineFragment.startOffset2
-      val end = lineFragment.endOffset2
-
-      if (start >= end) return
-
-      val document = psiFileCopy.viewProvider.document
-      if (document != null) PsiDocumentManager.getInstance(project).commitDocument(document)
-
-      CodeStyleManager.getInstance(project).reformatRange(psiFileCopy, start, end, true)
-    }
 
     private fun squash(lines: List<LineFragment>): List<LineFragment> = StreamEx.of(lines)
       .collapse({f1, f2 -> f2.startLine1 - f1.endLine1 == 1 && f2.startLine2 - f1.endLine2 == 1},
@@ -51,11 +38,6 @@ internal class IntentionPreviewModel {
       if (result == null) return emptyList()
 
       val psiFileCopy: PsiFile = result.psiFile
-      val lines: List<LineFragment> = result.lineFragments
-
-      if (result.fakeDiff) {
-        lines.forEach { lineFragment -> reformatRange(project, psiFileCopy, lineFragment) }
-      }
 
       val fileText = psiFileCopy.text
       val origFile = result.origFile
@@ -113,7 +95,7 @@ internal class IntentionPreviewModel {
       }
       if (diffs.isNotEmpty()) {
         val last = diffs.last()
-        val maxLine = if (result.fakeDiff) last.startLine + last.length else -1
+        val maxLine = if (result.normalDiff) last.startLine + last.length else -1
         val fileName = result.fileName
         val editors = diffs.map { it.createEditor(project, origFile.fileType, maxLine) }
         val fileNameEditor = createFileNamePresentation(fileName, origFile, project)

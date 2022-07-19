@@ -18,7 +18,7 @@ class KotlinQuickFixIntentionPreviewTest : KotlinLightCodeInsightFixtureTestCase
             "Simplify comparison",
             """
             fun test(p: Int) {
-                }""".trimIndent())
+            }""".trimIndent())
     }
 
     fun testConvertConcatenationToTemplate() {

@@ -26,7 +26,7 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
     String text = myFixture.getIntentionPreviewText(action);
     assertEquals("class Test {\n" +
                  "  public void test() {\n" +
-                 "    int variable  ;\n" +
+                 "    int variable;\n" +
                  "      variable = 2;\n" +
                  "  }\n" +
                  "}", text);
@@ -120,7 +120,7 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
                  "\n" +
                  "    Test(int a, String b) {\n" +
                  "\n" +
-                 "    this.a = a;\n" +
+                 "        this.a = a;\n" +
                  "        this.b = b;\n" +
                  "    }\n" +
                  "}\n", text);
@@ -152,7 +152,7 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
                  "}\n" +
                  "\n" +
                  "class B extends A {\n" +
-                 "  String test()  {\n" +
+                 "  String test() {\n" +
                  "    return \"\";\n" +
                  "  }\n" +
                  "\n" +

@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
@@ -23,10 +24,7 @@ import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase
 import java.io.IOException
@@ -86,53 +84,32 @@ internal class IntentionPreviewComputable(private val project: Project,
       origFile = originalFile
       caretOffset = originalEditor.caretModel.offset
     }
-    val psiFileCopy = origFile.copy() as PsiFile
     ProgressManager.checkCanceled()
-    val editorCopy = IntentionPreviewEditor(psiFileCopy, caretOffset, originalEditor.settings)
-
     val writable = originalEditor.document.isWritable
     try {
-      originalEditor.document.setReadOnly(true)
+      val (result: IntentionPreviewInfo, psiFileCopy: PsiFile?) = invokePreview(origFile, caretOffset)
       ProgressManager.checkCanceled()
-      var result = action.generatePreview(project, editorCopy, psiFileCopy)
-      if (result == IntentionPreviewInfo.FALLBACK_DIFF) {
-        if (action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) return null
-        // Use fallback algorithm only if invokeForPreview is not explicitly overridden
-        // in this case, the absence of diff could be intended, thus should not be logged as error
-        val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return null
-        val unwrapped = IntentionActionDelegate.unwrap(action)
-        val cls = (if (unwrapped is QuickFixWrapper) unwrapped.fix else unwrapped)::class.java
-        val loader = cls.classLoader
-        val thirdParty = loader is PluginAwareClassLoader && PluginManagerCore.isDevelopedByJetBrains(loader.pluginDescriptor)
-        if (!thirdParty) {
-          logger<IntentionPreviewComputable>().error("Intention preview fallback is used for action ${cls.name}|${action.familyName}")
-        }
-        action.invoke(project, editorCopy, psiFileCopy)
-        result = IntentionPreviewInfo.DIFF
-      }
-      ProgressManager.checkCanceled()
+      val comparisonManager = ComparisonManager.getInstance()
       return when (result) {
         IntentionPreviewInfo.DIFF,
         IntentionPreviewInfo.DIFF_NO_TRIM -> {
-          PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(psiFileCopy.viewProvider)
+          val document = psiFileCopy!!.viewProvider.document
           val policy = if (result == IntentionPreviewInfo.DIFF) ComparisonPolicy.TRIM_WHITESPACES else ComparisonPolicy.DEFAULT
           IntentionPreviewDiffResult(
             psiFile = psiFileCopy,
             origFile = origFile,
             policy = policy,
-            lineFragments = ComparisonManager.getInstance().compareLines(origFile.text, editorCopy.document.text, policy,
-                                                                         DumbProgressIndicator.INSTANCE))
+            lineFragments = comparisonManager.compareLines(origFile.text, document.text, policy, DumbProgressIndicator.INSTANCE))
         }
-        IntentionPreviewInfo.EMPTY -> null
+        IntentionPreviewInfo.EMPTY, IntentionPreviewInfo.FALLBACK_DIFF -> null
         is IntentionPreviewInfo.CustomDiff -> {
           IntentionPreviewDiffResult(
             fileFactory.createFileFromText("__dummy__", result.fileType(), result.modifiedText()),
             fileFactory.createFileFromText("__dummy__", result.fileType(), result.originalText()),
-            ComparisonManager.getInstance()
-              .compareLines(result.originalText(), result.modifiedText(),
-                            ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE),
+            comparisonManager.compareLines(result.originalText(), result.modifiedText(),
+                                           ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE),
             fileName = result.fileName(),
-            fakeDiff = false,
+            normalDiff = false,
             policy = ComparisonPolicy.TRIM_WHITESPACES)
         }
         else -> result
@@ -141,6 +118,36 @@ internal class IntentionPreviewComputable(private val project: Project,
     finally {
       originalEditor.document.setReadOnly(!writable)
     }
+  }
+
+  private fun invokePreview(origFile: PsiFile, caretOffset: Int): Pair<IntentionPreviewInfo, PsiFile?> {
+    var info: IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
+    val psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(origFile)
+    val editorCopy = IntentionPreviewEditor(psiFileCopy, caretOffset, originalEditor.settings)
+
+    originalEditor.document.setReadOnly(true)
+    ProgressManager.checkCanceled()
+    PostprocessReformattingAspect.getInstance(project)
+      .postponeFormattingInside { info = action.generatePreview(project, editorCopy, psiFileCopy) }
+    if (info == IntentionPreviewInfo.FALLBACK_DIFF) {
+      if (action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) return info to null
+      // Use fallback algorithm only if invokeForPreview is not explicitly overridden
+      // in this case, the absence of diff could be intended, thus should not be logged as error
+      val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return info to null
+      val unwrapped = IntentionActionDelegate.unwrap(action)
+      val cls = (if (unwrapped is QuickFixWrapper) unwrapped.fix else unwrapped)::class.java
+      val loader = cls.classLoader
+      val thirdParty = loader is PluginAwareClassLoader && PluginManagerCore.isDevelopedByJetBrains(loader.pluginDescriptor)
+      if (!thirdParty) {
+        logger<IntentionPreviewComputable>().error("Intention preview fallback is used for action ${cls.name}|${action.familyName}")
+      }
+      ProgressManager.checkCanceled()
+      PostprocessReformattingAspect.getInstance(project)
+        .postponeFormattingInside { action.invoke(project, editorCopy, psiFileCopy) }
+      info = IntentionPreviewInfo.DIFF
+    }
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(psiFileCopy.viewProvider.document)
+    return Pair(info, psiFileCopy)
   }
 
   private fun mapInjectedOffsetToUnescaped(injectedFile: PsiFile, injectedOffset: Int): Int {
@@ -185,6 +192,6 @@ private fun findCopyIntention(project: Project,
 internal data class IntentionPreviewDiffResult(val psiFile: PsiFile,
                                                val origFile: PsiFile,
                                                val lineFragments: List<LineFragment>,
-                                               val fakeDiff: Boolean = true,
+                                               val normalDiff: Boolean = true,
                                                val fileName: String? = null,
                                                val policy: ComparisonPolicy): IntentionPreviewInfo
