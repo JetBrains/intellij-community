@@ -17,10 +17,10 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.util.ElementKind
-import org.jetbrains.kotlin.idea.util.findElement
 import org.jetbrains.kotlin.idea.refactoring.introduce.findExpressionOrStringFragment
+import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.findElement
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -262,6 +262,13 @@ private fun findElement(
         element = findExpressionOrStringFragment(file, startOffset, endOffset)
     }
 
+    if (element is KtExpression) {
+        val qualifier = element.analyze().get(BindingContext.QUALIFIER, element)
+        if (qualifier != null && (qualifier !is ClassQualifier || qualifier.descriptor.kind != ClassKind.OBJECT)) {
+            element = null
+        }
+    }
+
     if (element == null) {
         //todo: if it's infix expression => add (), then commit document then return new created expression
 
@@ -269,13 +276,6 @@ private fun findElement(
             throw IntroduceRefactoringException(KotlinBundle.message("cannot.refactor.not.expression"))
         }
         return null
-    }
-
-    if (element is KtExpression) {
-        val qualifier = element.analyze().get(BindingContext.QUALIFIER, element)
-        if (qualifier != null && (qualifier !is ClassQualifier || qualifier.descriptor.kind != ClassKind.OBJECT)) {
-            return null
-        }
     }
 
     return element
