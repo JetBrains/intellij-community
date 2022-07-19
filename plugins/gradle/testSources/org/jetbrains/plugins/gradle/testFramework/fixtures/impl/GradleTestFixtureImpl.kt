@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
@@ -15,32 +13,27 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
 import com.intellij.openapi.observable.operations.ObservableOperationTrace
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.SdkTestFixture
+import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.runInEdtAndWait
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import org.gradle.util.GradleVersion
 import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.util.closeProject
 import org.jetbrains.plugins.gradle.testFramework.util.generateWrapper
+import org.jetbrains.plugins.gradle.testFramework.util.openProjectAsyncAndWait
 import org.jetbrains.plugins.gradle.testFramework.util.withSuppressedErrors
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.getProjectDataLoadPromise
 import org.jetbrains.plugins.gradle.util.waitForProjectReload
 import java.util.concurrent.TimeUnit
-import kotlin.time.Duration.Companion.minutes
 
 internal class GradleTestFixtureImpl private constructor(
   override val projectName: String,
@@ -81,14 +74,14 @@ internal class GradleTestFixtureImpl private constructor(
     installTaskExecutionWatcher()
     installProjectReloadWatcher()
 
-    _project = runBlocking { ProjectUtil.openOrImportAsync(fileFixture.root.toNioPath())!! }
+    _project = runBlocking { openProjectAsync(fileFixture.root) }
   }
 
   override fun tearDown() {
     runAll(
       { fileFixture.root.refreshAndWait() },
       { projectOperations.waitForOperation() },
-      { if (_project.isInitialized) _project.closeProject() },
+      { if (_project.isInitialized) runBlocking { _project.closeProjectAsync() } },
       { Disposer.dispose(testDisposable) },
       { fileFixture.tearDown() },
       { sdkFixture.tearDown() }
@@ -152,35 +145,13 @@ internal class GradleTestFixtureImpl private constructor(
     }
 
     private suspend fun createProjectCaches(projectRoot: VirtualFile) {
-      val project = openProjectAndWait(projectRoot)
+      val project = openProjectAsyncAndWait(projectRoot)
       try {
         projectRoot.refreshAndWait()
       }
       finally {
-        ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project = project, save = true)
+        project.closeProjectAsync(save = true)
       }
     }
   }
-}
-
-private suspend fun openProjectAndWait(projectRoot: VirtualFile): Project {
-  val deferred = getProjectDataLoadPromise()
-  val project = ProjectUtil.openOrImportAsync(projectRoot.toNioPath())!!
-  try {
-    withContext(Dispatchers.EDT) {
-      withTimeout(10.minutes) {
-        deferred.asDeferred().join()
-      }
-    }
-  }
-  catch (e: Throwable) {
-    try {
-      ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project)
-    }
-    catch (closeException: Throwable) {
-      e.addSuppressed(closeException)
-    }
-    throw e
-  }
-  return project
 }

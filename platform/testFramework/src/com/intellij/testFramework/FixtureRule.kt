@@ -3,6 +3,7 @@ package com.intellij.testFramework
 
 import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.CommandProcessor
@@ -19,6 +20,7 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -340,22 +342,52 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-inline fun <T> Project.use(task: (Project) -> T): T {
-  return try {
-    task(this)
+inline fun <T> Project.use(save: Boolean = false, action: (Project) -> T): T {
+  try {
+    return action(this)
   }
   finally {
-    PlatformTestUtil.forceCloseProjectWithoutSaving(this)
+    ProjectManagerEx.getInstanceEx().forceCloseProject(this, save = save)
   }
 }
 
-suspend inline fun <T> Project.useAsync(task: (Project) -> T): T {
+suspend fun <T> Project.useAsync(save: Boolean = false, action: suspend (Project) -> T): T {
   try {
-    return task(this)
+    return action(this)
   }
   finally {
-    ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this)
+    closeProjectAsync(save)
   }
+}
+
+suspend fun Project.closeProjectAsync(save: Boolean = false) {
+  ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this, save = save)
+}
+
+suspend fun Project.setupProjectAsync(setup: suspend (Project) -> Unit): Project {
+  try {
+    setup(this)
+  }
+  catch (e: Throwable) {
+    try {
+      closeProjectAsync()
+    }
+    catch (closeException: Throwable) {
+      e.addSuppressed(closeException)
+    }
+    throw e
+  }
+  return this
+}
+
+suspend fun openProjectAsync(virtualFile: VirtualFile, vararg activities: ProjectPostStartupActivity): Project {
+  return ProjectUtil.openOrImportAsync(virtualFile.toNioPath())!!
+    .setupProjectAsync { project ->
+      for (activity in activities) {
+        activity.runActivity(project)
+        activity.execute(project)
+      }
+    }
 }
 
 class DisposeNonLightProjectsRule : ExternalResource() {

@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autolink
 
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
@@ -14,9 +11,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.projectImport.ProjectOpenProcessor
+import com.intellij.testFramework.openProjectAsync
 import com.intellij.util.io.systemIndependentPath
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
@@ -135,19 +131,8 @@ abstract class AutoLinkTestCase : ExternalSystemTestCase() {
     """.trimIndent())
   }
 
-  suspend fun openProjectFrom(virtualFile: VirtualFile): Project {
-    val project = ProjectUtil.openOrImportAsync(virtualFile.toNioPath())!!
-    UnlinkedProjectStartupActivity().runActivity(project)
-    withContext(Dispatchers.EDT) {
-      // if executed, we processed all events in EDT
-    }
-    withContext(Dispatchers.EDT) {
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-    }
-    withContext(Dispatchers.EDT) {
-      // if executed, we processed all events in EDT
-    }
-    return project
+  suspend fun openProjectAsync(virtualFile: VirtualFile): Project {
+    return openProjectAsync(virtualFile, UnlinkedProjectStartupActivity())
   }
 
   fun assertNotificationAware(project: Project, vararg projects: ExternalSystemProjectId) {
