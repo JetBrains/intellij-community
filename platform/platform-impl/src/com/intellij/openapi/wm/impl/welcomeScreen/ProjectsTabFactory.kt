@@ -116,6 +116,8 @@ class ProjectsTab(private val parentDisposable: Disposable) :
     val recentProjectTree = createComponent(
       parentDisposable, ProjectCollectors.all
     )
+    recentProjectTree.selectLastOpenedProject()
+
     val treeComponent = recentProjectTree.component
     val scrollPane = ScrollPaneFactory.createScrollPane(treeComponent, true)
     scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER

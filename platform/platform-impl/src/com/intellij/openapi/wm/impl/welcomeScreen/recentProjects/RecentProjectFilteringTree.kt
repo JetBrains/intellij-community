@@ -115,7 +115,6 @@ internal class RecentProjectFilteringTree(
 
   override fun rebuildTree() {
     expandGroups()
-    setSelectionOnLastOpenedProject()
   }
 
   override fun createSpeedSearch(searchTextField: SearchTextField): SpeedSearchSupply = object : FilteringSpeedSearch(searchTextField) {}
@@ -174,7 +173,7 @@ internal class RecentProjectFilteringTree(
     }
   }
 
-  private fun setSelectionOnLastOpenedProject() {
+  internal fun selectLastOpenedProject() {
     val recentProjectsManager = RecentProjectsManagerBase.getInstanceEx()
     val projectPath = recentProjectsManager.getLastOpenedProject() ?: return
 
