@@ -30,6 +30,9 @@ object FeatureFlags {
 
     val showRepositoriesTabFlow
         get() = registryChangesFlow("packagesearch.plugin.repositories.tab")
+
+    val smartKotlinMultiplatformCheckboxEnabledFlow
+        get() = registryChangesFlow("packagesearch.plugin.smart.kotlin.multiplatform.checkbox")
 }
 
 private fun registryChangesFlow(key: String, defaultValue: Boolean = false): Flow<Boolean> =

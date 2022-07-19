@@ -17,11 +17,14 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.ProjectTopics
+import com.intellij.facet.Facet
+import com.intellij.facet.FacetManager
+import com.intellij.facet.FacetManager.FACETS_TOPIC
+import com.intellij.facet.FacetManagerListener
 import com.intellij.ide.impl.TrustStateListener
 import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -83,17 +86,6 @@ internal val Project.toolWindowManagerFlow
     }
 
 fun <L : Any, K> Project.messageBusFlow(
-    topic: Topic<L>,
-    initialValue: (suspend () -> K)? = null,
-    listener: suspend ProducerScope<K>.() -> L
-) = callbackFlow {
-    initialValue?.let { send(it()) }
-    val connection = messageBus.simpleConnect()
-    connection.subscribe(topic, listener())
-    awaitClose { connection.disconnect() }
-}
-
-fun <L : Any, K> Application.messageBusFlow(
     topic: Topic<L>,
     initialValue: (suspend () -> K)? = null,
     listener: suspend ProducerScope<K>.() -> L
@@ -195,4 +187,50 @@ val <T : Any> ExtensionPointName<T>.extensionsFlow: Flow<List<T>>
         send(extensions.toList())
         addExtensionPointListener(listener)
         awaitClose { removeExtensionPointListener(listener) }
+    }
+
+fun Project.hasKotlinModules() = ModuleManager.getInstance(this).modules.any { it.hasKotlinFacet() }
+
+internal fun Module.hasKotlinFacet(): Boolean {
+    val facetManager = FacetManager.getInstance(this)
+    return facetManager.allFacets.any { it.typeId.toString() == "kotlin-language" }
+}
+
+internal val Project.facetChangesFlow
+    get() = messageBusFlow(FACETS_TOPIC, initialValue = {
+        logWarn { "Initial value" }
+    }) {
+        object : FacetManagerListener {
+            override fun facetAdded(facet: Facet<*>) {
+                logWarn { "Facet added: ${facet.name} in module ${facet.module.name}" }
+                trySend(Unit)
+            }
+
+            override fun facetRemoved(facet: Facet<*>) {
+                logWarn { "Facet removed: ${facet.name} in module ${facet.module.name}" }
+                trySend(Unit)
+            }
+
+            override fun facetRenamed(facet: Facet<*>, oldName: String) {
+                logWarn { "Facet renamed: ${facet.name} (was $oldName) in module ${facet.module.name}" }
+                trySend(Unit)
+            }
+
+            override fun facetConfigurationChanged(facet: Facet<*>) {
+                logWarn { "Facet changed: ${facet.name} in module ${facet.module.name}" }
+                trySend(Unit)
+            }
+
+            override fun beforeFacetAdded(facet: Facet<*>) {
+                trySend(Unit)
+            }
+
+            override fun beforeFacetRemoved(facet: Facet<*>) {
+                trySend(Unit)
+            }
+
+            override fun beforeFacetRenamed(facet: Facet<*>) {
+                trySend(Unit)
+            }
+        }
     }

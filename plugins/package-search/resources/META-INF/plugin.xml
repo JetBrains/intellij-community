@@ -117,6 +117,12 @@ Supports Maven and Gradle projects.
                      description="Display the Repositories tab in the Package Search toolwindow. It may not work correctly, or at all."
                      restartRequired="true"/>
 
+        <registryKey id="packagesearch.plugin.smart.kotlin.multiplatform.checkbox"
+                     key="packagesearch.plugin.smart.kotlin.multiplatform.checkbox"
+                     defaultValue="false"
+                     description="Only display the Kotlin Multiplatform checkbox when at least one supported module has the Kotlin facet applied. When false, it only depends on the Kotlin IntelliJ plugin being enabled."
+                     restartRequired="false"/>
+
         <statistics.counterUsagesCollector
                 implementationClass="com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger"/>
 
