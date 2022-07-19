@@ -71,6 +71,11 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
             return CallMaker.makePropertyCall(null, null, element)
         }
 
+        if (element is KtArrayAccessExpression) {
+            val receiver = element.getArrayExpression()?.toExpressionReceiverValue(context) ?: return null
+            return CallMaker.makeArrayGetCall(receiver, element, Call.CallType.ARRAY_GET_METHOD)
+        }
+
         when (parent) {
             is KtBinaryExpression -> {
                 val receiver = parent.left?.toExpressionReceiverValue(context) ?: context.errorHandling()
