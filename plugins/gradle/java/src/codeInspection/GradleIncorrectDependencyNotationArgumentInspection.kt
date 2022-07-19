@@ -111,7 +111,7 @@ class GradleIncorrectDependencyNotationArgumentInspection : GroovyLocalInspectio
     val string = GroovyConstantExpressionEvaluator.evaluate(argument)
     if (string is String) {
       val parts = string.split(":")
-      if (parts.size != 3) {
+      if (parts.size < 2) {
         holder.registerProblem(argument, GradleInspectionBundle.message("inspection.display.name.expected.3.parts.separated.by.colon"))
       }
     }
