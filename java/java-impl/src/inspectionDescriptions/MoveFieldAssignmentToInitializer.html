@@ -1,9 +1,10 @@
 <html>
 <body>
-Suggests replacing initializations of a field via assignment with field initializers.
-<p>The code is highlighted only if the field initializer is located in the initializer, and
+Suggests replacing initialization of fields using assignment with initialization in the field declaration.
+<p>Only reports if the field assignment is located in an instance or static initializer, and
   joining it with the field declaration is likely to be safe.
-  In other cases, the inspection provides a quick-fix without code highlighting, as the fix may change the code semantics.</p>
+  In other cases, like assignment inside a constructor, the quick-fix is provided without highlighting,
+  as the fix may change the semantics.</p>
 <p>Example:</p>
 <pre><code>
   class MyClass {
@@ -14,7 +15,7 @@ Suggests replacing initializations of a field via assignment with field initiali
     }
   }
 </code></pre>
-The quick fix moves the assigned value to the field initializer removing the class initializer section if possible:
+The quick fix moves the assigned value to the field initializer removing the class initializer if possible:
 <pre><code>
   class MyClass {
     static final int intConstant = 10;
