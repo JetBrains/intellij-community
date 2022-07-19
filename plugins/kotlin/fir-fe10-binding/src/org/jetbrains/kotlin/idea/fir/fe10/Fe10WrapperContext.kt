@@ -61,6 +61,7 @@ fun KtSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): DeclarationDe
         is KtFunctionLikeSymbol -> toDeclarationDescriptor(context)
         is KtVariableLikeSymbol -> toDeclarationDescriptor(context)
         is KtReceiverParameterSymbol -> toDeclarationDescriptor(context)
+        is KtTypeAliasSymbol -> toDeclarationDescriptor(context)
         else -> context.implementationPlanned(this::class.qualifiedName ?: "")
     }
 
@@ -107,6 +108,8 @@ fun KtVariableLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): V
         is KtLocalVariableSymbol ->  KtSymbolBasedLocalVariableDescriptor(this, context)
         else -> context.implementationPlanned(this::class.toString())
     }
+
+fun KtTypeAliasSymbol.toDeclarationDescriptor(context: Fe10WrapperContext) = KtSymbolBasedTypeAliasDescriptor(this, context)
 
 class Fe10WrapperContextImpl(
     private val project: Project,

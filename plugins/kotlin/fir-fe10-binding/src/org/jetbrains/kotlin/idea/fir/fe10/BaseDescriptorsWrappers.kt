@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.AbstractReceiverParameterDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ReceiverParameterDescriptorImpl
-import org.jetbrains.kotlin.ir.util.IdSignature
+import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
@@ -861,4 +861,38 @@ class KtSymbolBasedPackageFragmentDescriptor(
 
     override fun acceptVoid(visitor: DeclarationDescriptorVisitor<Void, Void>?) =
         context.noImplementation("IDE shouldn't use visitor on descriptors")
+}
+
+class KtSymbolBasedTypeAliasDescriptor(
+    override val ktSymbol: KtTypeAliasSymbol,
+    context: Fe10WrapperContext
+) : KtSymbolBasedDeclarationDescriptor(context), KtSymbolBasedNamed, TypeAliasDescriptor {
+    override val classDescriptor: ClassDescriptor?
+        get() = context.implementationPostponed()
+    override val constructors: Collection<TypeAliasConstructorDescriptor>
+        get() = context.implementationPostponed()
+
+    override val expandedType: SimpleType
+        get() = ktSymbol.expandedType.toKotlinType(context, annotations) as SimpleType
+    override val underlyingType: SimpleType
+        get() = context.implementationPostponed()
+
+    override fun getDeclaredTypeParameters(): List<TypeParameterDescriptor> = context.implementationPostponed()
+
+    override fun getDefaultType(): SimpleType = expandedType
+
+    override fun getModality(): Modality = Modality.FINAL
+
+    override fun getPackageFqNameIfTopLevel(): FqName = (ktSymbol.classIdIfNonLocal ?: error("should be top-level")).packageFqName
+
+    override fun getOriginal(): TypeAliasDescriptor = this
+
+    override fun getTypeConstructor(): TypeConstructor = context.implementationPostponed()
+
+    override fun getVisibility(): DescriptorVisibility = ktSymbol.visibility.toDescriptorVisibility()
+    override fun isInner(): Boolean = false
+
+    override fun isActual(): Boolean = context.implementationPostponed()
+    override fun isExpect(): Boolean = context.implementationPostponed()
+    override fun isExternal(): Boolean = context.implementationPostponed()
 }
