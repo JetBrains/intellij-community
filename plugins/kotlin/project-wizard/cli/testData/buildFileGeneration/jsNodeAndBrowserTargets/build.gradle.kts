@@ -13,13 +13,13 @@ repositories {
 }
 
 kotlin {
-    js("nodeJs", LEGACY) {
+    js("nodeJs", IR) {
         binaries.executable()
         nodejs {
 
         }
     }
-    js("browser", LEGACY) {
+    js("browser", IR) {
         binaries.executable()
         browser {
             commonWebpackConfig {
