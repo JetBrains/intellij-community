@@ -14,12 +14,8 @@ import com.sun.jdi.Location
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.VirtualMachine
 import org.jetbrains.kotlin.codegen.inline.SMAP
-import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
-import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
-import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -32,15 +28,6 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.concurrent.ConcurrentMap
-
-fun isInlineFunctionLineNumber(file: VirtualFile, lineNumber: Int, project: Project): Boolean {
-    if (RootKindFilter.projectSources.matches(project, file)) {
-        val linesInFile = file.toPsiFile(project)?.getLineCount() ?: return false
-        return lineNumber > linesInFile
-    }
-
-    return true
-}
 
 fun createWeakBytecodeDebugInfoStorage(): ConcurrentMap<BinaryCacheKey, SMAP?> {
     return ConcurrentFactoryMap.createWeakMap<BinaryCacheKey, SMAP?> { key ->

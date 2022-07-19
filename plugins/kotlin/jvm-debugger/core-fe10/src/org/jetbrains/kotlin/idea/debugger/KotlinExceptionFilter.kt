@@ -98,7 +98,7 @@ class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : Except
     }
 
     private fun createHyperlinks(jvmName: JvmClassName, file: VirtualFile, line: Int, project: Project): InlineFunctionHyperLinkInfo? {
-        if (!isInlineFunctionLineNumber(file, line, project)) return null
+        if (!isInlineFrameLineNumber(file, line, project)) return null
 
         val smapData = KotlinDebuggerCaches.getSmapCached(project, jvmName, file) ?: return null
 
