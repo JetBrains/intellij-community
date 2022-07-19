@@ -3,9 +3,15 @@
 package org.jetbrains.kotlin.idea.fir.fe10.binding
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
+import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.fir.fe10.*
+import org.jetbrains.kotlin.idea.references.FE10_BINDING_RESOLVE_TO_DESCRIPTORS
+import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.util.slicedMap.ReadOnlySlice
@@ -34,7 +40,7 @@ internal class ToDescriptorBindingContextValueProviders(bindingContext: KtSymbol
         bindingContext.registerDeclarationToDescriptorByKey(BindingContext.VALUE_PARAMETER, this::getValueParameter)
         bindingContext.registerDeclarationToDescriptorByKey(BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER, this::getPrimaryConstructorParameter)
 
-
+        bindingContext.registerGetterByKey(FE10_BINDING_RESOLVE_TO_DESCRIPTORS, this::resolveToDescriptors)
         bindingContext.registerGetterByKey(BindingContext.DECLARATION_TO_DESCRIPTOR, this::getDeclarationToDescriptor)
     }
 
@@ -97,5 +103,12 @@ internal class ToDescriptorBindingContextValueProviders(bindingContext: KtSymbol
             getter(key)?.let { return it }
         }
         return null
+    }
+
+    private fun resolveToDescriptors(ktReference: KtReference): Collection<DeclarationDescriptor>? {
+        if (ktReference !is KtSymbolBasedReference) return null
+
+        val symbols = context.withAnalysisSession { ktReference.resolveToSymbols() }
+        return symbols.map { it.toDeclarationDescriptor(context) }
     }
 }
