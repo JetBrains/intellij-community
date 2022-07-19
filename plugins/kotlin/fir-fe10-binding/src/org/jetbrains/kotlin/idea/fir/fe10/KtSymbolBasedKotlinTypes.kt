@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.inference.substitute
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.types.*
@@ -126,6 +126,10 @@ fun KtType.toKotlinType(context: Fe10WrapperContext, annotations: Annotations = 
             // but I don't think that we will have the real problem with that implementation
             return IntersectionTypeConstructor(conjuncts.map { it.toKotlinType(context) }).createType()
         }
+        is KtDefinitelyNotNullType -> {
+            val kotlinType = original.toKotlinType(context, annotations)
+            return DefinitelyNotNullType.makeDefinitelyNotNull(kotlinType) ?: kotlinType
+        }
         else -> error("Unexpected subclass: ${this.javaClass}")
     }
 
@@ -152,12 +156,11 @@ fun KtTypeAliasSymbol.toExpandedKotlinType(
     if (typeParameters.isEmpty()) return expandedUnsubstitutedType
 
     // KtSubstitutor isn't able to substitute TypeProjections KT-53095
-    val map = mutableMapOf<TypeConstructor, TypeProjection>()
+    val map = mutableMapOf<KtTypeParameterSymbol, TypeProjection>()
 
     typeParameters.forEachIndexed { index, ktTypeParameterSymbol ->
-        val argument = arguments[index].toTypeProjection(context)
-        map[KtSymbolBasedTypeParameterDescriptor(ktTypeParameterSymbol, context).typeConstructor] = argument
+        map[ktTypeParameterSymbol] = arguments[index].toTypeProjection(context)
     }
 
-    return TypeSubstitutor.create(map).substitute(expandedUnsubstitutedType)
+    return Fe10BindingSimpleTypeSubstitutor.substitute(map, expandedUnsubstitutedType)
 }
