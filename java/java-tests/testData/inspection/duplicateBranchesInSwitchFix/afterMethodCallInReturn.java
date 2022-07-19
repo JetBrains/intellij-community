@@ -4,9 +4,7 @@ enum T {
 
     int foo(T t) {
         switch (t) {
-            case A:
-
-            case B:
+            case A, B:
                 return t.ordinal(); // comment 1
 
             case C:

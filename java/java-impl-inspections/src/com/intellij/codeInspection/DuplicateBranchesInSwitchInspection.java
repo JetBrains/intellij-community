@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -405,7 +405,24 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
         PsiElement prevElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(myLabelToMergeWith);
         if (prevElement != null) moveTarget = prevElement;
       }
-      moveTarget.getParent().addRangeAfter(firstElementToMove, lastElementToMove, moveTarget);
+      if (PsiUtil.isLanguageLevel14OrHigher(moveTarget) && moveTarget instanceof PsiSwitchLabelStatement) {
+        final PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement)moveTarget;
+        final PsiCaseLabelElementList caseLabelElementList = labelStatement.getCaseLabelElementList();
+        assert caseLabelElementList != null;
+        for (PsiElement element : myBranchPrefixToMove) {
+          if (element instanceof PsiSwitchLabelStatement) {
+            final PsiSwitchLabelStatement statement = (PsiSwitchLabelStatement)element;
+            final PsiCaseLabelElementList list1 = statement.getCaseLabelElementList();
+            assert list1 != null;
+            for (PsiCaseLabelElement labelElement : list1.getElements()) {
+              caseLabelElementList.addAfter(labelElement, caseLabelElementList.getLastChild());
+            }
+          }
+        }
+      }
+      else {
+        moveTarget.getParent().addRangeAfter(firstElementToMove, lastElementToMove, moveTarget);
+      }
       firstElementToMove.getParent().deleteChildRange(firstElementToMove, lastElementToMove);
     }
 

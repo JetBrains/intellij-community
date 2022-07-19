@@ -2,8 +2,7 @@
 class C {
     void foo(int n) {
         switch (n) {
-            case 1:
-            case 4:
+            case 1, 4:
                 bar("A");
                 break;
             case 2:
