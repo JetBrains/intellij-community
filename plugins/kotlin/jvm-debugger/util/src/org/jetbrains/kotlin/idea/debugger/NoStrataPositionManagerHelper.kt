@@ -7,16 +7,12 @@ import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.containers.ConcurrentFactoryMap
 import com.sun.jdi.Location
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.VirtualMachine
-import org.jetbrains.kotlin.codegen.inline.SMAP
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -27,16 +23,6 @@ import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import java.util.concurrent.ConcurrentMap
-
-fun createWeakBytecodeDebugInfoStorage(): ConcurrentMap<BinaryCacheKey, SMAP?> {
-    return ConcurrentFactoryMap.createWeakMap<BinaryCacheKey, SMAP?> { key ->
-        val bytes = ClassBytecodeFinder(key.project, key.jvmName, key.file).find() ?: return@createWeakMap null
-        return@createWeakMap readDebugInfo(bytes)
-    }
-}
-
-data class BinaryCacheKey(val project: Project, val jvmName: JvmClassName, val file: VirtualFile)
 
 fun getLocationsOfInlinedLine(type: ReferenceType, position: SourcePosition, sourceSearchScope: GlobalSearchScope): List<Location> {
     val line = position.line
@@ -81,7 +67,6 @@ fun isInCrossinlineArgument(ktElement: KtElement): Boolean {
     }
 }
 
-
 private fun inlinedLinesNumbers(
     inlineLineNumber: Int, inlineFileName: String,
     destinationTypeFqName: FqName, destinationFileName: String,
@@ -95,7 +80,7 @@ private fun inlinedLinesNumbers(
 
     val virtualFile = file.virtualFile ?: return listOf()
 
-    val smapData = KotlinDebuggerCaches.getSmapCached(project, jvmClassName, virtualFile) ?: return listOf()
+    val smapData = KotlinSourceMapCache.getInstance(project).getSourceMap(virtualFile, jvmClassName) ?: return listOf()
 
     val mappingsToInlinedFile = smapData.fileMappings.filter { it.name == inlineFileName }
     val mappingIntervals = mappingsToInlinedFile.flatMap { it.lineMappings }
