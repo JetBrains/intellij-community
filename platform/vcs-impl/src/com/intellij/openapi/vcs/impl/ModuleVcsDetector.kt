@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
@@ -9,9 +8,6 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.roots.AdditionalLibraryRootsListener
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsDirectoryMapping
@@ -20,6 +16,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 
 internal class ModuleVcsDetector(private val project: Project) {
   private val vcsManager by lazy(LazyThreadSafetyMode.NONE) { ProjectLevelVcsManagerImpl.getInstanceImpl(project) }
@@ -35,10 +32,7 @@ internal class ModuleVcsDetector(private val project: Project) {
     WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, MyWorkspaceModelChangeListener())
 
     if (vcsManager.needAutodetectMappings()) {
-      val initialDetectionListener = InitialMappingsDetectionListener()
-      busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, initialDetectionListener)
-      busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, initialDetectionListener)
-
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, InitialMappingsDetectionListener())
       queue.queue(InitialFullScan())
     }
   }
@@ -138,25 +132,16 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
-  private inner class InitialMappingsDetectionListener : ModuleRootListener, AdditionalLibraryRootsListener {
-    override fun rootsChanged(event: ModuleRootEvent) {
-      scheduleRescan()
+  private inner class InitialMappingsDetectionListener : ContentRootChangeListener() {
+    override fun changed(event: VersionedStorageChange) {
+      if (!vcsManager.needAutodetectMappings()) return
+      super.changed(event)
     }
 
-    override fun libraryRootsChanged(presentableLibraryName: String?,
-                                     oldRoots: MutableCollection<out VirtualFile>,
-                                     newRoots: MutableCollection<out VirtualFile>,
-                                     libraryNameForDebug: String) {
-      scheduleRescan()
-    }
-
-    private fun scheduleRescan() {
-      if (vcsManager.needAutodetectMappings()) {
-        queue.queue(DelayedFullScan())
-      }
+    override fun rootsDirectoriesChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
+      queue.queue(DelayedFullScan())
     }
   }
-
 
   internal class MyPostStartUpActivity : StartupActivity.DumbAware {
     init {
