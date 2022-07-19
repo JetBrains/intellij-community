@@ -156,6 +156,7 @@ Includes the following features:</p>
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.ui.floating.AddFloatingToolbarTextEditorCustomizer"/>
 
     <customPasteProvider implementation="org.intellij.plugins.markdown.editor.images.MarkdownImagePasteProvider"/>
+    <customPasteProvider implementation="org.intellij.plugins.markdown.editor.FileLinkPasteProvider"/>
 
     <customFileDropHandler id="MarkdownEditorFileDropHandler"
                            implementation="org.intellij.plugins.markdown.editor.EditorFileDropHandler"/>

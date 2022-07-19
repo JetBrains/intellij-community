@@ -1,0 +1,55 @@
+package org.intellij.plugins.markdown.editor
+
+import com.intellij.ide.PasteProvider
+import com.intellij.ide.dnd.FileCopyPasteUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.editor.actions.PasteAction
+import com.intellij.psi.util.PsiEditorUtil
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownType
+
+internal class FileLinkPasteProvider: PasteProvider {
+  override fun performPaste(dataContext: DataContext) {
+    val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
+    val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
+    val transferableProvider = dataContext.getData(PasteAction.TRANSFERABLE_PROVIDER) ?: return
+    val transferable = transferableProvider.produce() ?: return
+    val files = FileCopyPasteUtil.getFiles(transferable)?.asSequence() ?: return
+    val file = PsiEditorUtil.getPsiFile(editor)
+    val document = editor.document
+    val content = EditorFileDropHandler.buildTextContent(files, file)
+    runWriteAction {
+      EditorFileDropHandler.handleReadOnlyModificationException(project, document) {
+        executeCommand(project) {
+          editor.caretModel.runForEachCaret(reverseOrder = true) { caret ->
+            val offset = caret.offset
+            document.insertString(offset, content)
+            caret.moveToOffset(offset + content.length)
+          }
+        }
+      }
+    }
+  }
+
+  override fun isPastePossible(dataContext: DataContext): Boolean {
+    if (dataContext.getData(CommonDataKeys.PROJECT) == null) {
+      return false
+    }
+    val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return false
+    val file = dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return false
+    return file.fileType.isMarkdownType() && editor.document.isWritable
+  }
+
+  override fun isPasteEnabled(dataContext: DataContext): Boolean {
+    val file = dataContext.getData(CommonDataKeys.VIRTUAL_FILE)
+    val project = dataContext.getData(CommonDataKeys.PROJECT)
+    return file?.fileType?.isMarkdownType() == true && project != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+}

@@ -56,27 +56,27 @@ internal class EditorFileDropHandler: CustomFileDropHandler() {
     return true
   }
 
-  private fun buildTextContent(files: Sequence<Path>, file: PsiFile): String {
-    val imageFileType = ImageFileTypeManager.getInstance().imageFileType
-    val registry = FileTypeRegistry.getInstance()
-    val currentDirectory = file.containingDirectory?.virtualFile?.toNioPath()
-    val relativePaths = files.map { obtainRelativePath(it, currentDirectory) }
-    return relativePaths.joinToString(separator = "\n") { path ->
-      when (registry.getFileTypeByExtension(path.extension)) {
-        imageFileType, SvgFileType.INSTANCE -> ImageUtils.createMarkdownImageText(
-          description = path.name,
-          path = path.toString()
-        )
-        else -> createFileLink(path)
-      }
-    }
-  }
-
   companion object {
     private val commandName
       get() = MarkdownBundle.message("markdown.image.file.drop.handler.drop.command.name")
 
-    fun obtainRelativePath(path: Path, currentDirectory: Path?): Path {
+    internal fun buildTextContent(files: Sequence<Path>, file: PsiFile): String {
+      val imageFileType = ImageFileTypeManager.getInstance().imageFileType
+      val registry = FileTypeRegistry.getInstance()
+      val currentDirectory = file.containingDirectory?.virtualFile?.toNioPath()
+      val relativePaths = files.map { obtainRelativePath(it, currentDirectory) }
+      return relativePaths.joinToString(separator = "\n") { path ->
+        when (registry.getFileTypeByExtension(path.extension)) {
+          imageFileType, SvgFileType.INSTANCE -> ImageUtils.createMarkdownImageText(
+            description = path.name,
+            path = path.toString()
+          )
+          else -> createFileLink(path)
+        }
+      }
+    }
+
+    private fun obtainRelativePath(path: Path, currentDirectory: Path?): Path {
       if (currentDirectory == null) {
         return path
       }
@@ -87,7 +87,7 @@ internal class EditorFileDropHandler: CustomFileDropHandler() {
       return "[${file.name}]($file)"
     }
 
-    private fun handleReadOnlyModificationException(project: Project, document: Document, block: () -> Unit) {
+    internal fun handleReadOnlyModificationException(project: Project, document: Document, block: () -> Unit) {
       try {
         block.invoke()
       } catch (exception: ReadOnlyModificationException) {
