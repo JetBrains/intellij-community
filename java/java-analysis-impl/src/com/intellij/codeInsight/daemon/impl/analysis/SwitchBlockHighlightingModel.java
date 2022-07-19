@@ -824,6 +824,14 @@ public class SwitchBlockHighlightingModel {
         if (info != null) {
           results.add(info);
         }
+        if (!checkRecordExhaustiveness(elements)) {
+          results.add(createCompletenessInfoForSwitch(!elements.isEmpty()));
+        }
+      }
+      else if (selectorClass != null && selectorClass.isRecord()) {
+        if (!checkRecordExhaustiveness(elements)) {
+          results.add(createCompletenessInfoForSwitch(!elements.isEmpty()));
+        }
       }
       else {
         results.add(createCompletenessInfoForSwitch(!elements.isEmpty()));
@@ -873,6 +881,11 @@ public class SwitchBlockHighlightingModel {
           for (PsiClass permittedClass : getPermittedClasses(psiClass)) {
             if (!visited.add(permittedClass)) continue;
             PsiPattern pattern = patternClasses.get(permittedClass);
+            if (pattern instanceof PsiDeconstructionPattern &&
+                JavaPsiPatternUtil.dominates(((PsiDeconstructionPattern)pattern).getTypeElement().getType(),
+                                             TypeUtils.getType(permittedClass))) {
+              continue;
+            }
             if (pattern == null && (PsiUtil.getLanguageLevel(permittedClass).isLessThan(LanguageLevel.JDK_18_PREVIEW) ||
                                     TypeConversionUtil.areTypesConvertible(mySelectorType, TypeUtils.getType(permittedClass))) ||
                 pattern != null && !JavaPsiPatternUtil.isTotalForType(pattern, TypeUtils.getType(permittedClass))) {
@@ -898,6 +911,97 @@ public class SwitchBlockHighlightingModel {
       IntentionAction fix = getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, allNames);
       QuickFixAction.registerQuickFixAction(info, fix);
       return info;
+    }
+
+    private static boolean checkRecordExhaustiveness(@NotNull List<PsiCaseLabelElement> caseElements) {
+      List<PsiDeconstructionPattern> deconstructions =
+        ContainerUtil.mapNotNull(caseElements, element -> findUnconditionalDeconstruction(element));
+      MultiMap<PsiType, PsiDeconstructionPattern> deconstructionGroups =
+        ContainerUtil.groupBy(deconstructions, deconstruction -> deconstruction.getTypeElement().getType());
+
+      for (Map.Entry<PsiType, Collection<PsiDeconstructionPattern>> entry : deconstructionGroups.entrySet()) {
+        PsiType type = entry.getKey();
+
+        PsiClassType.ClassResolveResult resolve = PsiUtil.resolveGenericsClassInType(type);
+        PsiClass selectorClass = resolve.getElement();
+        PsiSubstitutor substitutor = resolve.getSubstitutor();
+        if (selectorClass == null) continue;
+        List<PsiType> types =
+          ContainerUtil.map(selectorClass.getRecordComponents(), component -> substitutor.substitute(component.getType()));
+
+        List<List<PsiType>> deconstructionGroupTypes = ContainerUtil.map(entry.getValue(), deconstruction -> {
+          return ContainerUtil.map(deconstruction.getDeconstructionList().getDeconstructionComponents(),
+                                   component -> JavaPsiPatternUtil.getPatternType(component));
+        });
+        if (!isExhaustiveInGroup(types, deconstructionGroupTypes)) { //todo check exhaustiveness only on completed
+          return false;
+        }
+      }
+      return true;
+    }
+
+    private static @Nullable PsiDeconstructionPattern findUnconditionalDeconstruction(PsiCaseLabelElement caseElement) {
+      if (caseElement instanceof PsiParenthesizedPattern) {
+        return findUnconditionalDeconstruction(((PsiParenthesizedPattern)caseElement).getPattern());
+      }
+      else if (caseElement instanceof PsiPatternGuard) {
+        PsiPatternGuard guarded = (PsiPatternGuard)caseElement;
+        Object constVal = JavaPsiPatternUtil.evaluateConstant(guarded.getGuardingExpression());
+        if (!Boolean.TRUE.equals(constVal)) return null;
+        return findUnconditionalDeconstruction(((PsiPatternGuard)caseElement).getPattern());
+      }
+      else if (caseElement instanceof PsiDeconstructionPattern) {
+        return ((PsiDeconstructionPattern)caseElement);
+      }
+      else {
+        return null;
+      }
+    }
+
+    private static boolean isExhaustiveInGroup(List<PsiType> recordTypes, List<List<PsiType>> deconstructions) {
+      if (recordTypes.isEmpty()) return true;
+      PsiType typeToCheck = recordTypes.get(0);
+
+      MultiMap<PsiType, List<PsiType>> deconstructionGroups = ContainerUtil.groupBy(deconstructions, deconstructionComponents -> {
+        return deconstructionComponents.get(0);
+      });
+
+      List<Map.Entry<PsiType, Collection<List<PsiType>>>> exhaustiveGroups =
+        ContainerUtil.filter(deconstructionGroups.entrySet(), deconstructionGroup -> {
+          return isExhaustiveInGroup(
+            recordTypes.stream().skip(1).collect(Collectors.toList()),
+            ContainerUtil.map(deconstructionGroup.getValue(), it -> it.stream().skip(1).collect(Collectors.toList())));
+        });
+
+      List<PsiType> exhaustiveTypes = ContainerUtil.map(exhaustiveGroups, it -> it.getKey());
+
+      return isExhaustive(typeToCheck, exhaustiveTypes);
+    }
+
+    private static boolean isExhaustive(PsiType typeToCheck, List<PsiType> types) { //generic types?
+      if (types.isEmpty()) return false;
+
+      for (PsiType psiType : types) {
+        if (JavaPsiPatternUtil.dominates(psiType, typeToCheck)) {
+          return true;
+        }
+      }
+
+      PsiClass classToCheck = PsiUtil.resolveClassInClassTypeOnly(typeToCheck);
+      if (classToCheck == null) {
+        return true;
+      }
+      if (classToCheck.hasModifierProperty(SEALED) && classToCheck.hasModifierProperty(ABSTRACT)) { //check
+        for (PsiClass permittedClass : getPermittedClasses(classToCheck)) {
+          PsiClassType permittedType = TypeUtils.getType(permittedClass);
+          if (!ContainerUtil.exists(types, type -> TypeConversionUtil.areTypesConvertible(type, permittedType))) {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      return false;
     }
 
     @NotNull

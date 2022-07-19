@@ -311,7 +311,7 @@ public final class JavaPsiPatternUtil {
   }
 
   @Nullable
-  private static Object evaluateConstant(@Nullable PsiExpression expression) {
+  public static Object evaluateConstant(@Nullable PsiExpression expression) {
     if (expression == null) return null;
     return JavaPsiFacade.getInstance(expression.getProject()).getConstantEvaluationHelper()
       .computeConstantExpression(expression, false);
