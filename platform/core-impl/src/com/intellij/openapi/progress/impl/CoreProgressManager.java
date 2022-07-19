@@ -839,7 +839,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   protected boolean sleepIfNeededToGivePriorityToAnotherThread() {
-    if (!isCurrentThreadEffectivelyPrioritized() && isLowPriorityReallyApplicable()) {
+    if (isDeprioritizationEnabled() && !isCurrentThreadEffectivelyPrioritized() && isLowPriorityReallyApplicable()) {
       LockSupport.parkNanos(1_000_000);
       avoidBlockingPrioritizingThread();
       return true;
@@ -917,6 +917,21 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       }
     }
     return false;
+  }
+
+  private boolean isDeprioritizationEnabled() {
+    return myDeprioritizations.get() < 1_000_000;
+  }
+  @TestOnly
+  @ApiStatus.Internal
+  public <T,E extends Throwable> T suppressAllDeprioritizationsDuringLongTestsExecutionIn(@NotNull ThrowableComputable<T, E> runnable) throws E {
+    myDeprioritizations.addAndGet(1_000_000);
+    try {
+      return runnable.compute();
+    }
+    finally {
+      myDeprioritizations.addAndGet(-1_000_000);
+    }
   }
 
   @NotNull
