@@ -16,7 +16,7 @@ dependencies {
 }
 
 kotlin {
-    js(LEGACY) {
+    js {
         binaries.executable()
         nodejs {
 

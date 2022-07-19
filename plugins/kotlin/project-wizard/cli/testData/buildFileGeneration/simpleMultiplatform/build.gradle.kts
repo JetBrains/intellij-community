@@ -21,7 +21,7 @@ kotlin {
             useJUnit()
         }
     }
-    js("a", LEGACY) {
+    js("a", IR) {
         binaries.executable()
         browser {
             commonWebpackConfig {
