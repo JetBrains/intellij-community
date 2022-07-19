@@ -5,10 +5,13 @@ package org.jetbrains.kotlin.idea.debugger.filter
 import com.intellij.debugger.engine.ExtraSteppingFilter
 import com.intellij.debugger.engine.SuspendContext
 import com.intellij.debugger.settings.DebuggerSettings
+import com.sun.jdi.Location
 import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.debugger.*
+import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.base.util.safeGetSourcePosition
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 
 class KotlinExtraSteppingFilter : ExtraSteppingFilter {
@@ -59,3 +62,21 @@ class KotlinExtraSteppingFilter : ExtraSteppingFilter {
     }
 }
 
+private fun isOneLineMethod(location: Location): Boolean {
+    val method = location.safeMethod() ?: return false
+    val allLineLocations = method.safeAllLineLocations()
+    if (allLineLocations.isEmpty()) return false
+    if (allLineLocations.size == 1) return true
+
+    val inlineFunctionBorders = method.getInlineFunctionAndArgumentVariablesToBordersMap().values
+    return allLineLocations
+        .mapNotNull { loc ->
+            if (!isKotlinFakeLineNumber(loc) &&
+                !inlineFunctionBorders.any { loc in it })
+                loc.lineNumber()
+            else
+                null
+        }
+        .toHashSet()
+        .size == 1
+}
