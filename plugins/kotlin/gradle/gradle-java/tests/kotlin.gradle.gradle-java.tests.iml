@@ -54,5 +54,6 @@
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" exported="" name="kotlin-tooling-core" level="project" />
     <orderEntry type="module" module-name="kotlin.run-configurations.jvm" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.junit.rt" scope="TEST" />
   </component>
 </module>

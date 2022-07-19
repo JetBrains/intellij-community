@@ -3,6 +3,7 @@ package com.intellij.junit5;
 
 import com.intellij.junit4.ExpectedPatterns;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
+import com.intellij.rt.execution.junit.FileComparisonData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
@@ -261,7 +262,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
             testFailure(methodName, id, parentId, messageName, assertionError, duration, reason, false);
           }
         }
-        else if (ex instanceof AssertionFailedError && ((AssertionFailedError)ex).isActualDefined() && ((AssertionFailedError)ex).isExpectedDefined()) {
+        else if (ex instanceof AssertionFailedError && !(ex instanceof FileComparisonData) && ((AssertionFailedError)ex).isActualDefined() && ((AssertionFailedError)ex).isExpectedDefined()) {
           final ValueWrapper actual = ((AssertionFailedError)ex).getActual();
           final ValueWrapper expected = ((AssertionFailedError)ex).getExpected();
           failureData = new ComparisonFailureData(expected.getStringRepresentation(), actual.getStringRepresentation());

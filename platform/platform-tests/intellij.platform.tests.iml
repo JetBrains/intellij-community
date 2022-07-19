@@ -69,5 +69,6 @@
     <orderEntry type="module" module-name="intellij.platform.wsl.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.junit.rt" scope="TEST" />
   </component>
 </module>

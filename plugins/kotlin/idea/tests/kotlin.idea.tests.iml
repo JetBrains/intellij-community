@@ -115,5 +115,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.resources" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.junit.rt" scope="TEST" />
   </component>
 </module>

@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.testFramework
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ExceptionUtil
 import io.opentelemetry.api.trace.StatusCode
@@ -146,7 +146,7 @@ fun runTestBuild(
       onFinish(buildContext)
     }
     catch (e: Throwable) {
-      if (e !is FileComparisonFailure) {
+      if (e !is FileComparisonData) {
         span.recordException(e)
       }
       span.setStatus(StatusCode.ERROR)

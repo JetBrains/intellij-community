@@ -19,7 +19,8 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
                                             "intellij.platform.testFramework.junit5",
                                             "intellij.platform.testFramework",
                                             "intellij.tools.testsBootstrap",
-                                            "intellij.java.rt")
+                                            "intellij.java.rt",
+                                            "intellij.junit.rt")
 
     buildCrossPlatformDistribution = true
     mavenArtifacts.additionalModules = List.of(
