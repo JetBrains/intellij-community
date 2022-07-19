@@ -301,11 +301,11 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
         || ChunkExtractor.isHighlightedAsString(keys = syntaxHighlighter == null ? TextAttributesKey.EMPTY_ARRAY : syntaxHighlighter.getTokenHighlights(((LeafElement)element).getElementType()))) {
       return PsiElementKind.STRING;
     }
-    if (isIdentifier(element)) {
-      return PsiElementKind.IDENTIFIER;
-    }
     if (element instanceof PsiComment || ChunkExtractor.isHighlightedAsComment(keys)) {
       return PsiElementKind.COMMENT;
+    }
+    if (isIdentifier(element)) {
+      return PsiElementKind.IDENTIFIER;
     }
     return PsiElementKind.OTHER;
   }
