@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -157,7 +157,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
 
   @Nullable
   public VirtualFile getDynamicSchemaForFile(@NotNull PsiFile psiFile) {
-    return ContentAwareJsonSchemaFileProvider.EP_NAME.extensions()
+    return ContentAwareJsonSchemaFileProvider.EP_NAME.getExtensionList().stream()
       .map(provider -> provider.getSchemaFile(psiFile))
       .filter(schemaFile -> schemaFile != null)
       .findFirst()

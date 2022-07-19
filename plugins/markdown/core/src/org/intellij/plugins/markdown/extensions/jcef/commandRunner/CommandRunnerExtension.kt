@@ -36,7 +36,6 @@ import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.streams.asSequence
 
 internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
                                       private val provider: Provider)
@@ -296,7 +295,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
       val dataContext = createDataContext(project, localSession, workingDirectory)
 
       return runReadAction {
-        RunAnythingProvider.EP_NAME.extensions().asSequence()
+        RunAnythingProvider.EP_NAME.extensionList.asSequence()
           .filter { checkForCLI(it, allowRunConfigurations) }
           .any { provider -> provider.findMatchingValue(dataContext, trimmedCmd) != null }
       }
@@ -313,7 +312,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
       val dataContext = createDataContext(project, localSession, workingDirectory, executor)
       val trimmedCmd = command.trim()
       return runReadAction {
-        for (provider in RunAnythingProvider.EP_NAME.extensions()) {
+        for (provider in RunAnythingProvider.EP_NAME.extensionList) {
           val value = provider.findMatchingValue(dataContext, trimmedCmd) ?: continue
           return@runReadAction TrustedProjectUtil.executeIfTrusted(project) {
             RUNNER_EXECUTED.log(project, place, RunnerType.LINE, provider.javaClass)

@@ -84,7 +84,7 @@ class ModuleStoreTest {
   @Test
   fun `must be empty if classpath storage`() {
     Assume.assumeTrue("eclipse plugin is not found in classpath",
-                      ClasspathStorageProvider.EXTENSION_POINT_NAME.extensions().anyMatch { it.id == "eclipse" })
+                      ClasspathStorageProvider.EXTENSION_POINT_NAME.extensionList.any { it.id == "eclipse" })
     runBlocking<Unit> {
       // we must not use VFS here, file must not be created
       val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")

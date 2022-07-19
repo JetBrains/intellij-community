@@ -40,7 +40,7 @@ class InlayProviderUsageCollector : ProjectUsagesCollector() {
         models.add("oc.type.hints")
         models.add("tms.local.md.hints")
 
-        for (extension in InlayHintsProviderFactory.EP.extensions()) {
+        for (extension in InlayHintsProviderFactory.EP.extensionList) {
           LOG.debug("JavaClass in InlayHintsProviderFactory is ${extension.javaClass.canonicalName}")
           for (providersInfo in extension.getProvidersInfo()) {
             LOG.debug("Value for 'model' in InlayHintsProviderFactory is ${providersInfo.provider.key.id}")
@@ -66,8 +66,7 @@ class InlayProviderUsageCollector : ProjectUsagesCollector() {
     override val validationRule: List<String>
       get() {
         val options = ArrayList<String>()
-        val languagesWithSupport = PARAMETER_NAME_HINTS_EP.extensions().map { it.language }
-        for (languageId in languagesWithSupport) {
+        for (languageId in PARAMETER_NAME_HINTS_EP.extensionList.map { it.language }) {
           LOG.debug("LanguageId in PARAMETER_NAME_HINTS_EP is ${languageId}")
           val language = Language.findLanguageByID(languageId)
           if (language != null) {

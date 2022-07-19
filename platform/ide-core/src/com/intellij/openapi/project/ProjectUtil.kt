@@ -136,7 +136,11 @@ fun Project.guessProjectDir() : VirtualFile? {
   if (isDefault) {
     return null
   }
-  val customBaseDir = BASE_DIRECTORY_SUGGESTER_EP_NAME.extensions().map { it.suggestBaseDirectory(this) }.filter(Objects::nonNull).findFirst().orElse(null)
+
+  val customBaseDir = BASE_DIRECTORY_SUGGESTER_EP_NAME.extensionList.asSequence()
+    .map { it.suggestBaseDirectory(this) }
+    .filterNotNull()
+    .firstOrNull()
   if (customBaseDir != null) {
     return customBaseDir
   }

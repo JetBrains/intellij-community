@@ -23,7 +23,6 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil
 import com.intellij.util.Processor
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
-import kotlin.streams.asSequence
 
 open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -90,7 +89,7 @@ open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
 
       private fun searchTypeDefinitions(element: PsiElement): List<PsiImplementationViewElement> {
         val search = ThrowableComputable<List<PsiElement>, Exception> {
-          TypeDeclarationProvider.EP_NAME.extensions().asSequence()
+          TypeDeclarationProvider.EP_NAME.extensionList.asSequence()
             .mapNotNull { provider ->
               ReadAction.compute<List<PsiElement>?, Throwable> {
                 provider.getSymbolTypeDeclarations(element)?.mapNotNull { it?.navigationElement }
@@ -101,7 +100,7 @@ open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
         }
         val message = CodeInsightBundle.message("searching.for.definitions")
         val definitions = ProgressManager.getInstance().runProcessWithProgressSynchronously(search, message, true, element.project)
-        return definitions.map { PsiImplementationViewElement(it) }
+        return definitions.map(::PsiImplementationViewElement)
       }
     }
   }

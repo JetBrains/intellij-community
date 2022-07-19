@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.SettingsCategory
@@ -231,16 +230,11 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
   }
 
   private fun computeIsEnabledByDefault(id: String) : Boolean {
-    val bean = InlayHintsProviderExtension.inlayProviderName.extensions()
-      .filter { val keyId = it.settingsKeyId
-        if (keyId == null) {
-          return@filter false
-        }
+    val bean = InlayHintsProviderExtension.inlayProviderName.extensionList
+      .firstOrNull {
+        val keyId = it.settingsKeyId ?: return@firstOrNull false
         SettingsKey.getFullId(it.language!!, keyId) == id
-      }
-      .findAny()
-      .orElse(null)
-    if (bean == null) return true
+      } ?: return true
     return bean.isEnabledByDefault
   }
 

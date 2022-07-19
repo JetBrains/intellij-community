@@ -301,13 +301,10 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     RegisteredIndexes registeredIndexes = myFileBasedIndex.getRegisteredIndexes();
     List<ID<?, ?>> contentDependentIndexes;
     if (registeredIndexes == null) {
-      Set<? extends ID<?, ?>> allContentDependentIndexes =
-        FileBasedIndexExtension
-          .EXTENSION_POINT_NAME
-          .extensions()
-          .filter(ex -> ex.dependsOnFileContent())
-          .map(ex -> ex.getName())
-          .collect(Collectors.toSet());
+      Set<? extends ID<?, ?>> allContentDependentIndexes = FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList().stream()
+        .filter(ex -> ex.dependsOnFileContent())
+        .map(ex -> ex.getName())
+        .collect(Collectors.toSet());
       contentDependentIndexes = ContainerUtil.filter(indexedStates, id -> !allContentDependentIndexes.contains(id));
     }
     else {

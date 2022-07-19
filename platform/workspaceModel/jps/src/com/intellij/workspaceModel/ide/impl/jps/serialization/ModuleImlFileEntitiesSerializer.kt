@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.diagnostic.AttachmentFactory
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -15,7 +14,6 @@ import com.intellij.util.io.exists
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
-import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
@@ -31,7 +29,6 @@ import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
 import org.jetbrains.jps.util.JpsPathUtil
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import java.io.StringReader
 import java.nio.file.Path
 import java.util.*
@@ -101,7 +98,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       externalSystemId = pair.second
 
       customRootsSerializer = moduleOptions[JpsProjectLoader.CLASSPATH_ATTRIBUTE]?.let { customSerializerId ->
-        val serializer = CustomModuleRootsSerializer.EP_NAME.extensions().filter { it.id == customSerializerId }.findAny().orElse(null)
+        val serializer = CustomModuleRootsSerializer.EP_NAME.extensionList.firstOrNull { it.id == customSerializerId }
         if (serializer == null) {
           errorReporter.reportError(ProjectModelBundle.message("error.message.unknown.classpath.provider", fileUrl.fileName, customSerializerId), fileUrl)
         }
@@ -144,7 +141,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       builder.addModuleCustomImlDataEntity(null, customModuleOptions, moduleEntity, entitySource)
     }
 
-    CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensions().forEach {
+    CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensionList.forEach {
       it.loadComponent(builder, moduleEntity, reader, fileUrl, errorReporter, virtualFileManager)
     }
     // Don't forget to load external system options even if custom root serializer exist
@@ -388,7 +385,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     val moduleOptions = customImlData?.customModuleOptions
     val customSerializerId = moduleOptions?.get(JpsProjectLoader.CLASSPATH_ATTRIBUTE)
     if (customSerializerId != null) {
-      val serializer = CustomModuleRootsSerializer.EP_NAME.extensions().filter { it.id == customSerializerId }.findAny().orElse(null)
+      val serializer = CustomModuleRootsSerializer.EP_NAME.extensionList.firstOrNull { it.id == customSerializerId }
       if (serializer != null) {
         val customDir = moduleOptions[JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE]
         serializer.saveRoots(module, entities, writer, customDir, fileUrl, storage, virtualFileManager)
@@ -401,7 +398,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     else {
       saveRootManagerElement(module, customImlData, entities, writer)
     }
-    CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensions().forEach {
+    for (it in CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensionList) {
       it.saveComponent(module, fileUrl, writer)
     }
   }

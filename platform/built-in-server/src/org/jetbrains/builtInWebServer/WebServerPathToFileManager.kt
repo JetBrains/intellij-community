@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
 import com.github.benmanes.caffeine.cache.CacheLoader
@@ -23,7 +23,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.io.exists
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
-import kotlin.streams.asSequence
 
 private const val cacheSize: Long = 4096 * 4
 
@@ -143,7 +142,7 @@ class WebServerPathToFileManager(private val project: Project) {
   fun getPathInfo(child: VirtualFile): PathInfo? {
     var result = virtualFileToPathInfo.getIfPresent(child)
     if (result == null) {
-      result = WebServerRootsProvider.EP_NAME.extensions().asSequence().map { it.getPathInfo(child, project) }.find { it != null }
+      result = WebServerRootsProvider.EP_NAME.extensionList.asSequence().map { it.getPathInfo(child, project) }.find { it != null }
       if (result != null) {
         virtualFileToPathInfo.put(child, result)
       }

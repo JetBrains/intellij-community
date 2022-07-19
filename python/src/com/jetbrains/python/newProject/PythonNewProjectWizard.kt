@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProject
 
 import com.intellij.ide.highlighter.ModuleFileType
@@ -29,7 +29,6 @@ import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.pythonSdk
 import java.nio.file.Path
-import kotlin.streams.toList
 
 /**
  * A wizard for creating new pure-Python projects in IntelliJ.
@@ -203,9 +202,7 @@ private class NewEnvironmentStep<P>(parent: P)
       PyAddNewVirtualEnvPanel(null, null, sdks, newProjectPath, context),
       PyAddNewCondaEnvPanel(null, null, sdks, newProjectPath),
     )
-    val providedPanels = PySdkProvider.EP_NAME.extensions()
-      .map { it.createNewEnvironmentPanel(null, null, sdks, newProjectPath, context) }
-      .toList()
+    val providedPanels = PySdkProvider.EP_NAME.extensionList.map { it.createNewEnvironmentPanel(null, null, sdks, newProjectPath, context) }
     val panels = basePanels + providedPanels
     return panels
       .associateBy { it.envName }

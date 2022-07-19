@@ -33,7 +33,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.stream.Collectors
 
 @ApiStatus.Internal
 class WorkspaceModelCacheImpl(private val project: Project) : Disposable, WorkspaceModelCache {
@@ -213,12 +212,10 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
       }
     }
 
-    private val WORKSPACE_MODEL_CACHE_VERSION_EP = ExtensionPointName.create<WorkspaceModelCacheVersion>("com.intellij.workspaceModel.cache.version")
+    private val WORKSPACE_MODEL_CACHE_VERSION_EP = ExtensionPointName<WorkspaceModelCacheVersion>("com.intellij.workspaceModel.cache.version")
 
     fun collectExternalCacheVersions(): Map<String, String> {
-      return WORKSPACE_MODEL_CACHE_VERSION_EP
-        .extensions()
-        .collect(Collectors.toMap(WorkspaceModelCacheVersion::getId, WorkspaceModelCacheVersion::getVersion))
+      return WORKSPACE_MODEL_CACHE_VERSION_EP.extensionList.associate { it.getId() to it.getVersion() }
     }
 
     fun forceEnableCaching(disposable: Disposable) {

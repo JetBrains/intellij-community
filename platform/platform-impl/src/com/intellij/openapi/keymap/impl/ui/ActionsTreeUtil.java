@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -89,7 +89,7 @@ public final class ActionsTreeUtil {
       .unique().toList();
     for (PluginId pluginId : pluginsIds) {
       if (PluginManagerCore.CORE_ID.equals(pluginId)
-          || KeymapExtension.EXTENSION_POINT_NAME.extensions().anyMatch(e -> e.skipPluginGroup(pluginId))) {
+          || KeymapExtension.EXTENSION_POINT_NAME.getExtensionList().stream().anyMatch(e -> e.skipPluginGroup(pluginId))) {
         continue;
       }
       String[] pluginActions = actionManager.getPluginActions(pluginId);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.impl
 
 import com.intellij.ide.browsers.*
@@ -10,15 +10,14 @@ import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
-import java.util.stream.Stream
 
 private val URL_PROVIDER_EP = ExtensionPointName<WebBrowserUrlProvider>("com.intellij.webBrowserUrlProvider")
 
 class WebBrowserServiceImpl : WebBrowserService() {
   companion object {
-    fun getProviders(request: OpenInBrowserRequest): Stream<WebBrowserUrlProvider> {
+    fun getProviders(request: OpenInBrowserRequest): Sequence<WebBrowserUrlProvider> {
       val dumbService = DumbService.getInstance(request.project)
-      return URL_PROVIDER_EP.extensions().filter {
+      return URL_PROVIDER_EP.extensionList.asSequence().filter {
         (!dumbService.isDumb || DumbService.isDumbAware(it)) && it.canHandleElement(request)
       }
     }
@@ -34,8 +33,9 @@ class WebBrowserServiceImpl : WebBrowserService() {
           request.isAppendAccessToken = false
           request.reloadMode = ReloadMode.DISABLED
           return getProviders(request)
-            .map { getUrls(it, request) }
-            .filter(Collection<*>::isNotEmpty).findFirst().orElse(Collections.emptyList())
+                   .map { getUrls(it, request) }
+                   .filter(Collection<*>::isNotEmpty).firstOrNull()
+                 ?: emptyList()
         }
       }
       catch (ignored: WebBrowserUrlProvider.BrowserException) {
