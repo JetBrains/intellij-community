@@ -16,16 +16,10 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.Alarm
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 internal class ModuleVcsDetector(private val project: Project) {
   private val vcsManager by lazy(LazyThreadSafetyMode.NONE) { ProjectLevelVcsManagerImpl.getInstanceImpl(project) }
@@ -126,31 +120,8 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
-  private inner class MyWorkspaceModelChangeListener : WorkspaceModelChangeListener {
-    override fun changed(event: VersionedStorageChange) {
-      val removedUrls = mutableSetOf<VirtualFileUrl>()
-      val addedUrls = mutableSetOf<VirtualFileUrl>()
-
-      val changes = event.getChanges(ContentRootEntity::class.java)
-      for (change in changes) {
-        val removedUrl = change.oldEntity?.url
-        val addedUrl = change.newEntity?.url
-        if (removedUrl != addedUrl) {
-          ContainerUtil.addIfNotNull(removedUrls, removedUrl)
-          ContainerUtil.addIfNotNull(addedUrls, addedUrl)
-        }
-      }
-
-      val fileManager = VirtualFileManager.getInstance()
-      val removed = removedUrls
-        .filter { !addedUrls.contains(it) } // do not process 'modifications' of any kind
-        .mapNotNull { fileManager.findFileByUrl(it.url) }
-        .filter { it.isDirectory }
-      val added = addedUrls
-        .filter { !removedUrls.contains(it) } // do not process 'modifications' of any kind
-        .mapNotNull { fileManager.findFileByUrl(it.url) }
-        .filter { it.isDirectory }
-
+  private inner class MyWorkspaceModelChangeListener : ContentRootChangeListener() {
+    override fun rootsDirectoriesChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
       if (added.isNotEmpty() && vcsManager.haveDefaultMapping() == null) {
         synchronized(dirtyContentRoots) {
           dirtyContentRoots.addAll(added)
