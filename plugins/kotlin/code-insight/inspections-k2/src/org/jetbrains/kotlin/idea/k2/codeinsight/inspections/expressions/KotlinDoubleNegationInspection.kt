@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPrefixExpression
 
-internal class DoubleNegationInspection :
+internal class KotlinDoubleNegationInspection :
     AbstractKotlinApplicatorBasedInspection<KtPrefixExpression, KotlinApplicatorInput.Empty>(KtPrefixExpression::class) {
     override fun getApplicabilityRange() = ApplicabilityRanges.SELF
 
