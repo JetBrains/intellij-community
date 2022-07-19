@@ -157,8 +157,8 @@ Includes the following features:</p>
 
     <customPasteProvider implementation="org.intellij.plugins.markdown.editor.images.MarkdownImagePasteProvider"/>
 
-    <customFileDropHandler id="MarkdownImageDropHandler"
-                           implementation="org.intellij.plugins.markdown.editor.images.MarkdownImageFileDropHandler"/>
+    <customFileDropHandler id="MarkdownEditorFileDropHandler"
+                           implementation="org.intellij.plugins.markdown.editor.EditorFileDropHandler"/>
 
     <spellchecker.support language="Markdown"
                           implementationClass="org.intellij.plugins.markdown.spellchecking.MarkdownSpellcheckingStrategy"/>
