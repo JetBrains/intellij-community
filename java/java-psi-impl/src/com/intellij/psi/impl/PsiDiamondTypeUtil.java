@@ -291,7 +291,7 @@ public final class PsiDiamondTypeUtil {
     exprCopy.getTypeArgumentList().replace(list);
 
     final JavaResolveResult copyResult = exprCopy.resolveMethodGenerics();
-    if (method != copyResult.getElement()) return false;
+    if (!method.isEquivalentTo(copyResult.getElement())) return false;
     final PsiSubstitutor psiSubstitutor = copyResult.getSubstitutor();
     for (int i = 0, length = typeParameters.length; i < length; i++) {
       PsiTypeParameter typeParameter = typeParameters[i];
