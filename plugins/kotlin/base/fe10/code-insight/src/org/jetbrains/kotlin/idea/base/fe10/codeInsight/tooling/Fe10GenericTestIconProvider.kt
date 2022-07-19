@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling
 
+import org.jetbrains.kotlin.base.fe10.analysis.classId
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -16,7 +17,7 @@ object Fe10GenericTestIconProvider : AbstractGenericTestIconProvider() {
     }
 
     private tailrec fun isIgnored(descriptor: DeclarationDescriptor): Boolean {
-        if (descriptor.annotations.any { it.fqName == KotlinTestAvailabilityChecker.IGNORE_FQ_NAME }) {
+        if (descriptor.annotations.any { it.classId == KotlinTestAvailabilityChecker.IGNORE_FQ_NAME }) {
             return true
         }
 
@@ -29,7 +30,7 @@ object Fe10GenericTestIconProvider : AbstractGenericTestIconProvider() {
             return false
         }
 
-        if (descriptor.annotations.any { it.fqName == KotlinTestAvailabilityChecker.TEST_FQ_NAME }) {
+        if (descriptor.annotations.any { it.classId == KotlinTestAvailabilityChecker.TEST_FQ_NAME }) {
             return true
         }
 

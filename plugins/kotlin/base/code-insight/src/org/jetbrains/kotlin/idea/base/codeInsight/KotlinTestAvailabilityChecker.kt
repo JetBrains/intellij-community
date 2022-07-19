@@ -3,16 +3,16 @@ package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.ClassId
 
 @Service(Service.Level.PROJECT)
 class KotlinTestAvailabilityChecker(project: Project) : FrameworkAvailabilityChecker(project) {
     companion object {
-        val TEST_FQ_NAME = FqName("kotlin.test.Test")
-        val IGNORE_FQ_NAME = FqName("kotlin.test.Ignore")
+        val TEST_FQ_NAME = ClassId.fromString("kotlin/test/Test")
+        val IGNORE_FQ_NAME = ClassId.fromString("kotlin/test/Ignore")
     }
     
-    override val fqNames = setOf(TEST_FQ_NAME.asString())
+    override val fqNames = setOf(TEST_FQ_NAME.asFqNameString())
 
     override val javaClassLookup = true
     override val aliasLookup = true // `kotlin.test.Test` might be a typealias
