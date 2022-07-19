@@ -332,9 +332,9 @@ private fun downloadMissingLibrarySources(
     }
 }
 
-internal class DistributionForOsTaskResult(@JvmField val os: OsFamily,
-                                           @JvmField val arch: JvmArchitecture,
-                                           @JvmField val outDir: Path)
+private class DistributionForOsTaskResult(@JvmField val builder: OsSpecificDistributionBuilder,
+                                          @JvmField val arch: JvmArchitecture,
+                                          @JvmField val outDir: Path)
 
 private fun find(directory: Path, suffix: String, context: BuildContext): Path {
   Files.walk(directory).use { stream ->
@@ -367,7 +367,7 @@ private fun buildOsSpecificDistributions(context: BuildContext): List<Distributi
     return BuildTaskRunnable("${os.osId} ${arch.name}") {
       val osAndArchSpecificDistDirectory = getOsAndArchSpecificDistDirectory(os, arch, context)
       builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
-      DistributionForOsTaskResult(os, arch, osAndArchSpecificDistDirectory)
+      DistributionForOsTaskResult(builder, arch, osAndArchSpecificDistDirectory)
     }
   }
 
@@ -618,7 +618,7 @@ private fun compileModulesForDistribution(pluginsToPublish: Set<PluginLayout>, c
   return compilePlatformAndPluginModules(pluginsToPublish, context)
 }
 
-internal class BuildTaskRunnable(
+private class BuildTaskRunnable(
   @JvmField val stepId: String,
   @JvmField val task: () -> DistributionForOsTaskResult,
 )
@@ -998,7 +998,7 @@ private fun doBuildUpdaterJar(context: BuildContext, artifactName: String) {
   context.notifyArtifactBuilt(updaterJar)
 }
 
-private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, context: BuildContext): Path {
+private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
   val executableName = context.productProperties.baseFileName
 
   val productJson = generateMultiPlatformProductJson(
@@ -1024,15 +1024,14 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
   val targetFile = context.paths.artifactDir.resolve(zipFileName)
   val dependenciesFile = copyDependenciesFile(context)
   crossPlatformZip(
-    macX64DistDir = distDirs.first { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.x64 }.outDir,
-    macArm64DistDir = distDirs.first { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 }.outDir,
-    linuxX64DistDir = distDirs.first { it.os == OsFamily.LINUX && it.arch == JvmArchitecture.x64 }.outDir,
-    winX64DistDir = distDirs.first { it.os == OsFamily.WINDOWS && it.arch == JvmArchitecture.x64 }.outDir,
+    macX64DistDir = distResults.first { it.builder.targetOs == OsFamily.MACOS && it.arch == JvmArchitecture.x64 }.outDir,
+    macArm64DistDir = distResults.first { it.builder.targetOs == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 }.outDir,
+    linuxX64DistDir = distResults.first { it.builder.targetOs == OsFamily.LINUX && it.arch == JvmArchitecture.x64 }.outDir,
+    winX64DistDir = distResults.first { it.builder.targetOs == OsFamily.WINDOWS && it.arch == JvmArchitecture.x64 }.outDir,
     targetFile = targetFile,
     executableName = executableName,
     productJson = productJson.encodeToByteArray(),
-    macExtraExecutables = context.macDistributionCustomizer!!.extraExecutables,
-    linuxExtraExecutables = context.linuxDistributionCustomizer!!.extraExecutables,
+    executablePatterns = distResults.flatMap { it.builder.generateExecutableFilesPatterns(includeRuntime = false) },
     distFiles = context.getDistFiles(),
     extraFiles = mapOf("dependencies.txt" to dependenciesFile),
     distAllDir = context.paths.distAllDir,
@@ -1095,8 +1094,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
                              targetFile: Path,
                              executableName: String,
                              productJson: ByteArray,
-                             macExtraExecutables: List<String>,
-                             linuxExtraExecutables: List<String>,
+                             executablePatterns: List<String>,
                              distFiles: Collection<Map.Entry<Path, String>>,
                              extraFiles: Map<String, Path>,
                              distAllDir: Path) {
@@ -1167,9 +1165,12 @@ private fun crossPlatformZip(macX64DistDir: Path,
         }
       }
 
-      val extraExecutablesSet = java.util.Set.copyOf(macExtraExecutables + linuxExtraExecutables)
-      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, _, relativePath ->
-        if (extraExecutablesSet.contains(relativePath)) {
+      val patterns = executablePatterns.map {
+        FileSystems.getDefault().getPathMatcher("glob:$it")
+      }
+      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, _, relativePathString ->
+        val relativePath = Path.of(relativePathString)
+        if (patterns.any { it.matches(relativePath) }) {
           entry.unixMode = executableFileUnixMode
         }
       }
