@@ -18,6 +18,8 @@ import com.intellij.debugger.ui.tree.render.ClassRenderer
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.openapi.project.Project
 import com.sun.jdi.*
+import org.jetbrains.kotlin.idea.debugger.base.util.safeFields
+import org.jetbrains.kotlin.idea.debugger.base.util.safeType
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 

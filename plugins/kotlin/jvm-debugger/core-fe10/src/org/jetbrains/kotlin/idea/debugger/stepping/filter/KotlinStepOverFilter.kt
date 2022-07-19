@@ -10,10 +10,9 @@ import com.sun.jdi.Location
 import com.sun.jdi.StackFrame
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isKotlinFakeLineNumber
-import org.jetbrains.kotlin.idea.debugger.getInlineFunctionAndArgumentVariablesToBordersMap
-import org.jetbrains.kotlin.idea.debugger.safeLineNumber
-import org.jetbrains.kotlin.idea.debugger.safeMethod
-import org.jetbrains.kotlin.idea.debugger.safeVariables
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.base.util.safeVariables
 import org.jetbrains.kotlin.idea.debugger.stepping.KotlinMethodFilter
 
 data class StepOverCallerInfo(val declaringType: String, val methodName: String?, val methodSignature: String?) {

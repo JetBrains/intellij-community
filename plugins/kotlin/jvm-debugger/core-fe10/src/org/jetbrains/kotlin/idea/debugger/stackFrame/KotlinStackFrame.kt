@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.idea.debugger.*
 import org.jetbrains.kotlin.idea.debugger.base.util.isSubtype
+import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariables
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluator
 
 @Suppress("EqualsOrHashCode")

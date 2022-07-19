@@ -9,6 +9,10 @@ import com.intellij.debugger.memory.utils.StackFrameItem
 import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.idea.debugger.*
+import org.jetbrains.kotlin.idea.debugger.base.util.safeKotlinPreferredLineNumber
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.base.util.safeSourceName
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.findPosition
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 

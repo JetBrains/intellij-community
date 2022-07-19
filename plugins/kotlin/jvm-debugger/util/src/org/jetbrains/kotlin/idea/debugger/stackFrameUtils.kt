@@ -5,6 +5,7 @@ import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getBorders
+import org.jetbrains.kotlin.idea.debugger.base.util.safeVariables
 
 // A pair of a [LocalVariable] with its starting [Location] and
 // a stable [Comparable] implementation.

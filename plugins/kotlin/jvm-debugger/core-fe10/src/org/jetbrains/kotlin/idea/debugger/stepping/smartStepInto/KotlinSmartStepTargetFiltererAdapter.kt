@@ -6,7 +6,7 @@ import com.intellij.debugger.jdi.GeneratedLocation
 import com.intellij.psi.util.parentOfType
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.idea.debugger.getInlineFunctionAndArgumentVariablesToBordersMap
-import org.jetbrains.kotlin.idea.debugger.safeMethod
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
