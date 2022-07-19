@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.debugger.filter
 import com.intellij.debugger.engine.SyntheticTypeComponentProvider
 import com.sun.jdi.*
 import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_IMPL_NAME_SUFFIX
-import org.jetbrains.kotlin.idea.debugger.isInKotlinSources
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
+import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.org.objectweb.asm.Opcodes

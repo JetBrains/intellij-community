@@ -54,6 +54,9 @@ import org.jetbrains.kotlin.idea.debugger.breakpoints.SourcePositionRefiner
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getElementsAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil
+import org.jetbrains.kotlin.idea.debugger.core.containsKotlinStrata
+import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
+import org.jetbrains.kotlin.idea.debugger.core.isInsideInlineArgument
 import org.jetbrains.kotlin.idea.debugger.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.stepping.getLineRange
@@ -64,6 +67,7 @@ import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_A
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
+import java.util.*
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
     private val stackFrameInterceptor: StackFrameInterceptor = debugProcess.project.service()

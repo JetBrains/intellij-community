@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.resolve.inline.INLINE_ONLY_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import java.util.*
+import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
 
 interface KotlinBreakpointType
 

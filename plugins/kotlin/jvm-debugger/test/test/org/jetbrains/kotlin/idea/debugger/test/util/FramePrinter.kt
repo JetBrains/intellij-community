@@ -23,7 +23,7 @@ import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
 import com.sun.jdi.ArrayType
 import org.jetbrains.kotlin.idea.debugger.GetterDescriptor
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
-import org.jetbrains.kotlin.idea.debugger.invokeInManagerThread
+import org.jetbrains.kotlin.idea.debugger.core.invokeInManagerThread
 import org.jetbrains.kotlin.idea.debugger.test.KOTLIN_LIBRARY_NAME
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.TimeUnit

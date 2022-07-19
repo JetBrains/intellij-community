@@ -38,7 +38,7 @@ object AnalysisApiBasedInlineUtil {
         return call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol
     }
 
-    private fun KtAnalysisSession.getResolvedFunctionCall(callExpression: KtCallExpression): KtFunctionCall<*>? {
+    fun KtAnalysisSession.getResolvedFunctionCall(callExpression: KtCallExpression): KtFunctionCall<*>? {
         val callInfo = callExpression.resolveCall() as? KtSuccessCallInfo ?: return null
         return callInfo.call as? KtFunctionCall<*>
     }

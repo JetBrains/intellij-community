@@ -18,7 +18,7 @@ import com.sun.jdi.Location
 import com.sun.jdi.Method
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
-import org.jetbrains.kotlin.idea.debugger.findElementAtLine
+import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
 import org.jetbrains.kotlin.idea.debugger.getInlineFunctionAndArgumentVariablesToBordersMap
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeStackFrame
