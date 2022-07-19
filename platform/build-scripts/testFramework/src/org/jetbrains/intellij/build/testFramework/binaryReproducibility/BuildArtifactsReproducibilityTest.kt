@@ -56,10 +56,10 @@ class BuildArtifactsReproducibilityTest {
       val diff = diffDirectory.resolve(it)
       val test = FileTreeContentTest(diff, context1.paths.tempDir)
       val error = when {
-        path1.isDirectory() && path2.isDirectory() -> test.assertTheSameContent(path1, path2)
-        path1.isRegularFile() && path2.isRegularFile() -> test.assertTheSame(Path.of(it),
-                                                                             context1.paths.buildOutputDir,
-                                                                             context2.paths.buildOutputDir)
+        path1.isDirectory() && path2.isDirectory() -> test.assertTheSameDirectoryContent(path1, path2)
+        path1.isRegularFile() && path2.isRegularFile() -> test.assertTheSameFile(Path.of(it),
+                                                                                 context1.paths.buildOutputDir,
+                                                                                 context2.paths.buildOutputDir)
         else -> error("Unable to compare $path1 and $path2")
       }
       if (error != null) {
