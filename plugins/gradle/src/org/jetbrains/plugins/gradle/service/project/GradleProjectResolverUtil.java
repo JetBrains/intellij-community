@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
@@ -876,7 +876,7 @@ public final class GradleProjectResolverUtil {
 
   @ApiStatus.Internal
   public static Stream<GradleProjectResolverExtension> createProjectResolvers(@Nullable ProjectResolverContext projectResolverContext) {
-    return GradleProjectResolverExtension.EP_NAME.extensions().map(extension -> {
+    return GradleProjectResolverExtension.EP_NAME.getExtensionList().stream().map(extension -> {
       try {
         Constructor<? extends GradleProjectResolverExtension> constructor = extension.getClass().getDeclaredConstructor();
         constructor.setAccessible(true);

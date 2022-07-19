@@ -18,6 +18,7 @@ public interface PyiStubSuppressor {
   boolean isIgnoredStub(@NotNull PyiFile file);
 
   static boolean isIgnoredStub(@Nullable PsiFile file) {
-    return file instanceof PyiFile && EP_NAME.extensions().anyMatch(it -> it.isIgnoredStub((PyiFile)file));
+    if (!(file instanceof PyiFile)) return false;
+    return EP_NAME.getExtensionList().stream().anyMatch(it -> it.isIgnoredStub((PyiFile)file));
   }
 }

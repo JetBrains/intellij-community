@@ -65,6 +65,10 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
     return point == null ? Collections.emptyList() : point.getExtensionList();
   }
 
+  /**
+   * @deprecated Use {@code getExtensionList().stream()}
+   */
+  @Deprecated
   public @NotNull Stream<T> extensions() {
     return getPointImpl(null).extensions();
   }
