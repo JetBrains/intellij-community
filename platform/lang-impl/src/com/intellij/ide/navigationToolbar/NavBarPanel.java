@@ -99,7 +99,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private NavBarItem myContextObject;
   private boolean myDisposed = false;
   private RelativePoint myLocationCache;
-  private SelectionIndexes menuPopupSelection = null;
+  private SelectionIndexes selectionIndexes = null;
 
   private static class SelectionIndexes {
     private final int myBarIndex;
@@ -473,26 +473,15 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         menu.addPopupMenuListener(new PopupMenuListenerAdapter() {
           @Override
           public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-            if (index != -1) {
+            if (index != -1 && !navBarPanel.isNodePopupActive()) {
               myModel.setSelectedIndex(index);
             }
           }
         });
 
-        Point itemPoint = new Point(component.getX() + x, component.getY() + y);
-        boolean isPopupActive = myNodePopup != null && myNodePopup.getComponent().isShowing();
-        if (isPopupActive) {
-          int[] selectedIndices = myNodePopup.getList().getSelectedIndices();
-          menuPopupSelection = new SelectionIndexes(myNodePopup.getItemIndex(), selectedIndices);
-        }
-        else {
-          Component updatedItem = navBarPanel.getComponentAt(itemPoint);
-          menuPopupSelection = new SelectionIndexes((updatedItem == null) ? -1 : getItems().indexOf(updatedItem), null);
-        }
-
-        menu.show(isPopupActive ? myNodePopup.getComponent() : navBarPanel,
-                  itemPoint.x,
-                  itemPoint.y);
+        menu.show(isNodePopupActive() ? myNodePopup.getComponent() : navBarPanel,
+                  component.getX() + x,
+                  component.getY() + y);
       }
     });
   }
@@ -648,6 +637,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
       final int selectedIndex = index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0;
       myNodePopup = new NavBarPopup(this, index, siblings, index, selectedIndex);
+      myModel.setSelectedIndex(index);
      // if (item != null && item.isShowing()) {
         myNodePopup.show(item);
         item.update();
@@ -735,12 +725,13 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   public Object getData(@NotNull String dataId) {
     Object barObject = null;
     List<Object> popupObjects = null;
-    if (menuPopupSelection != null) {
-      barObject = myModel.getElement(menuPopupSelection.myBarIndex);
-      if (barObject != null && menuPopupSelection.myNodePopupIndexes != null) {
+
+    if (selectionIndexes != null) {
+      barObject = myModel.getElement(selectionIndexes.myBarIndex);
+      if (barObject != null && selectionIndexes.myNodePopupIndexes != null) {
         popupObjects = new ArrayList<>();
         List<Object> childObjects = myModel.getChildren(barObject);
-        for (int index: menuPopupSelection.myNodePopupIndexes) {
+        for (int index: selectionIndexes.myNodePopupIndexes) {
           if (index < 0 || index >= childObjects.size()) continue;
           popupObjects.add(childObjects.get(index));
         }
@@ -755,7 +746,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       final Object obj = barObject;
       return getDataImpl(dataId, this, () -> JBIterable.of(obj));
     }
-    else if (!popupObjects.isEmpty()) {
+
+    if (!popupObjects.isEmpty()) {
       final List<Object> objects = popupObjects;
       return getDataImpl(dataId, this, () -> JBIterable.from(objects));
     }
@@ -768,6 +760,14 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     Object selectedObject = myModel.getRawSelectedObject();
     if (selectedObject == null) return JBIterable.empty();
     return JBIterable.of(selectedObject).filterMap(myModel::unwrapRaw);
+  }
+
+  void updatePopupSelection(int[] indexes) {
+    selectionIndexes = new SelectionIndexes(myModel.getSelectedIndex(), indexes);
+  }
+
+  void updateSelection() {
+    selectionIndexes = new SelectionIndexes(myModel.getSelectedIndex(), null);
   }
 
   @Nullable Object getDataImpl(@NotNull String dataId, @NotNull JComponent source, @NotNull Supplier<? extends JBIterable<?>> selection) {

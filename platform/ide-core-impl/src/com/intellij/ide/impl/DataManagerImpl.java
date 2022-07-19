@@ -243,7 +243,13 @@ public class DataManagerImpl extends DataManager {
     if (ourGetDataLevel.get()[0] > 0) {
       LOG.error("DataContext shall not be created and queried inside another getData() call.");
     }
-    return IdeUiService.getInstance().createUiDataContext(component);
+    Component current = component;
+    while (current instanceof DelegatingDataProvider) {
+      Component delegated = ((DelegatingDataProvider)current).getDelegatedDataProviderComponent();
+      if (delegated == null) break;
+      else current = delegated;
+    }
+    return IdeUiService.getInstance().createUiDataContext(current);
   }
 
   @Override
