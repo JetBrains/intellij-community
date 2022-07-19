@@ -1,6 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger
+package org.jetbrains.kotlin.idea.debugger.base.util
 
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.impl.DebuggerUtilsAsync
@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 val INLINED_THIS_REGEX = run {
-    val escapedName = Regex.escape(AsmUtil.INLINE_DECLARATION_SITE_THIS)
+    val escapedName = Regex.escape(INLINE_DECLARATION_SITE_THIS)
     val escapedSuffix = Regex.escape(INLINE_FUN_VAR_SUFFIX)
     Regex("^$escapedName(?:$escapedSuffix)*$")
 }
