@@ -233,7 +233,8 @@ public final class PsiDiamondTypeUtil {
       if (newParentCall != null && oldParentCall != null) {
         JavaResolveResult newResult = newParentCall.resolveMethodGenerics();
         JavaResolveResult oldResult = oldParentCall.resolveMethodGenerics();
-        if (!Objects.equals(newResult.getElement(), oldResult.getElement()) ||
+        if (newResult.getElement() == null ||
+            !newResult.getElement().isEquivalentTo(oldResult.getElement()) ||
             !new RecaptureTypeMapper().recapture(newResult.getSubstitutor()).equals(oldResult.getSubstitutor())) {
           return false;
         }
