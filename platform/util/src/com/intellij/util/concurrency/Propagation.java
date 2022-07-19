@@ -73,7 +73,11 @@ public final class Propagation {
     }
     return capturePropagationContext(command);
   }
-  public static @NotNull Pair<Runnable,Condition<?>> capturePropagationAndCancellationContext(@NotNull Runnable command, @NotNull Condition<?> expired) {
+
+  public static @NotNull Pair<Runnable, Condition<?>> capturePropagationAndCancellationContext(
+    @NotNull Runnable command,
+    @NotNull Condition<?> expired
+  ) {
     if (isPropagateCancellation()) {
       //noinspection TestOnlyProblems
       Job currentJob = Cancellation.currentJob();
@@ -99,7 +103,6 @@ public final class Propagation {
     };
   }
 
-  @Internal
   private static @NotNull Runnable capturePropagationContext(@NotNull Runnable runnable) {
     if (isPropagateThreadContext()) {
       return ThreadContext.captureThreadContext(runnable);
@@ -118,9 +121,11 @@ public final class Propagation {
     return new FutureTask<>(capturePropagationContext(callable));
   }
 
-  static <V> @NotNull MyScheduledFutureTask<V> capturePropagationAndCancellationContext(@NotNull SchedulingWrapper wrapper,
-                                                                                        @NotNull Callable<V> callable,
-                                                                                        long ns) {
+  static <V> @NotNull MyScheduledFutureTask<V> capturePropagationAndCancellationContext(
+    @NotNull SchedulingWrapper wrapper,
+    @NotNull Callable<V> callable,
+    long ns
+  ) {
     if (isPropagateCancellation()) {
       //noinspection TestOnlyProblems
       Job currentJob = Cancellation.currentJob();
@@ -138,10 +143,12 @@ public final class Propagation {
     return callable;
   }
 
-  static @NotNull MyScheduledFutureTask<?> capturePropagationAndCancellationContext(@NotNull SchedulingWrapper wrapper,
-                                                                                    @NotNull Runnable runnable,
-                                                                                    long ns,
-                                                                                    long period) {
+  static @NotNull MyScheduledFutureTask<?> capturePropagationAndCancellationContext(
+    @NotNull SchedulingWrapper wrapper,
+    @NotNull Runnable runnable,
+    long ns,
+    long period
+  ) {
     if (isPropagateCancellation()) {
       //noinspection TestOnlyProblems
       Job currentJob = Cancellation.currentJob();
@@ -158,6 +165,7 @@ public final class Propagation {
     }
     return runnable;
   }
+
   private static final class CancellationScheduledFutureTask<V> extends SchedulingWrapper.MyScheduledFutureTask<V> {
     private final @NotNull Job myJob;
 
