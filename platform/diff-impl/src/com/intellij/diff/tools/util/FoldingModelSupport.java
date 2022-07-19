@@ -34,6 +34,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -75,7 +76,7 @@ public class FoldingModelSupport {
   private FoldedBlock myHoveredBlock = null;
 
   private boolean myDuringSynchronize;
-  private final Int2ObjectMap<FoldedBlock>[] myLineMappings;
+  private final Int2ObjectMap<List<FoldedBlock>>[] myLineMappings;
   private final boolean[] myShouldUpdateLineNumbers;
 
   private boolean myEnabled;
@@ -502,12 +503,13 @@ public class FoldingModelSupport {
 
       ApplicationManager.getApplication().assertReadAccessAllowed();
 
-      Int2ObjectMap<FoldedBlock> mapping = myLineMappings[i];
+      Int2ObjectMap<List<FoldedBlock>> mapping = myLineMappings[i];
       mapping.clear();
 
       for (FoldedBlock folding : getFoldedBlocks()) {
         int lineNumber = folding.computeLineNumber(i);
-        mapping.putIfAbsent(lineNumber, folding);
+        List<FoldedBlock> lineBlocks = mapping.computeIfAbsent(lineNumber, (key) -> new SmartList<>());
+        lineBlocks.add(folding);
       }
     }
   }
@@ -515,7 +517,12 @@ public class FoldingModelSupport {
   @Nullable
   private FoldedBlock getBlockForLine(int index, int hoverLine) {
     updateLineNumbers(false);
-    return myLineMappings[index].get(hoverLine);
+    List<FoldedBlock> blocks = myLineMappings[index].get(hoverLine);
+    if (blocks == null) return null;
+    return ContainerUtil.find(blocks, folding -> {
+      FoldRegion region = folding.getRegion(index);
+      return region != null && !region.isExpanded();
+    });
   }
 
   //
