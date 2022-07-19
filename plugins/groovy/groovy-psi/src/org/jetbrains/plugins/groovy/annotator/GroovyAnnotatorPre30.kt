@@ -14,7 +14,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ArrayUtil
 import org.jetbrains.plugins.groovy.GroovyBundle.message
-import org.jetbrains.plugins.groovy.annotator.intentions.ConvertLambdaToClosureAction
+import org.jetbrains.plugins.groovy.annotator.intentions.ConvertLambdaToClosureIntention
 import org.jetbrains.plugins.groovy.annotator.intentions.ReplaceDotFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
@@ -155,7 +155,7 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
   override fun visitLambdaExpression(expression: GrLambdaExpression) {
     super.visitLambdaExpression(expression)
     holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.lambda")).range(expression.arrow)
-      .withFix(ConvertLambdaToClosureAction(expression))
+      .withFix(ConvertLambdaToClosureIntention(expression))
       .create()
   }
 
