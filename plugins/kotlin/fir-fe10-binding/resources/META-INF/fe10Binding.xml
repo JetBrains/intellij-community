@@ -188,5 +188,13 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.fold.initializer.and.if.to.elvis.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.MapGetWithNotNullAssertionOperatorInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="INFORMATION"
+                     language="kotlin"
+                     key="inspection.map.get.with.not.null.assertion.operator.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>
