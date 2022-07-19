@@ -129,10 +129,8 @@ abstract class KtSymbolBasedDeclarationDescriptor(val context: Fe10WrapperContex
     override fun getSource(): SourceElement = ktSymbol.psi.safeAs<KtPureElement>().toSourceElement()
 
     override fun getContainingDeclaration(): DeclarationDescriptor {
-        if (ktSymbol !is KtSymbolWithKind) error("ContainingDeclaration should be overridden")
-
         val containerSymbol = context.withAnalysisSession {
-            (ktSymbol as KtSymbolWithKind).getContainingSymbol()
+            ktSymbol.getContainingSymbol()
         }
         if (containerSymbol != null)
             return containerSymbol.toDeclarationDescriptor(context)
@@ -298,7 +296,6 @@ class KtSymbolBasedTypeParameterDescriptor(
     override fun getUpperBounds(): List<KotlinType> = ktSymbol.upperBounds.map { it.toKotlinType(context) }
     override fun getOriginal(): TypeParameterDescriptor = this
 
-    override fun getContainingDeclaration(): DeclarationDescriptor = context.containerDeclarationImplementationPostponed()
     override fun getPackageFqNameIfTopLevel(): FqName = error("Should be called")
 
     // there is no such thing in FIR, and it seems like it isn't really needed for IDE and could be bypassed on client site
