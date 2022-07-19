@@ -227,6 +227,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("testData/inspectionsLocal/lateinitVarOverridesLateinitVar", pattern = pattern)
             model("testData/inspectionsLocal/foldInitializerAndIfToElvis", pattern = pattern)
             model("testData/inspectionsLocal/mapGetWithNotNullAssertionOperator", pattern = pattern)
+            model("testData/inspectionsLocal/memberVisibilityCanBePrivate", pattern = pattern)
         }
     }
 
@@ -236,6 +237,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("testData/quickfix/addVarianceModifier", pattern = pattern)
             model("testData/quickfix/canBePrimaryConstructorProperty", pattern = pattern)
             model("testData/quickfix/kdocMissingDocumentation", pattern = pattern)
+            model("testData/quickfix/memberVisibilityCanBePrivate", pattern = pattern)
         }
     }
 

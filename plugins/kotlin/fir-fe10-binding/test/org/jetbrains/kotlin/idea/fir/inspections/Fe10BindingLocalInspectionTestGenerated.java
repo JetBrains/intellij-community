@@ -1434,4 +1434,47 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/mapGetWithNotNullAssertionOperator/replaceWithGetOrElse.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate")
+    public static class MemberVisibilityCanBePrivate extends AbstractFe10BindingLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotation.kt")
+        public void testAnnotation() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/annotation.kt");
+        }
+
+        @TestMetadata("JvmFieldOnParameter.kt")
+        public void testJvmFieldOnParameter() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/JvmFieldOnParameter.kt");
+        }
+
+        @TestMetadata("JvmFieldOnProperty.kt")
+        public void testJvmFieldOnProperty() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/JvmFieldOnProperty.kt");
+        }
+
+        @TestMetadata("sameClassFunctionCall.kt")
+        public void testSameClassFunctionCall() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/sameClassFunctionCall.kt");
+        }
+
+        @TestMetadata("subClassFunctionCall.kt")
+        public void testSubClassFunctionCall() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/subClassFunctionCall.kt");
+        }
+
+        @TestMetadata("subObjectFunctionCall.kt")
+        public void testSubObjectFunctionCall() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/subObjectFunctionCall.kt");
+        }
+
+        @TestMetadata("usedInAnnotationOnContainingObject.kt")
+        public void testUsedInAnnotationOnContainingObject() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/usedInAnnotationOnContainingObject.kt");
+        }
+    }
 }

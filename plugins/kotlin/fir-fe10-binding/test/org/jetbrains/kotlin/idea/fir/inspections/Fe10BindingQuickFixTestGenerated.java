@@ -91,4 +91,37 @@ public abstract class Fe10BindingQuickFixTestGenerated extends AbstractFe10Bindi
             runTest("../idea/tests/testData/quickfix/kdocMissingDocumentation/withIndentation.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/memberVisibilityCanBePrivate")
+    public static class MemberVisibilityCanBePrivate extends AbstractFe10BindingQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("constructorParam.kt")
+        public void testConstructorParam() throws Exception {
+            runTest("../idea/tests/testData/quickfix/memberVisibilityCanBePrivate/constructorParam.kt");
+        }
+
+        @TestMetadata("internal.kt")
+        public void testInternal() throws Exception {
+            runTest("../idea/tests/testData/quickfix/memberVisibilityCanBePrivate/internal.kt");
+        }
+
+        @TestMetadata("noModifier.kt")
+        public void testNoModifier() throws Exception {
+            runTest("../idea/tests/testData/quickfix/memberVisibilityCanBePrivate/noModifier.kt");
+        }
+
+        @TestMetadata("protected.kt")
+        public void testProtected() throws Exception {
+            runTest("../idea/tests/testData/quickfix/memberVisibilityCanBePrivate/protected.kt");
+        }
+
+        @TestMetadata("public.kt")
+        public void testPublic() throws Exception {
+            runTest("../idea/tests/testData/quickfix/memberVisibilityCanBePrivate/public.kt");
+        }
+    }
 }
