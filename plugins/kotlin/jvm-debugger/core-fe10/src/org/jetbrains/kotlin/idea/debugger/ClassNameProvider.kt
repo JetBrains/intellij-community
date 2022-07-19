@@ -3,59 +3,47 @@
 package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.debugger.SourcePosition
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
+import org.jetbrains.kotlin.idea.search.isImportUsage
+import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
+import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
-class ClassNameProvider(val project: Project, val searchScope: GlobalSearchScope, val configuration: Configuration) {
-    companion object {
-        private val CLASS_ELEMENT_TYPES = arrayOf<Class<out PsiElement>>(
-            KtScript::class.java,
-            KtFile::class.java,
-            KtClassOrObject::class.java,
-            KtProperty::class.java,
-            KtNamedFunction::class.java,
-            KtFunctionLiteral::class.java,
-            KtAnonymousInitializer::class.java
-        )
-
-        internal fun getRelevantElement(element: PsiElement?): PsiElement? {
-            if (element == null) {
-                return null
-            }
-
-            for (elementType in CLASS_ELEMENT_TYPES) {
-                if (elementType.isInstance(element)) {
-                    return element
-                }
-            }
-
-            // Do not copy the array (*elementTypes) if the element is one we look for
-            return PsiTreeUtil.getNonStrictParentOfType(element, *CLASS_ELEMENT_TYPES)
-        }
-    }
-
+class ClassNameProvider(
+    private val project: Project,
+    private val searchScope: GlobalSearchScope,
+    private val configuration: Configuration
+) {
     data class Configuration(val findInlineUseSites: Boolean, val alwaysReturnLambdaParentClass: Boolean) {
         companion object {
             val DEFAULT = Configuration(findInlineUseSites = true, alwaysReturnLambdaParentClass = true)
         }
     }
-
-    private val inlineUsagesSearcher = InlineCallableUsagesSearcher(project, searchScope)
 
     @RequiresReadLock
     fun getCandidates(position: SourcePosition): List<String> {
@@ -106,7 +94,7 @@ class ClassNameProvider(val project: Project, val searchScope: GlobalSearchScope
                 }
                 is KtProperty -> {
                     if (configuration.findInlineUseSites && current.hasInlineAccessors) {
-                        result += inlineUsagesSearcher.findInlinedCalls(current, alreadyVisited, ::computeCandidatesForElement)
+                        result += findInlinedCalls(current, alreadyVisited)
                     }
 
                     val propertyOwner = current.containingClassOrObject
@@ -118,7 +106,7 @@ class ClassNameProvider(val project: Project, val searchScope: GlobalSearchScope
                 }
                 is KtNamedFunction -> {
                     if (configuration.findInlineUseSites && current.hasModifier(KtTokens.INLINE_KEYWORD)) {
-                        result += inlineUsagesSearcher.findInlinedCalls(current, alreadyVisited, ::computeCandidatesForElement)
+                        result += findInlinedCalls(current, alreadyVisited)
                     }
 
                     if (current.isLocal) {
@@ -157,9 +145,81 @@ class ClassNameProvider(val project: Project, val searchScope: GlobalSearchScope
         return result
     }
 
+    private fun findInlinedCalls(declaration: KtDeclaration, alreadyVisited: Set<PsiElement>): List<String> {
+        val searchResult = hashSetOf<PsiElement>()
+        val declarationName = declaration.name ?: "<error>"
+
+        val task = Runnable {
+            for (reference in ReferencesSearch.search(declaration, getScopeForInlineDeclarationUsages(declaration))) {
+                ProgressManager.checkCanceled()
+                processInlinedReference(declaration, reference, alreadyVisited)?.let { searchResult += it }
+            }
+        }
+
+        val isSuccess = if (isDispatchThread()) {
+            val progressMessage = KotlinDebuggerCoreBundle.message("find.inline.calls.task.compute.names", declarationName)
+            ProgressManager.getInstance().runProcessWithProgressSynchronously(task, progressMessage, true, project)
+        } else {
+            try {
+                ProgressManager.getInstance().runProcess(task, EmptyProgressIndicator())
+                true
+            } catch (e: InterruptedException) {
+                false
+            }
+        }
+
+        if (!isSuccess) {
+            val notificationMessage = KotlinDebuggerCoreBundle.message("find.inline.calls.task.cancelled", declarationName)
+            XDebuggerManagerImpl.getNotificationGroup().createNotification(notificationMessage, MessageType.WARNING).notify(project)
+        }
+
+        val newAlreadyVisited = buildSet {
+            addAll(alreadyVisited)
+            addAll(searchResult)
+            add(declaration)
+        }
+
+        return searchResult.flatMap { computeCandidatesForElement(it, newAlreadyVisited) }
+    }
+
+    private fun processInlinedReference(declaration: KtDeclaration, reference: PsiReference, alreadyVisited: Set<PsiElement>): PsiElement? {
+        if (reference.isImportUsage() || reference.element.language != KotlinLanguage.INSTANCE) {
+            return null
+        }
+
+        val element = getInlinedReferenceElement(reference)
+        return if (!declaration.isAncestor(element) && element !in alreadyVisited) element else null
+    }
+
+    private fun getInlinedReferenceElement(reference: PsiReference): PsiElement {
+        val element = reference.element
+
+        /*
+            The list must be consistent with 'computeCandidatesForElement()' implementation.
+            * * *
+            In theory, we might use 'reference.element' as is, but it's quite inefficient
+            if there are multiple usages inside the same declaration.
+        */
+        return element.getParentOfTypes(
+            strict = false,
+            KtDeclaration::class.java,
+            KtFile::class.java,
+            KtScript::class.java,
+            KtCallableReferenceExpression::class.java,
+            KtLambdaExpression::class.java,
+            KtObjectLiteralExpression::class.java
+        ) ?: element
+    }
+
+    private fun getScopeForInlineDeclarationUsages(inlineDeclaration: KtDeclaration): GlobalSearchScope {
+        val virtualFile = inlineDeclaration.containingFile.virtualFile
+        return if (virtualFile != null && RootKindFilter.libraryFiles.matches(project, virtualFile)) {
+            searchScope.uniteWith(KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project))
+        } else {
+            searchScope
+        }
+    }
+
     private val KtProperty.hasInlineAccessors: Boolean
         get() = hasModifier(KtTokens.INLINE_KEYWORD) || accessors.any { it.hasModifier(KtTokens.INLINE_KEYWORD) }
-
-    private inline val PsiElement.relevantParent
-        get() = getRelevantElement(this.parent)
 }
