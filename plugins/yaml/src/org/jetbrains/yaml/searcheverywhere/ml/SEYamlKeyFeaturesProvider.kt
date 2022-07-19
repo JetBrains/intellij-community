@@ -18,10 +18,10 @@ import org.jetbrains.yaml.navigation.YAMLKeysSearchEverywhereContributor
 
 private class SEYamlKeyFeaturesProvider : SearchEverywhereElementFeaturesProvider(YAMLKeysSearchEverywhereContributor::class.java) {
   companion object {
-    private val KEY_IS_MOST_RECENTLY_USED = EventFields.Boolean("keyIsMostRecentlyUsed")
-    private val KEY_IS_IN_TOP_5_RECENTLY_USED = EventFields.Boolean("keyIsInTop5RecentlyUsed")
-    private val KEY_NEVER_USED = EventFields.Boolean("keyNeverUsed")
-    private val KEY_IS_MOST_POPULAR = EventFields.Boolean("keyIsMostPopular")
+    private val KEY_IS_MOST_RECENTLY_USED = EventFields.Boolean("yamlKeyIsMostRecentlyUsed")
+    private val KEY_IS_IN_TOP_5_RECENTLY_USED = EventFields.Boolean("yamlKeyIsInTop5RecentlyUsed")
+    private val KEY_NEVER_USED = EventFields.Boolean("yamlKeyNeverUsed")
+    private val KEY_IS_MOST_POPULAR = EventFields.Boolean("yamlKeyIsMostPopular")
 
     private val FILE_RECENCY_INDEX = EventFields.Int("yamlFileRecencyIndex")
     private val FILE_TIME_SINCE_LAST_MODIFICATION = EventFields.Long("yamlTimeSinceLastModification")
