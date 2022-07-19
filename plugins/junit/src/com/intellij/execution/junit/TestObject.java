@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
-import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -569,7 +568,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         return DisabledConditionUtil.getDisabledConditionValue(myConfiguration);
       }).executeSynchronously();
       if (disabledCondition != null) {
-        javaParameters.getProgramParametersList().add("-Djunit.jupiter.conditions.deactivate=" + disabledCondition);
+        javaParameters.getVMParametersList().add("-Djunit.jupiter.conditions.deactivate=" + disabledCondition);
       }
     }
   }

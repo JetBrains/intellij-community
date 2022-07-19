@@ -102,7 +102,7 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
     JUnitConfiguration configuration = new JUnitConfiguration("", myFixture.getProject());
     configuration.beClassConfiguration(aClass);
     JavaParameters parameters = configuration.getTestObject().createJavaParameters4Tests();
-    assertTrue(parameters.getProgramParametersList().hasParameter("-Djunit.jupiter.conditions.deactivate=org.junit.*DisabledCondition"));
+    assertTrue(parameters.getVMParametersList().hasParameter("-Djunit.jupiter.conditions.deactivate=org.junit.*DisabledCondition"));
   }
 
   @Test
@@ -123,7 +123,7 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
     JUnitConfiguration configuration = new JUnitConfiguration("", myFixture.getProject());
     configuration.beClassConfiguration(aClass);
     JavaParameters parameters = configuration.getTestObject().createJavaParameters4Tests();
-    assertTrue(parameters.getProgramParametersList().hasParameter("-Djunit.jupiter.conditions.deactivate=org.junit.*DisabledCondition"));
+    assertTrue(parameters.getVMParametersList().hasParameter("-Djunit.jupiter.conditions.deactivate=org.junit.*DisabledCondition"));
   }
 
   @Test
@@ -142,7 +142,7 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
     @SuppressWarnings("OptionalGetWithoutIsPresent") PsiMethod method = Arrays.stream(aClass.getMethods()).findFirst().get();
     configuration.beMethodConfiguration(MethodLocation.elementInClass(method, aClass));
     JavaParameters parameters = configuration.getTestObject().createJavaParameters4Tests();
-    assertTrue(parameters.getProgramParametersList().hasParameter("-Djunit.jupiter.conditions.deactivate=org.junit.*DisabledCondition"));
+    assertTrue(parameters.getVMParametersList().hasParameter("-Djunit.jupiter.conditions.deactivate=org.junit.*DisabledCondition"));
   }
 
   @Test
