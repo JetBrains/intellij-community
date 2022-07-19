@@ -1,0 +1,15 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.starter.runner
+
+import com.intellij.ide.starter.ci.CIServer
+import com.intellij.ide.starter.di.di
+import com.intellij.ide.starter.ide.IDETestContext
+import org.kodein.di.direct
+import org.kodein.di.instance
+
+class TestContainerImpl(
+  override val ciServer: CIServer = di.direct.instance(),
+  override var useLatestDownloadedIdeBuild: Boolean = false,
+  override val allContexts: MutableList<IDETestContext> = mutableListOf(),
+  override val setupHooks: MutableList<IDETestContext.() -> IDETestContext> = mutableListOf()
+) : TestContainer<TestContainerImpl>
