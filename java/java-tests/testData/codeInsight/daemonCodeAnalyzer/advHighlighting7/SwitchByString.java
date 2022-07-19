@@ -25,7 +25,7 @@ public class Test {
     String key = "key";
     switch (key) {
       case foo:
-      case <error descr="Cannot resolve symbol 'getStringValue'">getStringValue</error>(): {
+      case <error descr="Constant expression, pattern or null is required"><error descr="Cannot resolve symbol 'getStringValue'">getStringValue</error>()</error>: {
         System.out.println("illegal");
         break;
       }

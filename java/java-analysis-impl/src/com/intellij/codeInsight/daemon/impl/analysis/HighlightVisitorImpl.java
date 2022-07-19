@@ -48,6 +48,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 // java highlighting: problems in java code like unresolved/incompatible symbols/methods etc.
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
   private HighlightInfoHolder myHolder;
@@ -1948,6 +1950,32 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitDeconstructionPattern(@NotNull PsiDeconstructionPattern deconstructionPattern) {
     super.visitDeconstructionPattern(deconstructionPattern);
     myHolder.add(checkFeature(deconstructionPattern, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
+  }
+
+  @Override
+  public void visitDeconstructionList(@NotNull PsiDeconstructionList deconstructionList) {
+    super.visitDeconstructionList(deconstructionList);
+    // We are checking the case when the pattern looks similar to method call in switch and want to show user-friendly message that here
+    // only constant expressions are expected.
+    // it is required to do it in deconstruction list because unresolved reference won't let any parents show any highlighting,
+    // so we need element which is not parent
+    PsiElement parent = deconstructionList.getParent();
+    PsiDeconstructionPattern pattern = tryCast(parent, PsiDeconstructionPattern.class);
+    if (pattern == null) return;
+    PsiElement grandParent = parent.getParent();
+    if (!(grandParent instanceof PsiCaseLabelElementList)) return;
+    PsiTypeElement typeElement = pattern.getTypeElement();
+    PsiJavaCodeReferenceElement ref = PsiTreeUtil.getChildOfType(typeElement, PsiJavaCodeReferenceElement.class);
+    if (ref == null) return;
+    if (ref.multiResolve(true).length == 0) {
+      PsiElementFactory elementFactory = PsiElementFactory.getInstance(myFile.getProject());
+      PsiExpression expression = elementFactory.createExpressionFromText(pattern.getText(), grandParent);
+      PsiMethodCallExpression call = tryCast(expression, PsiMethodCallExpression.class);
+      if (call == null) return;
+      if (call.getMethodExpression().resolve() != null) {
+        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern.getTextRange()).descriptionAndTooltip(JavaErrorBundle.message("switch.constant.expression.required")).create());
+      }
+    }
   }
 
   @Override
