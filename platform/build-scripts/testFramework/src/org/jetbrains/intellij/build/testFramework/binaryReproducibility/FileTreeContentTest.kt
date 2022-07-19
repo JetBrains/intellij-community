@@ -64,8 +64,8 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
         path2.unpackingDir().also { Decompressor.Tar(path2).extract(it) }
       ) ?: AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
       "zip", "jar", "ijx" -> assertTheSameDirectoryContent(
-        path1.unpackingDir().also { Decompressor.Zip(path1).extract(it) },
-        path2.unpackingDir().also { Decompressor.Zip(path2).extract(it) }
+        path1.unpackingDir().also { Decompressor.Zip(path1).withZipExtensions().extract(it) },
+        path2.unpackingDir().also { Decompressor.Zip(path2).withZipExtensions().extract(it) }
       ) ?: AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
       else -> if (path1.checksum() != path2.checksum()) {
         saveDiff(relativeFilePath, path1, path2)
