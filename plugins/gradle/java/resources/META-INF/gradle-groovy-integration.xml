@@ -72,6 +72,12 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleBuildscriptStructureInspection"/>
 
+    <localInspection language="Groovy" groupPath="Gradle" shortName="EvaluationEagerness"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.avoid.eager.creations" groupKey="inspection.best.practises" groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleEagernessInspection"/>
+
 
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer"
                               order="last"/>

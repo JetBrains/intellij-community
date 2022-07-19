@@ -22,7 +22,7 @@ class GradleBuildscriptStructureInspection : GroovyLocalInspectionTool() {
       val statementsToCheck = statements.asList().subList(0, lastPluginsStatement)
       for (suspiciousStatement in statementsToCheck) {
         val psiToHighlight = getBadStatementHighlightingElement(suspiciousStatement) ?: continue
-        holder.registerProblem(psiToHighlight, GradleInspectionBundle.message("inspection.display.name.incorrect.buildscript.structure"), ProblemHighlightType.GENERIC_ERROR)
+        holder.registerProblem(psiToHighlight, GradleInspectionBundle.message("inspection.message.incorrect.buildscript.structure"), ProblemHighlightType.GENERIC_ERROR)
       }
     }
   }
