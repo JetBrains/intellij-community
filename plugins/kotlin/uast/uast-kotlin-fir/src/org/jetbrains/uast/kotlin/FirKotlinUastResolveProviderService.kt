@@ -344,6 +344,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             }
         }
 
+        if (analyzeForUast(ktExpression) { resolvedTargetElement?.canBeAnalysed() == false }) return null
+
         when (resolvedTargetElement) {
             is KtClassOrObject -> {
                 resolveToPsiClassOrEnumEntry(resolvedTargetElement)?.let { return it }
