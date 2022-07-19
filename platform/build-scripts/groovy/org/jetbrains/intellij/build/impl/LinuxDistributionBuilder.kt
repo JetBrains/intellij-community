@@ -64,22 +64,23 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
     val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
     context.executeStep(spanBuilder("build linux .tar.gz").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
-      if (customizer.buildTarGzWithoutBundledRuntime) {
-        context.executeStep(spanBuilder("Build Linux .tar.gz without bundled JRE").setAttribute("arch", arch.name),
+      if (customizer.buildTarGzWithoutBundledRuntime &&
+          (arch == JvmArchitecture.x64 || !context.shouldBuildDistributionForOS(OsFamily.LINUX, JvmArchitecture.x64))) {
+        context.executeStep(spanBuilder("Build Linux .tar.gz without bundled Runtime").setAttribute("arch", arch.name),
                             BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP) {
-          buildTarGz(jreDirectoryPath = null, unixDistPath = osAndArchSpecificDistPath, suffix = NO_JBR_SUFFIX + suffix)
+          buildTarGz(runtimeDir = null, unixDistPath = osAndArchSpecificDistPath, suffix = NO_JBR_SUFFIX)
         }
       }
       if (customizer.buildOnlyBareTarGz) {
         return@executeStep
       }
 
-      val jreDirectoryPath = context.bundledRuntime.extract(getProductPrefix(context), OsFamily.LINUX, arch)
-      val tarGzPath = buildTarGz(jreDirectoryPath, osAndArchSpecificDistPath, suffix)
+      val runtimeDir = context.bundledRuntime.extract(getProductPrefix(context), OsFamily.LINUX, arch)
+      val tarGzPath = buildTarGz(runtimeDir, osAndArchSpecificDistPath, suffix)
       checkExecutablePermissions(tarGzPath, rootDirectoryName)
 
       if (arch == JvmArchitecture.x64) {
-        buildSnapPackage(jreDirectoryPath, osAndArchSpecificDistPath)
+        buildSnapPackage(runtimeDir, osAndArchSpecificDistPath)
       }
       else {
         // TODO: Add snap for aarch64
@@ -143,25 +144,25 @@ class LinuxDistributionBuilder(override val context: BuildContext,
   private val rootDirectoryName: String
     get() = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
 
-  private fun buildTarGz(jreDirectoryPath: Path?, unixDistPath: Path, suffix: String): Path {
+  private fun buildTarGz(runtimeDir: Path?, unixDistPath: Path, suffix: String): Path {
     val tarRoot = rootDirectoryName
     val tarName = artifactName(context, suffix)
     val tarPath = context.paths.artifactDir.resolve(tarName)
     val paths = mutableListOf(context.paths.distAllDir, unixDistPath)
     var javaExecutablePath: String? = null
-    if (jreDirectoryPath != null) {
-      paths.add(jreDirectoryPath)
+    if (runtimeDir != null) {
+      paths.add(runtimeDir)
       javaExecutablePath = "jbr/bin/java"
-      require(Files.exists(jreDirectoryPath.resolve(javaExecutablePath))) { "$javaExecutablePath was not found under $jreDirectoryPath" }
+      require(Files.exists(runtimeDir.resolve(javaExecutablePath))) { "$javaExecutablePath was not found under $runtimeDir" }
     }
 
     val productJsonDir = context.paths.tempDir.resolve("linux.dist.product-info.json$suffix")
     generateProductJson(productJsonDir, javaExecutablePath, context)
     paths.add(productJsonDir)
 
-    val executableFilesPatterns = generateExecutableFilesPatterns(jreDirectoryPath != null)
+    val executableFilesPatterns = generateExecutableFilesPatterns(runtimeDir != null)
     spanBuilder("build Linux tar.gz")
-      .setAttribute("jreDirectoryPath", jreDirectoryPath?.toString() ?: "")
+      .setAttribute("runtimeDir", runtimeDir?.toString() ?: "")
       .useWithScope {
         synchronized(context.paths.distAllDir) {
           // Sync to prevent concurrent context.paths.distAllDir modification and reading from two Linux builders,
