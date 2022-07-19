@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX
@@ -145,25 +146,35 @@ object KotlinArtifactsDownloader {
             "Don't call downloadMavenArtifact on UI thread"
         }
 
-        // KTIJ-22176 KTI-878. Since 1.7.20, 'kotlin-dist-for-jps-meta' doesn't depend on broken 'kotlin-annotation-processing'
-        val props =
+        val excludedDeps =
             if (artifactId == KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID && IdeKotlinVersion.get(version) < IdeKotlinVersion.get("1.7.20")) {
-                KOTLIN_DIST_FOR_JPS_META_DEPS
-            } else {
-                listOf(MavenArtifact(artifactId, artifactIsPom = artifactIsPom))
-            }.map {
-                RepositoryLibraryProperties(
-                    "$KOTLIN_MAVEN_GROUP_ID:${it.artifactId}:$version",
-                    if (it.artifactIsPom) ArtifactKind.POM.extension else ArtifactKind.ARTIFACT.extension,
-                    it.transitive,
+                listOf( // Not existing deps of kotlin-annotation-processing KTI-878
+                    "$KOTLIN_MAVEN_GROUP_ID:util",
+                    "$KOTLIN_MAVEN_GROUP_ID:cli",
+                    "$KOTLIN_MAVEN_GROUP_ID:backend",
+                    "$KOTLIN_MAVEN_GROUP_ID:frontend",
+                    "$KOTLIN_MAVEN_GROUP_ID:frontend.java",
+                    "$KOTLIN_MAVEN_GROUP_ID:plugin-api",
+                    "$KOTLIN_MAVEN_GROUP_ID:backend.jvm.entrypoint",
                 )
+            } else {
+                emptyList()
             }
 
-        val repos = getMavenRepos(project) + additionalMavenRepos
-        val downloadedArtifacts =
-            props.flatMap { JarRepositoryManager.loadDependenciesSync(project, it, false, false, null, repos, indicator) }
+        val prop = RepositoryLibraryProperties(
+            JpsMavenRepositoryLibraryDescriptor(
+                KOTLIN_MAVEN_GROUP_ID,
+                artifactId,
+                version,
+                if (artifactIsPom) ArtifactKind.POM.extension else ArtifactKind.ARTIFACT.extension,
+                true,
+                excludedDeps,
+            )
+        )
 
-        return downloadedArtifacts
+        val repos = getMavenRepos(project) + additionalMavenRepos
+
+        return JarRepositoryManager.loadDependenciesSync(project, prop, false, false, null, repos, indicator)
             .map { File(it.file.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl).canonicalFile }
             .distinct()
     }
@@ -236,45 +247,4 @@ object KotlinArtifactsDownloader {
             getMavenRepos(project).joinToString("\n") { it.url }.prependIndent()
         ) + "\n\n" + suggestion
     }
-
-    private val KOTLIN_DIST_FOR_JPS_META_DEPS = listOf(
-        MavenArtifact("jvm-abi-gen"),
-        MavenArtifact("kotlin-android-extensions-runtime"),
-        MavenArtifact("kotlin-android-extensions"),
-        MavenArtifact("kotlin-annotation-processing-runtime"),
-        MavenArtifact("kotlin-annotation-processing", transitive = false),
-        MavenArtifact("kotlin-annotations-jvm"),
-        MavenArtifact("kotlin-compiler"),
-        MavenArtifact("kotlin-daemon-client"),
-        MavenArtifact("kotlin-daemon"),
-        MavenArtifact("kotlin-main-kts"),
-        MavenArtifact("kotlin-parcelize-compiler"),
-        MavenArtifact("kotlin-parcelize-runtime"),
-        MavenArtifact("kotlin-reflect"),
-        MavenArtifact("kotlin-script-runtime"),
-        MavenArtifact("kotlin-scripting-common"),
-        MavenArtifact("kotlin-scripting-compiler-impl"),
-        MavenArtifact("kotlin-scripting-compiler"),
-        MavenArtifact("kotlin-scripting-js"),
-        MavenArtifact("kotlin-scripting-jvm"),
-        MavenArtifact("kotlin-stdlib-jdk7"),
-        MavenArtifact("kotlin-stdlib-jdk8"),
-        MavenArtifact("kotlin-stdlib-js"),
-        MavenArtifact("kotlin-stdlib"),
-        MavenArtifact("kotlin-test-js"),
-        MavenArtifact("kotlin-test-junit5"),
-        MavenArtifact("kotlin-test-junit"),
-        MavenArtifact("kotlin-test-testng"),
-        MavenArtifact("kotlin-test"),
-        MavenArtifact("trove4j"),
-        MavenArtifact("kotlinx-coroutines-core-jvm"),
-        MavenArtifact("annotations"),
-        MavenArtifact("kotlin-maven-serialization"),
-        MavenArtifact("kotlin-maven-sam-with-receiver"),
-        MavenArtifact("kotlin-maven-allopen"),
-        MavenArtifact("kotlin-maven-lombok"),
-        MavenArtifact("kotlin-maven-noarg"),
-    )
-
-    private data class MavenArtifact(val artifactId: String, val transitive: Boolean = true, val artifactIsPom: Boolean = false)
 }
