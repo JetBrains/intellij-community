@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -16,7 +16,7 @@ class GrReplaceReturnWithYield : IntentionAction {
     return true
   }
 
-  override fun getText(): String = GroovyBundle.message("intention.name.replace.return.with.yield")
+  override fun getText(): String = GroovyBundle.message("intention.name.replace", "return", "yield")
 
   override fun getFamilyName(): String = GroovyBundle.message("intention.family.name.replace.keywords")
 
