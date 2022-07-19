@@ -155,11 +155,10 @@ Includes the following features:</p>
     <fileEditorProvider implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.ui.floating.AddFloatingToolbarTextEditorCustomizer"/>
 
-    <customPasteProvider implementation="org.intellij.plugins.markdown.editor.images.MarkdownImagePasteProvider"/>
-    <customPasteProvider implementation="org.intellij.plugins.markdown.editor.FileLinkPasteProvider"/>
-
+    <customPasteProvider implementation="org.intellij.plugins.markdown.editor.paste.MarkdownImagePasteProvider"/>
+    <customPasteProvider implementation="org.intellij.plugins.markdown.editor.paste.FileLinkPasteProvider"/>
     <customFileDropHandler id="MarkdownEditorFileDropHandler"
-                           implementation="org.intellij.plugins.markdown.editor.EditorFileDropHandler"/>
+                           implementation="org.intellij.plugins.markdown.editor.paste.EditorFileDropHandler"/>
 
     <spellchecker.support language="Markdown"
                           implementationClass="org.intellij.plugins.markdown.spellchecking.MarkdownSpellcheckingStrategy"/>

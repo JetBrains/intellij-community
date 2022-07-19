@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.editor
+package org.intellij.plugins.markdown.editor.paste
 
 import com.intellij.ide.PasteProvider
 import com.intellij.ide.dnd.FileCopyPasteUtil
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.actions.PasteAction
 import com.intellij.psi.util.PsiEditorUtil
+import org.intellij.plugins.markdown.editor.runForEachCaret
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownType
 
 internal class FileLinkPasteProvider: PasteProvider {

@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.editor.images
+package org.intellij.plugins.markdown.editor.paste
 
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ReadOnlyModificationException
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.images.ide.EditorImagePasteProvider
+import org.intellij.plugins.markdown.editor.images.ImageUtils
 import org.intellij.plugins.markdown.editor.runForEachCaret
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 

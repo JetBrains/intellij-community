@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.editor
+package org.intellij.plugins.markdown.editor.paste
 
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.openapi.application.runWriteAction
@@ -16,6 +16,7 @@ import org.intellij.images.fileTypes.ImageFileTypeManager
 import org.intellij.images.fileTypes.impl.SvgFileType
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.images.ImageUtils
+import org.intellij.plugins.markdown.editor.runForEachCaret
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 import java.awt.datatransfer.Transferable
 import java.nio.file.Path
