@@ -311,6 +311,18 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self: A, a, b", new String[]{"b"}, new String[]{"self: A, "});
   }
 
+  // PY-53671
+  public void testUnboundMethodReassignedAndImportedWithQualifiedImport() {
+    Map<String, PsiElement> marks = loadMultiFileTest(1);
+    feignCtrlP(marks.get("<arg>").getTextOffset()).check("self: C, param", new String[]{"self: C, "}, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  // PY-53671
+  public void testBoundMethodReassignedAndImportedWithQualifiedImport() {
+    Map<String, PsiElement> marks = loadMultiFileTest(1);
+    feignCtrlP(marks.get("<arg>").getTextOffset()).check("self: C, param", new String[]{"param"}, new String[]{"self: C, "});
+  }
+
   public void testConstructorFactory() {
     Map<String, PsiElement> marks = loadTest(1);
 
