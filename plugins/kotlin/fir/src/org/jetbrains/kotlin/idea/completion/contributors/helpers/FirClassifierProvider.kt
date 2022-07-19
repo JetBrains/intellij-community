@@ -33,12 +33,14 @@ internal object FirClassifierProvider {
     ): Sequence<KtClassifierSymbol> = sequence {
         yieldAll(
             indexHelper.getKotlinClasses(scopeNameFilter, psiFilter = { it !is KtEnumEntry }).asSequence()
+                .filter { it.canBeAnalysed() }
                 .map { it.getSymbol() as KtClassifierSymbol }
                 .filter { with(visibilityChecker) { isVisible(it) } }
         )
 
         yieldAll(
             indexHelper.getJavaClasses(scopeNameFilter).asSequence()
+                .filter { it.canBeAnalysed() }
                 .mapNotNull { it.classIdIfNonLocal?.getCorrespondingToplevelClassOrObjectSymbol() }
                 .filter { with(visibilityChecker) { isVisible(it) } }
         )
