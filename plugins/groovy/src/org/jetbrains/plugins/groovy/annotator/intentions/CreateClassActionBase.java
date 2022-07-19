@@ -3,6 +3,7 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,11 +19,13 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 /**
@@ -59,6 +62,46 @@ public abstract class CreateClassActionBase extends Intention {
       default:
         return "";
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    String name = myRefElement.getReferenceName();
+    if (name == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    PsiFile containingFile = myRefElement.getContainingFile();
+    if (!(containingFile instanceof GroovyFileBase)) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    String packageName = ((GroovyFileBase)containingFile).getPackageName();
+    String prefix = packageName.isEmpty() ? "" : "package " + packageName + "\n\n";
+    String template = prefix + "%s " + name + " {\n}" ;
+    String newClassPrefix;
+    switch (myType) {
+      case CLASS:
+        newClassPrefix = "class";
+        break;
+      case INTERFACE:
+        newClassPrefix = "interface";
+        break;
+      case TRAIT:
+        newClassPrefix = "trait";
+        break;
+      case ENUM:
+        newClassPrefix = "enum";
+        break;
+      case ANNOTATION:
+        newClassPrefix = "@interface";
+        break;
+      case RECORD:
+        newClassPrefix = "record";
+        break;
+      default:
+        return IntentionPreviewInfo.EMPTY;
+    }
+
+    return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, name + ".groovy", "", String.format(template, newClassPrefix));
   }
 
   @Override
