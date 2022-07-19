@@ -120,6 +120,10 @@ class ProjectsTab(private val parentDisposable: Disposable) :
     val scrollPane = ScrollPaneFactory.createScrollPane(treeComponent, true)
     scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
     scrollPane.isOpaque = false
+    val projectsPanel = JBUI.Panels.simplePanel(scrollPane)
+      .andTransparent()
+      .withBorder(JBUI.Borders.emptyTop(10))
+
     val projectSearch = recentProjectTree.installSearchField()
     val northPanel: JPanel = JBUI.Panels.simplePanel()
       .andTransparent()
@@ -134,7 +138,7 @@ class ProjectsTab(private val parentDisposable: Disposable) :
     northPanel.add(projectSearch, BorderLayout.CENTER)
     northPanel.add(projectActionsPanel, BorderLayout.EAST)
     recentProjectsPanel.add(northPanel, BorderLayout.NORTH)
-    recentProjectsPanel.add(scrollPane, BorderLayout.CENTER)
+    recentProjectsPanel.add(projectsPanel, BorderLayout.CENTER)
     recentProjectsPanel.add(WelcomeScreenComponentFactory.createNotificationPanel(parentDisposable), BorderLayout.SOUTH)
     initDnD(treeComponent)
     return recentProjectsPanel
