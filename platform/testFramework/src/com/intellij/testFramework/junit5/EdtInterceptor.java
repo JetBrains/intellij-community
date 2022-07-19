@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5;
 
 import com.intellij.testFramework.EdtTestUtil;
@@ -11,6 +11,10 @@ import org.junit.platform.commons.support.AnnotationSupport;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * @deprecated use {@link com.intellij.testFramework.junit5.RunInEdt} in JUnit 5
+ */
+@Deprecated(forRemoval = true)
 public class EdtInterceptor implements InvocationInterceptor {
   private final boolean myAnnotationDependant;
 
