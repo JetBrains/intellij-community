@@ -27,4 +27,69 @@ class GradleEagernessInspectionTest : GradleCodeInsightTestCase() {
       testHighlighting("tasks.create('abc')")
     }
   }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource("getByPath,findByPath")
+  fun testGetByPath(gradleVersion: GradleVersion, methodName : String) {
+    testEmptyProject(gradleVersion) {
+      codeInsightFixture.enableInspections(GradleEagernessInspection::class.java)
+      testHighlighting("tasks.<warning>$methodName</warning>('abc')")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAll(gradleVersion: GradleVersion) {
+    testEmptyProject(gradleVersion) {
+      codeInsightFixture.enableInspections(GradleEagernessInspection::class.java)
+      testHighlighting("tasks.<warning>all</warning> {}")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testWhenObjectAdded(gradleVersion: GradleVersion) {
+    testEmptyProject(gradleVersion) {
+      codeInsightFixture.enableInspections(GradleEagernessInspection::class.java)
+      testHighlighting("tasks.<warning>whenObjectAdded</warning> {}")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testPlainWithType(gradleVersion: GradleVersion) {
+    testEmptyProject(gradleVersion) {
+      codeInsightFixture.enableInspections(GradleEagernessInspection::class.java)
+      testHighlighting("tasks.withType(Jar)")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testWithType(gradleVersion: GradleVersion) {
+    testEmptyProject(gradleVersion) {
+      codeInsightFixture.enableInspections(GradleEagernessInspection::class.java)
+      testHighlighting("tasks.<warning>withType</warning>(Jar) {}")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testFixWithType(gradleVersion: GradleVersion) {
+    testEmptyProject(gradleVersion) {
+      codeInsightFixture.enableInspections(GradleEagernessInspection::class.java)
+      testIntention("tasks.withTy<caret>pe(Jar) { 1 + 1 }",
+                    "tasks.withType(Jar).configureEach { 1 + 1 }", "Add 'configureEach'")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testFixWithTypeComplex(gradleVersion: GradleVersion) {
+    testEmptyProject(gradleVersion) {
+      codeInsightFixture.enableInspections(GradleEagernessInspection::class.java)
+      testIntention("def a = tasks.withTy<caret>pe(Jar) { 1 + 1 }",
+                    "def a = tasks.withType(Jar).tap { configureEach { 1 + 1 } }", "Add 'configureEach'")
+    }
+  }
 }
