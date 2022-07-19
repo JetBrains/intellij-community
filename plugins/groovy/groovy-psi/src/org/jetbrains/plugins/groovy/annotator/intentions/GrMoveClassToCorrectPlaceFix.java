@@ -1,16 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
@@ -47,10 +47,24 @@ public class GrMoveClassToCorrectPlaceFix extends Intention {
     return myClass.isValid();
   }
 
+  //@Override
+  //public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+  //  GrTypeDefinition copy = PsiTreeUtil.findSameElementInCopy(myClass, target);
+  //  return new GrMoveClassToCorrectPlaceFix(copy);
+  //}
+
+
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    GrTypeDefinition copy = PsiTreeUtil.findSameElementInCopy(myClass, target);
-    return new GrMoveClassToCorrectPlaceFix(copy);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    final GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(myClass, GrTypeDefinition.class);
+    PsiNamedElement target;
+    if (containingClass != null) {
+      target = containingClass;
+    }
+    else {
+      target = myClass.getContainingFile();
+    }
+    return IntentionPreviewInfo.movePsi(myClass, target);
   }
 
   @Override
