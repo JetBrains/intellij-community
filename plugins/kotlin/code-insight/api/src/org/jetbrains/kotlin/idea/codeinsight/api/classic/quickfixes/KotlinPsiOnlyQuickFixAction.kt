@@ -18,7 +18,8 @@ abstract class KotlinPsiOnlyQuickFixAction<out T : PsiElement>(element: T) : Qui
 
     final override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
         val element = element ?: return
-        if (file is KtFile && FileModificationService.getInstance().prepareFileForWrite(element.containingFile)) {
+        if (file is KtFile &&
+            (!file.isPhysical || FileModificationService.getInstance().prepareFileForWrite(element.containingFile))) {
             invoke(project, editor, file)
         }
     }
