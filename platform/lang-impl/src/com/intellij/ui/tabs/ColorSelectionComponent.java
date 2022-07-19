@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.ColorChooser;
+import com.intellij.ui.ColorPicker;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.picker.ColorListener;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -103,11 +105,19 @@ public class ColorSelectionComponent extends JPanel {
 
     @Override
     protected void doPerformAction(ActionEvent e) {
-      final Color color = ColorChooser.chooseColor(this, IdeBundle.message("dialog.title.choose.color"), myColor);
-      if (color != null) {
-        myColor = color;
-      }
-      setSelected(myColor != null);
+      RelativePoint location = new RelativePoint(this, new Point(getWidth() / 2, getHeight()));
+      ColorListener listener = new ColorListener() {
+        @Override
+        public void colorChanged(Color color, Object source) {
+          if (color != null) {
+            myColor = color;
+          }
+          setSelected(myColor != null);
+          CustomColorButton.this.revalidate();
+          CustomColorButton.this.repaint();
+        }
+      };
+      ColorPicker.showColorPickerPopup(null, myColor, listener, location);
     }
 
     @Override
