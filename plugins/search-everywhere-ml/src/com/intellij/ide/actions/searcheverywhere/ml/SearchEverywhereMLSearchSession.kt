@@ -115,28 +115,13 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
 }
 
 internal class SearchEverywhereMLContextInfo(private val project: Project?) {
-  @Volatile
-  private var _features: List<EventPair<*>>? = null
-
-  val features: List<EventPair<*>>
-    get() {
-      if (_features == null) {
-        // features may not yet been initialized by the NonUrgentExecutor, however the features are requested,
-        // possibly when computing ML weights, so it is important to compute them immediately
-        _features = computeContextFeatures()
-      }
-
-      return _features!!
-    }
+  val features: List<EventPair<*>> by lazy {
+    SearchEverywhereContextFeaturesProvider().getContextFeatures(project)
+  }
 
   init {
     NonUrgentExecutor.getInstance().execute {
-      // In case we have actually computed the features before the NonUrgentExecutor had a chance to do it
-      if (_features == null) {
-        _features = computeContextFeatures()
-      }
+      features  // We don't care about the value, we just want the features to be computed
     }
   }
-
-  private fun computeContextFeatures() = SearchEverywhereContextFeaturesProvider().getContextFeatures(project)
 }
