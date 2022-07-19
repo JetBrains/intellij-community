@@ -44,7 +44,7 @@ class KotlinFieldBreakpoint(
     breakpoint: XBreakpoint<KotlinPropertyBreakpointProperties>
 ) : BreakpointWithHighlighter<KotlinPropertyBreakpointProperties>(project, breakpoint) {
     companion object {
-        private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpoint")
+        private val LOG = Logger.getInstance(KotlinFieldBreakpoint::class.java)
         private val CATEGORY: Key<FieldBreakpoint> = BreakpointCategory.lookup("field_breakpoints")
     }
 
