@@ -4,16 +4,11 @@ package com.intellij.execution.runToolbar
 import com.intellij.execution.runToolbar.data.RWSlotManagerState
 import com.intellij.execution.runToolbar.data.RWStateListener
 import com.intellij.ide.DataManager
-import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.util.ui.JBUI
 import java.awt.event.ContainerEvent
 import java.awt.event.ContainerListener
 import javax.swing.SwingUtilities
@@ -29,7 +24,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
   private var project: Project? = null
     set(value) {
-      if (field == value) return
+      if(field == value) return
       field?.let {
         remove(it)
       }
@@ -71,32 +66,32 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
         }
         RWSlotManagerState.SINGLE_PLAIN,
         RWSlotManagerState.MULTIPLE -> {
-          if (isOpened) RunToolbarMainSlotState.CONFIGURATION else RunToolbarMainSlotState.INFO
+          if(isOpened) RunToolbarMainSlotState.CONFIGURATION else RunToolbarMainSlotState.INFO
         }
         RWSlotManagerState.INACTIVE -> {
           RunToolbarMainSlotState.CONFIGURATION
         }
         RWSlotManagerState.MULTIPLE_WITH_MAIN -> {
-          if (isOpened) RunToolbarMainSlotState.PROCESS else RunToolbarMainSlotState.INFO
+          if(isOpened) RunToolbarMainSlotState.PROCESS else RunToolbarMainSlotState.INFO
         }
       }
 
       value
     }
 
-    if (RunToolbarProcess.logNeeded) LOG.info("MAIN SLOT state updated: $state RunToolbar")
+    if(RunToolbarProcess.logNeeded) LOG.info("MAIN SLOT state updated: $state RunToolbar")
   }
 
   override fun traceState(lastIds: List<String>, filteredIds: List<String>, ides: List<String>) {
-    if (logNeeded()) LOG.info("MAIN SLOT state: ${state} new filtered: ${filteredIds}} visible: $ides RunToolbar")
+    if(logNeeded()) LOG.info("MAIN SLOT state: ${state} new filtered: ${filteredIds}} visible: $ides RunToolbar")
   }
 
   internal var isOpened = false
     set(value) {
-      if (field == value) return
+      if(field == value) return
 
       field = value
-      if (RunToolbarProcess.logNeeded) LOG.info("MAIN SLOT isOpened: $isOpened RunToolbar")
+      if(RunToolbarProcess.logNeeded) LOG.info("MAIN SLOT isOpened: $isOpened RunToolbar")
       updateState()
 
       if (RunToolbarProcess.isExperimentalUpdatingEnabled) {
@@ -106,10 +101,9 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
   override fun isSuitableAction(action: AnAction): Boolean {
     return state?.let {
-      if (action is RTBarAction) {
+      if(action is RTBarAction) {
         action.checkMainSlotVisibility(it)
-      }
-      else true
+      } else true
     } ?: false
   }
 
@@ -118,18 +112,22 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
     (SwingUtilities.getWindowAncestor(this) as? IdeFrame)?.project?.let {
       project = it
-      RUN_CONFIG_SCALED_WIDTH = PropertiesComponent.getInstance().getInt(RUN_CONFIG_WIDTH_PROP, JBUI.scale(RUN_CONFIG_WIDTH_UNSCALED_MIN))
+
+      RUN_CONFIG_WIDTH = RunToolbarSettings.getInstance(it).getRunConfigWidth()
+
     }
   }
 
   override fun updateWidthHandler() {
     super.updateWidthHandler()
-    PropertiesComponent.getInstance().setValue(RUN_CONFIG_WIDTH_PROP, RUN_CONFIG_SCALED_WIDTH, JBUI.scale(RUN_CONFIG_WIDTH_UNSCALED_MIN))
+    project?.let {
+      RunToolbarSettings.getInstance(it).setRunConfigWidth(RUN_CONFIG_WIDTH)
+    }
   }
 
   private fun rebuildPopupControllerComponent() {
     popupController?.let {
-      it.updateControllerComponents(components.filter { it is PopupControllerComponent }.toMutableList())
+      it.updateControllerComponents(components.filter{it is PopupControllerComponent}.toMutableList())
     }
   }
 
@@ -186,7 +184,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
     removeContainerListener(componentListener)
     popupController?.let {
-      if (!Disposer.isDisposed(it)) {
+      if(!Disposer.isDisposed(it)) {
         Disposer.dispose(it)
       }
     }
