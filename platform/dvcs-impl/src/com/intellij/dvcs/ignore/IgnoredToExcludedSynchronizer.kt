@@ -2,7 +2,6 @@
 package com.intellij.dvcs.ignore
 
 import com.intellij.CommonBundle
-import com.intellij.ProjectTopics
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.projectView.actions.MarkExcludeRootAction
@@ -23,7 +22,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -45,6 +45,10 @@ import com.intellij.ui.EditorNotifications
 import com.intellij.util.Alarm
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import java.util.*
 
 private val LOG = logger<IgnoredToExcludedSynchronizer>()
@@ -64,11 +68,8 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
   private val queue = MergingUpdateQueue("IgnoredToExcludedSynchronizer", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 
   init {
-    project.messageBus.connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-      override fun rootsChanged(event: ModuleRootEvent) = updateNotificationState()
-    })
-    project.messageBus.connect(this).subscribe(AdditionalLibraryRootsListener.TOPIC,
-      (AdditionalLibraryRootsListener { _, _, _, _ -> updateNotificationState() }))
+    val connection = project.messageBus.connect(this)
+    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(connection, MyRootChangeListener())
   }
 
   /**
@@ -148,6 +149,15 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
       doActionOnChosenFiles(doFilterFiles(ignoredDirs))
     }
   }
+
+  private inner class MyRootChangeListener : WorkspaceModelChangeListener {
+    override fun changed(event: VersionedStorageChange) {
+      // listen content roots, source roots, excluded roots
+      if (event.getChanges(ContentRootEntity::class.java).isNotEmpty()) {
+        updateNotificationState()
+      }
+    }
+  }
 }
 
 private fun markIgnoredAsExcluded(project: Project, files: Collection<VirtualFile>) {
@@ -174,7 +184,7 @@ private fun determineIgnoredDirsToExclude(project: Project, ignoredPaths: Collec
   val sourceRoots = getProjectSourceRoots(project)
   val fileIndex = ProjectFileIndex.getInstance(project)
   val shelfPath = ShelveChangesManager.getShelfPath(project)
-  
+
   return ignoredPaths
     .asSequence()
     .filter(FilePath::isDirectory)
@@ -241,7 +251,8 @@ class IgnoredToExcludeNotificationProvider : EditorNotifications.Provider<Editor
       createActionLabel(message("ignore.to.exclude.notification.action.view")) { showIgnoredAction(project) }
       createActionLabel(message("ignore.to.exclude.notification.action.mute"), muteAction(project))
       createActionLabel(message("ignore.to.exclude.notification.action.details")) {
-        BrowserUtil.browse("https://www.jetbrains.com/help/idea/content-roots.html#folder-categories") }
+        BrowserUtil.browse("https://www.jetbrains.com/help/idea/content-roots.html#folder-categories")
+      }
     }
   }
 }
