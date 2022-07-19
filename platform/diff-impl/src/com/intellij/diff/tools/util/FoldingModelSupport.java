@@ -424,6 +424,7 @@ public class FoldingModelSupport {
     if (value != null) {
       value.setExpanded(expanded);
       value.setInnerHighlightersMuted(true);
+      value.putUserData(FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED, Boolean.TRUE);
     }
     return value;
   }
