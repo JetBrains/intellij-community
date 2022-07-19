@@ -71,7 +71,7 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
           info += "</div>";
         }
       }
-      info += "\n<b>" + property.getName() + "</b>=\"" + renderPropertyValue(((IProperty)element)) + "\"";
+      info += "\n<b>" + property.getName() + "</b>=\"" + renderPropertyValue((IProperty)element) + "\"";
       info += getLocationString(element);
       return info;
     }

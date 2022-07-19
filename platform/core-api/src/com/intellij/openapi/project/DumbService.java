@@ -71,7 +71,7 @@ public abstract class DumbService {
     }
 
     List<T> result = new ArrayList<>(size);
-    for (T element : ((ExtensionPointImpl<T>)point)) {
+    for (T element : (ExtensionPointImpl<T>)point) {
       if (isDumbAware(element)) {
         result.add(element);
       }

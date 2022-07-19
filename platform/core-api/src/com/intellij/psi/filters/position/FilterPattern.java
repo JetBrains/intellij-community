@@ -53,7 +53,7 @@ public class FilterPattern extends ObjectPattern<Object,FilterPattern> {
   }
 
   public int hashCode() {
-    return (myFilter != null ? myFilter.hashCode() : 0);
+    return myFilter != null ? myFilter.hashCode() : 0;
   }
 
   @Override

@@ -227,7 +227,7 @@ public final class ControlFlowUtils {
             hasDefaultCase = true;
           }
           else if (labelElement instanceof PsiPattern) {
-            hasTotalPattern = JavaPsiPatternUtil.isTotalForType(((PsiPattern)labelElement), selectorType);
+            hasTotalPattern = JavaPsiPatternUtil.isTotalForType((PsiPattern)labelElement, selectorType);
           }
         }
       }

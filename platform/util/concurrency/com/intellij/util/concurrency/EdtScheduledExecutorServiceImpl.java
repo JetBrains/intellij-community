@@ -30,7 +30,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
       @Override
       boolean executeMeInBackendExecutor() {
         if (!isDone()) {  // optimization: can be cancelled already
-          EdtExecutorService.getInstance().execute(this, modalityState, (o) -> {
+          EdtExecutorService.getInstance().execute(this, modalityState, __ -> {
             Application application = ApplicationManager.getApplication();
             return this.isCancelled() || application == null || application.isDisposed();
           });

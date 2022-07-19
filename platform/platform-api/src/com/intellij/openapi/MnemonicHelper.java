@@ -51,11 +51,11 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
       // before Swing updates mnemonics
       if (source instanceof AbstractButton) {
         //noinspection SSBasedInspection //see javax.swing.AbstractButton.setText
-        SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic(((AbstractButton)source)));
+        SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic((AbstractButton)source));
       }
       else if (source instanceof JLabel) {
         //noinspection SSBasedInspection //see javax.swing.JLabel.setText
-        SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic(((JLabel)source), null));
+        SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic((JLabel)source, null));
       }
     }
   };

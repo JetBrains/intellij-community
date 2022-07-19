@@ -84,7 +84,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
         DeleteSwitchLabelFix.deleteLabel((PsiSwitchLabelStatementBase)element);
       }
       else if (element instanceof PsiDefaultCaseLabelElement) {
-        DeleteSwitchLabelFix.deleteLabelElement(((PsiDefaultCaseLabelElement)element));
+        DeleteSwitchLabelFix.deleteLabelElement((PsiDefaultCaseLabelElement)element);
       }
     }
   }
@@ -120,7 +120,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
       }
       PsiSwitchLabeledRuleStatement ruleStatement = null;
       if (defaultStatement instanceof PsiSwitchLabeledRuleStatement) {
-        ruleStatement = ((PsiSwitchLabeledRuleStatement)defaultStatement);
+        ruleStatement = (PsiSwitchLabeledRuleStatement)defaultStatement;
       }
       else if (defaultStatement instanceof PsiDefaultCaseLabelElement) {
         PsiSwitchLabelStatementBase pDefaultStatement = PsiTreeUtil.getParentOfType(defaultStatement, PsiSwitchLabelStatementBase.class);

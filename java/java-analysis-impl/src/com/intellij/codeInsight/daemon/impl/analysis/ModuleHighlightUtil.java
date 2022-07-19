@@ -399,7 +399,7 @@ final class ModuleHighlightUtil {
           String message = JavaErrorBundle.message("module.service.impl");
           HighlightInfo info =
             HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create();
-           PsiClassType type = JavaPsiFacade.getElementFactory(file.getProject()).createType(((PsiClass)intTarget));
+           PsiClassType type = JavaPsiFacade.getElementFactory(file.getProject()).createType((PsiClass)intTarget);
            QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createExtendsListFix(implClass, type, true));
           results.add(info);
         }

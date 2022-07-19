@@ -412,7 +412,7 @@ public final class SwitchUtils {
       final IElementType operationToken = polyadicExpression.getOperationTokenType();
       if (JavaTokenType.ANDAND.equals(operationToken)){
         final PsiExpression[] operands = polyadicExpression.getOperands();
-        final PsiExpression instanceOf = ContainerUtil.find(operands, (operand) -> operand instanceof PsiInstanceOfExpression);
+        final PsiExpression instanceOf = ContainerUtil.find(operands, operand -> operand instanceof PsiInstanceOfExpression);
         StringBuilder builder = new StringBuilder();
         builder.append(createPatternCaseText(instanceOf));
         for (PsiExpression operand : operands) {
@@ -462,7 +462,7 @@ public final class SwitchUtils {
     }
     final PsiType type = expression.getType();
     if ((!languageLevel.isAtLeast(LanguageLevel.JDK_1_7) || !TypeUtils.isJavaLangString(type)) &&
-        ((!PsiType.INT.equals(type) && !PsiType.SHORT.equals(type) && !PsiType.BYTE.equals(type) && !PsiType.CHAR.equals(type)))) {
+        !PsiType.INT.equals(type) && !PsiType.SHORT.equals(type) && !PsiType.BYTE.equals(type) && !PsiType.CHAR.equals(type)) {
       return false;
     }
     final Object value = ExpressionUtils.computeConstantExpression(expression);

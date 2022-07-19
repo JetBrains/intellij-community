@@ -44,7 +44,7 @@ public class ArrayObjectsEqualsInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    final Kind kind = ((Kind)infos[0]);
+    final Kind kind = (Kind)infos[0];
     return kind.toString();
   }
 
@@ -56,7 +56,7 @@ public class ArrayObjectsEqualsInspection extends BaseInspection {
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final Kind kind = ((Kind)infos[0]);
+    final Kind kind = (Kind)infos[0];
     return new ArrayEqualsHashCodeFix(kind);
   }
 

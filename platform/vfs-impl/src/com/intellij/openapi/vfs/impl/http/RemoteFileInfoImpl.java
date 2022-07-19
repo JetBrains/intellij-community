@@ -238,7 +238,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
       localVirtualFile = myLocalVirtualFile;
     }
     final RemoteContentProvider contentProvider = myManager.findContentProvider(myUrl);
-    if ((localVirtualFile == null || !contentProvider.equals(myContentProvider) || !contentProvider.isUpToDate(myUrl, localVirtualFile))) {
+    if (localVirtualFile == null || !contentProvider.equals(myContentProvider) || !contentProvider.isUpToDate(myUrl, localVirtualFile)) {
       myContentProvider = contentProvider;
       addDownloadingListener(new MyRefreshingDownloadingListener(postRunnable));
       restartDownloading();

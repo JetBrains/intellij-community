@@ -304,7 +304,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
         return;
       }
       final IElementType tokenType = binaryExpression.getOperationTokenType();
-      if (!(ExpressionUtils.isEvaluatedAtCompileTime(lhs)) && ExpressionUtils.isEvaluatedAtCompileTime(rhs)) {
+      if (!ExpressionUtils.isEvaluatedAtCompileTime(lhs) && ExpressionUtils.isEvaluatedAtCompileTime(rhs)) {
         rhs = lhs;
       }
       @NonNls final String methodName = assertHint.getMethod().getName();

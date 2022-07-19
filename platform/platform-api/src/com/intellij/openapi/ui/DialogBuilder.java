@@ -62,7 +62,7 @@ public class DialogBuilder implements Disposable {
   }
 
   public DialogBuilder() {
-    this(((Project)null));
+    this((Project)null);
   }
 
   @Override

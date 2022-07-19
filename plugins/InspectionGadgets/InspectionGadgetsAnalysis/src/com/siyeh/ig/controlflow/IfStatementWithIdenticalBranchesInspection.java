@@ -869,7 +869,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       boolean conditionHasSideEffects = SideEffectChecker.mayHaveSideEffects(condition);
       if (!isOnTheFly && conditionHasSideEffects) return null;
       List<PsiLocalVariable> conditionVariables = new ArrayList<>();
-      boolean conditionVariablesCantBeChangedTransitively = StreamEx.ofTree(((PsiElement)condition), el -> StreamEx.of(el.getChildren()))
+      boolean conditionVariablesCantBeChangedTransitively = StreamEx.ofTree((PsiElement)condition, el -> StreamEx.of(el.getChildren()))
         .allMatch(element -> {
           if (!(element instanceof PsiReferenceExpression)) {
             return !(element instanceof PsiMethodCallExpression);
