@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -22,7 +23,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.debugger.ClassNameProvider.Companion.getRelevantElement
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class InlineCallableUsagesSearcher(val project: Project, val searchScope: GlobalSearchScope) {
+    @RequiresReadLock
     fun findInlinedCalls(
         declaration: KtDeclaration,
         alreadyVisited: Set<PsiElement>,
@@ -40,7 +41,7 @@ class InlineCallableUsagesSearcher(val project: Project, val searchScope: Global
             return emptyList()
         } else {
             val searchResult = hashSetOf<PsiElement>()
-            val declarationName = runReadAction { declaration.name ?: "<error>" }
+            val declarationName = declaration.name ?: "<error>"
 
             val task = Runnable {
                 for (reference in ReferencesSearch.search(declaration, getScopeForInlineDeclarationUsages(declaration))) {
@@ -84,28 +85,23 @@ class InlineCallableUsagesSearcher(val project: Project, val searchScope: Global
     }
 
     private fun processReference(declaration: KtDeclaration, reference: PsiReference, alreadyVisited: Set<PsiElement>): PsiElement? {
-        if (runReadAction { reference.isImportUsage() }) {
+        if (reference.isImportUsage()) {
             return null
         }
 
         val usage = (reference.element as? KtElement)?.let(::getRelevantElement) ?: return null
-        val shouldAnalyze = runReadAction { !declaration.isAncestor(usage) && usage !in alreadyVisited }
+        val shouldAnalyze = !declaration.isAncestor(usage) && usage !in alreadyVisited
         return if (shouldAnalyze) usage else null
     }
 
-    private fun checkIfInline(declaration: KtDeclaration) =
-        ReadAction.nonBlocking<Boolean> {
-            ProgressManager.checkCanceled()
-            checkIfInlineInReadAction(declaration)
-        }.executeSynchronously()
-
-    private fun checkIfInlineInReadAction(declaration: KtDeclaration): Boolean {
+    private fun checkIfInline(declaration: KtDeclaration): Boolean {
         if (DumbService.isDumb(project)) {
             return false
         }
 
         val bindingContext = declaration.analyze(BodyResolveMode.PARTIAL)
         val descriptor = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, declaration) ?: return false
+
         return when (descriptor) {
             is FunctionDescriptor -> InlineUtil.isInline(descriptor)
             is PropertyDescriptor -> InlineUtil.hasInlineAccessors(descriptor)
@@ -114,11 +110,9 @@ class InlineCallableUsagesSearcher(val project: Project, val searchScope: Global
     }
 
     private fun getScopeForInlineDeclarationUsages(inlineDeclaration: KtDeclaration): GlobalSearchScope {
-        val virtualFile = runReadAction { inlineDeclaration.containingFile.virtualFile }
+        val virtualFile = inlineDeclaration.containingFile.virtualFile
         return if (virtualFile != null && RootKindFilter.libraryFiles.matches(project, virtualFile)) {
-            searchScope.uniteWith(
-                KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project)
-            )
+            searchScope.uniteWith(KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project))
         } else {
             searchScope
         }
