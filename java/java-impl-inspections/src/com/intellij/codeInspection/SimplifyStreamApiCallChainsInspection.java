@@ -1688,6 +1688,12 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     }
 
     @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      PsiExpression expression = myValuePointer.getElement();
+      return expression == null ? null : new AnyMatchContainsFix(expression);
+    }
+
+    @Override
     public String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "List.contains()");
     }

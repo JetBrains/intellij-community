@@ -1,4 +1,4 @@
-// "Replace Set.of().stream() with Stream.of()" "true"
+// "Replace Set.of().stream() with Stream.of()" "true-preview"
 
 import java.util.Set;
 import java.util.stream.Stream;

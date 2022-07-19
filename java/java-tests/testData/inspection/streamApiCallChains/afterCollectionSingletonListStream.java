@@ -1,4 +1,4 @@
-// "Replace Collections.singletonList().stream() with Stream.of()" "true"
+// "Replace Collections.singletonList().stream() with Stream.of()" "true-preview"
 
 import java.util.*;
 import java.util.stream.Stream;

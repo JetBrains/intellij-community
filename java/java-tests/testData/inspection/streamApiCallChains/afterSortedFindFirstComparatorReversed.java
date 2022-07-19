@@ -1,4 +1,4 @@
-// "Replace with 'max()'" "true"
+// "Replace with 'max()'" "true-preview"
 
 import java.util.*;
 import java.util.stream.Collectors;

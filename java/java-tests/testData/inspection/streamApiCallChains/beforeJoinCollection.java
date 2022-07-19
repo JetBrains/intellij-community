@@ -1,4 +1,4 @@
-// "Replace with 'String.join'" "true"
+// "Replace with 'String.join'" "true-preview"
 
 import java.util.*;
 import java.util.stream.*;

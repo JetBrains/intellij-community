@@ -34,12 +34,15 @@ public final class ActionHint {
   private final boolean myShouldPresent;
   private final ProblemHighlightType myHighlightType;
   private final boolean myExactMatch;
+  private final boolean myCheckPreview;
 
-  private ActionHint(@NotNull String expectedText, boolean shouldPresent, ProblemHighlightType severity, boolean exactMatch) {
+  private ActionHint(@NotNull String expectedText, boolean shouldPresent, ProblemHighlightType severity, boolean exactMatch,
+                     boolean preview) {
     myExpectedText = expectedText;
     myShouldPresent = shouldPresent;
     myHighlightType = severity;
     myExactMatch = exactMatch;
+    myCheckPreview = preview;
   }
 
   /**
@@ -63,6 +66,13 @@ public final class ActionHint {
   @SuppressWarnings("WeakerAccess") // used in kotlin
   public boolean shouldPresent() {
     return myShouldPresent;
+  }
+
+  /**
+   * @return true if generated intention preview should be checked
+   */
+  public boolean shouldCheckPreview() {
+    return myCheckPreview;
   }
 
   /**
@@ -147,14 +157,16 @@ public final class ActionHint {
 
     assert comment != null : commenter;
     // "quick fix action text to perform" "should be available"
-    Pattern pattern = Pattern.compile("^" + Pattern.quote(comment) + " \"(.*)\" \"(\\w+)\".*", Pattern.DOTALL);
+    Pattern pattern = Pattern.compile("^" + Pattern.quote(comment) + " \"(.*)\" \"(\\w+)(?:-(\\w+))?\".*", Pattern.DOTALL);
     Matcher matcher = pattern.matcher(contents);
     TestCase.assertTrue("No comment found in " + file.getVirtualFile(), matcher.matches());
     final String text = matcher.group(1);
     String state = matcher.group(2);
+    String previewState = matcher.group(3);
+    boolean checkPreview = "preview".equals(previewState);
     if(state.equals("true") || state.equals("false")) {
-      return new ActionHint(text, Boolean.parseBoolean(state), null, exactMatch);
+      return new ActionHint(text, Boolean.parseBoolean(state), null, exactMatch, checkPreview);
     }
-    return new ActionHint(text, true, ProblemHighlightType.valueOf(state), exactMatch);
+    return new ActionHint(text, true, ProblemHighlightType.valueOf(state), exactMatch, checkPreview);
   }
 }
