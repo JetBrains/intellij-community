@@ -14,12 +14,8 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
 abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val project: Project, cleanOnLowMemory: Boolean): Disposable {
+    private val invalidationStamp = InvalidationStamp()
     protected abstract val cache: MutableMap<Key, Value>
-
-    private var invalidationCount: Int = 0
-
-    private var currentInvalidationCount: Int = 0
-
     protected val logger = Logger.getInstance(javaClass)
 
     init {
@@ -48,7 +44,7 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
         } ?: emptyList()
 
     protected fun checkEntitiesIfRequired(cache: MutableMap<Key, Value>) {
-        if (isValidityChecksEnabled && currentInvalidationCount > invalidationCount) {
+        if (isValidityChecksEnabled && invalidationStamp.isCheckRequired()) {
             checkEntities(cache, CHECK_ALL)
         }
     }
@@ -97,7 +93,7 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
             for (key in keys) {
                 removedValues.addIfNotNull(cache.remove(key))
             }
-            currentInvalidationCount++
+            invalidationStamp.incInvalidation()
             checkEntities(cache, validityCondition)
         }
         return removedValues
@@ -111,11 +107,15 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
             for (key in keys) {
                 cache.remove(key)
             }
-            currentInvalidationCount++
+            invalidationStamp.incInvalidation()
             checkEntities(cache, validityCondition)
         }
     }
 
+    /**
+     * @param condition is a condition to find entries those will be invalidated and removed from the cache
+     * @param validityCondition is a condition to find entries those have to be checked for their validity, see [checkKeyValidity] and [checkValueValidity]
+     */
     protected fun invalidateEntries(
         condition: (Key, Value) -> Boolean,
         validityCondition: ((Key, Value) -> Boolean)? = CHECK_ALL
@@ -128,7 +128,7 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
                     iterator.remove()
                 }
             }
-            currentInvalidationCount++
+            invalidationStamp.incInvalidation()
             checkEntities(cache, validityCondition)
         }
     }
@@ -152,7 +152,7 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
                 }
             }
             if (allEntriesChecked) {
-                invalidationCount = currentInvalidationCount
+                invalidationStamp.reset()
             }
         }
     }
@@ -163,9 +163,36 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
 
     protected open fun checkValueValidity(value: Value) {}
 
+    /***
+     * In some cases it is not possible to validate all entries of the cache.
+     * That could result to the state when there are some invalid entries after a partial cache invalidation.
+     *
+     * InvalidationStamp is to address this problem:
+     *  - currentCount is incremented any time when a partial cache invalidation happens
+     *  - count is equal to number of partial cache invalidation WHEN all cache entries have been validated
+     *
+     *  No checks are required when count is equal to currentCount.
+     */
+    private class InvalidationStamp {
+
+        private var currentCount: Int = 0
+        private var count: Int = 0
+
+        fun isCheckRequired(): Boolean = currentCount > count
+
+        fun incInvalidation() {
+            currentCount++
+        }
+
+        fun reset() {
+            count = currentCount
+        }
+
+    }
+
     companion object {
 
-        val CHECK_ALL:(Any, Any) -> Boolean = { _, _ -> true }
+        val CHECK_ALL: (Any, Any) -> Boolean = { _, _ -> true }
 
         val isFineGrainedCacheInvalidationEnabled: Boolean by lazy {
             Registry.`is`("kotlin.caches.fine.grained.invalidation")
@@ -216,7 +243,6 @@ abstract class SynchronizedFineGrainedEntityCache<Key: Any, Value: Any>(project:
     }
 
     abstract fun calculate(key: Key): Value
-
 }
 
 abstract class LockFreeFineGrainedEntityCache<Key: Any, Value: Any>(project: Project, cleanOnLowMemory: Boolean): FineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory) {
