@@ -1,15 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
@@ -17,12 +22,15 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.ComboboxSpeedSearch
 import com.intellij.ui.IconManager
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import java.awt.event.ActionListener
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.file.NoSuchFileException
@@ -88,7 +96,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
       }
       textField.border = null
       textField.isEditable = false
-      textField.addBrowseExtension(this@BrowseIconsComboBox::browseIconAndSelect, parentDisposable)
+      textField.addExtension(createBrowseIconExtension())
       textField.addExtension(object : ExtendableTextComponent.Extension {
         override fun getIcon(hovered: Boolean): Icon? {
           return (selectedItem as? ActionIconInfo)?.icon
@@ -154,6 +162,19 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
       // reset validation info if some item selected
       ComponentValidator.getInstance(this).ifPresent { validator -> validator.updateInfo(null) }
     })
+  }
+
+  private fun createBrowseIconExtension(): ExtendableTextComponent.Extension {
+    val keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)
+    val tooltip = "${UIBundle.message("component.with.browse.button.browse.button.tooltip.text")} (${KeymapUtil.getKeystrokeText(keyStroke)})"
+    val browseExtension = ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
+                                                                   tooltip, this::browseIconAndSelect)
+    object : DumbAwareAction() {
+      override fun actionPerformed(e: AnActionEvent) {
+        browseIconAndSelect()
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet(keyStroke), this, parentDisposable)
+    return browseExtension
   }
 
   private fun browseIconAndSelect() {
