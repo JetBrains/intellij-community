@@ -647,7 +647,11 @@ abstract class AbstractKtSymbolBasedPropertyDescriptor(
 
     override fun isLateInit(): Boolean = ktSymbol is KtKotlinPropertySymbol && (ktSymbol as KtKotlinPropertySymbol).isLateInit
 
-    override fun getModality(): Modality = implementationPlanned()
+    override fun getModality(): Modality = when (ktSymbol) {
+        is KtJavaFieldSymbol -> (ktSymbol as KtJavaFieldSymbol).modality
+        is KtPropertySymbol -> (ktSymbol as KtPropertySymbol).modality
+        is KtLocalVariableSymbol -> Modality.FINAL
+    }
 
     override fun isExpect(): Boolean = implementationPostponed()
     override fun isActual(): Boolean = implementationPostponed()
