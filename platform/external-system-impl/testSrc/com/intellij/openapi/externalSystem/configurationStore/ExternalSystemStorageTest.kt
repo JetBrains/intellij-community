@@ -843,12 +843,12 @@ class ExternalSystemStorageTest {
 
   private fun loadProjectAndCheckResults(testDataDirName: String, checkProject: (Project) -> Unit) {
     @Suppress("RedundantSuspendModifier")
-    suspend fun copyProjectFiles(dir: VirtualFile): Path {
-      val projectDir = VfsUtil.virtualToIoFile(dir)
-      FileUtil.copyDir(testDataRoot.resolve("common/project").toFile(), projectDir)
+    fun copyProjectFiles(dir: VirtualFile): Path {
+      val projectDir = dir.toNioPath()
+      FileUtil.copyDir(testDataRoot.resolve("common/project").toFile(), projectDir.toFile())
       val testProjectFilesDir = testDataRoot.resolve(testDataDirName).resolve("project").toFile()
       if (testProjectFilesDir.exists()) {
-        FileUtil.copyDir(testProjectFilesDir, projectDir)
+        FileUtil.copyDir(testProjectFilesDir, projectDir.toFile())
       }
       val testCacheFilesDir = testDataRoot.resolve(testDataDirName).resolve("cache").toFile()
       if (testCacheFilesDir.exists()) {
@@ -856,7 +856,7 @@ class ExternalSystemStorageTest {
         FileUtil.copyDir(testCacheFilesDir, cachePath.toFile())
       }
       VfsUtil.markDirtyAndRefresh(false, true, true, dir)
-      return projectDir.toPath()
+      return projectDir
     }
     doNotEnableExternalStorageByDefaultInTests {
       runBlocking {

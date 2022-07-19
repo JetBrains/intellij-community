@@ -5,6 +5,7 @@ import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
@@ -18,6 +19,7 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -26,11 +28,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
-import com.intellij.testFramework.common.runAllCatching
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.throwIfNotEmpty
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -130,7 +130,7 @@ class ProjectObject(private val runPostStartUpActivities: Boolean = false,
   }
 
   internal fun catchAndRethrow(action: () -> Unit) {
-    val l = runAllCatching(
+    com.intellij.testFramework.common.runAll(
       action,
       { sharedProject?.let { PlatformTestUtil.forceCloseProjectWithoutSaving(it) } },
       { projectTracker?.finish() },
@@ -141,7 +141,6 @@ class ProjectObject(private val runPostStartUpActivities: Boolean = false,
         sharedModule = null
       },
     )
-    throwIfNotEmpty(l)
   }
 
   val projectIfOpened: ProjectEx?
@@ -232,10 +231,9 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
  * Encouraged using on static fields to avoid project creating for each test.
  * Project created on request, so, could be used as a bare (only application).
  */
-class ProjectExtension(runPostStartUpActivities: Boolean = false,
-                       preloadServices: Boolean = false,
-                       projectDescriptor: LightProjectDescriptor? = null) : ApplicationExtension() {
-  private val projectObject = ProjectObject(runPostStartUpActivities, preloadServices, projectDescriptor)
+@Suppress("DEPRECATION")
+class ProjectExtension(runPostStartUpActivities: Boolean = false, preloadServices: Boolean = false) : ApplicationExtension() {
+  private val projectObject = ProjectObject(runPostStartUpActivities, preloadServices, null)
   
   override fun beforeAll(context: ExtensionContext) {
     super.beforeAll(context)
@@ -405,7 +403,7 @@ fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirecto
 }
 
 suspend fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryDirectory,
-                                                      projectCreator: (suspend (VirtualFile) -> Path)? = null,
+                                                      projectCreator: ((VirtualFile) -> Path)? = null,
                                                       task: suspend (Project) -> Unit) {
   createOrLoadProject(tempDirManager, projectCreator, task = task, directoryBased = false, loadComponentState = true)
 }
@@ -414,18 +412,20 @@ fun refreshProjectConfigDir(project: Project) {
   LocalFileSystem.getInstance().findFileByNioFile(project.stateStore.directoryStorePath!!)!!.refresh(false, true)
 }
 
-suspend fun <T> runNonUndoableWriteAction(file: VirtualFile, runnable: suspend () -> T): T {
-  return runUndoTransparentWriteAction {
-    val result = runBlocking { runnable() }
-    val documentReference = DocumentReferenceManager.getInstance().create(file)
-    val undoManager = UndoManager.getGlobalInstance() as UndoManagerImpl
-    undoManager.nonundoableActionPerformed(documentReference, false)
-    result
+fun <T> runNonUndoableWriteAction(file: VirtualFile, runnable: () -> T): T {
+  return CommandProcessor.getInstance().withUndoTransparentAction().use {
+    ApplicationManager.getApplication().runWriteAction(Computable {
+      val result = runnable()
+      val documentReference = DocumentReferenceManager.getInstance().create(file)
+      val undoManager = UndoManager.getGlobalInstance() as UndoManagerImpl
+      undoManager.nonundoableActionPerformed(documentReference, false)
+      result
+    })
   }
 }
 
 suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
-                                projectCreator: (suspend (VirtualFile) -> Path)? = null,
+                                projectCreator: ((VirtualFile) -> Path)? = null,
                                 directoryBased: Boolean = true,
                                 loadComponentState: Boolean = false,
                                 useDefaultProjectSettings: Boolean = true,
@@ -482,9 +482,8 @@ suspend fun loadProject(projectPath: Path, task: suspend (Project) -> Unit) {
  * Copy files from [projectPaths] directories to a temp directory, load project from it and pass it to [checkProject].
  */
 fun loadProjectAndCheckResults(projectPaths: List<Path>, tempDirectory: TemporaryDirectory, checkProject: suspend (Project) -> Unit) {
-  @Suppress("RedundantSuspendModifier")
-  suspend fun copyProjectFiles(targetDir: VirtualFile): Path {
-    val projectDir = VfsUtil.virtualToIoFile(targetDir)
+  fun copyProjectFiles(targetDir: VirtualFile): Path {
+    val projectDir = targetDir.toNioPath()
     var projectFileName: String? = null
     for (projectPath in projectPaths) {
       val dir = if (projectPath.isDirectory()) projectPath
@@ -492,10 +491,10 @@ fun loadProjectAndCheckResults(projectPaths: List<Path>, tempDirectory: Temporar
         projectFileName = projectPath.fileName.toString()
         projectPath.parent
       }
-      FileUtil.copyDir(dir.toFile(), projectDir)
+      FileUtil.copyDir(dir.toFile(), projectDir.toFile())
     }
     VfsUtil.markDirtyAndRefresh(false, true, true, targetDir)
-    return if (projectFileName != null) projectDir.toPath().resolve(projectFileName) else projectDir.toPath()
+    return if (projectFileName != null) projectDir.resolve(projectFileName) else projectDir
   }
   runBlocking {
     createOrLoadProject(tempDirectory, ::copyProjectFiles, directoryBased = projectPaths.all { it.isDirectory() },

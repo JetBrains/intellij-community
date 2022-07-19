@@ -12,7 +12,6 @@ import com.intellij.util.io.Ksuid
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.throwIfNotEmpty
 import org.jetbrains.annotations.ApiStatus
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -110,12 +109,12 @@ open class TemporaryDirectory : ExternalResource() {
       return
     }
 
-    val errors: List<Throwable> = runAllCatching(paths.asReversed()) {
+    val error = runAllCatching(paths.asReversed()) {
       it.delete()
     }
 
     paths.clear()
-    throwIfNotEmpty(errors)
+    error?.let { throw it }
   }
 
   @JvmOverloads

@@ -7,7 +7,6 @@ import com.intellij.util.ThrowableConsumer
 import com.intellij.util.ThrowablePairConsumer
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.lang.CompoundRuntimeException
-import com.intellij.util.throwIfNotEmpty
 
 /**
  * Runs all given runnables and throws all the caught exceptions at the end.
@@ -21,18 +20,20 @@ class RunAll(private val actions: List<ThrowableRunnable<*>>) : Runnable {
   }
 
   fun run(earlierExceptions: List<Throwable>? = null) {
-    val actions: Sequence<() -> Unit> = actions.asSequence().actionSequence()
-    if (earlierExceptions == null) {
+    val actions = actions.asSequence().actionSequence()
+    if (earlierExceptions.isNullOrEmpty()) {
       actions.runAll()
     }
     else {
-      val exceptions: List<Throwable> = earlierExceptions + actions.runAllCatching()
-      throwIfNotEmpty(exceptions)
+      val compound = CompoundRuntimeException(earlierExceptions)
+      actions.runAllCatching()?.let {
+        compound.addSuppressed(it)
+      }
+      throw compound
     }
   }
 
   companion object {
-
     @JvmStatic // for usage from Java
     fun runAll(vararg actions: ThrowableRunnable<*>) {
       actions.asSequence().actionSequence().runAll()
@@ -60,8 +61,10 @@ class RunAll(private val actions: List<ThrowableRunnable<*>>) : Runnable {
       }.runAll()
     }
 
-    private fun Sequence<ThrowableRunnable<*>>.actionSequence(): Sequence<() -> Unit> = map {
-      (it::run)
+    private fun Sequence<ThrowableRunnable<*>>.actionSequence(): Sequence<() -> Unit> {
+      return map {
+        (it::run)
+      }
     }
   }
 }

@@ -35,7 +35,6 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
-import java.nio.file.Paths
 
 const val ESCAPED_MODULE_DIR = "\$MODULE_DIR$"
 
@@ -176,9 +175,9 @@ class ModuleStoreTest {
       |<project version="4">
       |</project>""".trimMargin()
 
-    val projectCreator: suspend (VirtualFile) -> Path = {
+    val projectCreator: (VirtualFile) -> Path = {
       it.writeChild("misc.xml", iprFileContent)
-      Paths.get(it.path)
+      Path.of(it.path)
     }
 
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, projectCreator) { project ->
@@ -224,17 +223,17 @@ class ModuleStoreTest {
 
   @Test
   fun `do not fix format of iml if nothing was changed`() = runBlocking {
-    val testData = Paths.get(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData/moduleWithBlankLineAtEnd")
+    val testData = Path.of(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData/moduleWithBlankLineAtEnd")
     val imlFileText = testData.resolve("module.iml").readText()
-    val projectCreator: suspend (VirtualFile) -> Path = {
+    val projectCreator: (VirtualFile) -> Path = {
       it.writeChild(".idea/modules.xml", testData.resolve(".idea/modules.xml").readText())
       it.writeChild("module.iml", imlFileText)
-      Paths.get(it.path)
+      Path.of(it.path)
     }
 
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, projectCreator) { project ->
       project.stateStore.save()
-      val moduleFilePath = Paths.get(project.basePath!!).resolve("module.iml")
+      val moduleFilePath = Path.of(project.basePath!!).resolve("module.iml")
       assertThat(moduleFilePath.readText()).isEqualTo(imlFileText)
     }
   }

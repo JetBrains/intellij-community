@@ -155,27 +155,31 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
 @TestOnly
 @Internal
 fun Application.cleanApplicationState() {
-  val errors = ArrayList<Throwable>()
-  runCatching {
-    waitForAppLeakingThreads(this, 10, TimeUnit.SECONDS)
-  }.onFailure {
-    errors += it
+  var error: Throwable? = null
+  fun addError(e: Throwable) {
+    if (error == null) {
+      error = e
+    }
+    else {
+      error!!.addSuppressed(e)
+    }
   }
-  errors += cleanApplicationStateCatching()
-  errors += checkEditorsReleasedCatching()
+
   runCatching {
-    cleanupApplicationCaches()
-  }.onFailure {
-    errors += it
-  }
-  errors.reduceAndThrow()
+    waitForAppLeakingThreads(application = this, timeout = 10, timeUnit = TimeUnit.SECONDS)
+  }.onFailure(::addError)
+
+  cleanApplicationStateCatching()?.let(::addError)
+  runCatching(::checkEditorsReleased).onFailure(::addError)
+  runCatching(Application::cleanupApplicationCaches).onFailure(::addError)
+  error?.let { throw it }
 }
 
 private inline fun <reified T : Any> Application.serviceIfCreated(): T? = this.getServiceIfCreated(T::class.java)
 
 @TestOnly
 @Internal
-fun Application.cleanApplicationStateCatching(): List<Throwable> {
+fun Application.cleanApplicationStateCatching(): Throwable? {
   return runAllCatching(
     { (serviceIfCreated<FileTypeManager>() as? FileTypeManagerImpl)?.drainReDetectQueue() },
     { clearEncodingManagerDocumentQueue() },
@@ -204,9 +208,9 @@ fun Application.clearEncodingManagerDocumentQueue() {
 
 @TestOnly
 @Internal
-fun Application.checkEditorsReleasedCatching(): List<Throwable> {
-  val editorFactory = serviceIfCreated<EditorFactory>() ?: return emptyList()
-  val actions: MutableList<() -> Unit> = ArrayList()
+fun Application.checkEditorsReleased() {
+  val editorFactory = serviceIfCreated<EditorFactory>() ?: return
+  val actions = mutableListOf<() -> Unit>()
   for (editor in editorFactory.allEditors) {
     actions.add {
       EditorFactoryImpl.throwNotReleasedError(editor)
@@ -215,7 +219,7 @@ fun Application.checkEditorsReleasedCatching(): List<Throwable> {
       editorFactory.releaseEditor(editor)
     }
   }
-  return runAllCatching(actions)
+  runAll(actions)
 }
 
 @TestOnly

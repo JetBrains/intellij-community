@@ -37,8 +37,7 @@ import com.intellij.testFramework.common.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.ref.GCUtil
-import com.intellij.util.throwIfNotEmpty
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.EDT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -84,7 +83,7 @@ class TestApplicationManager private constructor() {
       val isLightProject = ProjectManagerImpl.isLight(project)
       val app = ApplicationManager.getApplication()
 
-      val l = runAllCatching(
+      com.intellij.testFramework.common.runAll(
         {
           if (isLightProject) {
             project.serviceIfCreated<AutoPopupController>()?.cancelAllRequests()
@@ -134,13 +133,13 @@ class TestApplicationManager private constructor() {
             GCUtil.clearBeanInfoCache()
           }
         },
-      ) + app.cleanApplicationStateCatching()
-
-      throwIfNotEmpty(l)
+        { app.cleanApplicationStateCatching()?.let { throw it } }
+      )
     }
 
-    private inline fun <reified T : Any, reified TI : Any> Application.serviceIfCreated(): TI? =
-      this.getServiceIfCreated(T::class.java) as? TI
+    private inline fun <reified T : Any, reified TI : Any> Application.serviceIfCreated(): TI? {
+      return this.getServiceIfCreated(T::class.java) as? TI
+    }
 
     private fun dropModuleRootCaches(project: Project) {
       WriteAction.runAndWait<RuntimeException> {
@@ -155,10 +154,10 @@ class TestApplicationManager private constructor() {
      */
     @JvmStatic
     fun disposeApplicationAndCheckForLeaks() {
-      val edtThrowables = runInEdtAndGet {
+      val edtThrowable = runInEdtAndGet {
         runAllCatching(
           { PlatformTestUtil.cleanupAllProjects() },
-          { UIUtil.dispatchAllInvocationEvents() },
+          { EDT.dispatchAllInvocationEvents() },
           {
             println((AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService).statistics())
             println("ProcessIOExecutorService threads created: ${(ProcessIOExecutorService.INSTANCE as ProcessIOExecutorService).threadCounter}")
@@ -177,17 +176,17 @@ class TestApplicationManager private constructor() {
             @Suppress("SSBasedInspection")
             getInstanceIfCreated()?.dispose()
           },
-          { UIUtil.dispatchAllInvocationEvents() },
+          {
+            EDT.dispatchAllInvocationEvents()
+          },
         )
       }
 
-      val l = edtThrowables + runAllCatching(
+      listOfNotNull(edtThrowable, runAllCatching(
         {
           assertDisposerEmpty()
         }
-      )
-
-      throwIfNotEmpty(l)
+      )).reduceAndThrow()
     }
 
     @ApiStatus.Internal

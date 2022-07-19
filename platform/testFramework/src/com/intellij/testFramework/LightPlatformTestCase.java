@@ -71,7 +71,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,9 +85,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Objects;
-
-import static com.intellij.testFramework.common.TestApplicationKt.checkEditorsReleasedCatching;
-import static com.intellij.util.ErrorKt.throwIfNotEmpty;
 
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
   private static Project ourProject;
@@ -481,12 +478,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     RunAll.runAll(
-      () -> UIUtil.dispatchAllInvocationEvents(),
+      () -> EDT.dispatchAllInvocationEvents(),
       () -> {
         // getAllEditors() should be called only after dispatchAllInvocationEvents(), that's why separate RunAll is used
         Application app = ApplicationManager.getApplication();
         if (app != null) {
-          throwIfNotEmpty(checkEditorsReleasedCatching(app));
+          TestApplicationKt.checkEditorsReleased(app);
         }
       });
   }
