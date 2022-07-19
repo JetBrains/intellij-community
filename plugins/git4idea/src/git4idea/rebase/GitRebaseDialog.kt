@@ -107,8 +107,13 @@ internal class GitRebaseDialog(private val project: Project,
     updateBranches()
     loadSettings()
 
+    // We call pack() manually.
+    isAutoAdjustable = false
+
     init()
     updateUi()
+    validate()
+    pack()
 
     updateOkActionEnabled()
 
@@ -510,14 +515,10 @@ internal class GitRebaseDialog(private val project: Project,
     if (option == GitRebaseOption.ONTO) {
       moveNewBaseValue()
     }
-    if (option in REBASE_FLAGS) {
-      updateUpstreamField()
-      optionsPanel.rerender(selectedOptions intersect REBASE_FLAGS)
-      rerender()
-    }
-    else {
-      updateUi()
-    }
+
+    updateUi()
+    validate()
+    pack()
 
     updateOkActionEnabled()
   }
@@ -545,7 +546,7 @@ internal class GitRebaseDialog(private val project: Project,
     updateTopPanel()
     updateBottomPanel()
     optionsPanel.rerender(selectedOptions intersect REBASE_FLAGS)
-    rerender()
+    panel.invalidate()
   }
 
   private fun updatePlaceholders() {
@@ -554,13 +555,6 @@ internal class GitRebaseDialog(private val project: Project,
     else
       GitBundle.message("rebase.dialog.target")
     upstreamField.setPlaceholder(placeHolder)
-  }
-
-  private fun rerender() {
-    window.pack()
-    window.revalidate()
-    pack()
-    repaint()
   }
 
   private fun updateTopPanel() {
