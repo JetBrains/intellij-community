@@ -11,10 +11,9 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.SyntheticLibraryOrigin
 import com.intellij.util.indexing.roots.origin.SyntheticLibraryOriginImpl
 
-internal class SyntheticLibraryIndexableFilesIteratorImpl
-private constructor(private val name: String?,
-                    private val syntheticLibrary: SyntheticLibrary,
-                    private val rootsToIndex: Collection<VirtualFile>) : SyntheticLibraryIndexableFilesIterator {
+internal class SyntheticLibraryIndexableFilesIteratorImpl(private val name: String?,
+                                                          private val syntheticLibrary: SyntheticLibrary,
+                                                          private val rootsToIndex: Collection<VirtualFile>) : SyntheticLibraryIndexableFilesIterator {
   constructor(syntheticLibrary: SyntheticLibrary) : this(getName(syntheticLibrary), syntheticLibrary, syntheticLibrary.allRoots)
 
   override fun getDebugName() = name.takeUnless { it.isNullOrEmpty() }?.let { "Synthetic library '$it'" }

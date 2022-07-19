@@ -4,7 +4,10 @@ package com.intellij.util.indexing.roots.builders
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -29,11 +32,13 @@ object IndexableIteratorBuilders {
     return forModuleRoots(moduleId, roots)
   }
 
-  fun forLibraryEntity(libraryId: LibraryId, dependencyChecked: Boolean): Collection<IndexableIteratorBuilder> =
-    listOf(LibraryIdIteratorBuilder(libraryId, dependencyChecked))
+  @JvmOverloads
+  fun forLibraryEntity(libraryId: LibraryId, dependencyChecked: Boolean, root: VirtualFile? = null): Collection<IndexableIteratorBuilder> =
+    listOf(LibraryIdIteratorBuilder(libraryId, root, dependencyChecked))
 
-  fun forSdk(sdkName: String, sdkType: String): Collection<IndexableIteratorBuilder> =
-    listOf(SdkIteratorBuilder(sdkName, sdkType))
+  fun forSdk(sdkName: String, sdkType: String): Collection<IndexableIteratorBuilder> = listOf(SdkIteratorBuilder(sdkName, sdkType))
+
+  fun forSdk(sdk: Sdk, file: VirtualFile): Collection<IndexableIteratorBuilder> = listOf(SdkIteratorBuilder(sdk, file))
 
   fun forInheritedSdk(): Collection<IndexableIteratorBuilder> = listOf(InheritedSdkIteratorBuilder)
 
@@ -63,9 +68,12 @@ object IndexableIteratorBuilders {
 }
 
 internal data class LibraryIdIteratorBuilder(val libraryId: LibraryId,
-                                             val dependencyChecked: Boolean) : IndexableIteratorBuilder
+                                             val root: VirtualFile? = null,
+                                             val dependencyChecked: Boolean = false) : IndexableIteratorBuilder
 
-internal data class SdkIteratorBuilder(val sdkName: String, val sdkType: String, val file: VirtualFile? = null) : IndexableIteratorBuilder
+internal data class SdkIteratorBuilder(val sdkName: String, val sdkType: String, val root: VirtualFile? = null) : IndexableIteratorBuilder {
+  constructor(sdk: Sdk, root: VirtualFile? = null) : this(sdk.name, sdk.sdkType.name, root)
+}
 
 internal object InheritedSdkIteratorBuilder : IndexableIteratorBuilder
 
@@ -74,3 +82,13 @@ internal data class FullModuleContentIteratorBuilder(val moduleId: ModuleId) : I
 internal class ModuleRootsIteratorBuilder(val moduleId: ModuleId, val urls: Collection<VirtualFileUrl>) : IndexableIteratorBuilder {
   constructor(moduleId: ModuleId, url: VirtualFileUrl) : this(moduleId, listOf(url))
 }
+
+internal data class SyntheticLibraryIteratorBuilder(val syntheticLibrary: SyntheticLibrary,
+                                                    val name: String?,
+                                                    val roots: Collection<VirtualFile>) : IndexableIteratorBuilder
+
+internal data class IndexableSetContributorFilesIteratorBuilder(val name: String?,
+                                                                val debugName: String,
+                                                                val providedRootsToIndex: Set<VirtualFile>,
+                                                                val projectAware: Boolean,
+                                                                val contributor: IndexableSetContributor) : IndexableIteratorBuilder

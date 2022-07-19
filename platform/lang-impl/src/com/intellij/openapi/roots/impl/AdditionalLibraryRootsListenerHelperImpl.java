@@ -62,7 +62,7 @@ public class AdditionalLibraryRootsListenerHelperImpl implements AdditionalLibra
       Collections.singletonList(
         AdditionalLibraryRootsContributor.createIndexingIterator(presentableLibraryName, rootsToIndex, libraryNameForDebug));
 
-    new UnindexedFilesUpdater(project, indexableFilesIterators, "On updated roots of library '" + presentableLibraryName + "'").
+    new UnindexedFilesUpdater(project, indexableFilesIterators, null, "On updated roots of library '" + presentableLibraryName + "'").
       queue(project);
   }
 }

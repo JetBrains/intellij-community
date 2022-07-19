@@ -52,7 +52,7 @@ class SdkIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   }
 
   private fun builderToRoot(builder: SdkIteratorBuilder) =
-    builder.file?.let { ListOfRoots(it) } ?: AllRoots
+    builder.root?.let { ListOfRoots(it) } ?: AllRoots
 
   private sealed interface Roots {
     fun merge(newRoot: Roots): Roots

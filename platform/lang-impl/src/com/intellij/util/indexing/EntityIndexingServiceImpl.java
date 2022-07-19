@@ -10,6 +10,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
+import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
@@ -17,8 +19,8 @@ import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener;
 import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.EntityStorage;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId;
@@ -43,6 +45,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
       runFullRescan(project, "Project roots have changed");
     }
     boolean fullReindexOnBuildableChanges = Registry.is("indexing.full.rescan.on.buildable.changes");
+    boolean indexDependencies = false;
     for (RootsChangeRescanningInfo change : changes) {
       if (change == RootsChangeRescanningInfo.TOTAL_RESCAN) {
         runFullRescan(project, "Reindex requested by project root model changes");
@@ -52,13 +55,36 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
         runFullRescan(project, "Reindex requested by buildable changes");
         return;
       }
+      else if (change == RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED) {
+        if (!indexDependencies && !DependenciesIndexedStatusService.shouldBeUsed()) {
+          runFullRescan(project, "Reindex of changed dependencies requested, but not enabled");
+          return;
+        }
+        else {
+          indexDependencies = true;
+        }
+      }
     }
     List<IndexableIteratorBuilder> builders = new SmartList<>();
+
+    StatusMark dependenciesStatusMark = null;
+    if (indexDependencies) {
+      Pair<Collection<? extends IndexableIteratorBuilder>, StatusMark> dependencyBuildersPair =
+        DependenciesIndexedStatusService.getInstance(project).getDeltaWithLastIndexedStatus();
+      if (dependencyBuildersPair == null) {
+        runFullRescan(project, "Reindex of changed dependencies requested, but status is not initialized");
+        return;
+      }
+      builders.addAll(dependencyBuildersPair.getFirst());
+      dependenciesStatusMark = dependencyBuildersPair.getSecond();
+    }
+
     EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
     for (RootsChangeRescanningInfo change : changes) {
       if (change == RootsChangeRescanningInfo.NO_RESCAN_NEEDED) continue;
       if (change instanceof ProjectRootsChangeListener.WorkspaceEventRescanningInfo) {
-        builders.addAll(getBuildersOnWorkspaceChange(project, ((ProjectRootsChangeListener.WorkspaceEventRescanningInfo)change).getEvents()));
+        builders.addAll(getBuildersOnWorkspaceChange(project,
+                                                     ((ProjectRootsChangeListener.WorkspaceEventRescanningInfo)change).getEvents()));
       }
       else if (change instanceof BuildableRootsChangeRescanningInfo) {
         builders.addAll(getBuildersOnBuildableChangeInfo((BuildableRootsChangeRescanningInfo)change));
@@ -85,7 +111,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
         reasonMessage += " and " + (debugNames.size() - maxNamesToLog) + " iterators more";
       }
       logRootChanges(project, false);
-      new UnindexedFilesUpdater(project, mergedIterators, reasonMessage).queue(project);
+      new UnindexedFilesUpdater(project, mergedIterators, dependenciesStatusMark, reasonMessage).queue(project);
     }
   }
 

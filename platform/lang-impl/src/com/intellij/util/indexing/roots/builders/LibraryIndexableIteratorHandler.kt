@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIterator
@@ -23,8 +24,15 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
                            entityStorage: EntityStorage): List<IndexableFilesIterator> {
     @Suppress("UNCHECKED_CAST")
     builders as Collection<LibraryIdIteratorBuilder>
+    val rootMap = mutableMapOf<LibraryId, Root>()
     val idsToIndex = mutableSetOf<LibraryId>()
-    builders.forEach { builder -> if (builder.dependencyChecked) idsToIndex.add(builder.libraryId) }
+    builders.forEach { builder ->
+      val libraryId = builder.libraryId
+      if (builder.dependencyChecked) {
+        idsToIndex.add(libraryId)
+      }
+      rootMap[libraryId] = merge(getLibraryId(builder.root), rootMap[libraryId])
+    }
 
     val dependencyChecker = DependencyChecker(entityStorage, idsToIndex)
     builders.forEach { builder ->
@@ -37,7 +45,7 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     val result = mutableListOf<IndexableFilesIterator>()
     val ids = mutableSetOf<LibraryOrigin>()
     idsToIndex.forEach { id ->
-      createLibraryIterator(id, entityStorage, project)?.also {
+      createLibraryIterator(id, rootMap[id]!!, entityStorage, project)?.also {
         if (ids.add(it.origin)) {
           result.add(it)
         }
@@ -46,8 +54,42 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     return result
   }
 
-  private fun createLibraryIterator(libraryId: LibraryId, entityStorage: EntityStorage, project: Project): LibraryIndexableFilesIterator? {
-    return libraryId.findLibraryBridge(entityStorage, project)?.let { LibraryIndexableFilesIteratorImpl.createIterator(it) }
+  private fun merge(first: Root, second: Root?): Root {
+    return when (second) {
+      AllRoots -> return AllRoots
+      null -> first
+      is RootList -> when (first) {
+        AllRoots -> AllRoots
+        is RootList -> {
+          first.addAll(second)
+          first
+        }
+      }
+    }
+  }
+
+  private fun getLibraryId(root: VirtualFile?): Root = root?.let { RootList(it) } ?: AllRoots
+
+  private fun createLibraryIterator(libraryId: LibraryId,
+                                    root: Root,
+                                    entityStorage: EntityStorage,
+                                    project: Project): LibraryIndexableFilesIterator? {
+    return libraryId.findLibraryBridge(entityStorage, project)?.let {
+      when(root){
+        AllRoots -> LibraryIndexableFilesIteratorImpl.createIterator(it)
+        is RootList -> LibraryIndexableFilesIteratorImpl.createIterator(it, root)
+      }
+    }
+  }
+
+  private sealed interface Root
+
+  private object AllRoots : Root
+
+  private class RootList() : ArrayList<VirtualFile>(), Root {
+    constructor(file: VirtualFile) : this() {
+      add(file)
+    }
   }
 
   private class DependencyChecker(val entityStorage: EntityStorage,
