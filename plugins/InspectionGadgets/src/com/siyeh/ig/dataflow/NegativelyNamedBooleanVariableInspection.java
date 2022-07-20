@@ -71,6 +71,7 @@ public class NegativelyNamedBooleanVariableInspection extends BaseInspection {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
       final String prefix = codeStyleManager.getPrefixByVariableKind(codeStyleManager.getVariableKind(variable));
       for (final String negativeName : NEGATIVE_NAMES) {
+        assert name != null;
         if (isNegativelyNamed(name, negativeName) || !prefix.isEmpty() && isNegativelyNamed(name, prefix + negativeName)) {
           registerVariableError(variable, variable);
           break;
