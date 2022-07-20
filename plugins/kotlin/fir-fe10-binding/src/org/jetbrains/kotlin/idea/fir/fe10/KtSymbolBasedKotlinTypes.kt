@@ -130,6 +130,9 @@ fun KtType.toKotlinType(context: Fe10WrapperContext, annotations: Annotations = 
             val kotlinType = original.toKotlinType(context, annotations)
             return DefinitelyNotNullType.makeDefinitelyNotNull(kotlinType) ?: kotlinType
         }
+        is KtDynamicType -> {
+            return createDynamicType(context.builtIns)
+        }
         else -> error("Unexpected subclass: ${this.javaClass}")
     }
 
