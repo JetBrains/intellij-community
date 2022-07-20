@@ -425,6 +425,17 @@ public final class DiffUtil {
     action.registerCustomShortcutSet(action.getShortcutSet(), component);
   }
 
+  public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
+                                                  @NotNull JComponent component,
+                                                  @Nullable Disposable parentDisposable) {
+    for (AnAction action : group.getChildren(null)) {
+      if (action instanceof ActionGroup) {
+        recursiveRegisterShortcutSet((ActionGroup)action, component, parentDisposable);
+      }
+      action.registerCustomShortcutSet(component, parentDisposable);
+    }
+  }
+
   @NotNull
   public static JPanel createMessagePanel(@NotNull @Nls String message) {
     String text = StringUtil.replace(message, "\n", UIUtil.BR);

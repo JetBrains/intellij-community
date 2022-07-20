@@ -50,7 +50,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.diff.tools.util.base.TextDiffViewerUtil.recursiveRegisterShortcutSet;
+import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 
 // TODO: support merge request chains
 // idea - to keep in memory all viewers that were modified (so binary conflict is not the case and OOM shouldn't be too often)
