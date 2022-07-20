@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.util.ElementKind
@@ -27,7 +28,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComme
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.scopes.receivers.ClassQualifier
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.Component
 import javax.swing.DefaultListCellRenderer
@@ -258,6 +261,7 @@ private fun findElement(
     if (element == null && elementKind == ElementKind.EXPRESSION) {
         element = findExpressionOrStringFragment(file, startOffset, endOffset)
     }
+
     if (element == null) {
         //todo: if it's infix expression => add (), then commit document then return new created expression
 
@@ -266,6 +270,14 @@ private fun findElement(
         }
         return null
     }
+
+    if (element is KtExpression) {
+        val qualifier = element.analyze().get(BindingContext.QUALIFIER, element)
+        if (qualifier != null && (qualifier !is ClassQualifier || qualifier.descriptor.kind != ClassKind.OBJECT)) {
+            return null
+        }
+    }
+
     return element
 }
 

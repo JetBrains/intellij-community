@@ -11,17 +11,13 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.siblings
-import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.base.psi.getElementAtOffsetIgnoreWhitespaceAfter
 import org.jetbrains.kotlin.idea.base.psi.getElementAtOffsetIgnoreWhitespaceBefore
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.isTypeConstructorReference
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.scopes.receivers.ClassQualifier
 
 enum class ElementKind {
     EXPRESSION {
@@ -46,6 +42,7 @@ fun findElement(
     val element = findElementOfClassAtRange(
         file, startOffset, endOffset, elementKind.elementClass
     ) ?: return null
+
     return when(elementKind) {
         ElementKind.TYPE_ELEMENT -> element
         ElementKind.TYPE_CONSTRUCTOR -> element.takeIf(::isTypeConstructorReference)
@@ -190,11 +187,5 @@ private fun findExpression(element: KtElement): KtExpression? {
         }
     }
 
-    if (expression !is KtExpression) return null
-
-    val qualifier = expression.analyze().get(BindingContext.QUALIFIER, expression)
-    if (qualifier != null && (qualifier !is ClassQualifier || qualifier.descriptor.kind != ClassKind.OBJECT)) {
-        return null
-    }
-    return expression
+    return expression as? KtExpression
 }
