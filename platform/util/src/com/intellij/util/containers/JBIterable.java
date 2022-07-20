@@ -86,11 +86,6 @@ public abstract class JBIterable<E> implements Iterable<E> {
     };
   }
 
-  public static @NotNull <E> JBIterable<E> from(E @Nullable [] array) {
-    if (array == null) return empty();
-    return from(Arrays.asList(array));
-  }
-
   /**
    * Returns a {@code JBIterable} that wraps {@code iterable}, or {@code iterable} itself if it
    * is already a {@code JBIterable}.
