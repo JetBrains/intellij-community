@@ -229,6 +229,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("testData/inspectionsLocal/mapGetWithNotNullAssertionOperator", pattern = pattern)
             model("testData/inspectionsLocal/memberVisibilityCanBePrivate", pattern = pattern)
             model("testData/inspectionsLocal/redundantObjectTypeCheck", pattern = pattern)
+            model("testData/inspectionsLocal/redundantSuspend", pattern = pattern)
         }
     }
 
