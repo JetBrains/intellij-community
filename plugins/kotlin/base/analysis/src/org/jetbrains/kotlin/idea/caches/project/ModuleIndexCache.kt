@@ -73,15 +73,13 @@ private fun getModuleIndex(project: Project): ModuleIndex {
         for (module in ModuleManager.getInstance(project).modules) {
             for (orderEntry in ModuleRootManager.getInstance(module).orderEntries) {
                 if (orderEntry is ModuleOrderEntry) {
-                    val referenced = orderEntry.module
-                    if (referenced != null) {
+                    orderEntry.module?.let { referenced ->
                         val map = if (orderEntry.isExported) exportingUsages else plainUsages
                         map.putValue(referenced, module)
                     }
                 }
             }
         }
-        // TODO:
         CachedValueProvider.Result(
             ModuleIndexImpl(plainUsages = plainUsages, exportingUsages = exportingUsages),
             ProjectRootModificationTracker.getInstance(project)
