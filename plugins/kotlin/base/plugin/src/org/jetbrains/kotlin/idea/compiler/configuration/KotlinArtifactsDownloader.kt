@@ -146,7 +146,7 @@ object KotlinArtifactsDownloader {
             "Don't call downloadMavenArtifact on UI thread"
         }
 
-        val excludedDeps =
+        val excludedDeps = // Since 1.7.20, 'kotlin-dist-for-jps-meta' doesn't depend on broken 'kotlin-annotation-processing'
             if (artifactId == KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID && IdeKotlinVersion.get(version) < IdeKotlinVersion.get("1.7.20")) {
                 listOf( // Not existing deps of kotlin-annotation-processing KTI-878
                     "$KOTLIN_MAVEN_GROUP_ID:util",
