@@ -343,6 +343,9 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
+/**
+ * Closes project after [action].
+ */
 fun <T> Project.useProject(save: Boolean = false, action: (Project) -> T): T {
   try {
     return action(this)
@@ -352,6 +355,9 @@ fun <T> Project.useProject(save: Boolean = false, action: (Project) -> T): T {
   }
 }
 
+/**
+ * Closes project asynchronously after [action].
+ */
 suspend fun <T> Project.useProjectAsync(save: Boolean = false, action: suspend (Project) -> T): T {
   try {
     return action(this)
@@ -359,6 +365,25 @@ suspend fun <T> Project.useProjectAsync(save: Boolean = false, action: suspend (
   finally {
     closeProjectAsync(save)
   }
+}
+
+/**
+ * Closes project asynchronously only if [action] is failed.
+ */
+suspend fun Project.withProjectAsync(action: suspend (Project) -> Unit): Project {
+  try {
+    action(this)
+  }
+  catch (e: Throwable) {
+    try {
+      closeProjectAsync()
+    }
+    catch (closeException: Throwable) {
+      e.addSuppressed(closeException)
+    }
+    throw e
+  }
+  return this
 }
 
 private fun Project.closeProject(save: Boolean = false) {
@@ -378,25 +403,9 @@ suspend fun Project.closeProjectAsync(save: Boolean = false) {
   }
 }
 
-suspend fun Project.setupProjectAsync(setup: suspend (Project) -> Unit): Project {
-  try {
-    setup(this)
-  }
-  catch (e: Throwable) {
-    try {
-      closeProjectAsync()
-    }
-    catch (closeException: Throwable) {
-      e.addSuppressed(closeException)
-    }
-    throw e
-  }
-  return this
-}
-
 suspend fun openProjectAsync(virtualFile: VirtualFile, vararg activities: ProjectPostStartupActivity): Project {
   return ProjectUtil.openOrImportAsync(virtualFile.toNioPath())!!
-    .setupProjectAsync { project ->
+    .withProjectAsync { project ->
       for (activity in activities) {
         activity.runActivity(project)
         activity.execute(project)

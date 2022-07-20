@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.openProjectAsync
-import com.intellij.testFramework.setupProjectAsync
+import com.intellij.testFramework.withProjectAsync
 import com.intellij.util.createException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,7 +25,7 @@ internal fun <T> Result<T>.onFailureCatching(action: (Throwable) -> Unit): Resul
 suspend fun openProjectAsyncAndWait(virtualFile: VirtualFile, vararg activities: ProjectPostStartupActivity): Project {
   val deferred = getProjectDataLoadPromise()
   return openProjectAsync(virtualFile, *activities)
-    .setupProjectAsync {
+    .withProjectAsync {
       withContext(Dispatchers.EDT) {
         withTimeout(10.minutes) {
           deferred.asDeferred().join()
