@@ -279,6 +279,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   fun redrawMessages() {
     initStyleConstants()
     ranges.clear()
+    highlighter.removeAllHighlights()
     text = ""
     insertOffset = 0
     var previous: LessonMessage? = null
@@ -309,8 +310,27 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
         when (part.type) {
           MessagePart.MessageType.TEXT_REGULAR -> insertText(part.text, REGULAR)
           MessagePart.MessageType.TEXT_BOLD -> insertText(part.text, BOLD)
-          MessagePart.MessageType.SHORTCUT -> appendShortcut(part)?.let { ranges.add(it) }
-          MessagePart.MessageType.CODE -> insertText(part.text, CODE)
+          MessagePart.MessageType.SHORTCUT -> {
+            val start = insertOffset
+            appendShortcut(part)?.let { ranges.add(it) }
+            val end = insertOffset
+            highlighter.addHighlight(start, end) { g, _, _, _, _ ->
+              val bg = if (panelMode) UISettings.getInstance().shortcutBackgroundColor else UISettings.getInstance().tooltipShortcutBackgroundColor
+              val needColor = if (lessonMessage.state == MessageState.INACTIVE) Color(bg.red, bg.green, bg.blue, 255 * 3 / 10) else bg
+              for (p in part.splitMe()) {
+                drawRectangleAroundText(p.startOffset, p.endOffset, g as Graphics2D, needColor, fill = true)
+              }
+            }
+          }
+          MessagePart.MessageType.CODE -> {
+            val start = insertOffset
+            insertText(part.text, CODE)
+            val end = insertOffset
+            highlighter.addHighlight(start, end) { g, _, _, _, _ ->
+              val needColor = UISettings.getInstance().codeBorderColor
+              drawRectangleAroundText(start, end, g, needColor, fill = !panelMode)
+            }
+          }
           MessagePart.MessageType.CHECK -> insertText(part.text, ROBOTO)
           MessagePart.MessageType.LINK -> appendLink(part)?.let { ranges.add(it) }
           MessagePart.MessageType.ICON_IDX -> LearningUiManager.iconMap[part.text]?.let { addPlaceholderForIcon(it) }
@@ -564,27 +584,6 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       val myMessages = lessonMessage.messageParts
       for (myMessage in myMessages) {
         when (myMessage.type) {
-          MessagePart.MessageType.SHORTCUT -> {
-            val bg = if (panelMode) UISettings.getInstance().shortcutBackgroundColor else UISettings.getInstance().tooltipShortcutBackgroundColor
-            val needColor = if (lessonMessage.state == MessageState.INACTIVE) Color(bg.red, bg.green, bg.blue, 255 * 3 / 10) else bg
-
-            for (part in myMessage.splitMe()) {
-              drawRectangleAroundText(part, g2d, needColor) { r2d ->
-                g2d.fill(r2d)
-              }
-            }
-          }
-          MessagePart.MessageType.CODE -> {
-            val needColor = UISettings.getInstance().codeBorderColor
-            drawRectangleAroundText(myMessage, g2d, needColor) { r2d ->
-              if (panelMode) {
-                g2d.draw(r2d)
-              }
-              else {
-                g2d.fill(r2d)
-              }
-            }
-          }
           MessagePart.MessageType.ICON_IDX -> {
             val rect = modelToView2D(myMessage.startOffset)
             var icon = LearningUiManager.iconMap[myMessage.text] ?: continue
@@ -622,12 +621,12 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
                                                        .takeIf { it != -1 && it < activeMessages.size - 1 }
                                                        ?.let { activeMessages[it + 1] } ?: activeMessages.firstOrNull()
 
-  private fun drawRectangleAroundText(myMessage: MessagePart,
-                                      g2d: Graphics2D,
+  private fun drawRectangleAroundText(startOffset: Int,
+                                      endOffset: Int,
+                                      g: Graphics,
                                       needColor: Color,
-                                      draw: (r2d: RoundRectangle2D) -> Unit) {
-    val startOffset = myMessage.startOffset
-    val endOffset = myMessage.endOffset
+                                      fill: Boolean) {
+    val g2d = g as Graphics2D
     val rectangleStart = modelToView2D(startOffset)
     val rectangleEnd = modelToView2D(endOffset)
     val color = g2d.color
@@ -639,7 +638,8 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     val r2d = RoundRectangle2D.Double(rectangleStart.x - 2 * indent, rectangleStart.y - indent + JBUIScale.scale(shift),
                                       rectangleEnd.x - rectangleStart.x + 4 * indent, (fontSize + 2 * indent).toDouble(),
                                       arc.toDouble(), arc.toDouble())
-    draw(r2d)
+
+    if (fill) g2d.fill(r2d) else g2d.draw(r2d)
     g2d.color = color
   }
 
