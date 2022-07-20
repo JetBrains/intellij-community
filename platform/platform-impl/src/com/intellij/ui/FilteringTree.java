@@ -2,7 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
@@ -14,6 +13,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBIterator;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -176,6 +176,10 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     getSearchModel().setSpeedSearch(supply);
   }
 
+  /**
+   * Used to simplify implementation.
+   * Returning anything but T is not adviced and might not work properly.
+   */
   protected abstract Class<? extends T> getNodeClass();
 
   @NotNull
@@ -204,6 +208,11 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   protected void onSpeedSearchUpdateComplete(@Nullable String pattern) {
   }
 
+  /**
+   * Comparison method to be used for {@link U}.
+   * <p>
+   * Note: Tree CAN NOT contain multiple equal elements, even if they do not share the same parent.
+   */
   protected boolean useIdentityHashing(){
     return true;
   }
@@ -296,6 +305,10 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       myNodeChanged.addListener(listener);
     }
 
+    /**
+     * Rebuild tree on non-filtered tree structure is changes
+     */
+    @RequiresEdt
     public void updateStructure() {
       Map<U, N> newNodes = createNodeCache();
       for (U node : JBTreeTraverser.from(myStructure).withRoot(getRootObject())) {
@@ -344,6 +357,10 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       return myFactory.fun(object);
     }
 
+    /**
+     * Rebuild tree on filter changes
+     */
+    @RequiresEdt
     public void refilter() {
       if (mySpeedSearch.isPopupActive()) {
         Set<U> acceptCache = myUseIdentityHashing ? new ReferenceOpenHashSet<>() : new HashSet<>();
