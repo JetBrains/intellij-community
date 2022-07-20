@@ -42,6 +42,15 @@ internal class SearchEverywhereItem(
   fun withPresentation(presentation: UsagePresentation): SearchEverywhereItem {
     return SearchEverywhereItem(usage, presentation)
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    return usage.plainText == (other as SearchEverywhereItem).usage.plainText
+  }
+
+  override fun hashCode() = usage.plainText.hashCode()
 }
 
 @ApiStatus.Internal
