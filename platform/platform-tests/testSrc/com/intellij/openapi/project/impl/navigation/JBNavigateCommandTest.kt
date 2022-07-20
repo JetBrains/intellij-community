@@ -13,7 +13,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createOrLoadProject
-import com.intellij.testFramework.useProject
+import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -76,7 +76,7 @@ class JBNavigateCommandTest : NavigationTestBase() {
       withContext(Dispatchers.EDT) {
         yield()
       }
-      projectManager.openProjects.find { it.name == projectName }!!.useProject { recentProject ->
+      projectManager.openProjects.find { it.name == projectName }!!.useProjectAsync { recentProject ->
         project = recentProject
         readAction {
           assertThat(getCurrentElement().name).isEqualTo("A.java")

@@ -4,6 +4,7 @@ package com.intellij.testFramework
 import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.CommandProcessor
@@ -342,12 +343,12 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-inline fun <T> Project.useProject(save: Boolean = false, action: (Project) -> T): T {
+fun <T> Project.useProject(save: Boolean = false, action: (Project) -> T): T {
   try {
     return action(this)
   }
   finally {
-    ProjectManagerEx.getInstanceEx().forceCloseProject(this, save = save)
+    closeProject(save)
   }
 }
 
@@ -360,8 +361,21 @@ suspend fun <T> Project.useProjectAsync(save: Boolean = false, action: suspend (
   }
 }
 
+private fun Project.closeProject(save: Boolean = false) {
+  invokeAndWaitIfNeeded {
+    ProjectManagerEx.getInstanceEx().forceCloseProject(this, save = save)
+  }
+}
+
 suspend fun Project.closeProjectAsync(save: Boolean = false) {
-  ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this, save = save)
+  if (ApplicationManager.getApplication().isDispatchThread) {
+    runBlockingUnderModalProgress {
+      ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this, save = save)
+    }
+  }
+  else {
+    ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this, save = save)
+  }
 }
 
 suspend fun Project.setupProjectAsync(setup: suspend (Project) -> Unit): Project {
