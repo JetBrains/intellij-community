@@ -29,6 +29,7 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
         bindingContext.registerGetterByKey(BindingContext.THIS_TYPE_FOR_SUPER_EXPRESSION, this::getThisTypeForSuperExpression)
         bindingContext.registerGetterByKey(BindingContext.COMPILE_TIME_VALUE, this::getCompileTimeValue)
         bindingContext.registerGetterByKey(BindingContext.DATA_CLASS_COPY_FUNCTION, this::getDataClassCopyFunction)
+        bindingContext.registerGetterByKey(BindingContext.EXPECTED_EXPRESSION_TYPE, this::getExpectedExpressionType)
     }
 
     private fun getType(ktTypeReference: KtTypeReference): KotlinType {
@@ -71,4 +72,9 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
 
         return copyFunction.safeAs<KtFunctionLikeSymbol>()?.toDeclarationDescriptor(context)
     }
+
+    private fun getExpectedExpressionType(ktExpression: KtExpression): KotlinType? =
+        context.withAnalysisSession {
+            ktExpression.getExpectedType()
+        }?.toKotlinType(context)
 }
