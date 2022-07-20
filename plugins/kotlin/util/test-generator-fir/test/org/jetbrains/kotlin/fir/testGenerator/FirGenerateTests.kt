@@ -234,6 +234,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("testData/inspectionsLocal/redundantExplicitType", pattern = pattern)
             model("testData/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals", pattern = pattern)
             model("testData/inspectionsLocal/replaceAssociateFunction", pattern = pattern)
+            model("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty", pattern = pattern)
         }
     }
 
