@@ -61,7 +61,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
-import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.PanelUI;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
@@ -103,9 +102,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   private static class SelectionIndexes {
     private final int myBarIndex;
-    private final @Nullable int[] myNodePopupIndexes;
+    private final int @Nullable [] myNodePopupIndexes;
 
-    SelectionIndexes(int barIndex, int[] nodePopupIndexes) {
+    SelectionIndexes(int barIndex, int @Nullable [] nodePopupIndexes) {
       myBarIndex = barIndex;
       myNodePopupIndexes = nodePopupIndexes;
     }
