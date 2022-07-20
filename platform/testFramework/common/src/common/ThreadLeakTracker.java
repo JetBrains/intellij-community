@@ -2,6 +2,7 @@
 package com.intellij.testFramework.common;
 
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -57,6 +58,7 @@ public final class ThreadLeakTracker {
 
   static {
     List<String> offenders = List.of(
+      "ApplicationImpl pooled thread ", // com.intellij.util.concurrency.AppScheduledExecutorService.POOLED_THREAD_PREFIX
       "AWT-EventQueue-",
       "AWT-Shutdown",
       "AWT-Windows",
@@ -70,6 +72,7 @@ public final class ThreadLeakTracker {
       FlushingDaemon.NAME,
       "HttpClient-",
       // any usage of HttpClient (from JDK) may leave a thread pool. It's ok since it's not supposed to be disposed to reuse connections
+      ProcessIOExecutorService.POOLED_THREAD_PREFIX,
       "IDEA Test Case Thread",
       "Image Fetcher ",
       "InnocuousThreadGroup",
@@ -84,6 +87,7 @@ public final class ThreadLeakTracker {
       "ObjectCleanerThread",
       "OkHttp ConnectionPool", // Dockers okhttp3.internal.connection.RealConnectionPool
       "Okio Watchdog", // Dockers "okio.AsyncTimeout.Watchdog"
+      "Periodic tasks thread", // com.intellij.util.concurrency.AppDelayQueue.TransferThread
       "rd throttler", // daemon thread created by com.jetbrains.rd.util.AdditionalApiKt.getTimer
       "Reference Handler",
       "RMI GC Daemon",
@@ -104,7 +108,8 @@ public final class ThreadLeakTracker {
     if (!offenders.equals(sorted)) {
       String proper = String
         .join(",\n", ContainerUtil.map(sorted, s -> '"' + s + '"'))
-        .replaceAll('"' + FlushingDaemon.NAME + '"', "FlushingDaemon.NAME");
+        .replaceAll('"' + FlushingDaemon.NAME + '"', "FlushingDaemon.NAME")
+        .replaceAll('"' + ProcessIOExecutorService.POOLED_THREAD_PREFIX + '"', "ProcessIOExecutorService.POOLED_THREAD_PREFIX");
       throw new AssertionError("Thread names must be sorted (for ease of maintenance). Something like this will do:\n" + proper);
     }
     wellKnownOffenders = new HashSet<>(offenders);

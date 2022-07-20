@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
-import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -37,17 +35,6 @@ public final class ThreadTracker {
   @Deprecated
   public static @NotNull Map<String, Thread> getThreads() {
     return ThreadLeakTracker.getThreads();
-  }
-
-  static {
-    Application application = ApplicationManager.getApplication();
-    // LeakHunter might be accessed first time after Application is already disposed (during test framework shutdown).
-    if (application != null && !application.isDisposed()) {
-      longRunningThreadCreated(application,
-                               "Periodic tasks thread",
-                               "ApplicationImpl pooled thread ",
-                               ProcessIOExecutorService.POOLED_THREAD_PREFIX);
-    }
   }
 
   /**
