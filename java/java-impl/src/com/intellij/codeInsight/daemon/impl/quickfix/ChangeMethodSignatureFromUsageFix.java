@@ -6,6 +6,7 @@ import com.intellij.codeInsight.JavaTargetElementEvaluator;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.find.FindManager;
@@ -13,6 +14,7 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.JavaMethodFindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -172,6 +175,18 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       if (PsiUtil.isApplicable(method, PsiSubstitutor.EMPTY, myExpressions)) return true;
     }
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    ParameterInfoImpl[] parameterInfos = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
+    if (parameterInfos == null) return IntentionPreviewInfo.EMPTY;
+    String params = "(" + StringUtil.join(parameterInfos, p -> p.getTypeText() + " " + p.getName(), ", ") + ")";
+    int methodOffset = myTargetMethod.getTextRange().getStartOffset();
+    TextRange range = myTargetMethod.getParameterList().getTextRange().shiftLeft(methodOffset);
+    String methodText = myTargetMethod.getText();
+    String methodTextWithChangedParameters = methodText.substring(0, range.getStartOffset()) + params + methodText.substring(range.getEndOffset());
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, methodText, methodTextWithChangedParameters); 
   }
 
   @Override
