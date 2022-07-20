@@ -184,14 +184,8 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   }
 
   public static @Nullable ClusteringSearchSession findClusteringSessionInUsageView(@NotNull UsageView usageView) {
-    Optional<Usage> usage = usageView.getUsages().stream().findFirst();
-    if (usage.isPresent()) {
-      Usage firstUsage = usage.get();
-      if (firstUsage instanceof SimilarUsage) {
-        return ((SimilarUsage)firstUsage).getClusteringSession();
-      }
-    }
-    return null;
+    return usageView.getUsages().stream().filter(usage -> usage instanceof SimilarUsage).map(e -> ((SimilarUsage)e).getClusteringSession())
+      .findFirst().orElse(null);
   }
 
   private @NotNull JPanel createHeaderPanel(@NotNull UsageInfo info,
