@@ -58,7 +58,7 @@ fun buildNavigateToClassInheritorsPopup(e: MouseEvent?, element: PsiElement?): N
 
     inheritors.sortWith(renderer.comparator as Comparator<in NavigatablePsiElement>)
 
-    val updater = MarkerType.SubclassUpdater(psiClass, renderer, inheritors)
+    val updater = MarkerType.SubclassUpdater(psiClass, renderer)
 
     val className = psiClass.name
     return NavigationPopupDescriptor(
