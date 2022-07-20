@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.impl.MarkerType
 import com.intellij.java.JavaBundle
 import com.intellij.java.analysis.JavaAnalysisBundle
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.NavigatablePsiElement
@@ -14,10 +13,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFunctionalExpression
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.search.PsiElementProcessorAdapter
-import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
-import com.intellij.util.CommonProcessors.CollectProcessor
 import org.jetbrains.kotlin.idea.presentation.DeclarationByModuleRenderer
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.awt.event.MouseEvent
@@ -54,40 +51,18 @@ fun buildNavigateToClassInheritorsPopup(e: MouseEvent?, element: PsiElement?): N
         return null
     }
 
-    val inheritors = mutableSetOf<NavigatablePsiElement>()
+    val inheritors = mutableListOf<NavigatablePsiElement>()
     inheritors.addIfNotNull(collectProcessor.foundElement)
     inheritors.addIfNotNull(collectExprProcessor.foundElement)
     if (inheritors.isEmpty()) return null
 
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            {
-                ClassInheritorsSearch.search(psiClass, runReadAction {
-                    PsiSearchHelper.getInstance(project).getUseScope(psiClass)
-                }, true).forEach(object : CollectProcessor<PsiClass>() {
-                    override fun process(o: PsiClass): Boolean {
-                        ProgressManager.checkCanceled()
-                        inheritors.add(o)
-                        return true
-                    }
-                })
-            },
-            JavaAnalysisBundle.message("progress.title.searching.for.overridden.methods"),
-            true,
-            project,
-            e?.component as? JComponent
-        )
-    ) {
-        return null
-    }
+    inheritors.sortWith(renderer.comparator as Comparator<in NavigatablePsiElement>)
 
-    val inheritorList = inheritors.toMutableList()
-    inheritorList.sortWith(renderer.comparator as Comparator<in NavigatablePsiElement>)
-
-    val updater = MarkerType.SubclassUpdater(psiClass, renderer)
+    val updater = MarkerType.SubclassUpdater(psiClass, renderer, inheritors)
 
     val className = psiClass.name
     return NavigationPopupDescriptor(
-        inheritorList,
+        inheritors,
         updater.getCaption(inheritors.size)!!,
         CodeInsightBundle.message("goto.implementation.findUsages.title", className),
         renderer,

@@ -332,7 +332,7 @@ public class MarkerType {
     ContainerUtil.addIfNotNull(inheritors, collectProcessor.getFoundElement());
     ContainerUtil.addIfNotNull(inheritors, collectExprProcessor.getFoundElement());
     if (inheritors.isEmpty()) return;
-    final SubclassUpdater subclassUpdater = new SubclassUpdater(aClass, renderer);
+    final SubclassUpdater subclassUpdater = new SubclassUpdater(aClass, renderer, inheritors);
     inheritors.sort(renderer.getComparator());
     PsiElementListNavigator.openTargets(e, inheritors.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY),
                                         subclassUpdater.getCaption(inheritors.size()), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
@@ -362,10 +362,16 @@ public class MarkerType {
   @IntellijInternalApi
   public static final class SubclassUpdater extends OverridingMembersUpdater {
     private final PsiClass myClass;
+    private final List<NavigatablePsiElement> myInheritors;
 
-    public SubclassUpdater(@NotNull PsiClass aClass, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
+    public SubclassUpdater(
+      @NotNull PsiClass aClass,
+      @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer,
+      @NotNull List<NavigatablePsiElement> inheritors
+    ) {
       super(aClass.getProject(), JavaAnalysisBundle.message("subclasses.search.progress.title"), renderer);
       myClass = aClass;
+      myInheritors = inheritors;
     }
 
     @Override
@@ -389,6 +395,7 @@ public class MarkerType {
     @Override
     public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
+      final Set<NavigatablePsiElement> navigatablePsiElementSet = new HashSet<>(myInheritors);
       ClassInheritorsSearch.search(myClass, ReadAction.compute(() -> PsiSearchHelper.getInstance(myProject).getUseScope(myClass)), true).forEach(
         new CommonProcessors.CollectProcessor<>() {
           @Override
@@ -397,6 +404,9 @@ public class MarkerType {
               indicator.cancel();
             }
             ProgressManager.checkCanceled();
+            if (navigatablePsiElementSet.add(o)) {
+              myInheritors.add(o);
+            }
             return super.process(o);
           }
         });
