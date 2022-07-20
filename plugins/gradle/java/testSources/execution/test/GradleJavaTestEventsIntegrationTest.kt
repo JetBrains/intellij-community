@@ -2,45 +2,20 @@
 package org.jetbrains.plugins.gradle.execution.test
 
 import com.intellij.openapi.externalSystem.model.task.*
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent
-import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.registry.Registry
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.assertj.core.api.Condition
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.GradleManager
-import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
-import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.isGradleAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.jupiter.params.ParameterizedTest
+import java.util.function.Function
 
-class GradleJavaTestEventsIntegrationTest : GradleTestCase() {
-
-  override fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
-    super.test(gradleVersion, fixtureBuilder) {
-      val testLauncherApi = Registry.get("gradle.testLauncherAPI.enabled")
-      if (testLauncherAPISupported()) {
-        testLauncherApi.setValue(true)
-      }
-      try {
-        test()
-      }
-      finally {
-        if (testLauncherAPISupported()) {
-          testLauncherApi.setValue(false)
-        }
-      }
-    }
-  }
+class GradleJavaTestEventsIntegrationTest : GradleJavaTestEventsIntegrationTestCase() {
 
   companion object {
     private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleJavaTestEventsIntegrationTest") { gradleVersion ->
@@ -151,50 +126,29 @@ class GradleJavaTestEventsIntegrationTest : GradleTestCase() {
     }
   }
 
-  private fun testLauncherAPISupported(): Boolean =  isGradleAtLeast("6.1")
-
-  private fun extractTestClassesAndMethods(testListener: LoggingESStatusChangeListener) =
-    testListener.eventLog
-      .filterIsInstance<ExternalSystemTaskExecutionEvent>()
-      .map { it.progressEvent.descriptor }
-      .filterIsInstance<TestOperationDescriptor>()
-      .map { it.run { className to methodName } }
-
   @ParameterizedTest
   @TargetVersions("!6.9")
   @AllGradleVersionsSource
   fun `test call test task produces test events`(gradleVersion: GradleVersion) {
     test(gradleVersion, FIXTURE_BUILDER) {
-      val testEventListener = LoggingESStatusChangeListener()
-      val testListener = LoggingESOutputListener(testEventListener)
-
-      val settings = createSettings { putUserData(GradleConstants.RUN_TASK_AS_TEST, true) }
-
+      val output = LoggingESOutputListener()
+      Assertions.setMaxStackTraceElementsDisplayed(1000)
       assertThatThrownBy {
-        GradleTaskManager().executeTasks(createId(),
-                                         listOf(":test"),
-                                         projectPath,
-                                         settings,
-                                         null,
-                                         testListener)
+        executeTasks(output, ":test") {
+          putUserData(GradleConstants.RUN_TASK_AS_TEST, true)
+        }
       }
-        .`is`(Condition({
-                          val message = it.message ?: return@Condition false
-                          message.contains("Test failed.") || message.contains("There were failing tests")
-                        },
-                        "Contain failed tests message"))
-
+        .`is`("contain failed tests message") { "Test failed." in it || "There were failing tests" in it }
 
       if (testLauncherAPISupported()) {
-        val testOperationDescriptors = extractTestClassesAndMethods(testEventListener)
-
-        assertThat(testOperationDescriptors)
+        assertThat(output.testsDescriptors)
+          .extracting(Function { it.className to it.methodName })
           .contains("my.pack.AClassTest" to "testSuccess",
                     "my.pack.AClassTest" to "testFail",
                     "my.otherpack.AClassTest" to "testSuccess")
       }
       else {
-        assertThat(testListener.eventLog)
+        assertThat(output.eventLog)
           .contains(
             "<descriptor name='testFail' displayName='testFail' className='my.pack.AClassTest' />",
             "<descriptor name='testSuccess' displayName='testSuccess' className='my.pack.AClassTest' />")
@@ -211,19 +165,11 @@ class GradleJavaTestEventsIntegrationTest : GradleTestCase() {
   @AllGradleVersionsSource
   fun `test call build task does not produce test events`(gradleVersion: GradleVersion) {
     test(gradleVersion, FIXTURE_BUILDER) {
-      val testListener = LoggingESOutputListener()
-      val settings = createSettings()
-
-      assertThatThrownBy {
-        GradleTaskManager().executeTasks(createId(),
-                                         listOf("clean", "build"),
-                                         projectPath,
-                                         settings,
-                                         null,
-                                         testListener)
-      }
+      val output = LoggingESOutputListener()
+      assertThatThrownBy { executeTasks(output, "clean", "build") }
         .hasMessageContaining("There were failing tests")
-      assertThat(testListener.eventLog).noneMatch { it.contains("<ijLogEol/>") }
+      assertThat(output.eventLog)
+        .noneMatch { it.contains("<ijLogEol/>") }
     }
   }
 
@@ -232,21 +178,12 @@ class GradleJavaTestEventsIntegrationTest : GradleTestCase() {
   @AllGradleVersionsSource
   fun `test call task for specific test overrides existing filters`(gradleVersion: GradleVersion) {
     test(gradleVersion, FIXTURE_BUILDER) {
-      val testListener = LoggingESOutputListener()
-
-      val settings = createSettings {
+      val output = executeTasks(":cleanTest", ":test") {
         putUserData(GradleConstants.RUN_TASK_AS_TEST, true)
         withArguments("--tests", "my.otherpack.*")
       }
 
-      GradleTaskManager().executeTasks(createId(),
-                                       listOf(":cleanTest", ":test"),
-                                       projectPath,
-                                       settings,
-                                       null,
-                                       testListener)
-
-      assertThat(testListener.eventLog)
+      assertThat(output.eventLog)
         .contains("<descriptor name='testSuccess' displayName='testSuccess' className='my.otherpack.AClassTest' />")
         .doesNotContain("<descriptor name='testFail' displayName='testFail' className='my.pack.AClassTest' />",
                         "<descriptor name='testSuccess' displayName='testSuccess' className='my.pack.AClassTest' />")
@@ -258,68 +195,25 @@ class GradleJavaTestEventsIntegrationTest : GradleTestCase() {
   @AllGradleVersionsSource
   fun `test display name is used by test events`(gradleVersion: GradleVersion) {
     test(gradleVersion, FIXTURE_BUILDER) {
-      val testEventListener = LoggingESStatusChangeListener()
-      val testListener = LoggingESOutputListener(testEventListener)
-
-      val settings = createSettings { putUserData(GradleConstants.RUN_TASK_AS_TEST, true) }
-
-      GradleTaskManager().executeTasks(createId(),
-                                       listOf(":junit5test"),
-                                       projectPath,
-                                       settings,
-                                       null,
-                                       testListener)
-
-      if (testLauncherAPISupported()) {
-        val testOperationDescriptors = testEventListener.eventLog
-          .filterIsInstance<ExternalSystemTaskExecutionEvent>()
-          .map { it.progressEvent.descriptor }
-          .filterIsInstance<TestOperationDescriptor>()
-          .map { it.run { "$className$$methodName" to displayName } }
-
-        assertThat(testOperationDescriptors)
-          .contains("my.otherpack.ADisplayNamedTest\$successful_test()" to "successful test")
+      val output = executeTasks(":junit5test") {
+        putUserData(GradleConstants.RUN_TASK_AS_TEST, true)
       }
-      else {
-        if (GradleVersionComparator(gradleVersion).isOrGreaterThan("4.10.3")) {
-          assertThat(testListener.eventLog)
+
+      when {
+        testLauncherAPISupported() -> {
+          assertThat(output.testsDescriptors)
+            .extracting(Function { (it.className + "$" + it.methodName) to it.displayName })
+            .contains("my.otherpack.ADisplayNamedTest\$successful_test()" to "successful test")
+        }
+        isGradleAtLeast("4.10.3") -> {
+          assertThat(output.eventLog)
             .contains("<descriptor name='successful_test()' displayName='successful test' className='my.otherpack.ADisplayNamedTest' />")
         }
-        else {
-          assertThat(testListener.eventLog)
+        else -> {
+          assertThat(output.eventLog)
             .contains("<descriptor name='successful test' displayName='successful test' className='my.otherpack.ADisplayNamedTest' />")
         }
       }
     }
-
   }
-
-  private fun createSettings(config: GradleExecutionSettings.() -> Unit = {}) = GradleManager()
-    .executionSettingsProvider
-    .`fun`(Pair.create(project, projectPath))
-    .apply { config() }
-
-  private fun createId() = ExternalSystemTaskId.create(GradleConstants.SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, project)
-
-  class LoggingESOutputListener(delegate: ExternalSystemTaskNotificationListener? = null) : ExternalSystemTaskNotificationListenerAdapter(
-    delegate) {
-    val eventLog = mutableListOf<String>()
-
-    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-      addEventLogLines(text, eventLog)
-    }
-
-    private fun addEventLogLines(text: String, eventLog: MutableList<String>) {
-      text.split("<ijLogEol/>").mapTo(eventLog) { it.trim('\r', '\n', ' ') }
-    }
-  }
-
-  class LoggingESStatusChangeListener : ExternalSystemTaskNotificationListenerAdapter() {
-    val eventLog = mutableListOf<ExternalSystemTaskNotificationEvent>()
-
-    override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
-      eventLog.add(event)
-    }
-  }
-
 }
