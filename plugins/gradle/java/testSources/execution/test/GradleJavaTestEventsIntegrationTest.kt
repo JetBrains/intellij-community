@@ -17,6 +17,97 @@ import java.util.function.Function
 
 class GradleJavaTestEventsIntegrationTest : GradleJavaTestEventsIntegrationTestCase() {
 
+  @ParameterizedTest
+  @TargetVersions("!6.9")
+  @AllGradleVersionsSource
+  fun `test call test task produces test events`(gradleVersion: GradleVersion) {
+    test(gradleVersion, FIXTURE_BUILDER) {
+      val output = LoggingESOutputListener()
+      Assertions.setMaxStackTraceElementsDisplayed(1000)
+      assertThatThrownBy {
+        executeTasks(output, ":test") {
+          putUserData(GradleConstants.RUN_TASK_AS_TEST, true)
+        }
+      }
+        .`is`("contain failed tests message") { "Test failed." in it || "There were failing tests" in it }
+
+      if (testLauncherAPISupported()) {
+        assertThat(output.testsDescriptors)
+          .extracting(Function { it.className to it.methodName })
+          .contains("my.pack.AClassTest" to "testSuccess",
+                    "my.pack.AClassTest" to "testFail",
+                    "my.otherpack.AClassTest" to "testSuccess")
+      }
+      else {
+        assertThat(output.eventLog)
+          .contains(
+            "<descriptor name='testFail' displayName='testFail' className='my.pack.AClassTest' />",
+            "<descriptor name='testSuccess' displayName='testSuccess' className='my.pack.AClassTest' />")
+          .doesNotContain(
+            "<descriptor name='testSuccess' displayName='testSuccess' className='my.otherpack.AClassTest' />")
+          .doesNotContain(
+            "Attempt to resolve configuration too early")
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @TargetVersions("!6.9")
+  @AllGradleVersionsSource
+  fun `test call build task does not produce test events`(gradleVersion: GradleVersion) {
+    test(gradleVersion, FIXTURE_BUILDER) {
+      val output = LoggingESOutputListener()
+      assertThatThrownBy { executeTasks(output, "clean", "build") }
+        .hasMessageContaining("There were failing tests")
+      assertThat(output.eventLog)
+        .noneMatch { it.contains("<ijLogEol/>") }
+    }
+  }
+
+  @ParameterizedTest
+  @TargetVersions("!6.9")
+  @AllGradleVersionsSource
+  fun `test call task for specific test overrides existing filters`(gradleVersion: GradleVersion) {
+    test(gradleVersion, FIXTURE_BUILDER) {
+      val output = executeTasks(":cleanTest", ":test") {
+        putUserData(GradleConstants.RUN_TASK_AS_TEST, true)
+        withArguments("--tests", "my.otherpack.*")
+      }
+
+      assertThat(output.eventLog)
+        .contains("<descriptor name='testSuccess' displayName='testSuccess' className='my.otherpack.AClassTest' />")
+        .doesNotContain("<descriptor name='testFail' displayName='testFail' className='my.pack.AClassTest' />",
+                        "<descriptor name='testSuccess' displayName='testSuccess' className='my.pack.AClassTest' />")
+    }
+  }
+
+  @ParameterizedTest
+  @TargetVersions("4.6+", "!6.9")
+  @AllGradleVersionsSource
+  fun `test display name is used by test events`(gradleVersion: GradleVersion) {
+    test(gradleVersion, FIXTURE_BUILDER) {
+      val output = executeTasks(":junit5test") {
+        putUserData(GradleConstants.RUN_TASK_AS_TEST, true)
+      }
+
+      when {
+        testLauncherAPISupported() -> {
+          assertThat(output.testsDescriptors)
+            .extracting(Function { (it.className + "$" + it.methodName) to it.displayName })
+            .contains("my.otherpack.ADisplayNamedTest\$successful_test()" to "successful test")
+        }
+        isGradleAtLeast("4.10.3") -> {
+          assertThat(output.eventLog)
+            .contains("<descriptor name='successful_test()' displayName='successful test' className='my.otherpack.ADisplayNamedTest' />")
+        }
+        else -> {
+          assertThat(output.eventLog)
+            .contains("<descriptor name='successful test' displayName='successful test' className='my.otherpack.ADisplayNamedTest' />")
+        }
+      }
+    }
+  }
+
   companion object {
     private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleJavaTestEventsIntegrationTest") { gradleVersion ->
       val gradleSupportsJunitPlatform = gradleVersion.isGradleAtLeast("4.6")
@@ -122,97 +213,6 @@ class GradleJavaTestEventsIntegrationTest : GradleJavaTestEventsIntegrationTestC
               }
           }
         """.trimIndent())
-      }
-    }
-  }
-
-  @ParameterizedTest
-  @TargetVersions("!6.9")
-  @AllGradleVersionsSource
-  fun `test call test task produces test events`(gradleVersion: GradleVersion) {
-    test(gradleVersion, FIXTURE_BUILDER) {
-      val output = LoggingESOutputListener()
-      Assertions.setMaxStackTraceElementsDisplayed(1000)
-      assertThatThrownBy {
-        executeTasks(output, ":test") {
-          putUserData(GradleConstants.RUN_TASK_AS_TEST, true)
-        }
-      }
-        .`is`("contain failed tests message") { "Test failed." in it || "There were failing tests" in it }
-
-      if (testLauncherAPISupported()) {
-        assertThat(output.testsDescriptors)
-          .extracting(Function { it.className to it.methodName })
-          .contains("my.pack.AClassTest" to "testSuccess",
-                    "my.pack.AClassTest" to "testFail",
-                    "my.otherpack.AClassTest" to "testSuccess")
-      }
-      else {
-        assertThat(output.eventLog)
-          .contains(
-            "<descriptor name='testFail' displayName='testFail' className='my.pack.AClassTest' />",
-            "<descriptor name='testSuccess' displayName='testSuccess' className='my.pack.AClassTest' />")
-          .doesNotContain(
-            "<descriptor name='testSuccess' displayName='testSuccess' className='my.otherpack.AClassTest' />")
-          .doesNotContain(
-            "Attempt to resolve configuration too early")
-      }
-    }
-  }
-
-  @ParameterizedTest
-  @TargetVersions("!6.9")
-  @AllGradleVersionsSource
-  fun `test call build task does not produce test events`(gradleVersion: GradleVersion) {
-    test(gradleVersion, FIXTURE_BUILDER) {
-      val output = LoggingESOutputListener()
-      assertThatThrownBy { executeTasks(output, "clean", "build") }
-        .hasMessageContaining("There were failing tests")
-      assertThat(output.eventLog)
-        .noneMatch { it.contains("<ijLogEol/>") }
-    }
-  }
-
-  @ParameterizedTest
-  @TargetVersions("!6.9")
-  @AllGradleVersionsSource
-  fun `test call task for specific test overrides existing filters`(gradleVersion: GradleVersion) {
-    test(gradleVersion, FIXTURE_BUILDER) {
-      val output = executeTasks(":cleanTest", ":test") {
-        putUserData(GradleConstants.RUN_TASK_AS_TEST, true)
-        withArguments("--tests", "my.otherpack.*")
-      }
-
-      assertThat(output.eventLog)
-        .contains("<descriptor name='testSuccess' displayName='testSuccess' className='my.otherpack.AClassTest' />")
-        .doesNotContain("<descriptor name='testFail' displayName='testFail' className='my.pack.AClassTest' />",
-                        "<descriptor name='testSuccess' displayName='testSuccess' className='my.pack.AClassTest' />")
-    }
-  }
-
-  @ParameterizedTest
-  @TargetVersions("4.6+", "!6.9")
-  @AllGradleVersionsSource
-  fun `test display name is used by test events`(gradleVersion: GradleVersion) {
-    test(gradleVersion, FIXTURE_BUILDER) {
-      val output = executeTasks(":junit5test") {
-        putUserData(GradleConstants.RUN_TASK_AS_TEST, true)
-      }
-
-      when {
-        testLauncherAPISupported() -> {
-          assertThat(output.testsDescriptors)
-            .extracting(Function { (it.className + "$" + it.methodName) to it.displayName })
-            .contains("my.otherpack.ADisplayNamedTest\$successful_test()" to "successful test")
-        }
-        isGradleAtLeast("4.10.3") -> {
-          assertThat(output.eventLog)
-            .contains("<descriptor name='successful_test()' displayName='successful test' className='my.otherpack.ADisplayNamedTest' />")
-        }
-        else -> {
-          assertThat(output.eventLog)
-            .contains("<descriptor name='successful test' displayName='successful test' className='my.otherpack.ADisplayNamedTest' />")
-        }
       }
     }
   }
