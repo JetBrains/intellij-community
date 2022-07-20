@@ -41,6 +41,7 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
@@ -375,55 +376,66 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       fileStatusMap.markFileUpToDate(document, ignoreId);
     }
 
-    HighlightingSession session = queuePassesCreation(textEditors, passesToIgnore);
+    ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(() -> {
+      HighlightingSession session = queuePassesCreation(textEditors, passesToIgnore);
 
-    DaemonProgressIndicator progress = getUpdateProgress();
-    // there can be PCE in FJP during queuePassesCreation
-    // no PCE guarantees session is not null
-    progress.checkCanceled();
+      DaemonProgressIndicator progress = getUpdateProgress();
+      // there can be PCE in FJP during queuePassesCreation
+      // no PCE guarantees session is not null
+      progress.checkCanceled();
 
-    try {
-      long start = System.currentTimeMillis();
-      while (progress.isRunning() && System.currentTimeMillis() < start + 10*60*1000) {
-        progress.checkCanceled();
-        if (callbackWhileWaiting != null) {
-          callbackWhileWaiting.run();
+      try {
+        long start = System.currentTimeMillis();
+        while (progress.isRunning() && System.currentTimeMillis() < start + 10 * 60 * 1000) {
+          progress.checkCanceled();
+          if (callbackWhileWaiting != null) {
+            callbackWhileWaiting.run();
+          }
+          waitInOtherThread(50, canChangeDocument);
+          EDT.dispatchAllInvocationEvents();
+          Throwable savedException = PassExecutorService.getSavedException(progress);
+          if (savedException != null) throw savedException;
         }
-        waitInOtherThread(50, canChangeDocument);
-        EDT.dispatchAllInvocationEvents();
-        Throwable savedException = PassExecutorService.getSavedException(progress);
-        if (savedException != null) throw savedException;
-      }
-      if (progress.isRunning() && !progress.isCanceled()) {
-        throw new RuntimeException("Highlighting still running after " +(System.currentTimeMillis()-start)/1000 + " seconds." +
-                                   " Still submitted passes: "+myPassExecutorService.getAllSubmittedPasses()+
-                                   " ForkJoinPool.commonPool(): "+ForkJoinPool.commonPool()+"\n"+
-                                   ", ForkJoinPool.commonPool() active thread count: "+ ForkJoinPool.commonPool().getActiveThreadCount()+
-                                   ", ForkJoinPool.commonPool() has queued submissions: "+ ForkJoinPool.commonPool().hasQueuedSubmissions()+
-                                   "\n"+ ThreadDumper.dumpThreadsToString());
-      }
+        if (progress.isRunning() && !progress.isCanceled()) {
+          throw new RuntimeException("Highlighting still running after " +
+                                     (System.currentTimeMillis() - start) / 1000 +
+                                     " seconds." +
+                                     " Still submitted passes: " +
+                                     myPassExecutorService.getAllSubmittedPasses() +
+                                     " ForkJoinPool.commonPool(): " +
+                                     ForkJoinPool.commonPool() +
+                                     "\n" +
+                                     ", ForkJoinPool.commonPool() active thread count: " +
+                                     ForkJoinPool.commonPool().getActiveThreadCount() +
+                                     ", ForkJoinPool.commonPool() has queued submissions: " +
+                                     ForkJoinPool.commonPool().hasQueuedSubmissions() +
+                                     "\n" +
+                                     ThreadDumper.dumpThreadsToString());
+        }
 
-      if (!waitInOtherThread(60000, canChangeDocument)) {
-        throw new TimeoutException("Unable to complete in 60s. Thread dump:\n"+ThreadDumper.dumpThreadsToString());
+        if (!waitInOtherThread(60000, canChangeDocument)) {
+          throw new TimeoutException("Unable to complete in 60s. Thread dump:\n" + ThreadDumper.dumpThreadsToString());
+        }
+        ((HighlightingSessionImpl)session).waitForHighlightInfosApplied();
+        EDT.dispatchAllInvocationEvents();
+        EDT.dispatchAllInvocationEvents();
+        assert progress.isCanceled() && progress.isDisposed();
       }
-      ((HighlightingSessionImpl)session).waitForHighlightInfosApplied();
-      EDT.dispatchAllInvocationEvents();
-      EDT.dispatchAllInvocationEvents();
-      assert progress.isCanceled() && progress.isDisposed();
-    }
-    catch (Throwable e) {
-      Throwable unwrapped = ExceptionUtilRt.unwrapException(e, ExecutionException.class);
-      if (progress.isCanceled() && progress.isRunning()) {
-        unwrapped.addSuppressed(new RuntimeException("Daemon progress was canceled unexpectedly: " + progress));
+      catch (Throwable e) {
+        Throwable unwrapped = ExceptionUtilRt.unwrapException(e, ExecutionException.class);
+        if (progress.isCanceled() && progress.isRunning()) {
+          unwrapped.addSuppressed(new RuntimeException("Daemon progress was canceled unexpectedly: " + progress));
+        }
+        ExceptionUtil.rethrow(unwrapped);
       }
-      ExceptionUtil.rethrow(unwrapped);
-    }
-    finally {
-      DaemonProgressIndicator.setDebug(false);
-      fileStatusMap.allowDirt(true);
-      progress.cancel();
-      waitForTermination();
-    }
+      finally {
+        DaemonProgressIndicator.setDebug(false);
+        fileStatusMap.allowDirt(true);
+        progress.cancel();
+        waitForTermination();
+      }
+      return null;
+    });
   }
 
   @TestOnly

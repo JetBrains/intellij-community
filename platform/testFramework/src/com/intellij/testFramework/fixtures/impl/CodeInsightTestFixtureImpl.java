@@ -84,8 +84,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -259,50 +257,48 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     ProjectInspectionProfileManager.getInstance(project); // avoid "severities changed, restart" event
 
-    return ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(() -> {
-      ProcessCanceledException exception = null;
-      int retries = 1000;
-      for (int i = 0; i < retries; i++) {
-        int oldDelay = settings.getAutoReparseDelay();
-        try {
-          settings.setAutoReparseDelay(0);
-          List<HighlightInfo> infos = new ArrayList<>();
-          EdtTestUtil.runInEdtAndWait(() -> {
-            codeAnalyzer.runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), toIgnore, canChangeDocument, null);
-            IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
-            if (policy != null) {
-              policy.waitForHighlighting(project, editor);
-            }
-            IdentifierHighlighterPassFactory.waitForIdentifierHighlighting();
-            infos.addAll(DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), null, project));
-            if (readEditorMarkupModel) {
-              MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
-              DaemonCodeAnalyzerEx.processHighlights(markupModel, project, null, 0, editor.getDocument().getTextLength(),
-                                                     Processors.cancelableCollectProcessor(infos));
-            }
-          });
-          infos.addAll(DaemonCodeAnalyzerEx.getInstanceEx(project).getFileLevelHighlights(project, file));
-          return infos;
-        }
-        catch (ProcessCanceledException e) {
-          Throwable cause = e.getCause();
-          if (cause != null && cause.getClass() != Throwable.class) {
-            // canceled because of an exception, no need to repeat the same
-            throw e;
+    ProcessCanceledException exception = null;
+    int retries = 1000;
+    for (int i = 0; i < retries; i++) {
+      int oldDelay = settings.getAutoReparseDelay();
+      try {
+        settings.setAutoReparseDelay(0);
+        List<HighlightInfo> infos = new ArrayList<>();
+        EdtTestUtil.runInEdtAndWait(() -> {
+          codeAnalyzer.runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), toIgnore, canChangeDocument, null);
+          IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+          if (policy != null) {
+            policy.waitForHighlighting(project, editor);
           }
-
-          EdtTestUtil.runInEdtAndWait(() -> {
-            PsiDocumentManager.getInstance(project).commitAllDocuments();
-            UIUtil.dispatchAllInvocationEvents();
-          });
-          exception = e;
-        }
-        finally {
-          settings.setAutoReparseDelay(oldDelay);
-        }
+          IdentifierHighlighterPassFactory.waitForIdentifierHighlighting();
+          infos.addAll(DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), null, project));
+          if (readEditorMarkupModel) {
+            MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
+            DaemonCodeAnalyzerEx.processHighlights(markupModel, project, null, 0, editor.getDocument().getTextLength(),
+                                                   Processors.cancelableCollectProcessor(infos));
+          }
+        });
+        infos.addAll(DaemonCodeAnalyzerEx.getInstanceEx(project).getFileLevelHighlights(project, file));
+        return infos;
       }
-      throw new AssertionError("Unable to highlight after " + retries + " retries", exception);
-    });
+      catch (ProcessCanceledException e) {
+        Throwable cause = e.getCause();
+        if (cause != null && cause.getClass() != Throwable.class) {
+          // canceled because of an exception, no need to repeat the same
+          throw e;
+        }
+
+        EdtTestUtil.runInEdtAndWait(() -> {
+          PsiDocumentManager.getInstance(project).commitAllDocuments();
+          UIUtil.dispatchAllInvocationEvents();
+        });
+        exception = e;
+      }
+      finally {
+        settings.setAutoReparseDelay(oldDelay);
+      }
+    }
+    throw new AssertionError("Unable to highlight after " + retries + " retries", exception);
   }
 
   public static void ensureIndexesUpToDate(@NotNull Project project) {
