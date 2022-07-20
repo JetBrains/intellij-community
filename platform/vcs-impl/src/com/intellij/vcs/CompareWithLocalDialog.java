@@ -224,7 +224,10 @@ public class CompareWithLocalDialog {
         return new MyFileContentProvider(change, browser.myLocalContent);
       });
       GetVersionAction.doGet(project, VcsBundle.message("compare.with.dialog.get.from.vcs.action.title"), fileContentProviders,
-                             () -> changesPanel.reloadChanges());
+                             () -> {
+                               FileDocumentManager.getInstance().saveAllDocuments();
+                               changesPanel.reloadChanges();
+                             });
     }
 
     private static class MyFileContentProvider implements FileRevisionProvider {
