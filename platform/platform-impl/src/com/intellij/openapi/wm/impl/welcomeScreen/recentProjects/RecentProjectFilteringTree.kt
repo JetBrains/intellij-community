@@ -95,6 +95,8 @@ internal class RecentProjectFilteringTree(
       setExpandableItemsEnabled(false)
       UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
     }
+
+    searchModel.updateStructure()
   }
 
   fun updateTree() {
