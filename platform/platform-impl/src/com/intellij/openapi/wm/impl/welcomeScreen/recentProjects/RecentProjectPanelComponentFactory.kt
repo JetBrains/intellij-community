@@ -26,6 +26,7 @@ internal object RecentProjectPanelComponentFactory {
     val tree = Tree()
     val filteringTree = RecentProjectFilteringTree(tree, parentDisposable, collectors).apply {
       installSearchField()
+      expandGroups()
     }
 
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).apply {

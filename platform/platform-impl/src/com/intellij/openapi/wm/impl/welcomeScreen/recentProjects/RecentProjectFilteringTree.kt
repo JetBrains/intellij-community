@@ -113,10 +113,6 @@ class RecentProjectFilteringTree(
 
   override fun createNode(item: RecentProjectTreeItem): DefaultMutableTreeNode = DefaultMutableTreeNode(item)
 
-  override fun rebuildTree() {
-    expandGroups()
-  }
-
   override fun createSpeedSearch(searchTextField: SearchTextField): SpeedSearchSupply = object : FilteringSpeedSearch(searchTextField) {}
 
   override fun installSearchField(): SearchTextField {
@@ -159,7 +155,7 @@ class RecentProjectFilteringTree(
     return RecentProjectPanel.FilePathChecker(treeUpdater, recentProjects.map { it.projectPath })
   }
 
-  private fun expandGroups() {
+  internal fun expandGroups() {
     for (child in root.children()) {
       val treeNode = child as DefaultMutableTreeNode
       val item = treeNode.userObject
