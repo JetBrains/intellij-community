@@ -60,6 +60,7 @@ internal class GradleTestFixtureImpl private constructor(
     GradleTestFixtureFactory.getFixtureFactory().createGradleJvmTestFixture(gradleVersion),
     GradleTestFixtureFactory.getFixtureFactory().createFileTestFixture("GradleTestFixture/$gradleVersion/$projectName") {
       configureProject()
+      excludeFiles(".gradle", "build")
       withFiles { generateWrapper(it, gradleVersion) }
       withFiles { runBlocking { createProjectCaches(it) } }
     }
