@@ -67,6 +67,7 @@ public abstract class CommitSelectionListener<T extends VcsCommitMetadata> imple
       }, t -> {
         if (myLastRequest == indicator && !(indicator.isCanceled())) {
           myLastRequest = null;
+          LOG.error("Error loading details for selection " + Arrays.toString(toLoad), t);
           onError(t);
           onLoadingStopped();
         }
