@@ -51,7 +51,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
       return;
     }
 
-    JBIterable<Change> changes = JBIterable.from(e.getData(VcsDataKeys.CHANGES));
+    JBIterable<Change> changes = JBIterable.of(e.getData(VcsDataKeys.CHANGES));
     JBIterable<FilePath> unversionedFiles = JBIterable.from(e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY));
 
     if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
