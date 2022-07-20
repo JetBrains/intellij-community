@@ -47,6 +47,10 @@ public class CreateSwitchTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testBoxedType() {
+    doTest();
+  }
+
   public void testNotAvailable() {
     doTestNotAvailable();
   }
