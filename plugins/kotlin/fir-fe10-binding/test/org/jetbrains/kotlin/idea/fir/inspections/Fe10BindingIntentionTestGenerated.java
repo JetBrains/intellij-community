@@ -784,4 +784,107 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
             runTest("../idea/tests/testData/intentions/convertTryFinallyToUseCall/wrongCaret.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods")
+    public static class RemoveRedundantCallsOfConversionMethods extends AbstractFe10BindingIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("booleanToInt.kt")
+        public void testBooleanToInt() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/booleanToInt.kt");
+        }
+
+        @TestMetadata("byte.kt")
+        public void testByte() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/byte.kt");
+        }
+
+        @TestMetadata("char.kt")
+        public void testChar() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/char.kt");
+        }
+
+        @TestMetadata("double.kt")
+        public void testDouble() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/double.kt");
+        }
+
+        @TestMetadata("float.kt")
+        public void testFloat() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/float.kt");
+        }
+
+        @TestMetadata("int.kt")
+        public void testInt() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/int.kt");
+        }
+
+        @TestMetadata("long.kt")
+        public void testLong() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/long.kt");
+        }
+
+        @TestMetadata("nullable.kt")
+        public void testNullable() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/nullable.kt");
+        }
+
+        @TestMetadata("nullable2.kt")
+        public void testNullable2() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/nullable2.kt");
+        }
+
+        @TestMetadata("safeString.kt")
+        public void testSafeString() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/safeString.kt");
+        }
+
+        @TestMetadata("safeString2.kt")
+        public void testSafeString2() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/safeString2.kt");
+        }
+
+        @TestMetadata("short.kt")
+        public void testShort() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/short.kt");
+        }
+
+        @TestMetadata("string.kt")
+        public void testString() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/string.kt");
+        }
+
+        @TestMetadata("toOtherType.kt")
+        public void testToOtherType() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/toOtherType.kt");
+        }
+
+        @TestMetadata("uByte.kt")
+        public void testUByte() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/uByte.kt");
+        }
+
+        @TestMetadata("uInt.kt")
+        public void testUInt() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/uInt.kt");
+        }
+
+        @TestMetadata("uLong.kt")
+        public void testULong() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/uLong.kt");
+        }
+
+        @TestMetadata("uShort.kt")
+        public void testUShort() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/uShort.kt");
+        }
+
+        @TestMetadata("variable.kt")
+        public void testVariable() throws Exception {
+            runTest("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods/variable.kt");
+        }
+    }
 }
