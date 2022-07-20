@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
@@ -43,7 +42,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
 
@@ -95,15 +93,7 @@ public final class FSRecords {
   }
 
   private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET");
-  static final ReentrantReadWriteLock lock;
-  private static final ReentrantReadWriteLock.ReadLock r;
-  private static final ReentrantReadWriteLock.WriteLock w;
-
-  static {
-    lock = new ReentrantReadWriteLock();
-    r = lock.readLock();
-    w = lock.writeLock();
-  }
+  private static final FineGrainedIdLock updateLock = new FineGrainedIdLock();
 
   /**
    * @return nameId > 0
@@ -206,11 +196,15 @@ public final class FSRecords {
   }
 
   static void deleteRecordRecursively(int id) {
-    writeAndHandleErrors(() -> {
-      ourNamesIndexModCount.incrementAndGet();
+    ourNamesIndexModCount.incrementAndGet();
+    try {
       incModCount(id);
       markAsDeletedRecursively(id);
-    });
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   private static void markAsDeletedRecursively(int id) throws IOException {
@@ -276,19 +270,43 @@ public final class FSRecords {
   }
 
   static int findRootRecord(@NotNull String rootUrl) {
-    return writeAndHandleErrors(() -> ourTreeAccessor.findOrCreateRootRecord(rootUrl, () -> createRecord()));
+    try {
+      return ourTreeAccessor.findOrCreateRootRecord(rootUrl);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   static void loadRootData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) {
-    writeAndHandleErrors(() -> ourTreeAccessor.loadRootData(id, path, fs));
+    try {
+      ourTreeAccessor.loadRootData(id, path, fs);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   static void loadDirectoryData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) {
-    writeAndHandleErrors(() -> ourTreeAccessor.loadDirectoryData(id, path, fs));
+    try {
+      ourTreeAccessor.loadDirectoryData(id, path, fs);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   static void deleteRootRecord(int fileId) {
-    writeAndHandleErrors(() -> ourTreeAccessor.deleteRootRecord(fileId));
+    try {
+      ourTreeAccessor.deleteRootRecord(fileId);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   public static int @NotNull [] listIds(int fileId) {
@@ -338,73 +356,6 @@ public final class FSRecords {
     }
   }
 
-  static <T> T read(@NotNull ThrowableComputable<T, ? extends Exception> action) {
-    // otherwise DbConnection.handleError(e) (requires write lock) could fail
-    if (lock.getReadHoldCount() != 0) {
-      try {
-        return action.compute();
-      }
-      catch (Exception ex) {
-        throw new RuntimeException(ex);
-      }
-    }
-
-    try {
-      r.lock();
-      try {
-        return action.compute();
-      }
-      finally {
-        r.unlock();
-      }
-    }
-    catch (ProcessCanceledException e) {
-      // long reads like processXXX can be safely cancelled
-      throw e;
-    }
-    catch (Throwable e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  static <T> T writeAndHandleErrors(@NotNull ThrowableComputable<T, ?> action) {
-    w.lock();
-    try {
-      return action.compute();
-    }
-    catch (Throwable e) {
-      handleError(e);
-      throw new RuntimeException(e);
-    }
-    finally {
-      w.unlock();
-    }
-  }
-
-  private static void writeAndHandleErrors(@NotNull ThrowableRunnable<?> action) {
-    w.lock();
-    try {
-      action.run();
-    }
-    catch (Throwable e) {
-      handleError(e);
-      throw new RuntimeException(e);
-    }
-    finally {
-      w.unlock();
-    }
-  }
-
-  static <T extends Exception> void write(@NotNull ThrowableRunnable<T> action) throws T {
-    w.lock();
-    try {
-      action.run();
-    }
-    finally {
-      w.unlock();
-    }
-  }
-
   // Perform operation on children and save the list atomically:
   // Obtain fresh children and try to apply `childrenConvertor` to the children of `parentId`.
   // If everything is still valid (i.e. no one changed the list in the meantime), commit.
@@ -415,7 +366,7 @@ public final class FSRecords {
     ListResult children = list(parentId);
     ListResult result = childrenConvertor.apply(children);
 
-    w.lock();
+    updateLock.lock(parentId);
     try {
       ListResult toSave;
       // optimization: if the children were never changed after list(), do not check for duplicates again
@@ -448,7 +399,7 @@ public final class FSRecords {
       return result;
     }
     finally {
-      w.unlock();
+      updateLock.unlock(parentId);
     }
   }
 
@@ -456,30 +407,43 @@ public final class FSRecords {
     assert fromParentId > 0: fromParentId;
     assert toParentId > 0: toParentId;
 
-    w.lock();
+    if (fromParentId == toParentId) return;
+
+    int minId = Math.min(fromParentId, toParentId);
+    int maxId = Math.max(fromParentId, toParentId);
+
+    updateLock.lock(minId);
     try {
-      final ListResult children = list(fromParentId);
+      updateLock.lock(maxId);
+      try {
+        try {
+          final ListResult children = list(fromParentId);
 
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Move children from " + fromParentId + " to " + toParentId + "; children = " + children);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Move children from " + fromParentId + " to " + toParentId + "; children = " + children);
+          }
+
+          incModCount(toParentId);
+          ourTreeAccessor.doSaveChildren(toParentId, children);
+
+          incModCount(fromParentId);
+          ourTreeAccessor.doSaveChildren(fromParentId, new ListResult(Collections.emptyList(), fromParentId));
+        }
+        catch (ProcessCanceledException e) {
+          // NewVirtualFileSystem.list methods can be interrupted now
+          throw e;
+        }
+        catch (Throwable e) {
+          handleError(e);
+          ExceptionUtil.rethrow(e);
+        }
       }
-
-      incModCount(toParentId);
-      ourTreeAccessor.doSaveChildren(toParentId, children);
-
-      incModCount(fromParentId);
-      ourTreeAccessor.doSaveChildren(fromParentId, new ListResult(Collections.emptyList(), fromParentId));
-    }
-    catch (ProcessCanceledException e) {
-      // NewVirtualFileSystem.list methods can be interrupted now
-      throw e;
-    }
-    catch (Throwable e) {
-      handleError(e);
-      ExceptionUtil.rethrow(e);
+      finally {
+        updateLock.unlock(maxId);
+      }
     }
     finally {
-      w.unlock();
+      updateLock.unlock(minId);
     }
   }
 
@@ -550,8 +514,8 @@ public final class FSRecords {
     ourConnection.incModCount(id);
   }
 
-  public static int incGlobalModCount() throws IOException {
-    return ourConnection.incGlobalModCount();
+  public static void incGlobalModCount() throws IOException {
+    ourConnection.incGlobalModCount();
   }
 
   public static int getParent(int id) {
@@ -705,15 +669,14 @@ public final class FSRecords {
 
   @NotNull
   static CharSequence getNameSequence(int id) {
-    int nameId = 0;
     try {
-      nameId = ourConnection.getRecords().getNameId(id);
+      int nameId = ourConnection.getRecords().getNameId(id);
+      return nameId == 0 ? "" : FileNameCache.getVFileName(nameId);
     }
     catch (IOException e) {
       handleError(e);
       throw new RuntimeException(e);
     }
-    return nameId == 0 ? "" : FileNameCache.getVFileName(nameId);
   }
 
   public static CharSequence getNameByNameId(int nameId) {
@@ -731,18 +694,18 @@ public final class FSRecords {
     return nameId == 0 ? "" : ourConnection.getNames().valueOf(nameId);
   }
 
-  /**
-   * @return nameId
-   */
-  static int setName(int fileId, @NotNull String name, int oldNameId) {
-    return writeAndHandleErrors(() -> {
+  static void setName(int fileId, @NotNull String name, int oldNameId) {
+    try {
       ourNamesIndexModCount.incrementAndGet();
       incModCount(fileId);
       int nameId = getNameId(name);
       ourConnection.getRecords().setNameId(fileId, nameId);
       InvertedNameIndex.updateFileName(fileId, nameId, oldNameId);
-      return nameId;
-    });
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   static void setFlags(int id, @PersistentFS.Attributes int flags) {
@@ -974,10 +937,13 @@ public final class FSRecords {
   }
 
   static void checkSanity() {
-    writeAndHandleErrors(() -> {
+    try {
       ourRecordAccessor.checkSanity();
-      return null;
-    });
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   @Contract("_->fail")

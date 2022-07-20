@@ -26,6 +26,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 final class PersistentFSConnection {
@@ -61,7 +62,7 @@ final class PersistentFSConnection {
   /**
    * accessed under {@link #r}/{@link #w}
    */
-  private boolean myCorrupted;
+  private final AtomicBoolean myCorrupted = new AtomicBoolean();
 
   PersistentFSConnection(@NotNull PersistentFSPaths paths,
                          @NotNull PersistentFSRecordsStorage records,
@@ -282,7 +283,7 @@ final class PersistentFSConnection {
     // no synchronization, it's ok to have race here
     if (myDirty) {
       myDirty = false;
-      myRecords.setConnectionStatus(myCorrupted
+      myRecords.setConnectionStatus(myCorrupted.get()
                                     ? PersistentFSHeaders.CORRUPTED_MAGIC
                                     : PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
     }
@@ -295,20 +296,15 @@ final class PersistentFSConnection {
 
   @Contract("_->fail")
   void handleError(@NotNull Throwable e) throws RuntimeException, Error {
-    assert FSRecords.lock.getReadHoldCount() == 0;
-
     // No need to forcibly mark VFS corrupted if it is already shut down
     try {
-      FSRecords.write(() -> {
-        if (!myCorrupted) {
-          createBrokenMarkerFile(e);
-          myCorrupted = true;
-          if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-            showCorruptionNotification();
-          }
-          doForce();
+      if (myCorrupted.compareAndSet(false, true)) {
+        createBrokenMarkerFile(e);
+        if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          showCorruptionNotification();
         }
-      });
+        doForce();
+      }
     }
     catch (IOException ioException) {
       LOG.error(ioException);

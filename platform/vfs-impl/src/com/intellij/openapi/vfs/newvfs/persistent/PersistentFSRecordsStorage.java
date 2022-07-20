@@ -79,7 +79,7 @@ abstract class PersistentFSRecordsStorage {
 
   abstract void setContentRecordId(int fileId, int recordId) throws IOException;
 
-  abstract int getFlags(int fileId) throws IOException;
+  abstract @PersistentFS.Attributes int getFlags(int fileId) throws IOException;
 
   abstract void setAttributesAndIncModCount(int fileId, long timestamp, long length, int flags, int nameId, int parentId, boolean overwriteMissed) throws IOException;
 
