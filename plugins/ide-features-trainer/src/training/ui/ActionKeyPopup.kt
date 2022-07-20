@@ -3,6 +3,7 @@ package training.ui
 
 import com.intellij.execution.target.TargetEnvironmentWizardStepKt
 import com.intellij.ide.plugins.newui.VerticalLayout
+import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions
@@ -16,7 +17,6 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
 import training.learn.LearnBundle
 import training.statistic.StatisticBase
-import training.util.KeymapUtil
 import training.util.getActionById
 import training.util.invokeActionForFocusContext
 import java.awt.Component
@@ -36,7 +36,7 @@ internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, ac
   val shortcuts = KeymapManager.getInstance().activeKeymap.getShortcuts(actionId)
   for (shortcut in shortcuts) {
     if (shortcut is KeyboardShortcut) {
-      @NonNls val keyStrokeText = KeymapUtil.getKeyboardShortcutData(shortcut).first
+      @NonNls val keyStrokeText = ShortcutsRenderingUtil.getKeyboardShortcutData(shortcut).first
       val shortcutLabel = JLabel(keyStrokeText).also {
         it.font = it.font.deriveFont((it.font.size - 1).toFloat())
         it.foreground = JBUI.CurrentTheme.Tooltip.shortcutForeground()

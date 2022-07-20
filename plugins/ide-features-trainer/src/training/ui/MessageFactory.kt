@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui
 
+import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.Strings
@@ -9,7 +10,6 @@ import org.jdom.Element
 import org.jdom.Text
 import org.jdom.output.XMLOutputter
 import training.dsl.LessonUtil
-import training.util.KeymapUtil
 import training.util.openLinkInBrowser
 import java.util.regex.Pattern
 import javax.swing.KeyStroke
@@ -101,19 +101,19 @@ internal object MessageFactory {
             type = MessagePart.MessageType.SHORTCUT
             link = text
             textAndSplitFn = {
-              val shortcutByActionId = KeymapUtil.getShortcutByActionId(text)
+              val shortcutByActionId = ShortcutsRenderingUtil.getShortcutByActionId(text)
               if (shortcutByActionId != null) {
-                KeymapUtil.getKeyboardShortcutData(shortcutByActionId)
+                ShortcutsRenderingUtil.getKeyboardShortcutData(shortcutByActionId)
               }
               else {
-                KeymapUtil.getGotoActionData(text)
+                ShortcutsRenderingUtil.getGotoActionData(text)
               }
             }
           }
           "raw_shortcut" -> {
             type = MessagePart.MessageType.SHORTCUT
             textAndSplitFn = {
-              KeymapUtil.getKeyStrokeData(KeyStroke.getKeyStroke(text))
+              ShortcutsRenderingUtil.getKeyStrokeData(KeyStroke.getKeyStroke(text))
             }
           }
           "ide" -> {

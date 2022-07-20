@@ -1,17 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package training.util
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.ui.text
 
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
-object KeymapUtil {
+@ApiStatus.Experimental
+@ApiStatus.Internal
+object ShortcutsRenderingUtil {
 
   /**
    * @param actionId
@@ -109,7 +113,7 @@ object KeymapUtil {
   fun getGotoActionData(@NonNls actionId: String): Pair<String, List<IntRange>> {
     val gotoActionShortcut = getShortcutByActionId("GotoAction")
     val gotoAction = getKeyboardShortcutData(gotoActionShortcut)
-    val actionName = getActionById(actionId).templatePresentation.text.replaceSpacesWithNonBreakSpace()
+    val actionName = ActionManager.getInstance().getAction(actionId).templatePresentation.text.replace(" ", "\u00A0")
     val updated = ArrayList<IntRange>(gotoAction.second)
     val start = gotoAction.first.length + 5
     updated.add(IntRange(start, start + actionName.length - 1))
