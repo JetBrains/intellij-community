@@ -1,4 +1,4 @@
-// "Add on-demand static import for 'java.lang.annotation.ElementType'" "true"
+// "Add on-demand static import for 'java.lang.annotation.ElementType'" "true-preview"
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 

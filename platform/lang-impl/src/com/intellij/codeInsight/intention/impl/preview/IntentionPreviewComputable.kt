@@ -147,7 +147,9 @@ internal class IntentionPreviewComputable(private val project: Project,
         .postponeFormattingInside { action.invoke(project, editorCopy, psiFileCopy) }
       info = IntentionPreviewInfo.DIFF
     }
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(psiFileCopy.viewProvider.document)
+    val manager = PsiDocumentManager.getInstance(project)
+    manager.commitDocument(editorCopy.document)
+    manager.doPostponedOperationsAndUnblockDocument(editorCopy.document)
     return Pair(info, psiFileCopy)
   }
 

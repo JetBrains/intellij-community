@@ -1,4 +1,4 @@
-// "Assert 'container != null'" "true"
+// "Assert 'container != null'" "true-preview"
 import java.util.function.Supplier;
 
 class A{

@@ -1,4 +1,4 @@
-// "Cast qualifier to 'java.lang.String'" "true"
+// "Cast qualifier to 'java.lang.String'" "true-preview"
 class Test {
   void m(Object o) {
     if (o instanceof String) {

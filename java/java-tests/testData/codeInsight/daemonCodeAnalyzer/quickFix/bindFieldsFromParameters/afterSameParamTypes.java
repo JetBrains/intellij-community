@@ -1,4 +1,4 @@
-// "Bind constructor parameters to fields" "true"
+// "Bind constructor parameters to fields" "true-preview"
 
 class A{
     private final String myOldClass;

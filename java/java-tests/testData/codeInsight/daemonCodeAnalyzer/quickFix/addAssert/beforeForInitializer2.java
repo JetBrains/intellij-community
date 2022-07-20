@@ -1,4 +1,4 @@
-// "Assert 'container != null'" "true"
+// "Assert 'container != null'" "true-preview"
 class A{
   void test(){
     Integer container = null;

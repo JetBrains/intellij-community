@@ -1,4 +1,4 @@
-// "Add on-demand static import for 'java.util.Arrays'" "true"
+// "Add on-demand static import for 'java.util.Arrays'" "true-preview"
 package test;
 
 import java.util.*;

@@ -1,4 +1,4 @@
-// "Add static import for 'test.Calendar.getInstance'" "true"
+// "Add static import for 'test.Calendar.getInstance'" "true-preview"
 package test;
 
 public class Foo {

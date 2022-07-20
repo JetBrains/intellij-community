@@ -1,4 +1,4 @@
-// "Add on-demand static import for 'test.Test.Letter'" "true"
+// "Add on-demand static import for 'test.Test.Letter'" "true-preview"
 package test;
 
 import static test.Test.Letter.*;

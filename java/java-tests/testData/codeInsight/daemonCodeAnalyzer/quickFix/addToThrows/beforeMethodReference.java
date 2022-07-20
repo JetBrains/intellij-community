@@ -1,4 +1,4 @@
-// "Add exception to method signature" "true"
+// "Add exception to method signature" "true-preview"
 class C {
   public static void main(String[] args){
     I i = C::f<caret>oo;

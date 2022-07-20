@@ -1,4 +1,4 @@
-// "Surround with try/catch" "true"
+// "Surround with try/catch" "true-preview"
 class Test {
 
   interface I<E extends Exception> {

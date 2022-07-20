@@ -1,4 +1,4 @@
-// "Replace with method reference" "true"
+// "Replace with method reference" "true-preview"
 import java.util.List;
 import java.util.function.Function;
 

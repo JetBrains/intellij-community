@@ -1,4 +1,4 @@
-// "Replace with lambda" "true"
+// "Replace with lambda" "true-preview"
 
 import java.util.function.Consumer;
 

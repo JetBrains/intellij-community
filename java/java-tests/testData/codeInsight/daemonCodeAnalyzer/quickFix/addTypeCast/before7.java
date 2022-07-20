@@ -1,4 +1,4 @@
-// "Cast to 'char'" "true"
+// "Cast to 'char'" "true-preview"
 class a {
  void f() {
    double d = 4;

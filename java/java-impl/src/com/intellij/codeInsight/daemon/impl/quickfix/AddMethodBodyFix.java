@@ -52,12 +52,6 @@ public final class AddMethodBodyFix implements IntentionActionWithFixAllOption {
            BaseIntentionAction.canModify(myMethod);
   }
 
-  @NotNull
-  @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myMethod;
-  }
-
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     PsiUtil.setModifierProperty(myMethod, PsiModifier.ABSTRACT, false);

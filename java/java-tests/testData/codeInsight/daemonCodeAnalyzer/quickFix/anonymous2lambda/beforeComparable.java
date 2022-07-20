@@ -1,4 +1,4 @@
-// "Replace with lambda" "true"
+// "Replace with lambda" "true-preview"
 class Test {
   {
     Comparable<String> c = new Compa<caret>rable<String>() {

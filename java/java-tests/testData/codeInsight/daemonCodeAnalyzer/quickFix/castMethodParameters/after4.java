@@ -1,4 +1,4 @@
-// "Cast 1st argument to 'char'" "true"
+// "Cast 1st argument to 'char'" "true-preview"
 class a {
     private void test()  {}
     private void test(int i)  {}

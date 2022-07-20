@@ -1,4 +1,4 @@
-// "Make annotation applicable to fields" "true"
+// "Make annotation applicable to fields" "true-preview"
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 

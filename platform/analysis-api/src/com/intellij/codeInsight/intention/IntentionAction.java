@@ -8,6 +8,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -139,7 +140,9 @@ public interface IntentionAction extends FileModifier {
   default @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!startInWriteAction()) return IntentionPreviewInfo.EMPTY;
     var copy = ObjectUtils.tryCast(getFileModifierForPreview(file), IntentionAction.class);
-    if (copy == null || copy.getElementToMakeWritable(file) != file) return IntentionPreviewInfo.FALLBACK_DIFF;
+    if (copy == null) return IntentionPreviewInfo.FALLBACK_DIFF;
+    PsiElement writable = copy.getElementToMakeWritable(file);
+    if (writable == null || writable.getContainingFile() != file) return IntentionPreviewInfo.FALLBACK_DIFF;
     copy.invoke(project, editor, file);
     return IntentionPreviewInfo.DIFF;
   }
