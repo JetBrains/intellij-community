@@ -92,9 +92,6 @@ class ModulesByLinkedKeyCache(private val project: Project): Disposable, Workspa
             val busConnection = project.messageBus.connect(this)
             WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, this)
         }
-
-        // force calculations
-        get("")
     }
 
     operator fun get(key: String): Module? =
@@ -114,6 +111,8 @@ class ModulesByLinkedKeyCache(private val project: Project): Disposable, Workspa
         cache.run(block)
 
     override fun beforeChanged(event: VersionedStorageChange) {
+        if (useCache { it.isEmpty() } == true) return
+
         val storageBefore = event.storageBefore
         val storageAfter = event.storageAfter
         val changes = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
