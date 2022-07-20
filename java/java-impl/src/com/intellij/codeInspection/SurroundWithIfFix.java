@@ -1,36 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaWithIfSurrounder;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.trivialif.MergeIfAndIntention;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -61,35 +40,14 @@ public class SurroundWithIfFix implements LocalQuickFix {
       final PsiCodeBlock body = CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)anchorStatement.getParent());
       anchorStatement = body.getStatements()[0];
     }
-    Editor editor = PsiEditorUtil.findEditor(anchorStatement);
-    if (editor == null) return;
-    PsiFile file = anchorStatement.getContainingFile();
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    Document document = documentManager.getDocument(file);
-    if (document == null) return;
     PsiElement[] elements = {anchorStatement};
     PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(anchorStatement);
     if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
-      elements = new PsiElement[]{prev, anchorStatement};
+      elements = new PsiElement[] {prev, anchorStatement};
     }
-    try {
-      TextRange textRange = new JavaWithIfSurrounder().surroundElements(project, editor, elements);
-      if (textRange == null) return;
-
-      @NonNls String newText = myText + mySuffix;
-      document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),newText);
-
-      editor.getCaretModel().moveToOffset(textRange.getEndOffset() + newText.length());
-
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-      new MergeIfAndIntention().invoke(project, editor, file);
-
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    final PsiIfStatement ifStatement = new JavaWithIfSurrounder()
+      .surroundStatements(project, anchorStatement.getParent(), elements, myText + mySuffix);
+    new MergeIfAndIntention().processIntention(ifStatement.getFirstChild());
   }
 
   @Override

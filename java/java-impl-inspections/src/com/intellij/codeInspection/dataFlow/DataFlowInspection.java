@@ -146,7 +146,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       if (!alwaysFails && !SideEffectChecker.mayHaveSideEffects(operand) && CodeBlockSurrounder.canSurround(castExpression)) {
         String suffix = " instanceof " + typeElement.getText();
         fixes.add(new AddAssertStatementFix(ParenthesesUtils.getText(operand, PsiPrecedenceUtil.RELATIONAL_PRECEDENCE) + suffix));
-        if (onTheFly && SurroundWithIfFix.isAvailable(operand)) {
+        if (SurroundWithIfFix.isAvailable(operand)) {
           fixes.add(new SurroundWithIfFix(operand, suffix));
         }
       }
@@ -194,7 +194,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
           fixes.add(new AddAssertStatementFix(replacement));
         }
 
-        if (onTheFly && SurroundWithIfFix.isAvailable(qualifier)) {
+        if (SurroundWithIfFix.isAvailable(qualifier)) {
           fixes.add(new SurroundWithIfFix(qualifier, suffix));
         }
 
