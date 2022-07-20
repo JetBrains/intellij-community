@@ -45,8 +45,10 @@ public class KotlinSurrounderUtils {
     }
 
     public static void showErrorHint(
-            @NotNull Project project, @NotNull Editor editor,
-            @NlsContexts.DialogMessage @NotNull String message, @NlsContexts.DialogTitle @NotNull String title,
+            @NotNull Project project,
+            @NotNull Editor editor,
+            @NlsContexts.DialogMessage @NotNull String message,
+            @NlsContexts.DialogTitle @NotNull String title,
             @Nullable String helpId
     ) {
         if (ApplicationManager.getApplication().isUnitTestMode()) throw new CommonRefactoringUtil.RefactoringErrorHintException(message);

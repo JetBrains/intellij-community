@@ -14,9 +14,10 @@ import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
-import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils
+import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.core.util.findElementsOfClassInRange
 import org.jetbrains.kotlin.idea.debugger.findElementAtLine
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -30,7 +31,6 @@ import org.jetbrains.kotlin.resolve.inline.INLINE_ONLY_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import java.util.*
-import org.jetbrains.kotlin.idea.core.util.findElementsOfClassInRange
 
 interface KotlinBreakpointType
 
@@ -135,7 +135,7 @@ fun computeLineBreakpointVariants(
         val isLambdaResult = bodyExpression is KtLambdaExpression && bodyExpression.functionLiteral in lambdas
 
         if (!isLambdaResult) {
-            val variantElement = CodeInsightUtils.getTopmostElementAtOffset(elementAt, pos.offset)
+            val variantElement = getTopmostElementAtOffset(elementAt, pos.offset)
             result.add(kotlinBreakpointType.LineKotlinBreakpointVariant(position, variantElement, -1))
             mainMethodAdded = true
         }

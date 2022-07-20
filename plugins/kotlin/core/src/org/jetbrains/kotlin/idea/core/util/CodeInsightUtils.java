@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.core.util;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiUtils;
 
 public class CodeInsightUtils {
     /**
@@ -11,6 +12,6 @@ public class CodeInsightUtils {
     @NotNull
     @Deprecated
     public static PsiElement getTopmostElementAtOffset(@NotNull PsiElement element, int offset) {
-        return org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils.getTopmostElementAtOffset(element, offset);
+        return KotlinPsiUtils.getTopmostElementAtOffset(element, offset);
     }
 }

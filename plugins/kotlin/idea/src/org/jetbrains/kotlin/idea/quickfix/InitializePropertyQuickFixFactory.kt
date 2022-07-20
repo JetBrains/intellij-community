@@ -24,10 +24,10 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.runRefactoringAndKeepDelaye
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.appendElement
 import org.jetbrains.kotlin.idea.core.getOrCreateBody
-import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.getDefaultInitializer
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.secondaryConstructors
@@ -43,7 +43,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {
             val element = element ?: return
             val descriptor = element.resolveToDescriptorIfAny() as? PropertyDescriptor ?: return
-            val initializerText = CodeInsightUtils.defaultInitializer(descriptor.type) ?: "TODO()"
+            val initializerText = descriptor.type.getDefaultInitializer() ?: "TODO()"
             val initializer = element.setInitializer(KtPsiFactory(project).createExpression(initializerText))!!
             if (editor != null) {
                 PsiDocumentManager.getInstance(project).commitDocument(editor.document)
@@ -66,7 +66,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
             return object : KotlinChangeSignatureConfiguration {
                 override fun configure(originalDescriptor: KotlinMethodDescriptor): KotlinMethodDescriptor {
                     return originalDescriptor.modify {
-                        val initializerText = CodeInsightUtils.defaultInitializer(propertyDescriptor.type) ?: "null"
+                        val initializerText = propertyDescriptor.type.getDefaultInitializer() ?: "null"
                         val newParam = KotlinParameterInfo(
                             callableDescriptor = originalDescriptor.baseDescriptor,
                             name = propertyDescriptor.name.asString(),
@@ -134,7 +134,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                                 it !is VariableDescriptor || it.name.asString() != name
                             }
                         }
-                        val initializerText = CodeInsightUtils.defaultInitializer(propertyDescriptor.type) ?: "null"
+                        val initializerText = propertyDescriptor.type.getDefaultInitializer() ?: "null"
                         val newParam = KotlinParameterInfo(
                             callableDescriptor = originalDescriptor.baseDescriptor,
                             name = Fe10KotlinNameSuggester.suggestNameByName(propertyDescriptor.name.asString(), validator),

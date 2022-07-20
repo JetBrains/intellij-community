@@ -4,9 +4,15 @@
 
 package org.jetbrains.kotlin.idea.base.psi
 
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.parentsOfType
+import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtPsiUtil
@@ -19,3 +25,99 @@ val KtClassOrObject.classIdIfNonLocal: ClassId?
         if (classesNames.any { it == null }) return null
         return ClassId(packageName, FqName(classesNames.joinToString(separator = ".")), /*local=*/false)
     }
+
+fun getElementAtOffsetIgnoreWhitespaceBefore(file: PsiFile, offset: Int): PsiElement? {
+    val element = file.findElementAt(offset)
+    if (element is PsiWhiteSpace) {
+        return file.findElementAt(element.getTextRange().endOffset)
+    }
+    return element
+}
+
+fun getElementAtOffsetIgnoreWhitespaceAfter(file: PsiFile, offset: Int): PsiElement? {
+    val element = file.findElementAt(offset - 1)
+    if (element is PsiWhiteSpace) {
+        return file.findElementAt(element.getTextRange().startOffset - 1)
+    }
+    return element
+}
+
+fun getStartLineOffset(file: PsiFile, line: Int): Int? {
+    val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return null
+    if (line >= document.lineCount) {
+        return null
+    }
+
+    val lineStartOffset = document.getLineStartOffset(line)
+    return CharArrayUtil.shiftForward(document.charsSequence, lineStartOffset, " \t")
+}
+
+fun getEndLineOffset(file: PsiFile, line: Int): Int? {
+    val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return null
+    if (line >= document.lineCount) {
+        return null
+    }
+
+    val lineStartOffset = document.getLineEndOffset(line)
+    return CharArrayUtil.shiftBackward(document.charsSequence, lineStartOffset, " \t")
+}
+
+fun getTopmostElementAtOffset(element: PsiElement, offset: Int): PsiElement {
+    var node = element
+    do {
+        val parent = node.parent
+        if (parent == null || !parent.isSuitableTopmostElementAtOffset(offset)) {
+            break
+        }
+        node = parent
+    } while (true)
+
+    return node
+}
+
+fun getTopParentWithEndOffset(element: PsiElement, stopAt: Class<*>): PsiElement {
+    var node = element
+    val endOffset = node.textOffset + node.textLength
+    do {
+        val parent = node.parent ?: break
+        if (parent.textOffset + parent.textLength != endOffset) {
+            break
+        }
+
+        node = parent
+        if (stopAt.isInstance(node)) {
+            break
+        }
+    } while (true)
+
+    return node
+}
+
+@SafeVarargs
+@Suppress("UNCHECKED_CAST")
+fun <T> getTopmostElementAtOffset(element: PsiElement, offset: Int, vararg classes: Class<out T>): T? {
+    var node = element
+    var lastElementOfType: T? = null
+    if (classes.anyIsInstance(node)) {
+        lastElementOfType = node as? T
+    }
+
+    do {
+        val parent = node.parent
+        if (parent == null || !parent.isSuitableTopmostElementAtOffset(offset)) {
+            break
+        }
+        if (classes.anyIsInstance(parent)) {
+            lastElementOfType = parent as? T
+        }
+        node = parent
+    } while (true)
+
+    return lastElementOfType
+}
+
+private fun <T> Array<out Class<out T>>.anyIsInstance(element: PsiElement): Boolean =
+    any { it.isInstance(element) }
+
+private fun PsiElement.isSuitableTopmostElementAtOffset(offset: Int): Boolean =
+    textOffset >= offset && this !is KtBlockExpression && this !is PsiFile

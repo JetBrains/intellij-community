@@ -12,7 +12,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils
+import org.jetbrains.kotlin.idea.base.psi.getElementAtOffsetIgnoreWhitespaceAfter
+import org.jetbrains.kotlin.idea.base.psi.getElementAtOffsetIgnoreWhitespaceBefore
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -57,8 +58,8 @@ private fun <T : PsiElement?> findElementOfClassAtRange(file: PsiFile, startOffs
     // But it's PSI looks like: (AT IDENTIFIER):JetLabel
     // So if we search parent starting exactly at IDENTIFIER then we find nothing
     // Solution is to retrieve label if we are on AT or IDENTIFIER
-    val element1 = getParentLabelOrElement(CodeInsightUtils.getElementAtOffsetIgnoreWhitespaceBefore(file, startOffset)) ?: return null
-    val element2 = getParentLabelOrElement(CodeInsightUtils.getElementAtOffsetIgnoreWhitespaceAfter(file, endOffset)) ?: return null
+    val element1 = getParentLabelOrElement(getElementAtOffsetIgnoreWhitespaceBefore(file, startOffset)) ?: return null
+    val element2 = getParentLabelOrElement(getElementAtOffsetIgnoreWhitespaceAfter(file, endOffset)) ?: return null
     val newStartOffset = element1.startOffset
     val newEndOffset = element2.endOffset
     val newElement = PsiTreeUtil.findElementOfClassAtRange(file, newStartOffset, newEndOffset, aClass) ?: return null
@@ -75,8 +76,8 @@ private fun getParentLabelOrElement(element: PsiElement?): PsiElement? =
         element
 
 fun findElements(file: PsiFile, startOffset: Int, endOffset: Int, kind: ElementKind): Array<PsiElement> {
-    var element1 = CodeInsightUtils.getElementAtOffsetIgnoreWhitespaceBefore(file, startOffset) ?: return PsiElement.EMPTY_ARRAY
-    var element2 = CodeInsightUtils.getElementAtOffsetIgnoreWhitespaceAfter(file, endOffset) ?: return PsiElement.EMPTY_ARRAY
+    var element1 = getElementAtOffsetIgnoreWhitespaceBefore(file, startOffset) ?: return PsiElement.EMPTY_ARRAY
+    var element2 = getElementAtOffsetIgnoreWhitespaceAfter(file, endOffset) ?: return PsiElement.EMPTY_ARRAY
     val newStartOffset = element1.startOffset
     val newEndOffset = element2.endOffset
     if (newStartOffset >= newEndOffset) return PsiElement.EMPTY_ARRAY
@@ -106,8 +107,8 @@ fun findElements(file: PsiFile, startOffset: Int, endOffset: Int, kind: ElementK
 
 @SafeVarargs
 fun findElementsOfClassInRange(file: PsiFile, startOffset: Int, endOffset: Int, vararg classes: Class<out PsiElement>): List<PsiElement> {
-    var element1 = CodeInsightUtils.getElementAtOffsetIgnoreWhitespaceBefore(file, startOffset)
-    var element2 = CodeInsightUtils.getElementAtOffsetIgnoreWhitespaceAfter(file, endOffset)
+    var element1 = getElementAtOffsetIgnoreWhitespaceBefore(file, startOffset)
+    var element2 = getElementAtOffsetIgnoreWhitespaceAfter(file, endOffset)
     if (element1 == null || element2 == null) return emptyList()
 
     val newStartOffset = element1.startOffset

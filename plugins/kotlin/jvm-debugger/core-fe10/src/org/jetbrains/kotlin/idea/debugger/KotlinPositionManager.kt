@@ -42,9 +42,10 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
+import org.jetbrains.kotlin.idea.base.psi.getEndLineOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
-import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils
+import org.jetbrains.kotlin.idea.base.psi.getStartLineOffset
+import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
@@ -281,8 +282,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     private fun getLambdaOrFunIfInside(location: Location, file: KtFile, lineNumber: Int): KtFunction? {
         val currentLocationClassName = location.getClassName() ?: return null
 
-        val start = CodeInsightUtils.getStartLineOffset(file, lineNumber)
-        val end = CodeInsightUtils.getEndLineOffset(file, lineNumber)
+        val start = getStartLineOffset(file, lineNumber)
+        val end = getEndLineOffset(file, lineNumber)
         if (start == null || end == null) return null
 
         val literalsOrFunctions = getLambdasAtLineIfAny(file, lineNumber)

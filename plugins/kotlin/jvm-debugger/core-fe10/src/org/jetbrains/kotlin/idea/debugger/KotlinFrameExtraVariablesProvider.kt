@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
-import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils
+import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -110,7 +110,7 @@ private fun shouldSkipLine(file: PsiFile, doc: Document, line: Int): Boolean {
     }
 
     val elemAtOffset = file.findElementAt(start)
-    val topmostElementAtOffset = CodeInsightUtils.getTopmostElementAtOffset(elemAtOffset!!, start)
+    val topmostElementAtOffset = getTopmostElementAtOffset(elemAtOffset!!, start)
     return topmostElementAtOffset !is KtDeclaration
 }
 

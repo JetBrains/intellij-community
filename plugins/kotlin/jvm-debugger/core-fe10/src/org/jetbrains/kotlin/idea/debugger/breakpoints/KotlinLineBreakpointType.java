@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
-import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils;
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle;
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager;
 import org.jetbrains.kotlin.lexer.KtTokens;
@@ -37,6 +36,7 @@ import org.jetbrains.kotlin.psi.*;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.kotlin.idea.base.psi.KotlinPsiUtils.getTopmostElementAtOffset;
 import static org.jetbrains.kotlin.idea.debugger.breakpoints.BreakpointTypeUtilsKt.isBreakpointApplicable;
 
 public class KotlinLineBreakpointType extends JavaLineBreakpointType implements KotlinBreakpointType {
@@ -119,7 +119,7 @@ public class KotlinLineBreakpointType extends JavaLineBreakpointType implements 
     public static boolean inTheMethod(@NotNull SourcePosition pos, @NotNull PsiElement method) {
         PsiElement elem = pos.getElementAt();
         if (elem == null) return false;
-        PsiElement topmostElement = CodeInsightUtils.getTopmostElementAtOffset(elem, elem.getTextRange().getStartOffset());
+        PsiElement topmostElement = getTopmostElementAtOffset(elem, elem.getTextRange().getStartOffset());
         return Comparing.equal(getContainingMethod(topmostElement), method);
     }
 

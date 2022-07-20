@@ -40,7 +40,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
-import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.ClassKind
 import org.jetbrains.kotlin.idea.refactoring.*
@@ -51,6 +50,7 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
+import org.jetbrains.kotlin.idea.util.getDefaultInitializer
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
@@ -928,7 +928,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
         private fun setupEditor(declaration: KtNamedDeclaration) {
             if (declaration is KtProperty && !declaration.hasInitializer() && containingElement is KtBlockExpression) {
                 val defaultValueType = typeCandidates[callableInfo.returnTypeInfo]!!.firstOrNull()?.theType
-                val defaultValue = defaultValueType?.let { CodeInsightUtils.defaultInitializer(it) } ?: "null"
+                val defaultValue = defaultValueType?.let { it.getDefaultInitializer() } ?: "null"
                 val initializer = declaration.setInitializer(KtPsiFactory(declaration).createExpression(defaultValue))!!
                 val range = initializer.textRange
                 containingFileEditor.selectionModel.setSelection(range.startOffset, range.endOffset)
