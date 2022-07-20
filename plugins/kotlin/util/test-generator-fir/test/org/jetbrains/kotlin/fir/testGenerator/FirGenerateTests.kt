@@ -228,6 +228,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("testData/inspectionsLocal/foldInitializerAndIfToElvis", pattern = pattern)
             model("testData/inspectionsLocal/mapGetWithNotNullAssertionOperator", pattern = pattern)
             model("testData/inspectionsLocal/memberVisibilityCanBePrivate", pattern = pattern)
+            model("testData/inspectionsLocal/redundantObjectTypeCheck", pattern = pattern)
         }
     }
 

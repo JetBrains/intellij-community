@@ -1477,4 +1477,42 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/usedInAnnotationOnContainingObject.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/redundantObjectTypeCheck")
+    public static class RedundantObjectTypeCheck extends AbstractFe10BindingLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("isClass.kt")
+        public void testIsClass() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantObjectTypeCheck/isClass.kt");
+        }
+
+        @TestMetadata("isClassWhenEntry.kt")
+        public void testIsClassWhenEntry() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantObjectTypeCheck/isClassWhenEntry.kt");
+        }
+
+        @TestMetadata("isNotObject.kt")
+        public void testIsNotObject() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantObjectTypeCheck/isNotObject.kt");
+        }
+
+        @TestMetadata("isNotObjectWhenEntry.kt")
+        public void testIsNotObjectWhenEntry() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantObjectTypeCheck/isNotObjectWhenEntry.kt");
+        }
+
+        @TestMetadata("isObject.kt")
+        public void testIsObject() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantObjectTypeCheck/isObject.kt");
+        }
+
+        @TestMetadata("isObjectWhenEntry.kt")
+        public void testIsObjectWhenEntry() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantObjectTypeCheck/isObjectWhenEntry.kt");
+        }
+    }
 }
