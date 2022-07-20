@@ -9,15 +9,13 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinInnerClassInheritorsSearcher: QueryExecutorBase<PsiClass, ClassInheritorsSearch.SearchParameters>() {
@@ -48,20 +46,9 @@ class KotlinInnerClassInheritorsSearcher: QueryExecutorBase<PsiClass, ClassInher
     }
 
     private fun processElementInScope(element: PsiElement, classToProcess: PsiClass, consumer: Processor<in PsiClass>): Boolean {
-        val declarations =
-            when (element) {
-                is KtClassOrObject -> element.declarations
-                is KtBlockExpression -> listOf(
-                    *element.getChildrenAsPsiElements(
-                        KtStubElementTypes.DECLARATION_TYPES,
-                        KtDeclaration.ARRAY_FACTORY
-                    )
-                )
-                else -> return true
-            }
-        for (declaration in declarations) {
-            val ktClassOrObject =
-                declaration.safeAs<KtClassOrObject>()?.takeIf { it.superTypeListEntries.isNotEmpty() } ?: continue
+        val classesOrObjects = runReadAction { PsiTreeUtil.findChildrenOfType(element, KtClassOrObject::class.java) }
+        for (ktClassOrObject in classesOrObjects) {
+            if (ktClassOrObject.superTypeListEntries.isEmpty()) continue
             ktClassOrObject.toLightClass()?.let {
                 if (it.isInheritor(classToProcess, true) && !consumer.process(it)) {
                     return false
