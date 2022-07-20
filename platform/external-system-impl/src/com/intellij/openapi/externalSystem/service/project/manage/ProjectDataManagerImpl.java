@@ -167,24 +167,23 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   }
 
   private static void runFinalTasks(@NotNull Project project, boolean synchronous, List<? extends Runnable> tasks) {
-    Runnable runnable = new DisposeAwareProjectChange(project) {
-      @Override
-      public void execute() {
-        for (Runnable task : ContainerUtil.reverse(tasks)) {
-          task.run();
-        }
+    Runnable runnable = () -> {
+      for (Runnable task : ContainerUtil.reverse(tasks)) {
+        task.run();
       }
     };
     if (synchronous) {
       try {
-        runnable.run();
+        if (!project.isDisposed()) {
+          runnable.run();
+        }
       }
       catch (Exception e) {
         LOG.warn(e);
       }
     }
     else {
-      ApplicationManager.getApplication().invokeLater(runnable);
+      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
     }
   }
 
