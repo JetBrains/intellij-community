@@ -58,6 +58,14 @@ class EntityCodeGenTest: KotlinLightCodeInsightFixtureTestCase() {
     doTest()
   }
 
+  fun testEntityWithCollections() {
+    doTest()
+  }
+
+  fun testRefsSetNotSupported() {
+    assertThrows(IllegalStateException::class.java) { doTest() }
+  }
+
   private fun doTest() {
     runWriteActionAndWait {
       CodeWriter.generate(project, getSourceRootVfu(), false) { genFolder }

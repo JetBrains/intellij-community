@@ -18,14 +18,14 @@ val TStructure<*, *>.vfuFields: List<Field<out Obj, Any?>>
 fun ValueType<*>.getRefType(): TRef<*> = when (this) {
   is TRef<*> -> this
   is TOptional<*> -> type.getRefType()
-  is TList<*> -> elementType.getRefType()
+  is TCollection<*, *> -> elementType.getRefType()
   else -> error("Unsupported type of requester, should be called only if `isRefType` is true")
 }
 
 fun ValueType<*>.isRefType(): Boolean = when (this) {
   is TRef<*> -> true
   is TOptional<*> -> type.isRefType()
-  is TList<*> -> elementType.isRefType()
+  is TCollection<*, *> -> elementType.isRefType()
   else -> false
 }
 
@@ -44,7 +44,7 @@ fun ValueType<*>.isList(): Boolean = when (this) {
 fun ValueType<*>.isVfuType(): Boolean = when (this) {
   is TBlob<*> -> javaSimpleName == "VirtualFileUrl"
   is TOptional<*> -> type.isVfuType()
-  is TList<*> -> elementType.isVfuType()
+  is TCollection<*, *> -> elementType.isVfuType()
   else -> false
 }
 

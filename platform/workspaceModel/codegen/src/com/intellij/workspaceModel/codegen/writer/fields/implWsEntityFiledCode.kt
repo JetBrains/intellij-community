@@ -76,6 +76,20 @@ internal fun Field<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, 
                 """.trimIndent()
       }
     }
+    is TSet<*> -> {
+      if (fieldType.isRefType()) {
+        error("Set of references is not supported")
+      }
+      else {
+        val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else ""
+        """
+                @JvmField var $implFieldName: ${fieldType.javaType}? = null
+                override val $javaName: ${fieldType.javaType}$optionalSuffix
+                    get() = $implFieldName$notNullAssertion   
+                
+                """.trimIndent()
+      }
+    }
     is TMap<*, *> -> """
             @JvmField var $implFieldName: ${fieldType.javaType}? = null
             override val $javaName: ${fieldType.javaType}$optionalSuffix

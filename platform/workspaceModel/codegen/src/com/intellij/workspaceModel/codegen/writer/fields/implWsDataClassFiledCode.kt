@@ -1,10 +1,9 @@
 package com.intellij.workspaceModel.codegen.fields
 
-import com.intellij.workspaceModel.codegen.*
-import com.intellij.workspaceModel.codegen.fields.javaType
-import com.intellij.workspaceModel.codegen.isRefType
 import com.intellij.workspaceModel.codegen.deft.*
-import com.intellij.workspaceModel.codegen.deft.Field
+import com.intellij.workspaceModel.codegen.isOverride
+import com.intellij.workspaceModel.codegen.isRefType
+import com.intellij.workspaceModel.codegen.javaName
 
 val Field<*, *>.implWsDataFieldCode: String
   get() = buildString {
@@ -29,7 +28,7 @@ private fun Field<*, *>.implWsDataBlockCode(fieldType: ValueType<*>, name: Strin
     TBoolean -> "var $javaName: ${fieldType.javaType} = false"
     TString -> "lateinit var $javaName: String"
     is TRef -> error("Reference type at EntityData not supported")
-    is TList<*>, is TMap<*, *> -> {
+    is TCollection<*, *>, is TMap<*, *> -> {
       if (fieldType.isRefType()) error("Reference type at EntityData not supported")
       if (!isOptional) {
         "lateinit var $javaName: ${fieldType.javaType}"
@@ -57,7 +56,7 @@ private fun Field<*, *>.implWsDataBlockCode(fieldType: ValueType<*>, name: Strin
 val Field<*, *>.implWsDataFieldInitializedCode: String
   get() = when (type) {
     is TInt, is TBoolean -> ""
-    is TString, is TBlob<*>, is TList<*>, is TMap<*, *> -> {
+    is TString, is TBlob<*>, is TCollection<*, *>, is TMap<*, *> -> {
       val capitalizedFieldName = javaName.replaceFirstChar { it.titlecaseChar() }
       "fun is${capitalizedFieldName}Initialized(): Boolean = ::${javaName}.isInitialized"
     }

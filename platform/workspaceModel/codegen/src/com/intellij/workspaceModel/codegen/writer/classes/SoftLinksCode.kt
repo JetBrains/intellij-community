@@ -71,7 +71,7 @@ internal fun Field<*, *>.hasSoftLinks(simpleTypes: List<DefType>): Boolean {
     is TBlob<*> -> {
       return type.hasSoftLinks(simpleTypes)
     }
-    is TList<*> -> {
+    is TCollection<*, *> -> {
       val elementType = type.elementType
       if (elementType is TBlob<*> && elementType.isPersistentId(simpleTypes)) {
         true
@@ -187,7 +187,7 @@ private fun ValueType<*>.operate(
         processSealedClass(simpleTypes, thisClass, varName, context, operation, generateNewName)
       }
     }
-    is TList<*> -> {
+    is TCollection<*, *> -> {
       val elementType = elementType
 
       context.section("for (item in ${varName})") {
@@ -289,7 +289,7 @@ private fun ValueType<*>.processType(
       }
       return null
     }
-    is TList<*> -> {
+    is TCollection<*, *> -> {
       var name: String? = "${varName.clean()}_data"
       val builder = lines(indent = context.indent) {
         section("val $name = $varName.map") label@{

@@ -1,24 +1,16 @@
 package com.intellij.workspaceModel.codegen.classes
 
+import com.intellij.workspaceModel.codegen.*
+import com.intellij.workspaceModel.codegen.deft.ObjType
+import com.intellij.workspaceModel.codegen.deft.TCollection
+import com.intellij.workspaceModel.codegen.fields.implWsBuilderFieldCode
+import com.intellij.workspaceModel.codegen.fields.implWsBuilderIsInitializedCode
+import com.intellij.workspaceModel.codegen.utils.fqn
+import com.intellij.workspaceModel.codegen.utils.lines
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.codegen.*
-import com.intellij.workspaceModel.codegen.*
-import com.intellij.workspaceModel.codegen.fields.implWsBuilderFieldCode
-import com.intellij.workspaceModel.codegen.fields.implWsBuilderIsInitializedCode
-import com.intellij.workspaceModel.codegen.fields.refsConnectionId
-import com.intellij.workspaceModel.codegen.utils.fqn
-import com.intellij.workspaceModel.codegen.utils.lines
-import com.intellij.workspaceModel.codegen.deft.ObjType
-import com.intellij.workspaceModel.codegen.deft.TList
-import com.intellij.workspaceModel.codegen.deft.TRef
-import com.intellij.workspaceModel.codegen.deft.ExtField
-import java.util.*
-import kotlin.reflect.KClass
-import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.full.memberProperties
 
 fun ObjType<*, *>.implWsEntityBuilderCode(): String {
   return """
@@ -43,7 +35,7 @@ ${
         line("this.id = getEntityData().createEntityId()")
         line()
         list(structure.vfuFields) {
-          val suffix = if (type is TList<*>) ".toHashSet()" else ""
+          val suffix = if (type is TCollection<*, *>) ".toHashSet()" else ""
           "index(this, \"$javaName\", this.$javaName$suffix)"
         }
         if (name == LibraryEntity::class.simpleName) {

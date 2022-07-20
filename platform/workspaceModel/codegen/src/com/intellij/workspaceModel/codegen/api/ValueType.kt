@@ -16,11 +16,15 @@ object TInt : PrimitiveType<Int>()
 
 object TString : AtomicType<String>()
 
-class TList<E>(val elementType: ValueType<E>) : ValueType<List<E>>() {
+abstract class TCollection<E, T: Collection<E>>(val elementType: ValueType<E>): ValueType<T>() {
   override fun link(linker: ObjModule) {
     elementType.link(linker)
   }
 }
+
+class TList<E>(elementType: ValueType<E>) : TCollection<E, List<E>>(elementType)
+
+class TSet<E>(elementType: ValueType<E>) : TCollection<E, Set<E>>(elementType)
 
 class TMap<K, V>(val keyType: ValueType<K>, val valueType: ValueType<V>) : ValueType<Map<K, V>>() {
   override fun link(linker: ObjModule) {

@@ -174,6 +174,24 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
             """.trimIndent()
     }
   }
+  is TSet<*> -> {
+    val elementType = this.elementType
+    if (this.isRefType()) {
+      error("Set of references is not supported")
+    } else {
+      """
+            override var ${field.javaName}: Set<${wsFqn(elementType.javaType)}>
+                get() = getEntityData().${field.javaName}
+                set(value) {
+                    checkModificationAllowed()
+                    getEntityData().${field.javaName} = value
+                    ${elementType.addVirtualFileIndex(field)}
+                    changedProperty.add("${field.javaName}")
+                }
+                
+            """.trimIndent()
+    }
+  }
   is TMap<*, *> -> """
             override var ${field.javaName}: $javaType
                 get() = getEntityData().${field.javaName}
@@ -223,6 +241,14 @@ private fun LinesBuilder.backrefSetup(
       }
       line("// else you're attaching a new entity to an existing entity that is not modifiable")
     }
+    is TSet<*> -> {
+      lineComment("Setting backref of the set")
+      `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*>") {
+        line("val data = ($varName.entityLinks[${EntityLink::class.fqn}($isChild, ${field.refsConnectionId})] as? Set<Any> ?: emptySet()) + this")
+        line("$varName.entityLinks[${EntityLink::class.fqn}($isChild, ${field.refsConnectionId})] = data")
+      }
+      line("// else you're attaching a new entity to an existing entity that is not modifiable")
+    }
     is TOptional<*> -> {
       `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*>") {
         line("$varName.entityLinks[${EntityLink::class.fqn}($isChild, ${field.refsConnectionId})] = this")
@@ -253,8 +279,8 @@ private fun LinesBuilder.backrefListSetup(
 fun LinesBuilder.implWsBuilderIsInitializedCode(field: Field<*, *>) {
   val javaName = field.javaName
   when (field.type) {
-    is TList<*> -> if (field.type.isRefType()) {
-      lineComment("Check initialization for list with ref type")
+    is TCollection<*, *> -> if (field.type.isRefType()) {
+      lineComment("Check initialization for collection with ref type")
       ifElse("_diff != null", {
         `if`("_diff.${fqn2(EntityStorage::extractOneToManyChildren)}<${WorkspaceEntityBase::class.fqn}>(${field.refsConnectionId}, this) == null") {
           line("error(\"Field ${field.owner.name}#$javaName should be initialized\")")

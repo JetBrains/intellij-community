@@ -15,11 +15,13 @@ val ValueType<*>.javaType: String
     TInt -> "Int"
     TString -> "String"
     is TList<*> -> "List<${elementType.javaType}>"
+    is TSet<*> -> "Set<${elementType.javaType}>"
     is TMap<*, *> -> "Map<${keyType.javaType}, ${valueType.javaType}>"
     is TRef -> targetObjType.javaFullName
     is TStructure<*, *> -> box.javaFullName
     is TOptional<*> -> type.javaType + "?"
     is TBlob<*> -> javaSimpleName
+    else -> error("Unsupported type")
   }
 
 val ValueType<*>.javaMutableType: String
@@ -28,11 +30,13 @@ val ValueType<*>.javaMutableType: String
     TInt -> "Int"
     TString -> "String"
     is TList<*> -> "MutableList<${elementType.javaType}>"
+    is TSet<*> -> "MutableSet<${elementType.javaType}>"
     is TMap<*, *> -> "MutableMap<${keyType.javaType}, ${valueType.javaType}>"
     is TRef -> targetObjType.javaFullName
     is TStructure<*, *> -> box.javaFullName
     is TOptional<*> -> type.javaMutableType + "?"
     is TBlob<*> -> javaSimpleName
+    else -> error("Unsupported type")
   }
 
 fun ValueType<*>.unsupportedTypeError(): Nothing = error("Unsupported field type: $this")

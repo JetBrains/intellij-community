@@ -37,6 +37,24 @@ class KtType(
           if (elementType != null) TList(elementType) else null
         }
       }
+      "Set" -> {
+        if (optional) {
+          diagnostics.add(classifierRange, "Nullable sets are not supported")
+          null
+        } else {
+          val target = args.singleOrNull()
+          if (target == null) diagnostics.add(classifierRange, "Set should have 1 type argument: $this")
+          val elementType = target?.build(scope, diagnostics, annotations, keepUnknownFields)
+          if (elementType == null) {
+            null
+          } else if (elementType is TRef<*>) {
+            diagnostics.add(classifierRange, "Set of references is not supported")
+            null
+          } else {
+            TSet(elementType)
+          }
+        }
+      }
       "Map" -> {
         if (args.size != 2) {
           diagnostics.add(classifierRange, "Map should have 2 type arguments: $this")
@@ -53,7 +71,7 @@ class KtType(
         val ktInterface = scope.resolve(classifier)?.ktInterface
         if (ktInterface?.kind == null && classifier !in listOf("VirtualFileUrl", "EntitySource", "PersistentEntityId") && !keepUnknownFields) {
           diagnostics.add(classifierRange, "Unsupported type: $this. " +
-                                           "Supported: String, Int, Boolean, List, Map, Serializable, subtypes of Obj")
+                                           "Supported: String, Int, Boolean, List, Set, Map, Serializable, subtypes of Obj")
           null
         }
         else {

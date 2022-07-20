@@ -45,7 +45,7 @@ open class WsEntityInterface : KtInterfaceKind() {
       TBlob<Any>(ktType.classifier)
     else {
       diagnostics.add(ktType.classifierRange, "Unsupported type: $ktType. " +
-                                              "Supported: String, Int, Boolean, List, Map, Serializable, Enum, Data and Sealed classes, subtypes of Obj")
+                                              "Supported: String, Int, Boolean, List, Set, Map, Serializable, Enum, Data and Sealed classes, subtypes of Obj")
       null
     }
   }
