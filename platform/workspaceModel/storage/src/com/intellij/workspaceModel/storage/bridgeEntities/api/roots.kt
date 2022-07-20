@@ -39,7 +39,7 @@ interface ContentRootEntity : WorkspaceEntity {
     }
     
     companion object: Type<ContentRootEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, url: VirtualFileUrl, excludedUrls: List<VirtualFileUrl>, excludedPatterns: List<String>, init: (Builder.() -> Unit)? = null): ContentRootEntity {
+        operator fun invoke(url: VirtualFileUrl, excludedUrls: List<VirtualFileUrl>, excludedPatterns: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ContentRootEntity {
             val builder = builder()
             builder.entitySource = entitySource
             builder.url = url
@@ -82,7 +82,7 @@ interface SourceRootEntity : WorkspaceEntity {
     }
     
     companion object: Type<SourceRootEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, url: VirtualFileUrl, rootType: String, init: (Builder.() -> Unit)? = null): SourceRootEntity {
+        operator fun invoke(url: VirtualFileUrl, rootType: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SourceRootEntity {
             val builder = builder()
             builder.entitySource = entitySource
             builder.url = url
@@ -115,7 +115,7 @@ interface SourceRootOrderEntity : WorkspaceEntity {
     }
     
     companion object: Type<SourceRootOrderEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, orderOfSourceRoots: List<VirtualFileUrl>, init: (Builder.() -> Unit)? = null): SourceRootOrderEntity {
+        operator fun invoke(orderOfSourceRoots: List<VirtualFileUrl>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SourceRootOrderEntity {
             val builder = builder()
             builder.entitySource = entitySource
             builder.orderOfSourceRoots = orderOfSourceRoots
@@ -146,7 +146,7 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
     }
     
     companion object: Type<CustomSourceRootPropertiesEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, propertiesXmlTag: String, init: (Builder.() -> Unit)? = null): CustomSourceRootPropertiesEntity {
+        operator fun invoke(propertiesXmlTag: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): CustomSourceRootPropertiesEntity {
             val builder = builder()
             builder.entitySource = entitySource
             builder.propertiesXmlTag = propertiesXmlTag
@@ -180,7 +180,7 @@ interface JavaSourceRootEntity : WorkspaceEntity {
     }
     
     companion object: Type<JavaSourceRootEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, generated: Boolean, packagePrefix: String, init: (Builder.() -> Unit)? = null): JavaSourceRootEntity {
+        operator fun invoke(generated: Boolean, packagePrefix: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): JavaSourceRootEntity {
             val builder = builder()
             builder.entitySource = entitySource
             builder.generated = generated
@@ -215,7 +215,7 @@ interface JavaResourceRootEntity: WorkspaceEntity {
     }
     
     companion object: Type<JavaResourceRootEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, generated: Boolean, relativeOutputPath: String, init: (Builder.() -> Unit)? = null): JavaResourceRootEntity {
+        operator fun invoke(generated: Boolean, relativeOutputPath: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): JavaResourceRootEntity {
             val builder = builder()
             builder.entitySource = entitySource
             builder.generated = generated

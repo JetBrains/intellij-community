@@ -27,7 +27,7 @@ interface VFUEntity : WorkspaceEntity {
   }
   
   companion object: Type<VFUEntity, Builder>() {
-      operator fun invoke(data: String, entitySource: EntitySource, fileProperty: VirtualFileUrl, init: (Builder.() -> Unit)? = null): VFUEntity {
+      operator fun invoke(data: String, fileProperty: VirtualFileUrl, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): VFUEntity {
           val builder = builder()
           builder.data = data
           builder.entitySource = entitySource
@@ -61,7 +61,7 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
   }
   
   companion object: Type<VFUWithTwoPropertiesEntity, Builder>() {
-      operator fun invoke(data: String, entitySource: EntitySource, fileProperty: VirtualFileUrl, secondFileProperty: VirtualFileUrl, init: (Builder.() -> Unit)? = null): VFUWithTwoPropertiesEntity {
+      operator fun invoke(data: String, fileProperty: VirtualFileUrl, secondFileProperty: VirtualFileUrl, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): VFUWithTwoPropertiesEntity {
           val builder = builder()
           builder.data = data
           builder.entitySource = entitySource
@@ -125,7 +125,7 @@ interface ListVFUEntity : WorkspaceEntity {
   }
   
   companion object: Type<ListVFUEntity, Builder>() {
-      operator fun invoke(data: String, entitySource: EntitySource, fileProperty: List<VirtualFileUrl>, init: (Builder.() -> Unit)? = null): ListVFUEntity {
+      operator fun invoke(data: String, fileProperty: List<VirtualFileUrl>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ListVFUEntity {
           val builder = builder()
           builder.data = data
           builder.entitySource = entitySource
@@ -148,7 +148,7 @@ fun MutableEntityStorage.addVFUEntity(
   virtualFileManager: VirtualFileUrlManager,
   source: EntitySource = SampleEntitySource("test")
 ): VFUEntity {
-  val vfuEntity = VFUEntity(data, source, virtualFileManager.fromUrl(fileUrl))
+  val vfuEntity = VFUEntity(data, virtualFileManager.fromUrl(fileUrl), source)
   this.addEntity(vfuEntity)
   return vfuEntity
 }
@@ -160,7 +160,7 @@ fun MutableEntityStorage.addVFU2Entity(
   virtualFileManager: VirtualFileUrlManager,
   source: EntitySource = SampleEntitySource("test")
 ): VFUWithTwoPropertiesEntity {
-  val vfuWithTwoPropertiesEntity = VFUWithTwoPropertiesEntity(data, source, virtualFileManager.fromUrl(fileUrl), virtualFileManager.fromUrl(secondFileUrl))
+  val vfuWithTwoPropertiesEntity = VFUWithTwoPropertiesEntity(data, virtualFileManager.fromUrl(fileUrl), virtualFileManager.fromUrl(secondFileUrl), source)
   this.addEntity(vfuWithTwoPropertiesEntity)
   return vfuWithTwoPropertiesEntity
 }
@@ -184,7 +184,7 @@ fun MutableEntityStorage.addListVFUEntity(
   virtualFileManager: VirtualFileUrlManager,
   source: EntitySource = SampleEntitySource("test")
 ): ListVFUEntity {
-  val listVFUEntity = ListVFUEntity(data, source, fileUrl.map { virtualFileManager.fromUrl(it) })
+  val listVFUEntity = ListVFUEntity(data, fileUrl.map { virtualFileManager.fromUrl(it) }, source)
   this.addEntity(listVFUEntity)
   return listVFUEntity
 }

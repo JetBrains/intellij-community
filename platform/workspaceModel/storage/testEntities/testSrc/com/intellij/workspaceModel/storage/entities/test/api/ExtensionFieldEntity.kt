@@ -58,7 +58,7 @@ interface AttachedEntity : WorkspaceEntity {
   }
   
   companion object: Type<AttachedEntity, Builder>() {
-      operator fun invoke(entitySource: EntitySource, data: String, init: (Builder.() -> Unit)? = null): AttachedEntity {
+      operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): AttachedEntity {
           val builder = builder()
           builder.entitySource = entitySource
           builder.data = data

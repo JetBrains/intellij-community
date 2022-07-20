@@ -67,7 +67,7 @@ open class ParentAbEntityImpl: ParentAbEntity, WorkspaceEntityBase() {
     
         fun checkInitialization() {
             val _diff = diff
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
                     error("Field ParentAbEntity#children should be initialized")

@@ -26,7 +26,7 @@ interface MainEntityToParent : WorkspaceEntity {
   }
   
   companion object: Type<MainEntityToParent, Builder>() {
-      operator fun invoke(entitySource: EntitySource, x: String, init: (Builder.() -> Unit)? = null): MainEntityToParent {
+      operator fun invoke(x: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): MainEntityToParent {
           val builder = builder()
           builder.entitySource = entitySource
           builder.x = x

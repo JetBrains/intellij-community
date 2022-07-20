@@ -82,7 +82,7 @@ open class TreeEntityImpl: TreeEntity, WorkspaceEntityBase() {
             if (!getEntityData().isEntitySourceInitialized()) {
                 error("Field TreeEntity#entitySource should be initialized")
             }
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
                     error("Field TreeEntity#children should be initialized")

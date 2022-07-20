@@ -118,7 +118,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
             if (!getEntityData().isDependenciesInitialized()) {
                 error("Field ModuleEntity#dependencies should be initialized")
             }
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CONTENTROOTS_CONNECTION_ID, this) == null) {
                     error("Field ModuleEntity#contentRoots should be initialized")
@@ -129,7 +129,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                     error("Field ModuleEntity#contentRoots should be initialized")
                 }
             }
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(FACETS_CONNECTION_ID, this) == null) {
                     error("Field ModuleEntity#facets should be initialized")

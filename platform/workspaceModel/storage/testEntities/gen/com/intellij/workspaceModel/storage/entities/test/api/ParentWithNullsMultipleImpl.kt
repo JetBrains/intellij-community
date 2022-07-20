@@ -76,7 +76,7 @@ open class ParentWithNullsMultipleImpl: ParentWithNullsMultiple, WorkspaceEntity
             if (!getEntityData().isEntitySourceInitialized()) {
                 error("Field ParentWithNullsMultiple#entitySource should be initialized")
             }
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
                     error("Field ParentWithNullsMultiple#children should be initialized")

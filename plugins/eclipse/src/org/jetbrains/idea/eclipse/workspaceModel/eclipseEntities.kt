@@ -52,7 +52,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
   }
   
   companion object: Type<EclipseProjectPropertiesEntity, Builder>() {
-      operator fun invoke(entitySource: EntitySource, variablePaths: Map<String, String>, eclipseUrls: List<VirtualFileUrl>, unknownCons: List<String>, knownCons: List<String>, forceConfigureJdk: Boolean, expectedModuleSourcePlace: Int, srcPlace: Map<String, Int>, init: (Builder.() -> Unit)? = null): EclipseProjectPropertiesEntity {
+      operator fun invoke(variablePaths: Map<String, String>, eclipseUrls: List<VirtualFileUrl>, unknownCons: List<String>, knownCons: List<String>, forceConfigureJdk: Boolean, expectedModuleSourcePlace: Int, srcPlace: Map<String, Int>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): EclipseProjectPropertiesEntity {
           val builder = builder()
           builder.entitySource = entitySource
           builder.variablePaths = variablePaths
@@ -90,7 +90,7 @@ data class EclipseProjectFile(
 }
 
 fun MutableEntityStorage.addEclipseProjectPropertiesEntity(module: ModuleEntity, source: EntitySource): EclipseProjectPropertiesEntity {
-  val entity = EclipseProjectPropertiesEntity(source, LinkedHashMap(), ArrayList(), ArrayList(), ArrayList(), false, 0, LinkedHashMap()) {
+  val entity = EclipseProjectPropertiesEntity(LinkedHashMap(), ArrayList(), ArrayList(), ArrayList(), false, 0, LinkedHashMap(), source) {
     this.module = module
 }
   this.addEntity(entity)

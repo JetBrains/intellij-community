@@ -86,7 +86,7 @@ open class ArtifactRootElementEntityImpl: ArtifactRootElementEntity, WorkspaceEn
             if (!getEntityData().isEntitySourceInitialized()) {
                 error("Field CompositePackagingElementEntity#entitySource should be initialized")
             }
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
                     error("Field CompositePackagingElementEntity#children should be initialized")

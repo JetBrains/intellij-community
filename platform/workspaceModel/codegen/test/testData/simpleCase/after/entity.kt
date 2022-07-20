@@ -24,7 +24,7 @@ interface SimpleEntity : WorkspaceEntity {
   }
 
   companion object: Type<SimpleEntity, Builder>() {
-      operator fun invoke(version: Int, entitySource: EntitySource, name: String, isSimple: Boolean, init: (Builder.() -> Unit)? = null): SimpleEntity {
+      operator fun invoke(version: Int, name: String, isSimple: Boolean, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SimpleEntity {
           val builder = builder()
           builder.version = version
           builder.entitySource = entitySource

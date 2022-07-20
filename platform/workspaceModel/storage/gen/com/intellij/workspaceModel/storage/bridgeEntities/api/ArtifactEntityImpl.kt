@@ -116,7 +116,7 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                     error("Field ArtifactEntity#rootElement should be initialized")
                 }
             }
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CUSTOMPROPERTIES_CONNECTION_ID, this) == null) {
                     error("Field ArtifactEntity#customProperties should be initialized")

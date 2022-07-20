@@ -43,7 +43,7 @@ interface ArtifactEntity : WorkspaceEntityWithPersistentId {
     }
     
     companion object: Type<ArtifactEntity, Builder>() {
-        operator fun invoke(name: String, entitySource: EntitySource, artifactType: String, includeInProjectBuild: Boolean, init: (Builder.() -> Unit)? = null): ArtifactEntity {
+        operator fun invoke(name: String, artifactType: String, includeInProjectBuild: Boolean, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArtifactEntity {
             val builder = builder()
             builder.name = name
             builder.entitySource = entitySource
@@ -82,7 +82,7 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
     }
     
     companion object: Type<ArtifactPropertiesEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, providerType: String, init: (Builder.() -> Unit)? = null): ArtifactPropertiesEntity {
+        operator fun invoke(providerType: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArtifactPropertiesEntity {
             val builder = builder()
             builder.entitySource = entitySource
             builder.providerType = providerType
@@ -537,7 +537,7 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
     }
     
     companion object: Type<CustomPackagingElementEntity, Builder>(CompositePackagingElementEntity) {
-        operator fun invoke(typeId: String, entitySource: EntitySource, propertiesXmlTag: String, init: (Builder.() -> Unit)? = null): CustomPackagingElementEntity {
+        operator fun invoke(typeId: String, propertiesXmlTag: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): CustomPackagingElementEntity {
             val builder = builder()
             builder.typeId = typeId
             builder.entitySource = entitySource

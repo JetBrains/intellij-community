@@ -124,7 +124,7 @@ internal class LibraryModifiableModelBridgeImpl(
 
     val properties = entity.libraryProperties
     if (properties == null) {
-      diff.addEntity(LibraryPropertiesEntity(entity.entitySource, libraryType) {
+      diff.addEntity(LibraryPropertiesEntity(libraryType, entity.entitySource) {
         library = entity
         if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
       })

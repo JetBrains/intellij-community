@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 class ExtensionListTest {
   @Test
   fun `access by extension without builder`() {
-    val entity = AttachedEntityList(MySource, "xyz") {
+    val entity = AttachedEntityList("xyz", MySource) {
       ref = MainEntityList("123", MySource)
     }
 
@@ -24,7 +24,7 @@ class ExtensionListTest {
   @Test
   fun `access by extension without builder on parent`() {
     val entity = MainEntityList("123", MySource) {
-      this.child = listOf(AttachedEntityList(MySource, "xyz"))
+      this.child = listOf(AttachedEntityList("xyz", MySource))
     }
 
     assertEquals("123", entity.x)
@@ -36,9 +36,9 @@ class ExtensionListTest {
   @Test
   fun `access by extension without builder on parent with an additional child`() {
     val entity = MainEntityList("123", MySource) {
-      this.child = listOf(AttachedEntityList(MySource, "xyz"))
+      this.child = listOf(AttachedEntityList("xyz", MySource))
     }
-    val newChild = AttachedEntityList(MySource, "abc") {
+    val newChild = AttachedEntityList("abc", MySource) {
       this.ref = entity
     }
 
@@ -52,7 +52,7 @@ class ExtensionListTest {
 
   @Test
   fun `access by extension`() {
-    val entity = AttachedEntityList(MySource, "xyz") {
+    val entity = AttachedEntityList("xyz", MySource) {
       ref = MainEntityList("123", MySource)
     }
     val builder = createEmptyBuilder()
@@ -73,7 +73,7 @@ class ExtensionListTest {
   fun `access by extension on parent`() {
     val entity = MainEntityList("123", MySource) {
       this.child = listOf(
-        AttachedEntityList(MySource, "xyz")
+        AttachedEntityList("xyz", MySource)
       )
     }
     val builder = createEmptyBuilder()
@@ -92,9 +92,9 @@ class ExtensionListTest {
 
   @Test
   fun `add via single child`() {
-    val child = AttachedEntityList(MySource, "abc")
+    val child = AttachedEntityList("abc", MySource)
     val entity = MainEntityList("123", MySource) {
-      this.child = listOf(AttachedEntityList(MySource, "xyz"), child)
+      this.child = listOf(AttachedEntityList("xyz", MySource), child)
     }
     val builder = createEmptyBuilder()
     builder.addEntity(child)
@@ -113,11 +113,11 @@ class ExtensionListTest {
   @Test
   fun `partially in builder`() {
     val entity = MainEntityList("123", MySource) {
-      this.child = listOf(AttachedEntityList(MySource, "xyz"))
+      this.child = listOf(AttachedEntityList("xyz", MySource))
     }
     val builder = createEmptyBuilder()
     builder.addEntity(entity)
-    val child = AttachedEntityList(MySource, "abc") {
+    val child = AttachedEntityList("abc", MySource) {
       this.ref = entity
     }
 

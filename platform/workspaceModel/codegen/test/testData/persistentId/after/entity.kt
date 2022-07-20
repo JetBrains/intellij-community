@@ -28,7 +28,7 @@ interface SimplePersistentIdEntity : WorkspaceEntityWithPersistentId {
   }
 
   companion object: Type<SimplePersistentIdEntity, Builder>() {
-      operator fun invoke(version: Int, entitySource: EntitySource, name: String, related: SimpleId, init: (Builder.() -> Unit)? = null): SimplePersistentIdEntity {
+      operator fun invoke(version: Int, name: String, related: SimpleId, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SimplePersistentIdEntity {
           val builder = builder()
           builder.version = version
           builder.entitySource = entitySource

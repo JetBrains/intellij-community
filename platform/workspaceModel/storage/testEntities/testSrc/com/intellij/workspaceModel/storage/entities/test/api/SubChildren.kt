@@ -92,7 +92,7 @@ interface ChildSubSubEntity : WorkspaceEntity {
   }
   
   companion object: Type<ChildSubSubEntity, Builder>() {
-      operator fun invoke(entitySource: EntitySource, childData: String, init: (Builder.() -> Unit)? = null): ChildSubSubEntity {
+      operator fun invoke(childData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildSubSubEntity {
           val builder = builder()
           builder.entitySource = entitySource
           builder.childData = childData

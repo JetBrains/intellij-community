@@ -11,7 +11,7 @@ class MutableStorageTest {
   @Test
   fun `simple entity mutation test`() {
     val builder = MutableEntityStorage.create()
-    val sampleEntity = SampleEntity2("ParentData", MySource, true)
+    val sampleEntity = SampleEntity2("ParentData", true, MySource)
 
     builder.addEntity(sampleEntity)
     val simpleEntityFromStore = builder.entities(SampleEntity2::class.java).single()
@@ -49,7 +49,7 @@ class MutableStorageTest {
   @Test
   fun `check exception if request data from entity which was removed`() {
     val builder = MutableEntityStorage.create()
-    val sampleEntity = SampleEntity2("ParentData", MySource, false)
+    val sampleEntity = SampleEntity2("ParentData", false, MySource)
     builder.addEntity(sampleEntity)
     val newBuilder = MutableEntityStorage.from(builder.toSnapshot())
     val entityFromStore = newBuilder.entities(SampleEntity2::class.java).single()

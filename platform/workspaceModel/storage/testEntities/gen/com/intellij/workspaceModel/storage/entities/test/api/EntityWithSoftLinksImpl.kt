@@ -155,7 +155,7 @@ open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
             if (!getEntityData().isDeepSealedClassInitialized()) {
                 error("Field EntityWithSoftLinks#deepSealedClass should be initialized")
             }
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
                     error("Field EntityWithSoftLinks#children should be initialized")

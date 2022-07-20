@@ -16,7 +16,7 @@ class StorageIndexiesTest {
   fun `check entity source index`() {
     val entity = ParentSubEntity("ParentData", MySource) {
       child = ChildSubEntity(MySource) {
-        child = ChildSubSubEntity(MySource, "ChildData")
+        child = ChildSubSubEntity("ChildData", MySource)
       }
     }
 
@@ -45,7 +45,7 @@ class StorageIndexiesTest {
     val firstRoot = virtualFileUrlManager.fromPath("/m2/root/one")
     val secondRoot = virtualFileUrlManager.fromPath("/m2/root/second")
 
-    val entity = VFUEntity2("VFUEntityData", VFUEntitySource(sourceUrl), directory, listOf(firstRoot, secondRoot))
+    val entity = VFUEntity2("VFUEntityData", directory, listOf(firstRoot, secondRoot), VFUEntitySource(sourceUrl))
 
     val builder = MutableEntityStorage.create()
     builder.addEntity(entity)

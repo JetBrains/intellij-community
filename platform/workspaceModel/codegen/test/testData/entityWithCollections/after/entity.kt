@@ -22,7 +22,7 @@ interface CollectionFieldEntity : WorkspaceEntity {
   }
 
   companion object: Type<CollectionFieldEntity, Builder>() {
-      operator fun invoke(versions: Set<Int>, entitySource: EntitySource, names: List<String>, init: (Builder.() -> Unit)? = null): CollectionFieldEntity {
+      operator fun invoke(versions: Set<Int>, names: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): CollectionFieldEntity {
           val builder = builder()
           builder.versions = versions
           builder.entitySource = entitySource

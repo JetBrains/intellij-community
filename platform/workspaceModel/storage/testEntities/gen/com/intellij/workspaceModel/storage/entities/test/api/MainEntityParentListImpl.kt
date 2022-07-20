@@ -1,12 +1,10 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
-import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -77,7 +75,7 @@ open class MainEntityParentListImpl: MainEntityParentList, WorkspaceEntityBase()
             if (!getEntityData().isEntitySourceInitialized()) {
                 error("Field MainEntityParentList#entitySource should be initialized")
             }
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
                     error("Field MainEntityParentList#children should be initialized")

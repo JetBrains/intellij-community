@@ -27,7 +27,7 @@ interface TestEntity: WorkspaceEntity {
   }
   
   companion object: Type<TestEntity, Builder>() {
-      operator fun invoke(name: String, entitySource: EntitySource, count: Int, anotherField: One, init: (Builder.() -> Unit)? = null): TestEntity {
+      operator fun invoke(name: String, count: Int, anotherField: One, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): TestEntity {
           val builder = builder()
           builder.name = name
           builder.entitySource = entitySource

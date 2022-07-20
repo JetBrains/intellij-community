@@ -2,13 +2,10 @@
 package com.intellij.workspaceModel.codegen
 
 import com.intellij.workspaceModel.codegen.SKIPPED_TYPES
+import com.intellij.workspaceModel.codegen.classes.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.codegen.fields.javaType
 import org.jetbrains.deft.Type
-import com.intellij.workspaceModel.codegen.classes.noDefaultValue
-import com.intellij.workspaceModel.codegen.classes.noOptional
-import com.intellij.workspaceModel.codegen.classes.noRefs
-import com.intellij.workspaceModel.codegen.classes.noPersistentId
 import com.intellij.workspaceModel.codegen.fields.referencedField
 import com.intellij.workspaceModel.codegen.fields.wsCode
 import com.intellij.workspaceModel.codegen.deft.model.DefType
@@ -56,7 +53,7 @@ fun DefType.generatedApiCode(indent: String = "    ", isEmptyGenBlock: Boolean):
   }
   val mandatoryFields = structure.allFields.noRefs().noOptional().noPersistentId().noDefaultValue()
   if (!mandatoryFields.isEmpty()) {
-    val fields = mandatoryFields.joinToString { "${it.name}: ${it.type.javaType}" }
+    val fields = (mandatoryFields.noEntitySource() + mandatoryFields.first { it.name == "entitySource" }).joinToString { "${it.name}: ${it.type.javaType}" }
     section(companionObjectHeader) {
       section("operator fun invoke($fields, init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
         line("val builder = builder()")

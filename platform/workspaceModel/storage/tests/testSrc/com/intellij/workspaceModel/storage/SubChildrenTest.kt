@@ -13,7 +13,7 @@ class SubChildrenTest {
   fun `parent with child`() {
     val entity = ParentSubEntity("ParentData", MySource) {
       child = ChildSubEntity(MySource) {
-        child = ChildSubSubEntity(MySource, "ChildData")
+        child = ChildSubSubEntity("ChildData", MySource)
       }
     }
 
@@ -24,7 +24,7 @@ class SubChildrenTest {
   fun `parent with child in builder`() {
     val entity = ParentSubEntity("ParentData", MySource) {
       child = ChildSubEntity(MySource) {
-        child = ChildSubSubEntity(MySource, "ChildData")
+        child = ChildSubSubEntity("ChildData", MySource)
       }
     }
 
@@ -39,7 +39,7 @@ class SubChildrenTest {
   fun `parent with child in builder and accessing`() {
     val entity = ParentSubEntity("ParentData", MySource) {
       child = ChildSubEntity(MySource) {
-        child = ChildSubSubEntity(MySource, "ChildData")
+        child = ChildSubSubEntity("ChildData", MySource)
       }
     }
 
@@ -54,7 +54,7 @@ class SubChildrenTest {
   fun `get parent from child`() {
     val entity = ParentSubEntity("ParentData", MySource) {
       child = ChildSubEntity(MySource) {
-        child = ChildSubSubEntity(MySource, "ChildData")
+        child = ChildSubSubEntity("ChildData", MySource)
       }
     }
 

@@ -42,7 +42,7 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
     }
     
     companion object: Type<LibraryEntity, Builder>() {
-        operator fun invoke(name: String, entitySource: EntitySource, tableId: LibraryTableId, roots: List<LibraryRoot>, excludedRoots: List<VirtualFileUrl>, init: (Builder.() -> Unit)? = null): LibraryEntity {
+        operator fun invoke(name: String, tableId: LibraryTableId, roots: List<LibraryRoot>, excludedRoots: List<VirtualFileUrl>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LibraryEntity {
             val builder = builder()
             builder.name = name
             builder.entitySource = entitySource
@@ -82,7 +82,7 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
     }
     
     companion object: Type<LibraryPropertiesEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, libraryType: String, init: (Builder.() -> Unit)? = null): LibraryPropertiesEntity {
+        operator fun invoke(libraryType: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LibraryPropertiesEntity {
             val builder = builder()
             builder.entitySource = entitySource
             builder.libraryType = libraryType
@@ -113,7 +113,7 @@ interface SdkEntity : WorkspaceEntity {
     }
     
     companion object: Type<SdkEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, homeUrl: VirtualFileUrl, init: (Builder.() -> Unit)? = null): SdkEntity {
+        operator fun invoke(homeUrl: VirtualFileUrl, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SdkEntity {
             val builder = builder()
             builder.entitySource = entitySource
             builder.homeUrl = homeUrl

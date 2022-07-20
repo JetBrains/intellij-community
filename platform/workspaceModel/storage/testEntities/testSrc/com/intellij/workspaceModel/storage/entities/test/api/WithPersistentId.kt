@@ -122,7 +122,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
   }
   
   companion object: Type<EntityWithSoftLinks, Builder>() {
-      operator fun invoke(link: OnePersistentId, entitySource: EntitySource, manyLinks: List<OnePersistentId>, inContainer: Container, inContainerList: List<Container>, deepContainer: List<TooDeepContainer>, sealedContainer: SealedContainer, listSealedContainer: List<SealedContainer>, justProperty: String, justListProperty: List<String>, deepSealedClass: DeepSealedOne, init: (Builder.() -> Unit)? = null): EntityWithSoftLinks {
+      operator fun invoke(link: OnePersistentId, manyLinks: List<OnePersistentId>, inContainer: Container, inContainerList: List<Container>, deepContainer: List<TooDeepContainer>, sealedContainer: SealedContainer, listSealedContainer: List<SealedContainer>, justProperty: String, justListProperty: List<String>, deepSealedClass: DeepSealedOne, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): EntityWithSoftLinks {
           val builder = builder()
           builder.link = link
           builder.entitySource = entitySource

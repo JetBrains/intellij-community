@@ -48,7 +48,7 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
     }
     
     companion object: Type<ModuleEntity, Builder>() {
-        operator fun invoke(name: String, entitySource: EntitySource, dependencies: List<ModuleDependencyItem>, init: (Builder.() -> Unit)? = null): ModuleEntity {
+        operator fun invoke(name: String, dependencies: List<ModuleDependencyItem>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleEntity {
             val builder = builder()
             builder.name = name
             builder.entitySource = entitySource
@@ -86,7 +86,7 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
     }
     
     companion object: Type<ModuleCustomImlDataEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, customModuleOptions: Map<String, String>, init: (Builder.() -> Unit)? = null): ModuleCustomImlDataEntity {
+        operator fun invoke(customModuleOptions: Map<String, String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleCustomImlDataEntity {
             val builder = builder()
             builder.entitySource = entitySource
             builder.customModuleOptions = customModuleOptions
@@ -118,7 +118,7 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
     }
     
     companion object: Type<ModuleGroupPathEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, path: List<String>, init: (Builder.() -> Unit)? = null): ModuleGroupPathEntity {
+        operator fun invoke(path: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleGroupPathEntity {
             val builder = builder()
             builder.entitySource = entitySource
             builder.path = path
@@ -158,7 +158,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
     }
     
     companion object: Type<JavaModuleSettingsEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, inheritedCompilerOutput: Boolean, excludeOutput: Boolean, init: (Builder.() -> Unit)? = null): JavaModuleSettingsEntity {
+        operator fun invoke(inheritedCompilerOutput: Boolean, excludeOutput: Boolean, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): JavaModuleSettingsEntity {
             val builder = builder()
             builder.entitySource = entitySource
             builder.inheritedCompilerOutput = inheritedCompilerOutput

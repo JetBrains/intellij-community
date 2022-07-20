@@ -86,7 +86,7 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
             if (!getEntityData().isEntitySourceInitialized()) {
                 error("Field XParentEntity#entitySource should be initialized")
             }
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
                     error("Field XParentEntity#children should be initialized")
@@ -97,7 +97,7 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                     error("Field XParentEntity#children should be initialized")
                 }
             }
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(OPTIONALCHILDREN_CONNECTION_ID, this) == null) {
                     error("Field XParentEntity#optionalChildren should be initialized")
@@ -108,7 +108,7 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                     error("Field XParentEntity#optionalChildren should be initialized")
                 }
             }
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDCHILD_CONNECTION_ID, this) == null) {
                     error("Field XParentEntity#childChild should be initialized")

@@ -224,7 +224,7 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
   }
   
   companion object: Type<WithListSoftLinksEntity, Builder>() {
-      operator fun invoke(myName: String, entitySource: EntitySource, links: List<NameId>, init: (Builder.() -> Unit)? = null): WithListSoftLinksEntity {
+      operator fun invoke(myName: String, links: List<NameId>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): WithListSoftLinksEntity {
           val builder = builder()
           builder.myName = myName
           builder.entitySource = entitySource
@@ -247,7 +247,7 @@ fun MutableEntityStorage.addWithListSoftLinksEntity(
   links: List<NameId>,
   source: EntitySource = MySource
 ): WithListSoftLinksEntity {
-  val withListSoftLinksEntity = WithListSoftLinksEntity(name, source, links)
+  val withListSoftLinksEntity = WithListSoftLinksEntity(name, links, source)
   this.addEntity(withListSoftLinksEntity)
   return withListSoftLinksEntity
 }
@@ -270,7 +270,7 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithPersistentId {
   }
   
   companion object: Type<ComposedIdSoftRefEntity, Builder>() {
-      operator fun invoke(myName: String, entitySource: EntitySource, link: NameId, init: (Builder.() -> Unit)? = null): ComposedIdSoftRefEntity {
+      operator fun invoke(myName: String, link: NameId, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ComposedIdSoftRefEntity {
           val builder = builder()
           builder.myName = myName
           builder.entitySource = entitySource
@@ -292,7 +292,7 @@ fun MutableEntityStorage.addComposedIdSoftRefEntity(
   link: NameId,
   source: EntitySource = MySource
 ): ComposedIdSoftRefEntity {
-  val composedIdSoftRefEntity = ComposedIdSoftRefEntity(name, source, link)
+  val composedIdSoftRefEntity = ComposedIdSoftRefEntity(name, link, source)
   this.addEntity(composedIdSoftRefEntity)
   return composedIdSoftRefEntity
 }

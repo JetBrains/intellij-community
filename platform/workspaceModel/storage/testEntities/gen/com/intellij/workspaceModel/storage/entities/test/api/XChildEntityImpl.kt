@@ -97,7 +97,7 @@ open class XChildEntityImpl: XChildEntity, WorkspaceEntityBase() {
                     error("Field XChildEntity#parentEntity should be initialized")
                 }
             }
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDCHILD_CONNECTION_ID, this) == null) {
                     error("Field XChildEntity#childChild should be initialized")

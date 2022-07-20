@@ -116,7 +116,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
             if (!getEntityData().isExcludedPatternsInitialized()) {
                 error("Field ContentRootEntity#excludedPatterns should be initialized")
             }
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(SOURCEROOTS_CONNECTION_ID, this) == null) {
                     error("Field ContentRootEntity#sourceRoots should be initialized")

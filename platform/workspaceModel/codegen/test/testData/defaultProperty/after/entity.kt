@@ -29,7 +29,7 @@ interface DefaultFieldEntity : WorkspaceEntity {
   }
 
   companion object: Type<DefaultFieldEntity, Builder>() {
-      operator fun invoke(version: Int, entitySource: EntitySource, data: TestData, init: (Builder.() -> Unit)? = null): DefaultFieldEntity {
+      operator fun invoke(version: Int, data: TestData, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): DefaultFieldEntity {
           val builder = builder()
           builder.version = version
           builder.entitySource = entitySource

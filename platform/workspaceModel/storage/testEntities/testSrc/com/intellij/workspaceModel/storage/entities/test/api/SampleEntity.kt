@@ -38,7 +38,7 @@ interface SampleEntity : WorkspaceEntity {
   }
   
   companion object: Type<SampleEntity, Builder>() {
-      operator fun invoke(booleanProperty: Boolean, entitySource: EntitySource, stringProperty: String, stringListProperty: List<String>, stringMapProperty: Map<String, String>, fileProperty: VirtualFileUrl, init: (Builder.() -> Unit)? = null): SampleEntity {
+      operator fun invoke(booleanProperty: Boolean, stringProperty: String, stringListProperty: List<String>, stringMapProperty: Map<String, String>, fileProperty: VirtualFileUrl, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SampleEntity {
           val builder = builder()
           builder.booleanProperty = booleanProperty
           builder.entitySource = entitySource

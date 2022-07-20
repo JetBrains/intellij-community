@@ -48,8 +48,8 @@ class EntityStorageSerializationTest {
       put("ab", "bc")
       put("bc", "ce")
     }
-    val entity = SampleEntity(false, SampleEntitySource("test"), "MyEntity", stringListProperty,
-                              stringMapProperty, virtualFileManager.fromUrl("file:///tmp"))
+    val entity = SampleEntity(false, "MyEntity", stringListProperty,
+                              stringMapProperty, virtualFileManager.fromUrl("file:///tmp"), SampleEntitySource("test"))
     builder.addEntity(entity)
 
     SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), virtualFileManager)
@@ -59,8 +59,8 @@ class EntityStorageSerializationTest {
   fun `entity uuid serialization`() {
     val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl()
     val builder = createEmptyBuilder()
-    val entity = SampleEntity(false, SampleEntitySource("test"), "MyEntity", emptyList(),
-                              emptyMap(), virtualFileManager.fromUrl("file:///tmp")) {
+    val entity = SampleEntity(false, "MyEntity", emptyList(),
+                              emptyMap(), virtualFileManager.fromUrl("file:///tmp"), SampleEntitySource("test")) {
       randomUUID = UUID.fromString("58e0a7d7-eebc-11d8-9669-0800200c9a66")
     }
     builder.addEntity(entity)

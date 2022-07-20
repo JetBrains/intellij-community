@@ -113,7 +113,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
             if (!getEntityData().isRootTypeInitialized()) {
                 error("Field SourceRootEntity#rootType should be initialized")
             }
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(JAVASOURCEROOTS_CONNECTION_ID, this) == null) {
                     error("Field SourceRootEntity#javaSourceRoots should be initialized")
@@ -124,7 +124,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
                     error("Field SourceRootEntity#javaSourceRoots should be initialized")
                 }
             }
-            // Check initialization for list with ref type
+            // Check initialization for collection with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(JAVARESOURCEROOTS_CONNECTION_ID, this) == null) {
                     error("Field SourceRootEntity#javaResourceRoots should be initialized")
