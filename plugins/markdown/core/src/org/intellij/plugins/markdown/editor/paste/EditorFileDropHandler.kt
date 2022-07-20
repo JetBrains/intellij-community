@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.refactoring.RefactoringBundle
@@ -70,7 +71,7 @@ internal class EditorFileDropHandler: CustomFileDropHandler() {
         when (registry.getFileTypeByExtension(path.extension)) {
           imageFileType, SvgFileType.INSTANCE -> ImageUtils.createMarkdownImageText(
             description = path.name,
-            path = path.toString()
+            path = FileUtil.toSystemIndependentName(path.toString())
           )
           else -> createFileLink(path)
         }
@@ -85,7 +86,8 @@ internal class EditorFileDropHandler: CustomFileDropHandler() {
     }
 
     private fun createFileLink(file: Path): String {
-      return "[${file.name}]($file)"
+      val independentPath = FileUtil.toSystemIndependentName(file.toString())
+      return "[${file.name}]($independentPath)"
     }
 
     internal fun handleReadOnlyModificationException(project: Project, document: Document, block: () -> Unit) {
