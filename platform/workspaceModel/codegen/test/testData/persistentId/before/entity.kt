@@ -6,6 +6,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 interface SimplePersistentIdEntity : WorkspaceEntityWithPersistentId {
   val version: Int
   val name: String
+  val related: SimpleId
 
   override val persistentId: SimpleId
     get() = SimpleId(name)

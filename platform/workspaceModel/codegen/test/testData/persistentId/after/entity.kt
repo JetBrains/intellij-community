@@ -13,6 +13,7 @@ import org.jetbrains.deft.Type
 interface SimplePersistentIdEntity : WorkspaceEntityWithPersistentId {
   val version: Int
   val name: String
+  val related: SimpleId
 
   override val persistentId: SimpleId
     get() = SimpleId(name)
@@ -23,14 +24,16 @@ interface SimplePersistentIdEntity : WorkspaceEntityWithPersistentId {
       override var version: Int
       override var entitySource: EntitySource
       override var name: String
+      override var related: SimpleId
   }
 
   companion object: Type<SimplePersistentIdEntity, Builder>() {
-      operator fun invoke(version: Int, entitySource: EntitySource, name: String, init: (Builder.() -> Unit)? = null): SimplePersistentIdEntity {
+      operator fun invoke(version: Int, entitySource: EntitySource, name: String, related: SimpleId, init: (Builder.() -> Unit)? = null): SimplePersistentIdEntity {
           val builder = builder()
           builder.version = version
           builder.entitySource = entitySource
           builder.name = name
+          builder.related = related
           init?.invoke(builder)
           return builder
       }
