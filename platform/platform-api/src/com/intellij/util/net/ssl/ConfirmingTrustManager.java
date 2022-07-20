@@ -177,18 +177,19 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
 
   @Override
   public void checkServerTrusted(final X509Certificate[] chain, String authType) throws CertificateException {
-    withCalculatedCertificateStrategy(strategy -> {
-      boolean askUser = strategy == UntrustedCertificateStrategy.ASK_USER;
-      checkServerTrusted(chain, authType, new CertificateConfirmationParameters(askUser, true, null, null));
+    withCalculatedCertificateStrategy(strategyWithReason -> {
+      boolean askUser = strategyWithReason.getStrategy() == UntrustedCertificateStrategy.ASK_USER;
+      String askUserReason = strategyWithReason.getReason();
+      checkServerTrusted(chain, authType, new CertificateConfirmationParameters(askUser, true, null, null, askUserReason));
     });
   }
 
-  private void withCalculatedCertificateStrategy(ThrowableConsumer<UntrustedCertificateStrategy, CertificateException> block) throws CertificateException {
+  private void withCalculatedCertificateStrategy(ThrowableConsumer<UntrustedCertificateStrategyWithReason, CertificateException> block) throws CertificateException {
     UntrustedCertificateStrategy initialStrategy = myUntrustedCertificateStrategy.get();
     if (initialStrategy != null) {
-      block.consume(initialStrategy);
+      block.consume(new UntrustedCertificateStrategyWithReason(initialStrategy, null));
     } else {
-      UntrustedCertificateStrategy strategy = ApplicationManager.getApplication().getService(InitialUntrustedCertificateStrategyProvider.class).getStrategy();
+      UntrustedCertificateStrategyWithReason strategy = ApplicationManager.getApplication().getService(InitialUntrustedCertificateStrategyProvider.class).getStrategy();
       block.consume(strategy);
     }
   }
@@ -199,7 +200,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
   @Deprecated
   public void checkServerTrusted(final X509Certificate[] chain, String authType, boolean addToKeyStore, boolean askUser)
     throws CertificateException {
-    checkServerTrusted(chain, authType, new CertificateConfirmationParameters(askUser, addToKeyStore, null, null));
+    checkServerTrusted(chain, authType, new CertificateConfirmationParameters(askUser, addToKeyStore, null, null, null));
   }
 
   public void checkServerTrusted(final X509Certificate[] chain, String authType, @NotNull CertificateConfirmationParameters parameters)
@@ -247,12 +248,22 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       return true;
     }
 
-    LOG.info("Going to ask user about certificate for: " + endPoint.getSubjectDN().toString() +
-             ", issuer: " + endPoint.getIssuerDN().toString());
-    boolean accepted = parameters.myAskUser && CertificateManager.showAcceptDialog(() -> {
-      // TODO may be another kind of warning, if default trust store is missing
-      return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint, parameters.myCertificateDetails);
-    });
+    boolean accepted = false;
+    if (parameters.myAskUser) {
+      if (parameters.myAskUserReason != null) {
+        LOG.info(parameters.myAskUserReason);
+      }
+      LOG.info("Going to ask user about certificate for: " + endPoint.getSubjectDN().toString() +
+               ", issuer: " + endPoint.getIssuerDN().toString());
+      accepted = CertificateManager.showAcceptDialog(() -> {
+        // TODO may be another kind of warning, if default trust store is missing
+        return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint, parameters.myCertificateDetails);
+      });
+    } else {
+      if (parameters.myAskUserReason != null) {
+        LOG.warn(parameters.myAskUserReason);
+      }
+    }
     if (accepted) {
       LOG.info("Certificate was accepted by user");
       if (parameters.myAddToKeyStore) {
@@ -601,6 +612,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
 
   public static final class CertificateConfirmationParameters {
     private final boolean myAskUser;
+    private final @Nullable String myAskUserReason;
     private final boolean myAddToKeyStore;
     private final @Nullable @NlsContexts.DialogMessage String myCertificateDetails;
     private final @Nullable Runnable myOnUserAcceptCallback;
@@ -617,7 +629,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     public static @NotNull CertificateConfirmationParameters askConfirmation(boolean addToKeyStore,
                                                                              @Nullable @NlsContexts.DialogMessage String certificateDetails,
                                                                              @Nullable Runnable onUserAcceptCallback) {
-      return new CertificateConfirmationParameters(true, addToKeyStore, certificateDetails, onUserAcceptCallback);
+      return new CertificateConfirmationParameters(true, addToKeyStore, certificateDetails, onUserAcceptCallback, null);
     }
 
     /**
@@ -627,17 +639,19 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
      * true.
      */
     public static @NotNull CertificateConfirmationParameters doNotAskConfirmation() {
-      return new CertificateConfirmationParameters(false, false, null, null);
+      return new CertificateConfirmationParameters(false, false, null, null, null);
     }
 
     private CertificateConfirmationParameters(boolean askUser,
                                               boolean addToKeyStore,
                                               @Nullable @NlsContexts.DialogMessage String certificateDetails,
-                                              @Nullable Runnable onUserAcceptCallback) {
+                                              @Nullable Runnable onUserAcceptCallback,
+                                              @Nullable String askUserReason) {
       myAskUser = askUser;
       myAddToKeyStore = addToKeyStore;
       myCertificateDetails = certificateDetails;
       myOnUserAcceptCallback = onUserAcceptCallback;
+      myAskUserReason = askUserReason;
     }
 
     @Override
