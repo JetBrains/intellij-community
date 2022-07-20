@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.util.caching.ConcurrentFactoryCache
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.search.isImportUsage
@@ -30,9 +31,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
-import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 class ClassNameProvider(
     private val project: Project,
@@ -54,11 +54,11 @@ class ClassNameProvider(
 
     fun getCandidatesForElement(element: PsiElement): List<String> {
         val cache = CachedValuesManager.getCachedValue(element) {
-            val value = Collections.synchronizedMap(HashMap<Configuration, List<String>>())
-            CachedValueProvider.Result(value, PsiModificationTracker.MODIFICATION_COUNT)
+            val storage = ConcurrentHashMap<Configuration, List<String>>()
+            CachedValueProvider.Result(ConcurrentFactoryCache(storage), PsiModificationTracker.MODIFICATION_COUNT)
         }
 
-        return cache.computeIfAbsent(configuration) {
+        return cache.get(configuration) {
             computeCandidatesForElement(element, emptySet())
         }
     }
