@@ -47,7 +47,22 @@ public class CreateFieldFromConstructorLabelFix extends GroovyFix {
     if (parent == null) {
       return IntentionPreviewInfo.EMPTY;
     }
-    return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, "", parent.getText());
+    String className = targetClass.getName();
+    String classKind;
+    if (targetClass.isInterface()) {
+      classKind = "interface";
+    } else if (targetClass.isEnum()) {
+     classKind = "enum";
+    } else if (targetClass.isAnnotationType()) {
+      classKind = "@interface";
+    } else if (targetClass.isRecord()) {
+      classKind = "record";
+    } else if (targetClass instanceof GrTypeDefinition && ((GrTypeDefinition)targetClass).isTrait()) {
+      classKind = "trait";
+    } else {
+      classKind = "class";
+    }
+    return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, classKind + " " + className, "", parent.getText());
   }
 
   @Nullable
