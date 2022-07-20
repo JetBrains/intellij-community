@@ -8,9 +8,11 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.actions.PasteAction
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.psi.util.PsiEditorUtil
 import org.intellij.plugins.markdown.editor.runForEachCaret
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownType
+import java.awt.datatransfer.DataFlavor
 
 internal class FileLinkPasteProvider: PasteProvider {
   override fun performPaste(dataContext: DataContext) {
@@ -35,19 +37,16 @@ internal class FileLinkPasteProvider: PasteProvider {
     }
   }
 
-  override fun isPastePossible(dataContext: DataContext): Boolean {
-    if (dataContext.getData(CommonDataKeys.PROJECT) == null) {
-      return false
-    }
-    val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return false
+  override fun isPasteEnabled(dataContext: DataContext): Boolean {
     val file = dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return false
-    return file.fileType.isMarkdownType() && editor.document.isWritable
+    if (file.fileType.isMarkdownType()) {
+      return CopyPasteManager.getInstance().areDataFlavorsAvailable(DataFlavor.javaFileListFlavor)
+    }
+    return false
   }
 
-  override fun isPasteEnabled(dataContext: DataContext): Boolean {
-    val file = dataContext.getData(CommonDataKeys.VIRTUAL_FILE)
-    val project = dataContext.getData(CommonDataKeys.PROJECT)
-    return file?.fileType?.isMarkdownType() == true && project != null
+  override fun isPastePossible(dataContext: DataContext): Boolean {
+    return true
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
