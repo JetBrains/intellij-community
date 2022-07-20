@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.codegen.inline.SMAPParser
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.util.caching.ConcurrentFactoryCache
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
@@ -48,18 +49,22 @@ class KotlinSourceMapCache(private val project: Project) {
         data class Key(val path: String, val jvmName: JvmClassName)
 
         val cache = project.cacheByClass(KotlinSourceMapCache::class.java, *dependencies) {
-            Collections.synchronizedMap(ContainerUtil.createSoftValueMap<Key, SMAP>())
+            val storage = ContainerUtil.createConcurrentSoftValueMap<Key, Optional<SMAP>>()
+            ConcurrentFactoryCache(storage)
         }
 
-        return cache.computeIfAbsent(Key(file.path, jvmName)) {
-            val bytecode = when {
-                RootKindFilter.projectSources.matches(project, file) -> findCompiledModuleClass(file, jvmName)
-                RootKindFilter.librarySources.matches(project, file) -> findLibraryClass(jvmName)
-                else -> null
-            }
+        val key = Key(file.path, jvmName)
+        return cache.get(key) { Optional.ofNullable(findSourceMap(file, jvmName)) }.orElse(null)
+    }
 
-            if (bytecode != null) parseSourceMap(bytecode) else null
+    private fun findSourceMap(file: VirtualFile, jvmName: JvmClassName): SMAP? {
+        val bytecode = when {
+            RootKindFilter.projectSources.matches(project, file) -> findCompiledModuleClass(file, jvmName)
+            RootKindFilter.librarySources.matches(project, file) -> findLibraryClass(jvmName)
+            else -> null
         }
+
+        return bytecode?.let(::parseSourceMap)
     }
 
     private fun parseSourceMap(bytecode: ByteArray): SMAP? {
