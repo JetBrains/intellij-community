@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IntellijInternalApi;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -341,7 +342,7 @@ public class MarkerType {
   @IntellijInternalApi
   public static abstract class OverridingMembersUpdater extends BackgroundUpdaterTask {
     public OverridingMembersUpdater(@Nullable Project project,
-                                     @NotNull @Nls String title,
+                                     @NotNull @ProgressTitle String title,
                                      @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
       super(project, title, createComparatorWrapper((Comparator)renderer.getComparator()));
     }
