@@ -10,7 +10,6 @@ import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -27,8 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.TreeModelEvent;
-import javax.swing.event.TreeModelListener;
 import javax.swing.text.JTextComponent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -238,10 +235,6 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   }
 
   public static class SearchTreeModel<N extends DefaultMutableTreeNode, U> extends DefaultTreeModel {
-    public interface Listener<U> extends EventListener {
-      void beforeNodeChanged(U x);
-      void nodeChanged(U x);
-    }
     private final @NotNull Function<? super U, String> myNamer;
     private final @NotNull Function<? super U, ? extends N> myFactory;
     private final U myRootObject;
@@ -249,8 +242,6 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     private final boolean myUseIdentityHashing;
     private SpeedSearchSupply mySpeedSearch;
     private Map<U, N> myNodeCache;
-    @SuppressWarnings("unchecked")
-    private final EventDispatcher<Listener<U>> myNodeChanged = (EventDispatcher)EventDispatcher.create(Listener.class);
 
     public SearchTreeModel(@NotNull N root, @NotNull SpeedSearchSupply speedSearch,
                            @NotNull Function<? super U, String> namer, @NotNull Function<? super U, ? extends N> nodeFactory,
@@ -263,33 +254,6 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       myStructure = structure;
       myUseIdentityHashing = useIdentityHashing;
       myNodeCache = createUserObjectMap();
-      addTreeModelListener(new TreeModelListener() {
-        @Override
-        @SuppressWarnings("unchecked")
-        public void treeNodesChanged(TreeModelEvent e) {
-          U object = getUserObject((N)e.getTreePath().getLastPathComponent());
-          if (object != null) myNodeChanged.getMulticaster().nodeChanged(object);
-        }
-
-        @Override
-        public void treeNodesInserted(TreeModelEvent e) {}
-
-        @Override
-        public void treeNodesRemoved(TreeModelEvent e) {}
-
-        @Override
-        public void treeStructureChanged(TreeModelEvent e) {}
-      });
-    }
-
-    public void modifyNode(@NotNull U object, @NotNull Runnable r) {
-      myNodeChanged.getMulticaster().beforeNodeChanged(object);
-      try {
-        r.run();
-      }
-      finally {
-        myNodeChanged.getMulticaster().nodeChanged(object);
-      }
     }
 
     public void setSpeedSearch(@NotNull SpeedSearchSupply supply) {
@@ -299,10 +263,6 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
 
     public SpeedSearchSupply getSpeedSearch() {
       return mySpeedSearch;
-    }
-
-    public void addNodeListener(@NotNull Listener<U> listener) {
-      myNodeChanged.addListener(listener);
     }
 
     /**
