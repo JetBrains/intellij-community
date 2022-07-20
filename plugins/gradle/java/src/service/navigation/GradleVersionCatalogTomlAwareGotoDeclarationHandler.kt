@@ -2,30 +2,28 @@
 package org.jetbrains.plugins.gradle.service.navigation
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.tail
-import org.jetbrains.plugins.gradle.service.project.getVersionCatalogsData
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionProperty
+import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator
 import org.jetbrains.plugins.gradle.service.resolve.getRootGradleProjectPath
-import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils
 import org.toml.lang.psi.TomlFile
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlRecursiveVisitor
 import org.toml.lang.psi.TomlTable
-import java.nio.file.Path
 
 class GradleVersionCatalogTomlAwareGotoDeclarationHandler : GotoDeclarationHandler {
 
@@ -48,12 +46,13 @@ class GradleVersionCatalogTomlAwareGotoDeclarationHandler : GotoDeclarationHandl
 }
 
 private fun findTomlFile(context: PsiElement, name: String): TomlFile? {
-  val path = context.getRootGradleProjectPath() ?: return null
-  val settingsFile = Path.of(path, GradleConstants.SETTINGS_FILE_NAME)
-  val settingsPsi = VfsUtil.findFile(settingsFile, false)?.let { PsiUtilCore.getPsiFile(context.project, it) }.castSafelyTo<GroovyFileBase>() ?: return null
-  val tomlRegistry = settingsPsi.getVersionCatalogsData()
-  val toml = tomlRegistry[name] ?: return null
-  return VfsUtil.findFile(toml, false)?.let { PsiManager.getInstance(context.project).findFile(it) }?.castSafelyTo<TomlFile>()
+  context.getRootGradleProjectPath()
+  val module = context.containingFile?.originalFile?.virtualFile?.let {
+    ProjectFileIndex.getInstance(context.project).getModuleForFile(it)
+  } ?: return null
+  val tomlPath = context.project.service<VersionCatalogsLocator>().getVersionCatalogsForModule(module)[name] ?: return null
+  val toml = VfsUtil.findFile(tomlPath, false) ?: return null
+  return PsiManager.getInstance(context.project).findFile(toml)?.castSafelyTo<TomlFile>()
 }
 
 private fun PsiMethod.resolveInToml(sourceElement: PsiElement): PsiElement? {
