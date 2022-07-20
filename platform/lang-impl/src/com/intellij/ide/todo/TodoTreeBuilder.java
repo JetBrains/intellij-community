@@ -500,7 +500,7 @@ public abstract class TodoTreeBuilder implements Disposable {
           validateCache();
           getTodoTreeStructure().validateCache();
         }
-        myModel.invalidate();
+        myModel.invalidateAsync();
       }, myProject.getDisposed()));
     }
     return Promises.resolvedPromise();

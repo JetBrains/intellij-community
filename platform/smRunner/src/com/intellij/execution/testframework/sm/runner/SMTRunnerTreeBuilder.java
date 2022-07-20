@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
@@ -70,7 +70,7 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
   }
 
   public void updateFromRoot() {
-    myTreeModel.invalidate();
+    myTreeModel.invalidateAsync();
   }
 
   public void setModel(StructureTreeModel asyncTreeModel) {

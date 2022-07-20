@@ -161,7 +161,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
       myStubTree.expandRow(0);
 
       myStubTree.addTreeSelectionListener(new StubTreeSelectionListener());
-      treeModel.invalidate();
+      treeModel.invalidateAsync();
     }
     else {
       myStubTree.setRootVisible(false);

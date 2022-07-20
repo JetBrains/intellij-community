@@ -12,6 +12,7 @@ import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -71,8 +72,9 @@ fun <T> rejectedPromise(error: Throwable?): Promise<T> {
   }
 }
 
-fun <T> rejectedCancellablePromise(error: String): CancellablePromise<T> =
-  DonePromise(PromiseValue.createRejected(createError(error, true)))
+fun <T> rejectedCancellablePromise(error: String): CancellablePromise<T> {
+  return DonePromise(PromiseValue.createRejected(createError(error, true)))
+}
 
 @Suppress("RemoveExplicitTypeArguments")
 private val CANCELLED_PROMISE: Promise<Any?> by lazy {
@@ -234,6 +236,19 @@ fun Logger.errorIfNotMessage(e: Throwable): Boolean {
   }
 
   return false
+}
+
+fun <T> CompletableFuture<T>.asPromise(): Promise<T> {
+  val promise = AsyncPromise<T>()
+  whenComplete { result, throwable ->
+    if (throwable == null) {
+      promise.setResult(result)
+    }
+    else {
+      promise.setError(throwable)
+    }
+  }
+  return promise
 }
 
 fun ActionCallback.toPromise(): Promise<Any?> {

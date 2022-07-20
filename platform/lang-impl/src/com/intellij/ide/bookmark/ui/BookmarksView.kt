@@ -147,7 +147,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     override fun isSelected() = isEnabled && state.groupLineBookmarks
     override fun setSelected(selected: Boolean) {
       state.groupLineBookmarks = selected
-      model.invalidate()
+      model.invalidateAsync()
     }
   }
   val autoScrollFromSource = object : Option {
@@ -238,49 +238,49 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
     project.messageBus.connect(this).subscribe(BookmarksListener.TOPIC, object : BookmarksListener {
       override fun groupsSorted() {
-        model.invalidate() //TODO: node inserted
+        model.invalidateAsync() //TODO: node inserted
       }
 
       override fun groupAdded(group: BookmarkGroup) {
-        model.invalidate() //TODO: node inserted
+        model.invalidateAsync() //TODO: node inserted
       }
 
       override fun groupRemoved(group: BookmarkGroup) {
-        model.invalidate() //TODO: node removed
+        model.invalidateAsync() //TODO: node removed
       }
 
       override fun groupRenamed(group: BookmarkGroup) {
-        model.invalidate() //TODO: node updated
+        model.invalidateAsync() //TODO: node updated
       }
 
       override fun bookmarksSorted(group: BookmarkGroup) {
-        model.invalidate() //TODO: node inserted
+        model.invalidateAsync() //TODO: node inserted
       }
 
       override fun bookmarkAdded(group: BookmarkGroup, bookmark: Bookmark) {
-        model.invalidate() //TODO: child node inserted
+        model.invalidateAsync() //TODO: child node inserted
       }
 
       override fun bookmarkRemoved(group: BookmarkGroup, bookmark: Bookmark) {
-        model.invalidate() //TODO: child node removed
+        model.invalidateAsync() //TODO: child node removed
       }
 
       override fun bookmarkChanged(group: BookmarkGroup, bookmark: Bookmark) {
-        model.invalidate() //TODO: child node updated
+        model.invalidateAsync() //TODO: child node updated
       }
 
       override fun bookmarkTypeChanged(bookmark: Bookmark) {
-        model.invalidate() //TODO: child node updated for every group
+        model.invalidateAsync() //TODO: child node updated for every group
       }
 
       override fun defaultGroupChanged(oldGroup: BookmarkGroup?, newGroup: BookmarkGroup?) {
-        model.invalidate() //TODO: node updated or node moved?
+        model.invalidateAsync() //TODO: node updated or node moved?
       }
 
       override fun structureChanged(node: Any?) {
         when (node) {
-          null -> model.invalidate()
-          else -> model.invalidate(node, true)
+          null -> model.invalidateAsync()
+          else -> model.invalidateAsync(node, true)
         }
       }
     })

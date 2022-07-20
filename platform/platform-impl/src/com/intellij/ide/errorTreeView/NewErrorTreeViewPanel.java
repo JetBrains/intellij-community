@@ -42,8 +42,6 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -53,6 +51,7 @@ import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class NewErrorTreeViewPanel extends JPanel implements DataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider, Disposable {
   protected static final Logger LOG = Logger.getInstance(NewErrorTreeViewPanel.class);
@@ -191,7 +190,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     return true;
   }
 
-  @NotNull public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myTree.getEmptyText();
   }
 
@@ -242,7 +241,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
   }
 
-  private void selectElement(final ErrorTreeElement element, @Nullable final Runnable onDone) {
+  private void selectElement(final ErrorTreeElement element, final @Nullable Runnable onDone) {
     myStructureModel.select(element, myTree, onDone == null? path -> {} : path -> onDone.run());
   }
 
@@ -252,7 +251,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   public void updateTree() {
     if (!myIsDisposed) {
-      myStructureModel.invalidate();
+      myStructureModel.invalidateAsync();
     }
   }
 
@@ -278,25 +277,34 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   protected void updateAddedElement(@NotNull ErrorTreeElement element) {
-    Promise<?> promise;
-    final Object parent = myErrorViewStructure.getParentElement(element);
+    CompletableFuture<?> future;
+    Object parent = myErrorViewStructure.getParentElement(element);
     if (parent == null) {
-      promise = myStructureModel.invalidate();
+      future = myStructureModel.invalidateAsync();
     }
     else {
       if (parent instanceof GroupingElement) {
-        final Object parent2 = myErrorViewStructure.getParentElement(parent);
+        Object parent2 = myErrorViewStructure.getParentElement(parent);
         // first, need to invalidate GroupingElement itself as it may have been just added
-        promise = parent2 != null ? myStructureModel.invalidate(parent2, true) : Promises.resolvedPromise();
+        future = parent2 == null ? null : myStructureModel.invalidateAsync(parent2, true);
       }
       else {
-        promise = Promises.resolvedPromise();
+        future = null;
       }
-      promise = promise.onProcessed(p -> myStructureModel.invalidate(parent, true));
+
+      if (future == null) {
+        future = myStructureModel.invalidateAsync(parent, true);
+      }
+      else {
+        future = future
+          // invalidateAsync for parent in any case
+          .handle((o, throwable) -> null)
+          .thenCompose(__ -> myStructureModel.invalidateAsync(parent, true));
+      }
     }
     if (element.getKind() == ErrorTreeElementKind.ERROR) {
       // expand automatically only errors
-      promise.onSuccess(p -> makeVisible(element));
+      future.thenRun(() -> makeVisible(element));
     }
   }
 
@@ -360,31 +368,26 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return this;
   }
 
-  @Nullable
-  private NavigatableErrorTreeElement getSelectedNavigatableElement() {
+  private @Nullable NavigatableErrorTreeElement getSelectedNavigatableElement() {
     final ErrorTreeElement selectedElement = getSelectedErrorTreeElement();
     return selectedElement instanceof NavigatableErrorTreeElement ? (NavigatableErrorTreeElement)selectedElement : null;
   }
 
-  @Nullable
-  public ErrorTreeElement getSelectedErrorTreeElement() {
+  public @Nullable ErrorTreeElement getSelectedErrorTreeElement() {
     final ErrorTreeNodeDescriptor treeNodeDescriptor = getSelectedNodeDescriptor();
     return treeNodeDescriptor == null? null : treeNodeDescriptor.getElement();
   }
 
-  @Nullable
-  public ErrorTreeNodeDescriptor getSelectedNodeDescriptor() {
+  public @Nullable ErrorTreeNodeDescriptor getSelectedNodeDescriptor() {
     List<ErrorTreeNodeDescriptor> descriptors = getSelectedNodeDescriptors();
     return descriptors.size() == 1 ? descriptors.get(0) : null;
   }
 
-  @Nullable
-  public VirtualFile getSelectedFile() {
+  public @Nullable VirtualFile getSelectedFile() {
     final ErrorTreeNodeDescriptor descriptor = getSelectedNodeDescriptor();
     ErrorTreeElement element = descriptor != null? descriptor.getElement() : null;
     if (element != null && !(element instanceof GroupingElement)) {
@@ -615,15 +618,13 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     return myOccurrenceNavigatorSupport.hasPreviousOccurence();
   }
 
-  @NotNull
   @Override
-  public String getNextOccurenceActionName() {
+  public @NotNull String getNextOccurenceActionName() {
     return myOccurrenceNavigatorSupport.getNextOccurenceActionName();
   }
 
-  @NotNull
   @Override
-  public String getPreviousOccurenceActionName() {
+  public @NotNull String getPreviousOccurenceActionName() {
     return myOccurrenceNavigatorSupport.getPreviousOccurenceActionName();
   }
 
@@ -690,7 +691,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       final boolean hideWarnings = !showWarnings;
       if (myConfiguration.isHideWarnings() != hideWarnings) {
         myConfiguration.setHideWarnings(hideWarnings);
-        myStructureModel.invalidate();
+        myStructureModel.invalidateAsync();
       }
     }
   }
@@ -710,7 +711,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       final boolean hideInfos = !showInfos;
       if (myConfiguration.isHideInfoMessages() != hideInfos) {
         myConfiguration.setHideInfoMessages(hideInfos);
-        myStructureModel.invalidate();
+        myStructureModel.invalidateAsync();
       }
     }
   }
@@ -764,15 +765,13 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       return null;
     }
 
-    @NotNull
     @Override
-    public String getNextOccurenceActionName() {
+    public @NotNull String getNextOccurenceActionName() {
       return IdeBundle.message("action.next.message");
     }
 
-    @NotNull
     @Override
-    public String getPreviousOccurenceActionName() {
+    public @NotNull String getPreviousOccurenceActionName() {
       return IdeBundle.message("action.previous.message");
     }
   }
@@ -799,6 +798,6 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   @Override
   public void reload() {
-    myStructureModel.invalidate();
+    myStructureModel.invalidateAsync();
   }
 }
