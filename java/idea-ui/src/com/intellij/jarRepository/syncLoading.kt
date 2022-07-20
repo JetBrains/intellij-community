@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -36,7 +37,12 @@ private suspend fun submitLoadJobs(project: Project, libs: Collection<Library>) 
     if (LibraryTableImplUtil.isValidLibrary(library)) {
       runCatching {
         RepositoryUtils.reloadDependencies(project, library as LibraryEx).await()
-      }.getOrNull()
+      }
+        .fold(onSuccess = { it }, 
+              onFailure = {
+                Logger.getInstance("syncLibrariesLoading").error(it)
+                null
+             })
     }
   }
 }
