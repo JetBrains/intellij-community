@@ -413,9 +413,8 @@ object EventFields {
   }
 
   @JvmField
-  val Version = VersionClass("version")
-
-  class VersionClass(@NonNls override val name: String) : PrimitiveEventField<String?>() {
+  val Version = object : PrimitiveEventField<String?>() {
+    override val name: String = "version"
     override val validationRule: List<String>
       get() = listOf("{regexp#version}")
 

@@ -18,7 +18,7 @@ class TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup(GROUP_ID, 4)
+    private val GROUP = EventLogGroup(GROUP_ID, 5)
 
     private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.StringValidatedByCustomRule("terminalCommandHandler",
                                                                                          ClassNameRuleValidator::class.java)
@@ -34,7 +34,7 @@ class TerminalUsageTriggerCollector : CounterUsagesCollector() {
                                                                                  TERMINAL_COMMAND_HANDLER_FIELD,
                                                                                  RUN_ANYTHING_PROVIDER_FIELD)
     private val localExecEvent = GROUP.registerEvent("local.exec",
-                                                     EventFields.VersionClass("os-version"),
+                                                     EventFields.StringValidatedByRegexp("os-version", "version"),
                                                      EventFields.String("shell", KNOWN_SHELLS.toList()))
 
     @JvmStatic
