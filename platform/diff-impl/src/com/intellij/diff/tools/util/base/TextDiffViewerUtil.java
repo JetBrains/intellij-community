@@ -52,7 +52,7 @@ public final class TextDiffViewerUtil {
     result.add(ActionManager.getInstance().getAction("CompareClipboardWithSelection"));
 
     result.add(Separator.getInstance());
-    ContainerUtil.addAll(result, ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP)).getChildren(null));
+    ContainerUtil.addAll(result, ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP));
 
     return result;
   }
