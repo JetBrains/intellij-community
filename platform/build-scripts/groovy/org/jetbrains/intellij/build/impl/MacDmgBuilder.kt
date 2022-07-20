@@ -16,6 +16,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.exists
 
 internal fun MacDistributionBuilder.signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
                                                     context: BuildContext,
@@ -25,6 +26,9 @@ internal fun MacDistributionBuilder.signAndBuildDmg(builtinModule: BuiltinModule
                                                     isRuntimeBundled: Boolean,
                                                     suffix: String,
                                                     notarize: Boolean) {
+  require(macZip.exists()) {
+    "Missing $macZip"
+  }
   var javaExePath: String? = null
   if (isRuntimeBundled) {
     javaExePath = "../jbr/Contents/Home/bin/java"

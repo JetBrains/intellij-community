@@ -73,7 +73,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
       val macZip = find(macZipDir, "${arch}.zip", context)
       val builtModule = readBuiltinModulesFile(find(directory = macZipDir, suffix = "builtinModules.json", context = context))
       return MacDistributionBuilder(context = context, customizer = context.macDistributionCustomizer!!, ideaProperties = null)
-        .buildAndSignDmgFromZip(macZip, arch, builtModule)
+        .buildAndSignDmgFromZip(macZip, null, arch, builtModule)
     }
     invokeAllSettled(listOfNotNull(createTask(JvmArchitecture.x64, context), createTask(JvmArchitecture.aarch64, context)))
   }
