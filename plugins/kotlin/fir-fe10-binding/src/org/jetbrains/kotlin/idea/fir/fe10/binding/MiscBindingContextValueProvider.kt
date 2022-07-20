@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.fe10.binding
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
@@ -13,6 +14,8 @@ import org.jetbrains.kotlin.idea.fir.fe10.toDeclarationDescriptor
 import org.jetbrains.kotlin.idea.fir.fe10.toKotlinType
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -30,6 +33,7 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
         bindingContext.registerGetterByKey(BindingContext.COMPILE_TIME_VALUE, this::getCompileTimeValue)
         bindingContext.registerGetterByKey(BindingContext.DATA_CLASS_COPY_FUNCTION, this::getDataClassCopyFunction)
         bindingContext.registerGetterByKey(BindingContext.EXPECTED_EXPRESSION_TYPE, this::getExpectedExpressionType)
+        bindingContext.registerGetterByKey(BindingContext.LABEL_TARGET, this::getLabelTarget)
     }
 
     private fun getType(ktTypeReference: KtTypeReference): KotlinType {
@@ -77,4 +81,16 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
         context.withAnalysisSession {
             ktExpression.getExpectedType()
         }?.toKotlinType(context)
+
+    private fun getLabelTarget(ktExpression: KtReferenceExpression): PsiElement? {
+        val potentiallyParentReturn = ktExpression.parent.parent
+        if (potentiallyParentReturn is KtReturnExpression) {
+            return context.withAnalysisSession {
+                potentiallyParentReturn.getReturnTargetSymbol()?.psi
+            }
+        }
+
+        // other cases
+        return context.incorrectImplementation { null }
+    }
 }
