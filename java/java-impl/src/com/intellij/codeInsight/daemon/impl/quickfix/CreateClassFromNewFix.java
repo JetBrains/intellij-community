@@ -12,13 +12,13 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.scratch.ScratchUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -57,14 +57,10 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     if (element == null) return IntentionPreviewInfo.EMPTY;
     PsiJavaCodeReferenceElement classReference = getReferenceElement(element);
     if (classReference == null) return IntentionPreviewInfo.EMPTY;
-    String text;
-    if (getKind() == CreateClassKind.RECORD) {
-      text = "record" + " " + classReference.getReferenceName() + "()";
-    }
-    else {
-      text = "class" + " " + classReference.getReferenceName();
-    }
-    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", text + " {}");
+    PsiClass aClass = getKind().create(JavaPsiFacade.getElementFactory(project), classReference.getReferenceName());
+    setupClassFromNewExpression(aClass, element);
+    CodeStyleManager.getInstance(project).reformat(aClass);
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", aClass.getText());
   }
 
   @NotNull
@@ -73,13 +69,11 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   }
 
   protected void setupClassFromNewExpression(final PsiClass psiClass, final PsiNewExpression newExpression) {
-    assert ApplicationManager.getApplication().isWriteAccessAllowed();
-
     PsiClass aClass = psiClass;
     if (aClass == null) return;
 
     final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-    if (classReference != null) {
+    if (classReference != null && aClass.isPhysical()) {
       classReference.bindToElement(aClass);
     }
     setupInheritance(newExpression, aClass);
@@ -89,8 +83,10 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     if (argList != null && !argList.isEmpty()) {
       TemplateBuilderImpl templateBuilder = createConstructorTemplate(aClass, newExpression, argList);
 
-      getReferenceElement(newExpression).bindToElement(aClass);
-      aClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(aClass);
+      if (aClass.isPhysical()) {
+        getReferenceElement(newExpression).bindToElement(aClass);
+        aClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(aClass);
+      }
       final Template template = templateBuilder.buildTemplate();
       template.setToReformat(true);
 
