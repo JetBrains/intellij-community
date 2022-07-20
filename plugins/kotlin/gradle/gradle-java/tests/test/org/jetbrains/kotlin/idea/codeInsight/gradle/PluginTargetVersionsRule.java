@@ -16,6 +16,7 @@ import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
 
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
 
 import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
 
@@ -23,14 +24,14 @@ import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
 public class PluginTargetVersionsRule implements MethodRule {
     @SuppressWarnings("ClassExplicitlyAnnotation")
     private static class TargetVersionsImpl implements TargetVersions {
-        private final String value;
+        private final String[] value;
 
-        TargetVersionsImpl(String value) {
+        TargetVersionsImpl(String... value) {
             this.value = value;
         }
 
         @Override
-        public String value() {
+        public String[] value() {
             return value;
         }
 
@@ -108,7 +109,7 @@ public class PluginTargetVersionsRule implements MethodRule {
 
         TargetVersions targetVersions = new TargetVersionsImpl(version);
 
-        return new CustomMatcher<>(caption + " version '" + targetVersions.value() + "'") {
+        return new CustomMatcher<>(caption + " version '" + Arrays.toString(targetVersions.value()) + "'") {
             @Override
             public boolean matches(Object item) {
                 return item instanceof String && new VersionMatcher(GradleVersion.version(item.toString())).isVersionMatch(targetVersions);
