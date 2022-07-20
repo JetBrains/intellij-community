@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.TimeoutUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,7 +139,7 @@ public final class MavenLegacyModuleImporter {
     configLanguageLevel(level);
   }
 
-  public void preConfigFacets() {
+  public void preConfigFacets(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
     MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), () -> {
       if (myModule.isDisposed()) return;
 
@@ -156,7 +157,9 @@ public final class MavenLegacyModuleImporter {
           }
 
           if (importer.getModuleType() == moduleType) {
-            importer.preProcess(myModule, myMavenProject, changes, myProviderForExtensions);
+            measureImporterTime(importer, counters, () -> {
+              importer.preProcess(myModule, myMavenProject, changes, myProviderForExtensions);
+            });
           }
         }
         catch (Exception e) {
@@ -166,7 +169,7 @@ public final class MavenLegacyModuleImporter {
     });
   }
 
-  public void configFacets(final List<MavenProjectsProcessorTask> postTasks) {
+  public void configFacets(final List<MavenProjectsProcessorTask> postTasks, Map<Class<? extends MavenImporter>, CountAndTime> counters) {
     MavenUtil.smartInvokeAndWait(myModule.getProject(), ModalityState.defaultModalityState(), () -> {
       if (myModule.isDisposed()) return;
 
@@ -185,14 +188,16 @@ public final class MavenLegacyModuleImporter {
 
           if (importer.getModuleType() == moduleType) {
             try {
-              importer.process(myProviderForExtensions,
-                               myModule,
-                               myRootModelAdapter,
-                               myMavenTree,
-                               myMavenProject,
-                               changes,
-                               myMavenProjectToModuleName,
-                               postTasks);
+              measureImporterTime(importer, counters, () -> {
+                importer.process(myProviderForExtensions,
+                                 myModule,
+                                 myRootModelAdapter,
+                                 myMavenTree,
+                                 myMavenProject,
+                                 changes,
+                                 myMavenProjectToModuleName,
+                                 postTasks);
+              });
             }
             catch (Exception e) {
               MavenLog.LOG.error(e);
@@ -203,7 +208,7 @@ public final class MavenLegacyModuleImporter {
     });
   }
 
-  public void postConfigFacets() {
+  public void postConfigFacets(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
     MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), () -> {
       if (myModule.isDisposed()) return;
 
@@ -221,14 +226,33 @@ public final class MavenLegacyModuleImporter {
           }
 
           if (importer.getModuleType() == moduleType) {
-            importer.postProcess(myModule, myMavenProject, changes, myProviderForExtensions);
+            measureImporterTime(importer, counters, () -> {
+              importer.postProcess(myModule, myMavenProject, changes, myProviderForExtensions);
+            });
           }
-        } catch(Exception e) {
+        }
+        catch (Exception e) {
           MavenLog.LOG.error(e);
         }
-
       }
     });
+  }
+
+  private static void measureImporterTime(MavenImporter importer, Map<Class<? extends MavenImporter>, CountAndTime> counters, Runnable r) {
+    long before = System.nanoTime();
+    try {
+      r.run();
+    }
+    finally {
+      CountAndTime countAndTime = counters.computeIfAbsent(importer.getClass(), __ -> new CountAndTime());
+      countAndTime.count++;
+      countAndTime.time += TimeoutUtil.getDurationMillis(before);
+    }
+  }
+
+  static class CountAndTime {
+    int count = 0;
+    long time = 0;
   }
 
   private List<MavenImporter> getSuitableImporters() {
