@@ -342,7 +342,7 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-inline fun <T> Project.use(save: Boolean = false, action: (Project) -> T): T {
+inline fun <T> Project.useProject(save: Boolean = false, action: (Project) -> T): T {
   try {
     return action(this)
   }
@@ -351,7 +351,7 @@ inline fun <T> Project.use(save: Boolean = false, action: (Project) -> T): T {
   }
 }
 
-suspend fun <T> Project.useAsync(save: Boolean = false, action: suspend (Project) -> T): T {
+suspend fun <T> Project.useProjectAsync(save: Boolean = false, action: suspend (Project) -> T): T {
   try {
     return action(this)
   }
@@ -427,7 +427,7 @@ fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirecto
     useDefaultProjectAsTemplate = useDefaultProjectSettings,
     beforeInit = { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) }
   ))!!
-  project.use {
+  project.useProject {
     project.runInLoadComponentStateMode {
       task(project)
     }
@@ -490,7 +490,7 @@ private suspend fun createOrLoadProject(projectPath: Path,
     options = options.copy(beforeInit = { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) })
   }
 
-  ProjectManagerEx.getInstanceEx().openProjectAsync(projectPath, options)!!.useAsync { project ->
+  ProjectManagerEx.getInstanceEx().openProjectAsync(projectPath, options)!!.useProjectAsync { project ->
     if (loadComponentState) {
       project.runInLoadComponentStateMode {
         task(project)

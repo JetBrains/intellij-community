@@ -31,7 +31,7 @@ import com.intellij.testFramework.fixtures.BareTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.SdkTestFixture
 import com.intellij.testFramework.fixtures.TempDirTestFixture
-import com.intellij.testFramework.use
+import com.intellij.testFramework.useProject
 import com.intellij.ui.UIBundle
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.util.ProjectInfoBuilder
@@ -125,7 +125,7 @@ abstract class GradleCreateProjectTestCase : UsefulTestCase() {
   }
 
   fun withProject(projectInfo: ProjectInfo, save: Boolean = false, action: Project.() -> Unit) {
-    createProject(projectInfo).use(save = save) { project ->
+    createProject(projectInfo).useProject(save = save) { project ->
       for (moduleInfo in projectInfo.modules) {
         createModule(moduleInfo, project)
       }

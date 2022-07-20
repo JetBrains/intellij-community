@@ -89,7 +89,7 @@ internal class OpenProjectTest(private val opener: Opener) {
   private fun openUsingOpenFileActionAndAssertThatProjectContainsOneModule(projectDir: Path, defaultProjectTemplateShouldBeApplied: Boolean) {
     checkDefaultProjectAsTemplate { checkDefaultProjectAsTemplateTask ->
       val project = opener.opener(projectDir)!!
-      project.use {
+      project.useProject {
         assertThatProjectContainsOneModule(project)
         checkDefaultProjectAsTemplateTask(project, defaultProjectTemplateShouldBeApplied)
       }

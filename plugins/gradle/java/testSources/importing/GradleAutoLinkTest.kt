@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.testFramework.useAsync
+import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
@@ -18,7 +18,7 @@ class GradleAutoLinkTest : GradleAutoLinkTestCase() {
     """.trimIndent())
     createProjectSubFile("project/settings.gradle", "rootProject.name = 'project'")
     runBlocking {
-      openProjectAsyncAndWait(projectDirectory).useAsync { project ->
+      openProjectAsyncAndWait(projectDirectory).useProjectAsync { project ->
         val gradleSettings = GradleSettings.getInstance(project)
         assertEquals(1, gradleSettings.linkedProjectsSettings.size)
       }
@@ -47,7 +47,7 @@ class GradleAutoLinkTest : GradleAutoLinkTestCase() {
     """.trimIndent())
     createProjectSubFile("project/settings.gradle", "rootProject.name = 'project'")
     runBlocking {
-      openProjectAsync(projectDirectory).useAsync { project ->
+      openProjectAsync(projectDirectory).useProjectAsync { project ->
         val gradleSettings = GradleSettings.getInstance(project)
         assertEquals(0, gradleSettings.linkedProjectsSettings.size)
       }

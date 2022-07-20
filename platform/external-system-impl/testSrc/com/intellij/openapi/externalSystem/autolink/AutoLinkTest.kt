@@ -2,7 +2,7 @@
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.ide.impl.SelectProjectOpenProcessorDialog
-import com.intellij.testFramework.useAsync
+import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
 
 class AutoLinkTest : AutoLinkTestCase() {
@@ -14,7 +14,7 @@ class AutoLinkTest : AutoLinkTestCase() {
     createDummyCompilerXml("project/.idea/compiler.xml")
 
     runBlocking {
-      openProjectAsync(projectDirectory).useAsync { project ->
+      openProjectAsync(projectDirectory).useProjectAsync { project ->
         assertNotificationAware(project)
         assertLinkedProjects(unlinkedProjectAware, 1)
       }
@@ -29,7 +29,7 @@ class AutoLinkTest : AutoLinkTestCase() {
     createProjectSubDir("project/.idea")
 
     runBlocking {
-      openProjectAsync(projectDirectory).useAsync { project ->
+      openProjectAsync(projectDirectory).useProjectAsync { project ->
         assertNotificationAware(project)
         assertLinkedProjects(unlinkedProjectAware, 1)
       }
@@ -45,7 +45,7 @@ class AutoLinkTest : AutoLinkTestCase() {
     createDummyModulesXml("project/.idea/modules.xml")
 
     runBlocking {
-      openProjectAsync(projectDirectory).useAsync { project ->
+      openProjectAsync(projectDirectory).useProjectAsync { project ->
         val projectId = unlinkedProjectAware.getProjectId(projectDirectory)
         assertNotificationAware(project, projectId)
         assertLinkedProjects(unlinkedProjectAware, 0)
@@ -63,7 +63,7 @@ class AutoLinkTest : AutoLinkTestCase() {
     createProjectSubDir("project/.idea")
 
     runBlocking {
-      openProjectAsync(projectDirectory).useAsync { project ->
+      openProjectAsync(projectDirectory).useProjectAsync { project ->
         val projectIdA = unlinkedProjectAwareA.getProjectId(projectDirectory)
         val projectIdB = unlinkedProjectAwareB.getProjectId(projectDirectory)
         assertNotificationAware(project, projectIdA, projectIdB)
@@ -84,7 +84,7 @@ class AutoLinkTest : AutoLinkTestCase() {
     unlinkedProjectAwareA.linkProject(projectDirectory.path)
 
     runBlocking {
-      openProjectAsync(projectDirectory).useAsync { project ->
+      openProjectAsync(projectDirectory).useProjectAsync { project ->
         val projectIdB = unlinkedProjectAwareB.getProjectId(projectDirectory)
         assertNotificationAware(project, projectIdB)
         assertLinkedProjects(unlinkedProjectAwareA, 1)
@@ -108,7 +108,7 @@ class AutoLinkTest : AutoLinkTestCase() {
     }, testDisposable)
 
     runBlocking {
-      openProjectAsync(projectDirectory).useAsync { project ->
+      openProjectAsync(projectDirectory).useProjectAsync { project ->
         val projectIdB = unlinkedProjectAwareB.getProjectId(projectDirectory)
         assertNotificationAware(project, projectIdB)
         assertLinkedProjects(unlinkedProjectAwareA, 1)

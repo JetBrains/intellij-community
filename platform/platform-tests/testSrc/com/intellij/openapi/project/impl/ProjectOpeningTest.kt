@@ -15,7 +15,7 @@ import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.testFramework.use
+import com.intellij.testFramework.useProject
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.*
@@ -85,7 +85,7 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
     projectDir.createDirectories()
 
     val dirBasedProject = ProjectManagerEx.getInstanceEx().newProject(projectDir, createTestOpenProjectOptions())!!
-    dirBasedProject.use {
+    dirBasedProject.useProject {
       assertThat(ProjectUtil.isSameProject(projectDir, dirBasedProject)).isTrue()
       assertThat(ProjectUtil.isSameProject(inMemoryFs.fs.getPath("/p2"), dirBasedProject)).isFalse()
       val iprFilePath = projectDir.resolve("project.ipr")
@@ -101,7 +101,7 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
     val projectDir = inMemoryFs.fs.getPath("/p")
     projectDir.createDirectories()
     val fileBasedProject = ProjectManagerEx.getInstanceEx().newProject(projectDir.resolve("project.ipr"), createTestOpenProjectOptions())!!
-    fileBasedProject.use {
+    fileBasedProject.useProject {
       assertThat(ProjectUtil.isSameProject(projectDir, fileBasedProject)).isTrue()
       assertThat(ProjectUtil.isSameProject(inMemoryFs.fs.getPath("/p2"), fileBasedProject)).isFalse()
       val iprFilePath2 = projectDir.resolve("project2.ipr")
@@ -116,7 +116,7 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
       ProjectUtil.openOrImportAsync(projectDir, OpenProjectTask())
     }
     assertThat(project).isNotNull()
-    val projectFilePath = project!!.use { it.projectFilePath }
+    val projectFilePath = project!!.useProject { it.projectFilePath }
     assertThat(projectFilePath).isEqualTo(projectFile.systemIndependentPath)
   }
 
@@ -125,7 +125,7 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
     val projectFile = Files.writeString(projectDir.resolve("project.ipr"), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\"/>")
     val project = ProjectUtil.openOrImport(projectDir, OpenProjectTask())
     assertThat(project).isNotNull()
-    val projectFilePath = project!!.use { it.projectFilePath }
+    val projectFilePath = project!!.useProject { it.projectFilePath }
     assertThat(projectFilePath).isEqualTo(projectFile.systemIndependentPath)
   }
 }
