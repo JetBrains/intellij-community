@@ -230,6 +230,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("testData/inspectionsLocal/memberVisibilityCanBePrivate", pattern = pattern)
             model("testData/inspectionsLocal/redundantObjectTypeCheck", pattern = pattern)
             model("testData/inspectionsLocal/redundantSuspend", pattern = pattern)
+            model("testData/inspectionsLocal/redundantExplicitType", pattern = pattern)
         }
     }
 

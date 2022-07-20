@@ -1553,4 +1553,102 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/recursiveCall.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/redundantExplicitType")
+    public static class RedundantExplicitType extends AbstractFe10BindingLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotated.kt")
+        public void testAnnotated() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/annotated.kt");
+        }
+
+        @TestMetadata("boolean.kt")
+        public void testBoolean() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/boolean.kt");
+        }
+
+        @TestMetadata("char.kt")
+        public void testChar() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/char.kt");
+        }
+
+        @TestMetadata("constructor.kt")
+        public void testConstructor() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/constructor.kt");
+        }
+
+        @TestMetadata("double.kt")
+        public void testDouble() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/double.kt");
+        }
+
+        @TestMetadata("float.kt")
+        public void testFloat() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/float.kt");
+        }
+
+        @TestMetadata("int.kt")
+        public void testInt() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/int.kt");
+        }
+
+        @TestMetadata("intExpr.kt")
+        public void testIntExpr() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/intExpr.kt");
+        }
+
+        @TestMetadata("interface.kt")
+        public void testInterface() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/interface.kt");
+        }
+
+        @TestMetadata("interfaceWithCompanionObject.kt")
+        public void testInterfaceWithCompanionObject() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/interfaceWithCompanionObject.kt");
+        }
+
+        @TestMetadata("long.kt")
+        public void testLong() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/long.kt");
+        }
+
+        @TestMetadata("member.kt")
+        public void testMember() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/member.kt");
+        }
+
+        @TestMetadata("null.kt")
+        public void testNull() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/null.kt");
+        }
+
+        @TestMetadata("object.kt")
+        public void testObject() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/object.kt");
+        }
+
+        @TestMetadata("short.kt")
+        public void testShort() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/short.kt");
+        }
+
+        @TestMetadata("string.kt")
+        public void testString() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/string.kt");
+        }
+
+        @TestMetadata("top.kt")
+        public void testTop() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/top.kt");
+        }
+
+        @TestMetadata("typealias.kt")
+        public void testTypealias() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantExplicitType/typealias.kt");
+        }
+    }
 }
