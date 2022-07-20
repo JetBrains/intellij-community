@@ -27,7 +27,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -205,43 +210,40 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
     }
   }
 
-  protected open fun addFieldsAfter(layout: LayoutBuilder) {}
+  protected open fun Panel.addFieldsAfter() {}
 
   private fun createComponent(): DialogPanel {
     val messages = starterSettings.customizedMessages
     selectedLibrariesPanel.emptyText.text = messages?.noDependenciesSelectedLabel
                                             ?: JavaStartersBundle.message("hint.dependencies.not.selected")
 
-    return panel(LCFlags.fillX, LCFlags.fillY) {
+    return panel {
       val frameworkVersions = getAvailableFrameworkVersions()
       if (frameworkVersions.isNotEmpty()) {
-        row {
-          cell(isFullWidth = true) {
-            label(messages?.frameworkVersionLabel ?: JavaStartersBundle.message("title.project.version.label"))
-
-            if (frameworkVersions.size == 1) {
-              label(frameworkVersions[0].title)
-            }
-            else {
-              frameworkVersionsModel.addListDataListener(object : ListDataListener {
-                override fun intervalAdded(e: ListDataEvent?) = updateAvailableDependencies()
-                override fun intervalRemoved(e: ListDataEvent?) = updateAvailableDependencies()
-                override fun contentsChanged(e: ListDataEvent?) = updateAvailableDependencies()
-              })
-              comboBox(frameworkVersionsModel, frameworkVersionProperty, SimpleListCellRenderer.create("") { it?.title ?: "" })
-            }
+        row(messages?.frameworkVersionLabel ?: JavaStartersBundle.message("title.project.version.label")) {
+          if (frameworkVersions.size == 1) {
+            label(frameworkVersions[0].title)
           }
-        }.largeGapAfter()
+          else {
+            frameworkVersionsModel.addListDataListener(object : ListDataListener {
+              override fun intervalAdded(e: ListDataEvent?) = updateAvailableDependencies()
+              override fun intervalRemoved(e: ListDataEvent?) = updateAvailableDependencies()
+              override fun contentsChanged(e: ListDataEvent?) = updateAvailableDependencies()
+            })
+            comboBox(frameworkVersionsModel, SimpleListCellRenderer.create("") { it?.title ?: "" })
+              .bindItem(frameworkVersionProperty)
+          }
+        }.bottomGap(BottomGap.SMALL)
       }
 
-      addFieldsAfter(this)
+      addFieldsAfter()
 
       row {
         label(messages?.dependenciesLabel ?: JavaStartersBundle.message("title.project.dependencies.label"))
       }
 
       row {
-        component(JPanel(GridBagLayout()).apply {
+        cell(JPanel(GridBagLayout()).apply {
           add(BorderLayoutPanel().apply {
             preferredSize = Dimension(0, 0)
 
@@ -266,8 +268,10 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
               addToCenter(selectedLibrariesPanel)
             }, gridConstraint(0, 1))
           }, gridConstraint(1, 0))
-        }).constraints(push, grow)
-      }
+        }).resizableColumn()
+          .horizontalAlign(HorizontalAlign.FILL)
+          .verticalAlign(VerticalAlign.FILL)
+      }.resizableRow()
     }.withVisualPadding()
   }
 
