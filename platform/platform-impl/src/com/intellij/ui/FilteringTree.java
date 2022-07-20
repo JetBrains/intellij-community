@@ -262,7 +262,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       myFactory = nodeFactory;
       myStructure = structure;
       myUseIdentityHashing = useIdentityHashing;
-      myNodeCache = createNodeCache();
+      myNodeCache = createUserObjectMap();
       addTreeModelListener(new TreeModelListener() {
         @Override
         @SuppressWarnings("unchecked")
@@ -310,7 +310,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
      */
     @RequiresEdt
     public void updateStructure() {
-      Map<U, N> newNodes = createNodeCache();
+      Map<U, N> newNodes = createUserObjectMap();
       for (U node : JBTreeTraverser.from(myStructure).withRoot(getRootObject())) {
         N treeNode = myNodeCache.get(node);
         newNodes.put(node, treeNode == null ? createNode(node) : treeNode);
@@ -363,7 +363,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     @RequiresEdt
     public void refilter() {
       if (mySpeedSearch.isPopupActive()) {
-        Set<U> acceptCache = myUseIdentityHashing ? new ReferenceOpenHashSet<>() : new HashSet<>();
+        Set<U> acceptCache = createUserObjectSet();
         computeAcceptCache(myRootObject, acceptCache);
         filterChildren(myRootObject, x -> acceptCache.contains(x));
       }
@@ -373,8 +373,17 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     }
 
     @NotNull
-    private Map<U, N> createNodeCache() {
+    private Set<U> createUserObjectSet() {
+      return myUseIdentityHashing ? new ReferenceOpenHashSet<>() : new HashSet<>();
+    }
+
+    @NotNull
+    private Map<U, N> createUserObjectMap() {
       return myUseIdentityHashing ? new IdentityHashMap<>() : new HashMap<>();
+    }
+
+    private boolean equalUserObjects(@Nullable U u1, @Nullable U u2) {
+      return myUseIdentityHashing ? u1 == u2 : Objects.equals(u1, u2);
     }
 
     private boolean computeAcceptCache(@NotNull U object, @NotNull Set<? super U> cache) {
@@ -425,23 +434,27 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     }
 
     private void filterDirectChildren(@NotNull N node, @NotNull Condition<? super U> filter) {
-      Set<U> accepted = new LinkedHashSet<>();
+      Set<U> acceptedSet = createUserObjectSet();
+      List<U> acceptedList = new ArrayList<>();
 
       for (U child : getChildren(getUserObject(node))) {
-        if (filter.value(child)) accepted.add(child);
+        if (filter.value(child)) {
+          acceptedSet.add(child);
+          acceptedList.add(child);
+        }
       }
 
-      removeNotAccepted(node, accepted);
-      mergeAcceptedNodes(node, accepted);
+      removeNotAccepted(node, acceptedSet);
+      mergeAcceptedNodes(node, acceptedList);
     }
 
-    private void mergeAcceptedNodes(@NotNull N node, Set<? extends U> accepted) {
+    private void mergeAcceptedNodes(@NotNull N node, List<? extends U> accepted) {
       int k = 0;
       N cur = getChildSafe(node, 0);
       IntList newIds = new IntArrayList();
       for (U child : accepted) {
         U curUsrObject = getUserObject(cur);
-        boolean isCur = cur != null && myUseIdentityHashing ? curUsrObject == child : (curUsrObject != null && curUsrObject.equals(child));
+        boolean isCur = cur != null && equalUserObjects(child, curUsrObject);
         if (isCur) {
           cur = getChildSafe(node, k + 1);
         }
