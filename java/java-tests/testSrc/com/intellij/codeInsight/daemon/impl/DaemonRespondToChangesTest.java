@@ -2857,12 +2857,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   private static final AtomicBoolean inspected = new AtomicBoolean();
 
   public static class MySlowAnnotator extends MyRecordingAnnotator {
-
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiFile) {
-        assertFalse("For this moment file has not to process injected fragments", injectedAnnotated.get());
-        assertFalse("For this moment file has not to run inspections", inspected.get());
+        String dump = ThreadDumper.dumpThreadsToString();
+        assertFalse("At this moment (while the annotations are still running), the file must not have any of its injected fragments processed. threads:\n" + dump, injectedAnnotated.get());
+        assertFalse("At this moment (while the annotations are still running), the file must not have any of its inspections run. threads:\n"+ dump, inspected.get());
         annotated.set(true);
         iDidIt();
       }
@@ -2870,7 +2870,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public static class MyInjectedSlowAnnotator extends MyRecordingAnnotator {
-
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       assertTrue("File already has to be annotated", annotated.get());
@@ -2905,6 +2904,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         };
       }
     });
+    annotated.set(false);
+    injectedAnnotated.set(false);
+    inspected.set(false);
     try {
       myDaemonCodeAnalyzer.serializeCodeInsightPasses(true);
 
@@ -2927,6 +2929,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
     finally {
       myDaemonCodeAnalyzer.serializeCodeInsightPasses(false);
+      annotated.set(false);
+      injectedAnnotated.set(false);
+      inspected.set(false);
     }
   }
 
