@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -362,6 +363,8 @@ public final class FSRecords {
   // Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
   @NotNull
   static ListResult update(@NotNull VirtualFile parent, int parentId, @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
+    SlowOperations.assertSlowOperationsAreAllowed();
+
     assert parentId > 0: parentId;
     ListResult children = list(parentId);
     ListResult result = childrenConvertor.apply(children);
