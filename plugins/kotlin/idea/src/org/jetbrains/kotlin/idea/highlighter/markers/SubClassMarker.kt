@@ -56,7 +56,7 @@ fun buildNavigateToClassInheritorsPopup(e: MouseEvent?, element: PsiElement?): N
     inheritors.addIfNotNull(collectExprProcessor.foundElement)
     if (inheritors.isEmpty()) return null
 
-    inheritors.sortWith(renderer.comparator as Comparator<in NavigatablePsiElement>)
+    inheritors.sortWith(renderer.comparator)
 
     val updater = MarkerType.SubclassUpdater(psiClass, renderer)
 
