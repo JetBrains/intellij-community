@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.ModuleSourceSet;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
@@ -101,9 +102,14 @@ public final class CompileScopeUtil {
     return scope.getUserData(BASE_SCOPE_FOR_EXTERNAL_BUILD);
   }
 
-  public static List<TargetTypeBuildScope> mergeScopes(List<TargetTypeBuildScope> scopes1, List<TargetTypeBuildScope> scopes2) {
-    if (scopes2.isEmpty()) return scopes1;
-    if (scopes1.isEmpty()) return scopes2;
+  public static List<TargetTypeBuildScope> mergeScopes(@NotNull List<TargetTypeBuildScope> scopes1,
+                                                       @NotNull List<TargetTypeBuildScope> scopes2) {
+    if (scopes2.isEmpty()) {
+      return scopes1;
+    }
+    if (scopes1.isEmpty()) {
+      return scopes2;
+    }
 
     Map<String, TargetTypeBuildScope> scopeById = new HashMap<>();
     mergeScopes(scopeById, scopes1);
@@ -145,8 +151,11 @@ public final class CompileScopeUtil {
   }
 
   public static boolean allProjectModulesAffected(CompileContextImpl compileContext) {
-    final Set<Module> allModules = ContainerUtil.set(compileContext.getProjectCompileScope().getAffectedModules());
-    allModules.removeAll(Arrays.asList(compileContext.getCompileScope().getAffectedModules()));
+    @SuppressWarnings("SSBasedInspection")
+    Set<Module> allModules = new ObjectOpenHashSet<>(compileContext.getProjectCompileScope().getAffectedModules());
+    for (Module module : compileContext.getCompileScope().getAffectedModules()) {
+      allModules.remove(module);
+    }
     return allModules.isEmpty();
   }
 

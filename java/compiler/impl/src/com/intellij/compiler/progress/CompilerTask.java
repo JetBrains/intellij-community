@@ -11,7 +11,6 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -27,7 +26,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -260,10 +258,10 @@ public final class CompilerTask extends Task.Backgroundable {
     ProgressManager.getInstance().run(this);
   }
 
-  public @NotNull CompletableFuture<?> startAsync(Runnable compileWork, Runnable restartWork) {
+  public void runUsingCurrentIndicator(Runnable compileWork, Runnable restartWork) {
     myCompileWork = compileWork;
     myRestartWork = restartWork;
-    return (CompletableFuture<?>)((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(this);
+    run(ProgressManager.getInstance().getProgressIndicator());
   }
 
   public void run(Runnable compileWork, Runnable restartWork, ProgressIndicator progressIndicator) {

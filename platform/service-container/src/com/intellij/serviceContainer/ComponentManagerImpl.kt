@@ -7,10 +7,7 @@ import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.idea.Main
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -1473,9 +1470,4 @@ private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescripto
                                        crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
   task(mainPluginDescriptor)
   executeRegisterTaskForOldContent(mainPluginDescriptor, task)
-}
-
-private fun createSupervisorCoroutineScope(parentScope: CoroutineScope): CoroutineScope {
-  val parentContext = parentScope.coroutineContext
-  return CoroutineScope(parentContext + SupervisorJob(parent = parentContext.job))
 }

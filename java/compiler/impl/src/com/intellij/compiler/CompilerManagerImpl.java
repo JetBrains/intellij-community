@@ -51,7 +51,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -319,12 +318,7 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   public boolean isUpToDate(@NotNull CompileScope scope) {
-    return new CompileDriver(myProject).isUpToDate(scope, true).join();
-  }
-
-  @Override
-  public CompletableFuture<Boolean> isUpToDateAsync(@NotNull CompileScope scope) {
-    return new CompileDriver(myProject).isUpToDate(scope, false);
+    return new CompileDriver(myProject).isUpToDate(scope);
   }
 
   @Override

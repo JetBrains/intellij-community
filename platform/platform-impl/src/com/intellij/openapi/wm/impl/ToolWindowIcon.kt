@@ -1,63 +1,33 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+package com.intellij.openapi.wm.impl
 
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.ui.RetrievableIcon;
-import com.intellij.ui.icons.MenuBarIconProvider;
-import com.intellij.util.IconUtil;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.awt.*;
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.ScalableIcon
+import com.intellij.ui.RetrievableIcon
+import com.intellij.ui.icons.MenuBarIconProvider
+import com.intellij.util.IconUtil
+import java.awt.Component
+import java.awt.Graphics
+import javax.swing.Icon
 
 /**
  * @author Konstantin Bulenkov
  */
-public final class ToolWindowIcon implements RetrievableIcon, MenuBarIconProvider, ScalableIcon {
-  @NotNull
-  private final Icon myIcon;
-  private final String myToolWindowId;
+internal class ToolWindowIcon(private val icon: Icon,
+                              private val toolWindowId: String) : RetrievableIcon, MenuBarIconProvider, ScalableIcon {
+  override fun retrieveIcon() = icon
 
-  ToolWindowIcon(@NotNull Icon icon, @NotNull String toolWindowId) {
-    myIcon = icon;
-    myToolWindowId = toolWindowId;
+  override fun getMenuBarIcon(isDark: Boolean) = ToolWindowIcon(IconLoader.getMenuBarIcon(icon, isDark), toolWindowId)
+
+  override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+    icon.paintIcon(c, g, x, y)
   }
 
-  @Override
-  @NotNull
-  public Icon retrieveIcon() {
-    return myIcon;
-  }
+  override fun getIconWidth() = icon.iconWidth
 
-  @NotNull
-  @Override
-  public Icon getMenuBarIcon(boolean isDark) {
-    return new ToolWindowIcon(IconLoader.getMenuBarIcon(myIcon, isDark), myToolWindowId);
-  }
+  override fun getIconHeight() = icon.iconHeight
 
-  @Override
-  public void paintIcon(Component c, Graphics g, int x, int y) {
-    myIcon.paintIcon(c, g, x, y);
-  }
+  override fun getScale() = if (icon is ScalableIcon) icon.scale else 1f
 
-  @Override
-  public int getIconWidth() {
-    return myIcon.getIconWidth();
-  }
-
-  @Override
-  public int getIconHeight() {
-    return myIcon.getIconHeight();
-  }
-
-  @Override
-  public float getScale() {
-    return myIcon instanceof ScalableIcon ? ((ScalableIcon)myIcon).getScale() : 1f;
-  }
-
-  @Override
-  public @NotNull Icon scale(float scaleFactor) {
-    return new ToolWindowIcon(IconUtil.scaleOrLoadCustomVersion(myIcon, scaleFactor), myToolWindowId);
-  }
+  override fun scale(scaleFactor: Float) = ToolWindowIcon(IconUtil.scaleOrLoadCustomVersion(icon, scaleFactor), toolWindowId)
 }

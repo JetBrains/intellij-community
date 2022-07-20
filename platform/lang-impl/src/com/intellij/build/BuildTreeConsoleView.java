@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
@@ -97,7 +97,7 @@ import static com.intellij.util.ui.UIUtil.*;
 /**
  * @author Vladislav.Soroka
  */
-public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildConsoleView, Filterable<ExecutionNode>, OccurenceNavigator {
+public final class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildConsoleView, Filterable<ExecutionNode>, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance(BuildTreeConsoleView.class);
 
   @NonNls private static final String TREE = "tree";
@@ -122,10 +122,20 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final ProblemOccurrenceNavigatorSupport myOccurrenceNavigatorSupport;
   private final Set<BuildEvent> myDeferredEvents = ContainerUtil.newConcurrentSet();
 
+  /**
+   * @deprecated BuildViewSettingsProvider is not used anymore.
+   */
+  @Deprecated
   public BuildTreeConsoleView(@NotNull Project project,
                               @NotNull BuildDescriptor buildDescriptor,
                               @Nullable ExecutionConsole executionConsole,
                               @NotNull BuildViewSettingsProvider buildViewSettingsProvider) {
+    this(project, buildDescriptor, executionConsole);
+  }
+
+  public BuildTreeConsoleView(@NotNull Project project,
+                              @NotNull BuildDescriptor buildDescriptor,
+                              @Nullable ExecutionConsole executionConsole) {
     myProject = project;
     myBuildDescriptor = buildDescriptor instanceof DefaultBuildDescriptor
                         ? (DefaultBuildDescriptor)buildDescriptor
@@ -159,7 +169,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myThreeComponentsSplitter.setFirstComponent(myContentPanel);
     List<Filter> filters = myBuildDescriptor.getExecutionFilters();
     myConsoleViewHandler = new ConsoleViewHandler(myProject, myTree, myBuildProgressRootNode, this,
-                                                  executionConsole, filters, buildViewSettingsProvider);
+                                                  executionConsole, filters);
     myThreeComponentsSplitter.setSecondComponent(myConsoleViewHandler.getComponent());
     myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
     BuildTreeFilters.install(this);
@@ -253,7 +263,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return executionNode -> executionNode == getBuildProgressRootNode() ||
                             executionNode.isRunning() ||
                             executionNode.isFailed() ||
-                            myNodeFilters.stream().anyMatch(predicate -> predicate.test(executionNode));
+                            ContainerUtil.exists(myNodeFilters, predicate -> predicate.test(executionNode));
   }
 
   @Override
@@ -357,7 +367,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
             if (parentNode != null) {
               if (parentNode != buildProgressRootNode) {
                 myConsoleViewHandler.addOutput(parentNode, buildId, event);
-                myConsoleViewHandler.addOutput(parentNode, "\n", true);
+                myConsoleViewHandler.addOutput(parentNode);
               }
               reportMessageKind(messageEvent.getKind(), parentNode, structureChanged);
             }
@@ -904,14 +914,13 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return myTreeModel.getInvoker().invokeLater(task);
   }
 
-  private static class ConsoleViewHandler implements Disposable {
+  private static final class ConsoleViewHandler implements Disposable {
     private static final String EMPTY_CONSOLE_NAME = "empty";
     private final Project myProject;
     private final JPanel myPanel;
     private final CompositeView<ExecutionConsole> myView;
     private final AtomicReference<String> myNodeConsoleViewName = new AtomicReference<>();
     private final Map<String, List<Consumer<? super BuildTextConsoleView>>> deferredNodeOutput = new ConcurrentHashMap<>();
-    private final @NotNull BuildViewSettingsProvider myViewSettingsProvider;
     private @Nullable ExecutionNode myExecutionNode;
     private @NotNull final List<Filter> myExecutionConsoleFilters;
     private final BuildProgressStripe myPanelWithProgress;
@@ -923,12 +932,10 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                        @NotNull ExecutionNode buildProgressRootNode,
                        @NotNull Disposable parentDisposable,
                        @Nullable ExecutionConsole executionConsole,
-                       @NotNull List<Filter> executionConsoleFilters,
-                       @NotNull BuildViewSettingsProvider buildViewSettingsProvider) {
+                       @NotNull List<Filter> executionConsoleFilters) {
       myProject = project;
       myPanel = new NonOpaquePanel(new BorderLayout());
       myPanelWithProgress = new BuildProgressStripe(myPanel, parentDisposable, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
-      myViewSettingsProvider = buildViewSettingsProvider;
       myExecutionConsoleFilters = executionConsoleFilters;
       Disposer.register(parentDisposable, this);
       myView = new CompositeView<>(null) {
@@ -1073,8 +1080,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       });
     }
 
-    private void addOutput(@NotNull ExecutionNode node, @NotNull String text, boolean stdOut) {
-      addOutput(node, view -> view.append(text, stdOut));
+    private void addOutput(@NotNull ExecutionNode node) {
+      addOutput(node, view -> view.append("\n", true));
     }
 
     private void addOutput(@NotNull ExecutionNode node, @NotNull Object buildId, BuildEvent event) {
@@ -1296,8 +1303,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     }
 
     @Override
-    public @NotNull Object[] getChildElements(@NotNull Object element) {
-      // This .toArray() is still slow but it is called less frequently because of batching in AsyncTreeModel and process less data if
+    public Object @NotNull [] getChildElements(@NotNull Object element) {
+      // This .toArray() is still slow, but it is called less frequently because of batching in AsyncTreeModel and process less data if
       // filters are applied.
       return ((ExecutionNode)element).getChildList().toArray();
     }

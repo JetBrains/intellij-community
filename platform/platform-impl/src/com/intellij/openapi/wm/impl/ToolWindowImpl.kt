@@ -416,7 +416,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
     else {
       if (pendingContentManagerListeners == null) {
-        pendingContentManagerListeners = arrayListOf()
+        pendingContentManagerListeners = mutableListOf()
       }
       pendingContentManagerListeners!!.add(listener)
     }
@@ -432,8 +432,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   override fun setIcon(newIcon: Icon) {
     EDT.assertIsEdt()
-    doSetIcon(newIcon)
-    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.ICON)
+    if (newIcon !== icon?.retrieveIcon()) {
+      doSetIcon(newIcon)
+      toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.ICON)
+    }
   }
 
   internal fun doSetIcon(newIcon: Icon) {
@@ -805,7 +807,7 @@ private class ToolWindowFocusWatcher(private val toolWindow: ToolWindowImpl, com
 }
 
 private fun setBackgroundRecursively(component: Component, bg: Color) {
-  UIUtil.forEachComponentInHierarchy(component, Consumer { c: Component ->
+  UIUtil.forEachComponentInHierarchy(component, Consumer { c ->
     if (c !is ActionButton && c !is Divider) {
       c.background = bg
     }

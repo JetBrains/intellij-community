@@ -111,7 +111,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    */
   private @NotNull <Result> CompletableFuture<Result> onValidThread(@NotNull Function<? super Structure, ? extends Result> function) {
     CompletableFuture<Result> future = new CompletableFuture<>();
-    invoker.invoke(() -> {
+    invoker.compute(() -> {
       if (!disposed) {
         Result result = function.apply(structure);
         if (result != null) {
@@ -121,6 +121,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       if (!future.isDone()) {
         future.completeExceptionally(AsyncPromise.CANCELED);
       }
+      return null;
     }).onError(future::completeExceptionally);
     return future;
   }

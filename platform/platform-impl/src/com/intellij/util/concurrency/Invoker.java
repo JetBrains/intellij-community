@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
@@ -76,8 +76,7 @@ public abstract class Invoker implements Disposable {
    * @param task a task to execute on the valid thread
    * @return an object to control task processing
    */
-  @NotNull
-  public final <T> CancellablePromise<T> compute(@NotNull Supplier<? extends T> task) {
+  public final @NotNull <T> CancellablePromise<T> compute(@NotNull Supplier<? extends T> task) {
     return promise(new Task<>(task));
   }
 
@@ -90,21 +89,8 @@ public abstract class Invoker implements Disposable {
    * @param task a task to execute asynchronously on the valid thread
    * @return an object to control task processing
    */
-  @NotNull
-  public final <T> CancellablePromise<T> computeLater(@NotNull Supplier<? extends T> task) {
-    return computeLater(task, 0);
-  }
-
-  /**
-   * Computes the specified task on the valid thread after the specified delay.
-   *
-   * @param task  a task to execute asynchronously on the valid thread
-   * @param delay milliseconds for the initial delay
-   * @return an object to control task processing
-   */
-  @NotNull
-  public final <T> CancellablePromise<T> computeLater(@NotNull Supplier<? extends T> task, int delay) {
-    return promise(new Task<>(task), delay);
+  public final @NotNull <T> CancellablePromise<T> computeLater(@NotNull Supplier<? extends T> task) {
+    return promise(new Task<>(task), 0);
   }
 
   /**
@@ -114,8 +100,7 @@ public abstract class Invoker implements Disposable {
    * @param task a task to execute on the valid thread
    * @return an object to control task processing
    */
-  @NotNull
-  public final CancellablePromise<?> invoke(@NotNull Runnable task) {
+  public final @NotNull CancellablePromise<?> invoke(@NotNull Runnable task) {
     return compute(new Wrapper(task));
   }
 
@@ -128,8 +113,7 @@ public abstract class Invoker implements Disposable {
    * @param task a task to execute asynchronously on the valid thread
    * @return an object to control task processing
    */
-  @NotNull
-  public final CancellablePromise<?> invokeLater(@NotNull Runnable task) {
+  public final @NotNull CancellablePromise<?> invokeLater(@NotNull Runnable task) {
     return invokeLater(task, 0);
   }
 
@@ -140,9 +124,8 @@ public abstract class Invoker implements Disposable {
    * @param delay milliseconds for the initial delay
    * @return an object to control task processing
    */
-  @NotNull
-  public final CancellablePromise<?> invokeLater(@NotNull Runnable task, int delay) {
-    return computeLater(new Wrapper(task), delay);
+  public final @NotNull CancellablePromise<?> invokeLater(@NotNull Runnable task, int delay) {
+    return promise(new Task<>(new Wrapper(task)), delay);
   }
 
   /**
@@ -153,9 +136,8 @@ public abstract class Invoker implements Disposable {
    * @return an object to control task processing
    * @deprecated use {@link #invoke(Runnable)} or {@link #compute(Supplier)} instead
    */
-  @NotNull
   @Deprecated(forRemoval = true)
-  public final CancellablePromise<?> runOrInvokeLater(@NotNull Runnable task) {
+  public final @NotNull CancellablePromise<?> runOrInvokeLater(@NotNull Runnable task) {
     return invoke(task);
   }
 
@@ -241,9 +223,10 @@ public abstract class Invoker implements Disposable {
    * @param task a task to execute on the valid thread
    * @return an object to control task processing
    */
-  @NotNull
-  private <T> CancellablePromise<T> promise(@NotNull Task<T> task) {
-    if (!isValidThread()) return promise(task, 0);
+  private @NotNull <T> CancellablePromise<T> promise(@NotNull Task<T> task) {
+    if (!isValidThread()) {
+      return promise(task, 0);
+    }
     count.incrementAndGet();
     invokeSafely(task, 0);
     return task.promise;
@@ -256,10 +239,13 @@ public abstract class Invoker implements Disposable {
    * @param delay milliseconds for the initial delay
    * @return an object to control task processing
    */
-  @NotNull
-  private <T> CancellablePromise<T> promise(@NotNull Task<T> task, int delay) {
-    if (delay < 0) throw new IllegalArgumentException("delay must be non-negative: " + delay);
-    if (task.canInvoke(disposed)) offerSafely(task, 0, delay);
+  private @NotNull <T> CancellablePromise<T> promise(@NotNull Task<T> task, int delay) {
+    if (delay < 0) {
+      throw new IllegalArgumentException("delay must be non-negative: " + delay);
+    }
+    if (task.canInvoke(disposed)) {
+      offerSafely(task, 0, delay);
+    }
     return task.promise;
   }
 
@@ -349,8 +335,7 @@ public abstract class Invoker implements Disposable {
   }
 
 
-  @NotNull
-  private ProgressIndicatorBase indicator(@NotNull AsyncPromise<?> promise) {
+  private @NotNull ProgressIndicatorBase indicator(@NotNull AsyncPromise<?> promise) {
     ProgressIndicatorBase indicator = indicators.get(promise);
     if (indicator == null) {
       indicator = new ProgressIndicatorBase(true, false);
@@ -500,28 +485,23 @@ public abstract class Invoker implements Disposable {
   }
 
 
-  @NotNull
-  public static Invoker forEventDispatchThread(@NotNull Disposable parent) {
+  public static @NotNull Invoker forEventDispatchThread(@NotNull Disposable parent) {
     return new EDT(parent);
   }
 
-  @NotNull
-  public static Invoker forBackgroundPoolWithReadAction(@NotNull Disposable parent) {
+  public static @NotNull Invoker forBackgroundPoolWithReadAction(@NotNull Disposable parent) {
     return new Background(parent, ThreeState.YES, 8);
   }
 
-  @NotNull
-  public static Invoker forBackgroundPoolWithoutReadAction(@NotNull Disposable parent) {
+  public static @NotNull Invoker forBackgroundPoolWithoutReadAction(@NotNull Disposable parent) {
     return new Background(parent, ThreeState.NO, 8);
   }
 
-  @NotNull
-  public static Invoker forBackgroundThreadWithReadAction(@NotNull Disposable parent) {
+  public static @NotNull Invoker forBackgroundThreadWithReadAction(@NotNull Disposable parent) {
     return new Background(parent, ThreeState.YES, 1);
   }
 
-  @NotNull
-  public static Invoker forBackgroundThreadWithoutReadAction(@NotNull Disposable parent) {
+  public static @NotNull Invoker forBackgroundThreadWithoutReadAction(@NotNull Disposable parent) {
     return new Background(parent, ThreeState.NO, 1);
   }
 }

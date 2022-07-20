@@ -115,7 +115,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
 
       @Override
       public void modulesAdded(@NotNull Project project, @NotNull List<Module> modules) {
-        myProcessorsProfilesMap = null; // clear cache
+        // clear cache
+        myProcessorsProfilesMap = null;
       }
 
       @Override

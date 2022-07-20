@@ -1,585 +1,564 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.errorTreeView;
+package com.intellij.ide.errorTreeView
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.*;
-import com.intellij.ide.actions.CloseTabToolbarAction;
-import com.intellij.ide.actions.ExportToTextFileToolbarAction;
-import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
-import com.intellij.ide.errorTreeView.impl.ErrorViewTextExporter;
-import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
-import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.MessageView;
-import com.intellij.ui.tree.AsyncTreeModel;
-import com.intellij.ui.tree.StructureTreeModel;
-import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Alarm;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MutableErrorTreeView;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.icons.AllIcons
+import com.intellij.ide.*
+import com.intellij.ide.actions.CloseTabToolbarAction
+import com.intellij.ide.actions.ExportToTextFileToolbarAction
+import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration
+import com.intellij.ide.errorTreeView.impl.ErrorViewTextExporter
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.createSupervisorCoroutineScope
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.Navigatable
+import com.intellij.ui.AutoScrollToSourceHandler
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.SideBorder
+import com.intellij.ui.content.MessageView
+import com.intellij.ui.tree.AsyncTreeModel
+import com.intellij.ui.tree.StructureTreeModel
+import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.EditSourceOnDoubleClickHandler
+import com.intellij.util.EditSourceOnEnterKeyHandler
+import com.intellij.util.ui.ErrorTreeView
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.MutableErrorTreeView
+import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.tree.TreeUtil
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import org.jetbrains.annotations.ApiStatus
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.GridLayout
+import java.awt.datatransfer.StringSelection
+import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.tree.DefaultMutableTreeNode
+import kotlin.time.Duration.Companion.milliseconds
 
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.awt.datatransfer.StringSelection;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+@OptIn(FlowPreview::class)
+open class NewErrorTreeViewPanel @JvmOverloads constructor(
+  @JvmField protected var myProject: Project,
+  private val helpId: String?,
+  @Suppress("UNUSED_PARAMETER") createExitAction: Boolean = true,
+  createToolbar: Boolean = true,
+  rerunAction: Runnable? = null,
+  private val state: MessageViewState = MessageViewState(),
+  errorViewStructure: ErrorViewStructure? = null,
+) : JPanel(), DataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider, Disposable {
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  class MessageViewState {
+    @Volatile
+    @JvmField
+    var progressText: @NlsContexts.ProgressText String? = null
 
-public class NewErrorTreeViewPanel extends JPanel implements DataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider, Disposable {
-  protected static final Logger LOG = Logger.getInstance(NewErrorTreeViewPanel.class);
-  private volatile @NlsContexts.ProgressText String myProgressText = "";
-  private volatile float myFraction;
-  private final ErrorViewStructure myErrorViewStructure;
-  private final StructureTreeModel<ErrorViewStructure> myStructureModel;
-  private final Alarm myUpdateAlarm = new Alarm();
-  private volatile boolean myIsDisposed;
-  private final ErrorTreeViewConfiguration myConfiguration;
+    @JvmField
+    @Volatile
+    var fraction = 0f
 
-  public interface ProcessController {
-    void stopProcess();
-
-    boolean isProcessStopped();
+    fun clearProgress() {
+      progressText = null
+      fraction = 0.0f
+    }
   }
 
-  private ActionToolbar myLeftToolbar;
-  private final TreeExpander myTreeExpander = new MyTreeExpander();
-  private final ExporterToTextFile myExporterToTextFile;
-  protected Project myProject;
-  private final String myHelpId;
-  protected Tree myTree;
-  private final JPanel myMessagePanel;
-  private ProcessController myProcessController;
+  val errorViewStructure: ErrorViewStructure
 
-  private JLabel myProgressLabel;
-  private JPanel myProgressPanel;
+  private val structureModel: StructureTreeModel<ErrorViewStructure>
+  private val progressFlow = MutableStateFlow<String?>(null)
 
-  private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
-  private final MyOccurrenceNavigatorSupport myOccurrenceNavigatorSupport;
+  @Volatile
+  private var isDisposed = false
+  private val configuration = ErrorTreeViewConfiguration.getInstance(myProject)
 
-  public NewErrorTreeViewPanel(Project project, String helpId) {
-    this(project, helpId, true);
+  private var leftToolbar: ActionToolbar? = null
+
+  private val treeExpander = object : TreeExpander {
+    override fun expandAll() {
+      this@NewErrorTreeViewPanel.expandAll()
+    }
+
+    override fun canExpand() = true
+
+    override fun collapseAll() {
+      this@NewErrorTreeViewPanel.collapseAll()
+    }
+
+    override fun canCollapse() = true
   }
 
-  public NewErrorTreeViewPanel(Project project, String helpId, boolean createExitAction) {
-    this(project, helpId, createExitAction, true);
+  private val exporterToTextFile: ExporterToTextFile
+  @JvmField
+  protected var myTree: Tree
+  private val messagePanel: JPanel
+  private var processController: ProcessController? = null
+  private var progressLabel: JLabel? = null
+  private var progressPanel: JPanel? = null
+  private val autoScrollToSourceHandler: AutoScrollToSourceHandler
+  private val occurrenceNavigatorSupport: MyOccurrenceNavigatorSupport
+
+  interface ProcessController {
+    fun stopProcess()
+
+    val isProcessStopped: Boolean
   }
 
-  public NewErrorTreeViewPanel(Project project, String helpId, boolean createExitAction, boolean createToolbar) {
-    this(project, helpId, createExitAction, createToolbar, null);
-  }
+  private val scope = createSupervisorCoroutineScope(myProject.coroutineScope)
 
-  public NewErrorTreeViewPanel(Project project, String helpId, boolean createExitAction, boolean createToolbar, @Nullable Runnable rerunAction) {
-    myProject = project;
-    myHelpId = helpId;
-    myConfiguration = ErrorTreeViewConfiguration.getInstance(project);
-    setLayout(new BorderLayout());
+  init {
+    layout = BorderLayout()
+    autoScrollToSourceHandler = object : AutoScrollToSourceHandler() {
+      override fun isAutoScrollMode() = configuration.isAutoscrollToSource
 
-    myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
-      @Override
-      protected boolean isAutoScrollMode() {
-        return myConfiguration.isAutoscrollToSource();
+      override fun setAutoScrollMode(state: Boolean) {
+        configuration.isAutoscrollToSource = state
       }
-
-      @Override
-      protected void setAutoScrollMode(boolean state) {
-        myConfiguration.setAutoscrollToSource(state);
-      }
-    };
-
-    myMessagePanel = new JPanel(new BorderLayout());
-
-    myErrorViewStructure = createErrorViewStructure(project, canHideWarnings());
-    myStructureModel = new StructureTreeModel<>(myErrorViewStructure, this);
-    myTree = new Tree(new AsyncTreeModel(myStructureModel, this));
-    myTree.setRowHeight(0);
-    myTree.getEmptyText().setText(IdeBundle.message("errortree.noMessages"));
-
-    myExporterToTextFile = new ErrorViewTextExporter(myErrorViewStructure);
-    myOccurrenceNavigatorSupport = new MyOccurrenceNavigatorSupport(myTree);
-
-    myAutoScrollToSourceHandler.install(myTree);
-    TreeUtil.installActions(myTree);
-    myTree.setRootVisible(false);
-    myTree.setShowsRootHandles(true);
-    myTree.setLargeModel(true);
-
-    JScrollPane scrollPane = NewErrorTreeRenderer.install(myTree);
-    scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
-    myMessagePanel.add(scrollPane, BorderLayout.CENTER);
-
+    }
+    messagePanel = JPanel(BorderLayout())
+    @Suppress("LeakingThis")
+    this.errorViewStructure = errorViewStructure ?: createErrorViewStructure(project = myProject, canHideWarnings = canHideWarnings())
+    @Suppress("LeakingThis")
+    structureModel = StructureTreeModel(this.errorViewStructure, this)
+    @Suppress("LeakingThis")
+    myTree = Tree(AsyncTreeModel(structureModel, this))
+    myTree.rowHeight = 0
+    @Suppress("SpellCheckingInspection")
+    myTree.emptyText.text = IdeBundle.message("errortree.noMessages")
+    exporterToTextFile = ErrorViewTextExporter(errorViewStructure)
+    occurrenceNavigatorSupport = MyOccurrenceNavigatorSupport(myTree)
+    autoScrollToSourceHandler.install(myTree)
+    TreeUtil.installActions(myTree)
+    myTree.isRootVisible = false
+    myTree.showsRootHandles = true
+    myTree.isLargeModel = true
+    val scrollPane = NewErrorTreeRenderer.install(myTree)
+    scrollPane.border = IdeBorderFactory.createBorder(SideBorder.LEFT)
+    messagePanel.add(scrollPane, BorderLayout.CENTER)
     if (createToolbar) {
-      add(createToolbarPanel(rerunAction), BorderLayout.WEST);
+      @Suppress("LeakingThis")
+      add(createToolbarPanel(rerunAction), BorderLayout.WEST)
     }
-
-    add(myMessagePanel, BorderLayout.CENTER);
-
-    myTree.addMouseListener(new PopupHandler() {
-      @Override
-      public void invokePopup(Component comp, int x, int y) {
-        popupInvoked(comp, x, y);
+    @Suppress("LeakingThis")
+    add(messagePanel, BorderLayout.CENTER)
+    myTree.addMouseListener(object : PopupHandler() {
+      override fun invokePopup(comp: Component, x: Int, y: Int) {
+        popupInvoked(comp, x, y)
       }
-    });
+    })
+    EditSourceOnDoubleClickHandler.install(myTree)
+    EditSourceOnEnterKeyHandler.install(myTree)
 
-    EditSourceOnDoubleClickHandler.install(myTree);
-    EditSourceOnEnterKeyHandler.install(myTree);
-  }
-
-  protected ErrorViewStructure createErrorViewStructure(Project project, boolean canHideWarnings) {
-    return new ErrorViewStructure(project, canHideWarnings);
-  }
-
-  @Override
-  public void dispose() {
-    myIsDisposed = true;
-    myErrorViewStructure.clear();
-    myUpdateAlarm.cancelAllRequests();
-    Disposer.dispose(myUpdateAlarm);
-  }
-
-  @Override
-  public void performCopy(@NotNull DataContext dataContext) {
-    List<ErrorTreeNodeDescriptor> descriptors = getSelectedNodeDescriptors();
-    if (!descriptors.isEmpty()) {
-      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(descriptors, descriptor -> {
-        ErrorTreeElement element = descriptor.getElement();
-        return NewErrorTreeRenderer.calcPrefix(element) + StringUtil.join(element.getText(), "\n");
-      }, "\n")));
-    }
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
-  }
-
-  @Override
-  public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-    return !getSelectedNodeDescriptors().isEmpty();
-  }
-
-  @Override
-  public boolean isCopyVisible(@NotNull DataContext dataContext) {
-    return true;
-  }
-
-  public @NotNull StatusText getEmptyText() {
-    return myTree.getEmptyText();
-  }
-
-  @Override
-  public Object getData(@NotNull String dataId) {
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return this;
-    }
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      final NavigatableErrorTreeElement selectedMessageElement = getSelectedNavigatableElement();
-      return selectedMessageElement != null ? selectedMessageElement.getNavigatable() : null;
-    }
-    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return myHelpId;
-    }
-    else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      return myTreeExpander;
-    }
-    else if (PlatformDataKeys.EXPORTER_TO_TEXT_FILE.is(dataId)) {
-      return myExporterToTextFile;
-    }
-    else if (CURRENT_EXCEPTION_DATA_KEY.is(dataId)) {
-      ErrorTreeElement selectedMessageElement = getSelectedErrorTreeElement();
-      return selectedMessageElement != null ? selectedMessageElement.getData() : null;
-    }
-    return null;
-  }
-
-  public void selectFirstMessage() {
-    final ErrorTreeElement firstError = myErrorViewStructure.getFirstMessage(ErrorTreeElementKind.ERROR);
-    if (firstError != null) {
-      selectElement(firstError, () -> {
-        if (shouldShowFirstErrorInEditor()) {
-          TransactionGuard.submitTransaction(this, () -> navigateToSource(false));
+    scope.launch {
+      progressFlow
+        .debounce(100.milliseconds)
+        .collectLatest { text ->
+          withContext(Dispatchers.EDT) {
+            initProgressPanel()
+            if (text == null) {
+              progressLabel!!.text = ""
+            }
+            else {
+              val fraction = state.fraction
+              progressLabel!!.text = if (fraction > 0.0f) "${(fraction * 100 + 0.5).toInt()}%  $text" else text
+            }
+          }
         }
-      });
+    }
+  }
+
+  companion object {
+    @JvmField
+    protected val LOG = logger<NewErrorTreeViewPanel>()
+
+    @Suppress("SpellCheckingInspection")
+    @JvmStatic
+    fun createExportPrefix(line: Int): String = if (line < 0) "" else IdeBundle.message("errortree.prefix.line", line)
+
+    @JvmStatic
+    fun createRendererPrefix(line: Int, column: Int): String {
+      if (line < 0) {
+        return ""
+      }
+      return if (column < 0) "($line)" else "($line, $column)"
+    }
+
+    @JvmStatic
+    fun getQualifiedName(file: VirtualFile): String = file.presentableUrl
+  }
+
+  protected open fun createErrorViewStructure(project: Project?, canHideWarnings: Boolean): ErrorViewStructure {
+    return ErrorViewStructure(project, canHideWarnings)
+  }
+
+  override fun dispose() {
+    try {
+      scope.cancel()
+    }
+    finally {
+      isDisposed = true
+      errorViewStructure.clear()
+    }
+  }
+
+  override fun performCopy(dataContext: DataContext) {
+    val descriptors = selectedNodeDescriptors
+    if (!descriptors.isEmpty()) {
+      CopyPasteManager.getInstance().setContents(StringSelection(descriptors.joinToString(separator = "\n") {
+        val element = it.element
+        NewErrorTreeRenderer.calcPrefix(element) + element.text.joinToString(separator = "\n")
+      }))
+    }
+  }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+  override fun isCopyEnabled(dataContext: DataContext) = !selectedNodeDescriptors.isEmpty()
+
+  override fun isCopyVisible(dataContext: DataContext) = true
+
+  val emptyText: StatusText
+    get() = myTree.emptyText
+
+  override fun getData(dataId: String): Any? {
+    return when {
+      PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> this
+      CommonDataKeys.NAVIGATABLE.`is`(dataId) -> {
+        val selectedMessageElement = selectedNavigatableElement
+        selectedMessageElement?.navigatable
+      }
+      PlatformCoreDataKeys.HELP_ID.`is`(dataId) -> helpId
+      PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
+      PlatformDataKeys.EXPORTER_TO_TEXT_FILE.`is`(dataId) -> exporterToTextFile
+      ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.`is`(dataId) -> {
+        val selectedMessageElement = selectedErrorTreeElement
+        selectedMessageElement?.data
+      }
+      else -> null
+    }
+  }
+
+  open fun selectFirstMessage() {
+    val firstError = errorViewStructure.getFirstMessage(ErrorTreeElementKind.ERROR)
+    if (firstError != null) {
+      selectElement(firstError) {
+        if (shouldShowFirstErrorInEditor()) {
+          ApplicationManager.getApplication().invokeLater(::navigateToSource, myProject.disposed)
+        }
+      }
     }
     else {
-      ErrorTreeElement firstWarning = myErrorViewStructure.getFirstMessage(ErrorTreeElementKind.WARNING);
-      if (firstWarning == null) firstWarning = myErrorViewStructure.getFirstMessage(ErrorTreeElementKind.NOTE);
-
-      if (firstWarning != null) {
-        selectElement(firstWarning, null);
+      val firstWarning = errorViewStructure.getFirstMessage(ErrorTreeElementKind.WARNING)
+                         ?: errorViewStructure.getFirstMessage(ErrorTreeElementKind.NOTE)
+      if (firstWarning == null) {
+        TreeUtil.promiseSelectFirst(myTree)
       }
       else {
-        TreeUtil.promiseSelectFirst(myTree);
+        selectElement(firstWarning, null)
       }
     }
   }
 
-  private void selectElement(final ErrorTreeElement element, final @Nullable Runnable onDone) {
-    myStructureModel.select(element, myTree, onDone == null? path -> {} : path -> onDone.run());
+  private fun selectElement(element: ErrorTreeElement, onDone: Runnable?) {
+    structureModel.select(element, myTree, Consumer { onDone?.run() })
   }
 
-  protected boolean shouldShowFirstErrorInEditor() {
-    return false;
-  }
+  protected open fun shouldShowFirstErrorInEditor(): Boolean = false
 
-  public void updateTree() {
-    if (!myIsDisposed) {
-      myStructureModel.invalidateAsync();
+  open fun updateTree() {
+    if (!isDisposed) {
+      structureModel.invalidateAsync()
     }
   }
 
-  @Override
-  public void addMessage(int type, String @NotNull [] text, @Nullable VirtualFile file, int line, int column, @Nullable Object data) {
-    addMessage(type, text, null, file, line, column, data);
+  override fun addMessage(type: Int, text: Array<String>, file: VirtualFile?, line: Int, column: Int, data: Any?) {
+    addMessage(type = type, text = text, underFileGroup = null, file = file, line = line, column = column, data = data)
   }
 
-  @Override
-  public void addMessage(int type,
-                         String @NotNull [] text,
-                         @Nullable VirtualFile underFileGroup,
-                         @Nullable VirtualFile file,
-                         int line,
-                         int column,
-                         @Nullable Object data) {
-    if (myIsDisposed) {
-      return;
+  override fun addMessage(type: Int,
+                          text: Array<String>,
+                          underFileGroup: VirtualFile?,
+                          file: VirtualFile?,
+                          line: Int,
+                          column: Int,
+                          data: Any?) {
+    if (isDisposed) {
+      return
     }
-    updateAddedElement(myErrorViewStructure.addMessage(
+    updateAddedElement(errorViewStructure.addMessage(
       ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, underFileGroup, file, line, column, data
-    ));
+    ))
   }
 
-  protected void updateAddedElement(@NotNull ErrorTreeElement element) {
-    CompletableFuture<?> future;
-    Object parent = myErrorViewStructure.getParentElement(element);
+  fun updateAddedElement(element: ErrorTreeElement) {
+    var future: CompletableFuture<*>?
+    val parent = errorViewStructure.getParentElement(element)
     if (parent == null) {
-      future = myStructureModel.invalidateAsync();
+      future = structureModel.invalidateAsync()
     }
     else {
-      if (parent instanceof GroupingElement) {
-        Object parent2 = myErrorViewStructure.getParentElement(parent);
+      future = if (parent is GroupingElement) {
+        val parent2 = errorViewStructure.getParentElement(parent)
         // first, need to invalidate GroupingElement itself as it may have been just added
-        future = parent2 == null ? null : myStructureModel.invalidateAsync(parent2, true);
+        if (parent2 == null) null else structureModel.invalidateAsync(parent2, true)
       }
       else {
-        future = null;
+        null
       }
 
       if (future == null) {
-        future = myStructureModel.invalidateAsync(parent, true);
+        future = structureModel.invalidateAsync(parent, true)
       }
       else {
         future = future
           // invalidateAsync for parent in any case
-          .handle((o, throwable) -> null)
-          .thenCompose(__ -> myStructureModel.invalidateAsync(parent, true));
+          .handle { _, _ -> null }
+          .thenCompose { structureModel.invalidateAsync(parent, true) }
       }
     }
-    if (element.getKind() == ErrorTreeElementKind.ERROR) {
+    if (element.kind == ErrorTreeElementKind.ERROR) {
       // expand automatically only errors
-      future.thenRun(() -> makeVisible(element));
+      future!!.thenRun { makeVisible(element) }
     }
   }
 
-  protected void makeVisible(@NotNull ErrorTreeElement element) {
-    myStructureModel.makeVisible(element, myTree, pp->{});
+  protected fun makeVisible(element: ErrorTreeElement) {
+    structureModel.makeVisible(element, myTree) { }
   }
 
-  @Override
-  public void addMessage(int type,
-                         String @NotNull [] text,
-                         @Nullable String groupName,
-                         @NotNull Navigatable navigatable,
-                         @Nullable String exportTextPrefix,
-                         @Nullable String rendererTextPrefix,
-                         @Nullable Object data) {
-    if (myIsDisposed) {
-      return;
+  override fun addMessage(type: Int,
+                          text: Array<String>,
+                          groupName: String?,
+                          navigatable: Navigatable,
+                          exportTextPrefix: String?,
+                          rendererTextPrefix: String?,
+                          data: Any?) {
+    if (isDisposed) {
+      return
     }
-    VirtualFile file = data instanceof VirtualFile ? (VirtualFile)data : null;
-    if (file == null && navigatable instanceof OpenFileDescriptor) {
-      file = ((OpenFileDescriptor)navigatable).getFile();
+
+    var file = if (data is VirtualFile) data else null
+    if (file == null && navigatable is OpenFileDescriptor) {
+      file = navigatable.file
     }
-    final String exportPrefix = exportTextPrefix == null ? "" : exportTextPrefix;
-    final String renderPrefix = rendererTextPrefix == null ? "" : rendererTextPrefix;
-    final ErrorTreeElementKind kind = ErrorTreeElementKind.convertMessageFromCompilerErrorType(type);
-    updateAddedElement(myErrorViewStructure.addNavigatableMessage(
+    val exportPrefix = exportTextPrefix ?: ""
+    val renderPrefix = rendererTextPrefix ?: ""
+    val kind = ErrorTreeElementKind.convertMessageFromCompilerErrorType(type)
+    updateAddedElement(errorViewStructure.addNavigatableMessage(
       groupName, navigatable, kind, text, data, exportPrefix, renderPrefix, file
-    ));
+    ))
   }
 
-  public boolean removeMessage(int type, @NotNull String groupName, @NotNull Navigatable navigatable) {
-    final ErrorTreeElementKind kind = ErrorTreeElementKind.convertMessageFromCompilerErrorType(type);
-    List<NavigatableMessageElement> removed = myErrorViewStructure.removeNavigatableMessage(groupName, kind, navigatable);
-    if (removed.isEmpty()) return false;
-    removed.forEach(this::updateAddedElement);
-    return true;
+  fun removeMessage(type: Int, groupName: String, navigatable: Navigatable): Boolean {
+    val kind = ErrorTreeElementKind.convertMessageFromCompilerErrorType(type)
+    val removed = errorViewStructure.removeNavigatableMessage(groupName, kind, navigatable)
+    if (removed.isEmpty()) {
+      return false
+    }
+    for (descriptor in removed) {
+      updateAddedElement(descriptor)
+    }
+    return true
   }
 
-  public void removeAllInGroup(@NotNull String name) {
-    List<NavigatableMessageElement> removed = myErrorViewStructure.removeAllNavigatableMessagesInGroup(name);
-    removed.forEach(this::updateAddedElement);
+  fun removeAllInGroup(name: String) {
+    for (it in errorViewStructure.removeAllNavigatableMessagesInGroup(name)) {
+      updateAddedElement(it)
+    }
   }
 
-  public NavigatableMessageElement @Nullable [] getNavigatableMessages(@NotNull String groupName) {
-    ErrorTreeElement[] childElements = myErrorViewStructure.getChildElements(new GroupingElement(groupName, null, null));
-    return ObjectUtils.tryCast(childElements, NavigatableMessageElement[].class);
-  }
+  override fun getComponent(): JComponent = this
 
-  public ErrorViewStructure getErrorViewStructure() {
-    return myErrorViewStructure;
-  }
+  private val selectedNavigatableElement: NavigatableErrorTreeElement?
+    get() = selectedErrorTreeElement as? NavigatableErrorTreeElement
 
-  public static String createExportPrefix(int line) {
-    return line < 0 ? "" : IdeBundle.message("errortree.prefix.line", line);
-  }
+  val selectedErrorTreeElement: ErrorTreeElement?
+    get() = selectedNodeDescriptor?.element
 
-  public static String createRendererPrefix(int line, int column) {
-    if (line < 0) return "";
-    if (column < 0) return "(" + line + ")";
-    return "(" + line + ", " + column + ")";
-  }
+  private val selectedNodeDescriptor: ErrorTreeNodeDescriptor?
+    get() = selectedNodeDescriptors.singleOrNull()
 
-  @Override
-  public @NotNull JComponent getComponent() {
-    return this;
-  }
-
-  private @Nullable NavigatableErrorTreeElement getSelectedNavigatableElement() {
-    final ErrorTreeElement selectedElement = getSelectedErrorTreeElement();
-    return selectedElement instanceof NavigatableErrorTreeElement ? (NavigatableErrorTreeElement)selectedElement : null;
-  }
-
-  public @Nullable ErrorTreeElement getSelectedErrorTreeElement() {
-    final ErrorTreeNodeDescriptor treeNodeDescriptor = getSelectedNodeDescriptor();
-    return treeNodeDescriptor == null? null : treeNodeDescriptor.getElement();
-  }
-
-  public @Nullable ErrorTreeNodeDescriptor getSelectedNodeDescriptor() {
-    List<ErrorTreeNodeDescriptor> descriptors = getSelectedNodeDescriptors();
-    return descriptors.size() == 1 ? descriptors.get(0) : null;
-  }
-
-  public @Nullable VirtualFile getSelectedFile() {
-    final ErrorTreeNodeDescriptor descriptor = getSelectedNodeDescriptor();
-    ErrorTreeElement element = descriptor != null? descriptor.getElement() : null;
-    if (element != null && !(element instanceof GroupingElement)) {
-      NodeDescriptor<?> parent = descriptor.getParentDescriptor();
-      if (parent instanceof ErrorTreeNodeDescriptor) {
-        element = ((ErrorTreeNodeDescriptor)parent).getElement();
+  val selectedFile: VirtualFile?
+    get() {
+      val descriptor = selectedNodeDescriptor
+      var element = descriptor?.element
+      if (element != null && element !is GroupingElement) {
+        val parent = descriptor!!.parentDescriptor
+        if (parent is ErrorTreeNodeDescriptor) {
+          element = parent.element
+        }
       }
+      return if (element is GroupingElement) element.file else null
     }
-    return element instanceof GroupingElement? ((GroupingElement)element).getFile() : null;
-  }
 
-  private List<ErrorTreeNodeDescriptor> getSelectedNodeDescriptors() {
-    TreePath[] paths = myIsDisposed ? null : myTree.getSelectionPaths();
-    if (paths == null) {
-      return Collections.emptyList();
-    }
-    List<ErrorTreeNodeDescriptor> result = new ArrayList<>();
-    for (TreePath path : paths) {
-      DefaultMutableTreeNode lastPathNode = (DefaultMutableTreeNode)path.getLastPathComponent();
-      Object userObject = lastPathNode.getUserObject();
-      if (userObject instanceof ErrorTreeNodeDescriptor) {
-        result.add((ErrorTreeNodeDescriptor)userObject);
+  private val selectedNodeDescriptors: List<ErrorTreeNodeDescriptor>
+    get() {
+      val paths = (if (isDisposed) null else myTree.selectionPaths) ?: return emptyList()
+      val result = ArrayList<ErrorTreeNodeDescriptor>()
+      for (path in paths) {
+        val lastPathNode = path.lastPathComponent as DefaultMutableTreeNode
+        val userObject = lastPathNode.userObject
+        if (userObject is ErrorTreeNodeDescriptor) {
+          result.add(userObject)
+        }
       }
+      return result
     }
-    return result;
-  }
 
-  private void navigateToSource(final boolean focusEditor) {
-    NavigatableErrorTreeElement element = getSelectedNavigatableElement();
-    if (element == null) {
-      return;
-    }
-    final Navigatable navigatable = element.getNavigatable();
+  private fun navigateToSource() {
+    val element = selectedNavigatableElement ?: return
+    val navigatable = element.navigatable
     if (navigatable.canNavigate()) {
-      navigatable.navigate(focusEditor);
+      navigatable.navigate(false)
     }
   }
 
-  public static String getQualifiedName(final VirtualFile file) {
-    return file.getPresentableUrl();
-  }
-
-  private void popupInvoked(Component component, int x, int y) {
-    final TreePath path = myTree.getLeadSelectionPath();
-    if (path == null) {
-      return;
+  private fun popupInvoked(component: Component, x: Int, y: Int) {
+    if (myTree.leadSelectionPath == null) {
+      return
     }
-    DefaultActionGroup group = new DefaultActionGroup();
-    if (getData(CommonDataKeys.NAVIGATABLE.getName()) != null) {
-      group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
+
+    val group = DefaultActionGroup()
+    if (getData(CommonDataKeys.NAVIGATABLE.name) != null) {
+      group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE))
     }
-    group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
-    group.add(myAutoScrollToSourceHandler.createToggleAction());
-    addExtraPopupMenuActions(group);
-    group.addSeparator();
-    group.add(CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this));
-    group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this));
-    group.addSeparator();
-    group.add(new ExportToTextFileToolbarAction(myExporterToTextFile));
-
-    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.COMPILER_MESSAGES_POPUP, group);
-    menu.getComponent().show(component, x, y);
+    group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY))
+    group.add(autoScrollToSourceHandler.createToggleAction())
+    addExtraPopupMenuActions(group)
+    group.addSeparator()
+    group.add(CommonActionsManager.getInstance().createExpandAllAction(treeExpander, this))
+    group.add(CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, this))
+    group.addSeparator()
+    group.add(ExportToTextFileToolbarAction(exporterToTextFile))
+    val menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.COMPILER_MESSAGES_POPUP, group)
+    menu.component.show(component, x, y)
   }
 
-  protected void addExtraPopupMenuActions(DefaultActionGroup group) {
+  protected open fun addExtraPopupMenuActions(group: DefaultActionGroup) {
   }
 
-  public void setProcessController(ProcessController controller) {
-    myProcessController = controller;
+  fun setProcessController(controller: ProcessController?) {
+    processController = controller
   }
 
-  public void stopProcess() {
-    myProcessController.stopProcess();
+  fun stopProcess() {
+    processController!!.stopProcess()
   }
 
-  public boolean canControlProcess() {
-    return myProcessController != null;
+  fun canControlProcess(): Boolean {
+    return processController != null
   }
 
-  public boolean isProcessStopped() {
-    return myProcessController.isProcessStopped();
-  }
+  val isProcessStopped: Boolean
+    get() = processController!!.isProcessStopped
 
-  public void close() {
-    MessageView messageView = MessageView.getInstance(myProject);
-    Content content = messageView.getContentManager().getContent(this);
-    if (content != null) {
-      messageView.getContentManager().removeContent(content, true);
-      Disposer.dispose(this);
+  open fun close() {
+    val messageView = MessageView.getInstance(myProject)
+    messageView.contentManager.getContent(this)?.let {
+      messageView.contentManager.removeContent(it, true)
+      Disposer.dispose(this)
     }
   }
 
-  public void setProgress(final @NlsContexts.ProgressText String s, float fraction) {
-    myProgressText = s;
-    myFraction = fraction;
-    updateProgress();
+  fun setProgress(s: @NlsContexts.ProgressText String?, fraction: Float) {
+    state.progressText = s
+    state.fraction = fraction
+    updateProgress()
   }
 
-  public void setProgressText(@NlsContexts.ProgressText String s) {
-    myProgressText = s;
-    updateProgress();
+  fun setProgressText(s: @NlsContexts.ProgressText String?) {
+    state.progressText = s
+    updateProgress()
   }
 
-  public void setFraction(float fraction) {
-    myFraction = fraction;
-    updateProgress();
+  fun setFraction(fraction: Float) {
+    state.fraction = fraction
+    updateProgress()
   }
 
-  public void clearProgressData() {
-    if (myProgressPanel != null) {
-      myProgressText = " ";
-      myFraction = 0.0f;
-      updateProgress();
-    }
+  fun clearProgressData() {
+    state.clearProgress()
+    progressFlow.value = null
   }
 
-  private void updateProgress() {
-    if (myIsDisposed) {
-      return;
-    }
-
-    myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(() -> {
-      initProgressPanel();
-
-      float fraction = myFraction;
-      String text = myProgressText;
-      if (fraction > 0.0f) {
-        myProgressLabel.setText((int)(fraction * 100 + 0.5) + "%  " + text);
-      }
-      else {
-        myProgressLabel.setText(text);
-      }
-    }, 50, ModalityState.NON_MODAL);
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  fun updateProgress() {
+    progressFlow.value = state.progressText
   }
 
-  private void initProgressPanel() {
-    if (myProgressPanel == null) {
-      myProgressPanel = new JPanel(new GridLayout(1, 2));
-      myProgressLabel = new JLabel();
-      myProgressPanel.add(myProgressLabel);
-      //JLabel secondLabel = new JLabel();
-      //myProgressPanel.add(secondLabel);
-      myMessagePanel.add(myProgressPanel, BorderLayout.SOUTH);
-      myMessagePanel.validate();
-    }
-  }
-
-  public void collapseAll() {
-    TreeUtil.collapseAll(myTree, 2);
-  }
-
-  public void expandAll() {
-    TreePath[] selectionPaths = myTree.getSelectionPaths();
-    TreePath leadSelectionPath = myTree.getLeadSelectionPath();
-    int row = 0;
-    while (row < myTree.getRowCount()) {
-      myTree.expandRow(row);
-      row++;
+  private fun initProgressPanel() {
+    if (progressPanel != null) {
+      return
     }
 
-    if (selectionPaths != null) {
+    val progressPanel = JPanel(GridLayout(1, 2))
+    this.progressPanel = progressPanel
+    progressLabel = JLabel()
+    progressPanel.add(progressLabel)
+    //JLabel secondLabel = new JLabel();
+    //myProgressPanel.add(secondLabel);
+    messagePanel.add(progressPanel, BorderLayout.SOUTH)
+    messagePanel.validate()
+  }
+
+  fun collapseAll() {
+    TreeUtil.collapseAll(myTree, 2)
+  }
+
+  fun expandAll() {
+    val selectionPaths = myTree.selectionPaths
+    val leadSelectionPath = myTree.leadSelectionPath
+    var row = 0
+    while (row < myTree.rowCount) {
+      myTree.expandRow(row)
+      row++
+    }
+    selectionPaths?.let {
       // restore selection
-      myTree.setSelectionPaths(selectionPaths);
+      myTree.selectionPaths = it
     }
-    if (leadSelectionPath != null) {
+    leadSelectionPath?.let {
       // scroll to lead selection path
-      myTree.scrollPathToVisible(leadSelectionPath);
+      myTree.scrollPathToVisible(it)
     }
   }
 
-  private JPanel createToolbarPanel(@Nullable Runnable rerunAction) {
-    DefaultActionGroup group = new DefaultActionGroup();
-    AnAction closeMessageViewAction = new CloseTabToolbarAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        close();
+  private fun createToolbarPanel(rerunAction: Runnable?): JPanel {
+    val group = DefaultActionGroup()
+    val closeMessageViewAction: AnAction = object : CloseTabToolbarAction() {
+      override fun actionPerformed(e: AnActionEvent) {
+        close()
       }
-    };
-
+    }
     if (rerunAction != null) {
-      group.add(new RerunAction(rerunAction, closeMessageViewAction));
+      group.add(RerunAction(rerunAction, closeMessageViewAction))
     }
-
-    group.add(new StopAction());
+    group.add(StopAction())
     if (canHideWarnings()) {
-      group.addSeparator();
-      group.add(new ShowInfosAction());
-      group.add(new ShowWarningsAction());
+      group.addSeparator()
+      group.add(ShowInfosAction())
+      group.add(ShowWarningsAction())
     }
-
-    fillRightToolbarGroup(group);
+    fillRightToolbarGroup(group)
 
     //if (myCreateExitAction) {
     //  leftUpdateableActionGroup.add(closeMessageViewAction);
@@ -587,217 +566,115 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     //leftUpdateableActionGroup.add(new PreviousOccurenceToolbarAction(this));
     //leftUpdateableActionGroup.add(new NextOccurenceToolbarAction(this));
     //leftUpdateableActionGroup.add(new ExportToTextFileToolbarAction(myExporterToTextFile));
-
-    ActionManager actionManager = ActionManager.getInstance();
-    myLeftToolbar = actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, group, false);
-    myLeftToolbar.setTargetComponent(myMessagePanel);
-    return JBUI.Panels.simplePanel(myLeftToolbar.getComponent());
+    val actionManager = ActionManager.getInstance()
+    leftToolbar = actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, group, false)
+    leftToolbar!!.targetComponent = messagePanel
+    return JBUI.Panels.simplePanel(leftToolbar!!.component)
   }
 
-  protected void fillRightToolbarGroup(DefaultActionGroup group) {
-
+  protected open fun fillRightToolbarGroup(group: DefaultActionGroup) {
   }
 
-  @Override
-  public OccurenceInfo goNextOccurence() {
-    return myOccurrenceNavigatorSupport.goNextOccurence();
-  }
+  override fun goNextOccurence(): OccurenceNavigator.OccurenceInfo = occurrenceNavigatorSupport.goNextOccurence()
 
-  @Override
-  public OccurenceInfo goPreviousOccurence() {
-    return myOccurrenceNavigatorSupport.goPreviousOccurence();
-  }
+  override fun goPreviousOccurence(): OccurenceNavigator.OccurenceInfo = occurrenceNavigatorSupport.goPreviousOccurence()
 
-  @Override
-  public boolean hasNextOccurence() {
-    return myOccurrenceNavigatorSupport.hasNextOccurence();
-  }
+  override fun hasNextOccurence() = occurrenceNavigatorSupport.hasNextOccurence()
 
-  @Override
-  public boolean hasPreviousOccurence() {
-    return myOccurrenceNavigatorSupport.hasPreviousOccurence();
-  }
+  override fun hasPreviousOccurence() = occurrenceNavigatorSupport.hasPreviousOccurence()
 
-  @Override
-  public @NotNull String getNextOccurenceActionName() {
-    return myOccurrenceNavigatorSupport.getNextOccurenceActionName();
-  }
+  override fun getNextOccurenceActionName() = occurrenceNavigatorSupport.nextOccurenceActionName
 
-  @Override
-  public @NotNull String getPreviousOccurenceActionName() {
-    return myOccurrenceNavigatorSupport.getPreviousOccurenceActionName();
-  }
+  override fun getPreviousOccurenceActionName() = occurrenceNavigatorSupport.previousOccurenceActionName
 
-  private class RerunAction extends DumbAwareAction {
-    private final Runnable myRerunAction;
-    private final AnAction myCloseAction;
-
-    RerunAction(@NotNull Runnable rerunAction, @NotNull AnAction closeAction) {
-      super(IdeBundle.message("action.refresh"), null, AllIcons.Actions.Rerun);
-      myRerunAction = rerunAction;
-      myCloseAction = closeAction;
+  private inner class RerunAction(private val rerunAction: Runnable, private val closeAction: AnAction)
+    : DumbAwareAction(IdeBundle.message("action.refresh"), null, AllIcons.Actions.Rerun) {
+    override fun actionPerformed(e: AnActionEvent) {
+      closeAction.actionPerformed(e)
+      rerunAction.run()
     }
 
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      myCloseAction.actionPerformed(e);
-      myRerunAction.run();
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent event) {
-      final Presentation presentation = event.getPresentation();
-      presentation.setEnabled(canControlProcess() && isProcessStopped());
+    override fun update(event: AnActionEvent) {
+      val presentation = event.presentation
+      presentation.isEnabled = canControlProcess() && isProcessStopped
     }
   }
 
-  private class StopAction extends DumbAwareAction {
-    StopAction() {
-      super(IdeBundle.messagePointer("action.stop"), AllIcons.Actions.Suspend);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
+  private inner class StopAction : DumbAwareAction(IdeBundle.messagePointer("action.stop"), AllIcons.Actions.Suspend) {
+    override fun actionPerformed(e: AnActionEvent) {
       if (canControlProcess()) {
-        stopProcess();
+        stopProcess()
       }
-      myLeftToolbar.updateActionsImmediately();
+      leftToolbar!!.updateActionsImmediately()
     }
 
-    @Override
-    public void update(@NotNull AnActionEvent event) {
-      Presentation presentation = event.getPresentation();
-      presentation.setEnabled(canControlProcess() && !isProcessStopped());
-      presentation.setVisible(canControlProcess());
+    override fun update(event: AnActionEvent) {
+      val presentation = event.presentation
+      presentation.isEnabled = canControlProcess() && !isProcessStopped
+      presentation.isVisible = canControlProcess()
     }
   }
 
-  protected boolean canHideWarnings() {
-    return true;
-  }
+  protected open fun canHideWarnings(): Boolean = true
 
-  private class ShowWarningsAction extends ToggleAction implements DumbAware {
-    ShowWarningsAction() {
-      super(IdeBundle.messagePointer("action.show.warnings"), AllIcons.General.ShowWarning);
-    }
+  private inner class ShowWarningsAction : ToggleAction(IdeBundle.messagePointer("action.show.warnings"),
+                                                          AllIcons.General.ShowWarning), DumbAware {
+    override fun isSelected(event: AnActionEvent) = !isHideWarnings
 
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent event) {
-      return !isHideWarnings();
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent event, boolean showWarnings) {
-      final boolean hideWarnings = !showWarnings;
-      if (myConfiguration.isHideWarnings() != hideWarnings) {
-        myConfiguration.setHideWarnings(hideWarnings);
-        myStructureModel.invalidateAsync();
+    override fun setSelected(event: AnActionEvent, showWarnings: Boolean) {
+      val hideWarnings = !showWarnings
+      if (configuration.isHideWarnings != hideWarnings) {
+        configuration.isHideWarnings = hideWarnings
+        structureModel.invalidateAsync()
       }
     }
   }
 
-  private class ShowInfosAction extends ToggleAction implements DumbAware {
-    ShowInfosAction() {
-      super(IdeBundle.messagePointer("action.show.infos"), AllIcons.General.ShowInfos);
-    }
+  private inner class ShowInfosAction : ToggleAction(IdeBundle.messagePointer("action.show.infos"),
+                                                       AllIcons.General.ShowInfos), DumbAware {
+    override fun isSelected(event: AnActionEvent) = !isHideInfos
 
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent event) {
-      return !isHideInfos();
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent event, boolean showInfos) {
-      final boolean hideInfos = !showInfos;
-      if (myConfiguration.isHideInfoMessages() != hideInfos) {
-        myConfiguration.setHideInfoMessages(hideInfos);
-        myStructureModel.invalidateAsync();
+    override fun setSelected(event: AnActionEvent, showInfos: Boolean) {
+      val hideInfos = !showInfos
+      if (configuration.isHideInfoMessages != hideInfos) {
+        configuration.isHideInfoMessages = hideInfos
+        structureModel.invalidateAsync()
       }
     }
   }
 
-  public boolean isHideWarnings() {
-    return myConfiguration.isHideWarnings();
+  val isHideWarnings: Boolean
+    get() = configuration.isHideWarnings
+
+  val isHideInfos: Boolean
+    get() = configuration.isHideInfoMessages
+
+  override fun getGroupChildrenData(groupName: String): List<Any> = errorViewStructure.getGroupChildrenData(groupName)
+
+  override fun removeGroup(name: String) {
+    errorViewStructure.removeGroup(name)
   }
 
-  public boolean isHideInfos() {
-    return myConfiguration.isHideInfoMessages();
+  override fun addFixedHotfixGroup(text: String, children: List<SimpleErrorData?>) {
+    errorViewStructure.addFixedHotfixGroup(text, children)
   }
 
-  private class MyTreeExpander implements TreeExpander {
-    @Override
-    public void expandAll() {
-      NewErrorTreeViewPanel.this.expandAll();
-    }
-
-    @Override
-    public boolean canExpand() {
-      return true;
-    }
-
-    @Override
-    public void collapseAll() {
-      NewErrorTreeViewPanel.this.collapseAll();
-    }
-
-    @Override
-    public boolean canCollapse() {
-      return true;
-    }
+  override fun addHotfixGroup(hotfixData: HotfixData, children: List<SimpleErrorData?>) {
+    errorViewStructure.addHotfixGroup(hotfixData, children, this)
   }
 
-  private static class MyOccurrenceNavigatorSupport extends OccurenceNavigatorSupport {
-    MyOccurrenceNavigatorSupport(final Tree tree) {
-      super(tree);
-    }
+  override fun reload() {
+    structureModel.invalidateAsync()
+  }
+}
 
-    @Override
-    protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
-      Object userObject = node.getUserObject();
-      if (!(userObject instanceof ErrorTreeNodeDescriptor)) {
-        return null;
-      }
-      final ErrorTreeNodeDescriptor descriptor = (ErrorTreeNodeDescriptor)userObject;
-      final ErrorTreeElement element = descriptor.getElement();
-      if (element instanceof NavigatableErrorTreeElement) {
-        return ((NavigatableErrorTreeElement)element).getNavigatable();
-      }
-      return null;
-    }
-
-    @Override
-    public @NotNull String getNextOccurenceActionName() {
-      return IdeBundle.message("action.next.message");
-    }
-
-    @Override
-    public @NotNull String getPreviousOccurenceActionName() {
-      return IdeBundle.message("action.previous.message");
-    }
+private class MyOccurrenceNavigatorSupport(tree: Tree) : OccurenceNavigatorSupport(tree) {
+  override fun createDescriptorForNode(node: DefaultMutableTreeNode): Navigatable? {
+    val userObject = node.userObject as? ErrorTreeNodeDescriptor
+    return (userObject?.element as? NavigatableErrorTreeElement)?.navigatable
   }
 
-  @Override
-  public List<Object> getGroupChildrenData(final String groupName) {
-    return myErrorViewStructure.getGroupChildrenData(groupName);
-  }
+  override fun getNextOccurenceActionName() = IdeBundle.message("action.next.message")
 
-  @Override
-  public void removeGroup(final String name) {
-    myErrorViewStructure.removeGroup(name);
-  }
-
-  @Override
-  public void addFixedHotfixGroup(String text, List<? extends SimpleErrorData> children) {
-    myErrorViewStructure.addFixedHotfixGroup(text, children);
-  }
-
-  @Override
-  public void addHotfixGroup(HotfixData hotfixData, List<? extends SimpleErrorData> children) {
-    myErrorViewStructure.addHotfixGroup(hotfixData, children, this);
-  }
-
-  @Override
-  public void reload() {
-    myStructureModel.invalidateAsync();
-  }
+  override fun getPreviousOccurenceActionName() = IdeBundle.message("action.previous.message")
 }
