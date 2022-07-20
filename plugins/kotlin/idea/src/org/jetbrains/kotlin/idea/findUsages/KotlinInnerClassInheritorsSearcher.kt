@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.findUsages
 import com.intellij.java.indexing.JavaIndexingBundle
 import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.openapi.progress.ProgressIndicatorProvider
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.ProgressManager.checkCanceled
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
@@ -37,7 +37,7 @@ class KotlinInnerClassInheritorsSearcher: QueryExecutorBase<PsiClass, ClassInher
 
         try {
             for (element in searchScope.scope) {
-                ProgressManager.checkCanceled()
+                checkCanceled()
                 if (!runReadAction { processElementInScope(element, classToProcess, consumer) }) break
             }
         } finally {
@@ -46,8 +46,9 @@ class KotlinInnerClassInheritorsSearcher: QueryExecutorBase<PsiClass, ClassInher
     }
 
     private fun processElementInScope(element: PsiElement, classToProcess: PsiClass, consumer: Processor<in PsiClass>): Boolean {
-        val classesOrObjects = runReadAction { PsiTreeUtil.findChildrenOfType(element, KtClassOrObject::class.java) }
+        val classesOrObjects = PsiTreeUtil.findChildrenOfType(element, KtClassOrObject::class.java)
         for (ktClassOrObject in classesOrObjects) {
+            checkCanceled()
             if (ktClassOrObject.superTypeListEntries.isEmpty()) continue
             ktClassOrObject.toLightClass()?.let {
                 if (it.isInheritor(classToProcess, true) && !consumer.process(it)) {
