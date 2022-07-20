@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache.Compan
 import org.jetbrains.kotlin.idea.base.util.caching.StorageProvider
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
@@ -82,8 +83,10 @@ private val Module.facetSettings: KotlinFacetSettings?
 @Service(Service.Level.PROJECT)
 class ModulesByLinkedKeyCache(private val project: Project): Disposable, WorkspaceModelChangeListener {
 
-    private val cache: MutableMap<String, Module> by StorageProvider(project, javaClass) { ConcurrentHashMap() }
+    private val cache: MutableMap<String, Module> by StorageProvider(project, javaClass) { HashMap() }
         @Deprecated("Do not use directly", level = DeprecationLevel.ERROR) get
+
+    private val lock = Any()
 
     init {
         LowMemoryWatcher.register(this::invalidate, this)
@@ -97,18 +100,22 @@ class ModulesByLinkedKeyCache(private val project: Project): Disposable, Workspa
     operator fun get(key: String): Module? =
         useCache { cache ->
             if (cache.isEmpty()) {
-                val moduleManager = ModuleManager.getInstance(project)
                 val stableNameProvider = StableModuleNameProvider.getInstance(project)
 
-                val map = moduleManager.modules.associateBy { stableNameProvider.getStableModuleName(it) }
+                val map = runReadAction {
+                    val modules = ModuleManager.getInstance(project).modules
+                    modules.associateBy { stableNameProvider.getStableModuleName(it) }
+                }
                 cache.putAll(map)
             }
             cache[key]
         }
 
     private fun <T> useCache(block: (MutableMap<String, Module>) -> T?): T? =
-        @Suppress("DEPRECATION_ERROR")
-        cache.run(block)
+        synchronized(lock) {
+            @Suppress("DEPRECATION_ERROR")
+            cache.run(block)
+        }
 
     override fun beforeChanged(event: VersionedStorageChange) {
         if (useCache { it.isEmpty() } == true) return
