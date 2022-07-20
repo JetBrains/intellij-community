@@ -103,7 +103,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   private static class SelectionIndexes {
     private final int myBarIndex;
-    private final int[] myNodePopupIndexes;
+    private final @Nullable int[] myNodePopupIndexes;
 
     SelectionIndexes(int barIndex, int[] nodePopupIndexes) {
       myBarIndex = barIndex;
@@ -470,14 +470,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.NAVIGATION_BAR_POPUP, actionGroup);
         popupMenu.setTargetComponent(navBarPanel);
         JPopupMenu menu = popupMenu.getComponent();
-        menu.addPopupMenuListener(new PopupMenuListenerAdapter() {
-          @Override
-          public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-            if (index != -1 && !navBarPanel.isNodePopupActive()) {
-              myModel.setSelectedIndex(index);
-            }
-          }
-        });
+
+        if (index != -1 && !navBarPanel.isNodePopupActive()) {
+          myModel.setSelectedIndex(index);
+        }
 
         menu.show(isNodePopupActive() ? myNodePopup.getComponent() : navBarPanel,
                   component.getX() + x,
