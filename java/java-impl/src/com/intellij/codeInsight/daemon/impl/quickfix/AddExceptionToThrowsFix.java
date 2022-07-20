@@ -154,9 +154,9 @@ public final class AddExceptionToThrowsFix extends BaseIntentionAction implement
     return false;
   }
 
-  private static void processMethod(@NotNull Project project,
-                                    @NotNull PsiMethod targetMethod,
-                                    @NotNull Set<? extends PsiClassType> unhandledExceptions) throws IncorrectOperationException {
+  public static void processMethod(@NotNull Project project,
+                                   @NotNull PsiMethod targetMethod,
+                                   @NotNull Set<? extends PsiClassType> unhandledExceptions) throws IncorrectOperationException {
     for (PsiClassType unhandledException : unhandledExceptions) {
       PsiClass exceptionClass = unhandledException.resolve();
       if (exceptionClass != null) {
