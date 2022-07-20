@@ -1,14 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
@@ -20,15 +15,12 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,11 +43,12 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
     Project project = e.getProject();
     assert project != null;
     ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
-    invokePopup(project, new ToolWindowsComparator(toolWindowManager.getRecentToolWindows()), null, null);
+    invokePopup(project, new ToolWindowsComparator(toolWindowManager.getRecentToolWindows()), e.getDataContext(), null, null);
   }
 
   public static void invokePopup(Project project,
                                  @NotNull Comparator<? super ToolWindow> comparator,
+                                 @NotNull DataContext dataContext,
                                  @Nullable Predicate<? super ToolWindow> filter,
                                  @Nullable RelativePoint point) {
     if (filter == null) {
@@ -74,27 +67,10 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
     }
 
     toolWindows.sort(comparator);
-    IPopupChooserBuilder<ToolWindow> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(toolWindows);
-    ToolWindow selected =
-      toolWindowManager.getActiveToolWindowId() == null || toolWindows.size() == 1 ? toolWindows.get(0) : toolWindows.get(1);
 
-    popup = builder
-      .setRenderer(new ToolWindowsWidgetCellRenderer())
-      .setAutoselectOnMouseMove(true)
-      .setRequestFocus(true)
-      .setSelectedValue(selected, false)
-      .setMinSize(new Dimension(300, -1))
-      .setNamerForFiltering(x -> x.getStripeTitle())
-      .setItemChosenCallback((selectedValue) -> {
-        if (popup != null) {
-          popup.closeOk(null);
-        }
-        toolWindowManager.activateToolWindow(selectedValue.getId(), null, true, ToolWindowEventSource.ToolWindowSwitcher);
-      }).createPopup();
-
-    if (ExperimentalUI.isNewUI()) {
-      UIUtil.setBackgroundRecursively(popup.getContent(), JBUI.CurrentTheme.Popup.BACKGROUND);
-    }
+    List<ToolWindowAction> actions = ContainerUtil.map(toolWindows, it -> new ToolWindowAction(project, it));
+    popup = JBPopupFactory.getInstance().createActionGroupPopup(null, new DefaultActionGroup(actions), dataContext, null, true);
+    popup.setMinimumSize(new Dimension(300, -1));
 
     Disposer.register(popup, () -> popup = null);
     if (point == null) {
@@ -133,57 +109,6 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
     return ActionUpdateThread.BGT;
   }
 
-  private static final class ToolWindowsWidgetCellRenderer implements ListCellRenderer<ToolWindow> {
-    private final SelectablePanel myPanel;
-    private final SimpleColoredComponent myTextLabel = new SimpleColoredComponent();
-    private final JLabel myShortcutLabel = new JLabel();
-
-    private ToolWindowsWidgetCellRenderer() {
-      myPanel = new SelectablePanel();
-      myPanel.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
-      myPanel.setSelectionInsets(JBUI.insets(1, 4));
-      myPanel.setLayout(new BorderLayout());
-      myPanel.add(myTextLabel, BorderLayout.WEST);
-      myPanel.add(myShortcutLabel, BorderLayout.EAST);
-      myShortcutLabel.setBorder(JBUI.Borders.empty(0, 8, 1, 0));
-      myPanel.setBorder(JBUI.Borders.empty(4, 12));
-    }
-
-    @Override
-    public Component getListCellRendererComponent(JList<? extends ToolWindow> list,
-                                                  ToolWindow value,
-                                                  int index,
-                                                  boolean isSelected,
-                                                  boolean cellHasFocus) {
-      if (ExperimentalUI.isNewUI()) {
-        myPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
-        myPanel.setSelectionColor(isSelected ? UIUtil.getListBackground(true, true) : null);
-      } else {
-        myPanel.setBackground(UIUtil.getListBackground(false, false));
-        myPanel.setSelectionColor(UIUtil.getListBackground(isSelected, true));
-      }
-      myTextLabel.clear();
-      myTextLabel.append(value.getStripeTitle());
-      Icon icon = value.getIcon();
-      if (icon instanceof ScalableIcon) {
-        icon = ((ScalableIcon)icon).scaleToWidth(JBUIScale.scale(16f));
-      }
-      myTextLabel.setIcon(ObjectUtils.notNull(icon, EmptyIcon.ICON_16));
-      myTextLabel.setForeground(UIUtil.getListForeground(isSelected, true));
-      myTextLabel.setOpaque(false);
-      String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(value.getId());
-      KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(activateActionId);
-      if (shortcut != null) {
-        myShortcutLabel.setText(KeymapUtil.getShortcutText(shortcut));
-      }
-      else {
-        myShortcutLabel.setText("");
-      }
-      myShortcutLabel.setForeground(isSelected ? UIManager.getColor("MenuItem.acceleratorSelectionForeground") : UIManager.getColor("MenuItem.acceleratorForeground"));
-      return myPanel;
-    }
-  }
-
   private static final class ToolWindowsComparator implements Comparator<ToolWindow> {
     private final List<String> myRecent;
 
@@ -205,4 +130,43 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
       return NaturalComparator.INSTANCE.compare(o1.getStripeTitle(), o2.getStripeTitle());
     }
   }
+
+  private static class ToolWindowAction extends DumbAwareAction {
+
+    @NotNull
+    private final Project project;
+
+    @NotNull
+    private final ToolWindow toolWindow;
+
+    private ToolWindowAction(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+      super(toolWindow.getStripeTitle(), null, getIcon(toolWindow));
+      this.project = project;
+      this.toolWindow = toolWindow;
+
+      String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(toolWindow.getId());
+      KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(activateActionId);
+      if (shortcut != null) {
+        setShortcutSet(new CustomShortcutSet(shortcut));
+      }
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      if (popup != null) {
+        popup.closeOk(null);
+      }
+      ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
+      toolWindowManager.activateToolWindow(toolWindow.getId(), null, true, ToolWindowEventSource.ToolWindowSwitcher);
+    }
+
+    private static Icon getIcon(@NotNull ToolWindow toolWindow) {
+      Icon icon = toolWindow.getIcon();
+      if (icon instanceof ScalableIcon) {
+        icon = ((ScalableIcon)icon).scaleToWidth(JBUIScale.scale(16f));
+      }
+      return ObjectUtils.notNull(icon, EmptyIcon.ICON_16);
+    }
+  }
+
 }
