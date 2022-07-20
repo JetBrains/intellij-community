@@ -299,9 +299,9 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
           throw new RuntimeException(e);
         }
         LightQuickFixTestCase.this.invoke(action);
-        Path path = Path.of(previewFilePath);
+        Path path = Path.of(getTestDataPath(), previewFilePath);
         if (Files.exists(path)) {
-          assertSameLinesWithFile(previewFilePath, previewContent);
+          assertSameLinesWithFile(path.toString(), previewContent);
         } else {
           assertEquals(getFile().getText(), previewContent);
         }
