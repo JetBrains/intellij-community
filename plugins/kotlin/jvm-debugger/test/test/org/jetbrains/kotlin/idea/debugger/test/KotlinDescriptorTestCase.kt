@@ -34,7 +34,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches
+import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator
 import org.jetbrains.kotlin.idea.debugger.test.preference.*
 import org.jetbrains.kotlin.idea.debugger.test.util.BreakpointCreator
 import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
@@ -104,20 +104,20 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
         registerEvaluatorBackend()
 
-        KotlinDebuggerCaches.LOG_COMPILATIONS = true
+        KotlinEvaluator.LOG_COMPILATIONS = true
         logPropagator = LogPropagator(::systemLogger).apply { attach() }
     }
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { KotlinDebuggerCaches.LOG_COMPILATIONS = false },
-            ThrowableRunnable { oldValues?.revertValues() },
-            ThrowableRunnable { oldValues = null },
-            ThrowableRunnable { detachLibraries() },
-            ThrowableRunnable { logPropagator?.detach() },
-            ThrowableRunnable { logPropagator = null },
-            ThrowableRunnable { restoreEvaluatorBackend() },
-            ThrowableRunnable { super.tearDown() }
+          ThrowableRunnable { KotlinEvaluator.LOG_COMPILATIONS = false },
+          ThrowableRunnable { oldValues?.revertValues() },
+          ThrowableRunnable { oldValues = null },
+          ThrowableRunnable { detachLibraries() },
+          ThrowableRunnable { logPropagator?.detach() },
+          ThrowableRunnable { logPropagator = null },
+          ThrowableRunnable { restoreEvaluatorBackend() },
+          ThrowableRunnable { super.tearDown() }
         )
     }
 

@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.engine.evaluation.EvaluateException
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.builtins.isSuspendFunctionType
@@ -58,21 +58,14 @@ internal class KotlinSuspendFunctionWrapper(
         }
 
     private fun KtExpression.containsSuspendFunctionCall(bindingContext: BindingContext): Boolean {
-        var result = false
-        invokeAndWaitIfNeeded {
-            accept(object : KtTreeVisitorVoid() {
-                override fun visitCallExpression(callExpression: KtCallExpression) {
-                    val resolvedCall = callExpression.getResolvedCall(bindingContext)
-                    if (resolvedCall != null && resolvedCall.resultingDescriptor.isSuspend &&
-                        !callExpression.parentsOfType<KtLambdaExpression>().isCoroutineContextAvailableFromLambda(bindingContext)) {
-                        result = true
-                        return
-                    }
-                    callExpression.acceptChildren(this)
-                }
-            })
+        return runReadAction {
+            descendantsOfType<KtCallExpression>().any { callExpression ->
+                val resolvedCall = callExpression.getResolvedCall(bindingContext)
+                resolvedCall != null
+                        && resolvedCall.resultingDescriptor.isSuspend
+                        && !callExpression.parentsOfType<KtLambdaExpression>().isCoroutineContextAvailableFromLambda(bindingContext)
+            }
         }
-        return result
     }
 
     private fun PsiElement?.isCoroutineContextAvailable() =

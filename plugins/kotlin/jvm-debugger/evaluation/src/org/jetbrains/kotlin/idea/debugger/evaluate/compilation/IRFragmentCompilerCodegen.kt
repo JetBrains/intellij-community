@@ -224,7 +224,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
 
     private fun getMethodSignature(
         fragmentClass: ClassToLoad,
-    ): CompiledDataDescriptor.MethodSignature {
+    ): CompiledCodeFragmentData.MethodSignature {
         val parameters: MutableList<Type> = mutableListOf()
         var returnType: Type? = null
 
@@ -244,7 +244,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
             }
         }, SKIP_CODE)
 
-        return CompiledDataDescriptor.MethodSignature(parameters, returnType!!)
+        return CompiledCodeFragmentData.MethodSignature(parameters, returnType!!)
     }
 
     // Short of inspecting the metadata, there are no indications in the bytecode of what precisely is the entrypoint

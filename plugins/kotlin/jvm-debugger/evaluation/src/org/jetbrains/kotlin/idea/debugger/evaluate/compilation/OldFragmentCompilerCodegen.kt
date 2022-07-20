@@ -91,7 +91,7 @@ class OldFragmentCompilerCodegen(
         methodDescriptor: FunctionDescriptor,
         parameterInfo: CodeFragmentParameterInfo,
         state: GenerationState
-    ): CompiledDataDescriptor.MethodSignature {
+    ): CompiledCodeFragmentData.MethodSignature {
         val typeMapper = state.typeMapper
         val asmSignature = typeMapper.mapSignatureSkipGeneric(methodDescriptor)
 
@@ -99,7 +99,7 @@ class OldFragmentCompilerCodegen(
             getSharedTypeIfApplicable(param, typeMapper) ?: sigParam.asmType
         }
 
-        return CompiledDataDescriptor.MethodSignature(asmParameters, asmSignature.returnType)
+        return CompiledCodeFragmentData.MethodSignature(asmParameters, asmSignature.returnType)
     }
 
     private fun getLocalFunctionSuffixes(
