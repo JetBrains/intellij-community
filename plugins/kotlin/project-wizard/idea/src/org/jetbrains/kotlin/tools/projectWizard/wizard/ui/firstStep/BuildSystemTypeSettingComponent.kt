@@ -102,7 +102,7 @@ class BuildSystemTypeSettingComponent(
     private inner class BuildSystemChooseButton(
         action: BuildSystemTypeAction,
         presentation: Presentation,
-        place: String?,
+        place: String,
         minimumSize: Dimension
     ) : ActionButtonWithText(action, presentation, place, minimumSize) {
         override fun getInsets(): Insets = super.getInsets().apply {

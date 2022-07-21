@@ -159,7 +159,7 @@ internal class DeprecatedSegmentedButtonAction<T>(val option: T,
 private class DeprecatedSegmentedButton(
   action: AnAction,
   presentation: Presentation,
-  place: String?,
+  place: String,
   minimumSize: Dimension,
   private val spacingConfiguration: SpacingConfiguration
 ) : ActionButtonWithText(action, presentation, place, minimumSize) {
