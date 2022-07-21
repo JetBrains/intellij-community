@@ -1276,7 +1276,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       myVisibleActions = newVisibleActions;
 
       boolean skipSizeAdjustments = mySkipWindowAdjustments;
-      Component compForSize = skipSizeAdjustments ? null : guessBestParentForSizeAdjustment();
+      Component compForSize = guessBestParentForSizeAdjustment();
       Dimension oldSize = skipSizeAdjustments ? null : compForSize.getPreferredSize();
 
       removeAll();
@@ -1291,8 +1291,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         adjustContainerWindowSize(fullReset, availSize, oldSize, newSize);
       }
 
-      revalidate();
-      repaint();
+      compForSize.revalidate();
+      compForSize.repaint();
     }
   }
 
