@@ -775,8 +775,8 @@
 
     <projectConfigurable parentId="project.propDebugger" instance="com.intellij.debugger.settings.CaptureConfigurable"/>
 
-    <xdebugger.localAttachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider"/>
-    <xdebugger.localAttachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaSAAttachDebuggerProvider"/>
+    <xdebugger.attachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider"/>
+    <xdebugger.attachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaSAAttachDebuggerProvider"/>
 
     <consoleFilterProvider implementation="com.intellij.debugger.impl.attach.JavaDebuggerConsoleFilterProvider"/>
     <jvm.exceptionFilter implementation="com.intellij.debugger.impl.attach.JavaDebuggerAddExceptionBreakpointFilter"/>

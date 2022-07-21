@@ -5,10 +5,9 @@ import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -18,24 +17,25 @@ public interface XAttachDebuggerProvider {
   ExtensionPointName<XAttachDebuggerProvider> EP = ExtensionPointName.create("com.intellij.xdebugger.attachDebuggerProvider");
 
   /**
-   * will be removed in 2020.1, right after {@link XLocalAttachDebuggerProvider}
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  static List<XAttachDebuggerProvider> getAttachDebuggerProviders() {
-    return ContainerUtil.concat(new ArrayList<>(EP.getExtensionList()),
-                                new ArrayList<>(XLocalAttachDebuggerProvider.EP.getExtensionList()));
-  }
-
-  /**
    * @return a group in which the supported processes should be visually organized.
-   * Return {@link XDefaultLocalAttachGroup} for a common process group.
    */
   @NotNull
   default XAttachPresentationGroup<ProcessInfo> getPresentationGroup() {
-    return XDefaultLocalAttachGroup.INSTANCE;
+    return DEFAULT_PRESENTATION_GROUP;
   }
 
+  XAttachProcessPresentationGroup DEFAULT_PRESENTATION_GROUP = new XAttachProcessPresentationGroup() {
+    @Override
+    public int getOrder() {
+      return 0;
+    }
+
+    @Nls
+    @Override
+    public @NotNull String getGroupName() {
+      return "";
+    }
+  };
 
   /**
    * @return if this XAttachDebuggerProvider is able to interact with this host

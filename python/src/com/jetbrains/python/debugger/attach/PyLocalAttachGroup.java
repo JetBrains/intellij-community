@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.attach;
 
 import com.intellij.execution.process.ProcessInfo;
@@ -6,8 +6,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.xdebugger.attach.XAttachProcessPresentationGroup;
-import com.intellij.xdebugger.attach.XLocalAttachGroup;
 import com.jetbrains.python.PyBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,7 +20,7 @@ final class PyLocalAttachGroup implements XAttachProcessPresentationGroup {
 
   @Override
   public int getOrder() {
-    return XLocalAttachGroup.DEFAULT.getOrder() - 10;
+    return -10;
   }
 
   @NotNull
@@ -29,15 +29,14 @@ final class PyLocalAttachGroup implements XAttachProcessPresentationGroup {
     return PyBundle.message("python.local.attach.group.name");
   }
 
-  @NotNull
   @Override
-  public Icon getProcessIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+  public @NotNull Icon getItemIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return AllIcons.RunConfigurations.Application;
   }
 
-  @NotNull
+  @Nls
   @Override
-  public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+  public @NotNull String getItemDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return info.getArgs();
   }
 }
