@@ -4,13 +4,39 @@ package org.jetbrains.kotlin.idea.searcheverywhere
 class SuperSymbolTests : KotlinSearchEverywhereTestCase() {
     fun `test super class`(): Unit = doTest(
         text = """
-                open class A
-                class B<caret> : A()
-            """.trimIndent(),
+            open class A
+            class B<caret> : A()
+        """.trimIndent(),
+        action = "Go to Super Class",
+    )
+
+    fun `test super interface`(): Unit = doTest(
+        text = """
+            interface A
+            class B<caret> : A
+        """.trimIndent(),
+        action = "Go to Super Interface",
+    )
+
+    fun `test super several interfaces`(): Unit = doTest(
+        text = """
+            interface A
+            interface C
+            class B<caret> : A, C
+        """.trimIndent(),
+        action = "Go to Super Interface",
+    )
+
+    fun `test super class and interface `(): Unit = doTest(
+        text = """
+            interface A
+            class C
+            class B<caret> : A, C()
+        """.trimIndent(),
         action = "Go to Super Class or Interface",
     )
 
-    fun `test super function`(): Unit = doTest(
+    fun `test super method`(): Unit = doTest(
         text = """
             abstract class A {
               abstract fun foo()

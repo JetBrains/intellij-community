@@ -90,9 +90,20 @@ class GotoSuperActionHandler : PresentableCodeInsightActionHandler {
         val useShortName = actionPlace != null && (ActionPlaces.MAIN_MENU == actionPlace || ActionPlaces.isPopupPlace(actionPlace))
         when (containingElement) {
             is KtClassOrObject -> {
-                presentation.text = JavaBundle.message(
-                    if (useShortName) "action.GotoSuperClass.MainMenu.text" else "action.GotoSuperClass.text"
-                )
+                val superTypes = containingElement.superTypeListEntries
+                presentation.text = when {
+                    superTypes.all { it is KtSuperTypeEntry } -> KotlinBundle.message(
+                        if (useShortName) "action.GotoSuperInterface.MainMenu.text" else "action.GotoSuperInterface.text"
+                    )
+
+                    superTypes.singleOrNull() is KtSuperTypeCallEntry -> KotlinBundle.message(
+                        if (useShortName) "action.GotoSuperClass.MainMenu.text" else "action.GotoSuperClass.text"
+                    )
+
+                    else -> JavaBundle.message(
+                        if (useShortName) "action.GotoSuperClass.MainMenu.text" else "action.GotoSuperClass.text"
+                    )
+                }
 
                 presentation.description = JavaBundle.message("action.GotoSuperClass.description")
             }
