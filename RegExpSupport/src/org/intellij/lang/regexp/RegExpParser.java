@@ -408,6 +408,9 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     else if (type == RegExpTT.PYTHON_NAMED_GROUP_REF || type == RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF) {
       parseNamedGroupRef(builder, marker, RegExpTT.GROUP_END);
     }
+    else if (type == RegExpTT.PCRE_NUMBERED_GROUP_REF) {
+      parseNumberedGroupRef(builder, marker);
+    }
     else if (type == RegExpTT.RUBY_NAMED_GROUP_REF || type == RegExpTT.RUBY_NAMED_GROUP_CALL) {
       parseNamedGroupRef(builder, marker, RegExpTT.GT);
     }
@@ -519,6 +522,13 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     builder.advanceLexer();
     checkMatches(builder, RegExpTT.NAME, RegExpBundle.message("parse.error.group.name.expected"));
     checkMatches(builder, type, RegExpBundle.message("parse.error.unclosed.group.reference"));
+    marker.done(RegExpElementTypes.NAMED_GROUP_REF);
+  }
+
+  private static void parseNumberedGroupRef(PsiBuilder builder, PsiBuilder.Marker marker) {
+    builder.advanceLexer();
+    checkMatches(builder, RegExpTT.NUMBER, RegExpBundle.message("parse.error.group.number.expected"));
+    checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.group.reference"));
     marker.done(RegExpElementTypes.NAMED_GROUP_REF);
   }
 

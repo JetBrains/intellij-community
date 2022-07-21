@@ -45,6 +45,7 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
     private boolean allowMysqlBracketExpressions;
     private boolean allowPcreBackReferences;
     private boolean allowPcreConditions;
+    private boolean allowPcreNumberedGroupRef;
     private int maxOctal = 0777;
     private int minOctalDigits = 1;
     private boolean whitespaceInClass;
@@ -66,6 +67,7 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
       this.allowTransformationEscapes = capabilities.contains(TRANSFORMATION_ESCAPES);
       this.allowMysqlBracketExpressions = capabilities.contains(MYSQL_BRACKET_EXPRESSIONS);
       this.allowPcreBackReferences = capabilities.contains(PCRE_BACK_REFERENCES);
+      this.allowPcreNumberedGroupRef = capabilities.contains(PCRE_NUMBERED_GROUP_REF);
       this.allowPcreConditions = capabilities.contains(PCRE_CONDITIONS);
       if (capabilities.contains(MAX_OCTAL_177)) {
         maxOctal = 0177;
@@ -118,6 +120,7 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
 %xstate NAMED_GROUP
 %xstate QUOTED_NAMED_GROUP
 %xstate PY_NAMED_GROUP_REF
+%xstate PCRE_NUMBERED_GROUP
 %xstate BRACKET_EXPRESSION
 %xstate MYSQL_CHAR_EXPRESSION
 %xstate MYSQL_CHAR_EQ_EXPRESSION
@@ -448,6 +451,12 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
   "(?<" { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_NAMED_GROUP; }
   "(?'" { yybegin(QUOTED_NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_QUOTED_NAMED_GROUP; }
 
+  "(?"[+-]? / [:digit:] { if (allowPcreNumberedGroupRef) {
+                            yybegin(PCRE_NUMBERED_GROUP);
+                            return RegExpTT.PCRE_NUMBERED_GROUP_REF;
+                          }
+                          else { yypushback(yylength() - 2); yybegin(OPTIONS); return RegExpTT.SET_OPTIONS; }}
+
   "(?"        { yybegin(OPTIONS); return RegExpTT.SET_OPTIONS; }
 }
 
@@ -477,6 +486,11 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
   {GROUP_NAME}      { return RegExpTT.NAME;   }
   ")"               { yybegin(YYINITIAL); return RegExpTT.GROUP_END; }
   {ANY}             { yybegin(YYINITIAL); yypushback(1); }
+}
+
+<PCRE_NUMBERED_GROUP> {
+  [:digit:]+              { return RegExpTT.NUMBER; }
+  {ANY}                   { yybegin(YYINITIAL); yypushback(1); }
 }
 
 <CONDITIONAL1> {

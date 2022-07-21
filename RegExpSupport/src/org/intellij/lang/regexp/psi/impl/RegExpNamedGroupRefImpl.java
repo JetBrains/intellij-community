@@ -9,6 +9,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
+import java.util.List;
 import java.util.Objects;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
@@ -35,6 +36,18 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
   @Override
   @Nullable
   public RegExpGroup resolve() {
+    if (isPcreNumberedGroupRef()) {
+      Integer groupNumber;
+      ASTNode node = getNode().findChildByType(RegExpTT.NUMBER);
+      if (node == null) return null;
+      try {
+        groupNumber = Integer.parseInt(node.getText());
+      }
+      catch (NumberFormatException e) {
+        groupNumber = null;
+      }
+      return groupNumber == null ? null : resolveNumberedGroupRef(groupNumber, getContainingFile());
+    }
     final String groupName = getGroupName();
     return groupName == null ? null : resolve(groupName, getContainingFile());
   }
@@ -44,6 +57,19 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
       .filter(RegExpGroup.class)
       .filter(group -> Objects.equals(groupName, group.getGroupName()))
       .first();
+  }
+
+  @Nullable
+  static RegExpGroup resolveNumberedGroupRef(int groupNumber, PsiFile file) {
+    if (groupNumber < 1) return null;
+    List<RegExpGroup> groups = SyntaxTraverser.psiTraverser(file)
+      .filter(RegExpGroup.class)
+      .filter(RegExpGroup::isCapturing)
+      .toList();
+    if (groups.size() < groupNumber) {
+      return null;
+    }
+    return groups.get(groupNumber - 1);
   }
 
   @Override
@@ -62,6 +88,11 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
   public boolean isRubyNamedGroupRef() {
     final ASTNode node = getNode();
     return node.findChildByType(RUBY_GROUP_REF_TOKENS) != null;
+  }
+
+  @Override
+  public boolean isPcreNumberedGroupRef() {
+    return getNode().findChildByType(RegExpTT.PCRE_NUMBERED_GROUP_REF) != null;
   }
 
   @Override

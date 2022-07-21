@@ -119,6 +119,11 @@ public enum RegExpCapability {
   PCRE_BACK_REFERENCES,
 
   /**
+   * (?group_id)
+   */
+  PCRE_NUMBERED_GROUP_REF,
+
+  /**
    * Allow PCRE conditions DEFINE and VERSION[>]?=n.m in conditional groups
    */
   PCRE_CONDITIONS,

@@ -757,6 +757,11 @@ public class RegExpLexerTest extends LexerTestCase {
                          "ESC_CHARACTER ('\\#')", lexer);
   }
 
+  public void testNumberedGroupRef() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(PCRE_NUMBERED_GROUP_REF));
+    doTest("(abcd)(?1)", null, lexer);
+  }
+
   @Override
   protected Lexer createLexer() {
     return null;
