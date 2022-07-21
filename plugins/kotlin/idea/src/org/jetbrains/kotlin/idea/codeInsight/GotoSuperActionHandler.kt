@@ -1,18 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
-import com.intellij.codeInsight.CodeInsightActionHandler
+import com.intellij.codeInsight.generation.actions.PresentableCodeInsightActionHandler
 import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.codeInsight.navigation.actions.GotoSuperAction
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.util.EditSourceUtil
+import com.intellij.idea.ActionsBundle
+import com.intellij.java.JavaBundle
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.findParentOfType
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -23,7 +28,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.search.declarationsSearch.findSuperDescriptors
 import org.jetbrains.kotlin.psi.*
 
-class GotoSuperActionHandler : CodeInsightActionHandler {
+class GotoSuperActionHandler : PresentableCodeInsightActionHandler {
     data class SuperDeclarationsAndDescriptor(val supers: List<PsiElement>, val descriptor: DeclarationDescriptor?) {
         constructor() : this(emptyList(), null)
 
@@ -74,14 +79,50 @@ class GotoSuperActionHandler : CodeInsightActionHandler {
         }
     }
 
-    @Nls
-    private fun getTitle(descriptor: DeclarationDescriptor): String? =
-        when (descriptor) {
-            is ClassDescriptor -> KotlinBundle.message("goto.super.chooser.class.title")
-            is PropertyDescriptor -> KotlinBundle.message("goto.super.chooser.property.title")
-            is SimpleFunctionDescriptor -> KotlinBundle.message("goto.super.chooser.function.title")
-            else -> null
+    override fun update(editor: Editor, file: PsiFile, presentation: Presentation?) {
+        update(editor, file, presentation, null)
+    }
+
+    override fun update(editor: Editor, file: PsiFile, presentation: Presentation?, actionPlace: String?) {
+        if (presentation == null) return
+        val containingElement = file.findElementAt(editor.caretModel.offset)?.findParentOfType<KtDeclaration>()
+
+        val useShortName = actionPlace != null && (ActionPlaces.MAIN_MENU == actionPlace || ActionPlaces.isPopupPlace(actionPlace))
+        when (containingElement) {
+            is KtClassOrObject -> {
+                presentation.text = JavaBundle.message(
+                    if (useShortName) "action.GotoSuperClass.MainMenu.text" else "action.GotoSuperClass.text"
+                )
+
+                presentation.description = JavaBundle.message("action.GotoSuperClass.description")
+            }
+
+            is KtProperty -> {
+                presentation.text = KotlinBundle.message(
+                    if (useShortName) "action.GotoSuperProperty.MainMenu.text" else "action.GotoSuperProperty.text"
+                )
+
+                presentation.description = KotlinBundle.message("action.GotoSuperProperty.description")
+            }
+
+            else -> {
+                presentation.text = ActionsBundle.actionText(
+                    if (useShortName) "GotoSuperMethod.MainMenu" else "GotoSuperMethod"
+                )
+
+                presentation.description = ActionsBundle.actionDescription("GotoSuperMethod")
+            }
         }
+    }
+
+    @Nls
+    private fun getTitle(descriptor: DeclarationDescriptor): String? = when (descriptor) {
+        is ClassDescriptor -> KotlinBundle.message("goto.super.chooser.class.title")
+        is PropertyDescriptor -> KotlinBundle.message("goto.super.chooser.property.title")
+        is SimpleFunctionDescriptor -> KotlinBundle.message("goto.super.chooser.function.title")
+        else -> null
+    }
+
 
     override fun startInWriteAction() = false
 }
