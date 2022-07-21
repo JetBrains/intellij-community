@@ -57,12 +57,12 @@ class Dominance {
     }
     switch (object) {
       case RecordInterface(I z, D y) s when true -> {}
-      case RecordInterface(C z, D y) -> {}
+      case <error descr="Label is dominated by a preceding case label 'RecordInterface(I z, D y) s when true'">RecordInterface(C z, D y)</error> -> {}
       default -> {}
     }
     switch (object) {
       case RecordInterface(C z, D y) s when true -> {}
-      case RecordInterface(C z, D y) s when y.hashCode() > 0 -> {}
+      case <error descr="Label is dominated by a preceding case label 'RecordInterface(C z, D y) s when true'">RecordInterface(C z, D y) s when y.hashCode() > 0</error> -> {}
       default -> {}
     }
     switch (object) {
