@@ -115,7 +115,7 @@ Supports Maven and Gradle projects.
                      key="packagesearch.plugin.repositories.tab"
                      defaultValue="false"
                      description="Display the Repositories tab in the Package Search toolwindow. It may not work correctly, or at all."
-                     restartRequired="true"/>
+                     restartRequired="false"/>
 
         <registryKey id="packagesearch.plugin.smart.kotlin.multiplatform.checkbox"
                      key="packagesearch.plugin.smart.kotlin.multiplatform.checkbox"

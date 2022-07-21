@@ -39,7 +39,7 @@ private fun registryChangesFlow(key: String, defaultValue: Boolean = false): Flo
     ApplicationManager.getApplication().messageBusFlow(RegistryManager.TOPIC, { Registry.`is`(key, defaultValue) }) {
         object : RegistryValueListener {
             override fun afterValueChanged(value: RegistryValue) {
-                trySend(Registry.`is`(key, defaultValue))
+                if (value.key == key) trySend(Registry.`is`(key, defaultValue))
             }
         }
     }
