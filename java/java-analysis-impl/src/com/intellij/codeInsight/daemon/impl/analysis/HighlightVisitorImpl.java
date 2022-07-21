@@ -827,7 +827,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
     super.visitInstanceOfExpression(expression);
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkInstanceOfApplicable(expression));
+    if (!myHolder.hasErrorResults()) myHolder.addAll(HighlightUtil.checkInstanceOfApplicable(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInstanceOfGenericType(myLanguageLevel, expression));
     if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_16)) {
       myHolder.add(HighlightUtil.checkInstanceOfPatternSupertype(expression));

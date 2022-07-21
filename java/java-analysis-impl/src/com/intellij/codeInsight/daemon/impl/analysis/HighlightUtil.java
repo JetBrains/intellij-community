@@ -55,7 +55,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -205,13 +208,13 @@ public final class HighlightUtil {
   }
 
 
-  static HighlightInfo checkInstanceOfApplicable(@NotNull PsiInstanceOfExpression expression) {
+  static List<HighlightInfo> checkInstanceOfApplicable(@NotNull PsiInstanceOfExpression expression) {
     PsiExpression operand = expression.getOperand();
     PsiTypeElement typeElement = expression.getCheckType();
-    if (typeElement == null) return null;
+    if (typeElement == null) return Collections.emptyList();
     PsiType checkType = typeElement.getType();
     PsiType operandType = operand.getType();
-    if (operandType == null) return null;
+    if (operandType == null) return Collections.emptyList();
     if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)
         || TypeConversionUtil.isPrimitiveAndNotNull(checkType)
         || !TypeConversionUtil.areTypesConvertible(operandType, checkType)) {
@@ -222,9 +225,14 @@ public final class HighlightUtil {
       if (TypeConversionUtil.isPrimitiveAndNotNull(checkType)) {
         QuickFixAction.registerQuickFixAction(info, getFixFactory().createReplacePrimitiveWithBoxedTypeAction(operandType, typeElement));
       }
-      return info;
+      return Collections.singletonList(info);
     }
-    return null;
+    PsiPrimaryPattern pattern = expression.getPattern();
+    if (pattern instanceof PsiDeconstructionPattern) {
+      PsiDeconstructionPattern deconstruction = (PsiDeconstructionPattern)pattern;
+      return SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.createDeconstructionErrors(deconstruction);
+    }
+    return Collections.emptyList();
   }
 
 

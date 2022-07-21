@@ -543,7 +543,7 @@ public class SwitchBlockHighlightingModel {
       return list;
     }
 
-    static @NotNull List<HighlightInfo> createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern) {
+    public static @NotNull List<HighlightInfo> createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern) {
       if (deconstructionPattern == null) return Collections.emptyList();
       PsiTypeElement typeElement = deconstructionPattern.getTypeElement();
       PsiType deconstructionType = typeElement.getType();
