@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.util.castSafelyTo
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
@@ -18,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_TYPE_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 
@@ -66,9 +69,12 @@ class GradleMiscContributor : GradleMethodContextContributor {
     // resolve closure type to delegate based on return method type, e.g.
     // FlatDirectoryArtifactRepository flatDir(Closure configureClosure)
     if (parent is GrMethodCall) {
-      parent.resolveMethod()?.returnType?.let { type ->
-        if (type !is PsiPrimitiveType) {
-          return DelegatesToInfo(type, Closure.DELEGATE_FIRST)
+      val methodResult = parent.advancedResolve().castSafelyTo<GroovyMethodResult>() ?: return null
+      val closureParameter = methodResult.candidate?.argumentMapping?.expectedType(ExpressionArgument(closure))
+      if (closureParameter?.equalsToText(GROOVY_LANG_CLOSURE) == true) {
+        val returnType = methodResult.substitutor.substitute(methodResult.element.returnType)
+        if (returnType !is PsiPrimitiveType) {
+          return DelegatesToInfo(returnType, Closure.DELEGATE_FIRST)
         }
       }
     }
