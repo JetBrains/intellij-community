@@ -14,6 +14,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
@@ -65,6 +66,7 @@ internal object MarkdownActionUtil {
     }
   }
 
+  @RequiresBackgroundThread
   fun findMarkdownTextEditorByPsiFile(event: AnActionEvent): Editor? {
     val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return null
     return when {
