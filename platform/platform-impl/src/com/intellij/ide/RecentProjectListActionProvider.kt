@@ -18,19 +18,27 @@ open class RecentProjectListActionProvider {
     fun getInstance() = service<RecentProjectListActionProvider>()
   }
 
-  fun collectProjects(withOpened: Boolean = true): List<RecentProjectTreeItem> {
+  fun collectProjectsWithoutCurrent(currentProject: Project): List<RecentProjectTreeItem> {
+    return collectProjects(currentProject)
+  }
+
+  fun collectProjects(): List<RecentProjectTreeItem> {
+    return collectProjects(null)
+  }
+
+  private fun collectProjects(projectToFilterOut: Project?): List<RecentProjectTreeItem> {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
     val openedPaths = ProjectUtil.getOpenProjects().mapNotNull { openProject ->
       recentProjectManager.getProjectPath(openProject)
     }.toSet()
-    val allRecentProjectPaths = if (withOpened)
-      LinkedHashSet(recentProjectManager.getRecentPaths())
-    else
-      LinkedHashSet(recentProjectManager.getRecentPaths()).apply { removeAll(openedPaths) }
+    val allRecentProjectPaths = LinkedHashSet(recentProjectManager.getRecentPaths())
+    if (projectToFilterOut != null) {
+      allRecentProjectPaths.remove(recentProjectManager.getProjectPath(projectToFilterOut))
+    }
 
     val duplicates = getDuplicateProjectNames(openedPaths, allRecentProjectPaths)
     val groups = recentProjectManager.groups.sortedWith(ProjectGroupComparator(allRecentProjectPaths))
-    val projectGroups =  groups.map { projectGroup ->
+    val projectGroups = groups.map { projectGroup ->
       val children = projectGroup.projects.map { recentProject ->
         createRecentProject(recentProject, duplicates, projectGroup)
       }
@@ -38,7 +46,7 @@ open class RecentProjectListActionProvider {
       return@map ProjectsGroupItem(projectGroup, children)
     }
 
-    val projectsWithoutGroups =  allRecentProjectPaths.map { recentProject ->
+    val projectsWithoutGroups = allRecentProjectPaths.map { recentProject ->
       createRecentProject(recentProject, duplicates, null)
     }
 

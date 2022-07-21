@@ -7,6 +7,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
@@ -134,15 +135,15 @@ object ProjectCollectors {
   }
 
   @JvmField
-  val recentProjectsWithoutOpenedCollector: () -> List<RecentProjectTreeItem> = {
-    RecentProjectListActionProvider.getInstance().collectProjects(false)
-  }
-
-  @JvmField
   val cloneableProjectsCollector: () -> List<RecentProjectTreeItem> = {
     CloneableProjectsService.getInstance().collectCloneableProjects()
   }
 
   @JvmField
   val all = listOf(cloneableProjectsCollector, recentProjectsCollector)
+
+  @JvmStatic
+  fun createRecentProjectsWithoutCurrentCollector(currentProject: Project): () -> List<RecentProjectTreeItem> = {
+    RecentProjectListActionProvider.getInstance().collectProjectsWithoutCurrent(currentProject)
+  }
 }
