@@ -134,7 +134,9 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     protected val disableHmppProperties: String
         get() = if (isHmppEnabledByDefault) "kotlin.mpp.hierarchicalStructureSupport=false" else ""
 
-    protected fun repositories(useKts: Boolean): String = GradleKotlinTestUtils.listRepositories(useKts, gradleVersion)
+    protected fun repositories(useKts: Boolean): String = GradleKotlinTestUtils.listRepositories(
+        useKts, GradleVersion.version(gradleVersion), kotlinPluginVersion
+    )
 
     override val defaultProperties: Map<String, String>
         get() = super.defaultProperties.toMutableMap().apply {
