@@ -284,7 +284,7 @@ public final class CompileDriver {
                      new DefaultMessageHandler(myProject) {
                        @Override
                        public void sessionTerminated(@NotNull UUID sessionId) {
-                         if (compileContext.shouldUpdateProblemsView()) {
+                         if (!onlyCheckUpToDate && compileContext.shouldUpdateProblemsView()) {
                            ProblemsView view = myProject.getServiceIfCreated(ProblemsView.class);
                            if (view != null) {
                              view.clearProgress();
