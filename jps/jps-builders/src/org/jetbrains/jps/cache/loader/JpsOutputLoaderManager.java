@@ -88,9 +88,12 @@ public class JpsOutputLoaderManager {
   }
 
   public void load(@NotNull BuildRunner buildRunner, boolean isForceUpdate,
-                   @NotNull List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
+                   @NotNull List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes,
+                   @NotNull Runnable beforeDownload) {
     if (!canRunNewLoading()) return;
     if (isForceCachesDownload || isDownloadQuickerThanLocalBuild(buildRunner, myCommitsCountBetweenCompilation, scopes)) {
+      LOG.info("Before download task execution...");
+      beforeDownload.run();
       // Drop JPS metadata to force plugin for downloading all compilation outputs
       myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.fetching.cache.for.commit", myCommitHash));
       if (isForceUpdate) {
@@ -339,6 +342,7 @@ public class JpsOutputLoaderManager {
 
   private @Nullable Pair<Long, Integer> estimateProjectBuildTime(BuildRunner buildRunner,
                                        List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
+    ProjectDescriptor projectDescriptor = null;
     try {
       long startTime = System.currentTimeMillis();
       BuildFSState fsState = new BuildFSState(false);
@@ -352,7 +356,7 @@ public class JpsOutputLoaderManager {
         buildRunner.setForceCleanCaches(true);
         LOG.info("Storage files are absent");
       }
-      ProjectDescriptor projectDescriptor = buildRunner.load(MessageHandler.DEAF, dataStorageRoot, fsState);
+      projectDescriptor = buildRunner.load(MessageHandler.DEAF, dataStorageRoot, fsState);
       long contextInitializationTime = System.currentTimeMillis() - startTime;
       LOG.info("Time spend to context initialization: " + contextInitializationTime);
       CompileScope compilationScope = buildRunner.createCompilationScope(projectDescriptor, scopes);
@@ -375,6 +379,9 @@ public class JpsOutputLoaderManager {
     }
     catch (Exception e) {
       LOG.warn("Exception at calculation approximate build time", e);
+    }
+    finally {
+      if (projectDescriptor != null) projectDescriptor.release();
     }
     return null;
   }

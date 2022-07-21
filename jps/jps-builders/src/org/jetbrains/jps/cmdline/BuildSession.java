@@ -56,7 +56,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final UUID mySessionId;
   private final Channel myChannel;
   @Nullable
-  private final PreloadedData myPreloadedData;
+  private PreloadedData myPreloadedData;
   private volatile boolean myCanceled;
   private final String myProjectPath;
   @Nullable
@@ -176,7 +176,18 @@ final class BuildSession implements Runnable, CanceledStatus {
           LOG.info("Trying to download JPS caches before build");
           myCacheLoadManager = new JpsOutputLoaderManager(myBuildRunner.loadModelAndGetJpsProject(), this, myProjectPath, myChannel,
                                                           mySessionId, myCacheDownloadSettings);
-          myCacheLoadManager.load(myBuildRunner, true, myScopes);
+          myCacheLoadManager.load(myBuildRunner, true, myScopes, () -> {
+            if (myPreloadedData != null) {
+              LOG.info("Releasing old project description...");
+              ProjectDescriptor projectDescriptor = myPreloadedData.getProjectDescriptor();
+              if (projectDescriptor != null) {
+                projectDescriptor.release();
+                myPreloadedData.setProjectDescriptor(null);
+              }
+              JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class).forEach(ext -> ext.discardPreloadedData(myPreloadedData));
+              myPreloadedData = null;
+            }
+          });
         }
       }
 
