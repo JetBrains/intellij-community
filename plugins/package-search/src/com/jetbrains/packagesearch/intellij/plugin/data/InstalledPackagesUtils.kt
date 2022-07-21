@@ -35,7 +35,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageV
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import kotlinx.coroutines.Deferred
@@ -134,13 +134,13 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     }
 
     val cachedContents = runCatching { cacheFile.readText() }
-        .onFailure { logDebug("installedDependencies", it) { "Unable to load caches from \"${cacheFile.absolutePath}\"" } }
+        .onFailure { logWarn("installedDependencies", it) { "Unable to load caches from \"${cacheFile.absolutePath}\"" } }
         .getOrNull()
         ?.takeIf { it.isNotBlank() }
 
     val cache = if (cachedContents != null) {
         runCatching { json.decodeFromString<InstalledDependenciesCache>(cachedContents) }
-            .onFailure { logDebug("installedDependencies", it) { "Dependency JSON cache file read failed for ${buildFile.path}" } }
+            .onFailure { logWarn("installedDependencies", it) { "Dependency JSON cache file read failed for ${buildFile.path}" } }
             .getOrNull()
     } else {
         null
@@ -160,7 +160,7 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
 
     val declaredDependencies =
         runCatching { operationProvider?.declaredDependenciesInModule(this@installedDependencies) }
-            .onFailure { logDebug("installedDependencies", it) { "Unable to list dependencies in module $name" } }
+            .onFailure { logWarn("installedDependencies", it) { "Unable to list dependencies in module $name" } }
             .getOrNull()
             ?.toList()
             ?: emptyList()
@@ -173,7 +173,7 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
                 ?.mapNotNull { dep -> dep.key?.let { it to dep.coordinates.version } }
                 ?.toMap()
                 ?: emptyMap()
-        }.onFailure { logDebug("Error while evaluating resolvedDependenciesInModule for $name", it) }
+        }.onFailure { logWarn("Error while evaluating resolvedDependenciesInModule for $name", it) }
             .getOrElse { emptyMap() }
     }
 
