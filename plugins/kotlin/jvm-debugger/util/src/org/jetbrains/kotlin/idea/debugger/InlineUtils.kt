@@ -12,24 +12,22 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.sun.jdi.Location
 import com.sun.jdi.ReferenceType
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 val INLINED_THIS_REGEX = run {
@@ -104,7 +102,7 @@ fun getLocationsOfInlinedLine(type: ReferenceType, position: SourcePosition, sou
     val element = file.findElementAt(lineStartOffset) ?: return listOf()
     val ktElement = element.parents.firstIsInstanceOrNull<KtElement>() ?: return listOf()
 
-    val isInInline = runReadAction { element.parents.any { it is KtFunction && it.hasModifier(KtTokens.INLINE_KEYWORD) } }
+    val isInInline = element.parents.any { it is KtFunction && it.hasModifier(KtTokens.INLINE_KEYWORD) }
 
     if (!isInInline) {
         // Lambdas passed to cross-inline arguments are inlined when they are used in non-inlined lambdas
@@ -120,21 +118,33 @@ fun getLocationsOfInlinedLine(type: ReferenceType, position: SourcePosition, sou
 }
 
 private fun isInCrossInlineArgument(ktElement: KtElement): Boolean {
-    val argumentFunctions = runReadAction {
-        ktElement.parents.filter {
-            when (it) {
-                is KtFunctionLiteral -> it.parent is KtLambdaExpression &&
-                        (it.parent.parent is KtValueArgument || it.parent.parent is KtLambdaArgument)
-                is KtFunction -> it.parent is KtValueArgument
-                else -> false
+    for (function in ktElement.parents.filterIsInstance<KtFunction>()) {
+        when (function) {
+            is KtFunctionLiteral -> {
+                val lambdaExpression = function.parent as? KtLambdaExpression ?: continue
+                val argumentExpression = lambdaExpression.parent
+                if (argumentExpression is KtValueArgument && isCrossInlineArgument(lambdaExpression)) {
+                    return true
+                }
             }
-        }.filterIsInstance<KtFunction>()
+            is KtNamedFunction -> {
+                if (function.parent is KtValueArgument && isCrossInlineArgument(function)) {
+                    return true
+                }
+            }
+        }
     }
 
-    val bindingContext = ktElement.analyze(BodyResolveMode.PARTIAL)
-    return argumentFunctions.any {
-        val argumentDescriptor = InlineUtil.getInlineArgumentDescriptor(it, bindingContext)
-        argumentDescriptor?.isCrossinline ?: false
+    return false
+}
+
+private fun isCrossInlineArgument(argumentExpression: KtExpression): Boolean {
+    val callExpression = KtPsiUtil.getParentCallIfPresent(argumentExpression) ?: return false
+
+    return analyze(callExpression) f@ {
+        val call = callExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return@f false
+        val parameter = call.argumentMapping[argumentExpression]?.symbol ?: return@f false
+        return@f parameter.isCrossinline
     }
 }
 
