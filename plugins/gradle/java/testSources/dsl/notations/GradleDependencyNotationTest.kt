@@ -23,7 +23,7 @@ class GradleDependencyNotationTest : GradleCodeInsightTestCase() {
   fun testIncorrectString(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
       codeInsightFixture.enableInspections(GradleIncorrectDependencyNotationArgumentInspection::class.java)
-      testHighlighting("dependencies { implementation(<warning>'a:b'</warning>) }")
+      testHighlighting("dependencies { implementation(<warning>'ab'</warning>) }")
     }
   }
 
