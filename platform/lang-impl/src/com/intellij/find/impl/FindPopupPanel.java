@@ -1967,15 +1967,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       setLayout(new BorderLayout());
       add(myUsageRenderer, BorderLayout.CENTER);
       add(myFileAndLineNumber, BorderLayout.EAST);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
       if (ExperimentalUI.isNewUI()) {
-        size.height = JBUI.CurrentTheme.List.rowHeight();
+        setPreferredHeight(JBUI.CurrentTheme.List.rowHeight());
       }
-      return size;
     }
 
     @Override

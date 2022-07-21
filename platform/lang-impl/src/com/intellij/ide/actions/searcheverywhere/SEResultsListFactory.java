@@ -37,7 +37,7 @@ abstract class SEResultsListFactory {
 
   abstract ListCellRenderer<Object> createListRenderer(SearchListModel model, SearchEverywhereHeader header);
 
-  protected static final SimpleTextAttributes SMALL_LABEL_ATTRS = new SimpleTextAttributes(
+  public static final SimpleTextAttributes SMALL_LABEL_ATTRS = new SimpleTextAttributes(
     SimpleTextAttributes.STYLE_SMALLER, JBUI.CurrentTheme.BigPopup.listTitleLabelForeground());
 
   protected static final ListCellRenderer<Object> myMoreRenderer = new ColoredListCellRenderer<>() {

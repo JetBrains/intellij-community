@@ -15,6 +15,7 @@ import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.ui.RunAnythingScrollingUtil;
+import com.intellij.ide.actions.searcheverywhere.GroupTitleRenderer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
@@ -53,16 +54,17 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.Accessible;
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -593,7 +595,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   private class MyListRenderer extends ColoredListCellRenderer<Object> {
 
-    private final RunAnythingMyAccessibleComponent myMainPanel = new RunAnythingMyAccessibleComponent(new BorderLayout());
+    private final GroupTitleRenderer groupTitleRenderer = new GroupTitleRenderer();
 
     private final RunAnythingMore runAnythingMore = new RunAnythingMore();
 
@@ -625,39 +627,25 @@ public class RunAnythingPopupUI extends BigPopupUI {
         cmp.setForeground(UIUtil.getListForeground(isSelected));
         foreground = cmp.getBackground();
       }
-      myMainPanel.removeAll();
       RunAnythingSearchListModel model = getSearchingModel(myResultsList);
-      if (model != null) {
-        String title = model.getTitle(index);
-        if (title != null) {
-          myMainPanel.add(RunAnythingUtil.createTitle(" " + title, list.getBackground()), BorderLayout.NORTH);
-        }
-      }
       SelectablePanel wrapped = SelectablePanel.wrap(cmp, list.getBackground());
       wrapped.setSelectionColor(bg);
       wrapped.setForeground(foreground);
       if (ExperimentalUI.isNewUI()) {
-        wrapped.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
-        JBInsets insets = JBInsets.create(3, 0);
-        Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
-        wrapped.setBorder(JBUI.Borders.empty(innerInsets.top + insets.top,
-                                             innerInsets.left,
-                                             innerInsets.bottom + insets.bottom,
-                                             innerInsets.right));
-        int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
-        //noinspection UseDPIAwareBorders
-        myMainPanel.setBorder(new EmptyBorder(0, leftRightInset, 0, leftRightInset));
+        PopupUtil.configSelectablePanel(wrapped);
+        wrapped.setPreferredHeight(JBUI.CurrentTheme.List.rowHeight());
       }
       else {
         wrapped.setBorder(RENDERER_BORDER);
       }
-      myMainPanel.setBackground(list.getBackground());
-      myMainPanel.add(wrapped, BorderLayout.CENTER);
-      if (cmp instanceof Accessible) {
-        myMainPanel.setAccessible((Accessible)cmp);
+      if (model != null) {
+        String title = model.getTitle(index);
+        if (title != null) {
+          return groupTitleRenderer.withDisplayedData(title, wrapped);
+        }
       }
 
-      return myMainPanel;
+      return wrapped;
     }
 
     @Override

@@ -754,7 +754,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
       boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
       IconCompOptionalCompPanel<SimpleColoredComponent>
-        panel = new IconCompOptionalCompPanel<SimpleColoredComponent>(nameComponent) {
+        panel = new IconCompOptionalCompPanel<>(nameComponent) {
         @Override
         public AccessibleContext getAccessibleContext() {
           return nameComponent.getAccessibleContext();
