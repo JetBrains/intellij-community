@@ -220,11 +220,9 @@ internal class ImportQuickFix(
             unresolvedName: Name,
             isVisible: (KtCallableSymbol) -> Boolean
         ): List<FqName> {
-            val callablesCandidates = indexProvider.getCallableSymbolsByName(
-                unresolvedName,
-                kotlinPsiFilter = { it.canBeImported() },
-                nonKotlinPsiFilter = { it.canBeImported() }
-            )
+            val callablesCandidates =
+                indexProvider.getKotlinCallableSymbolsByName(unresolvedName) { it.canBeImported() } +
+                indexProvider.getJavaCallableSymbolsByName(unresolvedName) { it.canBeImported() }
 
             return callablesCandidates
                 .filter(isVisible)
@@ -238,11 +236,8 @@ internal class ImportQuickFix(
             isVisible: (KtNamedClassOrObjectSymbol) -> Boolean
         ): List<FqName> {
             val classesCandidates =
-                indexProvider.getClassesByName(
-                    unresolvedName,
-                    kotlinPsiFilter = { it.canBeImported() },
-                    nonKotlinPsiFilter = { it.canBeImported() }
-                )
+                indexProvider.getKotlinClassesByName(unresolvedName) { it.canBeImported() } +
+                        indexProvider.getJavaClassesByName(unresolvedName) { it.canBeImported() }
 
             return classesCandidates
                 .filter(isVisible)
@@ -266,6 +261,7 @@ private fun KtDeclaration.canBeImported(): Boolean {
         is KtNamedFunction -> isTopLevel || containingClassOrObject is KtObjectDeclaration
         is KtClassOrObject ->
             getClassId() != null && parentsOfType<KtClassOrObject>(withSelf = true).none { it.hasModifier(KtTokens.INNER_KEYWORD) }
+
         else -> false
     }
 }

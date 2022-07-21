@@ -19,54 +19,68 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 
 class KtSymbolFromIndexProvider(private val project: Project) {
     context(KtAnalysisSession)
-    fun getClassesByName(
+    fun getKotlinClassesByName(
         name: Name,
-        kotlinPsiFilter: (KtClassOrObject) -> Boolean = { true },
-        nonKotlinPsiFilter: (PsiClass) -> Boolean = { true }
+        psiFilter: (KtClassOrObject) -> Boolean = { true },
     ): Sequence<KtNamedClassOrObjectSymbol> {
         val scope = analysisScope
         val nameString = name.asString()
 
-        val kotlinClasses = KotlinClassShortNameIndex[nameString, project, scope]
+        return KotlinClassShortNameIndex[nameString, project, scope]
             .asSequence()
-            .filter(kotlinPsiFilter)
+            .filter(psiFilter)
             .mapNotNull { it.getNamedClassOrObjectSymbol() }
+    }
 
-        val javaClasses = sequence {
+    context(KtAnalysisSession)
+    fun getJavaClassesByName(
+        name: Name,
+        psiFilter: (PsiClass) -> Boolean = { true }
+    ): Sequence<KtNamedClassOrObjectSymbol> {
+        val scope = analysisScope
+        val nameString = name.asString()
+
+        return sequence {
             forEachNonKotlinCache { cache ->
                 yieldAll(cache.getClassesByName(nameString, scope).iterator())
             }
         }
-            .filter(nonKotlinPsiFilter)
+            .filter(psiFilter)
             .mapNotNull { it.getNamedClassSymbol() }
-        return kotlinClasses + javaClasses
     }
 
     context(KtAnalysisSession)
-    fun getCallableSymbolsByName(
+    fun getKotlinCallableSymbolsByName(
         name: Name,
-        kotlinPsiFilter: (KtCallableDeclaration) -> Boolean = { true },
-        nonKotlinPsiFilter: (PsiMember) -> Boolean = { true }
+        psiFilter: (KtCallableDeclaration) -> Boolean = { true },
     ): Sequence<KtCallableSymbol> {
         val scope = analysisScope
         val nameString = name.asString()
 
-        val kotlinCallables = sequence {
+        return sequence {
             yieldAll(KotlinFunctionShortNameIndex[nameString, project, scope])
             yieldAll(KotlinPropertyShortNameIndex[nameString, project, scope])
         }
             .onEach { ProgressManager.checkCanceled() }
-            .filter { it is KtCallableDeclaration && kotlinPsiFilter(it) }
+            .filter { it is KtCallableDeclaration && psiFilter(it) }
             .mapNotNull { it.getSymbolOfTypeSafe<KtCallableSymbol>() }
+    }
 
-        val javaCallables = sequence {
-            forEachNonKotlinCache { cache -> yieldAll(cache.getMethodsByName(nameString, analysisScope).iterator()) }
-            forEachNonKotlinCache { cache -> yieldAll(cache.getFieldsByName(nameString, analysisScope).iterator()) }
+    context(KtAnalysisSession)
+    fun getJavaCallableSymbolsByName(
+        name: Name,
+        psiFilter: (PsiMember) -> Boolean = { true }
+    ): Sequence<KtCallableSymbol> {
+        val scope = analysisScope
+        val nameString = name.asString()
+
+        return sequence {
+            forEachNonKotlinCache { cache -> yieldAll(cache.getMethodsByName(nameString, scope).iterator()) }
+            forEachNonKotlinCache { cache -> yieldAll(cache.getFieldsByName(nameString, scope).iterator()) }
         }
-            .filter(nonKotlinPsiFilter)
+            .filter(psiFilter)
             .mapNotNull { it.getCallableSymbol() }
 
-        return kotlinCallables + javaCallables
     }
 
     private inline fun SequenceScope<*>.forEachNonKotlinCache(action: SequenceScope<*>.(cache: PsiShortNamesCache) -> Unit) {
