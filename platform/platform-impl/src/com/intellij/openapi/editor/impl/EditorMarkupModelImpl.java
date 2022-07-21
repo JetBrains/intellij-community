@@ -69,7 +69,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Queue;
@@ -170,6 +169,11 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     AnAction nextErrorAction = createAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatchesSmall);
     AnAction prevErrorAction = createAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatchesSmall);
     DefaultActionGroup navigateGroup = new DefaultActionGroup(prevErrorAction, nextErrorAction) {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabledAndVisible(showNavigation);
@@ -428,9 +432,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   private @NotNull AnAction createAction(@NotNull String id, @NotNull Icon icon) {
     AnAction delegate = ActionManager.getInstance().getAction(id);
-    AnAction result = new MarkupModelDelegateAction(delegate, icon);
-
-    result.copyShortcutFrom(delegate);
+    AnAction result = new MarkupModelDelegateAction(delegate);
+    result.getTemplatePresentation().setIcon(icon);
     return result;
   }
 
@@ -1453,8 +1456,18 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   private class TrafficLightAction extends DumbAwareAction implements CustomComponentAction {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
       return new TrafficLightButton(this, presentation, new EditorToolbarButtonLook(), place, myEditor.getColorsScheme());
+    }
+
+    @Override
+    public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
+      ((TrafficLightButton)component).updateFromPresentation(presentation);
     }
 
     @Override
@@ -1472,14 +1485,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       presentation.setVisible(!AnalyzerStatus.isEmpty(analyzerStatus));
 
       if (!hasAnalyzed || analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
-        if (newStatus.isEmpty()) {
-          newStatus = Collections.singletonList(new StatusItem("", newIcon));
-          presentation.putClientProperty(EXPANDED_STATUS, newStatus);
-        }
-
-        if (!newStatus.equals(presentation.getClientProperty(EXPANDED_STATUS))) {
-          presentation.putClientProperty(EXPANDED_STATUS, newStatus);
-        }
+        List<StatusItem> adjusted = newStatus.isEmpty() ? Collections.singletonList(new StatusItem("", newIcon)) : newStatus;
+        presentation.putClientProperty(EXPANDED_STATUS, adjusted);
 
         presentation.putClientProperty(TRANSLUCENT_STATE, analyzerStatus.getAnalyzingType() != AnalyzingType.COMPLETE);
       }
@@ -1497,43 +1504,20 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     private boolean mouseHover;
     private final ActionButtonLook buttonLook;
     private final MouseListener mouseListener;
-    private final PropertyChangeListener presentationPropertyListener;
-    private final Presentation presentation;
     private final EditorColorsScheme colorsScheme;
+    private List<StatusItem> items;
     private boolean translucent;
 
-    private TrafficLightButton(@NotNull AnAction action,
-                               @NotNull Presentation presentation,
-                               @NotNull ActionButtonLook buttonLook,
-                               @NotNull String place,
-                               @NotNull EditorColorsScheme colorsScheme) {
+    TrafficLightButton(@NotNull AnAction action,
+                       @NotNull Presentation presentation,
+                       @NotNull ActionButtonLook buttonLook,
+                       @NotNull String place,
+                       @NotNull EditorColorsScheme colorsScheme) {
       setLayout(new GridBagLayout());
       setOpaque(false);
 
       this.buttonLook = buttonLook;
-      this.presentation = presentation;
       this.colorsScheme = colorsScheme;
-
-      presentationPropertyListener = event -> {
-        String propName = event.getPropertyName();
-        if (propName.equals(EXPANDED_STATUS.toString()) && event.getNewValue() != null) {
-          //noinspection unchecked
-          List<StatusItem> newStatus = (List<StatusItem>)event.getNewValue();
-          updateContents(newStatus);
-          translucent = false;
-          revalidate();
-          repaint();
-        }
-        else if (propName.equals(TRANSLUCENT_STATE.toString())) {
-          translucent = event.getNewValue() == Boolean.TRUE;
-          repaint();
-        }
-        else if (propName.equals(Presentation.PROP_VISIBLE)) {
-          setVisible(event.getNewValue() == Boolean.TRUE);
-          revalidate();
-          repaint();
-        }
-      };
 
       mouseListener = new MouseAdapter() {
         @Override
@@ -1542,7 +1526,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
 
         private void showInspectionsHint(MouseEvent me) {
-          DataContext context = getDataContext();
+          DataContext context = ActionToolbar.getDataContextFor(TrafficLightButton.this);
           AnActionEvent event = AnActionEvent.createFromInputEvent(me, place, presentation, context, false, true);
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
             ActionUtil.performActionDumbAwareWithCallbacks(action, event);
@@ -1596,11 +1580,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
       };
 
-      List<StatusItem> newStatus = presentation.getClientProperty(EXPANDED_STATUS);
-      if (newStatus != null) {
-        updateContents(newStatus);
-      }
-
       setBorder(new Border() {
         @Override
         public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {}
@@ -1617,21 +1596,29 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       });
     }
 
+    private void updateFromPresentation(@NotNull Presentation presentation) {
+      boolean newTranslucent = Boolean.TRUE.equals(presentation.getClientProperty(TRANSLUCENT_STATE));
+      List<StatusItem> newItems = presentation.getClientProperty(EXPANDED_STATUS);
+      if (translucent == newTranslucent && Objects.equals(items, newItems)) {
+        return;
+      }
+      translucent = newTranslucent;
+      items = newItems;
+      updateContents(ContainerUtil.notNullize(newItems));
+      revalidate();
+      repaint();
+    }
+
+
     @Override
     public void addNotify() {
       super.addNotify();
-      presentation.addPropertyChangeListener(presentationPropertyListener);
       addMouseListener(mouseListener);
     }
 
     @Override
     public void removeNotify() {
-      presentation.removePropertyChangeListener(presentationPropertyListener);
       removeMouseListener(mouseListener);
-    }
-
-    private @NotNull DataContext getDataContext() {
-      return ActionToolbar.getDataContextFor(this);
     }
 
     private void updateContents(@NotNull List<StatusItem> status) {
@@ -1875,36 +1862,28 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private final class MarkupModelDelegateAction extends DumbAwareAction implements ActionWithDelegate<AnAction> {
-    private final AnAction myDelegate;
+  private final class MarkupModelDelegateAction extends AnActionWrapper {
 
-    private MarkupModelDelegateAction(@NotNull AnAction delegate, @NotNull Icon icon) {
-      super(delegate.getTemplatePresentation().getText(), null, icon);
-      myDelegate = delegate;
+    MarkupModelDelegateAction(@NotNull AnAction delegate) {
+      super(delegate);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       IdeFocusManager focusManager = IdeFocusManager.getInstance(myEditor.getProject());
 
-      AnActionEvent delegateEvent = AnActionEvent.createFromAnAction(myDelegate,
+      AnActionEvent delegateEvent = AnActionEvent.createFromAnAction(getDelegate(),
                                                                      e.getInputEvent(),
                                                                      ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
                                                                      myEditor.getDataContext());
 
       if (focusManager.getFocusOwner() != myEditor.getContentComponent()) {
         focusManager.requestFocus(myEditor.getContentComponent(), true).
-          doWhenDone(() -> myDelegate.actionPerformed(delegateEvent));
+          doWhenDone(() -> getDelegate().actionPerformed(delegateEvent));
       }
       else {
-        myDelegate.actionPerformed(delegateEvent);
+        getDelegate().actionPerformed(delegateEvent);
       }
-    }
-
-    @NotNull
-    @Override
-    public AnAction getDelegate() {
-      return myDelegate;
     }
   }
 }
