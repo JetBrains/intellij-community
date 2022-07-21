@@ -125,7 +125,6 @@ class KotlinGradleFUSLogger : StartupActivity.DumbAware, Runnable {
                 GradleStatisticsEvents.CompilerPlugins,
                 BooleanMetrics.ENABLED_COMPILER_PLUGIN_ALL_OPEN,
                 BooleanMetrics.ENABLED_COMPILER_PLUGIN_NO_ARG,
-                BooleanMetrics.ENABLED_COMPILER_PLUGIN_JPA_SUPPORT,
                 BooleanMetrics.ENABLED_COMPILER_PLUGIN_SAM_WITH_RECEIVER,
                 BooleanMetrics.JVM_COMPILER_IR_MODE,
                 StringMetrics.JVM_DEFAULTS,
