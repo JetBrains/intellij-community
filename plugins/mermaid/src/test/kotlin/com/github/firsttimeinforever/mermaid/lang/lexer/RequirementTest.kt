@@ -5,6 +5,7 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DOUBLE_QUOTE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EOL
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ID
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ID_KEYWORD
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.LABEL
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.OPEN_CURLY
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement
@@ -20,7 +21,6 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requiremen
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.ELEMENT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.FUNCTIONAL_REQUIREMENT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.HIGH
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.ID_KEYWORD
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.INSPECTION
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.INTERFACE_REQUIREMENT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.LOW
@@ -35,10 +35,10 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requiremen
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.TEST
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.TEXT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.TRACES
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.TYPE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.VERIFIES
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.VERIFY_METHOD
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.STRING_VALUE
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.TYPE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.WHITE_SPACE
 
 class RequirementTest : MermaidLexerTestCase() {

@@ -144,11 +144,9 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       MermaidTokens.Requirement.PHYSICAL_REQUIREMENT,
       MermaidTokens.Requirement.DESIGN_CONSTRAINT,
       MermaidTokens.Requirement.ELEMENT,
-      MermaidTokens.Requirement.ID_KEYWORD,
       MermaidTokens.Requirement.TEXT,
       MermaidTokens.Requirement.RISK,
       MermaidTokens.Requirement.VERIFY_METHOD,
-      MermaidTokens.Requirement.TYPE,
       MermaidTokens.Requirement.DOCREF -> arrayOf(MermaidTextAttributes.keyword)
 
       MermaidTokens.Requirement.LOW,
@@ -174,6 +172,25 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     }
   }
 
+  private fun getGitGraphHighlights(tokenType: IElementType): Array<TextAttributesKey>? {
+    return when (tokenType) {
+      MermaidTokens.GitGraph.GIT_GRAPH,
+      MermaidTokens.GitGraph.COMMIT,
+      MermaidTokens.GitGraph.BRANCH,
+      MermaidTokens.GitGraph.CHECKOUT,
+      MermaidTokens.GitGraph.MERGE,
+      MermaidTokens.GitGraph.TAG,
+      MermaidTokens.GitGraph.CHERRY_PICK,
+      MermaidTokens.GitGraph.ORDER -> arrayOf(MermaidTextAttributes.keyword)
+
+      MermaidTokens.GitGraph.NORMAL,
+      MermaidTokens.GitGraph.REVERSE,
+      MermaidTokens.GitGraph.HIGHLIGHT -> arrayOf(MermaidTextAttributes.constant)
+
+      else -> null
+    }
+  }
+
   override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> {
     val pieHighlights = getPieHighlights(tokenType)
     val journeyHighlighter = getJourneyHighlights(tokenType)
@@ -184,6 +201,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     val entityRelationshipDiagramHighlights = getEntityRelationshipDiagramHighlights(tokenType)
     val ganttDiagramHighlights = getGanttDiagramHighlights(tokenType)
     val requirementHighlights = getRequirementHighlights(tokenType)
+    val gitGraphHighlights = getGitGraphHighlights(tokenType)
     return pieHighlights
       ?: journeyHighlighter
       ?: flowchartHighlighter
@@ -193,6 +211,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       ?: entityRelationshipDiagramHighlights
       ?: ganttDiagramHighlights
       ?: requirementHighlights
+      ?: gitGraphHighlights
       ?: when (tokenType) {
         MermaidTokens.END,
         MermaidTokens.TITLE,
@@ -203,7 +222,9 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.RIGHT_OF,
         MermaidTokens.LEFT_OF,
         MermaidTokens.SECTION,
-        MermaidTokens.LINK -> arrayOf(MermaidTextAttributes.keyword)
+        MermaidTokens.LINK,
+        MermaidTokens.ID_KEYWORD,
+        MermaidTokens.TYPE -> arrayOf(MermaidTextAttributes.keyword)
 
         MermaidTokens.TITLE_VALUE,
         MermaidTokens.DOUBLE_QUOTE,

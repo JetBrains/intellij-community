@@ -19,6 +19,7 @@
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EntityRelationship.*'
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Gantt.*'
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.*'
+    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.GitGraph.*'
   ]
   generateTokens=false
 }
@@ -35,6 +36,7 @@ private diagram ::= pieHeader pieDocument
 	| ENTITY_RELATIONSHIP erDocument
 	| GANTT ganttDocument
 	| REQUIREMENT_DIAGRAM requirementDocument
+	| GIT_GRAPH gitGraphDocument
 
 pieHeader ::= PIE [showDataRec]
 private showDataRec ::= EOL showDataRec | SHOW_DATA
@@ -294,6 +296,38 @@ relationshipDef ::= identifier ARROW_LEFT reqRelationship REQ_LINE identifier
   | identifier REQ_LINE reqRelationship ARROW_RIGHT identifier
 
 reqRelationship ::= CONTAINS | COPIES | DERIVES | SATISFIES | VERIFIES | REFINES | TRACES
+
+
+gitGraphDocument ::= gitGraphLines
+private gitGraphLines ::= gitGraphLine [gitGraphLines]
+gitGraphLine ::= gitGraphStatement [IGNORED] [EOL] | [IGNORED] EOL
+private gitGraphStatement ::= commitStatement
+	| mergeStatement
+	| cherryPickStatement
+	| branchStatement
+	| checkoutStatement
+	| directive
+
+branchStatement ::= BRANCH identifier [branchOrder]
+cherryPickStatement ::= CHERRY_PICK commitIdAttribute
+mergeStatement ::= MERGE identifier [commitTagAttribute]
+checkoutStatement ::= CHECKOUT identifier
+commitStatement ::=
+    COMMIT commitIdAttribute commitTagAttribute [commitTypeAttribute]
+  | COMMIT commitIdAttribute [commitTypeAttribute] [commitTagAttribute]
+  | COMMIT commitTagAttribute commitTypeAttribute [commitIdAttribute]
+  | COMMIT commitTagAttribute [commitIdAttribute] [commitTypeAttribute]
+  | COMMIT commitTypeAttribute commitIdAttribute [commitTagAttribute]
+  | COMMIT commitTypeAttribute [commitTagAttribute] [commitIdAttribute]
+  | COMMIT [commit_arg]
+
+branchOrder ::= ORDER COLON NUM
+commitIdAttribute ::= ID_KEYWORD COLON string
+commitTypeAttribute ::= TYPE COLON commitType
+commitTagAttribute ::= TAG COLON string
+commit_arg ::= string
+private commitType ::= NORMAL | REVERSE | HIGHLIGHT
+
 
 directive ::= OPEN_DIRECTIVE directiveContent? CLOSE_DIRECTIVE
 private directiveContent ::= property [COMMA directiveContent]

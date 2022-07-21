@@ -11,6 +11,7 @@ import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.*
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.elementType
 import com.intellij.util.ProcessingContext
 
 class MermaidCompletionContributor : CompletionContributor() {
@@ -138,23 +139,63 @@ class MermaidCompletionContributor : CompletionContributor() {
     )
     extend(
       CompletionType.BASIC,
-      psiElement().isRequirementAttribute(MermaidTokens.Requirement.RISK),
+      psiElement().afterSiblingSkippingElementsAndWhitespaces(
+        psiElement(MermaidTokens.COLON),
+        MermaidTokens.Requirement.RISK
+      ),
       RequirementRiskCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
-      psiElement().isRequirementAttribute(MermaidTokens.Requirement.VERIFY_METHOD),
+      psiElement().afterSiblingSkippingElementsAndWhitespaces(
+        psiElement(MermaidTokens.COLON),
+        MermaidTokens.Requirement.VERIFY_METHOD
+      ),
       RequirementVerifyMethodCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
       psiElement().afterSiblingSkippingElementsAndWhitespaces(
         or(
+          psiElement(MermaidTokens.COLON),
           psiElement(MermaidTokens.Requirement.ARROW_LEFT),
           psiElement(MermaidTokens.Requirement.REQ_LINE)
         ), MermaidTokens.ID
       ),
       RequirementRelationshipCompletionProvider()
+    )
+
+    extend(
+      CompletionType.BASIC,
+      psiElement().inTopLevelOfDiagram(
+        psiElement(MermaidTokens.GitGraph.GIT_GRAPH),
+        psiElement(MermaidElements.GIT_GRAPH_DOCUMENT)
+      ),
+      GitGraphSimpleCompletionProvider()
+    )
+
+    extend(
+      CompletionType.BASIC,
+      psiElement().withLastDocumentLine(
+        psiElement(MermaidTokens.GitGraph.GIT_GRAPH),
+        psiElement(MermaidElements.GIT_GRAPH_DOCUMENT),
+        psiElement(MermaidElements.COMMIT_STATEMENT)
+      ).andNot(
+        psiElement().afterSiblingSkippingElementsAndWhitespaces(
+          psiElement(MermaidTokens.COLON),
+          MermaidTokens.TYPE
+        )
+      ),
+      GitGraphCommitCompletionProvider()
+    )
+
+    extend(
+      CompletionType.BASIC,
+      psiElement().afterSiblingSkippingElementsAndWhitespaces(
+        psiElement(MermaidTokens.COLON),
+        MermaidTokens.TYPE
+      ),
+      GitGraphCommitTypeCompletionProvider()
     )
   }
 
@@ -212,19 +253,8 @@ class MermaidCompletionContributor : CompletionContributor() {
       psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM),
       psiElement(MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP),
       psiElement(MermaidTokens.Gantt.GANTT),
-      psiElement(MermaidTokens.Requirement.REQUIREMENT_DIAGRAM)
-    )
-  }
-
-  private fun PsiElementPattern.Capture<PsiElement>.isRequirementAttribute(attribute: MermaidToken): PsiElementPattern.Capture<PsiElement> {
-    return withParent(
-      psiElement().afterSiblingSkipping(
-        psiElement().whitespace(),
-        psiElement(MermaidTokens.COLON).afterSiblingSkipping(
-          psiElement().whitespace(),
-          psiElement(attribute)
-        )
-      )
+      psiElement(MermaidTokens.Requirement.REQUIREMENT_DIAGRAM),
+      psiElement(MermaidTokens.GitGraph.GIT_GRAPH)
     )
   }
 
@@ -235,11 +265,48 @@ class MermaidCompletionContributor : CompletionContributor() {
     return withParent(
       psiElement().afterSiblingSkipping(
         psiElement().whitespace(),
-        andOr(psiElement(MermaidTokens.COLON), skip).afterSiblingSkipping(
+        andOr(skip).afterSiblingSkipping(
           psiElement().whitespace(),
           psiElement(attribute)
         )
       )
     )
+  }
+
+  private fun PsiElementPattern.Capture<PsiElement>.inTopLevelOfDiagram(
+    diagramPattern: ElementPattern<in PsiElement>,
+    documentPattern: ElementPattern<in PsiElement>
+  ): PsiElementPattern.Capture<PsiElement> {
+    return insideDiagram(diagramPattern).with(object : PatternCondition<PsiElement>("inTopLevelOfDiagram") {
+      override fun accepts(psiElement: PsiElement, context: ProcessingContext): Boolean {
+        for (child in psiElement.containingFile.children) {
+          if (documentPattern.accepts(child)) {
+            val lastLine = child.lastChild
+            val lastElement = lastLine.lastChild
+            return lastElement.elementType == MermaidTokens.EOL
+          }
+        }
+        return false
+      }
+    })
+  }
+
+  private fun PsiElementPattern.Capture<PsiElement>.withLastDocumentLine(
+    diagramPattern: ElementPattern<in PsiElement>,
+    documentPattern: ElementPattern<in PsiElement>,
+    documentLinePattern: ElementPattern<in PsiElement>
+  ): PsiElementPattern.Capture<PsiElement> {
+    return insideDiagram(diagramPattern).with(object : PatternCondition<PsiElement>("withLastDocumentLine") {
+      override fun accepts(psiElement: PsiElement, context: ProcessingContext): Boolean {
+        for (child in psiElement.containingFile.children) {
+          if (documentPattern.accepts(child)) {
+            val lastLine = child.lastChild
+            val lastElement = lastLine.lastChild
+            return documentLinePattern.accepts(lastElement)
+          }
+        }
+        return false
+      }
+    })
   }
 }

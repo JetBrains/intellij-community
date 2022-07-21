@@ -83,6 +83,9 @@ object MermaidTokens {
   val ID = MermaidToken("ID")
 
   @JvmField
+  val NUM = MermaidToken("NUM")
+
+  @JvmField
   val ALIAS = MermaidToken("ALIAS")
 
   @JvmField
@@ -180,6 +183,12 @@ object MermaidTokens {
 
   @JvmField
   val LINK_TARGET = MermaidToken("LINK_TARGET")
+
+  @JvmField
+  val TYPE = MermaidToken("TYPE")
+
+  @JvmField
+  val ID_KEYWORD = MermaidToken("ID_KEYWORD")
 
   object Pie {
     @JvmField
@@ -512,9 +521,6 @@ object MermaidTokens {
     val DEMONSTRATION = MermaidToken("DEMONSTRATION")
 
     @JvmField
-    val ID_KEYWORD = MermaidToken("ID_KEYWORD")
-
-    @JvmField
     val TEXT = MermaidToken("TEXT")
 
     @JvmField
@@ -522,9 +528,6 @@ object MermaidTokens {
 
     @JvmField
     val VERIFY_METHOD = MermaidToken("VERIFY_METHOD")
-
-    @JvmField
-    val TYPE = MermaidToken("TYPE")
 
     @JvmField
     val DOCREF = MermaidToken("DOCREF")
@@ -558,5 +561,40 @@ object MermaidTokens {
 
     @JvmField
     val REQ_LINE = MermaidToken("REQ_LINE")
+  }
+
+  object GitGraph {
+    @JvmField
+    val GIT_GRAPH = MermaidToken("GIT_GRAPH")
+
+    @JvmField
+    val COMMIT = MermaidToken("COMMIT")
+
+    @JvmField
+    val BRANCH = MermaidToken("BRANCH")
+
+    @JvmField
+    val CHECKOUT = MermaidToken("CHECKOUT")
+
+    @JvmField
+    val MERGE = MermaidToken("MERGE")
+
+    @JvmField
+    val TAG = MermaidToken("TAG")
+
+    @JvmField
+    val CHERRY_PICK = MermaidToken("CHERRY_PICK")
+
+    @JvmField
+    val ORDER = MermaidToken("ORDER")
+
+    @JvmField
+    val NORMAL = MermaidToken("NORMAL")
+
+    @JvmField
+    val REVERSE = MermaidToken("REVERSE")
+
+    @JvmField
+    val HIGHLIGHT = MermaidToken("HIGHLIGHT")
   }
 }

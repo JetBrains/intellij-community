@@ -117,6 +117,11 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 %xstate requirement_value
 %xstate req_element
 
+
+%xstate gitgraph
+
+//%xstate
+
 %%
 
 <YYINITIAL> {
@@ -134,6 +139,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   "erDiagram" { yybegin(entity_relationship); return EntityRelationship.ENTITY_RELATIONSHIP; }
   "gantt" { yybegin(gantt); return Gantt.GANTT; }
   "requirementDiagram" { yybegin(requirement_diagram); return Requirement.REQUIREMENT_DIAGRAM; }
+  "gitgraph" { yybegin(gitgraph); return GitGraph.GIT_GRAPH; }
   ";" { return SEMICOLON; }
   [^\s%;{]+ { return BAD_CHARACTER; }
 }
@@ -155,12 +161,12 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 //  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 //}
 
-<pie, journey, flowchart, flowchart_body, sequence, class_diagram, class_name, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element> {
+<pie, journey, flowchart, flowchart_body, sequence, class_diagram, class_name, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph> {
   "%%{" { yypushstate(directive); return OPEN_DIRECTIVE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
   %%([^{][^\n\r]*)? { return LINE_COMMENT; }
 }
-<pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, class_name, struct, note_content, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element> {
+<pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, class_name, struct, note_content, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element, gitgraph> {
   [\n\r] { return EOL; }
   ";" { return SEMICOLON; }
 }
@@ -318,7 +324,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   [^\n\r;\[\]()\"|{}\-\=\.]+ { return Flowchart.LINK_TEXT; }
   [^\n\r;\[\]()\"|{}\-\=\.]+/\| { return Flowchart.LINK_TEXT; }
   [\-\=\.] { return Flowchart.LINK_TEXT; }
-	"\"" { yybegin(link_quoted_text); return DOUBLE_QUOTE; }
+	[\"] { yybegin(link_quoted_text); return DOUBLE_QUOTE; }
   "|" { yybegin(flowchart_body); return Flowchart.SEP; }
   [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
@@ -614,13 +620,13 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   "}" { yybegin(requirement_diagram); return CLOSE_CURLY; }
 }
 <requirement> {
-	"id" { return Requirement.ID_KEYWORD; }
+	"id" { return ID_KEYWORD; }
   "text" { return Requirement.TEXT; }
 	"risk" { return Requirement.RISK; }
   "verifymethod" { return Requirement.VERIFY_METHOD; }
 }
 <req_element> {
-	"type" { return Requirement.TYPE; }
+	"type" { return TYPE; }
   "docref" { return Requirement.DOCREF; }
 }
 <requirement_diagram, requirement, req_element> {
@@ -638,6 +644,29 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 	[\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
 	[\w][^\r\n\{\<\>\-\=]* { return LABEL; }
   [\n\r] { yypopstate(); return EOL; }
+}
+
+//---gitgraph---------------------------------------------------------------------
+<gitgraph> {
+	"commit" { return GitGraph.COMMIT; }
+  "id" { return ID_KEYWORD; }
+  "type" { return TYPE; }
+  "tag" { return GitGraph.TAG; }
+  "branch" { return GitGraph.BRANCH; }
+  "order" { return GitGraph.ORDER; }
+  "merge" { return GitGraph.MERGE; }
+  "cherry-pick" { return GitGraph.CHERRY_PICK; }
+  "checkout" { return GitGraph.CHECKOUT; }
+      
+  "NORMAL" { return GitGraph.NORMAL; }
+  "REVERSE" { return GitGraph.REVERSE; }
+  "HIGHLIGHT" { return GitGraph.HIGHLIGHT; }
+      
+  ":" { return COLON; }
+  [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  [a-zA-Z][-_\./a-zA-Z0-9]*[-_a-zA-Z0-9] { return ID; }
+  [0-9]+ { return NUM; }
+  (#[^\n\r]*)/[\n\r]? { return IGNORED; }
 }
 
 //--------------------------------------------------------------------------------

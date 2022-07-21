@@ -80,7 +80,8 @@ class MermaidLineIndentProvider : LineIndentProvider {
             MermaidTokens.StateDiagram.STATE_DIAGRAM,
             MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP,
             MermaidTokens.Gantt.GANTT,
-            MermaidTokens.Requirement.REQUIREMENT_DIAGRAM
+            MermaidTokens.Requirement.REQUIREMENT_DIAGRAM,
+            MermaidTokens.GitGraph.GIT_GRAPH
           )
         ) {
           return getIndentString(editor, position.getStartOffset(), true)

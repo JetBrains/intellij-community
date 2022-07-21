@@ -21,7 +21,8 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
       "stateDiagram-v2",
       "erDiagram",
       "gantt",
-      "requirementDiagram"
+      "requirementDiagram",
+      "gitGraph"
     )
 
   override fun addCompletions(
@@ -153,3 +154,27 @@ class RequirementVerifyMethodCompletionProvider :
 
 class RequirementRelationshipCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("contains", "copies", "derives", "satisfies", "verifies", "refines", "traces"))
+
+class GitGraphSimpleCompletionProvider :
+  MermaidSimpleCompletionProvider(listOf("commit", "branch", "checkout", "merge", "cherry-pick"))
+
+class GitGraphCommitCompletionProvider : MermaidLiveTemplateCompletionProvider() {
+  private val keywords = listOf(
+    "id",
+    "type",
+    "tag"
+  )
+
+  override fun addCompletions(
+    parameters: CompletionParameters,
+    context: ProcessingContext,
+    result: CompletionResultSet
+  ) {
+    val project = parameters.originalFile.project
+    result.addAllElements(keywords.map { createKeywordLookupElement(project, it) })
+  }
+}
+
+class GitGraphCommitTypeCompletionProvider :
+  MermaidSimpleCompletionProvider(listOf("NORMAL", "REVERSE", "HIGHLIGHT"))
+

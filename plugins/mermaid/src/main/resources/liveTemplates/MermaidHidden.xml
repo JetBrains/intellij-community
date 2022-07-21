@@ -200,4 +200,37 @@
     </context>
   </template>
 
+  <template id="mermaid_id" name="mermaid_git_graph_id"
+            value="id: &quot;$ID$&quot;$END$$SELECTION$"
+            description="git graph id"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="ID" expression="" defaultValue="&quot;&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_tag" name="mermaid_git_graph_tag"
+            value="tag: &quot;$TAG$&quot;$END$$SELECTION$"
+            description="git graph tag"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="TAG" expression="" defaultValue="&quot;&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_type" name="mermaid_git_graph_type"
+            value="type: $TYPE$$END$$SELECTION$"
+            description="git graph type"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="TYPE" expression="" defaultValue="&quot;&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
 </templateSet>
