@@ -65,7 +65,6 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     myTree = tree;
     myTree
       .setModel(new SearchTreeModel<>(myRoot, DUMMY_SEARCH, o -> getText(o), this::createNode, this::getChildren, useIdentityHashing()));
-    SwingUtilities.invokeLater(() -> rebuildTree());
   }
 
   @NotNull
@@ -195,9 +194,6 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     return myTree;
   }
 
-  protected void rebuildTree() {
-  }
-
   protected void expandTreeOnSearchUpdateComplete(@Nullable String pattern) {
     if (StringUtil.isNotEmpty(pattern)) TreeUtil.expandAll(myTree);
   }
@@ -226,12 +222,6 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   @NotNull
   public T getRoot() {
     return myRoot;
-  }
-
-  public void update() {
-    rebuildTree();
-    myTree.revalidate();
-    myTree.repaint();
   }
 
   public static class SearchTreeModel<N extends DefaultMutableTreeNode, U> extends DefaultTreeModel {
