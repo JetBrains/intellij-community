@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.kotlin.tooling.core.isSnapshot
 import org.jetbrains.kotlin.tooling.core.isStable
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
+import java.io.File
 
 object GradleKotlinTestUtils {
 
@@ -46,7 +47,9 @@ object GradleKotlinTestUtils {
         }
 
         if (!kotlinVersion.isStable) {
-            +"""
+            if (localKotlinGradlePluginExists(kotlinVersion)) {
+                +"mavenLocal()"
+            } else +"""
                 maven("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap") {
                     content {
                         includeVersionByRegex(".*jetbrains.*", ".*", "$kotlinVersion")
@@ -65,4 +68,12 @@ object GradleKotlinTestUtils {
 
         return repositories.joinToString("\n")
     }
+}
+
+private fun localKotlinGradlePluginExists(kotlinGradlePluginVersion: KotlinToolingVersion): Boolean {
+    val localKotlinGradlePlugin = File(System.getProperty("user.home"))
+        .resolve(".m2/repository")
+        .resolve("org/jetbrains/kotlin/kotlin-gradle-plugin/$kotlinGradlePluginVersion")
+
+    return localKotlinGradlePlugin.exists()
 }
