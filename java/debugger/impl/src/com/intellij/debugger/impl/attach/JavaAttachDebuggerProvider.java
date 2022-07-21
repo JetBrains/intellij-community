@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.execution.application.AppMainV2;
@@ -255,7 +256,8 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       }
 
       //do not allow further for idea process
-      if (!pid.equals(OSProcessUtil.getApplicationPid())) {
+      // read only attach is disabled on macos because of IDEA-252760
+      if (!pid.equals(OSProcessUtil.getApplicationPid()) && !SystemInfo.isMac) {
         Properties systemProperties = vm.getSystemProperties();
 
         // prefer sa-jdwp attach if available
