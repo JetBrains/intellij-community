@@ -96,7 +96,7 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
     @Suppress("DialogTitleCapitalization")
     HelpTooltip()
       .setTitle(toolWindow.stripeTitle)
-      .setLocation(getAlignment(toolWindow.anchor))
+      .setLocation(getAlignment(toolWindow.anchor, toolWindow.isSplitMode))
       .setShortcut(ActionManager.getInstance().getKeyboardShortcut(ActivateToolWindowAction.getActionIdForToolWindow(toolWindow.id)))
       .setInitialDelay(0)
       .setHideDelay(0)
@@ -107,12 +107,12 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
   override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
 }
 
-private fun getAlignment(anchor: ToolWindowAnchor): HelpTooltip.Alignment {
+private fun getAlignment(anchor: ToolWindowAnchor, splitMode: Boolean): HelpTooltip.Alignment {
   return when (anchor) {
     ToolWindowAnchor.RIGHT -> HelpTooltip.Alignment.LEFT
     ToolWindowAnchor.TOP -> HelpTooltip.Alignment.LEFT
     ToolWindowAnchor.LEFT -> HelpTooltip.Alignment.RIGHT
-    ToolWindowAnchor.BOTTOM -> HelpTooltip.Alignment.RIGHT
+    ToolWindowAnchor.BOTTOM -> if (splitMode) HelpTooltip.Alignment.LEFT else HelpTooltip.Alignment.RIGHT
     else -> HelpTooltip.Alignment.RIGHT
   }
 }
