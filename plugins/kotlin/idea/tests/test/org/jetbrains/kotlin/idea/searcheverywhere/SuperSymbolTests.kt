@@ -60,6 +60,19 @@ class SuperSymbolTests : KotlinSearchEverywhereTestCase() {
         action = "Go to Super Property",
     )
 
+    fun `test super property from getter`(): Unit = doTest(
+        text = """
+            abstract class A {
+              abstract val a: Int
+            }
+            class B : A() {
+              override val a: Int 
+                g<caret>et() = 5
+            }
+        """.trimIndent(),
+        action = "Go to Super Property",
+    )
+
     private fun doTest(text: String, action: String): Unit = configureAndCheckActions(
         text = text,
         expected = listOf(action),

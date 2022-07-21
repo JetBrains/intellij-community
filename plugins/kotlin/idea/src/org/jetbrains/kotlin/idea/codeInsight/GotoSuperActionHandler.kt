@@ -17,7 +17,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.psi.util.findParentOfType
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -34,14 +33,7 @@ class GotoSuperActionHandler : PresentableCodeInsightActionHandler {
 
         companion object {
             fun forDeclarationAtCaret(editor: Editor, file: PsiFile): SuperDeclarationsAndDescriptor {
-                val element = file.findElementAt(editor.caretModel.offset) ?: return SuperDeclarationsAndDescriptor()
-                val declaration = PsiTreeUtil.getParentOfType<KtDeclaration>(
-                    element,
-                    KtNamedFunction::class.java,
-                    KtClass::class.java,
-                    KtProperty::class.java,
-                    KtObjectDeclaration::class.java
-                ) ?: return SuperDeclarationsAndDescriptor()
+                val declaration = findDeclarationAtCaret(editor, file) ?: return SuperDeclarationsAndDescriptor()
 
                 val project = declaration.project
                 val descriptor = declaration.resolveToDescriptorIfAny() ?: return SuperDeclarationsAndDescriptor()
@@ -54,6 +46,18 @@ class GotoSuperActionHandler : PresentableCodeInsightActionHandler {
                     descriptor = descriptor
                 )
             }
+
+            fun findDeclarationAtCaret(editor: Editor, file: PsiFile): KtDeclaration? {
+                val element = file.findElementAt(editor.caretModel.offset) ?: return null
+                return findDeclaration(element)
+            }
+
+            fun findDeclaration(element: PsiElement): KtDeclaration? = PsiTreeUtil.getParentOfType<KtDeclaration>(
+                element,
+                KtNamedFunction::class.java,
+                KtClassOrObject::class.java,
+                KtProperty::class.java,
+            )
         }
     }
 
@@ -85,12 +89,11 @@ class GotoSuperActionHandler : PresentableCodeInsightActionHandler {
 
     override fun update(editor: Editor, file: PsiFile, presentation: Presentation?, actionPlace: String?) {
         if (presentation == null) return
-        val containingElement = file.findElementAt(editor.caretModel.offset)?.findParentOfType<KtDeclaration>()
 
         val useShortName = actionPlace != null && (ActionPlaces.MAIN_MENU == actionPlace || ActionPlaces.isPopupPlace(actionPlace))
-        when (containingElement) {
+        when (val declaration = SuperDeclarationsAndDescriptor.findDeclarationAtCaret(editor, file)) {
             is KtClassOrObject -> {
-                val superTypes = containingElement.superTypeListEntries
+                val superTypes = declaration.superTypeListEntries
                 presentation.text = when {
                     superTypes.all { it is KtSuperTypeEntry } -> KotlinBundle.message(
                         if (useShortName) "action.GotoSuperInterface.MainMenu.text" else "action.GotoSuperInterface.text"
