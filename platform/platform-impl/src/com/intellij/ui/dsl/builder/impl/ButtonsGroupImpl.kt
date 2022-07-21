@@ -75,9 +75,13 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
   }
 
   private fun postInitUnbound() {
-    val boundedRadioButton = radioButtons.filterValues { it != null }.keys.firstOrNull()
-    if (boundedRadioButton != null) {
-      throw UiDslException("Radio button '${boundedRadioButton.component.text}' is used without ButtonsGroup.bind")
+    val buttonGroup = ButtonGroup()
+    for ((cell, value) in radioButtons) {
+      if (value != null) {
+        throw UiDslException("Radio button '${cell.component.text}' is used without ButtonsGroup.bind")
+      }
+
+      buttonGroup.add(cell.component)
     }
   }
 }
