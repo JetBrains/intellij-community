@@ -119,38 +119,48 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return object : SegmentedCustomPanel(presentation) {
       init {
-        layout = MigLayout("ins 0, gap 0, fill, hidemode 3", "[grow][grow]")
+        layout = MigLayout("ins 0, gap 0, fill, hidemode 3", "[grow][pref!]")
         val configComponent = RunToolbarConfigComponent(presentation)
         add(configComponent, "grow")
 
-        add(JPanel(MigLayout("ins 0, ay center, gap 0, fill")).apply {
-          add(JPanel(MigLayout("ins 0")).apply {
-            val s = JBDimension(1, 24)
+        val targetComponent =
+          object : JPanel(MigLayout("ins 0, fill", "[min!][grow]")){
 
-            preferredSize = s
-            minimumSize = s
-            maximumSize = s
-
-            background = UIManager.getColor("Separator.separatorColor")
-          }, "w min!, pos 0 0")
-          add(object : DraggablePane(){
-            init {
-              layout = MigLayout("ins 0, filly")
-              setListener(object : DragListener {
-                override fun dragStarted(locationOnScreen: Point) {
-                }
-
-                override fun dragged(locationOnScreen: Point, offset: Dimension) {
-                }
-
-                override fun dragStopped(locationOnScreen: Point, offset: Dimension) {
-                }
-              })
+            override fun getPreferredSize(): Dimension {
+              val d = super.getPreferredSize()
+              d.width = FixWidthSegmentedActionToolbarComponent.RUN_TARGET_WIDTH
+              return d
             }
-          }, "w min!, pos 0 0")
-          add(RunToolbarTargetComponent(presentation), "grow")
-        }, "grow")
+          }.apply {
+            add(JPanel(MigLayout("ins 0")).apply {
+              val s = JBDimension(1, 24)
 
+              preferredSize = s
+              minimumSize = s
+              maximumSize = s
+
+              background = UIManager.getColor("Separator.separatorColor")
+            }, "w min!")
+            add(object : DraggablePane(){
+              init {
+                setListener(object : DragListener {
+                  override fun dragStarted(locationOnScreen: Point) {
+                  }
+
+                  override fun dragged(locationOnScreen: Point, offset: Dimension) {
+                  }
+
+                  override fun dragStopped(locationOnScreen: Point, offset: Dimension) {
+                  }
+                })
+              }
+            }.apply {
+              isOpaque = false
+            }, "pos 0 0")
+            add(RunToolbarTargetComponent(presentation), "grow")
+            isOpaque = false
+          }
+        add(targetComponent, "w pref")
         background = JBColor.namedColor("ComboBoxButton.background", Gray.xDF)
       }
 
