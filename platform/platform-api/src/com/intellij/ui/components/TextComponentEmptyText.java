@@ -15,7 +15,9 @@ import java.awt.event.FocusListener;
 import java.util.function.Predicate;
 
 public class TextComponentEmptyText extends StatusText {
-  /** Expecting an instance of {@link Predicate}&lt;{@link JTextComponent}&gt;. */
+  /**
+   * Expecting an instance of {@link Predicate}&lt;{@link JTextComponent}&gt;.
+   */
   public static final String STATUS_VISIBLE_FUNCTION = "StatusVisibleFunction";
 
   private final JTextComponent myOwner;
@@ -90,10 +92,9 @@ public class TextComponentEmptyText extends StatusText {
   protected @NotNull Rectangle adjustComponentBounds(@NotNull JComponent component, @NotNull Rectangle bounds) {
     Dimension size = component.getPreferredSize();
     int width = Math.min(size.width, bounds.width);
-    int height = Math.min(size.height, bounds.height);
 
     return component == getComponent()
-           ? new Rectangle(bounds.x, bounds.y, width, height)
-           : new Rectangle(bounds.x + bounds.width - width, bounds.y, width, height);
+           ? new Rectangle(bounds.x, bounds.y, width, bounds.height)
+           : new Rectangle(bounds.x + bounds.width - width, bounds.y, width, bounds.height);
   }
 }
