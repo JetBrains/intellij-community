@@ -40,3 +40,5 @@ fun main() {
     Shadow().shade<caret><Shadow>()
 }
 
+/* IGNORE_FIR */
+

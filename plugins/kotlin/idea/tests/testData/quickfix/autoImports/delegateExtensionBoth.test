@@ -39,3 +39,5 @@ import some.setValue
 class BigTest {
     var a by <caret>DelegateImpl<Int>()
 }
+
+/* IGNORE_FIR */

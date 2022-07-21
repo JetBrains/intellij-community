@@ -45,3 +45,5 @@ class X {
         this.foo(<caret>1)
     }
 }
+
+/* IGNORE_FIR */

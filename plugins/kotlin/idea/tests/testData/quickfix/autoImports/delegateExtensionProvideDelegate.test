@@ -46,5 +46,7 @@ class MyUI {
     val image by <caret>bindResource<Int>(42)
 }
 
+/* IGNORE_FIR */
+
 
 

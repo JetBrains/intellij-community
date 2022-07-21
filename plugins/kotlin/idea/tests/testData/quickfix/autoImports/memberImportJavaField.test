@@ -28,4 +28,4 @@ fun f() {
     val k = foobar<caret>
 }
 
-
+/* IGNORE_FIR */

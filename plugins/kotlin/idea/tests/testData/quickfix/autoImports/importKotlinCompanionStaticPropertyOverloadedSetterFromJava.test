@@ -41,4 +41,6 @@ public class Foo {
     }
 }
 
+/* IGNORE_FIR */
+
 

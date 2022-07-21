@@ -31,4 +31,6 @@ fun f() {
     foobar<caret>()
 }
 
+/* IGNORE_FIR */
+
 

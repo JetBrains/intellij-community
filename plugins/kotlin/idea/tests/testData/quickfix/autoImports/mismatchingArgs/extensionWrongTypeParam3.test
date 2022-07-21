@@ -29,3 +29,5 @@ fun main() {
     foo<caret>()
 }
 
+/* IGNORE_FIR */
+

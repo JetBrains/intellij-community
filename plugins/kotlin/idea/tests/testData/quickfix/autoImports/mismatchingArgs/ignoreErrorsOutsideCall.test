@@ -44,3 +44,5 @@ class X : XXX {
     }
 }
 
+/* IGNORE_FIR */
+

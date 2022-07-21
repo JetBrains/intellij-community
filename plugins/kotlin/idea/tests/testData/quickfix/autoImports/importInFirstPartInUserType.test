@@ -26,3 +26,5 @@ package testing
 import some.Some
 
 class TestClass: <caret>Some.InnerInSome()
+
+/* IGNORE_FIR */

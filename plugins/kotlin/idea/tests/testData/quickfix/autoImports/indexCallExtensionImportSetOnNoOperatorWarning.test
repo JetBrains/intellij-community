@@ -42,5 +42,7 @@ fun testing() {
     foo()<caret>["str"] = 1
 }
 
+/* IGNORE_FIR */
+
 
 

@@ -38,3 +38,5 @@ fun foo(): Some = Some()
 fun testing() {
     foo()<caret>["other"] = 1
 }
+
+/* IGNORE_FIR */

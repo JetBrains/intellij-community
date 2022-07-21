@@ -37,3 +37,5 @@ import some.getValue
 class BigTest {
     val a by <caret>DelegateImpl<Int>()
 }
+
+/* IGNORE_FIR */

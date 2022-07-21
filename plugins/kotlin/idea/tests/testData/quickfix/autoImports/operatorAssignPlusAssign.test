@@ -35,5 +35,7 @@ fun testing() {
     s <caret>+= 1
 }
 
+/* IGNORE_FIR */
+
 
 
