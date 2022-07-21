@@ -36,7 +36,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectD
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import com.jetbrains.packagesearch.intellij.plugin.util.logError
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import kotlinx.coroutines.Deferred
@@ -174,7 +173,7 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
                 ?.mapNotNull { dep -> dep.key?.let { it to dep.coordinates.version } }
                 ?.toMap()
                 ?: emptyMap()
-        }.onFailure { logError("Error while evaluating resolvedDependenciesInModule for $name", it) }
+        }.onFailure { logDebug("Error while evaluating resolvedDependenciesInModule for $name", it) }
             .getOrElse { emptyMap() }
     }
 
