@@ -34,13 +34,12 @@ public class AddLineBreakpointAction extends DumbAwareAction {
       .onSuccess((bp) -> {
         if (isConditional()) {
           EditorGutterComponentEx gutter = (EditorGutterComponentEx)editor.getGutter();
-          int x = gutter.getLineNumberAreaOffset() + gutter.getLineNumberAreaWidth() / 2;
-          int y = (int)editor.offsetToPoint2D(position.getOffset()).getY() + editor.getLineHeight() / 2;
-          DebuggerUIUtil.showXBreakpointEditorBalloon(project, new Point(x, y), editor.getComponent(), false, bp);
+          int x = -gutter.getWidth() + gutter.getLineNumberAreaOffset() + gutter.getLineNumberAreaWidth() / 2;
+          int y = editor.offsetToXY(position.getOffset()).y + editor.getLineHeight() / 2;
+          DebuggerUIUtil.showXBreakpointEditorBalloon(project, new Point(x, y), editor.getContentComponent(), false, bp);
         }
       });
   }
-
 
   @Override
   public void update(@NotNull AnActionEvent e) {
