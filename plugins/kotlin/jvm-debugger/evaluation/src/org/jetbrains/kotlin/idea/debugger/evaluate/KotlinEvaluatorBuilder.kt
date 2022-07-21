@@ -195,7 +195,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 return evaluateWithCompilation(context, compiledData, classLoaderRef, status)
             } catch (e: Throwable) {
                 status.compilingEvaluatorFailed()
-                LOG.warn("Compiling evaluator failed", e)
+                LOG.warn("Compiling evaluator failed: " + e.message, e)
 
                 status.usedEvaluator(EvaluationStatus.EvaluatorType.Eval4j)
                 evaluateWithEval4J(context, compiledData, classLoaderRef, status)
