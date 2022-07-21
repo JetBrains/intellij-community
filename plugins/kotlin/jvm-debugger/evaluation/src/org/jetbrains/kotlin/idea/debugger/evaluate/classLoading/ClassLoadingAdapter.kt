@@ -56,7 +56,7 @@ interface ClassLoadingAdapter {
                 }
             }
 
-            val methodToRun = classNode.methods.single { it.name == GENERATED_FUNCTION_NAME }
+            val methodToRun = classNode.methods.single { it.isEvaluationEntryPoint }
 
             val visitedLabels = hashSetOf<Label>()
 

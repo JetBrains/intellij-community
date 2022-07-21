@@ -36,13 +36,11 @@ import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.util.caching.ConcurrentFactoryCache
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus.EvaluationContextLanguage
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
-import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTION_NAME
+import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.*
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilingEvaluator.ClassLoadingResult
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilingEvaluator.loadClassesSafely
@@ -65,7 +63,6 @@ import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ExecutionException
 import org.jetbrains.eval4j.Value as Eval4JValue
 
 internal val LOG = Logger.getInstance(KotlinEvaluator::class.java)
@@ -368,7 +365,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         return runEvaluation(context, compiledData, classLoader, status) { args ->
             val mainClassType = context.findClass(GENERATED_CLASS_NAME, classLoader) as? ClassType
                 ?: error("Can not find class \"$GENERATED_CLASS_NAME\"")
-            val mainMethod = mainClassType.methods().single { it.name() == GENERATED_FUNCTION_NAME }
+            val mainMethod = mainClassType.methods().single { isEvaluationEntryPoint(it.name()) }
             val returnValue = context.invokeMethod(mainClassType, mainMethod, args)
             EvaluatorValueConverter.unref(returnValue)
         }
@@ -382,7 +379,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     ): InterpreterResult {
         val mainClassBytecode = compiledData.mainClass.bytes
         val mainClassAsmNode = ClassNode().apply { ClassReader(mainClassBytecode).accept(this, 0) }
-        val mainMethod = mainClassAsmNode.methods.first { it.name.startsWith(GENERATED_FUNCTION_NAME) }
+        val mainMethod = mainClassAsmNode.methods.first { it.isEvaluationEntryPoint }
 
         return runEvaluation(context, compiledData, classLoader ?: context.evaluationContext.classLoader, status) { args ->
             val vm = context.vm.virtualMachine
