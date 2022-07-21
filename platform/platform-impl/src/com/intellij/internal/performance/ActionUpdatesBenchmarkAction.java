@@ -170,8 +170,6 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
     boolean isDumb = DumbService.isDumb(project);
     List<Pair<Integer, String>> results = new ArrayList<>();
-    int[] actionUpdateThreadCounts = new int[ActionUpdateThread.values().length];
-    List<String> oldEdtActionNames = new ArrayList<>();
 
     DataContext rawContext = DataManager.getInstance().getDataContext(component);
 
@@ -208,18 +206,16 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
     long startActions = System.nanoTime();
     for (String id : actionManager.getActionIds()) {
       AnAction action = actionManager.getAction(id);
-      if (action == null) continue;
+      if (action == null) {
+        LOG.warn("no action for id: " + id);
+        continue;
+      }
       if (action.getClass() == DefaultActionGroup.class) continue;
       if (isDumb && !DumbService.isDumbAware(action)) continue;
-      ActionUpdateThread updateThread = action.getActionUpdateThread();
       String className = action.getClass().getName();
       String actionIdIfNeeded = nonUniqueClasses.contains(className) ? " (" + id + ")" : "";
       String actionName = className + actionIdIfNeeded;
       ProgressManager.checkCanceled();
-      actionUpdateThreadCounts[updateThread.ordinal()]++;
-      if (updateThread == ActionUpdateThread.OLD_EDT) {
-        oldEdtActionNames.add(actionName);
-      }
       AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.MAIN_MENU, wrappedContext);
       runAndMeasure(results, actionName,
                     () -> activityRunner.run(actionName, id, () -> ActionUtil.performDumbAwareUpdate(action, event, true)));
@@ -236,7 +232,26 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
       if (result.first < MIN_REPORTED_UPDATE_MILLIS) break;
       LOG.info(result.first + " ms - " + result.second);
     }
+    dumpActionUpdateThreads(nonUniqueClasses);
+  }
 
+  private static void dumpActionUpdateThreads(@NotNull Set<String> nonUniqueClasses) {
+    ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
+    int[] actionUpdateThreadCounts = new int[ActionUpdateThread.values().length];
+    List<String> oldEdtActionNames = new ArrayList<>();
+    for (String id : actionManager.getActionIds()) {
+      AnAction action = actionManager.getAction(id);
+      if (action == null) continue;
+      if (action.getClass() == DefaultActionGroup.class) continue;
+      ActionUpdateThread updateThread = action.getActionUpdateThread();
+      actionUpdateThreadCounts[updateThread.ordinal()]++;
+      if (updateThread == ActionUpdateThread.OLD_EDT) {
+        String className = action.getClass().getName();
+        String actionIdIfNeeded = nonUniqueClasses.contains(className) ? " (" + id + ")" : "";
+        String actionName = className + actionIdIfNeeded;
+        oldEdtActionNames.add(actionName);
+      }
+    }
     List<String> oldEdtExtensions = new ArrayList<>();
     ExtensionsAreaImpl extensionArea = (ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea();
     //noinspection TestOnlyProblems
