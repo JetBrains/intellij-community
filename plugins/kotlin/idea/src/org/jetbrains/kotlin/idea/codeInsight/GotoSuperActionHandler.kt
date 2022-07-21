@@ -52,12 +52,16 @@ class GotoSuperActionHandler : PresentableCodeInsightActionHandler {
                 return findDeclaration(element)
             }
 
-            fun findDeclaration(element: PsiElement): KtDeclaration? = PsiTreeUtil.getParentOfType<KtDeclaration>(
-                element,
-                KtNamedFunction::class.java,
-                KtClassOrObject::class.java,
-                KtProperty::class.java,
-            )
+            fun findDeclaration(element: PsiElement): KtDeclaration? {
+                val declaration = PsiTreeUtil.getParentOfType<KtDeclaration>(
+                    element,
+                    KtNamedFunction::class.java,
+                    KtClassOrObject::class.java,
+                    KtProperty::class.java,
+                ) ?: return null
+
+                return declaration.takeUnless { it is KtEnumEntry } ?: findDeclaration(declaration.parent)
+            }
         }
     }
 
