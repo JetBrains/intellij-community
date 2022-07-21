@@ -1,18 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.completion
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.PlatformIcons
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.*
 import org.jetbrains.kotlin.psi.KtElement
 import javax.swing.Icon
 
-internal object KotlinFirIconProvider {
+@ApiStatus.Internal
+object KotlinIconProvider {
     fun KtAnalysisSession.getIconFor(symbol: KtSymbol): Icon? {
         symbol.psi?.let { referencedPsi ->
             if (referencedPsi !is KtElement) {

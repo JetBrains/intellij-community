@@ -6,7 +6,8 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -14,13 +15,20 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.DescriptorMemberChooserObject;
+import org.jetbrains.kotlin.asJava.classes.KtLightClass;
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade;
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinPsiElementMemberChooserObject;
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable;
+import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle;
+import org.jetbrains.kotlin.psi.KtClassOrObject;
+import org.jetbrains.kotlin.psi.KtDeclaration;
 import org.jetbrains.kotlin.psi.KtProperty;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.util.List;
+import java.util.ArrayList;
 
 public abstract class AddFieldBreakpointDialog extends DialogWrapper {
     private final Project myProject;
@@ -67,20 +75,57 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
         myFieldChooser.addActionListener(e -> {
             PsiClass selectedClass = getSelectedClass();
             if (selectedClass != null) {
-                DescriptorMemberChooserObject[] properties = FieldBreakpointDialogUtilKt.collectProperties(selectedClass);
-                MemberChooser<DescriptorMemberChooserObject> chooser = new MemberChooser<>(properties, false, false, myProject);
-                chooser.setTitle(JavaDebuggerBundle.message("add.field.breakpoint.dialog.field.chooser.title", properties.length));
-                chooser.setCopyJavadocVisible(false);
-                TransactionGuard.getInstance().submitTransactionAndWait(chooser::show);
-                List<DescriptorMemberChooserObject> selectedElements = chooser.getSelectedElements();
-                if (selectedElements != null && selectedElements.size() == 1) {
-                    KtProperty field = (KtProperty) selectedElements.get(0).getElement();
-                    myFieldChooser.setText(field.getName());
-                }
+                showFieldChooser(selectedClass);
             }
         });
         myFieldChooser.setEnabled(false);
         return myPanel;
+    }
+
+    private void showFieldChooser(@NotNull PsiClass selectedClass) {
+        Project project = selectedClass.getProject();
+
+        ReadAction.nonBlocking(() -> collectPropertyMembers(selectedClass))
+                .expireWith(KotlinPluginDisposable.getInstance(project))
+                .finishOnUiThread(ModalityState.defaultModalityState(), (properties) -> {
+                    if (properties != null) {
+                        var chooser = new MemberChooser<>(properties, false, false, project);
+                        chooser.setTitle(KotlinDebuggerCoreBundle.message("property.watchpoint.add.dialog.chooser.title", properties.length));
+                        chooser.setCopyJavadocVisible(false);
+                        chooser.show();
+                        var selectedElements = chooser.getSelectedElements();
+                        if (selectedElements != null && selectedElements.size() == 1) {
+                            var field = (KtProperty) selectedElements.get(0).getElement();
+                            myFieldChooser.setText(field.getName());
+                        }
+                    }
+                }).submit(AppExecutorUtil.getAppExecutorService());
+    }
+
+    private static KotlinPsiElementMemberChooserObject[] collectPropertyMembers(PsiClass container) {
+        var result = new ArrayList<KotlinPsiElementMemberChooserObject>();
+
+        if (container instanceof KtLightClassForFacade) {
+            var facadeClass = (KtLightClassForFacade) container;
+            for (var file : facadeClass.getFiles()) {
+                for (var declaration : file.getDeclarations()) {
+                    if (declaration instanceof KtProperty) {
+                        result.add(KotlinPsiElementMemberChooserObject.getKotlinMemberChooserObject(declaration));
+                    }
+                }
+            }
+        } else if (container instanceof KtLightClass) {
+            KtClassOrObject kotlinOrigin = ((KtLightClass) container).getKotlinOrigin();
+            if (kotlinOrigin != null) {
+                for (KtDeclaration declaration : kotlinOrigin.getDeclarations()) {
+                    if (declaration instanceof KtProperty) {
+                        result.add(KotlinPsiElementMemberChooserObject.getKotlinMemberChooserObject(declaration));
+                    }
+                }
+            }
+        }
+
+        return result.toArray(new KotlinPsiElementMemberChooserObject[0]);
     }
 
     private void updateUI() {

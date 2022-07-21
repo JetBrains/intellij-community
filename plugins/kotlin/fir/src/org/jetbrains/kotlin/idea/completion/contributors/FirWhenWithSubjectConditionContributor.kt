@@ -10,8 +10,8 @@ import com.intellij.psi.util.parentOfType
 import gnu.trove.THashSet
 import gnu.trove.TObjectHashingStrategy
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.InsertionHandlerBase
-import org.jetbrains.kotlin.idea.completion.KotlinFirIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirWithSubjectEntryPositionContext
