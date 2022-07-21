@@ -795,6 +795,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
           ExecutionTarget target = rtData.getExecutionTarget();
           builder = target == null ?  builder.activeTarget() : builder.target(target);
         }
+        else {
+          builder = builder.activeTarget();
+        }
 
         ExecutionEnvironment environment = builder.dataContext(dataContext).build();
         if(environmentCustomization != null) environmentCustomization.accept(environment);
