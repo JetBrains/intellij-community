@@ -10,13 +10,13 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.directoryStreamIfExists
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.xxh3.Xxh3
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import java.nio.file.Path
 import java.util.*
-import java.util.function.Supplier
 
 private val buildNumber = BuildNumber.fromString("2042.0")!!
 
@@ -96,7 +96,7 @@ internal class ClassLoaderConfiguratorTest {
     </idea-plugin>
     """)
 
-    val plugins = loadDescriptors(rootDir).enabledPlugins
+    val plugins = runBlocking { loadDescriptors (rootDir).enabledPlugins }
     assertThat(plugins).hasSize(2)
     val barPlugin = plugins.get(1)
     assertThat(barPlugin.pluginId.idString).isEqualTo("2-bar")
@@ -143,7 +143,7 @@ internal class ClassLoaderConfiguratorTest {
       </idea-plugin>
     """)
 
-    val loadResult = loadDescriptors(rootDir)
+    val loadResult = runBlocking { loadDescriptors(rootDir) }
     val plugins = loadResult.enabledPlugins
     assertThat(plugins).hasSize(2)
 
@@ -153,11 +153,11 @@ internal class ClassLoaderConfiguratorTest {
   }
 }
 
-private fun loadDescriptors(dir: Path): PluginLoadingResult {
+private suspend fun loadDescriptors(dir: Path): PluginLoadingResult {
   val result = PluginLoadingResult()
-  val context = DescriptorListLoadingContext(disabledPlugins = Collections.emptySet(),
+  val context = DescriptorListLoadingContext(disabledPlugins = emptySet(),
                                              brokenPluginVersions = emptyMap(),
-                                             productBuildNumber = Supplier { buildNumber })
+                                             productBuildNumber = { buildNumber })
 
   // constant order in tests
   val paths = dir.directoryStreamIfExists { it.sorted() }!!

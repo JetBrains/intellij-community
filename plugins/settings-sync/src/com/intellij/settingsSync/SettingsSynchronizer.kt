@@ -17,7 +17,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, FrameState
 
   private var scheduledFuture: ScheduledFuture<*>? = null // accessed only from the EDT
 
-  override fun componentsInitialized() {
+  override suspend fun execute() {
     if (!isSettingsSyncEnabledByKey()) {
       return
     }

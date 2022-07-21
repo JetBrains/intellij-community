@@ -209,7 +209,9 @@ object LangTool : GrazieStateLifecycle {
   internal class Preloader : PreloadingActivity() {
     override suspend fun execute() {
       if (isInitialized.compareAndSet(false, true)) {
-        preloadLang()
+        withContext(Dispatchers.IO) {
+          preloadLang()
+        }
       }
     }
   }

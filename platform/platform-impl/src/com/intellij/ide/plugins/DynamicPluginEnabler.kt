@@ -149,7 +149,7 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
   ): Boolean {
     assert(!action.isPerProject || project != null)
 
-    val pluginIds = descriptors.toPluginSet()
+    val pluginIds = descriptors.toPluginIdSet()
 
     fun unloadExcessPlugins() = unloadPlugins(
       descriptors,

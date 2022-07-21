@@ -17,6 +17,7 @@ import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.intellij.lang.annotations.Language
 import org.junit.Assume.assumeTrue
@@ -31,7 +32,6 @@ import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.function.Function
-import java.util.function.Supplier
 import kotlin.io.path.name
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -44,15 +44,17 @@ private fun loadDescriptors(
   val result = PluginLoadingResult(checkModuleDependencies = false)
   val context = DescriptorListLoadingContext(
     brokenPluginVersions = emptyMap(),
-    productBuildNumber = Supplier { buildNumber },
-    disabledPlugins = disabledPlugins.mapTo(LinkedHashSet()) { PluginId.getId(it) },
+    productBuildNumber = { buildNumber },
+    disabledPlugins = disabledPlugins.mapTo(LinkedHashSet(), PluginId::getId),
   )
   // constant order in tests
   val paths: List<Path> = dir.directoryStreamIfExists { it.sorted() }!!
   context.use {
+    runBlocking {
     result.addAll(descriptors = paths.map { loadDescriptor(it, context) },
                   overrideUseIfCompatible = false,
                   productBuildNumber = buildNumber)
+    }
   }
   return context to result
 }
@@ -624,7 +626,7 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
   result.readExternal(
     raw = raw,
     isSub = false,
-    context = DescriptorListLoadingContext(disabledPlugins = Collections.emptySet()),
+    context = DescriptorListLoadingContext(disabledPlugins = emptySet()),
     pathResolver = pathResolver,
     dataLoader = dataLoader
   )

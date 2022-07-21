@@ -1,35 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.BaseEventLogMetadataPersistence;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.TimeUnit;
 
 public final class StatisticsEventLogMigration {
 
   public static void performMigration() {
-    JobScheduler.getScheduler().schedule(() -> {
-      moveLogsToNewFolder();
+    moveLogsToNewFolder();
 
-      clearDeprecatedMetadataFolder();
-      FUStatisticsPersistence.clearLegacyStates();
-    }, 5, TimeUnit.MINUTES);
+    clearDeprecatedMetadataFolder();
+    FUStatisticsPersistence.clearLegacyStates();
   }
 
   private static void clearDeprecatedMetadataFolder() {
-    Path deprecated = BaseEventLogMetadataPersistence.getDeprecatedMetadataDir();
-    if (Files.exists(deprecated)) {
-      deleteDir(deprecated);
-    }
+    deleteDir(BaseEventLogMetadataPersistence.getDeprecatedMetadataDir());
   }
 
   private static void moveLogsToNewFolder() {
@@ -56,7 +50,7 @@ public final class StatisticsEventLogMigration {
 
   private static void deleteDir(Path path) {
     try {
-      FileUtil.delete(path);
+      NioFiles.deleteRecursively(path);
     }
     catch (IOException ignored) {
     }

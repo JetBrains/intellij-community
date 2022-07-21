@@ -402,7 +402,7 @@ public final class PluginInstaller {
     }
 
     IdeaPluginDescriptorImpl targetDescriptor = PluginDescriptorLoader.loadDescriptor(targetFile,
-                                                                                      DisabledPluginsState.disabledPlugins(),
+                                                                                      DisabledPluginsState.getDisabledIds(),
                                                                                       false,
                                                                                       PluginXmlPathResolver.DEFAULT_PATH_RESOLVER);
     if (targetDescriptor == null) {

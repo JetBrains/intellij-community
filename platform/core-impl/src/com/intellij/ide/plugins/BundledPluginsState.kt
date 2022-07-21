@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -16,32 +16,12 @@ import java.nio.file.Path
 
 @ApiStatus.Internal
 class BundledPluginsState {
-
-  init {
-    val savedBuildNumber = PropertiesComponent.getInstance().savedBuildNumber
-    val currentBuildNumber = ApplicationInfo.getInstance().build
-
-    val shouldSave = savedBuildNumber == null
-                     || savedBuildNumber < currentBuildNumber
-                     || (!ApplicationManager.getApplication().isUnitTestMode && PluginManagerCore.isRunningFromSources())
-
-    if (shouldSave) {
-      val bundledPluginIds = loadedPluginIds
-
-      ProcessIOExecutorService.INSTANCE.execute {
-        try {
-          writePluginIdsToFile(bundledPluginIds)
-
-          PropertiesComponent.getInstance().savedBuildNumber = currentBuildNumber
-        }
-        catch (e: IOException) {
-          LOG.warn("Unable to save bundled plugins list", e)
-        }
-      }
-    }
-  }
-
   companion object {
+    private const val SAVED_VERSION_KEY = "bundled.plugins.list.saved.version"
+
+    var PropertiesComponent.savedBuildNumber: BuildNumber?
+      @VisibleForTesting get() = getValue(SAVED_VERSION_KEY)?.let { BuildNumber.fromString(it) }
+      private set(value) = setValue(SAVED_VERSION_KEY, value?.asString())
 
     @ApiStatus.Internal
     const val BUNDLED_PLUGINS_FILENAME = "bundled_plugins.txt"
@@ -68,7 +48,7 @@ class BundledPluginsState {
 
     fun readPluginIdsFromFile(configDir: Path = PathManager.getConfigDir()): Set<PluginId> {
       return try {
-        PluginManagerCore.readPluginIdsFromFile(configDir.resolve(BUNDLED_PLUGINS_FILENAME))
+        DisabledPluginsState.readPluginIdsFromFile(configDir.resolve(BUNDLED_PLUGINS_FILENAME))
       }
       catch (e: IOException) {
         LOG.warn("Unable to load bundled plugins list", e)
@@ -76,9 +56,28 @@ class BundledPluginsState {
       }
     }
   }
-}
 
-private const val SAVED_VERSION_KEY = "bundled.plugins.list.saved.version"
-var PropertiesComponent.savedBuildNumber: BuildNumber?
-  @VisibleForTesting get() = getValue(SAVED_VERSION_KEY)?.let { BuildNumber.fromString(it) }
-  private set(value) = setValue(SAVED_VERSION_KEY, value?.asString())
+  init {
+    val savedBuildNumber = PropertiesComponent.getInstance().savedBuildNumber
+    val currentBuildNumber = ApplicationInfo.getInstance().build
+
+    val shouldSave = savedBuildNumber == null
+                     || savedBuildNumber < currentBuildNumber
+                     || (!ApplicationManager.getApplication().isUnitTestMode && PluginManagerCore.isRunningFromSources())
+
+    if (shouldSave) {
+      val bundledPluginIds = loadedPluginIds
+
+      ProcessIOExecutorService.INSTANCE.execute {
+        try {
+          writePluginIdsToFile(bundledPluginIds)
+
+          PropertiesComponent.getInstance().savedBuildNumber = currentBuildNumber
+        }
+        catch (e: IOException) {
+          LOG.warn("Unable to save bundled plugins list", e)
+        }
+      }
+    }
+  }
+}

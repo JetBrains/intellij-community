@@ -22,12 +22,13 @@ import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.WordPrefixMatcher
 import com.intellij.util.text.Matcher
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.CancellationException
 import java.util.function.Consumer
+import kotlin.coroutines.coroutineContext
 
 abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHitProvider {
   companion object {
@@ -129,18 +130,18 @@ private suspend fun cacheAll(project: Project?) {
     if (provider is OptionsSearchTopHitProvider && (project == null || provider !is ApplicationLevelProvider)) {
       val p = provider as OptionsSearchTopHitProvider
       if (p.preloadNeeded() && (project == null || !project.isDisposed)) {
-        yield()
+        coroutineContext.ensureActive()
         getCachedOptions(p, project, pluginDescriptor)
       }
     }
   }
 
-  yield()
+  coroutineContext.ensureActive()
 
   if (project != null) {
     val cache = ProjectTopHitCache.getInstance(project)
     OptionsTopHitProvider.PROJECT_LEVEL_EP.processExtensions { provider, pluginDescriptor ->
-      yield()
+      coroutineContext.ensureActive()
       try {
         cache.getCachedOptions(provider, project, pluginDescriptor)
       }
@@ -177,7 +178,7 @@ private fun doConsumeTopHits(provider: OptionsSearchTopHitProvider,
                              project: Project?) {
   var pattern = rawPattern
   if (provider.id.startsWith(id) || pattern.startsWith(" ")) {
-    pattern = if (pattern.startsWith(' ')) pattern.trim { it <= ' ' } else pattern.substring(id.length).trim { it <= ' ' }
+    pattern = (if (pattern.startsWith(' ')) pattern else pattern.substring(id.length)).trim()
     consumeTopHitsForApplicableProvider(provider, OptionsTopHitProvider.buildMatcher(pattern), collector, project)
   }
 }

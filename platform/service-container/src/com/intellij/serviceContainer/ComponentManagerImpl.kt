@@ -38,7 +38,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
 import org.picocontainer.PicoContainer
-import java.lang.Runnable
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.Constructor
@@ -392,12 +391,12 @@ abstract class ComponentManagerImpl(
     return count
   }
 
-  fun createInitOldComponentsTask(): Runnable? {
+  fun createInitOldComponentsTask(): (() -> Unit)? {
     if (componentAdapters.getImmutableSet().none { it is MyComponentAdapter }) {
       return null
     }
 
-    return Runnable {
+    return {
       for (componentAdapter in componentAdapters.getImmutableSet()) {
         if (componentAdapter is MyComponentAdapter) {
           componentAdapter.getInstance<Any>(this, keyClass = null, indicator = null)
@@ -586,27 +585,33 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  override fun <T : Any> getService(serviceClass: Class<T>): T? {
+  final override fun <T : Any> getService(serviceClass: Class<T>): T? {
     // `computeIfAbsent` cannot be used because of recursive update
-    var result = serviceInstanceHotCache.get(serviceClass)
-    if (result == null) {
-      result = doGetService(serviceClass, true) ?: return null
-      serviceInstanceHotCache.putIfAbsent(serviceClass, result)
-    }
     @Suppress("UNCHECKED_CAST")
-    return result as T?
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? {
     var result = serviceInstanceHotCache.get(serviceClass) as T?
     if (result == null) {
-      result = doGetService(serviceClass, createIfNeeded = false)
-      if (result != null) {
-        serviceInstanceHotCache.putIfAbsent(serviceClass, result)
-      }
+      result = doGetService(serviceClass, true) ?: return postGetService(serviceClass, createIfNeeded = true)
+      serviceInstanceHotCache.putIfAbsent(serviceClass, result)
     }
     return result
+  }
+
+  protected open fun <T : Any> postGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? = null
+
+  final override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? {
+    @Suppress("UNCHECKED_CAST")
+    var result = serviceInstanceHotCache.get(serviceClass) as T?
+    if (result != null) {
+      return result
+    }
+    result = doGetService(serviceClass, createIfNeeded = false)
+    if (result == null) {
+      return postGetService(serviceClass, createIfNeeded = false)
+    }
+    else {
+      serviceInstanceHotCache.putIfAbsent(serviceClass, result)
+      return result
+    }
   }
 
   protected open fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
@@ -991,11 +996,11 @@ abstract class ComponentManagerImpl(
 
   open fun activityNamePrefix(): String? = null
 
-  open fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
-                           activityPrefix: String,
-                           syncScope: CoroutineScope,
-                           asyncScope: CoroutineScope,
-                           onlyIfAwait: Boolean = false) {
+  fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
+                      activityPrefix: String,
+                      syncScope: CoroutineScope,
+                      onlyIfAwait: Boolean = false) {
+    val asyncScope = coroutineScope!!
     for (plugin in modules) {
       serviceLoop@ for (service in getContainerDescriptor(plugin).services) {
         if (!isServiceSuitable(service) || (service.os != null && !isSuitableForOs(service.os))) {
@@ -1030,6 +1035,14 @@ abstract class ComponentManagerImpl(
         }
       }
     }
+
+    postPreloadServices(modules, activityPrefix, syncScope, onlyIfAwait)
+  }
+
+  protected open fun postPreloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
+                                         activityPrefix: String,
+                                         syncScope: CoroutineScope,
+                                         onlyIfAwait: Boolean) {
   }
 
   protected open fun preloadService(service: ServiceDescriptor) {

@@ -238,14 +238,14 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     myLowMemoryWatcherManager.waitForInitComplete(timeout, unit);
   }
 
-  static @NotNull Runnable capturePropagationAndCancellationContext(@NotNull Runnable command) {
+  public static @NotNull Runnable capturePropagationAndCancellationContext(@NotNull Runnable command) {
     if (!propagateContextOrCancellation()) {
       return command;
     }
     return Propagation.capturePropagationAndCancellationContext(command);
   }
 
-  static <T> @NotNull FutureTask<T> capturePropagationAndCancellationContext(@NotNull Callable<T> callable) {
+  public static <T> @NotNull FutureTask<T> capturePropagationAndCancellationContext(@NotNull Callable<T> callable) {
     if (!propagateContextOrCancellation()) {
       return new FutureTask<>(callable);
     }

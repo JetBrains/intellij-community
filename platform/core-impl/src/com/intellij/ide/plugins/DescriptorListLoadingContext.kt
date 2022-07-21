@@ -21,13 +21,14 @@ import java.util.function.Supplier
 class DescriptorListLoadingContext constructor(
   @JvmField val disabledPlugins: Set<PluginId>,
   private val brokenPluginVersions: Map<PluginId, Set<String?>> = PluginManagerCore.getBrokenPluginVersions(),
-  @JvmField val productBuildNumber: Supplier<BuildNumber> = Supplier { PluginManagerCore.getBuildNumber() },
+  @JvmField val productBuildNumber: () -> BuildNumber = { PluginManagerCore.getBuildNumber() },
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false,
   @JvmField val transient: Boolean = false
 ) : AutoCloseable, ReadModuleContext {
-  internal @JvmField val globalErrors = CopyOnWriteArrayList<Supplier<String>>()
+  @JvmField
+  internal val globalErrors = CopyOnWriteArrayList<Supplier<String>>()
 
   internal fun copyGlobalErrors(): MutableList<Supplier<String>> = ArrayList(globalErrors)
 
@@ -44,7 +45,7 @@ class DescriptorListLoadingContext constructor(
     get() {
       var result = field
       if (result == null) {
-        result = productBuildNumber.get().asStringWithoutProductCode()
+        result = productBuildNumber().asStringWithoutProductCode()
         field = result
       }
       return result

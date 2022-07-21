@@ -212,7 +212,6 @@ open class ProjectImpl(filePath: Path, projectName: String?)
           container.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
                                     activityPrefix = "project ",
                                     syncScope = this,
-                                    asyncScope = coroutineScope,
                                     onlyIfAwait = isLight)
         }
       }

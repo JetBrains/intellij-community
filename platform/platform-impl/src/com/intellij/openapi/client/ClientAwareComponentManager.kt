@@ -18,14 +18,6 @@ abstract class ClientAwareComponentManager constructor(
   internal val parent: ComponentManagerImpl?,
   setExtensionsRootArea: Boolean = parent == null
 ) : ComponentManagerImpl(parent, setExtensionsRootArea) {
-  override fun <T : Any> getService(serviceClass: Class<T>): T? {
-    return getFromSelfOrCurrentSession(serviceClass, true)
-  }
-
-  override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? {
-    return getFromSelfOrCurrentSession(serviceClass, false)
-  }
-
   override fun <T : Any> getServices(serviceClass: Class<T>, includeLocal: Boolean): List<T> {
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     return sessionsManager.getSessions(includeLocal).mapNotNull {
@@ -33,18 +25,7 @@ abstract class ClientAwareComponentManager constructor(
     }
   }
 
-  private fun <T : Any> getFromSelfOrCurrentSession(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
-    val fromSelf = if (createIfNeeded) {
-      super.getService(serviceClass)
-    }
-    else {
-      super.getServiceIfCreated(serviceClass)
-    }
-
-    if (fromSelf != null) {
-      return fromSelf
-    }
-
+  override fun <T : Any> postGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     val sessionsManager = if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
       if (createIfNeeded) {
         throwAlreadyDisposedError(serviceClass.name, this, ProgressIndicatorProvider.getGlobalProgressIndicator())
@@ -80,17 +61,14 @@ abstract class ClientAwareComponentManager constructor(
     }
   }
 
-  override fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
-                               activityPrefix: String,
-                               syncScope: CoroutineScope,
-                               asyncScope: CoroutineScope,
-                               onlyIfAwait: Boolean) {
-    super.preloadServices(modules, activityPrefix, syncScope, asyncScope, onlyIfAwait)
-
+  override fun postPreloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
+                                   activityPrefix: String,
+                                   syncScope: CoroutineScope,
+                                   onlyIfAwait: Boolean) {
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     for (session in sessionsManager.getSessions(true)) {
       session as? ClientSessionImpl ?: continue
-      session.preloadServices(modules, activityPrefix, syncScope, asyncScope, onlyIfAwait)
+      session.preloadServices(modules, activityPrefix, syncScope, onlyIfAwait)
     }
   }
 

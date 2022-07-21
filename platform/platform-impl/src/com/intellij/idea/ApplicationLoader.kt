@@ -58,6 +58,7 @@ import java.util.function.BiFunction
 import javax.swing.LookAndFeel
 import javax.swing.UIManager
 import kotlin.system.exitProcess
+import kotlin.time.Duration
 
 @Suppress("SSBasedInspection")
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
@@ -132,6 +133,12 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
                              listenerCallbacks = null)
     }
 
+    val appInitializedListeners = async(Dispatchers.IO) {
+      runActivity("app init listener preload") {
+        getAppInitListeners(app)
+      }
+    }
+
     // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
     // but it is OK, because registry is not and should not be used.
     initConfigurationStore(app)
@@ -151,13 +158,34 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
 
     val args = processProgramArguments(rawArgs)
 
-    val deferredStarter = async {
+    val deferredStarter = async(Dispatchers.IO) {
       initAppActivity.runChild("app starter creation") {
         findAppStarter(args)
       }
     }
 
-    prepareStart(app = app, initAppActivity = initAppActivity, pluginSet = pluginSet, mainScope = this)
+    coroutineScope {
+      app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this)
+
+      launch {
+        initAppActivity.runChild("old component init task creating", app::createInitOldComponentsTask)?.let { loadComponentInEdtTask ->
+          val placeOnEventQueueActivity = initAppActivity.startChild(Activities.PLACE_ON_EVENT_QUEUE)
+          withContext(SwingDispatcher) {
+            placeOnEventQueueActivity.end()
+            loadComponentInEdtTask()
+          }
+        }
+        StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
+      }
+    }
+    coroutineScope {
+      initAppActivity.runChild("app initialized callback") {
+        callAppInitialized(appInitializedListeners.await())
+      }
+
+      // doesn't block app start-up
+      app.coroutineScope.runPostAppInitTasks(app)
+    }
 
     initAppActivity.end()
 
@@ -178,23 +206,14 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
     }
 
     // not as a part of blocking initApplication
-    Main.mainScope!!.launch {
+    app.coroutineScope.launch {
       if (starter is ModernApplicationStarter) {
         val timeout = starter.timeout
         if (timeout == null) {
           starter.start(args)
         }
         else {
-          try {
-            withTimeout(timeout) {
-              starter.start(args)
-            }
-          }
-          catch (e: TimeoutCancellationException) {
-            println("Cannot execute $starter in $timeout")
-            println(ThreadDumper.dumpThreadsToString())
-            exitProcess(1)
-          }
+          runAppStarterWithTimeout(starter = starter, args = args, timeout = timeout)
         }
       }
       else {
@@ -209,75 +228,65 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
   }
 }
 
-private suspend fun prepareStart(app: ApplicationImpl, initAppActivity: Activity, pluginSet: PluginSet, mainScope: CoroutineScope) {
-  coroutineScope {
-    app.preloadServices(
-      modules = pluginSet.getEnabledModules(),
-      activityPrefix = "",
-      syncScope = this,
-      asyncScope = mainScope
-    )
+fun getAppInitListeners(app: Application): List<ApplicationInitializedListener> {
+  val extensionArea = app.extensionArea as ExtensionsAreaImpl
+  val point = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
+  val result = point.extensionList
+  point.reset()
+  return result
+}
 
-    launch {
-      val loadComponentInEdtFutureTask = initAppActivity.runChild("old component init task creating", app::createInitOldComponentsTask)
-      if (loadComponentInEdtFutureTask != null) {
-        val placeOnEventQueueActivity = initAppActivity.startChild(Activities.PLACE_ON_EVENT_QUEUE)
-        withContext(SwingDispatcher) {
-          placeOnEventQueueActivity.end()
-          loadComponentInEdtFutureTask.run()
-        }
+private suspend fun runAppStarterWithTimeout(starter: ModernApplicationStarter, args: List<String>, timeout: Duration) {
+  try {
+    withTimeout(timeout) {
+      starter.start(args)
+    }
+  }
+  catch (e: TimeoutCancellationException) {
+    println("Cannot execute $starter in $timeout")
+    println(ThreadDumper.dumpThreadsToString())
+    exitProcess(1)
+  }
+}
+
+private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
+  launchAndMeasure("create locator file", Dispatchers.IO) {
+    createAppLocatorFile()
+  }
+
+  if (!app.isUnitTestMode && !app.isHeadlessEnvironment && System.getProperty("enable.activity.preloading", "true").toBoolean()) {
+    // do not execute as a single long task, make sure that other more important tasks may slip in between
+    launchAndMeasure("preloading activity executing") {
+      coroutineScope {
+        executePreloadActivities(app)
       }
-      StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
     }
   }
 
-  coroutineScope {
-    initAppActivity.runChild("app initialized callback") {
-      callAppInitialized(app)
+  if (!Main.isLightEdit()) {
+    // this functionality should be used only by plugin functionality that is used after start-up
+    launchAndMeasure("system properties setting") {
+      SystemPropertyBean.initSystemProperties()
     }
+  }
 
-    // doesn't block app start-up
-    app.coroutineScope.launch {
-      launchAndMeasure("create locator file", Dispatchers.IO) {
-        createAppLocatorFile()
+  launch {
+    PluginManagerMain.checkThirdPartyPluginsAllowed()
+  }
+
+  if (!app.isHeadlessEnvironment) {
+    launchAndMeasure("icons preloading", Dispatchers.IO) {
+      if (app.isInternal) {
+        IconLoader.setStrictGlobally(true)
       }
 
-      if (!app.isUnitTestMode && !app.isHeadlessEnvironment && System.getProperty("enable.activity.preloading", "true").toBoolean()) {
-        // do not execute as a single long task, make sure that other more important tasks may slip in between
-        launchAndMeasure("preloading activity executing") {
-          executePreloadActivities(app)
-        }
-      }
-
-      if (!Main.isLightEdit()) {
-        // this functionality should be used only by plugin functionality that is used after start-up
-        launchAndMeasure("system properties setting") {
-          SystemPropertyBean.initSystemProperties()
-        }
-      }
-
-      launch {
-        PluginManagerMain.checkThirdPartyPluginsAllowed()
-      }
-
-      if (!app.isHeadlessEnvironment) {
-        launch {
-          runActivity("icons preloading") {
-            if (app.isInternal) {
-              IconLoader.setStrictGlobally(true)
-            }
-
-            AsyncProcessIcon("")
-            AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
-            AnimatedIcon.FS()
-          }
-
-          runActivity("migLayout") {
-            // IDEA-170295
-            PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
-          }
-        }
-      }
+      AsyncProcessIcon("")
+      AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
+      AnimatedIcon.FS()
+    }
+    launch(Dispatchers.IO) {
+      // IDEA-170295
+      PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
     }
   }
 }
@@ -356,7 +365,7 @@ private fun addActivateAndWindowsCliListeners() {
     if (args.isEmpty()) {
       return@BiFunction 0
     }
-    val result = runBlocking { handleExternalCommand (args.toList(), currentDirectory) }
+    val result = runBlocking { handleExternalCommand(args.asList(), currentDirectory) }
     CliResult.unmap(result.future, Main.ACTIVATE_ERROR).exitCode
   }
 
@@ -452,21 +461,12 @@ private fun processProgramArguments(args: List<String>): List<String> {
 }
 
 
-fun CoroutineScope.callAppInitialized(app: ApplicationImpl) {
-  val extensionArea = app.extensionArea
-  val extensionPoint = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
-  // sort for stable performance results
-  extensionPoint.processImplementations(/* shouldBeSorted = */ true) { supplier, _ ->
+fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedListener>) {
+  for (listener in listeners) {
     launch {
-      try {
-        supplier.get()?.componentsInitialized()
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
+      listener.execute()
     }
   }
-  extensionPoint.reset()
 }
 
 @Internal
@@ -489,12 +489,13 @@ internal inline fun <T> ExtensionPointName<T>.processExtensions(consumer: (exten
   }
 }
 
-private suspend fun executePreloadActivities(app: ApplicationImpl) {
+private fun CoroutineScope.executePreloadActivities(app: ApplicationImpl) {
   val extensionPoint = app.extensionArea.getExtensionPoint<PreloadingActivity>("com.intellij.preloadingActivity")
   val isDebugEnabled = LOG.isDebugEnabled
   ExtensionPointName<PreloadingActivity>("com.intellij.preloadingActivity").processExtensions { preloadingActivity, pluginDescriptor ->
-    yield()
-    executePreloadActivity(preloadingActivity, pluginDescriptor, isDebugEnabled)
+    async {
+      executePreloadActivity(preloadingActivity, pluginDescriptor, isDebugEnabled)
+    }
   }
   extensionPoint.reset()
 }

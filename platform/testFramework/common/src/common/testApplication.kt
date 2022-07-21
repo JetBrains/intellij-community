@@ -10,6 +10,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.Main
 import com.intellij.idea.callAppInitialized
+import com.intellij.idea.getAppInitListeners
 import com.intellij.idea.initConfigurationStore
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
@@ -128,13 +129,12 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
             modules = pluginSet.getEnabledModules(),
             activityPrefix = "",
             syncScope = this,
-            asyncScope = GlobalScope + CoroutineExceptionHandler { _, throwable -> LOG.error(throwable) }
           )
         }
         app.loadComponents()
       }
 
-      callAppInitialized(app)
+      callAppInitialized(getAppInitListeners(app))
     }
 
     StartUpMeasurer.setCurrentState(LoadingState.APP_STARTED)

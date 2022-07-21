@@ -19,7 +19,7 @@ private class WelcomeWizardHelper : ApplicationInitializedListener {
     }
   }
 
-  override fun componentsInitialized() {
+  override suspend fun execute() {
     // project View settings
     WelcomeWizardUtil.getAutoScrollToSource()?.let {
       ProjectViewSharedSettings.instance.autoscrollToSource = it

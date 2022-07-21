@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.Java11Shim;
 import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.lang.ZipFilePool;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Deferred;
 import kotlinx.coroutines.GlobalScope;
@@ -75,7 +76,6 @@ public final class PluginManagerCore {
   static final @NonNls String ENABLE = "enable";
   static final @NonNls String EDIT = "edit";
 
-  @SuppressWarnings("StaticNonFinalField")
   private static volatile boolean IGNORE_COMPATIBILITY = Boolean.getBoolean("idea.ignore.plugin.compatibility");
 
   private static final String THIRD_PARTY_PLUGINS_FILE = "alien_plugins.txt";
@@ -412,7 +412,7 @@ public final class PluginManagerCore {
       initFuture = null;
       future.cancel(new CancellationException("invalidatePlugins"));
     }
-    DisabledPluginsState.invalidate();
+    DisabledPluginsState.Companion.invalidate();
     shadowedBundledPlugins = null;
   }
 
@@ -519,15 +519,19 @@ public final class PluginManagerCore {
         }
       }
 
-      DisabledPluginsState.setEnabledState(pluginIds, enabled);
+      DisabledPluginsState.Companion.setEnabledState$intellij_platform_core_impl(pluginIds, enabled);
     }
     return applied;
   }
 
+  public static void scheduleDescriptorLoading(@NotNull CoroutineScope coroutineScope) {
+    scheduleDescriptorLoading(coroutineScope, null);
+  }
+
   @ApiStatus.Internal
-  public static synchronized void scheduleDescriptorLoading(@NotNull CoroutineScope coroutineScope) {
+  public static synchronized void scheduleDescriptorLoading(@NotNull CoroutineScope coroutineScope, @Nullable Deferred<ZipFilePool> zipFilePoolDeferred) {
     if (initFuture == null) {
-      initFuture = PluginDescriptorLoader.scheduleLoading(coroutineScope);
+      initFuture = PluginDescriptorLoader.scheduleLoading(coroutineScope, zipFilePoolDeferred);
     }
   }
 
@@ -661,41 +665,42 @@ public final class PluginManagerCore {
 
   public static @Nullable PluginLoadingError checkBuildNumberCompatibility(@NotNull IdeaPluginDescriptor descriptor,
                                                                            @NotNull BuildNumber ideBuildNumber) {
-    if (!IGNORE_COMPATIBILITY) {
-      try {
-        String sinceBuild = descriptor.getSinceBuild();
-        if (sinceBuild != null) {
-          String pluginName = descriptor.getName();
-          BuildNumber sinceBuildNumber = BuildNumber.fromString(sinceBuild, pluginName, null);
-          if (sinceBuildNumber != null && sinceBuildNumber.compareTo(ideBuildNumber) > 0) {
-            return new PluginLoadingError(descriptor,
-                                          message("plugin.loading.error.long.incompatible.since.build", pluginName,
-                                                  descriptor.getVersion(), sinceBuild, ideBuildNumber),
-                                          message("plugin.loading.error.short.incompatible.since.build", sinceBuild));
-          }
-        }
-
-        String untilBuild = descriptor.getUntilBuild();
-        if (untilBuild != null) {
-          String pluginName = descriptor.getName();
-          BuildNumber untilBuildNumber = BuildNumber.fromString(untilBuild, pluginName, null);
-          if (untilBuildNumber != null && untilBuildNumber.compareTo(ideBuildNumber) < 0) {
-            return new PluginLoadingError(descriptor,
-                                          message("plugin.loading.error.long.incompatible.until.build", pluginName,
-                                                  descriptor.getVersion(), untilBuild, ideBuildNumber),
-                                          message("plugin.loading.error.short.incompatible.until.build", untilBuild));
-          }
-        }
-      }
-      catch (Exception e) {
-        getLogger().error(e);
-        return new PluginLoadingError(descriptor,
-                                      message("plugin.loading.error.long.failed.to.load.requirements.for.ide.version",
-                                              descriptor.getName()),
-                                      message("plugin.loading.error.short.failed.to.load.requirements.for.ide.version"));
-      }
+    if (IGNORE_COMPATIBILITY) {
+      return null;
     }
 
+    try {
+      String sinceBuild = descriptor.getSinceBuild();
+      if (sinceBuild != null) {
+        String pluginName = descriptor.getName();
+        BuildNumber sinceBuildNumber = BuildNumber.fromString(sinceBuild, pluginName, null);
+        if (sinceBuildNumber != null && sinceBuildNumber.compareTo(ideBuildNumber) > 0) {
+          return new PluginLoadingError(descriptor,
+                                        message("plugin.loading.error.long.incompatible.since.build", pluginName,
+                                                descriptor.getVersion(), sinceBuild, ideBuildNumber),
+                                        message("plugin.loading.error.short.incompatible.since.build", sinceBuild));
+        }
+      }
+
+      String untilBuild = descriptor.getUntilBuild();
+      if (untilBuild != null) {
+        String pluginName = descriptor.getName();
+        BuildNumber untilBuildNumber = BuildNumber.fromString(untilBuild, pluginName, null);
+        if (untilBuildNumber != null && untilBuildNumber.compareTo(ideBuildNumber) < 0) {
+          return new PluginLoadingError(descriptor,
+                                        message("plugin.loading.error.long.incompatible.until.build", pluginName,
+                                                descriptor.getVersion(), untilBuild, ideBuildNumber),
+                                        message("plugin.loading.error.short.incompatible.until.build", untilBuild));
+        }
+      }
+    }
+    catch (Exception e) {
+      getLogger().error(e);
+      return new PluginLoadingError(descriptor,
+                                    message("plugin.loading.error.long.failed.to.load.requirements.for.ide.version",
+                                            descriptor.getName()),
+                                    message("plugin.loading.error.short.failed.to.load.requirements.for.ide.version"));
+    }
     return null;
   }
 
@@ -848,7 +853,7 @@ public final class PluginManagerCore {
   private static @NotNull Set<PluginId> get3rdPartyPluginIds() {
     Path file = PathManager.getConfigDir().resolve(THIRD_PARTY_PLUGINS_FILE);
     try {
-      Set<PluginId> ids = readPluginIdsFromFile(file);
+      Set<PluginId> ids = DisabledPluginsState.Companion.readPluginIdsFromFile$intellij_platform_core_impl(file);
       if (!ids.isEmpty()) {
         Files.delete(file);
       }
@@ -856,21 +861,6 @@ public final class PluginManagerCore {
     }
     catch (IOException e) {
       getLogger().error(file.toString(), e);
-      return Collections.emptySet();
-    }
-  }
-
-  @ReviseWhenPortedToJDK(value = "10, 11", description = "toUnmodifiableSet, Set.of, String.isBlank")
-  @ApiStatus.Internal
-  public synchronized static @NotNull Set<PluginId> readPluginIdsFromFile(@NotNull Path path) throws IOException {
-    try (Stream<String> lines = Files.lines(path)) {
-      return lines
-        .map(String::trim)
-        .filter(line -> !line.isEmpty())
-        .map(PluginId::getId)
-        .collect(Collectors.toSet());
-    }
-    catch (NoSuchFileException ignored) {
       return Collections.emptySet();
     }
   }

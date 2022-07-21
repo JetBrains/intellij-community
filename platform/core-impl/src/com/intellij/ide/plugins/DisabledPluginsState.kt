@@ -1,224 +1,217 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.plugins;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.plugins
 
-import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.openapi.application.JetBrainsProtocolHandler;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
-import org.jetbrains.annotations.*;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
+import com.intellij.openapi.application.JetBrainsProtocolHandler
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.stream.Collectors
 
 @ApiStatus.Internal
-public final class DisabledPluginsState implements PluginEnabler.Headless {
+class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
+  companion object {
+    const val DISABLED_PLUGINS_FILENAME: @NonNls String = "disabled_plugins.txt"
+    private val IGNORE_DISABLED_PLUGINS = java.lang.Boolean.getBoolean("idea.ignore.disabled.plugins")
 
-  public static final @NonNls String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
+    @Volatile
+    private var disabledPlugins: Set<PluginId>? = null
+    private val ourDisabledPluginListeners = CopyOnWriteArrayList<Runnable>()
 
-  private static final boolean IGNORE_DISABLED_PLUGINS = Boolean.getBoolean("idea.ignore.disabled.plugins");
+    @Volatile
+    private var isDisabledStateIgnored = IGNORE_DISABLED_PLUGINS
 
-  private static volatile @Nullable Set<PluginId> ourDisabledPlugins;
-  private static final List<Runnable> ourDisabledPluginListeners = new CopyOnWriteArrayList<>();
+    @JvmStatic
+    fun addDisablePluginListener(listener: Runnable) {
+      ourDisabledPluginListeners.add(listener)
+    }
 
-  private static volatile boolean ourIgnoredDisabledPlugins = IGNORE_DISABLED_PLUGINS;
+    @JvmStatic
+    fun removeDisablePluginListener(listener: Runnable) {
+      ourDisabledPluginListeners.remove(listener)
+    }
 
-  DisabledPluginsState() {
-  }
-
-  public static void addDisablePluginListener(@NotNull Runnable listener) {
-    ourDisabledPluginListeners.add(listener);
-  }
-
-  public static void removeDisablePluginListener(@NotNull Runnable listener) {
-    ourDisabledPluginListeners.remove(listener);
-  }
-
-  @Override
-  public boolean isIgnoredDisabledPlugins() {
-    return ourIgnoredDisabledPlugins;
-  }
-
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-  @Override
-  public void setIgnoredDisabledPlugins(boolean ignoredDisabledPlugins) {
-    ourIgnoredDisabledPlugins = ignoredDisabledPlugins;
-  }
-
-  public static @NotNull Set<PluginId> loadDisabledPlugins() {
-    Set<PluginId> disabledPlugins = new LinkedHashSet<>();
-
-    Path path = getDefaultFilePath();
-    ApplicationInfoEx applicationInfo = ApplicationInfoImpl.getShadowInstance();
-    Set<PluginId> requiredPlugins = splitByComma(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY);
-
-    boolean updateFile = false;
-    try {
-      for (PluginId id : PluginManagerCore.readPluginIdsFromFile(path)) {
-        if (!requiredPlugins.contains(id) &&
-            !applicationInfo.isEssentialPlugin(id)) {
-          disabledPlugins.add(id);
-        }
-        else {
-          updateFile = true;
+    internal fun readPluginIdsFromFile(path: Path): Set<PluginId> {
+      try {
+        Files.lines(path).use { lines ->
+          return lines
+            .map(String::trim)
+            .filter { !it.isEmpty() }
+            .map(PluginId::getId)
+            .collect(Collectors.toSet())
         }
       }
+      catch (ignored: NoSuchFileException) {
+        return Collections.emptySet()
+      }
+    }
 
-      for (PluginId suppressedPluginId : splitByComma("idea.suppressed.plugins.id")) {
-        if (!applicationInfo.isEssentialPlugin(suppressedPluginId) &&
-            disabledPlugins.add(suppressedPluginId)) {
-          updateFile = true;
+    @JvmStatic
+    fun loadDisabledPlugins(): Set<PluginId> {
+      val disabledPlugins = LinkedHashSet<PluginId>()
+      val path = defaultFilePath
+      val requiredPlugins = splitByComma(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
+      var updateFile = false
+      try {
+        val pluginIdsFromFile = readPluginIdsFromFile(path)
+        val suppressedPluginIds = splitByComma("idea.suppressed.plugins.id")
+
+        if (pluginIdsFromFile.isEmpty() && suppressedPluginIds.isEmpty()) {
+          return Collections.emptySet()
+        }
+
+        // ApplicationInfoImpl maybe loaded in another thread - get it after readPluginIdsFromFile
+        val applicationInfo = ApplicationInfoImpl.getShadowInstance()
+        for (id in pluginIdsFromFile) {
+          if (!requiredPlugins.contains(id) && !applicationInfo.isEssentialPlugin(id)) {
+            disabledPlugins.add(id)
+          }
+          else {
+            updateFile = true
+          }
+        }
+        for (suppressedPluginId in suppressedPluginIds) {
+          if (!applicationInfo.isEssentialPlugin(suppressedPluginId) && disabledPlugins.add(suppressedPluginId)) {
+            updateFile = true
+          }
+        }
+        return disabledPlugins
+      }
+      catch (e: IOException) {
+        logger.info("Unable to load disabled plugins list from $path", e)
+        return Collections.emptySet()
+      }
+      finally {
+        if (updateFile) {
+          trySaveDisabledPlugins(disabledPlugins, false)
         }
       }
     }
-    catch (IOException e) {
-      getLogger().info("Unable to load disabled plugins list from " + path, e);
-    }
-    finally {
-      if (updateFile) {
-        trySaveDisabledPlugins(disabledPlugins, false);
+
+    @JvmStatic
+    fun disabledPlugins(): Set<PluginId> = getDisabledIds()
+
+    @JvmStatic
+    fun getDisabledIds(): Set<PluginId> {
+      disabledPlugins?.let { return it }
+
+      if (isDisabledStateIgnored) {
+        return Collections.emptySet()
+      }
+
+      synchronized(DisabledPluginsState::class.java) {
+        var result = disabledPlugins
+        if (result == null) {
+          @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
+          result = Collections.unmodifiableSet(loadDisabledPlugins())!!
+          disabledPlugins = result
+        }
+        return result
       }
     }
 
-    return disabledPlugins;
-  }
-
-  public static @NotNull Set<PluginId> disabledPlugins() {
-    return Collections.unmodifiableSet(getDisabledIds());
-  }
-
-  private static @NotNull Set<PluginId> getDisabledIds() {
-    Set<PluginId> result = ourDisabledPlugins;
-    if (result != null) {
-      return result;
-    }
-
-    // to preserve the order of additions and removals
-    if (ourIgnoredDisabledPlugins) {
-      return new HashSet<>();
-    }
-
-    //noinspection SynchronizeOnThis
-    synchronized (DisabledPluginsState.class) {
-      result = ourDisabledPlugins;
-      if (result == null) {
-        result = loadDisabledPlugins();
-        ourDisabledPlugins = result;
+    internal fun setEnabledState(plugins: Set<PluginId>, enabled: Boolean): Boolean {
+      val disabled = getDisabledIds().toMutableSet()
+      val changed = if (enabled) disabled.removeAll(plugins) else disabled.addAll(plugins)
+      if (changed) {
+        disabledPlugins = Collections.unmodifiableSet(disabled)
       }
-      return result;
-    }
-  }
-
-  @Override
-  public boolean isDisabled(@NotNull PluginId pluginId) {
-    return getDisabledIds().contains(pluginId);
-  }
-
-  @Override
-  public boolean enable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
-    return enableById(IdeaPluginDescriptorImplKt.toPluginSet(descriptors));
-  }
-
-  @Override
-  public boolean disable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
-    return disableById(IdeaPluginDescriptorImplKt.toPluginSet(descriptors));
-  }
-
-  @Override
-  public boolean enableById(@NotNull Set<PluginId> pluginIds) {
-    return setEnabledState(pluginIds, true);
-  }
-
-  @Override
-  public boolean disableById(@NotNull Set<PluginId> pluginIds) {
-    return setEnabledState(pluginIds, false);
-  }
-
-  static boolean setEnabledState(@NotNull Set<PluginId> plugins,
-                                 boolean enabled) {
-    Set<PluginId> disabled = getDisabledIds();
-    boolean changed = enabled ?
-                      disabled.removeAll(plugins) :
-                      disabled.addAll(plugins);
-
-    getLogger().info(joinedPluginIds(plugins, enabled));
-    return changed && saveDisabledPluginsAndInvalidate(disabled);
-  }
-
-  public static boolean saveDisabledPluginsAndInvalidate(@NotNull Set<PluginId> pluginIds) {
-    return trySaveDisabledPlugins(pluginIds,
-                                  true);
-  }
-
-  private static boolean trySaveDisabledPlugins(@NotNull Set<PluginId> pluginIds,
-                                                boolean invalidate) {
-    try {
-      PluginManagerCore.writePluginIdsToFile(getDefaultFilePath(),
-                                             pluginIds);
-    }
-    catch (IOException e) {
-      getLogger().warn("Unable to save disabled plugins list", e);
-      return false;
+      logger.info(joinedPluginIds(plugins, enabled))
+      return changed && saveDisabledPluginsAndInvalidate(disabled)
     }
 
-    if (invalidate) {
-      invalidate();
+    @JvmStatic
+    fun saveDisabledPluginsAndInvalidate(pluginIds: Set<PluginId>): Boolean {
+      return trySaveDisabledPlugins(pluginIds = pluginIds, invalidate = true)
     }
 
-    for (Runnable listener : ourDisabledPluginListeners) {
-      listener.run();
+    private fun trySaveDisabledPlugins(pluginIds: Set<PluginId>, invalidate: Boolean): Boolean {
+      try {
+        PluginManagerCore.writePluginIdsToFile(defaultFilePath, pluginIds)
+      }
+      catch (e: IOException) {
+        logger.warn("Unable to save disabled plugins list", e)
+        return false
+      }
+      if (invalidate) {
+        invalidate()
+      }
+      for (listener in ourDisabledPluginListeners) {
+        listener.run()
+      }
+      return true
     }
 
-    return true;
-  }
+    @TestOnly
+    @Throws(IOException::class)
+    fun saveDisabledPluginsAndInvalidate(configPath: Path, vararg pluginIds: String?) {
+      PluginManagerCore.writePluginIdsToFile(configPath.resolve(DISABLED_PLUGINS_FILENAME), pluginIds.asList())
+      invalidate()
+    }
 
-  @TestOnly
-  public static void saveDisabledPluginsAndInvalidate(@NotNull Path configPath,
-                                                      String... pluginIds) throws IOException {
-    PluginManagerCore.writePluginIdsToFile(configPath.resolve(DISABLED_PLUGINS_FILENAME),
-                                           Arrays.asList(pluginIds));
-    invalidate();
-  }
+    private val defaultFilePath: Path
+      get() = PathManager.getConfigDir().resolve(DISABLED_PLUGINS_FILENAME)
 
-  private static @NotNull Path getDefaultFilePath() {
-    return PathManager.getConfigDir()
-      .resolve(DISABLED_PLUGINS_FILENAME);
-  }
-
-
-  private static @NotNull Logger getLogger() {
     // do not use class reference here
-    return Logger.getInstance("#com.intellij.ide.plugins.DisabledPluginsState");
-  }
+    @Suppress("SSBasedInspection")
+    private val logger: Logger
+      // do not use class reference here
+      get() = Logger.getInstance("#com.intellij.ide.plugins.DisabledPluginsState")
 
-  static void invalidate() {
-    ourDisabledPlugins = null;
-  }
-
-  @ReviseWhenPortedToJDK(value = "10", description = "toUnmodifiableSet")
-  private static @NotNull Set<PluginId> splitByComma(@NotNull String key) {
-    return Arrays.stream(System.getProperty(key, "").split(","))
-      .map(PluginId::getId)
-      .collect(Collectors.toSet());
-  }
-
-  private static @NotNull String joinedPluginIds(@NotNull Collection<PluginId> pluginIds, boolean enabled) {
-    StringBuilder buffer = new StringBuilder("Plugins to ")
-      .append(enabled ? "enable" : "disable")
-      .append(": [");
-
-    for (Iterator<PluginId> iterator = pluginIds.iterator(); iterator.hasNext(); ) {
-      buffer.append(iterator.next().getIdString());
-      if (iterator.hasNext()) {
-        buffer.append(", ");
-      }
+    fun invalidate() {
+      disabledPlugins = null
     }
 
-    return buffer.append(']').toString();
+    private fun splitByComma(key: String): Set<PluginId> {
+      val property = System.getProperty(key, "")
+      if (property.isEmpty()) {
+        return emptySet()
+      }
+
+      val result = HashSet<PluginId>()
+      for (s in property.split(',')) {
+        result.add(PluginId.getId(s.trim().takeIf(String::isNotEmpty) ?: continue))
+      }
+      return result
+    }
+
+    private fun joinedPluginIds(pluginIds: Collection<PluginId>, enabled: Boolean): String {
+      val buffer = StringBuilder("Plugins to ")
+        .append(if (enabled) "enable" else "disable")
+        .append(": [")
+      val iterator = pluginIds.iterator()
+      while (iterator.hasNext()) {
+        buffer.append(iterator.next().idString)
+        if (iterator.hasNext()) {
+          buffer.append(", ")
+        }
+      }
+      return buffer.append(']').toString()
+    }
   }
+
+  override fun isIgnoredDisabledPlugins() = isDisabledStateIgnored
+
+  override fun setIgnoredDisabledPlugins(ignoredDisabledPlugins: Boolean) {
+    isDisabledStateIgnored = ignoredDisabledPlugins
+  }
+
+  override fun isDisabled(pluginId: PluginId) = getDisabledIds().contains(pluginId)
+
+  override fun enable(descriptors: Collection<IdeaPluginDescriptor>) = enableById(descriptors.toPluginIdSet())
+
+  override fun disable(descriptors: Collection<IdeaPluginDescriptor>) = disableById(descriptors.toPluginIdSet())
+
+  override fun enableById(pluginIds: Set<PluginId>) = setEnabledState(plugins = pluginIds, enabled = true)
+
+  override fun disableById(pluginIds: Set<PluginId>) = setEnabledState(plugins = pluginIds, enabled = false)
 }

@@ -40,8 +40,10 @@ internal fun AnActionEvent.getProjectCommitMode(): CommitMode? =
   project?.let { CommitModeManager.getInstance(it).getCurrentCommitMode() }
 
 internal class NonModalCommitCustomization : ApplicationInitializedListener {
-  override fun componentsInitialized() {
-    if (!isNewUser()) return
+  override suspend fun execute() {
+    if (!isNewUser()) {
+      return
+    }
 
     PropertiesComponent.getInstance().setValue(KEY, true)
     appSettings.COMMIT_FROM_LOCAL_CHANGES = true

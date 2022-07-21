@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
@@ -41,13 +40,17 @@ import kotlin.system.exitProcess
 
 internal class SystemHealthMonitor : PreloadingActivity() {
   override suspend fun execute() {
-    checkInstallationIntegrity()
+    withContext(Dispatchers.IO) {
+      checkInstallationIntegrity()
+    }
     checkIdeDirectories()
     checkRuntime()
     checkReservedCodeCacheSize()
     checkEnvironment()
-    checkSignalBlocking()
-    checkTempDirEnvVars()
+    withContext(Dispatchers.IO) {
+      checkSignalBlocking()
+      checkTempDirEnvVars()
+    }
     startDiskSpaceMonitoring()
   }
 }
@@ -171,7 +174,7 @@ private fun checkRuntime() {
       }
     }
   }
-  jreHome = StringUtil.trimEnd(jreHome, "/Contents/Home")
+  jreHome = jreHome.removeSuffix("/Contents/Home")
   showNotification(key = "bundled.jre.version.message",
                    suppressable = false,
                    action = switchAction,

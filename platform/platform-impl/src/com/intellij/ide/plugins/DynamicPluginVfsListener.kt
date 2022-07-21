@@ -17,7 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import java.io.File
+import java.nio.file.Path
 
 private const val AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY = "idea.auto.reload.plugins"
 
@@ -28,7 +28,7 @@ internal class DynamicPluginVfsListenerInitializer : PreloadingActivity() {
     if (java.lang.Boolean.getBoolean(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) {
       val pluginsPath = PathManager.getPluginsPath()
       LocalFileSystem.getInstance().addRootToWatch(pluginsPath, true)
-      val pluginsRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(pluginsPath))
+      val pluginsRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(pluginsPath))
       if (pluginsRoot != null) {
         // ensure all plugins are in VFS
         VfsUtilCore.processFilesRecursively(pluginsRoot) { true }

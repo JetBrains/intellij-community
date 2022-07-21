@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
@@ -10,7 +11,6 @@ import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.BuildersKt;
 import kotlinx.coroutines.CoroutineStart;
-import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,12 +119,13 @@ public abstract class ActionManagerEx extends ActionManager {
 
   @ApiStatus.Internal
   public static void doWithLazyActionManager(@NotNull Consumer<? super ActionManager> whatToDo) {
-    ActionManager created = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+    Application app = ApplicationManager.getApplication();
+    ActionManager created = app.getServiceIfCreated(ActionManager.class);
     if (created == null) {
       // reuse default dispatcher thread
-      BuildersKt.launch(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
+      BuildersKt.launch(app.getCoroutineScope(), EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
         ActionManager actionManager = getInstance();
-        ApplicationManager.getApplication().invokeLater(() -> whatToDo.accept(actionManager), ModalityState.any());
+        app.invokeLater(() -> whatToDo.accept(actionManager), ModalityState.any());
         return Unit.INSTANCE;
       });
     }

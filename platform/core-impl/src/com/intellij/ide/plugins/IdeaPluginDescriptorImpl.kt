@@ -22,9 +22,9 @@ import java.util.*
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
 
-fun Iterable<IdeaPluginDescriptor>.toPluginSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
+fun Iterable<IdeaPluginDescriptor>.toPluginIdSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
 
-fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> = mapNotNull { PluginManagerCore.findPlugin(it) }
+fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> = mapNotNull(PluginManagerCore::findPlugin)
 
 @ApiStatus.Internal
 class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
@@ -304,7 +304,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       return
     }
 
-    PluginManagerCore.checkBuildNumberCompatibility(this, context.productBuildNumber.get())?.let {
+    PluginManagerCore.checkBuildNumberCompatibility(this, context.productBuildNumber())?.let {
       markAsIncompatible(it)
       return
     }

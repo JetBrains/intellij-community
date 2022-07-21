@@ -378,10 +378,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     ApplicationLoader.initConfigurationStore(this);
     try {
       BuildersKt.runBlocking(EmptyCoroutineContext.INSTANCE, (scope, continuation) -> {
-        preloadServices(modules, "", scope, GlobalScope.INSTANCE, false);
+        preloadServices(modules, "", scope, false);
         loadComponents();
 
-        ApplicationLoader.callAppInitialized(scope, this);
+        ApplicationLoader.callAppInitialized(scope, ApplicationLoader.getAppInitListeners(this));
         return Unit.INSTANCE;
       });
     }

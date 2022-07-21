@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 
 @Internal
-@VisibleForTesting
 open class MessageBusImpl : MessageBus {
   interface MessageHandlerHolder {
     val isDisposed: Boolean

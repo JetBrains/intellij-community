@@ -136,6 +136,11 @@ fun start(mainClass: String,
       MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
     }
 
+    launch(Dispatchers.IO) {
+      // required for DisabledPluginsState and Eua
+      ApplicationInfoImpl.getShadowInstance()
+    }
+
     val euaDocumentFuture = if (isHeadless) null else loadEuaDocumentAsync()
 
     if (args.isNotEmpty() && (Main.CWM_HOST_COMMAND == args[0] || Main.CWM_HOST_NO_LOBBY_COMMAND == args[0])) {
@@ -156,7 +161,9 @@ fun start(mainClass: String,
     activity = activity.endAndStart("system dirs locking")
     // This needs to happen before UI initialization - if we're not going to show UI (in case another IDE instance is already running),
     // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
-    val configImportNeeded = lockSystemDirs(!isHeadless, configPath, systemPath, args)
+    val configImportNeeded = withContext(Dispatchers.IO) {
+      lockSystemDirs(checkConfig = !isHeadless, configPath = configPath, systemPath = systemPath, args = args)
+    }
     activity = activity.endAndStart("LaF init scheduling")
     val busyThread = Thread.currentThread()
     // LookAndFeel type is not specified to avoid class loading
@@ -212,13 +219,19 @@ fun start(mainClass: String,
     // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
     Java11Shim.INSTANCE = Java11ShimImpl()
     if (!configImportNeeded) {
-      ZipFilePool.POOL = ZipFilePoolImpl()
-      PluginManagerCore.scheduleDescriptorLoading(this)
+      PluginManagerCore.scheduleDescriptorLoading(this, async(Dispatchers.IO) {
+        // ZipFilePoolImpl uses Guava for Striped lock - load in parallel
+        val result = ZipFilePoolImpl()
+        ZipFilePool.POOL = result
+        result
+      })
     }
 
     launch {
       setupSystemLibraries()
-      loadSystemLibraries(log)
+      withContext(Dispatchers.IO) {
+        loadSystemLibraries(log)
+      }
 
       // JNA and Swing are used - invoke only after both are loaded
       if (!isHeadless && SystemInfoRt.isMac) {
@@ -230,11 +243,13 @@ fun start(mainClass: String,
           subActivity.end()
         }
       }
-      logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance(), args)
+      withContext(Dispatchers.IO) {
+        logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance(), args)
+      }
     }
 
     // don't load EnvironmentUtil class in the main thread
-    shellEnvLoadFuture = async {
+    shellEnvLoadFuture = async(Dispatchers.IO) {
       EnvironmentUtil.loadEnvironment(StartUpMeasurer.startActivity("environment loading"))
     }
 
@@ -316,7 +331,7 @@ private fun checkGraphics(): Boolean {
 }
 
 /** Called via reflection from [WindowsCommandLineProcessor.processWindowsLauncherCommandLine].  */
-@Suppress("KDocUnresolvedReference", "unused")
+@Suppress("unused")
 fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<String>): Int {
   return EXTERNAL_LISTENER.apply(currentDirectory, args)
 }
@@ -336,7 +351,7 @@ fun addExternalInstanceListener(processor: Function<List<String>, Future<CliResu
 // used externally by TeamCity plugin (as TeamCity cannot use modern API to support old IDE versions)
 @Synchronized
 @Deprecated("")
-fun getServer(): BuiltInServer? = socketLock?.server
+fun getServer(): BuiltInServer? = socketLock?.getServer()
 
 @Synchronized
 fun getServerFutureAsync(): Deferred<BuiltInServer?> = socketLock?.serverFuture ?: CompletableDeferred(value = null)
@@ -707,7 +722,7 @@ private fun checkDirectory(directory: Path,
 }
 
 /** Returns `true` when `checkConfig` is requested and config import is needed.  */
-private fun lockSystemDirs(checkConfig: Boolean, configPath: Path, systemPath: Path, args: Array<String>): Boolean {
+private fun CoroutineScope.lockSystemDirs(checkConfig: Boolean, configPath: Path, systemPath: Path, args: Array<String>): Boolean {
   if (socketLock != null) {
     throw AssertionError("Already initialized")
   }
@@ -716,7 +731,7 @@ private fun lockSystemDirs(checkConfig: Boolean, configPath: Path, systemPath: P
   val importNeeded = checkConfig &&
                      (!Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)))
   socketLock = SocketLock(configPath, systemPath)
-  val status = socketLock!!.lockAndTryActivate(args)
+  val status = socketLock!!.lockAndTryActivate(args = args, scope = this)
   when (status.key) {
     ActivationStatus.NO_INSTANCE -> {
       ShutDownTracker.getInstance().registerShutdownTask {

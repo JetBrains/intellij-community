@@ -32,8 +32,6 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -255,7 +253,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       }
       LOG.info("Going to ask user about certificate for: " + endPoint.getSubjectDN().toString() +
                ", issuer: " + endPoint.getIssuerDN().toString());
-      accepted = CertificateManager.showAcceptDialog(() -> {
+      accepted = CertificateManager.Companion.showAcceptDialog(() -> {
         // TODO may be another kind of warning, if default trust store is missing
         return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint, parameters.myCertificateDetails);
       });

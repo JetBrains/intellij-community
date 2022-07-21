@@ -65,7 +65,6 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
    * But even if `forceExecuteImmediately = true` specified, job is not re-added.
    * That's ok - client doesn't expect that `forceExecuteImmediately` means "executes immediately", it means "do save without regular delay".
    */
-  @OptIn(DelicateCoroutinesApi::class)
   private fun requestSave(forceExecuteImmediately: Boolean = false) {
     if (currentJob.get() != null) {
       return
@@ -76,7 +75,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
       return
     }
 
-    currentJob.getAndSet(GlobalScope.launch {
+    currentJob.getAndSet(app.coroutineScope.launch {
       if (!forceExecuteImmediately) {
         delay(300)
       }

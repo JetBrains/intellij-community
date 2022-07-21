@@ -14,7 +14,9 @@ import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.serverBootstrap
 import com.intellij.util.net.NetUtils
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
@@ -35,7 +37,6 @@ private const val PROPERTY_DISABLED = "idea.builtin.server.disabled"
 
 private val LOG = logger<BuiltInServerManager>()
 
-@OptIn(DelicateCoroutinesApi::class)
 class BuiltInServerManagerImpl : BuiltInServerManager() {
   private var serverStartFuture: Job? = null
   private var server: BuiltInServer? = null
@@ -47,9 +48,10 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
     get() = server
 
   init {
+    val app = ApplicationManager.getApplication()
     serverStartFuture = when {
-      ApplicationManager.getApplication().isUnitTestMode -> null
-      else -> GlobalScope.async(Dispatchers.IO) { startServerInPooledThread() }
+      app.isUnitTestMode -> null
+      else -> app.coroutineScope.async(Dispatchers.IO) { startServerInPooledThread() }
     }
   }
 
@@ -92,16 +94,17 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   fun createServerBootstrap() = serverBootstrap(server!!.eventLoopGroup)
 
   override fun waitForStart(): BuiltInServerManager {
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode ||
-                   ApplicationManager.getApplication().isHeadlessEnvironment ||
-                   !ApplicationManager.getApplication().isDispatchThread,
+    val app = ApplicationManager.getApplication()
+    LOG.assertTrue(app.isUnitTestMode ||
+                   app.isHeadlessEnvironment ||
+                   !app.isDispatchThread,
                    "Should not wait for built-in server on EDT")
 
     var future: Job?
     synchronized(this) {
       future = serverStartFuture
       if (future == null) {
-        future = GlobalScope.async(Dispatchers.IO) { startServerInPooledThread() }
+        future = app.coroutineScope.async(Dispatchers.IO) { startServerInPooledThread() }
         serverStartFuture = future
       }
     }

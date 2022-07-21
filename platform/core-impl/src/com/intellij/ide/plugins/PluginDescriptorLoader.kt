@@ -5,7 +5,6 @@
 
 package com.intellij.ide.plugins
 
-import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -36,7 +35,6 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
-import java.util.function.Supplier
 import java.util.zip.ZipFile
 import javax.xml.stream.XMLStreamException
 import kotlin.io.path.name
@@ -52,12 +50,13 @@ fun loadDescriptor(file: Path, parentContext: DescriptorListLoadingContext): Ide
                                      isBundled = false,
                                      isEssential = false,
                                      isDirectory = Files.isDirectory(file),
-                                     useCoreClassLoader = false)
+                                     useCoreClassLoader = false,
+                                     pool = null)
 }
 
 internal fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescriptorImpl? {
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
-  val parentContext = DescriptorListLoadingContext(disabledPlugins = DisabledPluginsState.disabledPlugins())
+  val parentContext = DescriptorListLoadingContext(disabledPlugins = DisabledPluginsState.getDisabledIds())
   if (Files.isDirectory(pluginRoot)) {
     return loadDescriptorFromDir(file = pluginRoot,
                                  descriptorRelativePath = "${PluginManagerCore.META_INF}$fileName",
@@ -69,14 +68,17 @@ internal fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescr
                                  useCoreClassLoader = false)
   }
   else {
-    return loadDescriptorFromJar(file = pluginRoot,
-                                 fileName = fileName,
-                                 pathResolver = pathResolver,
-                                 parentContext = parentContext,
-                                 isBundled = true,
-                                 isEssential = true,
-                                 pluginPath = null,
-                                 useCoreClassLoader = false)
+    return runBlocking {
+      loadDescriptorFromJar(file = pluginRoot,
+                            fileName = fileName,
+                            pathResolver = pathResolver,
+                            parentContext = parentContext,
+                            isBundled = true,
+                            isEssential = true,
+                            pluginPath = null,
+                            useCoreClassLoader = false,
+                            pool = null)
+    }
   }
 }
 
@@ -123,18 +125,17 @@ private fun loadDescriptorFromJar(file: Path,
                                   isBundled: Boolean,
                                   isEssential: Boolean,
                                   useCoreClassLoader: Boolean,
-                                  pluginPath: Path?): IdeaPluginDescriptorImpl? {
+                                  pluginPath: Path?,
+                                  pool: ZipFilePool?): IdeaPluginDescriptorImpl? {
   var closeable: Closeable? = null
   try {
-    val dataLoader: DataLoader
-    val pool = ZipFilePool.POOL
-    if (pool == null || parentContext.transient) {
+    val dataLoader = if (pool == null) {
       val zipFile = ZipFile(file.toFile(), StandardCharsets.UTF_8)
       closeable = zipFile
-      dataLoader = JavaZipFileDataLoader(zipFile)
+      JavaZipFileDataLoader(zipFile)
     }
     else {
-      dataLoader = ImmutableZipFileDataLoader(pool.load(file), file, pool)
+      ImmutableZipFileDataLoader(pool.load(file), file, pool)
     }
 
     val raw = readModuleDescriptor(input = dataLoader.load("META-INF/$fileName") ?: return null,
@@ -184,7 +185,8 @@ fun loadDescriptorFromFileOrDir(
   isEssential: Boolean,
   isDirectory: Boolean,
   useCoreClassLoader: Boolean,
-  isUnitTestMode: Boolean = false
+  isUnitTestMode: Boolean = false,
+  pool: ZipFilePool?,
 ): IdeaPluginDescriptorImpl? {
   return when {
     isDirectory -> {
@@ -196,6 +198,7 @@ fun loadDescriptorFromFileOrDir(
         useCoreClassLoader = useCoreClassLoader,
         pathResolver = pathResolver,
         isUnitTestMode = isUnitTestMode,
+        pool = pool,
       )
     }
     file.fileName.toString().endsWith(".jar", ignoreCase = true) -> {
@@ -206,7 +209,8 @@ fun loadDescriptorFromFileOrDir(
                             isBundled = isBundled,
                             isEssential = isEssential,
                             pluginPath = null,
-                            useCoreClassLoader = useCoreClassLoader)
+                            useCoreClassLoader = useCoreClassLoader,
+                            pool = pool)
     }
     else -> null
   }
@@ -221,6 +225,7 @@ private fun loadFromPluginDir(
   useCoreClassLoader: Boolean,
   pathResolver: PathResolver,
   isUnitTestMode: Boolean = false,
+  pool: ZipFilePool?,
 ): IdeaPluginDescriptorImpl? {
   val pluginJarFiles = resolveArchives(file)
   if (!pluginJarFiles.isNullOrEmpty()) {
@@ -234,7 +239,8 @@ private fun loadFromPluginDir(
                             isBundled = isBundled,
                             isEssential = isEssential,
                             pluginPath = file,
-                            useCoreClassLoader = useCoreClassLoader)?.let {
+                            useCoreClassLoader = useCoreClassLoader,
+                            pool = pool)?.let {
         it.jarFiles = pluginJarFiles
         return it
       }
@@ -340,16 +346,17 @@ private fun fileNameIsLikeVersionedLibraryName(name: String): Boolean {
   return false
 }
 
-private suspend fun loadDescriptorsFromProperty(context: DescriptorListLoadingContext): List<IdeaPluginDescriptorImpl> {
+private fun CoroutineScope.loadDescriptorsFromProperty(context: DescriptorListLoadingContext,
+                                                       pool: ZipFilePool?): List<Deferred<IdeaPluginDescriptorImpl?>> {
   val pathProperty = System.getProperty(PluginManagerCore.PROPERTY_PLUGIN_PATH) ?: return emptyList()
 
   // gradle-intellij-plugin heavily depends on this property in order to have core class loader plugins during tests
   val useCoreClassLoaderForPluginsFromProperty = java.lang.Boolean.getBoolean("idea.use.core.classloader.for.plugin.path")
   val t = StringTokenizer(pathProperty, File.pathSeparatorChar + ",")
-  val list = mutableListOf<IdeaPluginDescriptorImpl>()
-  withContext(Dispatchers.IO) {
-    while (t.hasMoreTokens()) {
-      val file = Paths.get(t.nextToken())
+  val list = mutableListOf<Deferred<IdeaPluginDescriptorImpl?>>()
+  while (t.hasMoreTokens()) {
+    val file = Paths.get(t.nextToken())
+    list.add(async {
       loadDescriptorFromFileOrDir(
         file = file,
         context = context,
@@ -358,24 +365,34 @@ private suspend fun loadDescriptorsFromProperty(context: DescriptorListLoadingCo
         isEssential = false,
         isDirectory = Files.isDirectory(file),
         useCoreClassLoader = useCoreClassLoaderForPluginsFromProperty,
-      )?.let {
-        list.add(it)
-      }
-    }
+        pool = pool,
+      )
+    })
   }
   return list
 }
 
 @Suppress("DeferredIsResult")
-internal fun CoroutineScope.scheduleLoading(): Deferred<PluginSet> {
+internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFilePool>?): Deferred<PluginSet> {
   val resultDeferred = async {
-    val activity = StartUpMeasurer.startActivity("plugin descriptor loading", ActivityCategory.DEFAULT)
-    try {
-      loadDescriptors(PluginManagerCore.isUnitTestMode, PluginManagerCore.isRunningFromSources())
+    val activity = StartUpMeasurer.startActivity("plugin descriptor loading")
+    val isUnitTestMode = PluginManagerCore.isUnitTestMode
+    val isRunningFromSources = PluginManagerCore.isRunningFromSources()
+    val result = DescriptorListLoadingContext(
+      isMissingSubDescriptorIgnored = true,
+      isMissingIncludeIgnored = isUnitTestMode,
+      checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
+      disabledPlugins = DisabledPluginsState.getDisabledIds(),
+    ).use { context ->
+      context to loadDescriptors(
+        context = context,
+        isUnitTestMode = isUnitTestMode,
+        isRunningFromSources = isRunningFromSources,
+        zipFilePoolDeferred = zipFilePoolDeferred,
+      )
     }
-    finally {
-      activity.end()
-    }
+    activity.end()
+    result
   }
   val pluginSetDeferred = async {
     val pair = resultDeferred.await()
@@ -458,18 +475,33 @@ suspend fun getLoadedPluginsForRider(): List<IdeaPluginDescriptorImpl?> {
     return it
   }
 
-  val result = loadDescriptors(isUnitTestMode = PluginManagerCore.isUnitTestMode,
-                               isRunningFromSources = PluginManagerCore.isRunningFromSources())
-  return PluginManagerCore.initializeAndSetPlugins(result.first, result.second, PluginManagerCore::class.java.classLoader).enabledPlugins
+  val isUnitTestMode = PluginManagerCore.isUnitTestMode
+  val isRunningFromSources = PluginManagerCore.isRunningFromSources()
+  return DescriptorListLoadingContext(
+    isMissingSubDescriptorIgnored = true,
+    isMissingIncludeIgnored = isUnitTestMode,
+    checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
+    disabledPlugins = DisabledPluginsState.getDisabledIds(),
+  ).use { context ->
+    val result = loadDescriptors(context = context, isUnitTestMode = isUnitTestMode, isRunningFromSources = isRunningFromSources)
+    PluginManagerCore.initializeAndSetPlugins(context, result, PluginManagerCore::class.java.classLoader).enabledPlugins
+  }
 }
 
-@Suppress("DeprecatedCallableAddReplaceWith")
 @Internal
 @Deprecated("do not use")
 fun loadDescriptorsForDeprecatedWizard(): PluginLoadingResult {
   return runBlocking {
-    loadDescriptors(isUnitTestMode = PluginManagerCore.isUnitTestMode,
-                    isRunningFromSources = PluginManagerCore.isRunningFromSources()).second
+    val isUnitTestMode = PluginManagerCore.isUnitTestMode
+    val isRunningFromSources = PluginManagerCore.isRunningFromSources()
+    DescriptorListLoadingContext(
+      isMissingSubDescriptorIgnored = true,
+      isMissingIncludeIgnored = isUnitTestMode,
+      checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
+      disabledPlugins = DisabledPluginsState.getDisabledIds(),
+    ).use { context ->
+      loadDescriptors(context = context, isUnitTestMode = isUnitTestMode, isRunningFromSources = isRunningFromSources)
+    }
   }
 }
 
@@ -480,42 +512,54 @@ fun loadDescriptorsForDeprecatedWizard(): PluginLoadingResult {
  */
 @Internal
 suspend fun loadDescriptors(
+  context: DescriptorListLoadingContext,
   isUnitTestMode: Boolean = PluginManagerCore.isUnitTestMode,
   isRunningFromSources: Boolean,
-): Pair<DescriptorListLoadingContext, PluginLoadingResult> {
-  DescriptorListLoadingContext(
-    isMissingSubDescriptorIgnored = true,
-    isMissingIncludeIgnored = isUnitTestMode,
-    checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
-    disabledPlugins = DisabledPluginsState.disabledPlugins(),
-  ).use { context ->
-    val list = loadDescriptorsFromDirs(
-      context = context,
-      customPluginDir = Paths.get(PathManager.getPluginsPath()),
-      isUnitTestMode = isUnitTestMode,
-      isRunningFromSources = isRunningFromSources,
-    )
+  zipFilePoolDeferred: Deferred<ZipFilePool>? = null,
+): PluginLoadingResult {
+  val list: List<IdeaPluginDescriptorImpl?>
+  val extraList: List<IdeaPluginDescriptorImpl?>
+  coroutineScope {
+    withContext(Dispatchers.IO) {
+      val zipFilePool = if (context.transient) null else zipFilePoolDeferred?.await()
+      val listDeferred = loadDescriptorsFromDirs(
+        context = context,
+        customPluginDir = Paths.get(PathManager.getPluginsPath()),
+        isUnitTestMode = isUnitTestMode,
+        isRunningFromSources = isRunningFromSources,
+        zipFilePool = zipFilePool,
+      )
+      val extraListDeferred = loadDescriptorsFromProperty(context, zipFilePool)
 
-    val buildNumber = context.productBuildNumber.get()
-    val loadingResult = PluginLoadingResult()
-    loadingResult.addAll(descriptors = list, overrideUseIfCompatible = false, productBuildNumber = buildNumber)
-
-    val extraList = loadDescriptorsFromProperty(context)
-    if (!extraList.isEmpty()) {
-      // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
-      loadingResult.addAll(descriptors = list, overrideUseIfCompatible = true, productBuildNumber = buildNumber)
+      list = listDeferred.awaitAll()
+      extraList = extraListDeferred.awaitAll()
     }
-
-    if (isUnitTestMode && loadingResult.enabledPluginsById.size <= 1) {
-      // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
-      loadingResult.addAll(descriptors = loadDescriptorsFromDir(dir = Paths.get(PathManager.getPreInstalledPluginsPath()),
-                                                                context = context,
-                                                                isBundled = true),
-                           overrideUseIfCompatible = false,
-                           productBuildNumber = buildNumber)
-    }
-    return context to loadingResult
   }
+
+  val buildNumber = context.productBuildNumber()
+  val loadingResult = PluginLoadingResult()
+  loadingResult.addAll(descriptors = list, overrideUseIfCompatible = false, productBuildNumber = buildNumber)
+  if (!extraList.isEmpty()) {
+    // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
+    loadingResult.addAll(descriptors = list, overrideUseIfCompatible = true, productBuildNumber = buildNumber)
+  }
+
+  if (isUnitTestMode && loadingResult.enabledPluginsById.size <= 1) {
+    // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
+    loadingResult.addAll(
+      descriptors = coroutineScope {
+        loadDescriptorsFromDir(
+          dir = Paths.get(PathManager.getPreInstalledPluginsPath()),
+          context = context,
+          isBundled = true,
+          pool = if (context.transient) null else zipFilePoolDeferred?.await()
+        ).awaitAll()
+      },
+      overrideUseIfCompatible = false,
+      productBuildNumber = buildNumber
+    )
+  }
+  return loadingResult
 }
 
 private suspend fun loadDescriptorsFromDirs(
@@ -524,7 +568,8 @@ private suspend fun loadDescriptorsFromDirs(
   bundledPluginDir: Path? = null,
   isUnitTestMode: Boolean = PluginManagerCore.isUnitTestMode,
   isRunningFromSources: Boolean = PluginManagerCore.isRunningFromSources(),
-): List<IdeaPluginDescriptorImpl?> {
+  zipFilePool: ZipFilePool?,
+): List<Deferred<IdeaPluginDescriptorImpl?>> {
   val isInDevServerMode = java.lang.Boolean.getBoolean("idea.use.dev.build.server")
 
   val platformPrefixProperty = PlatformUtils.getPlatformPrefix()
@@ -536,84 +581,77 @@ private suspend fun loadDescriptorsFromDirs(
   }
 
   return coroutineScope {
-    val root: Deferred<List<IdeaPluginDescriptorImpl?>> = async {
-      loadCoreModules(context = context,
-                      platformPrefix = platformPrefix,
-                      isUnitTestMode = isUnitTestMode,
-                      isInDevServerMode = isInDevServerMode,
-                      isRunningFromSources = isRunningFromSources)
+    val root = loadCoreModules(context = context,
+                               platformPrefix = platformPrefix,
+                               isUnitTestMode = isUnitTestMode,
+                               isInDevServerMode = isInDevServerMode,
+                               isRunningFromSources = isRunningFromSources,
+                               pool = zipFilePool)
+
+    val custom = loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool)
+
+    val effectiveBundledPluginDir = bundledPluginDir ?: if (isUnitTestMode) {
+      null
+    }
+    else if (isInDevServerMode) {
+      Paths.get(PathManager.getHomePath(), "out/dev-run", platformPrefix, "plugins")
+    }
+    else {
+      Paths.get(PathManager.getPreInstalledPluginsPath())
     }
 
-    val custom: Deferred<List<IdeaPluginDescriptorImpl?>> = async {
-      val activity = StartUpMeasurer.startActivity("plugin from user dir loading")
-      val result = loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false)
-      activity.end()
-      result
+    val bundled = if (effectiveBundledPluginDir == null) {
+      emptyList()
+    }
+    else {
+      loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool)
     }
 
-    val bundled: Deferred<List<IdeaPluginDescriptorImpl?>> = async {
-      val bundledPluginDirOrDefault = bundledPluginDir ?: if (isUnitTestMode) {
-        return@async emptyList()
-      }
-      else if (isInDevServerMode) {
-        Paths.get(PathManager.getHomePath(), "out/dev-run", platformPrefix, "plugins")
-      }
-      else {
-        Paths.get(PathManager.getPreInstalledPluginsPath())
-      }
-
-      val activity = StartUpMeasurer.startActivity("plugin from bundled dir loading")
-      val result = loadDescriptorsFromDir(dir = bundledPluginDirOrDefault, context = context, isBundled = true)
-      activity.end()
-      result
-    }
-
-    awaitAll(root, custom, bundled).flatten()
+    (root + custom + bundled)
   }
 }
 
-private suspend fun loadCoreModules(context: DescriptorListLoadingContext,
-                                    platformPrefix: String,
-                                    isUnitTestMode: Boolean,
-                                    isInDevServerMode: Boolean,
-                                    isRunningFromSources: Boolean): List<IdeaPluginDescriptorImpl?> {
-  var activity = StartUpMeasurer.startActivity("platform plugin collecting")
-
+private fun CoroutineScope.loadCoreModules(context: DescriptorListLoadingContext,
+                                           platformPrefix: String,
+                                           isUnitTestMode: Boolean,
+                                           isInDevServerMode: Boolean,
+                                           isRunningFromSources: Boolean,
+                                           pool: ZipFilePool?): List<Deferred<IdeaPluginDescriptorImpl?>> {
   val classLoader = DescriptorListLoadingContext::class.java.classLoader
-  val pathResolver = ClassPathXmlPathResolver(
-    classLoader = classLoader,
-    isRunningFromSources = isRunningFromSources && !isInDevServerMode,
-  )
+  val pathResolver = ClassPathXmlPathResolver(classLoader = classLoader, isRunningFromSources = isRunningFromSources && !isInDevServerMode)
   val useCoreClassLoader = pathResolver.isRunningFromSources ||
                            platformPrefix.startsWith("CodeServer") ||
                            java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
   // should be the only plugin in lib (only for Ultimate and WebStorm for now)
   val rootModuleDescriptors = if ((platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
                                   (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
-    listOf(loadCoreProductPlugin(getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!,
-                                     context = context,
-                                     pathResolver = pathResolver,
-                                     useCoreClassLoader = useCoreClassLoader))
+    Collections.singletonList(async {
+      loadCoreProductPlugin(getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!,
+                            context = context,
+                            pathResolver = pathResolver,
+                            useCoreClassLoader = useCoreClassLoader)
+    })
   }
   else {
     val fileName = "${platformPrefix}Plugin.xml"
-    var result = listOf(getResourceReader("${PluginManagerCore.META_INF}$fileName", classLoader)?.let {
-      loadCoreProductPlugin(it, context, pathResolver, useCoreClassLoader)
+    var result = listOf(async {
+      getResourceReader("${PluginManagerCore.META_INF}$fileName", classLoader)?.let {
+        loadCoreProductPlugin(it, context, pathResolver, useCoreClassLoader)
+      }
     })
 
     val urlToFilename = collectPluginFilesInClassPath(classLoader)
     if (!urlToFilename.isEmpty()) {
-      activity = activity.endAndStart("plugin from classpath loading")
       @Suppress("SuspiciousCollectionReassignment")
       result += loadDescriptorsFromClassPath(urlToFilename = urlToFilename,
                                              context = context,
                                              pathResolver = pathResolver,
-                                             useCoreClassLoader = useCoreClassLoader)
+                                             useCoreClassLoader = useCoreClassLoader,
+                                             pool = pool)
     }
 
     result
   }
-  activity.end()
   return rootModuleDescriptors
 }
 
@@ -675,17 +713,20 @@ private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String>
 @Throws(IOException::class)
 fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
   val context = DescriptorListLoadingContext(isMissingSubDescriptorIgnored = true,
-                                             disabledPlugins = DisabledPluginsState.disabledPlugins(),
-                                             productBuildNumber = Supplier { buildNumber ?: PluginManagerCore.getBuildNumber() },
+                                             disabledPlugins = DisabledPluginsState.getDisabledIds(),
+                                             productBuildNumber = { buildNumber ?: PluginManagerCore.getBuildNumber() },
                                              transient = true)
 
-  val descriptor = loadDescriptorFromFileOrDir(file = file,
-                                               context = context,
-                                               pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-                                               isBundled = false,
-                                               isEssential = false,
-                                               isDirectory = false,
-                                               useCoreClassLoader = false)
+  val descriptor = runBlocking {
+    loadDescriptorFromFileOrDir(file = file,
+                                context = context,
+                                pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+                                isBundled = false,
+                                isEssential = false,
+                                isDirectory = false,
+                                useCoreClassLoader = false,
+                                pool = null)
+  }
   if (descriptor != null || !file.toString().endsWith(".zip")) {
     return descriptor
   }
@@ -697,13 +738,16 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
       //org.jetbrains.intellij.build.io.ZipArchiveOutputStream may add __index__ entry to the plugin zip, we need to ignore it here
       val rootDir = NioFiles.list(outputDir).firstOrNull { it.name != "__index__" }
       if (rootDir != null) {
-        return loadDescriptorFromFileOrDir(file = rootDir,
-                                           context = context,
-                                           pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-                                           isBundled = false,
-                                           isEssential = false,
-                                           isDirectory = true,
-                                           useCoreClassLoader = false)
+        return runBlocking {
+          loadDescriptorFromFileOrDir(file = rootDir,
+                                      context = context,
+                                      pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+                                      isBundled = false,
+                                      isEssential = false,
+                                      isDirectory = true,
+                                      useCoreClassLoader = false,
+                                      pool = null)
+        }
       }
     }
     catch (ignore: NoSuchFileException) {
@@ -721,13 +765,16 @@ fun loadDescriptor(file: Path,
                    isBundled: Boolean,
                    pathResolver: PathResolver): IdeaPluginDescriptorImpl? {
   DescriptorListLoadingContext(disabledPlugins = disabledPlugins).use { context ->
-    return loadDescriptorFromFileOrDir(file = file,
-                                       context = context,
-                                       pathResolver = pathResolver,
-                                       isBundled = isBundled,
-                                       isEssential = false,
-                                       isDirectory = Files.isDirectory(file),
-                                       useCoreClassLoader = false)
+    return runBlocking {
+      loadDescriptorFromFileOrDir(file = file,
+                                  context = context,
+                                  pathResolver = pathResolver,
+                                  isBundled = isBundled,
+                                  isEssential = false,
+                                  isDirectory = Files.isDirectory(file),
+                                  useCoreClassLoader = false,
+                                  pool = null)
+    }
   }
 }
 
@@ -741,16 +788,19 @@ fun loadDescriptors(
   return DescriptorListLoadingContext(
     disabledPlugins = emptySet(),
     brokenPluginVersions = brokenPluginVersions ?: PluginManagerCore.getBrokenPluginVersions(),
-    productBuildNumber = Supplier { productBuildNumber ?: PluginManagerCore.getBuildNumber() },
+    productBuildNumber = { productBuildNumber ?: PluginManagerCore.getBuildNumber() },
     isMissingIncludeIgnored = true,
     isMissingSubDescriptorIgnored = true,
   ).use { context ->
     runBlocking {
       val result = PluginLoadingResult()
       result.addAll(
-        descriptors = loadDescriptorsFromDirs(context = context, customPluginDir = customPluginDir, bundledPluginDir = bundledPluginDir),
+        descriptors = loadDescriptorsFromDirs(context = context,
+                                              customPluginDir = customPluginDir,
+                                              bundledPluginDir = bundledPluginDir,
+                                              zipFilePool = null).awaitAll(),
         overrideUseIfCompatible = false,
-        productBuildNumber = context.productBuildNumber.get()
+        productBuildNumber = context.productBuildNumber()
       )
       result
     }
@@ -763,7 +813,7 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
   val buildNumber = BuildNumber.fromString("2042.42")!!
   val context = DescriptorListLoadingContext(disabledPlugins = Collections.emptySet(),
                                              brokenPluginVersions = emptyMap(),
-                                             productBuildNumber = Supplier { buildNumber })
+                                             productBuildNumber = { buildNumber })
   return runBlocking {
     val result = PluginLoadingResult(checkModuleDependencies = false)
     result.addAll(loadDescriptorsFromClassPath(
@@ -771,56 +821,55 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
       context = context,
       pathResolver = ClassPathXmlPathResolver(loader, isRunningFromSources = false),
       useCoreClassLoader = true,
-    ), overrideUseIfCompatible = false, productBuildNumber = buildNumber)
+      pool = if (context.transient) null else ZipFilePool.POOL,
+    ).awaitAll(), overrideUseIfCompatible = false, productBuildNumber = buildNumber)
     result.enabledPlugins
   }
 }
 
-private suspend fun loadDescriptorsFromDir(dir: Path,
-                                           context: DescriptorListLoadingContext,
-                                           isBundled: Boolean): List<IdeaPluginDescriptorImpl?> {
+private fun CoroutineScope.loadDescriptorsFromDir(dir: Path,
+                                                  context: DescriptorListLoadingContext,
+                                                  isBundled: Boolean,
+                                                  pool: ZipFilePool?): List<Deferred<IdeaPluginDescriptorImpl?>> {
   if (!Files.isDirectory(dir)) {
     return emptyList()
   }
 
-  return coroutineScope {
-    withContext(Dispatchers.IO) {
-      Files.newDirectoryStream(dir).use { dirStream ->
-        dirStream.map { file ->
-          async {
-            loadDescriptorFromFileOrDir(
-              file = file,
-              context = context,
-              pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-              isBundled = isBundled,
-              isDirectory = Files.isDirectory(file),
-              isEssential = false,
-              useCoreClassLoader = false,
-            )
-          }
-        }
+  return Files.newDirectoryStream(dir).use { dirStream ->
+    dirStream.map { file ->
+      async {
+        loadDescriptorFromFileOrDir(
+          file = file,
+          context = context,
+          pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+          isBundled = isBundled,
+          isDirectory = Files.isDirectory(file),
+          isEssential = false,
+          useCoreClassLoader = false,
+          pool = pool,
+        )
       }
-    }.awaitAll()
+    }
   }
 }
 
 // urls here expected to be a file urls to plugin.xml
-private suspend fun loadDescriptorsFromClassPath(
+private fun CoroutineScope.loadDescriptorsFromClassPath(
   urlToFilename: Map<URL, String>,
   context: DescriptorListLoadingContext,
   pathResolver: ClassPathXmlPathResolver,
   useCoreClassLoader: Boolean,
-): List<IdeaPluginDescriptorImpl?> {
-  return coroutineScope {
-    urlToFilename.map { (url, filename) ->
-      async(Dispatchers.IO) {
-        loadDescriptorFromResource(resource = url,
-                                   filename = filename,
-                                   context = context,
-                                   pathResolver = pathResolver,
-                                   useCoreClassLoader = useCoreClassLoader)
-      }
-    }.awaitAll()
+  pool: ZipFilePool?,
+): List<Deferred<IdeaPluginDescriptorImpl?>> {
+  return urlToFilename.map { (url, filename) ->
+    async {
+      loadDescriptorFromResource(resource = url,
+                                 filename = filename,
+                                 context = context,
+                                 pathResolver = pathResolver,
+                                 useCoreClassLoader = useCoreClassLoader,
+                                 pool = pool)
+    }
   }
 }
 
@@ -831,6 +880,7 @@ private fun loadDescriptorFromResource(
   context: DescriptorListLoadingContext,
   pathResolver: ClassPathXmlPathResolver,
   useCoreClassLoader: Boolean,
+  pool: ZipFilePool?,
 ): IdeaPluginDescriptorImpl? {
   val file = Paths.get(UrlClassLoader.urlToFilePath(resource.path))
   var closeable: Closeable? = null
@@ -848,7 +898,6 @@ private fun loadDescriptorFromResource(
         // support for unpacked plugins in classpath, e.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
         basePath = file.parent?.takeIf { !it.endsWith("lib") }?.parent ?: file
 
-        val pool = if (context.transient) null else ZipFilePool.POOL
         if (pool == null) {
           val zipFile = ZipFile(file.toFile(), StandardCharsets.UTF_8)
           closeable = zipFile

@@ -1,417 +1,369 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.idea;
+package com.intellij.idea
 
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivityCategory;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.ide.CliResult;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtilRt;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufOutputStream;
-import io.netty.channel.ChannelHandlerContext;
-import kotlin.coroutines.EmptyCoroutineContext;
-import kotlinx.coroutines.BuildersKt;
-import kotlinx.coroutines.CoroutineStart;
-import kotlinx.coroutines.Deferred;
-import kotlinx.coroutines.GlobalScope;
-import kotlinx.coroutines.future.FutureKt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.io.BuiltInServer;
-import org.jetbrains.io.MessageDecoder;
+import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.ide.CliResult
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.SpecialConfigFiles
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtilRt
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.ByteBufOutputStream
+import io.netty.channel.ChannelHandlerContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
+import org.jetbrains.io.BuiltInServer
+import org.jetbrains.io.MessageDecoder
+import java.io.DataInput
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.io.IOException
+import java.net.ConnectException
+import java.net.InetAddress
+import java.net.Socket
+import java.nio.channels.FileChannel
+import java.nio.charset.StandardCharsets
+import java.nio.file.*
+import java.nio.file.attribute.PosixFileAttributeView
+import java.nio.file.attribute.PosixFilePermission
+import java.util.*
+import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Function
+import java.util.function.Supplier
 
-import java.io.*;
-import java.net.ConnectException;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.*;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-import java.util.function.Supplier;
+private const val PATHS_EOT_RESPONSE = "---"
+private const val ACTIVATE_COMMAND = "activate "
+private const val OK_RESPONSE = "ok"
 
-import static com.intellij.ide.SpecialConfigFiles.*;
+class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path) {
+  companion object {
+    /**
+     * Name of an environment variable that will be set by the Windows launcher and will contain the working directory the
+     * IDE was started with.
+     *
+     * This is necessary on Windows because the launcher needs to change the current directory for the JVM to load
+     * properly; see the details in WindowsLauncher.cpp.
+     */
+    const val LAUNCHER_INITIAL_DIRECTORY_ENV_VAR = "IDEA_INITIAL_DIRECTORY"
+  }
 
-public final class SocketLock {
-  public enum ActivationStatus {ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE}
+  enum class ActivationStatus {
+    ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE
+  }
 
-  /**
-   * Name of an environment variable that will be set by the Windows launcher and will contain the working directory the
-   * IDE was started with.
-   *
-   * This is necessary on Windows because the launcher needs to change the current directory for the JVM to load
-   * properly; see the details in WindowsLauncher.cpp.
-   */
-  public static final String LAUNCHER_INITIAL_DIRECTORY_ENV_VAR = "IDEA_INITIAL_DIRECTORY";
+  private val commandProcessorRef: AtomicReference<Function<List<String>, Future<CliResult>>> = AtomicReference(Function {
+    CliResult.error(Main.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized"))
+  })
 
-  private static final String ACTIVATE_COMMAND = "activate ";
-  private static final String OK_RESPONSE = "ok";
-  private static final String PATHS_EOT_RESPONSE = "---";
+  private val lockedFiles = ArrayList<AutoCloseable>(4)
 
-  private final AtomicReference<Function<? super List<String>, ? extends Future<CliResult>>> myCommandProcessorRef;
-  private final Path myConfigPath;
-  private final Path mySystemPath;
-  private final List<AutoCloseable> myLockedFiles = new ArrayList<>(4);
-  private volatile Deferred<BuiltInServer> builtinServerFuture;
+  @Volatile
+  var serverFuture: Deferred<BuiltInServer>? = null
+    private set
 
-  public SocketLock(@NotNull Path configPath, @NotNull Path systemPath) {
-    myConfigPath = configPath;
-    mySystemPath = systemPath;
-    if (myConfigPath.equals(mySystemPath)) {
-      throw new IllegalArgumentException("'config' and 'system' paths should point to different directories");
+  init {
+    if (configPath == systemPath) {
+      throw IllegalArgumentException("'config' and 'system' paths should point to different directories")
     }
-    myCommandProcessorRef =
-      new AtomicReference<>(args -> CliResult.error(Main.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized")));
   }
 
-  public @NotNull Path getConfigPath() {
-    return myConfigPath;
+  fun setCommandProcessor(processor: Function<List<String>, Future<CliResult>>) {
+    commandProcessorRef.set(processor)
   }
 
-  public @NotNull Path getSystemPath() {
-    return mySystemPath;
-  }
-
-  public void setCommandProcessor(@NotNull Function<? super List<String>, ? extends Future<CliResult>> processor) {
-    myCommandProcessorRef.set(processor);
-  }
-
-  public void dispose() {
-    log("enter: dispose()");
-
-    BuiltInServer server = null;
+  fun dispose() {
+    log("enter: dispose()")
+    var server: BuiltInServer? = null
     try {
-      server = getServer();
+      server = getServer()
     }
-    catch (Exception ignored) { }
+    catch (ignored: Exception) {
+    }
 
     try {
-      if (myLockedFiles.isEmpty()) {
-        lockPortFiles();
+      if (lockedFiles.isEmpty()) {
+        lockPortFiles()
       }
-      if (server != null) {
-        Disposer.dispose(server);
+      server?.let {
+        Disposer.dispose(it)
       }
-      Files.deleteIfExists(myConfigPath.resolve(PORT_FILE));
-      Files.deleteIfExists(mySystemPath.resolve(PORT_FILE));
-      Files.deleteIfExists(mySystemPath.resolve(TOKEN_FILE));
-      unlockPortFiles();
+      Files.deleteIfExists(configPath.resolve(SpecialConfigFiles.PORT_FILE))
+      Files.deleteIfExists(systemPath.resolve(SpecialConfigFiles.PORT_FILE))
+      Files.deleteIfExists(systemPath.resolve(SpecialConfigFiles.TOKEN_FILE))
+      unlockPortFiles()
     }
-    catch (Exception e) {
-      log(e);
+    catch (e: Exception) {
+      log(e)
     }
   }
 
-  @Nullable BuiltInServer getServer() {
-    Deferred<BuiltInServer> future = builtinServerFuture;
-    return future == null ? null : FutureKt.asCompletableFuture(future).join();
-  }
+  fun getServer(): BuiltInServer? = serverFuture?.asCompletableFuture()?.join()
 
-  @Nullable Deferred<BuiltInServer> getServerFuture() {
-    return builtinServerFuture;
-  }
-
-  public @NotNull Map.Entry<@NotNull ActivationStatus, @Nullable CliResult> lockAndTryActivate(@NotNull String @NotNull [] args) throws Exception {
-    log("enter: lock(config=%s system=%s)", myConfigPath, mySystemPath);
-
-    lockPortFiles();
-
-    Map<Integer, List<String>> portToPath = new HashMap<>();
-    readPort(myConfigPath, portToPath);
-    readPort(mySystemPath, portToPath);
+  fun lockAndTryActivate(args: Array<String>, scope: CoroutineScope): Map.Entry<ActivationStatus, CliResult?> {
+    log("enter: lock(config=%s system=%s)", configPath, systemPath)
+    lockPortFiles()
+    val portToPath = HashMap<Int, MutableList<String>>()
+    readPort(configPath, portToPath)
+    readPort(systemPath, portToPath)
     if (!portToPath.isEmpty()) {
-      for (Map.Entry<Integer, List<String>> entry : portToPath.entrySet()) {
-        Map.Entry<ActivationStatus, CliResult> status = tryActivate(entry.getKey(), entry.getValue(), args);
-        if (status.getKey() != ActivationStatus.NO_INSTANCE) {
-          log("exit: lock(): " + status.getValue());
-          unlockPortFiles();
-          return status;
+      for ((key, value) in portToPath) {
+        val status = tryActivate(key, value, args)
+        if (status.key != ActivationStatus.NO_INSTANCE) {
+          log("exit: lock(): " + status.value)
+          unlockPortFiles()
+          return status
         }
       }
     }
 
-    builtinServerFuture =
-      BuildersKt.async(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
-        Activity activity = StartUpMeasurer.startActivity("built-in server launch", ActivityCategory.DEFAULT);
-
-        String token = UUID.randomUUID().toString();
-        Path[] lockedPaths = {myConfigPath, mySystemPath};
-        BuiltInServer server =
-          BuiltInServer.Companion.start(6942, 50, false, () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef::get, token));
+    serverFuture = scope.async(Dispatchers.IO) {
+      val activity = StartUpMeasurer.startActivity("built-in server launch", ActivityCategory.DEFAULT)
+      val token = UUID.randomUUID().toString()
+      val lockedPaths = arrayOf(configPath, systemPath)
+      val server = BuiltInServer.start(firstPort = 6942, portsCount = 50, tryAnyPort = false) {
+        MyChannelInboundHandler(lockedPaths, commandProcessorRef::get, token)
+      }
+      val portBytes = server.port.toString().toByteArray(StandardCharsets.UTF_8)
+      Files.write(configPath.resolve(SpecialConfigFiles.PORT_FILE), portBytes)
+      Files.write(systemPath.resolve(SpecialConfigFiles.PORT_FILE), portBytes)
+      val tokenFile = systemPath.resolve(SpecialConfigFiles.TOKEN_FILE)
+      Files.write(tokenFile, token.toByteArray(StandardCharsets.UTF_8))
+      val view = Files.getFileAttributeView(tokenFile, PosixFileAttributeView::class.java)
+      if (view != null) {
         try {
-          byte[] portBytes = Integer.toString(server.getPort()).getBytes(StandardCharsets.UTF_8);
-          Files.write(myConfigPath.resolve(PORT_FILE), portBytes);
-          Files.write(mySystemPath.resolve(PORT_FILE), portBytes);
-
-          Path tokenFile = mySystemPath.resolve(TOKEN_FILE);
-          Files.write(tokenFile, token.getBytes(StandardCharsets.UTF_8));
-          PosixFileAttributeView view = Files.getFileAttributeView(tokenFile, PosixFileAttributeView.class);
-          if (view != null) {
-            try {
-              view.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
-            }
-            catch (IOException e) {
-              log(e);
-            }
-          }
-
-          unlockPortFiles();
+          view.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE))
         }
-        catch (RuntimeException e) {
-          throw e;
+        catch (e: IOException) {
+          log(e)
         }
-        catch (Exception e) {
-          throw new CompletionException(e);
-        }
+      }
+      unlockPortFiles()
 
-        activity.end();
-        return server;
-      });
-
-    log("exit: lock(): succeed");
-    return new AbstractMap.SimpleEntry<>(ActivationStatus.NO_INSTANCE, null);
+      activity.end()
+      server
+    }
+    log("exit: lock(): succeed")
+    return AbstractMap.SimpleEntry(ActivationStatus.NO_INSTANCE, null)
   }
 
   /**
-   * <p>According to <a href="https://stackoverflow.com/a/12652718/3463676">Stack Overflow</a>, file locks should be removed on process segfault.
-   * According to {@link FileLock} documentation, file locks are marked as invalid on JVM termination.</p>
+   * According to [Stack Overflow](https://stackoverflow.com/a/12652718/3463676), file locks should be removed on process segfault.
+   * According to [FileLock] documentation, file locks are marked as invalid on JVM termination.
    *
-   * <p>Unlocking of port files (via {@link #unlockPortFiles}) happens either after builtin server init, or on app termination.</p>
+   * Unlocking of port files (via [.unlockPortFiles]) happens either after builtin server init, or on app termination.
    *
-   * <p>Because of that, we do not care about non-starting Netty leading to infinite lock handling, as the IDE is not ready to
-   * accept connections anyway; on app termination the locks will be released.</p>
+   * Because of that, we do not care about non-starting Netty leading to infinite lock handling, as the IDE is not ready to
+   * accept connections anyway; on app termination the locks will be released.
    */
-  private synchronized void lockPortFiles() throws IOException {
-    if (!myLockedFiles.isEmpty()) {
-      throw new IllegalStateException("File locking must not be called twice");
-    }
-
-    OpenOption[] options = {StandardOpenOption.CREATE, StandardOpenOption.APPEND};
-    Files.createDirectories(myConfigPath);
-    FileChannel cc = FileChannel.open(myConfigPath.resolve(PORT_LOCK_FILE), options);
-    myLockedFiles.add(cc);
-    myLockedFiles.add(cc.lock());
-    Files.createDirectories(mySystemPath);
-    FileChannel sc = FileChannel.open(mySystemPath.resolve(PORT_LOCK_FILE), options);
-    myLockedFiles.add(sc);
-    myLockedFiles.add(sc.lock());
+  @Suppress("KDocUnresolvedReference")
+  @Synchronized
+  private fun lockPortFiles() {
+    check(lockedFiles.isEmpty()) { "File locking must not be called twice" }
+    val options = arrayOf<OpenOption>(StandardOpenOption.CREATE, StandardOpenOption.APPEND)
+    Files.createDirectories(configPath)
+    val cc = FileChannel.open(configPath.resolve(SpecialConfigFiles.PORT_LOCK_FILE), *options)
+    lockedFiles.add(cc)
+    lockedFiles.add(cc.lock())
+    Files.createDirectories(systemPath)
+    val sc = FileChannel.open(systemPath.resolve(SpecialConfigFiles.PORT_LOCK_FILE), *options)
+    lockedFiles.add(sc)
+    lockedFiles.add(sc.lock())
   }
 
-  private synchronized void unlockPortFiles() throws Exception {
-    if (myLockedFiles.isEmpty()) {
-      throw new IllegalStateException("File unlocking must not be called twice");
+  @Synchronized
+  private fun unlockPortFiles() {
+    check(!lockedFiles.isEmpty()) { "File unlocking must not be called twice" }
+    for (i in lockedFiles.indices.reversed()) {
+      lockedFiles[i].close()
     }
-    for (int i = myLockedFiles.size() - 1; i >= 0; i--) {
-      myLockedFiles.get(i).close();
-    }
-    myLockedFiles.clear();
+    lockedFiles.clear()
   }
 
-  private static String readOneLine(Path file) throws IOException {
-    try (BufferedReader reader = Files.newBufferedReader(file)) {
-      return reader.readLine().trim();
-    }
-  }
-
-  private static void readPort(Path dir, Map<Integer, List<String>> portToPath) {
+  private fun tryActivate(portNumber: Int, paths: List<String>, args: Array<String>): Map.Entry<ActivationStatus, CliResult?> {
+    log("trying: port=%s", portNumber)
     try {
-      portToPath.computeIfAbsent(Integer.parseInt(readOneLine(dir.resolve(PORT_FILE))), it -> new ArrayList<>()).add(dir.toString());
-    }
-    catch (NoSuchFileException ignore) { }
-    catch (Exception e) {
-      log(e);  // no need to delete a file, it will be overwritten
-    }
-  }
-
-  private Map.Entry<ActivationStatus, CliResult> tryActivate(int portNumber, List<String> paths, String[] args) {
-    log("trying: port=%s", portNumber);
-
-    try (Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), portNumber)) {
-      socket.setSoTimeout(5000);
-
-      DataInput in = new DataInputStream(socket.getInputStream());
-      List<String> stringList = readStringSequence(in);
-      // backward compatibility: requires at least one path to match
-      boolean result = paths.stream().anyMatch(stringList::contains);
-      if (result) {
-        try {
-          String token = readOneLine(mySystemPath.resolve(TOKEN_FILE));
-          @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-
-          String currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR);
-          if (currentDirectory == null) {
-            currentDirectory = ".";
-          }
-          out.writeUTF(ACTIVATE_COMMAND + token + '\0' + Paths.get(currentDirectory).toAbsolutePath() + '\0' + String.join("\0", args));
-          out.flush();
-
-          socket.setSoTimeout(0);
-          List<String> response = readStringSequence(in);
-          log("read: response=%s", String.join(";", response));
-          if (!response.isEmpty() && OK_RESPONSE.equals(response.get(0))) {
-            return new AbstractMap.SimpleEntry<>(ActivationStatus.ACTIVATED, mapResponseToCliResult(response));
-          }
-        }
-        catch (IOException | IllegalArgumentException e) {
-          log(e);
-        }
-
-        return new AbstractMap.SimpleEntry<>(ActivationStatus.CANNOT_ACTIVATE, null);
-      }
-    }
-    catch (ConnectException e) {
-      log("%s (stale port file?)", e.getMessage());
-    }
-    catch (IOException e) {
-      log(e);
-    }
-
-    return new AbstractMap.SimpleEntry<>(ActivationStatus.NO_INSTANCE, null);
-  }
-
-  private static final class MyChannelInboundHandler extends MessageDecoder {
-    private enum State {HEADER, CONTENT}
-
-    private final List<String> myLockedPaths;
-    private final Supplier<? extends Function<? super List<String>, ? extends Future<CliResult>>> myCommandProcessorRef;
-    private final String myToken;
-    private State myState = State.HEADER;
-
-    MyChannelInboundHandler(Path[] lockedPaths, Supplier<? extends Function<? super List<String>, ? extends Future<CliResult>>> commandProcessorRef, String token) {
-      myLockedPaths = new ArrayList<>(lockedPaths.length);
-      for (Path path : lockedPaths) {
-        myLockedPaths.add(path.toString());
-      }
-      myCommandProcessorRef = commandProcessorRef;
-      myToken = token;
-    }
-
-    @Override
-    public void channelActive(@NotNull ChannelHandlerContext context) throws Exception {
-      sendStringSequence(context, myLockedPaths);
-    }
-
-    @Override
-    protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf input) throws Exception {
-      while (true) {
-        switch (myState) {
-          case HEADER: {
-            ByteBuf buffer = getBufferIfSufficient(input, 2, context);
-            if (buffer == null) return;
-            contentLength = buffer.readUnsignedShort();
-            if (contentLength > 8192) {
-              context.close();
-              return;
+      Socket(InetAddress.getByName("127.0.0.1"), portNumber).use { socket ->
+        socket.soTimeout = 5000
+        val input = DataInputStream(socket.getInputStream())
+        val stringList = readStringSequence(input)
+        // backward compatibility: requires at least one path to match
+        val result = paths.any(stringList::contains)
+        if (result) {
+          try {
+            val token = readOneLine(systemPath.resolve(SpecialConfigFiles.TOKEN_FILE))
+            val out = DataOutputStream(socket.getOutputStream())
+            var currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
+            if (currentDirectory == null) {
+              currentDirectory = "."
             }
-            myState = State.CONTENT;
-            break;
-          }
-
-          case CONTENT: {
-            CharSequence command = readChars(input);
-            if (command == null) return;
-
-            if (StringUtilRt.startsWith(command, ACTIVATE_COMMAND)) {
-              String data = command.subSequence(ACTIVATE_COMMAND.length(), command.length()).toString();
-              StringTokenizer tokenizer = new StringTokenizer(data, data.contains("\0") ? "\0" : "\uFFFD");
-              CliResult result;
-              boolean tokenOK = tokenizer.hasMoreTokens() && myToken.equals(tokenizer.nextToken());
-              if (tokenOK) {
-                List<String> list = new ArrayList<>();
-                while (tokenizer.hasMoreTokens()) list.add(tokenizer.nextToken());
-                Future<CliResult> future = myCommandProcessorRef.get().apply(list);
-                result = CliResult.unmap(future, Main.ACTIVATE_ERROR);
-              }
-              else {
-                log(new UnsupportedOperationException("unauthorized request: " + command));
-                result = new CliResult(Main.ACTIVATE_WRONG_TOKEN_CODE, IdeBundle.message("activation.auth.message"));
-              }
-
-              String exitCode = String.valueOf(result.exitCode), message = result.message;
-              List<String> response = message != null ? List.of(OK_RESPONSE, exitCode, message) : List.of(OK_RESPONSE, exitCode);
-              sendStringSequence(context, response);
+            out.writeUTF(
+              ACTIVATE_COMMAND + token + '\u0000' + Paths.get(currentDirectory).toAbsolutePath() + '\u0000' + java.lang.String.join("\u0000", *args))
+            out.flush()
+            socket.soTimeout = 0
+            val response = readStringSequence(input)
+            log("read: response=%s", java.lang.String.join(";", response))
+            if (!response.isEmpty() && OK_RESPONSE == response[0]) {
+              return AbstractMap.SimpleEntry(ActivationStatus.ACTIVATED, mapResponseToCliResult(response))
             }
-
-            context.close();
-            break;
           }
+          catch (e: IOException) {
+            log(e)
+          }
+          catch (e: IllegalArgumentException) {
+            log(e)
+          }
+          return AbstractMap.SimpleEntry<ActivationStatus, CliResult?>(ActivationStatus.CANNOT_ACTIVATE, null)
         }
       }
     }
+    catch (e: ConnectException) {
+      log("%s (stale port file?)", e.message!!)
+    }
+    catch (e: IOException) {
+      log(e)
+    }
+    return AbstractMap.SimpleEntry<ActivationStatus, CliResult?>(ActivationStatus.NO_INSTANCE, null)
+  }
+}
+
+private fun readOneLine(file: Path) = Files.newBufferedReader(file).use { it.readLine().trim() }
+
+private fun readPort(dir: Path, portToPath: MutableMap<Int, MutableList<String>>) {
+  try {
+    portToPath.computeIfAbsent(readOneLine(dir.resolve(SpecialConfigFiles.PORT_FILE)).toInt()) { ArrayList() }.add(dir.toString())
+  }
+  catch (ignore: NoSuchFileException) {
+  }
+  catch (e: Exception) {
+    // no need to delete a file, it will be overwritten
+    log(e)
+  }
+}
+
+private fun readStringSequence(input: DataInput): List<String> {
+  val result = ArrayList<String>()
+  while (true) {
+    try {
+      val string = input.readUTF()
+      log("read: path=%s", string)
+      if (PATHS_EOT_RESPONSE == string) {
+        break
+      }
+      result.add(string)
+    }
+    catch (e: IOException) {
+      log("read: %s", e.message!!)
+      break
+    }
+  }
+  return result
+}
+
+private fun mapResponseToCliResult(responseParts: List<String>): CliResult {
+  if (responseParts.size > 3 || responseParts.size < 2) {
+    throw IllegalArgumentException("bad response: " + java.lang.String.join(";", responseParts))
+  }
+  val code = try {
+    responseParts[1].toInt()
+  }
+  catch (e: NumberFormatException) {
+    throw IllegalArgumentException("Second part is not a parsable return code", e)
+  }
+  return CliResult(code, if (responseParts.size == 3) responseParts[2] else null)
+}
+
+private fun log(format: String, vararg args: Any) {
+  val logger = Logger.getInstance(SocketLock::class.java)
+  if (logger.isDebugEnabled) {
+    logger.debug(String.format(format, *args))
+  }
+}
+
+private fun sendStringSequence(context: ChannelHandlerContext, strings: List<String>) {
+  val buffer = context.alloc().ioBuffer(1024)
+  var success = false
+  try {
+    ByteBufOutputStream(buffer).use { out ->
+      for (s in strings) {
+        out.writeUTF(s)
+      }
+      out.writeUTF(PATHS_EOT_RESPONSE)
+      success = true
+    }
+  }
+  finally {
+    if (!success) {
+      buffer.release()
+    }
+  }
+  context.writeAndFlush(buffer)
+}
+
+private fun log(e: Exception) {
+  Logger.getInstance(SocketLock::class.java).warn(e)
+}
+
+private class MyChannelInboundHandler(lockedPaths: Array<Path>,
+                                      private val commandProcessorRef: Supplier<Function<List<String>, Future<CliResult>>>,
+                                      private val token: String) : MessageDecoder() {
+  private enum class State {
+    HEADER, CONTENT
   }
 
-  private static void sendStringSequence(ChannelHandlerContext context, List<String> strings) throws IOException {
-    ByteBuf buffer = context.alloc().ioBuffer(1024);
-    boolean success = false;
-    try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
-      for (String s : strings) {
-        out.writeUTF(s);
-      }
-      out.writeUTF(PATHS_EOT_RESPONSE);
-      success = true;
-    }
-    finally {
-      if (!success) {
-        buffer.release();
-      }
-    }
-    context.writeAndFlush(buffer);
+  private val lockedPaths = lockedPaths.map(Path::toString)
+  private var state = State.HEADER
+
+  override fun channelActive(context: ChannelHandlerContext) {
+    sendStringSequence(context, lockedPaths)
   }
 
-  private static List<String> readStringSequence(DataInput in) {
-    List<String> result = new ArrayList<>();
+  override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
     while (true) {
-      try {
-        String string = in.readUTF();
-        log("read: path=%s", string);
-        if (PATHS_EOT_RESPONSE.equals(string)) {
-          break;
+      when (state) {
+        State.HEADER -> {
+          val buffer = getBufferIfSufficient(input, 2, context) ?: return
+          contentLength = buffer.readUnsignedShort()
+          if (contentLength > 8192) {
+            context.close()
+            return
+          }
+          state = State.CONTENT
         }
-        result.add(string);
+        State.CONTENT -> {
+          val command = readChars(input) ?: return
+          if (StringUtilRt.startsWith(command, ACTIVATE_COMMAND)) {
+            val data = command.subSequence(ACTIVATE_COMMAND.length, command.length).toString()
+            val tokenizer = StringTokenizer(data, if (data.contains("\u0000")) "\u0000" else "\uFFFD")
+            val tokenOK = tokenizer.hasMoreTokens() && token == tokenizer.nextToken()
+            val result = if (tokenOK) {
+              val list = ArrayList<String>()
+              while (tokenizer.hasMoreTokens()) {
+                list.add(tokenizer.nextToken())
+              }
+              CliResult.unmap(commandProcessorRef.get().apply(list), Main.ACTIVATE_ERROR)
+            }
+            else {
+              log(UnsupportedOperationException("unauthorized request: $command"))
+              CliResult(Main.ACTIVATE_WRONG_TOKEN_CODE, IdeBundle.message("activation.auth.message"))
+            }
+
+            val exitCode = result.exitCode.toString()
+            val message = result.message
+            @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+            val response = if (message == null) {
+              java.util.List.of(OK_RESPONSE, exitCode)
+            }
+            else {
+              java.util.List.of(OK_RESPONSE, exitCode, message)
+            }
+            sendStringSequence(context, response)
+          }
+          context.close()
+        }
       }
-      catch (IOException e) {
-        log("read: %s", e.getMessage());
-        break;
-      }
-    }
-    return result;
-  }
-
-  private static CliResult mapResponseToCliResult(List<String> responseParts) throws IllegalArgumentException {
-    if (responseParts.size() > 3 || responseParts.size() < 2) {
-      throw new IllegalArgumentException("bad response: " + String.join(";", responseParts));
-    }
-
-    int code;
-    try {
-      code = Integer.parseInt(responseParts.get(1));
-    }
-    catch (NumberFormatException e) {
-      throw new IllegalArgumentException("Second part is not a parsable return code", e);
-    }
-
-    String message = responseParts.size() == 3 ? responseParts.get(2) : null;
-    return new CliResult(code, message);
-  }
-
-  private static void log(Exception e) {
-    Logger.getInstance(SocketLock.class).warn(e);
-  }
-
-  private static void log(String format, Object... args) {
-    Logger logger = Logger.getInstance(SocketLock.class);
-    if (logger.isDebugEnabled()) {
-      logger.debug(String.format(format, args));
     }
   }
 }

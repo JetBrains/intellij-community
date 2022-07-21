@@ -1,20 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus
 
 /**
- * Use extension point {@code com.intellij.applicationInitializedListener} to register listener.
- * Please note - you cannot use {@link ExtensionPointName#findExtension} because this extension point is cleared up after app loading.
- * <p>
- * Not part of {@link ApplicationLoadListener} to avoid class loading before application initialization.
+ * Use extension point `com.intellij.applicationInitializedListener` to register listener.
+ * Please note - you cannot use [ExtensionPointName.findExtension] because this extension point is cleared up after app loading.
+ *
+ *
+ * Not part of [ApplicationLoadListener] to avoid class loading before application initialization.
  */
 @ApiStatus.Internal
-public interface ApplicationInitializedListener {
+interface ApplicationInitializedListener {
+  /** Perform the preloading. */
+  @JvmDefault
+  suspend fun execute() {
+    @Suppress("DEPRECATION")
+    componentsInitialized()
+  }
+
   /**
-   * Invoked when all application level components are initialized in the same thread where components are initializing (EDT is not guaranteed).
-   * Write actions and time-consuming activities are not recommended because listeners are invoked sequentially and directly affects application start time.
+   * Invoked when all application level components are initialized.
+   * Write actions and time-consuming activities are not recommended because directly affects application start time.
    */
-  void componentsInitialized();
+  @Deprecated("Use {@link #execute()}", ReplaceWith("execute()"))
+  fun componentsInitialized() {
+  }
 }

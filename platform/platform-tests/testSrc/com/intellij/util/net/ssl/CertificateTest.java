@@ -145,7 +145,7 @@ public class CertificateTest extends LightPlatformTestCase {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       final Thread thread = new Thread(() -> {
         try {
-          boolean accepted = CertificateManager.showAcceptDialog(() -> {
+          boolean accepted = CertificateManager.Companion.showAcceptDialog(() -> {
             // this dialog will be attempted to show only if blocking thread was forcibly interrupted after timeout
             throw new AssertionError("Deadlock was not detected in time");
           });

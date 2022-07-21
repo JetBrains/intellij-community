@@ -1,72 +1,52 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.idea;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
 
-import com.intellij.util.lang.ClassLoadingLocks;
-import com.intellij.util.lang.ImmutableZipFile;
-import com.intellij.util.lang.ZipFile;
-import com.intellij.util.lang.ZipFilePool;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.idea
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import com.google.common.util.concurrent.Striped
+import com.intellij.util.lang.ImmutableZipFile
+import com.intellij.util.lang.ZipFile
+import com.intellij.util.lang.ZipFilePool
+import org.jetbrains.annotations.ApiStatus
+import java.io.InputStream
+import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
-public final class ZipFilePoolImpl extends ZipFilePool {
-  private final Map<Path, MyEntryResolver> pool = new ConcurrentHashMap<>();
-  private final ClassLoadingLocks<Path> lock = new ClassLoadingLocks<>();
+class ZipFilePoolImpl : ZipFilePool() {
+  private val pool = ConcurrentHashMap<Path, MyEntryResolver>(1024)
+  private val lock = Striped.lock(64)
 
-  @Override
-  public @NotNull ZipFile loadZipFile(@NotNull Path file) throws IOException {
-    MyEntryResolver resolver = pool.get(file);
-    if (resolver == null) {
-      // doesn't make sense to use pool for requests from class loader (requested only once per class loader)
-      return ImmutableZipFile.load(file);
-    }
-    else {
-      return resolver.zipFile;
-    }
+  override fun loadZipFile(file: Path): ZipFile {
+    val resolver = pool.get(file)
+    // doesn't make sense to use pool for requests from class loader (requested only once per class loader)
+    return resolver?.zipFile ?: ImmutableZipFile.load(file)
   }
 
-  @Override
-  public @NotNull ZipFilePool.EntryResolver load(@NotNull Path file) throws IOException {
-    MyEntryResolver resolver = pool.get(file);
-    if (resolver == null) {
-      synchronized (lock.getOrCreateLock(file)) {
-        resolver = pool.get(file);
-        if (resolver == null) {
-          ZipFile zipFile = ImmutableZipFile.load(file);
-          resolver = new MyEntryResolver(zipFile);
-          pool.put(file, resolver);
-        }
+  override fun load(file: Path): EntryResolver {
+    pool.get(file)?.let { return it }
+    val lock = lock.get(file)
+    lock.lock()
+    try {
+      return pool.computeIfAbsent(file) {
+        val zipFile = ImmutableZipFile.load(file)
+        MyEntryResolver(zipFile)
       }
     }
-    return resolver;
-  }
-
-  private static final class MyEntryResolver implements ZipFilePool.EntryResolver {
-    private final ZipFile zipFile;
-
-    MyEntryResolver(ZipFile zipFile) {
-      this.zipFile = zipFile;
-    }
-
-    @Override
-    public @Nullable InputStream loadZipEntry(@NotNull String path) throws IOException {
-      return zipFile.getInputStream(path.charAt(0) == '/' ? path.substring(1) : path);
-    }
-
-    @Override
-    public String toString() {
-      return zipFile.toString();
+    finally {
+      lock.unlock()
     }
   }
 
-  public void clear() {
-    pool.clear();
+  private class MyEntryResolver(@JvmField val zipFile: ZipFile) : EntryResolver {
+    override fun loadZipEntry(path: String): InputStream? {
+      return zipFile.getInputStream(if (path[0] == '/') path.substring(1) else path)
+    }
+
+    override fun toString() = zipFile.toString()
+  }
+
+  fun clear() {
+    pool.clear()
   }
 }

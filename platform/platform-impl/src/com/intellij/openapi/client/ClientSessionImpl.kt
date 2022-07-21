@@ -55,7 +55,6 @@ abstract class ClientSessionImpl(
     this.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
                          activityPrefix = "client ",
                          syncScope = syncScope + exceptionHandler,
-                         asyncScope = GlobalScope + exceptionHandler,
                          onlyIfAwait = false
     )
     assert(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
