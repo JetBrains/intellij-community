@@ -3,7 +3,6 @@ package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -137,7 +136,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
           if (c != null) children.add(c);
         }
         return children;
-      }).expand(Conditions.alwaysTrue());
+      });
       if (start == null) {
         traverser = traverser.withRoot(getRoot());
       }
