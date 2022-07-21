@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +57,14 @@ public final class ThreadDumper {
     catch (Exception ignored) {
       threads = threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), Integer.MAX_VALUE);
     }
+    int o = 0;
+    for (int i = 0; i < threads.length; i++) {
+      ThreadInfo info = threads[i];
+      if (info != null) {
+        threads[o++] = info;
+      }
+    }
+    threads = ArrayUtil.realloc(threads, o, ThreadInfo[]::new);
     if (sort) {
       sort(threads);
     }
