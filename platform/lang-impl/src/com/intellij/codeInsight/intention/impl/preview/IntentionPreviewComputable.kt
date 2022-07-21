@@ -128,8 +128,10 @@ internal class IntentionPreviewComputable(private val project: Project,
                                            originalEditor.selectionModel.selectionEnd)
     originalEditor.document.setReadOnly(true)
     ProgressManager.checkCanceled()
-    PostprocessReformattingAspect.getInstance(project)
-      .postponeFormattingInside { info = action.generatePreview(project, editorCopy, psiFileCopy) }
+    IntentionPreviewUtils.previewSession(editorCopy) {
+      PostprocessReformattingAspect.getInstance(project)
+        .postponeFormattingInside { info = action.generatePreview(project, editorCopy, psiFileCopy) }
+    }
     if (info == IntentionPreviewInfo.FALLBACK_DIFF) {
       if (action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) return info to null
       // Use fallback algorithm only if invokeForPreview is not explicitly overridden
@@ -143,8 +145,10 @@ internal class IntentionPreviewComputable(private val project: Project,
         logger<IntentionPreviewComputable>().error("Intention preview fallback is used for action ${cls.name}|${action.familyName}")
       }
       ProgressManager.checkCanceled()
-      PostprocessReformattingAspect.getInstance(project)
-        .postponeFormattingInside { action.invoke(project, editorCopy, psiFileCopy) }
+      IntentionPreviewUtils.previewSession(editorCopy) {
+        PostprocessReformattingAspect.getInstance(project)
+          .postponeFormattingInside { action.invoke(project, editorCopy, psiFileCopy) }
+      }
       info = IntentionPreviewInfo.DIFF
     }
     val manager = PsiDocumentManager.getInstance(project)

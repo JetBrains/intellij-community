@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.fileEditor.impl
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId.Companion.current
 import com.intellij.codeWithMe.ClientId.Companion.isCurrentlyUnderLocalId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
@@ -373,7 +374,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
       val selectedEditor = clientManager.getSelectedEditor()
       return if (selectedEditor is TextEditor) selectedEditor.editor else null
     }
-    return getEditor(activeFile ?: return  null)
+    return IntentionPreviewUtils.getPreviewEditor() ?: getEditor(activeFile ?: return  null)
   }
 
   override fun getSelectedTextEditorWithRemotes(): Array<Editor> {

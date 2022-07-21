@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
@@ -1417,6 +1418,10 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       }
       FileEditor selectedEditor = clientManager.getSelectedEditor();
       return selectedEditor instanceof TextEditor ? ((TextEditor)selectedEditor).getEditor() : null;
+    }
+    Editor editor = IntentionPreviewUtils.getPreviewEditor();
+    if (editor != null) {
+      return editor;
     }
 
     if (!isLockFree) {
