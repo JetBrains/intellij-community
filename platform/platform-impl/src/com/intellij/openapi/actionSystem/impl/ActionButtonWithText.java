@@ -19,6 +19,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentInputMapUIResource;
@@ -39,10 +40,10 @@ public class ActionButtonWithText extends ActionButton {
 
   public static final Key<Boolean> SHORTCUT_SHOULD_SHOWN = new Key<>("SHORTCUT_SHOULD_SHOWN");
 
-  public ActionButtonWithText(final AnAction action,
-                              final Presentation presentation,
-                              final String place,
-                              final Dimension minimumSize) {
+  public ActionButtonWithText(@NotNull AnAction action,
+                              @Nullable Presentation presentation,
+                              @NotNull String place,
+                              @NotNull Dimension minimumSize) {
     super(action, presentation, place, minimumSize);
     setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : StartupUiUtil.getLabelFont());
     setForeground(UIUtil.getLabelForeground());

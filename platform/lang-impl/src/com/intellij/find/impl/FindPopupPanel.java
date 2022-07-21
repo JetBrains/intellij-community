@@ -418,7 +418,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
   private void initComponents() {
     AnAction myShowFilterPopupAction = new MyShowFilterPopupAction();
     myFilterContextButton =
-      new ActionButton(myShowFilterPopupAction, myShowFilterPopupAction.getTemplatePresentation(), ActionPlaces.UNKNOWN,
+      new ActionButton(myShowFilterPopupAction, null, ActionPlaces.UNKNOWN,
                        ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
         @Override
         public Icon getIcon() {
