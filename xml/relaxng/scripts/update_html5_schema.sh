@@ -60,6 +60,8 @@ cp -R html5-schema/svg20 result
 # Remove unnecessary files
 rm result/html5/.htaccess
 rm result/html5/assertions.sch
+rm result/html5/mml3/Makefile
+rm result/html5/mml3/patch-vnu
 
 # Update html5-schema dir
 rm -rf html5-schema
