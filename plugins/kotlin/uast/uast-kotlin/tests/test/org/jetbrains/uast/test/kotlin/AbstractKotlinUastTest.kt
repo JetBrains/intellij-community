@@ -183,5 +183,5 @@ private fun loadScriptingPlugin(configuration: CompilerConfiguration) {
         TestKotlinArtifacts.kotlinScriptingJvm
     )
 
-    PluginCliParser.loadPluginsSafe(pluginClasspath.map { it.absolutePath }, null, configuration)
+    PluginCliParser.loadPluginsSafe(pluginClasspath.map { it.absolutePath }, emptyList(), emptyList(), configuration)
 }
