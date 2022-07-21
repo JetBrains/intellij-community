@@ -36,11 +36,15 @@ import javax.swing.JComponent
 import javax.swing.plaf.FontUIResource
 
 private class ReaderModeActionProvider : InspectionWidgetActionProvider {
+
   override fun createAction(editor: Editor): AnAction? {
     val project: Project? = editor.project
     return if (project == null || project.isDefault) null
       else object : DefaultActionGroup(ReaderModeAction(editor), Separator.create()) {
-        override fun update(e: AnActionEvent) {
+
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+      override fun update(e: AnActionEvent) {
           e.presentation.isEnabledAndVisible = false
           if (Experiments.getInstance().isFeatureEnabled("editor.reader.mode")) {
             val p = e.project ?: return
@@ -58,6 +62,9 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
     LangBundle.messagePointer("action.ReaderModeProvider.text"),
     LangBundle.messagePointer("action.ReaderModeProvider.description"),
     null), CustomComponentAction {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
       object : ActionButtonWithText(this, presentation, place, JBUI.size(18)) {
         override fun iconTextSpace() = JBUI.scale(2)
