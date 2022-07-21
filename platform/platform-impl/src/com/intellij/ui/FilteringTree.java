@@ -485,11 +485,9 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     }
   }
 
-  private static class MySpeedSearch<Item> extends SpeedSearch {
+  private static abstract class MySpeedSearch<Item> extends SpeedSearch {
     private boolean myUpdating = false;
     private final JTextComponent myField;
-
-    protected void onUpdatePattern(@Nullable String text) { }
 
     MySpeedSearch(@NotNull JComponent comp, @NotNull JTextComponent field) {
       myField = field;
@@ -553,30 +551,19 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       select(it.current());
     }
 
-    protected void onSearchFieldUpdated(String pattern) {
-    }
+    protected void onUpdatePattern(@Nullable String text) { }
 
-    public void select(@NotNull Item item) {
-    }
+    protected void onSearchFieldUpdated(String pattern) { }
+
+    public abstract void select(@NotNull Item item);
 
     @Nullable
-    public Item getSelection() {
-      return null;
-    }
+    public abstract Item getSelection();
 
-    public boolean isMatching(@NotNull Item item) {
-      return false;
-    }
+    public abstract boolean isMatching(@NotNull Item item);
 
     @NotNull
-    public Iterator<Item> iterate(@Nullable Item start, boolean fwd) {
-      return new JBIterator<>() {
-        @Override
-        protected Item nextImpl() {
-          return stop();
-        }
-      };
-    }
+    public abstract Iterator<Item> iterate(@Nullable Item start, boolean fwd);
 
     @NotNull
     public Iterator<Item> iterate(@Nullable Item start, boolean fwd, boolean wrap) {
