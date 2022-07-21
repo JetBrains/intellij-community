@@ -160,14 +160,13 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   @Override
   public void doWhenFocusSettlesDown(@NotNull Runnable runnable) {
-    // Not a "Write-safe" context when postponed
-    myQueue.executeWhenAllFocusEventsLeftTheQueue(runnable);
+    doWhenFocusSettlesDown(runnable, ModalityState.defaultModalityState());
   }
 
   @Override
   public void doWhenFocusSettlesDown(@NotNull Runnable runnable, @NotNull ModalityState modality) {
     AtomicBoolean immediate = new AtomicBoolean(true);
-    doWhenFocusSettlesDown(() -> {
+    myQueue.executeWhenAllFocusEventsLeftTheQueue(() -> {
       if (immediate.get()) {
         boolean expired = runnable instanceof ExpirableRunnable && ((ExpirableRunnable)runnable).isExpired();
         if (!expired) {
