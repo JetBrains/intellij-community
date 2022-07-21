@@ -37,8 +37,8 @@ dependencies {
   implementation "org.kodein.di:kodein-di-jvm:7.9.0"
 
 
-  implementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:222-EAP-SNAPSHOT'
-  testImplementation 'com.jetbrains.intellij.tools:ide-starter:222-EAP-SNAPSHOT'
+  implementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:222-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.tools:ide-starter:222-SNAPSHOT'
 
   testImplementation 'junit:junit:4.13.2'
 
