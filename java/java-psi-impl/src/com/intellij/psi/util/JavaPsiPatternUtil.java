@@ -155,25 +155,25 @@ public final class JavaPsiPatternUtil {
     return null;
   }
 
+  @Contract(value = "null, _ -> false", pure = true)
   public static boolean isTotalForType(@Nullable PsiCaseLabelElement pattern, @NotNull PsiType type) {
     return isTotalForType(pattern, type, true);
   }
 
-  @Contract(value = "null, _ -> false", pure = true)
   public static boolean isTotalForType(@Nullable PsiCaseLabelElement pattern, @NotNull PsiType type, boolean checkComponents) {
     if (pattern == null) return false;
     if (pattern instanceof PsiPatternGuard) {
       PsiPatternGuard guarded = (PsiPatternGuard)pattern;
       Object constVal = evaluateConstant(guarded.getGuardingExpression());
-      return isTotalForType(guarded.getPattern(), type) && Boolean.TRUE.equals(constVal);
+      return isTotalForType(guarded.getPattern(), type, checkComponents) && Boolean.TRUE.equals(constVal);
     }
     if (pattern instanceof PsiGuardedPattern) {
       PsiGuardedPattern guarded = (PsiGuardedPattern)pattern;
       Object constVal = evaluateConstant(guarded.getGuardingExpression());
-      return isTotalForType(guarded.getPrimaryPattern(), type) && Boolean.TRUE.equals(constVal);
+      return isTotalForType(guarded.getPrimaryPattern(), type, checkComponents) && Boolean.TRUE.equals(constVal);
     }
     else if (pattern instanceof PsiParenthesizedPattern) {
-      return isTotalForType(((PsiParenthesizedPattern)pattern).getPattern(), type);
+      return isTotalForType(((PsiParenthesizedPattern)pattern).getPattern(), type, checkComponents);
     }
     else if (pattern instanceof PsiDeconstructionPattern) {
       if (!dominates(getPatternType(pattern), type)) return false;
@@ -186,7 +186,7 @@ public final class JavaPsiPatternUtil {
         for (int i = 0; i < patternComponents.length; i++) {
           PsiPattern patternComponent = patternComponents[i];
           PsiType componentType = recordComponents[i].getType();
-          if (!isTotalForType(patternComponent, componentType)) {
+          if (!isTotalForType(patternComponent, componentType, true)) {
             return false;
           }
         }
@@ -219,7 +219,7 @@ public final class JavaPsiPatternUtil {
   public static boolean dominates(@Nullable PsiCaseLabelElement who, @NotNull PsiCaseLabelElement overWhom) {
     if (who == null) return false;
     PsiType overWhomType = getPatternType(overWhom);
-    if (overWhomType == null || !isTotalForType(who, overWhomType)) {
+    if (overWhomType == null || !isTotalForType(who, overWhomType, false)) {
       return false;
     }
     PsiDeconstructionPattern whoDeconstruction = findDeconstructionPattern(who);
