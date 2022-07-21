@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -796,7 +796,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
         GrModifierList modifierList = variable.getModifierList();
         if (modifierList != null && typeElement == null && StringUtil.isEmptyOrSpaces(modifierList.getText())) {
           myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle
-            .message("java.style.for.each.statement.requires.a.type.declaration")).range(delimiter.getTextRange())
+            .message("java.style.for.each.statement.requires.a.type.declaration")).range(variable.getNameIdentifierGroovy())
           .withFix(new ReplaceDelimiterFix()).create();
         }
       }
