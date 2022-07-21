@@ -2,12 +2,12 @@
 
 package org.jetbrains.kotlin.idea.debugger.breakpoints.dialog;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -39,7 +39,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
     public AddFieldBreakpointDialog(Project project) {
         super(project, true);
         myProject = project;
-        setTitle(JavaDebuggerBundle.message("add.field.breakpoint.dialog.title"));
+        setTitle(KotlinDebuggerCoreBundle.message("property.watchpoint.add.dialog.title"));
         init();
     }
 
@@ -55,7 +55,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
         myClassChooser.addActionListener(e -> {
             PsiClass currentClass = getSelectedClass();
             TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(
-                    JavaDebuggerBundle.message("add.field.breakpoint.dialog.classchooser.title"));
+                    KotlinDebuggerCoreBundle.message("property.watchpoint.add.dialog.choose.owner.class.title"));
             if (currentClass != null) {
                 PsiFile containingFile = currentClass.getContainingFile();
                 if (containingFile != null) {
@@ -109,6 +109,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
             var facadeClass = (KtLightClassForFacade) container;
             for (var file : facadeClass.getFiles()) {
                 for (var declaration : file.getDeclarations()) {
+                    ProgressManager.checkCanceled();
                     if (declaration instanceof KtProperty) {
                         result.add(KotlinPsiElementMemberChooserObject.getKotlinMemberChooserObject(declaration));
                     }
@@ -118,6 +119,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
             KtClassOrObject kotlinOrigin = ((KtLightClass) container).getKotlinOrigin();
             if (kotlinOrigin != null) {
                 for (KtDeclaration declaration : kotlinOrigin.getDeclarations()) {
+                    ProgressManager.checkCanceled();
                     if (declaration instanceof KtProperty) {
                         result.add(KotlinPsiElementMemberChooserObject.getKotlinMemberChooserObject(declaration));
                     }

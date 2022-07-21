@@ -37,7 +37,7 @@ import javax.swing.JComponent
 class KotlinFieldBreakpointType :
     JavaBreakpointType<KotlinPropertyBreakpointProperties>,
     XLineBreakpointType<KotlinPropertyBreakpointProperties>(
-        "kotlin-field", KotlinDebuggerCoreBundle.message("field.watchpoint.tab.title")
+        "kotlin-field", KotlinDebuggerCoreBundle.message("property.watchpoint.tab.title")
     ),
     KotlinBreakpointType {
     override fun createJavaBreakpoint(
@@ -76,7 +76,7 @@ class KotlinFieldBreakpointType :
 
                 val psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project))
                 if (psiClass !is KtLightClass) {
-                    reportError(project, KotlinDebuggerCoreBundle.message("couldn.t.find.0.class", className))
+                    reportError(project, KotlinDebuggerCoreBundle.message("property.watchpoint.error.couldnt.find.0.class", className))
                     return false
                 }
 
