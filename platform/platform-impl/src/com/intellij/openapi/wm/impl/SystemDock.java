@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.application.Application;
@@ -26,7 +26,7 @@ public final class SystemDock {
     Application app = ApplicationManager.getApplication();
     if (app != null && !app.isUnitTestMode()) {
       if (SystemInfoRt.isMac) {
-        delegate = MacDockDelegate.getInstance();
+        delegate = MacDockDelegate.Companion.getInstance();
       }
       else if (SystemInfoRt.isWindows) {
         delegate = WinDockDelegate.getInstance();

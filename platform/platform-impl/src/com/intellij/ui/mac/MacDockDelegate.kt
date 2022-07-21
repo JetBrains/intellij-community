@@ -1,82 +1,73 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.mac;
+package com.intellij.ui.mac
 
-import com.intellij.ide.DataManager;
-import com.intellij.ide.RecentProjectListActionProvider;
-import com.intellij.ide.ReopenProjectAction;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.wm.impl.SystemDock;
+import com.intellij.ide.DataManager
+import com.intellij.ide.RecentProjectListActionProvider
+import com.intellij.ide.ReopenProjectAction
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.wm.impl.SystemDock
+import java.awt.Menu
+import java.awt.MenuItem
+import java.awt.PopupMenu
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+internal class MacDockDelegate private constructor() : SystemDock.Delegate {
+  companion object {
+    private val LOG = logger<MacDockDelegate>()
 
-/**
- * @author Denis Fokin
- */
-public final class MacDockDelegate implements SystemDock.Delegate {
-  private static final Logger LOG = Logger.getInstance(MacDockDelegate.class);
+    @Suppress("SpellCheckingInspection")
+    private val appClass by lazy { MacDockDelegate::class.java.classLoader.loadClass("com.apple.eawt.Application") }
 
-  private static boolean initialized = false;
-  private static final SystemDock.Delegate instance = new MacDockDelegate();
+    val instance: SystemDock.Delegate by lazy {
+      val result = MacDockDelegate()
+      try {
+        dockMenu.add(recentProjectsMenu)
+        val lookup = MethodHandles.lookup()
+        val appClass = appClass
+        val app = lookup.findStatic(appClass, "getApplication", MethodType.methodType(appClass)).invoke()
+        lookup.findVirtual(appClass, "setDockMenu", MethodType.methodType(Void.TYPE, PopupMenu::class.java)).invoke(app, dockMenu)
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+      }
 
-  private static final PopupMenu dockMenu = new PopupMenu("DockMenu");
-  private static final Menu recentProjectsMenu = new Menu("Recent Projects");
-
-  private MacDockDelegate() { }
-
-  private static void initDockMenu() {
-    dockMenu.add(recentProjectsMenu);
-
-    try {
-      Class<?> appClass = Class.forName("com.apple.eawt.Application");
-      Object application = appClass.getMethod("getApplication").invoke(null);
-      appClass.getMethod("setDockMenu", PopupMenu.class).invoke(application, dockMenu);
+      result
     }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-  }
 
-  private static void activateApplication() {
-    try {
-      Class<?> appClass = Class.forName("com.apple.eawt.Application");
-      Object application = appClass.getMethod("getApplication").invoke(null);
-      appClass.getMethod("requestForeground", boolean.class).invoke(application, false);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-  }
+    private val dockMenu = PopupMenu("DockMenu")
+    private val recentProjectsMenu = Menu("Recent Projects")
 
-  @Override
-  public void updateRecentProjectsMenu () {
-    recentProjectsMenu.removeAll();
-
-    for (AnAction action : RecentProjectListActionProvider.getInstance().getActions(false)) {
-      MenuItem menuItem = new MenuItem(((ReopenProjectAction)action).getProjectNameToDisplay());
-      menuItem.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          // Newly opened project won't become an active window, if another application is currently active.
-          // This is not what user expects, so we activate our application explicitly.
-          activateApplication();
-          ActionUtil.performActionDumbAwareWithCallbacks(action, AnActionEvent.createFromAnAction(action, null, ActionPlaces.DOCK_MENU, DataManager.getInstance().getDataContext(null)));
-        }
-      });
-      recentProjectsMenu.add(menuItem);
+    private fun activateApplication() {
+      try {
+        val appClass = appClass
+        val lookup = MethodHandles.lookup()
+        val app = lookup.findStatic(appClass, "getApplication", MethodType.methodType(appClass)).invoke()
+        lookup.findVirtual(appClass, "requestForeground", MethodType.methodType(Void.TYPE, java.lang.Boolean.TYPE)).invoke(app, false)
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+      }
     }
   }
 
-  synchronized public static SystemDock.Delegate getInstance() {
-    if (!initialized) {
-      initDockMenu();
-      initialized = true;
+  override fun updateRecentProjectsMenu() {
+    recentProjectsMenu.removeAll()
+    for (action in RecentProjectListActionProvider.getInstance().getActions(addClearListItem = false)) {
+      val menuItem = MenuItem((action as ReopenProjectAction).projectNameToDisplay)
+      menuItem.addActionListener {
+        // Newly opened project won't become an active window, if another application is currently active.
+        // This is not what user expects, so we activate our application explicitly.
+        activateApplication()
+        ActionUtil.performActionDumbAwareWithCallbacks(
+          action,
+          AnActionEvent.createFromAnAction(action, null, ActionPlaces.DOCK_MENU, DataManager.getInstance().getDataContext(null))
+        )
+      }
+      recentProjectsMenu.add(menuItem)
     }
-    return instance;
   }
 }
