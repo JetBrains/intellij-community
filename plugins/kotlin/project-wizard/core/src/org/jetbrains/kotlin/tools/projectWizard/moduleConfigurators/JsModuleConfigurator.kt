@@ -209,7 +209,9 @@ fun GradleIRListBuilder.applicationSupport() {
 
 fun GradleIRListBuilder.commonCssSupport() {
     "commonWebpackConfig" {
-        +"cssSupport.enabled = true"
+        "cssSupport" {
+            +"enabled.set(true)"
+        }
     }
 }
 
