@@ -649,7 +649,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
   private Change assertChangeFor(final FilePath file, Condition<Change> check) {
     Change change = changeListManager.getChange(file);
-    assertTrue(String.format("Wring change: %s\nAll changes: %s", change, changeListManager.getAllChanges()),
+    assertTrue(String.format("Wrong change: %s\nAll changes: %s", change, changeListManager.getAllChanges()),
                change != null && check.value(change));
     return change;
   }
