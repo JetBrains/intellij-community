@@ -104,14 +104,14 @@ public class GitBranchPopupActions {
       topActions.addAction(new CheckoutRevisionActions(myProject, repositoryList));
     }
 
-    if (toInsert != null) {
-      topActions.addAll(toInsert);
-    }
-
     LightActionGroup popupGroup = new LightActionGroup(true);
     for (AnAction action : topActions.getChildren(null)) {
       boolean isSeparatorOrGroup = action instanceof Separator || action instanceof ActionGroup;
       popupGroup.addAction(isSeparatorOrGroup ? action : new MyDelegateWithShortcutText(action));
+    }
+
+    if (toInsert != null) {
+      popupGroup.addAll(toInsert);
     }
 
     popupGroup.addSeparator(specificRepository == null ?
