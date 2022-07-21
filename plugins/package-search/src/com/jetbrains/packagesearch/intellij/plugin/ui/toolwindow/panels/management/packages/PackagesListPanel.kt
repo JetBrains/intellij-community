@@ -19,7 +19,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.ide.browsers.UrlOpener
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
