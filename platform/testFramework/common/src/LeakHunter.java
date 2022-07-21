@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.common.ThreadLeakTracker;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
@@ -129,7 +130,7 @@ public final class LeakHunter {
       result.put(Disposer.getTree(), "Disposer.getTree()");
       result.put(IdeEventQueue.getInstance(), "IdeEventQueue.getInstance()");
       result.put(LaterInvocator.getLaterInvocatorEdtQueue(), "LaterInvocator.getLaterInvocatorEdtQueue()");
-      result.put(ThreadUtil.getThreads().values(), "all live threads");
+      result.put(ThreadLeakTracker.getThreads().values(), "all live threads");
       if (allLoadedClasses != null) {
         result.put(allLoadedClasses, "all loaded classes statics");
       }
