@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.DataManager;
@@ -283,7 +283,7 @@ public class DataManagerImpl extends DataManager {
   public @NotNull Promise<DataContext> getDataContextFromFocusAsync() {
     AsyncPromise<DataContext> result = new AsyncPromise<>();
     IdeFocusManager.getGlobalInstance()
-                   .doWhenFocusSettlesDown(() -> result.setResult(getDataContext()), ModalityState.any());
+                   .doWhenFocusSettlesDown(() -> result.setResult(getDataContext()), ModalityState.defaultModalityState());
     return result;
   }
 
