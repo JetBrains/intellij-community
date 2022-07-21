@@ -426,6 +426,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
       presentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, customComponent);
       customComponent.putClientProperty(CustomComponentAction.ACTION_KEY, action);
+      ((CustomComponentAction)action).updateCustomComponent(customComponent, presentation);
     }
     tweakActionComponentUI(customComponent);
 
