@@ -596,7 +596,7 @@ public class SwitchBlockHighlightingModel {
         }
         elements.putValue(evaluateConstant(labelElement), labelElement);
       }
-      else if (labelElement instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(((PsiPattern)labelElement), mySelectorType)) {
+      else if (labelElement instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(labelElement, mySelectorType)) {
         elements.putValue(myTotalPattern, labelElement);
       }
     }
@@ -869,7 +869,7 @@ public class SwitchBlockHighlightingModel {
       for (PsiCaseLabelElement element : elements) {
         PsiPattern patternLabelElement = ObjectUtils.tryCast(element, PsiPattern.class);
         if (patternLabelElement == null) continue;
-        PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(((PsiPattern)element)));
+        PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(element));
         if (patternClass != null) {
           patternClasses.put(patternClass, patternLabelElement);
         }
@@ -1048,7 +1048,7 @@ public class SwitchBlockHighlightingModel {
     @Nullable
     private static PsiCaseLabelElement findTotalPatternForType(@NotNull List<PsiCaseLabelElement> labelElements, @NotNull PsiType type) {
       return ContainerUtil.find(labelElements, element ->
-        element instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(((PsiPattern)element), type));
+        element instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(element, type));
     }
 
     private static boolean isConstantLabelElement(@NotNull PsiCaseLabelElement labelElement) {

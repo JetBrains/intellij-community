@@ -155,7 +155,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
   public final void apply() throws ConfigurationException {
     if (root != null) {
       root.apply(getSettings());
-      DebuggerConfigurableProvider.EXTENSION_POINT.getExtensionList().stream().forEach(provider -> provider.generalApplied(getCategory()));
+      DebuggerConfigurableProvider.EXTENSION_POINT.getExtensionList().forEach(provider -> provider.generalApplied(getCategory()));
     }
 
     if (isChildrenMerged()) {

@@ -163,6 +163,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
       }
       CommentTracker commentTracker = new CommentTracker();
       final String newExpression = calculateReplacementExpression(expression, commentTracker);
+      if (newExpression == null) return;
       PsiReplacementUtil.replaceExpression((PsiExpression)parent, newExpression, commentTracker);
     }
   }

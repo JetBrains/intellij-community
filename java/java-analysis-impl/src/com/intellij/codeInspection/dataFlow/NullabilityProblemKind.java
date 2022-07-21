@@ -351,7 +351,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
           for (PsiCaseLabelElement element : labelElementList.getElements()) {
             if (element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType())) return null;
             if (element instanceof PsiPattern && expressionType != null &&
-                JavaPsiPatternUtil.isTotalForType(((PsiPattern)element), expressionType)) return null;
+                JavaPsiPatternUtil.isTotalForType(element, expressionType)) return null;
           }
         }
       }

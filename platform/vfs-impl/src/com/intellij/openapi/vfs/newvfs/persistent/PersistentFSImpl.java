@@ -105,13 +105,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     myVfsData = new VfsData();
     LOG.assertTrue(!myConnected.get());
     doConnect();
-    PersistentFsConnectionListener.EP_NAME.getExtensionList().stream().forEach(PersistentFsConnectionListener::connectionOpen);
+    PersistentFsConnectionListener.EP_NAME.getExtensionList().forEach(PersistentFsConnectionListener::connectionOpen);
   }
 
   @ApiStatus.Internal
   public void disconnect() {
     if (myConnected.compareAndSet(true, false)) {
-      PersistentFsConnectionListener.EP_NAME.getExtensionList().stream().forEach(PersistentFsConnectionListener::beforeConnectionClosed);
+      PersistentFsConnectionListener.EP_NAME.getExtensionList().forEach(PersistentFsConnectionListener::beforeConnectionClosed);
       // TODO make sure we don't have files in memory
       FileNameCache.drop();
       myRoots.clear();
