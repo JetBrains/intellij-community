@@ -1,6 +1,6 @@
 {
   "name": "GitLab",
-  "schemaPath": "schema.graphql",
+  "schemaPath": "gen/schema.graphql",
   "extensions": {
     "endpoints": {
       "gitlab.com": {
@@ -10,7 +10,7 @@
           "Authorization": "bearer YOUR_TOKEN_HERE",
           "Accept": "application/json"
         },
-        "introspect": true
+        "introspect": false
       }
     }
   }
