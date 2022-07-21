@@ -42,7 +42,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   private val CODE = SimpleAttributeSet()
   private val LINK = SimpleAttributeSet()
 
-  private var codeFontSize = UISettings.getInstance().fontSize.toInt()
+  private var codeFontSize = UISettings.getInstance().plainFont.size
 
   private val TASK_PARAGRAPH_STYLE = SimpleAttributeSet()
   private val INTERNAL_PARAGRAPH_STYLE = SimpleAttributeSet()
@@ -156,7 +156,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   }
 
   private fun initStyleConstants() {
-    val fontSize = UISettings.getInstance().fontSize.toInt()
+    val fontSize = UISettings.getInstance().plainFont.size
 
     StyleConstants.setForeground(INACTIVE, UISettings.getInstance().inactiveColor)
 
