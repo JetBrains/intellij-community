@@ -29,7 +29,6 @@ import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.tree.ui.Control
 import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
@@ -114,8 +113,6 @@ internal class RecentProjectFilteringTree(
   override fun getChildren(item: RecentProjectTreeItem): Iterable<RecentProjectTreeItem> = item.children()
 
   override fun createNode(item: RecentProjectTreeItem): DefaultMutableTreeNode = DefaultMutableTreeNode(item)
-
-  override fun createSpeedSearch(searchTextField: SearchTextField): SpeedSearchSupply = object : FilteringSpeedSearch(searchTextField) {}
 
   override fun installSearchField(): SearchTextField {
     return super.installSearchField().apply {
