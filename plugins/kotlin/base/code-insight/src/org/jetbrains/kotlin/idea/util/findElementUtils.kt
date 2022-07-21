@@ -2,7 +2,7 @@
 
 @file:JvmName("FindElementUtils")
 
-package org.jetbrains.kotlin.idea.core.util
+package org.jetbrains.kotlin.idea.util
 
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement

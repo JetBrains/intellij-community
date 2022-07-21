@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea
 
-import org.jetbrains.kotlin.idea.core.util.ElementKind
+import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.refactoring.IntroduceRefactoringException
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase

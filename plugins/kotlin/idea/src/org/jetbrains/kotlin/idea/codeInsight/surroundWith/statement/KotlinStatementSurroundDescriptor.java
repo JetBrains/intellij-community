@@ -7,8 +7,8 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.core.util.ElementKind;
-import static org.jetbrains.kotlin.idea.core.util.FindElementUtils.findElements;
+import org.jetbrains.kotlin.idea.util.ElementKind;
+import static org.jetbrains.kotlin.idea.util.FindElementUtils.findElements;
 
 public class KotlinStatementSurroundDescriptor implements SurroundDescriptor {
 

@@ -50,7 +50,7 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.utils.keysToMap
-import org.jetbrains.kotlin.idea.core.util.ElementKind
+import org.jetbrains.kotlin.idea.util.ElementKind
 
 object KotlinIntroduceTypeParameterHandler : RefactoringActionHandler {
     @NlsContexts.DialogTitle

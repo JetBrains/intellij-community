@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.core.moveCaret
-import org.jetbrains.kotlin.idea.core.util.ElementKind
+import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.references.findPsiDeclarations

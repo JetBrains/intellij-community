@@ -14,8 +14,8 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.core.util.ElementKind.TYPE_CONSTRUCTOR
-import org.jetbrains.kotlin.idea.core.util.ElementKind.TYPE_ELEMENT
+import org.jetbrains.kotlin.idea.util.ElementKind.TYPE_CONSTRUCTOR
+import org.jetbrains.kotlin.idea.util.ElementKind.TYPE_ELEMENT
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractIntroduceAction

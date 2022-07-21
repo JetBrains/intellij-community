@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.util.ElementKind
-import org.jetbrains.kotlin.idea.core.util.findElement
+import org.jetbrains.kotlin.idea.util.ElementKind
+import org.jetbrains.kotlin.idea.util.findElement
 import org.jetbrains.kotlin.idea.refactoring.introduce.findExpressionOrStringFragment
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc

@@ -26,10 +26,9 @@ import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTempl
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.core.util.ElementKind
 import org.jetbrains.kotlin.idea.refactoring.KotlinNamesValidator
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ui.KotlinExtractFunctionDialog
@@ -37,6 +36,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetSibling
 import org.jetbrains.kotlin.idea.refactoring.introduce.validateExpressionElements
+import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.nonBlocking
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression

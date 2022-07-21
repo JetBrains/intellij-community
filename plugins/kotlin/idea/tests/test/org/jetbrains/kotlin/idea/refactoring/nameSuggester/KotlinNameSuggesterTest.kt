@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.nameSuggester
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.util.ElementKind
+import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.refactoring.IntroduceRefactoringException
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase

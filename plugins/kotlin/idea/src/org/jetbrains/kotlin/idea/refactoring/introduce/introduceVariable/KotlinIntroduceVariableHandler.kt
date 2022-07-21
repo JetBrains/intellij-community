@@ -65,7 +65,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.sure
 import kotlin.math.min
-import org.jetbrains.kotlin.idea.core.util.ElementKind
+import org.jetbrains.kotlin.idea.util.ElementKind
 
 object KotlinIntroduceVariableHandler : RefactoringActionHandler {
     val INTRODUCE_VARIABLE get() = KotlinBundle.message("introduce.variable")

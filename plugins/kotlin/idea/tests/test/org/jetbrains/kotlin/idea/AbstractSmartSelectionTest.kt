@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea
 
-import org.jetbrains.kotlin.idea.core.util.ElementKind
+import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.refactoring.getExpressionShortText
 import org.jetbrains.kotlin.idea.refactoring.getSmartSelectSuggestions
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
