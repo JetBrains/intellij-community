@@ -22,8 +22,8 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.compute
 import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils.getTopmostElementAtOffset
+import org.jetbrains.kotlin.idea.debugger.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
-import org.jetbrains.kotlin.idea.debugger.isDexDebug
 import org.jetbrains.kotlin.idea.debugger.safeLocation
 import org.jetbrains.kotlin.idea.debugger.safeMethod
 import org.jetbrains.kotlin.psi.KtElement
@@ -110,7 +110,7 @@ private fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(
     lines: ClosedRange<Int>
 ): List<KotlinMethodSmartStepTarget> {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    if (debugProcess.isDexDebug() || size <= 1) return this
+    if (DexDebugFacility.isDex(debugProcess) || size <= 1) return this
     val frameProxy = debugProcess.suspendManager.pausedContext?.frameProxy
     val location = frameProxy?.safeLocation() ?: return this
     return filterSmartStepTargets(location, lines, this, debugProcess)

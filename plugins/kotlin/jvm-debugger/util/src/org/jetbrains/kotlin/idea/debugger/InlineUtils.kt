@@ -2,17 +2,35 @@
 
 package org.jetbrains.kotlin.idea.debugger
 
+import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.sun.jdi.Location
+import com.sun.jdi.ReferenceType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
+import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.resolve.inline.InlineUtil
+import org.jetbrains.kotlin.resolve.jvm.JvmClassName
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 val INLINED_THIS_REGEX = run {
     val escapedName = Regex.escape(AsmUtil.INLINE_DECLARATION_SITE_THIS)
@@ -73,4 +91,71 @@ fun isInlineFrameLineNumber(file: VirtualFile, lineNumber: Int, project: Project
     }
 
     return true
+}
+
+@RequiresReadLock
+@ApiStatus.Internal
+fun getLocationsOfInlinedLine(type: ReferenceType, position: SourcePosition, sourceSearchScope: GlobalSearchScope): List<Location> {
+    val line = position.line
+    val file = position.file
+    val project = position.file.project
+
+    val lineStartOffset = file.getLineStartOffset(line) ?: return listOf()
+    val element = file.findElementAt(lineStartOffset) ?: return listOf()
+    val ktElement = element.parents.firstIsInstanceOrNull<KtElement>() ?: return listOf()
+
+    val isInInline = runReadAction { element.parents.any { it is KtFunction && it.hasModifier(KtTokens.INLINE_KEYWORD) } }
+
+    if (!isInInline) {
+        // Lambdas passed to cross-inline arguments are inlined when they are used in non-inlined lambdas
+        val isInCrossInlineArgument = isInCrossInlineArgument(ktElement)
+        if (!isInCrossInlineArgument) {
+            return listOf()
+        }
+    }
+
+    val lines = inlinedLinesNumbers(line + 1, position.file.name, FqName(type.name()), type.sourceName(), project, sourceSearchScope)
+
+    return lines.flatMap { DebuggerUtilsAsync.locationsOfLineSync(type, it) }
+}
+
+private fun isInCrossInlineArgument(ktElement: KtElement): Boolean {
+    val argumentFunctions = runReadAction {
+        ktElement.parents.filter {
+            when (it) {
+                is KtFunctionLiteral -> it.parent is KtLambdaExpression &&
+                        (it.parent.parent is KtValueArgument || it.parent.parent is KtLambdaArgument)
+                is KtFunction -> it.parent is KtValueArgument
+                else -> false
+            }
+        }.filterIsInstance<KtFunction>()
+    }
+
+    val bindingContext = ktElement.analyze(BodyResolveMode.PARTIAL)
+    return argumentFunctions.any {
+        val argumentDescriptor = InlineUtil.getInlineArgumentDescriptor(it, bindingContext)
+        argumentDescriptor?.isCrossinline ?: false
+    }
+}
+
+private fun inlinedLinesNumbers(
+    inlineLineNumber: Int, inlineFileName: String,
+    destinationTypeFqName: FqName, destinationFileName: String,
+    project: Project, sourceSearchScope: GlobalSearchScope
+): List<Int> {
+    val internalName = destinationTypeFqName.asString().replace('.', '/')
+    val jvmClassName = JvmClassName.byInternalName(internalName)
+
+    val file = DebuggerUtils.findSourceFileForClassIncludeLibrarySources(project, sourceSearchScope, jvmClassName, destinationFileName)
+        ?: return listOf()
+
+    val virtualFile = file.virtualFile ?: return listOf()
+
+    val sourceMap = KotlinSourceMapCache.getInstance(project).getSourceMap(virtualFile, jvmClassName) ?: return listOf()
+
+    val mappingsToInlinedFile = sourceMap.fileMappings.filter { it.name == inlineFileName }
+    val mappingIntervals = mappingsToInlinedFile.flatMap { it.lineMappings }
+
+    return mappingIntervals.asSequence().filter { rangeMapping -> rangeMapping.hasMappingForSource(inlineLineNumber) }
+        .map { rangeMapping -> rangeMapping.mapSourceToDest(inlineLineNumber) }.filter { line -> line != -1 }.toList()
 }

@@ -12,7 +12,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.sun.jdi.ReferenceType
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
-import org.jetbrains.kotlin.idea.debugger.isDexDebug
+import org.jetbrains.kotlin.idea.debugger.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.safeSourceName
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtElement
@@ -41,7 +41,7 @@ class KotlinLineBreakpoint(
     private fun hasTargetLine(classType: ReferenceType, sourcePosition: XSourcePosition): Boolean {
         val allLineLocations = DebuggerUtilsEx.allLineLocations(classType) ?: return true
 
-        if (classType.virtualMachine().isDexDebug()) {
+        if (DexDebugFacility.isDex(classType.virtualMachine())) {
             return true
         }
 

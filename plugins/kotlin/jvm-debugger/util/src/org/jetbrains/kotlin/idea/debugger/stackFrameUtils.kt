@@ -50,7 +50,7 @@ fun Method.sortedVariablesWithLocation(): List<VariableWithLocation> {
         ?: return emptyList()
 
     // On the JVM we can use the variable offsets directly.
-    if (!virtualMachine().isDexDebug()) {
+    if (!DexDebugFacility.isDex(virtualMachine())) {
         return allVariables.mapNotNull { local ->
             local.getBorders()?.let { VariableWithLocation(local, it.start) }
         }.sorted()
