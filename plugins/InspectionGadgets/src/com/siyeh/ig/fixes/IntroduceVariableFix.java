@@ -15,11 +15,16 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,5 +66,15 @@ public class IntroduceVariableFix extends RefactoringInspectionGadgetsFix {
       }
     }
     return super.getElementToRefactor(element);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    PsiExpression expression = ObjectUtils.tryCast(getElementToRefactor(previewDescriptor.getPsiElement()), PsiExpression.class);
+    if (expression == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    JavaRefactoringActionHandlerFactory.getInstance().createIntentionPreviewIntroduceVariableHandler().invoke(project, new PsiElement[]{expression}, null);
+    return IntentionPreviewInfo.DIFF;
   }
 }
