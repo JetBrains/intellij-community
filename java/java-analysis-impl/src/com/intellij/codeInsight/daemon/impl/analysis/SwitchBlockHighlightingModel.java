@@ -633,7 +633,8 @@ public class SwitchBlockHighlightingModel {
             }
             continue;
           }
-          if (isNullType(next) && JavaPsiPatternUtil.isTotalForType(current, mySelectorType)) {
+          if (isNullType(next) && JavaPsiPatternUtil.isTotalForType(current, mySelectorType)
+              && (PsiUtil.getLanguageLevel(next).isLessThan(LanguageLevel.JDK_19_PREVIEW))) {
             result.put(next, current);
             continue;
           }
