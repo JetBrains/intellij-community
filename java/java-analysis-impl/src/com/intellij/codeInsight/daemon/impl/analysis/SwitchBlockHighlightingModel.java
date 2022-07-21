@@ -565,13 +565,17 @@ public class SwitchBlockHighlightingModel {
 
       List<HighlightInfo> results = new SmartList<>();
       for (int i = 0; i < recordComponents.length; i++) {
-        PsiType recordComponent = recordComponents[i].getType();
-        PsiType patternComponent = JavaPsiPatternUtil.getPatternType(patternComponents[i]);
-        if (patternComponent == null ||
-            !recordComponent.equals(patternComponent) && !JavaPsiPatternUtil.dominates(recordComponent, patternComponent)) {
+        PsiPattern patternComponent = patternComponents[i];
+        PsiType recordType = recordComponents[i].getType();
+        PsiType patternType = JavaPsiPatternUtil.getPatternType(patternComponent);
+        if (patternType == null ||
+            !recordType.equals(patternType) && !JavaPsiPatternUtil.dominates(recordType, patternType)) {
           HighlightInfo info =
-            HighlightUtil.createIncompatibleTypeHighlightInfo(recordComponent, patternComponent, patternComponents[i].getTextRange(), 0);
+            HighlightUtil.createIncompatibleTypeHighlightInfo(recordType, patternType, patternComponent.getTextRange(), 0);
           results.add(info);
+        }
+        if (patternComponent instanceof PsiDeconstructionPattern) {
+          results.addAll(createDeconstructionErrors(((PsiDeconstructionPattern)patternComponent)));
         }
       }
       return results;

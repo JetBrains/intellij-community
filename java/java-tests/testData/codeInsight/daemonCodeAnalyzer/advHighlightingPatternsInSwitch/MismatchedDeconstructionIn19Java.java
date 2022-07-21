@@ -2,6 +2,9 @@ record LongRecord(String s1, String s2, String s3) {}
 record PrimitiveRecord(int x){}
 record IntegerRecord(Integer x){}
 record RecordWithInterface(I x, I y) {}
+record Top(Child c1, Child c2) {}
+record Child(I x, I y){}
+record Wrong(int x) {}
 
 sealed interface I permits C, D {}
 final class C implements I {}
@@ -35,6 +38,12 @@ public class Incompatible {
     }
     switch (typedRecord){
       case TypedRecord<I>(I x) s-> {}
+      default -> {}
+    }
+    switch (object){
+      case Top(Child c1, Child(I x, <error descr="Incompatible types. Found: 'int', required: 'I'">int y</error>) c3) c -> {  }
+      case Top(Child c1, <error descr="Incompatible types. Found: 'Wrong', required: 'Child'">Wrong(int y) c3</error>) c -> {  }
+      case Top(Child c1, Child(C a, I i) c3) c -> {  }
       default -> {}
     }
   }
