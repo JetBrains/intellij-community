@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.TimeoutUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -249,13 +248,13 @@ public final class MavenLegacyModuleImporter {
     finally {
       CountAndTime countAndTime = counters.computeIfAbsent(importer.getClass(), __ -> new CountAndTime());
       if (increaseModuleCounter) countAndTime.count++;
-      countAndTime.time += TimeoutUtil.getDurationMillis(before);
+      countAndTime.timeNano += System.nanoTime() - before;
     }
   }
 
   static class CountAndTime {
     int count = 0;
-    long time = 0;
+    long timeNano = 0;
   }
 
   private List<MavenImporter> getSuitableImporters() {
