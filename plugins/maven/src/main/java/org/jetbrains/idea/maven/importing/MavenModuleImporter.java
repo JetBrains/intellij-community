@@ -157,7 +157,7 @@ public final class MavenModuleImporter {
           }
 
           if (importer.getModuleType() == moduleType) {
-            measureImporterTime(importer, counters, () -> {
+            measureImporterTime(importer, counters, true, () -> {
               importer.preProcess(myModule, myMavenProject, changes, myProviderForExtensions);
             });
           }
@@ -188,7 +188,7 @@ public final class MavenModuleImporter {
 
           if (importer.getModuleType() == moduleType) {
             try {
-              measureImporterTime(importer, counters, () -> {
+              measureImporterTime(importer, counters, false, () -> {
                 importer.process(myProviderForExtensions,
                                  myModule,
                                  myRootModelAdapter,
@@ -226,7 +226,7 @@ public final class MavenModuleImporter {
           }
 
           if (importer.getModuleType() == moduleType) {
-            measureImporterTime(importer, counters, () -> {
+            measureImporterTime(importer, counters, false, () -> {
               importer.postProcess(myModule, myMavenProject, changes, myProviderForExtensions);
             });
           }
@@ -238,14 +238,17 @@ public final class MavenModuleImporter {
     });
   }
 
-  private static void measureImporterTime(MavenImporter importer, Map<Class<? extends MavenImporter>, CountAndTime> counters, Runnable r) {
+  private static void measureImporterTime(MavenImporter importer,
+                                          Map<Class<? extends MavenImporter>, CountAndTime> counters,
+                                          boolean increaseModuleCounter,
+                                          Runnable r) {
     long before = System.nanoTime();
     try {
       r.run();
     }
     finally {
       CountAndTime countAndTime = counters.computeIfAbsent(importer.getClass(), __ -> new CountAndTime());
-      countAndTime.count++;
+      if (increaseModuleCounter) countAndTime.count++;
       countAndTime.time += TimeoutUtil.getDurationMillis(before);
     }
   }
