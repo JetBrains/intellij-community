@@ -94,4 +94,14 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public int getHoveredFreeMarkersLine() {
     return -1;
   }
+
+  @ApiStatus.Internal
+  public int getLineNumberAreaOffset() {
+    return 0;
+  }
+
+  @ApiStatus.Internal
+  public int getLineNumberAreaWidth() {
+    return 0;
+  }
 }

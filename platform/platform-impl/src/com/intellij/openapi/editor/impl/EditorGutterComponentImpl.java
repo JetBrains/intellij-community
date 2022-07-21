@@ -1730,7 +1730,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return GAP_BETWEEN_ANNOTATIONS.get();
   }
 
-  int getLineNumberAreaWidth() {
+  @Override
+  public int getLineNumberAreaWidth() {
     if (isLineNumbersShown()) {
       return myLineNumberAreaWidth + getAreaWidthWithGap(myAdditionalLineNumberAreaWidth);
     }
@@ -1764,7 +1765,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return myLayout.getEditorMouseAreaByOffset(offset);
   }
 
-  int getLineNumberAreaOffset() {
+  @Override
+  public int getLineNumberAreaOffset() {
     return myLayout.getLineNumberAreaOffset();
   }
 
