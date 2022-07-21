@@ -246,6 +246,21 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     insertOffset += text.length
   }
 
+  private fun insertIconWithFixedHeight(iconIdx: String, state: MessageState, getFixedHeight: (Icon) -> Int) {
+    val original = LearningUiManager.iconMap[iconIdx] ?: error("Not found icon with index: $iconIdx")
+    val icon = if (state == MessageState.INACTIVE) getInactiveIcon(original) else original
+    insertIcon(object : Icon {
+      override fun getIconWidth() = icon.iconWidth
+
+      override fun getIconHeight() = getFixedHeight(icon)
+
+      override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+        icon.paintIcon(c, g, x, y)
+      }
+    })
+    insertOffset++
+  }
+
   fun addMessage(messageParts: List<MessagePart>, properties: MessageProperties = MessageProperties()): () -> Rectangle? {
     val lessonMessage = LessonMessage(messageParts,
                                       properties.state,
@@ -333,35 +348,17 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
           MessagePart.MessageType.CHECK -> insertText(part.text, ROBOTO)
           MessagePart.MessageType.LINK -> appendLink(part)?.let { ranges.add(it) }
           MessagePart.MessageType.ICON_IDX -> {
-            val original = LearningUiManager.iconMap[part.text] ?: error("Not found icon with index: ${part.text}")
-            val icon = if (lessonMessage.state == MessageState.INACTIVE) getInactiveIcon(original) else original
-            insertIcon(object : Icon {
-              override fun getIconWidth() = icon.iconWidth
-
+            insertIconWithFixedHeight(part.text, lessonMessage.state) {
               // substitute fake height to place icon little lower
-              override fun getIconHeight() = getFontMetrics(this@LessonMessagePane.font).ascent
-
-              override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
-                icon.paintIcon(c, g, x, y)
-              }
-            })
-            insertOffset++
+              getFontMetrics(this@LessonMessagePane.font).ascent
+            }
           }
           MessagePart.MessageType.PROPOSE_RESTORE -> insertText(part.text, BOLD)
           MessagePart.MessageType.ILLUSTRATION -> {
-            val original = LearningUiManager.iconMap[part.text] ?: error("Not found icon with index: ${part.text}")
-            val illustration = if (lessonMessage.state == MessageState.INACTIVE) getInactiveIcon(original) else original
-            insertIcon(object : Icon {
-              override fun getIconWidth() = illustration.iconWidth
-
+            insertIconWithFixedHeight(part.text, lessonMessage.state) { icon ->
               // reduce the icon height by the line height, because otherwise there will be extra space below the icon
-              override fun getIconHeight() = illustration.iconHeight - getFontMetrics(this@LessonMessagePane.font).height
-
-              override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
-                illustration.paintIcon(c, g, x, y)
-              }
-            })
-            insertOffset++
+              icon.iconHeight - getFontMetrics(this@LessonMessagePane.font).height
+            }
             paragraphStyle = INTERNAL_PARAGRAPH_STYLE
           }
           MessagePart.MessageType.LINE_BREAK -> {
