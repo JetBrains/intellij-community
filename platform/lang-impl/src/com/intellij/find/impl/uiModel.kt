@@ -44,6 +44,8 @@ internal class SearchEverywhereItem(
   }
 
   override fun equals(other: Any?): Boolean {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
