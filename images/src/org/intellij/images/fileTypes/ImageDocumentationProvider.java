@@ -2,7 +2,6 @@
 package org.intellij.images.fileTypes;
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -30,9 +29,6 @@ public class ImageDocumentationProvider extends AbstractDocumentationProvider {
       return null;
     }
     final VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
-    if (!DumbService.isDumb(element.getProject())) {
-      return null;
-    }
     ImageInfo imageInfo = ImageInfoIndex.getInfo(file, element.getProject());
     if (imageInfo == null) {
       return null;
