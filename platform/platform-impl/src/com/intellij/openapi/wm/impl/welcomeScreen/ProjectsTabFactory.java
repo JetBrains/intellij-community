@@ -136,6 +136,7 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
       RecentProjectFilteringTree recentProjectTree = RecentProjectPanelComponentFactory.createComponent(
         parentDisposable, ProjectCollectors.all
       );
+      recentProjectTree.selectLastOpenedProject();
       JComponent treeComponent = recentProjectTree.getComponent();
       JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(treeComponent, true);
       scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
