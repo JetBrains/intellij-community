@@ -153,7 +153,9 @@ internal object ProjectCollectors {
   val all = listOf(cloneableProjectsCollector, recentProjectsCollector)
 
   @JvmStatic
-  fun createRecentProjectsWithoutCurrentCollector(currentProject: Project): () -> List<RecentProjectTreeItem> = {
-    RecentProjectListActionProvider.getInstance().collectProjectsWithoutCurrent(currentProject)
+  fun createRecentProjectsWithoutCurrentCollector(currentProject: Project): () -> List<RecentProjectTreeItem> {
+    return {
+      RecentProjectListActionProvider.getInstance().collectProjectsWithoutCurrent(currentProject)
+    }
   }
 }
