@@ -2,27 +2,27 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.*
-import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("IntentionDescriptionNotFoundInspection")
-class KotlinInlayHintToggleAction : IntentionAction, HighPriorityAction {
+class KotlinInlayHintToggleAction : IntentionAction, LowPriorityAction {
     @IntentionName
     private var lastOptionName = ""
 
     override fun getText(): String = lastOptionName
 
     override fun getFamilyName(): String = KotlinBundle.message("hints.types")
-    
+
     override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
         lastOptionName = ""
         var element = findElement(editor, file)
@@ -44,7 +44,7 @@ class KotlinInlayHintToggleAction : IntentionAction, HighPriorityAction {
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
         var element = findElement(editor, file)
 
-        while(element != null) {
+        while (element != null) {
             for (hintType in Holder.hintTypes) {
                 if (toggleHintSetting(hintType, project, element)) return
             }
@@ -97,6 +97,7 @@ internal fun toggleHintSetting(
         true
     } ?: false
 }
+
 private fun findSetting(hintType: HintType, project: Project, hintsSettings: InlayHintsSettings = InlayHintsSettings.instance()):
         Pair<SettingsKey<KotlinAbstractHintsProvider.HintsSettings>, KotlinAbstractHintsProvider.HintsSettings>? {
     val language = KotlinLanguage.INSTANCE
