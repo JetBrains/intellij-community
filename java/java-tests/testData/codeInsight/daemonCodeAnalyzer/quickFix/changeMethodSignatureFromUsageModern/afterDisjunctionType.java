@@ -1,4 +1,4 @@
-// "Add 'Exception' as 1st parameter to method 'f'" "true"
+// "Add 'Exception' as 1st parameter to method 'f'" "true-preview"
 import java.io.FileInputStream;
 import java.io.IOException;
 

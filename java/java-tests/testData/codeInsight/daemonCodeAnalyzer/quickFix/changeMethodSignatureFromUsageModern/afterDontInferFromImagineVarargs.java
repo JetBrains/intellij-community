@@ -1,4 +1,4 @@
-// "Add 'String' as 2nd parameter to method 'get'" "true"
+// "Add 'String' as 2nd parameter to method 'get'" "true-preview"
 import java.util.List;
 class Test<T> {
 

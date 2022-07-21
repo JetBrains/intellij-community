@@ -180,11 +180,33 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     ParameterInfoImpl[] parameterInfos = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
+    PsiParameterList parameterList = myTargetMethod.getParameterList();
+    PsiParameter[] oldParameters = parameterList.getParameters();
     if (parameterInfos == null) return IntentionPreviewInfo.EMPTY;
-    String params = "(" + StringUtil.join(parameterInfos, p -> p.getTypeText() + " " + p.getName(), ", ") + ")";
-    int methodOffset = myTargetMethod.getTextRange().getStartOffset();
-    TextRange range = myTargetMethod.getParameterList().getTextRange().shiftLeft(methodOffset);
-    String methodText = myTargetMethod.getText();
+    String params = "(" + StringUtil.join(parameterInfos, p -> {
+      String modifiers = "";
+      if (p.oldParameterIndex != ParameterInfo.NEW_PARAMETER) {
+        PsiModifierList modifierList = oldParameters[p.oldParameterIndex].getModifierList();
+        if (modifierList != null) {
+          modifiers = modifierList.getText();
+        }
+      }
+      return (modifiers.isEmpty() ? "" : modifiers + " ") + p.getTypeText() + " " + p.getName();
+    }, ", ") + ")";
+    TextRange range;
+    String methodText;
+    PsiRecordHeader header = null;
+    if (JavaPsiRecordUtil.isCanonicalConstructor(myTargetMethod) && !JavaPsiRecordUtil.isExplicitCanonicalConstructor(myTargetMethod)) {
+      PsiClass recordClass = ObjectUtils.tryCast(myTargetMethod.getParent(), PsiClass.class);
+      header = recordClass == null ? null : recordClass.getRecordHeader();
+    }
+    if (header != null) {
+      range = header.getTextRangeInParent();
+      methodText = header.getParent().getText();
+    } else {
+      range = parameterList.getTextRangeInParent();
+      methodText = myTargetMethod.getText();
+    }
     String methodTextWithChangedParameters = methodText.substring(0, range.getStartOffset()) + params + methodText.substring(range.getEndOffset());
     return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE,
                                                myTargetMethod.getContainingFile() != myContext.getContainingFile() ? myTargetMethod.getContainingFile().getName() : null,
