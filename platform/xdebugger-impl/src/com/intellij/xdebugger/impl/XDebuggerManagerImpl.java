@@ -428,6 +428,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       boolean requireRepaint = false;
       if (gutter.getClientProperty("line.number.hover.icon") != icon) {
         gutter.putClientProperty("line.number.hover.icon", icon);
+        gutter.putClientProperty("line.number.hover.icon.context.menu", icon == null ? null
+                                                                                     : ActionManager.getInstance().getAction("XDebugger.Hover.Breakpoint.Context.Menu"));
         requireRepaint = true;
       }
       if (!Objects.equals(gutter.getClientProperty("active.line.number"), line)) {

@@ -129,5 +129,9 @@
     <action class="com.intellij.execution.actions.ActivateDebugToolWindowAction" id="ActivateDebugToolWindow">
       <add-to-group group-id="ActivateToolWindowActions"/>
     </action>
+    <group id="XDebugger.Hover.Breakpoint.Context.Menu">
+      <action id="AddBreakpoint" class="com.intellij.xdebugger.impl.actions.handlers.AddLineBreakpointAction"/>
+      <action id="AddConditionalBreakpoint" class="com.intellij.xdebugger.impl.actions.handlers.AddLineBreakpointAction$WithCondition"/>
+    </group>
   </actions>
 </idea-plugin>

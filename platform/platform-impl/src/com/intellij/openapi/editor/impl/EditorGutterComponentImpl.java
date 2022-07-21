@@ -2432,7 +2432,16 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         }
       }
       else {
-        ActionGroup group = myCustomGutterPopupGroup;
+        ActionGroup group = null;
+        if (ExperimentalUI.isNewUI() &&
+            myEditor.getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA &&
+            getClientProperty("line.number.hover.icon.context.menu") instanceof ActionGroup) {
+          group = (ActionGroup)getClientProperty("line.number.hover.icon.context.menu");
+        }
+
+        if (group == null) {
+          group = myCustomGutterPopupGroup;
+        }
         if (group == null && myShowDefaultGutterPopup) {
           group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
         }
