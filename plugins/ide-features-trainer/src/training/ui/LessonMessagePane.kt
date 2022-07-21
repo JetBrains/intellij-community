@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.keymap.Keymap
@@ -349,7 +348,22 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
             insertOffset++
           }
           MessagePart.MessageType.PROPOSE_RESTORE -> insertText(part.text, BOLD)
-          MessagePart.MessageType.ILLUSTRATION -> addPlaceholderForIllustration(part)
+          MessagePart.MessageType.ILLUSTRATION -> {
+            val original = LearningUiManager.iconMap[part.text] ?: error("Not found icon with index: ${part.text}")
+            val illustration = if (lessonMessage.state == MessageState.INACTIVE) getInactiveIcon(original) else original
+            insertIcon(object : Icon {
+              override fun getIconWidth() = illustration.iconWidth
+
+              // reduce the icon height by the line height, because otherwise there will be extra space below the icon
+              override fun getIconHeight() = illustration.iconHeight - getFontMetrics(this@LessonMessagePane.font).height
+
+              override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+                illustration.paintIcon(c, g, x, y)
+              }
+            })
+            insertOffset++
+            paragraphStyle = INTERNAL_PARAGRAPH_STYLE
+          }
           MessagePart.MessageType.LINE_BREAK -> {
             insertText("\n", REGULAR)
             paragraphStyle = INTERNAL_PARAGRAPH_STYLE
@@ -364,23 +378,6 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       previous = lessonMessage
     }
   }
-
-  private fun addPlaceholderForIllustration(part: MessagePart) {
-    val illustration = LearningUiManager.iconMap[part.text]
-    if (illustration == null) {
-      thisLogger().error("No illustration for ${part.text}")
-    }
-    else {
-      val spaceAbove = spaceAboveIllustrationParagraph(illustration) + UISettings.getInstance().illustrationAbove
-      val illustrationStyle = SimpleAttributeSet()
-      StyleConstants.setSpaceAbove(illustrationStyle, spaceAbove.toFloat())
-      setCommonParagraphAttributes(illustrationStyle)
-      paragraphStyle = illustrationStyle
-    }
-    insertText(" ", REGULAR)
-  }
-
-  private fun spaceAboveIllustrationParagraph(illustration: Icon) = illustration.iconHeight - getFontMetrics(this.font).height + UISettings.getInstance().illustrationBelow
 
   fun passPreviousMessages() {
     for (message in activeMessages) {
@@ -450,7 +447,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   override fun paintComponent(g: Graphics) {
     adjustCodeFontSize(g)
     try {
-      paintMessages(g)
+      highlightActiveMessage(g)
     }
     catch (e: BadLocationException) {
       LOG.warn(e)
@@ -583,25 +580,8 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   }
 
   @Throws(BadLocationException::class)
-  private fun paintMessages(g: Graphics) {
+  private fun highlightActiveMessage(g: Graphics) {
     val g2d = g as Graphics2D
-    for (lessonMessage in allLessonMessages()) {
-      val myMessages = lessonMessage.messageParts
-      for (myMessage in myMessages) {
-        when (myMessage.type) {
-          MessagePart.MessageType.ILLUSTRATION -> {
-            val x = modelToView2D(myMessage.startOffset).x.toInt()
-            val y = modelToView2D(myMessage.endOffset - 1).y.toInt()
-            var icon = LearningUiManager.iconMap[myMessage.text] ?: continue
-            if (inactiveMessages.contains(lessonMessage)) {
-              icon = getInactiveIcon(icon)
-            }
-            icon.paintIcon(this, g2d, x, y - spaceAboveIllustrationParagraph(icon))
-          }
-          else -> {}
-        }
-      }
-    }
     val lastActiveMessage = activeMessages.lastOrNull()
     val firstActiveMessage = firstActiveMessage()
     if (panelMode && lastActiveMessage != null && lastActiveMessage.state == MessageState.NORMAL) {

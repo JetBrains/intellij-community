@@ -86,9 +86,6 @@ internal class UISettings {
   val taskParagraphAbove: Int get() = JBUI.scale(24)
   val taskInternalParagraphAbove: Int get() = JBUI.scale(12)
 
-  val illustrationAbove: Int get() = JBUI.scale(12)
-  val illustrationBelow: Int get() = JBUI.scale(0)
-
   val checkIndent: Int get() = JBUI.scale(40)
 
   val numberTaskIndent: Int get() = JBUI.scale(11)
