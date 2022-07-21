@@ -2,10 +2,7 @@
 package com.intellij.execution.runToolbar
 
 import com.intellij.CommonBundle
-import com.intellij.execution.IS_RUN_MANAGER_INITIALIZED
-import com.intellij.execution.RunManager
-import com.intellij.execution.RunManagerListener
-import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.*
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunManagerImpl
@@ -41,7 +38,7 @@ class RunToolbarSlotManager(val project: Project) {
   internal val activeListener = RWAddedController()
   internal val stateListeners = RWStateController()
 
-  internal var mainSlotData = SlotDate(UUID.randomUUID().toString())
+  internal var mainSlotData = SlotDate(project, UUID.randomUUID().toString())
 
   val activeProcesses = RWActiveProcesses()
   private val dataIds = mutableListOf<String>()
@@ -375,7 +372,7 @@ class RunToolbarSlotManager(val project: Project) {
   }
 
   private fun addSlot(configuration: RunnerAndConfigurationSettings? = null, id: String = UUID.randomUUID().toString()): SlotDate {
-    val slot = SlotDate(id)
+    val slot = SlotDate(project, id)
     slot.configuration = configuration
     dataIds.add(slot.id)
     slotsData[slot.id] = slot
@@ -519,7 +516,7 @@ class RunToolbarSlotManager(val project: Project) {
   }
 }
 
-internal open class SlotDate(override var id: String) : RunToolbarData {
+internal open class SlotDate(val project: Project, override var id: String) : RunToolbarData {
   companion object {
     var index = 0
   }
@@ -528,8 +525,19 @@ internal open class SlotDate(override var id: String) : RunToolbarData {
     id = value
   }
 
+  override var executionTarget: ExecutionTarget? = null
+    get() = environment?.executionTarget ?: run {
+      configuration?.configuration.let {
+        val targets = ExecutionTargetManager.getInstance(project).getTargetsFor(it)
+        if(field != null && targets.contains(field)) field else targets.firstOrNull()
+      }
+    } ?: run {
+      ExecutionTargetManager.getInstance(project).activeTarget
+    }
+
   override var configuration: RunnerAndConfigurationSettings? = null
     get() = environment?.runnerAndConfigurationSettings ?: field
+
 
   override var environment: ExecutionEnvironment? = null
     set(value) {
@@ -537,6 +545,7 @@ internal open class SlotDate(override var id: String) : RunToolbarData {
         field = value
       value?.let {
         configuration = it.runnerAndConfigurationSettings
+        executionTarget = it.executionTarget
       }
     }
 

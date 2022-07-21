@@ -55,7 +55,7 @@ internal class RunToolbarShowHidePopupAction : AnAction(ActionsBundle.message("a
       }
     }.apply {
       isOpaque = false
-      add(DraggablePane(), "pos 0 0")
+      add(RunWidgetResizePane(), "pos 0 0")
       add(extraSlotsActionButton, "grow")
     }
   }

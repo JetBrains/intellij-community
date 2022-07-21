@@ -108,10 +108,19 @@ open class DraggablePane : JPanel() {
 
   init {
     isOpaque = false
-    //background = Color.RED
     preferredSize = JBDimension(7, 21)
     minimumSize = JBDimension(7, 21)
+}
 
+  interface DragListener {
+    fun dragStarted(locationOnScreen: Point)
+    fun dragged(locationOnScreen: Point, offset: Dimension)
+    fun dragStopped(locationOnScreen: Point, offset: Dimension)
+  }
+}
+
+class RunWidgetResizePane: DraggablePane() {
+  init {
     setListener(object : DragListener {
       override fun dragStarted(locationOnScreen: Point) {
         RunWidgetResizeController.getInstance().dragStarted(locationOnScreen)
@@ -125,11 +134,5 @@ open class DraggablePane : JPanel() {
         RunWidgetResizeController.getInstance().dragStopped(locationOnScreen, offset)
       }
     })
-  }
-
-  interface DragListener {
-    fun dragStarted(locationOnScreen: Point)
-    fun dragged(locationOnScreen: Point, offset: Dimension)
-    fun dragStopped(locationOnScreen: Point, offset: Dimension)
   }
 }

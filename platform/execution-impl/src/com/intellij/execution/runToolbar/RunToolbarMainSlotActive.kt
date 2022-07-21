@@ -65,7 +65,7 @@ internal class RunToolbarMainSlotActive : SegmentedCustomAction(),
 
   private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCustomPanel(presentation), PopupControllerComponent {
     private val arrow = JLabel()
-    private val dragArea = DraggablePane()
+    private val dragArea = RunWidgetResizePane()
 
     private val setting = object : TrimmedMiddleLabel() {
       override fun getFont(): Font {

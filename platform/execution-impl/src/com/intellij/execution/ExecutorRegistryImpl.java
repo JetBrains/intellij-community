@@ -789,7 +789,14 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         if (builder == null) {
           return;
         }
-        ExecutionEnvironment environment = builder.activeTarget().dataContext(dataContext).build();
+
+        RunToolbarData rtData = dataContext.getData(RunToolbarData.RUN_TOOLBAR_DATA_KEY);
+        if(rtData != null) {
+          ExecutionTarget target = rtData.getExecutionTarget();
+          builder = target == null ?  builder.activeTarget() : builder.target(target);
+        }
+
+        ExecutionEnvironment environment = builder.dataContext(dataContext).build();
         if(environmentCustomization != null) environmentCustomization.accept(environment);
         ExecutionManager.getInstance(project).restartRunProfile(environment);
       }

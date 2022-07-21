@@ -11,6 +11,7 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Rectangle
 import javax.swing.JComponent
+import kotlin.math.roundToInt
 
 open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionGroup) : SegmentedActionToolbarComponent(place, group) {
   companion object {
@@ -31,6 +32,11 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
         } else value
 
         listeners.forEach { it.updated() }
+      }
+
+    val RUN_TARGET_WIDTH: Int
+      get() {
+        return (RUN_CONFIG_WIDTH/2.5).roundToInt()
       }
 
     val ARROW_WIDTH: Int
