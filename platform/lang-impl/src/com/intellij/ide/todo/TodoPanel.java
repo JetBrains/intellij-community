@@ -340,7 +340,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
     Object userObject = node.getUserObject();
-    final PsiElement selectedElement = TodoTreeHelper.getInstance(myProject).getSelectedElement(userObject);
+    final PsiElement selectedElement = myProject != null ? TodoTreeHelper.getInstance(myProject).getSelectedElement(userObject) : null;
     if (selectedElement != null) return selectedElement;
     return getSelectedFile();
   }
