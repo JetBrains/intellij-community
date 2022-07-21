@@ -28,11 +28,6 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 * Move to another module
 */
 class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) {
-    fun getClassNamesInPackage(packageFqName: FqName): Set<Name> =
-        KotlinTopLevelClassByPackageIndex
-            .get(packageFqName.asStringForIndexes(), project, scope)
-            .mapNotNullTo(hashSetOf()) { it.nameAsName }
-
     fun getKotlinClasses(
         nameFilter: (Name) -> Boolean,
         psiFilter: (element: KtClassOrObject) -> Boolean = { true }
@@ -58,22 +53,6 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
         val properties = sequenceOfElements(KotlinTopLevelPropertyFqnNameIndex)
 
         return (functions + properties).toList()
-    }
-
-    fun getKotlinCallablesByName(name: Name): Collection<KtCallableDeclaration> {
-        val functions: Sequence<KtCallableDeclaration> =
-            KotlinFunctionShortNameIndex.get(name.asString(), project, scope).asSequence()
-
-        val properties: Sequence<KtNamedDeclaration> =
-            KotlinPropertyShortNameIndex.get(name.asString(), project, scope).asSequence()
-
-        return (functions + properties)
-            .filterIsInstance<KtCallableDeclaration>()
-            .toList()
-    }
-
-    fun getKotlinClassesByName(name: Name): Collection<KtClassOrObject> {
-        return KotlinClassShortNameIndex.get(name.asString(), project, scope)
     }
 
     fun getTopLevelExtensions(nameFilter: (Name) -> Boolean, receiverTypeNames: Set<String>): Collection<KtCallableDeclaration> {

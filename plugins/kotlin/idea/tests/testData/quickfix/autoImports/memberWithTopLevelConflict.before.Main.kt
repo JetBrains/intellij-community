@@ -7,3 +7,5 @@
 fun usage() {
     sleep<caret>()
 }
+
+/* IGNORE_FIR */

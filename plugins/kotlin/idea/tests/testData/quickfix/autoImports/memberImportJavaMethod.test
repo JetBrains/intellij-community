@@ -30,7 +30,3 @@ import foo.Bar.foobar
 fun f() {
     foobar<caret>()
 }
-
-/* IGNORE_FIR */
-
-
