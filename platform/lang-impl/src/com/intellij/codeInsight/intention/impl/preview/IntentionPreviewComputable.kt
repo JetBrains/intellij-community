@@ -124,7 +124,8 @@ internal class IntentionPreviewComputable(private val project: Project,
     var info: IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
     val psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(origFile)
     val editorCopy = IntentionPreviewEditor(psiFileCopy, caretOffset, originalEditor.settings)
-
+    editorCopy.selectionModel.setSelection(originalEditor.selectionModel.selectionStart,
+                                           originalEditor.selectionModel.selectionEnd)
     originalEditor.document.setReadOnly(true)
     ProgressManager.checkCanceled()
     PostprocessReformattingAspect.getInstance(project)
