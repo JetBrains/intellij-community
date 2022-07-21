@@ -64,17 +64,23 @@ internal fun addBrowserSupport(module: Module) {
 internal fun browserConfiguration(): String {
     return """
         webpackTask {
-            cssSupport.enabled = true
+            cssSupport {
+                enabled.set(true)
+            }
         }
         
         runTask {
-            cssSupport.enabled = true
+            cssSupport {
+                enabled.set(true)
+            }
         }
         
         testTask {
             useKarma {
                 useChromeHeadless()
-                webpackConfig.cssSupport.enabled = true
+                webpackConfig.cssSupport {
+                    enabled.set(true)
+                }
             }
         }
     """.trimIndent()
