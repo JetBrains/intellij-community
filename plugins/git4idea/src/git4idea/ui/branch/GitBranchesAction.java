@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,7 +50,8 @@ public class GitBranchesAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    e.getPresentation().setEnabledAndVisible(project != null && !project.isDisposed());
+    e.getPresentation().setEnabledAndVisible(project != null && !project.isDisposed() &&
+                                             !GitRepositoryManager.getInstance(project).getRepositories().isEmpty());
   }
 
   @Override
