@@ -629,8 +629,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         NamedScope stateScope = state.getScope(getProject());
         if (stateScope == null) continue;
 
-        AnalysisScope scopeForState = new AnalysisScope(GlobalSearchScopesCore.filterScope(getProject(), stateScope)
-                                                          .intersectWith(initialSearchScope), getProject());
+        SearchScope intersectionScope = ReadAction.compute(() -> 
+                                                             GlobalSearchScopesCore.filterScope(getProject(), stateScope)
+                                                               .intersectWith(initialSearchScope));
+        AnalysisScope scopeForState = new AnalysisScope(intersectionScope, getProject());
         InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
         GlobalInspectionTool tool = (GlobalInspectionTool)toolWrapper.getTool();
         InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
