@@ -478,6 +478,7 @@ internal class PackagesListPanel(
                     is TargetModules.One -> targetModules.module.projectModule.name
                     is TargetModules.None -> error("No module selected empty state should be handled separately")
                 }
+                listPanel.emptyText.clear()
                 listPanel.emptyText.appendLine(
                     PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.packagesOnly", targetModuleNames)
                 )
