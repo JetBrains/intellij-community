@@ -157,18 +157,25 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   }
 
   public void installSimple() {
-    SpeedSearchSupply supply = new TreeSpeedSearch(myTree, p -> StringUtil.notNullize(getText(p == null ? null : getUserObject((TreeNode)p.getLastPathComponent()))), true) {
-      @Override
-      protected void onSearchFieldUpdated(String pattern) {
-        super.onSearchFieldUpdated(pattern);
-        //constructor of popup
-        if (StringUtil.isNotEmpty(pattern) && !isPopupActive()) SwingUtilities.invokeLater(() -> {
-          getSearchModel().refilter();
-          if (StringUtil.isNotEmpty(pattern)) TreeUtil.expandAll(myTree);
-        });
-        else getSearchModel().refilter();
-      }
-    };
+    SpeedSearchSupply supply =
+      new TreeSpeedSearch(myTree,
+                          p -> StringUtil.notNullize(getText(p == null ? null : getUserObject((TreeNode)p.getLastPathComponent()))),
+                          true) {
+        @Override
+        protected void onSearchFieldUpdated(String pattern) {
+          super.onSearchFieldUpdated(pattern);
+          //constructor of popup
+          if (StringUtil.isNotEmpty(pattern) && !isPopupActive()) {
+            SwingUtilities.invokeLater(() -> {
+              getSearchModel().refilter();
+              if (StringUtil.isNotEmpty(pattern)) TreeUtil.expandAll(myTree);
+            });
+          }
+          else {
+            getSearchModel().refilter();
+          }
+        }
+      };
     getSearchModel().setSpeedSearch(supply);
   }
 
@@ -206,7 +213,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
    * <p>
    * Note: Tree CAN NOT contain multiple equal elements, even if they do not share the same parent.
    */
-  protected boolean useIdentityHashing(){
+  protected boolean useIdentityHashing() {
     return true;
   }
 
@@ -613,7 +620,6 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       }
       return true;
     }
-
   }
 
   @Nullable
