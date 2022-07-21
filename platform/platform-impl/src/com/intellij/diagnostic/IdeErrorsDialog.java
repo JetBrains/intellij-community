@@ -742,6 +742,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myIndex > 0);
     }
@@ -760,6 +765,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (action != null) {
         registerCustomShortcutSet(action.getShortcutSet(), getRootPane(), getDisposable());
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
