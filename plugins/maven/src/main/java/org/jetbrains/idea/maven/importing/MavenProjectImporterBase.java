@@ -22,6 +22,7 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public abstract class MavenProjectImporterBase implements MavenProjectImporter {
   protected final Project myProject;
@@ -90,7 +91,8 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
         toRun.forEach(importer -> importer.postConfigFacets(counters));
 
         for (Map.Entry<Class<? extends MavenImporter>, MavenModuleImporter.CountAndTime> each : counters.entrySet()) {
-          MavenImportCollector.IMPORTER_RUN.log(myProject, each.getKey(), each.getValue().count, each.getValue().time);
+          MavenImportCollector.IMPORTER_RUN.log(myProject, each.getKey(), each.getValue().count,
+                                                TimeUnit.NANOSECONDS.toMillis(each.getValue().timeNano));
         }
       }
       finally {
