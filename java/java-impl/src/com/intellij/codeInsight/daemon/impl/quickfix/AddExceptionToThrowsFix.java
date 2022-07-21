@@ -61,7 +61,7 @@ public final class AddExceptionToThrowsFix extends BaseIntentionAction implement
       processMethod(project, targetMethod, exceptions);
       return IntentionPreviewInfo.DIFF;
     }
-    else {
+    else {//in another file
       String methodText = targetMethod.getText();
       TextRange throwsListRange = targetMethod.getThrowsList().getTextRange().shiftLeft(targetMethod.getTextRange().getStartOffset());
       String newThrowsList;
@@ -75,7 +75,10 @@ public final class AddExceptionToThrowsFix extends BaseIntentionAction implement
       String methodWithAdditionalExceptions = methodText.substring(0, throwsListRange.getEndOffset()) + 
                                               newThrowsList + 
                                               methodText.substring(throwsListRange.getEndOffset());
-      return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, methodText, methodWithAdditionalExceptions);
+      return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, 
+                                                 targetMethod.getContainingFile().getName(), 
+                                                 methodText, 
+                                                 methodWithAdditionalExceptions);
     }
   }
 

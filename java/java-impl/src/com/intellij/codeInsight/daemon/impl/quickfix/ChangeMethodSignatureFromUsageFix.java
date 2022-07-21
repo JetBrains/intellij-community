@@ -186,7 +186,10 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     TextRange range = myTargetMethod.getParameterList().getTextRange().shiftLeft(methodOffset);
     String methodText = myTargetMethod.getText();
     String methodTextWithChangedParameters = methodText.substring(0, range.getStartOffset()) + params + methodText.substring(range.getEndOffset());
-    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, methodText, methodTextWithChangedParameters); 
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE,
+                                               myTargetMethod.getContainingFile() != myContext.getContainingFile() ? myTargetMethod.getContainingFile().getName() : null,
+                                               methodText,
+                                               methodTextWithChangedParameters); 
   }
 
   @Override
