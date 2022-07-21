@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.codegen.AsmUtil
+import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION
 import org.jetbrains.kotlin.name.FqName
@@ -31,7 +33,7 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 val INLINED_THIS_REGEX = run {
-    val escapedName = Regex.escape(INLINE_DECLARATION_SITE_THIS)
+    val escapedName = Regex.escape(AsmUtil.INLINE_DECLARATION_SITE_THIS)
     val escapedSuffix = Regex.escape(INLINE_FUN_VAR_SUFFIX)
     Regex("^$escapedName(?:$escapedSuffix)*$")
 }
