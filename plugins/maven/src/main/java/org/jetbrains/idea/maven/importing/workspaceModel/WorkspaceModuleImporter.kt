@@ -34,6 +34,7 @@ class WorkspaceModuleImporter(
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val builder: MutableEntityStorage,
   private val importingSettings: MavenImportingSettings,
+  private val dependenciesImportingContext: DependenciesImportingContext,
   private val folderImportingContext: WorkspaceFolderImporter.FolderImportingContext
 ) {
   private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(EXTERNAL_SOURCE_ID)
@@ -41,12 +42,16 @@ class WorkspaceModuleImporter(
   fun importModule(): ModuleEntity {
     val baseModuleDirPath = importingSettings.dedicatedModuleDir.ifBlank { null } ?: importData.mavenProject.directory
     val baseModuleDir = virtualFileUrlManager.fromPath(baseModuleDirPath)
-    val entitySource = JpsEntitySourceFactory.createEntitySourceForModule(project, baseModuleDir, externalSource)
+    val moduleLibrarySource = JpsEntitySourceFactory.createEntitySourceForModule(project, baseModuleDir, externalSource)
+    val projectLibrarySource = dependenciesImportingContext.getCachedProjectLibraryEntitySource {
+      JpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource)
+    }
 
     val moduleName = importData.moduleData.moduleName
 
-    val dependencies = collectDependencies(moduleName, importData.dependencies, entitySource)
-    val moduleEntity = createModuleEntity(moduleName, importData.mavenProject, importData.moduleData.type, dependencies, entitySource)
+    val dependencies = collectDependencies(moduleName, importData.dependencies, moduleLibrarySource, projectLibrarySource)
+    val moduleEntity = createModuleEntity(moduleName, importData.mavenProject, importData.moduleData.type, dependencies,
+                                          moduleLibrarySource)
     configureModuleEntity(importData, moduleEntity, folderImportingContext)
     return moduleEntity
   }
@@ -82,14 +87,15 @@ class WorkspaceModuleImporter(
 
   private fun collectDependencies(moduleName: String,
                                   dependencies: List<Any>,
-                                  moduleEntitySource: EntitySource): List<ModuleDependencyItem> {
+                                  moduleLibrarySource: EntitySource,
+                                  projectLibrarySource: EntitySource): List<ModuleDependencyItem> {
     val result = mutableListOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency)
     for (dependency in dependencies) {
       if (dependency is SystemDependency) {
-        result.add(createSystemDependency(moduleName, dependency.artifact, moduleEntitySource))
+        result.add(createSystemDependency(moduleName, dependency.artifact, moduleLibrarySource))
       }
       else if (dependency is LibraryDependency) {
-        result.add(createLibraryDependency(dependency.artifact))
+        result.add(createLibraryDependency(dependency.artifact, projectLibrarySource))
       }
       else if (dependency is AttachedJarDependency) {
         result.add(createLibraryDependency(
@@ -98,6 +104,7 @@ class WorkspaceModuleImporter(
           classUrls = dependency.classes.map(::pathToUrl),
           sourceUrls = dependency.sources.map(::pathToUrl),
           javadocUrls = dependency.javadocs.map(::pathToUrl),
+          projectLibrarySource
         ))
       }
       else if (dependency is ModuleDependency) {
@@ -105,7 +112,7 @@ class WorkspaceModuleImporter(
                      .ModuleDependency(ModuleId(dependency.artifact), false, toScope(dependency.scope), dependency.isTestJar))
       }
       else if (dependency is BaseDependency) {
-        result.add(createLibraryDependency(dependency.artifact))
+        result.add(createLibraryDependency(dependency.artifact, projectLibrarySource))
       }
     }
     return result
@@ -124,7 +131,7 @@ class WorkspaceModuleImporter(
 
   private fun createSystemDependency(moduleName: String,
                                      artifact: MavenArtifact,
-                                     moduleEntitySource: EntitySource): ModuleDependencyItem.Exportable.LibraryDependency {
+                                     entitySource: EntitySource): ModuleDependencyItem.Exportable.LibraryDependency {
     assert(MavenConstants.SCOPE_SYSTEM == artifact.scope)
 
     val libraryId = LibraryId(artifact.libraryName, LibraryTableId.ModuleLibraryTableId(moduleId = ModuleId(moduleName)))
@@ -133,11 +140,12 @@ class WorkspaceModuleImporter(
                        MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
                      sourceUrls = emptyList(),
                      javadocUrls = emptyList(),
-                     moduleEntitySource)
+                     entitySource)
     return ModuleDependencyItem.Exportable.LibraryDependency(libraryId, false, artifact.dependencyScope)
   }
 
-  private fun createLibraryDependency(artifact: MavenArtifact): ModuleDependencyItem.Exportable.LibraryDependency {
+  private fun createLibraryDependency(artifact: MavenArtifact,
+                                      entitySource: EntitySource): ModuleDependencyItem.Exportable.LibraryDependency {
     assert(MavenConstants.SCOPE_SYSTEM != artifact.scope)
     return createLibraryDependency(artifact.libraryName,
                                    artifact.dependencyScope,
@@ -146,7 +154,8 @@ class WorkspaceModuleImporter(
                                    sourceUrls = listOf(
                                      MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
                                    javadocUrls = listOf(
-                                     MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")))
+                                     MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")),
+                                   entitySource)
   }
 
   private fun createLibraryDependency(
@@ -155,7 +164,7 @@ class WorkspaceModuleImporter(
     classUrls: List<String>,
     sourceUrls: List<String>,
     javadocUrls: List<String>,
-    source: EntitySource = JpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource)
+    source: EntitySource
   ): ModuleDependencyItem.Exportable.LibraryDependency {
     val libraryId = LibraryId(libraryName, LibraryTableId.ProjectLibraryTableId)
 
@@ -170,7 +179,7 @@ class WorkspaceModuleImporter(
     sourceUrls: List<String>,
     javadocUrls: List<String>,
     source: EntitySource) {
-    if (builder.resolve(libraryId) != null) return;
+    if (builder.resolve(libraryId) != null) return
 
     val roots = mutableListOf<LibraryRoot>()
 
@@ -259,6 +268,14 @@ class WorkspaceModuleImporter(
     }
     builder.addJavaModuleSettingsEntity(inheritCompilerOutput, false, null, compilerOutputUrlForTests,
                                         languageLevel.name, moduleEntity, moduleEntity.entitySource)
+  }
+
+  class DependenciesImportingContext {
+    private var projectLibrarySourceCache: EntitySource? = null
+
+    internal fun getCachedProjectLibraryEntitySource(compute: () -> EntitySource): EntitySource {
+      return projectLibrarySourceCache ?: compute().also { projectLibrarySourceCache = it }
+    }
   }
 
   companion object {

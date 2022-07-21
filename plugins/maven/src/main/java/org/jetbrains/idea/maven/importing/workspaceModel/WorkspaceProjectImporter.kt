@@ -99,12 +99,17 @@ class WorkspaceProjectImporter(
                                                     mavenProjectToModuleName).getContext(projectsToImport.keys)
 
     val createdModules = mutableListOf<ImportedModuleData>()
+    val dependenciesImportingContext = WorkspaceModuleImporter.DependenciesImportingContext()
     val folderImportingContext = WorkspaceFolderImporter.FolderImportingContext()
 
     for (importData in sortProjectsToImportByPrecedence(context)) {
-      val moduleEntity = WorkspaceModuleImporter(
-        myProject, importData, virtualFileUrlManager, builder, myImportingSettings, folderImportingContext
-      ).importModule()
+      val moduleEntity = WorkspaceModuleImporter(myProject,
+                                                 importData,
+                                                 virtualFileUrlManager,
+                                                 builder,
+                                                 myImportingSettings,
+                                                 dependenciesImportingContext,
+                                                 folderImportingContext).importModule()
       createdModules.add(ImportedModuleData(moduleEntity.persistentId, importData.mavenProject, importData.moduleData.type))
     }
     return createdModules
