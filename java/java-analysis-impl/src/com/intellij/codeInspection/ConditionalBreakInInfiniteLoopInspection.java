@@ -26,6 +26,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean noConversionToDoWhile = false;
   public boolean allowConditionFusion = false;
+  public boolean suggestConversionWhenIfIsASingleStmtInLoop = false;
 
   @Nullable
   @Override
@@ -33,6 +34,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(JavaBundle.message("inspection.conditional.break.in.infinite.loop.no.conversion.with.do.while"), "noConversionToDoWhile");
     panel.addCheckbox(JavaBundle.message("inspection.conditional.break.in.infinite.loop.allow.condition.fusion"), "allowConditionFusion");
+    panel.addCheckbox(JavaBundle.message("inspection.conditional.break.in.infinite.loop.suggest.conversion.when.if.is.single.stmt.in.loop"), "suggestConversionWhenIfIsASingleStmtInLoop");
     return panel;
   }
 
@@ -57,7 +59,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
 
       private void visitLoop(@NotNull PsiConditionalLoopStatement loopStatement, @Nullable PsiElement keyword) {
         if (keyword == null) return;
-        Context context = Context.from(loopStatement, noConversionToDoWhile);
+        Context context = Context.from(loopStatement, noConversionToDoWhile, suggestConversionWhenIfIsASingleStmtInLoop);
         if (context == null) return;
         LocalQuickFix[] fixes;
         if (context.myConditionInTheBeginning) {
@@ -88,7 +90,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
   }
 
   public static void tryTransform(@NotNull PsiWhileStatement whileStatement) {
-    Context context = Context.from(whileStatement, true);
+    Context context = Context.from(whileStatement, true, true);
     if (context != null) {
       context.simplify(whileStatement);
     }
@@ -120,7 +122,9 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
     }
 
     @Nullable
-    private static Context from(@NotNull PsiConditionalLoopStatement loopStatement, boolean noConversionToDoWhile) {
+    private static Context from(@NotNull PsiConditionalLoopStatement loopStatement,
+                                boolean noConversionToDoWhile,
+                                boolean dontConvertWhenIfIsSingleStmtInLoop) {
       boolean isEndlessLoop = ControlFlowUtils.isEndlessLoop(loopStatement);
       if (!isEndlessLoop) {
         if (loopStatement instanceof PsiForStatement) {
@@ -135,6 +139,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
       if (body == null) return null;
       PsiStatement[] statements = ControlFlowUtils.unwrapBlock(body);
       if (statements.length < 1) return null;
+      if (statements.length == 1 && dontConvertWhenIfIsSingleStmtInLoop) return null;
       if (StreamEx.ofTree((PsiElement)body, el -> StreamEx.of(el.getChildren()))
             .select(PsiBreakStatement.class)
             .filter(stmt -> ControlFlowUtils.statementBreaksLoop(stmt, loopStatement))
@@ -246,7 +251,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiConditionalLoopStatement loop = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiConditionalLoopStatement.class);
       if (loop == null) return;
-      Context context = Context.from(loop, noConversionToDoWhile);
+      Context context = Context.from(loop, noConversionToDoWhile, false);
       if (context == null) return;
       context.simplify(loop);
     }
