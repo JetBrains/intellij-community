@@ -86,6 +86,21 @@ internal class ImportQuickFix(
         return true
     }
 
+    override fun fixSilently(editor: Editor): Boolean {
+        val element = element ?: return false
+        val file = element.containingKtFile
+        if (!DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled) return false
+        if (!ShowAutoImportPass.isAddUnambiguousImportsOnTheFlyEnabled(file)) return false
+        val project = file.project
+        val addImportAction = createAddImportAction(project, editor, file)
+        if (importCandidates.size == 1) {
+            addImportAction.execute()
+            return true
+        } else {
+            return false
+        }
+    }
+
     private val modificationCountOnCreate: Long = PsiModificationTracker.getInstance(element.project).modificationCount
 
     /**
