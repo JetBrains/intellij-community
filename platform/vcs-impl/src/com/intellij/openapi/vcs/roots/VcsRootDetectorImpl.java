@@ -69,7 +69,7 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
     Set<VcsRoot> detectedRoots = new HashSet<>();
     Map<VirtualFile, Boolean> scannedDirs = new HashMap<>();
 
-    scanForRootsInsideDir(myProject, dirToScan, null, scannedDirs, detectedRoots);
+    detectedRoots.addAll(scanForRootsInsideDir(myProject, dirToScan, null, scannedDirs));
     detectedRoots.addAll(scanForRootsAboveDirs(Collections.singletonList(dirToScan), scannedDirs, detectedRoots));
     return detectedRoots;
   }
@@ -94,19 +94,21 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
     // process inner content roots first
     contentRoots.sort(Comparator.comparing(root -> -root.getPath().length()));
     for (VirtualFile dir : contentRoots) {
-      scanForRootsInsideDir(myProject, dir, skipDirs, scannedDirs, detectedRoots);
+      detectedRoots.addAll(scanForRootsInsideDir(myProject, dir, skipDirs, scannedDirs));
       skipDirs.add(dir);
     }
 
     detectedRoots.addAll(scanForRootsAboveDirs(contentRoots, scannedDirs, detectedRoots));
+
     return detectedRoots;
   }
 
-  private void scanForRootsInsideDir(@NotNull Project project,
-                                     @NotNull VirtualFile root,
-                                     @Nullable Set<VirtualFile> skipDirs,
-                                     @NotNull Map<VirtualFile, Boolean> scannedDirs,
-                                     @NotNull Set<VcsRoot> result) {
+  @NotNull
+  private Set<VcsRoot> scanForRootsInsideDir(@NotNull Project project,
+                                             @NotNull VirtualFile root,
+                                             @Nullable Set<VirtualFile> skipDirs,
+                                             @NotNull Map<VirtualFile, Boolean> scannedDirs) {
+    Set<VcsRoot> result = new HashSet<>();
     VcsRootScanner.visitDirsRecursivelyWithoutExcluded(project, root, false, dir -> {
       if (skipDirs != null && skipDirs.contains(dir)) {
         return SKIP_CHILDREN;
@@ -123,6 +125,7 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
       }
       return CONTINUE;
     });
+    return result;
   }
 
   @NotNull
