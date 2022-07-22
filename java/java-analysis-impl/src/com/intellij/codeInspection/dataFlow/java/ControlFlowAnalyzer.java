@@ -262,6 +262,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
     startElement(statement);
+    int startSize = getInstructionCount();
 
     PsiElement[] elements = statement.getDeclaredElements();
     for (PsiElement element : elements) {
@@ -275,6 +276,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           initializeVariable(variable, initializer);
         }
       }
+    }
+    if (getInstructionCount() == startSize) {
+      // Add no-op instruction if the statement has no instructions at all,
+      // so it could be anchored in debugger.
+      addInstruction(new SpliceInstruction(0));
     }
 
     finishElement(statement);
