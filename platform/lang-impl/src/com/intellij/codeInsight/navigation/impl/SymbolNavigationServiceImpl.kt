@@ -25,6 +25,9 @@ class SymbolNavigationServiceImpl : SymbolNavigationService {
     if (symbol is NavigatableSymbol) {
       result += symbol.getNavigationTargets(project)
     }
+    if (symbol is NavigationTarget) {
+      result += symbol
+    }
     val element = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
     if (element != null) {
       result += PsiElementNavigationTarget(element)
