@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.importing
 
 class MavenCompilerSettingsConfigurator : MavenConfigurator {
-  override fun afterModelApplied(context: MavenConfigurator.AppliedContext) {
+  override fun afterModelApplied(context: MavenConfigurator.AppliedModelContext) {
     MavenProjectImporterBase.removeOutdatedCompilerConfigSettings(context.project)
   }
 }

@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsTree
 
 @ApiStatus.Experimental
 interface MavenConfigurator {
@@ -21,19 +22,7 @@ interface MavenConfigurator {
   }
 
   /**
-   * Called for each imported project.
-   * [ModuleEntity]-es are already created and filled with folders and dependencies,
-   * but not yet applied to [com.intellij.workspaceModel.ide.WorkspaceModel]
-   *
-   * * Called on a background thread.
-   * * Implementations are responsible for taking readActions (preferably cancelable).
-   * * WriteActions are not allowed.
-   */
-  @RequiresBackgroundThread
-  fun configureModule(context: MutableModuleContext) {}
-
-  /**
-   * Called once per import, after [configureModule] has been called for all [MavenConfigurator]s and all [Module]s.
+   * Called for each imported project. Order of projects is not defined.
    * [ModuleEntity]-es are already created and filled with folders and dependencies,
    * but not yet applied to [com.intellij.workspaceModel.ide.WorkspaceModel].
    *
@@ -42,38 +31,58 @@ interface MavenConfigurator {
    * * WriteActions are not allowed.
    */
   @RequiresBackgroundThread
-  fun beforeModelApplied(context: MutableContext) {}
+  fun configureMavenProject(context: MutableMavenProjectContext) {
+  }
+
+  /**
+   * Called once per import, after [configureMavenProject] has been called for all [MavenConfigurator]s and all [Module]s.
+   * [ModuleEntity]-es are already created and filled with folders and dependencies,
+   * but not yet applied to [com.intellij.workspaceModel.ide.WorkspaceModel].
+   *
+   * * Called on a background thread.
+   * * Implementations are responsible for taking readActions (preferably cancelable).
+   * * WriteActions are not allowed.
+   */
+  @RequiresBackgroundThread
+  fun beforeModelApplied(context: MutableModelContext) {
+  }
 
   /**
    * Called once per import, after all the changes are applied to applied to [com.intellij.workspaceModel.ide.WorkspaceModel]
    *
    * * Called in WriteAction.
    * * Should be as fast as possible.
-   * * Necessary preparations must be done in [beforeModelApplied] or [configureModule]. Data can be passed context as [UserDataHolder]
+   * * Necessary preparations must be done in [beforeModelApplied] or [configureMavenProject]. Data can be passed context as [UserDataHolder]
    */
   @RequiresWriteLock
-  fun afterModelApplied(context: AppliedContext) {}
+  fun afterModelApplied(context: AppliedModelContext) {
+  }
 
   data class ModuleWithType<M>(val module: M, val type: MavenModuleType)
+
+  /**
+   * Every Maven project is represented by one or several IJ [Module]s. See [org.jetbrains.idea.maven.importing.MavenModuleType] for the list of possible module types.
+   * Configuration implementation should be careful when configuring each [Module], e.g. [org.jetbrains.idea.maven.importing.MavenModuleType.TEST_ONLY] should be configured for test sources only.
+   *
+   */
   data class MavenProjectWithModules<M>(val mavenProject: MavenProject,
                                         val modules: List<ModuleWithType<M>>)
 
-  interface Context<S : EntityStorage, M> : UserDataHolder {
+  interface Context<S : EntityStorage> : UserDataHolder {
     val project: Project
     val storage: S
+    val mavenProjectsTree: MavenProjectsTree
+  }
 
-    val mavenProjectsWithModules: List<MavenProjectWithModules<M>>
-
+  interface ModelContext<S : EntityStorage, M> : Context<S> {
+    val mavenProjectsWithModules: Sequence<MavenProjectWithModules<M>>
     fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T>
   }
 
-  interface MutableContext : Context<MutableEntityStorage, ModuleEntity>
-  interface AppliedContext : Context<EntityStorage, Module>
+  interface MutableModelContext : ModelContext<MutableEntityStorage, ModuleEntity>
+  interface AppliedModelContext : ModelContext<EntityStorage, Module>
 
-  interface MutableModuleContext : UserDataHolder {
-    val project: Project
-    val storage: MutableEntityStorage
-
+  interface MutableMavenProjectContext : Context<MutableEntityStorage> {
     val mavenProjectWithModules: MavenProjectWithModules<ModuleEntity>
   }
 }

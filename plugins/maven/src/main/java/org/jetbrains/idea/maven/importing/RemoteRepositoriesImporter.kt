@@ -29,13 +29,13 @@ class RemoteRepositoriesImporter : MavenImporter("", ""),
     return true
   }
 
-  override fun beforeModelApplied(context: MavenConfigurator.MutableContext) {
-    val mavenProjects = context.mavenProjectsWithModules.asSequence().map { it.mavenProject }
+  override fun beforeModelApplied(context: MavenConfigurator.MutableModelContext) {
+    val mavenProjects = context.mavenProjectsWithModules.map { it.mavenProject }
     val repositories = collectRepositoriesForMavenProjects(context.project, mavenProjects)
     COLLECTED_REPOSITORIES.set(context, repositories)
   }
 
-  override fun afterModelApplied(context: MavenConfigurator.AppliedContext) {
+  override fun afterModelApplied(context: MavenConfigurator.AppliedModelContext) {
     COLLECTED_REPOSITORIES.get(context)?.let { applyRepositories(context.project, it) }
   }
 

@@ -36,13 +36,13 @@ class MavenEncodingImporter : MavenImporter("", ""), MavenConfigurator {
     return true
   }
 
-  override fun beforeModelApplied(context: MavenConfigurator.MutableContext) {
-    val allMavenProjects = context.mavenProjectsWithModules.asSequence().map { (mavenProject, _) -> mavenProject }
+  override fun beforeModelApplied(context: MavenConfigurator.MutableModelContext) {
+    val allMavenProjects = context.mavenProjectsWithModules.map { (mavenProject, _) -> mavenProject }
     val mapper = mapEncodings(allMavenProjects, context.project)
     PREPARED_MAPPER.set(context, mapper)
   }
 
-  override fun afterModelApplied(context: MavenConfigurator.AppliedContext) {
+  override fun afterModelApplied(context: MavenConfigurator.AppliedModelContext) {
     PREPARED_MAPPER.get(context)?.applyCollectedInfo()
   }
 

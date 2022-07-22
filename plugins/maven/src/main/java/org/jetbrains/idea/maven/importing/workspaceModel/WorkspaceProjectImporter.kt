@@ -211,16 +211,17 @@ class WorkspaceProjectImporter(
                                builder: MutableEntityStorage,
                                contextDataHolder: UserDataHolderBase,
                                configuratorsTimings: MutableMap<Class<MavenConfigurator>, ConfiguratorTiming>) {
-    val context = object : MavenConfigurator.MutableModuleContext, UserDataHolder by contextDataHolder {
+    val context = object : MavenConfigurator.MutableMavenProjectContext, UserDataHolder by contextDataHolder {
       override val project = myProject
       override val storage = builder
+      override val mavenProjectsTree = myProjectsTree
       override lateinit var mavenProjectWithModules: MavenConfigurator.MavenProjectWithModules<ModuleEntity>
     }
     MavenConfigurator.EXTENSION_POINT_NAME.extensions.forEach { configurator ->
       recordConfiguratorTiming(configurator, configuratorsTimings, ConfiguratorTiming::configModulesNano) {
         projectsWithModules.forEach { projectWithModules ->
           try {
-            configurator.configureModule(context.apply { mavenProjectWithModules = projectWithModules })
+            configurator.configureMavenProject(context.apply { mavenProjectWithModules = projectWithModules })
           }
           catch (e: Exception) {
             MavenLog.LOG.error(e)
@@ -234,10 +235,11 @@ class WorkspaceProjectImporter(
                                  builder: MutableEntityStorage,
                                  contextDataHolder: UserDataHolderBase,
                                  configuratorsTimings: MutableMap<Class<MavenConfigurator>, ConfiguratorTiming>) {
-    val context = object : MavenConfigurator.MutableContext, UserDataHolder by contextDataHolder {
+    val context = object : MavenConfigurator.MutableModelContext, UserDataHolder by contextDataHolder {
       override val project = myProject
       override val storage = builder
-      override val mavenProjectsWithModules = projectsWithModules
+      override val mavenProjectsTree = myProjectsTree
+      override val mavenProjectsWithModules = projectsWithModules.asSequence()
       override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = Companion.importedEntities(builder, clazz)
     }
     MavenConfigurator.EXTENSION_POINT_NAME.extensions.forEach { configurator ->
@@ -256,10 +258,11 @@ class WorkspaceProjectImporter(
                                 builder: EntityStorage,
                                 contextDataHolder: UserDataHolderBase,
                                 configuratorsTimings: MutableMap<Class<MavenConfigurator>, ConfiguratorTiming>) {
-    val context = object : MavenConfigurator.AppliedContext, UserDataHolder by contextDataHolder {
+    val context = object : MavenConfigurator.AppliedModelContext, UserDataHolder by contextDataHolder {
       override val project = myProject
       override val storage = builder
-      override val mavenProjectsWithModules = projectsWithModules
+      override val mavenProjectsTree = myProjectsTree
+      override val mavenProjectsWithModules = projectsWithModules.asSequence()
       override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = Companion.importedEntities(builder, clazz)
     }
     MavenConfigurator.EXTENSION_POINT_NAME.extensions.forEach { configurator ->
