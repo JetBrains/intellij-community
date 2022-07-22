@@ -14,7 +14,7 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("fir-fe10-binding")
+@TestRoot("k2-fe10-bindings")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10BindingIntentionTest {

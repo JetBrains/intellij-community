@@ -201,7 +201,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
 
-    testGroup("fir-fe10-binding", testDataPath = "../idea/tests") {
+    testGroup("k2-fe10-bindings", testDataPath = "../idea/tests") {
         testClass<AbstractFe10BindingIntentionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("testData/intentions/conventionNameCalls", pattern = pattern)
@@ -212,7 +212,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("fir-fe10-binding", testDataPath = "../idea/tests") {
+    testGroup("k2-fe10-bindings", testDataPath = "../idea/tests") {
         testClass<AbstractFe10BindingLocalInspectionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("testData/inspectionsLocal/addOperatorModifier", pattern = pattern)
@@ -240,7 +240,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("fir-fe10-binding", testDataPath = "../idea/tests") {
+    testGroup("k2-fe10-bindings", testDataPath = "../idea/tests") {
         testClass<AbstractFe10BindingQuickFixTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
             model("testData/quickfix/addVarianceModifier", pattern = pattern)
