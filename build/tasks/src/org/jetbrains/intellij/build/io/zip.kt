@@ -9,14 +9,20 @@ import java.util.zip.Deflater
 
 private val W_OVERWRITE = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)
 
+enum class AddDirEntriesMode {
+  NONE,
+  RESOURCE_ONLY,
+  ALL
+}
+
 // symlinks not supported but can be easily implemented - see CollectingVisitor.visitFile
 fun zip(targetFile: Path,
         dirs: Map<Path, String>,
         compress: Boolean,
-        addDirEntries: Boolean = false,
+        addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE,
         overwrite: Boolean = false,
         compressionLevel: Int = Deflater.DEFAULT_COMPRESSION,
-        fileFilter: ((name: String) -> Boolean)? = null ) {
+        fileFilter: ((name: String) -> Boolean)? = null) {
   // note - dirs contain duplicated directories (you cannot simply add directory entry on visit - uniqueness must be preserved)
   // anyway, directory entry are not added
   Files.createDirectories(targetFile.parent)
@@ -24,10 +30,12 @@ fun zip(targetFile: Path,
                 deflater = if (compress) Deflater(compressionLevel, true) else null).use {
     val fileAdded: ((String) -> Boolean)?
     val dirNameSetToAdd: Set<String>
-    if (addDirEntries) {
+    if (addDirEntriesMode != AddDirEntriesMode.NONE) {
       dirNameSetToAdd = LinkedHashSet()
       fileAdded = { name ->
-        if (!name.endsWith(".class") && !name.endsWith("/package.html") && name != "META-INF/MANIFEST.MF") {
+        if (addDirEntriesMode == AddDirEntriesMode.ALL ||
+            (addDirEntriesMode == AddDirEntriesMode.RESOURCE_ONLY && !name.endsWith(".class") && !name.endsWith(
+              "/package.html") && name != "META-INF/MANIFEST.MF")) {
           var slashIndex = name.lastIndexOf('/')
           if (slashIndex != -1) {
             while (dirNameSetToAdd.add(name.substring(0, slashIndex))) {

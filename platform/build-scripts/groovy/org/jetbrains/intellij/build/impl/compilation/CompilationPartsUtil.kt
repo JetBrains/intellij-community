@@ -20,6 +20,7 @@ import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.httpClient
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.deleteDir
 import org.jetbrains.intellij.build.io.zip
 import java.math.BigInteger
@@ -91,7 +92,7 @@ private fun createBufferPool(): DirectFixedSizeByteBufferPool {
   return DirectFixedSizeByteBufferPool(size = MAX_BUFFER_SIZE, maxPoolSize = ForkJoinPool.getCommonPoolParallelism() * 2)
 }
 
-fun packCompilationResult(context: CompilationContext, zipDir: Path): List<PackAndUploadItem> {
+fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE): List<PackAndUploadItem> {
   val incremental = context.options.incrementalCompilation
   if (!incremental) {
     try {
@@ -153,7 +154,8 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path): List<PackA
             dirs = mapOf(item.output to ""),
             compress = false,
             overwrite = true,
-            fileFilter = { it != "classpath.index" && it != ".unmodified" && it != ".DS_Store" }
+            fileFilter = { it != "classpath.index" && it != ".unmodified" && it != ".DS_Store" },
+            addDirEntriesMode = addDirEntriesMode
           )
         }
         spanBuilder("compute hash").setParent(traceContext).setAttribute("name", item.name).use {

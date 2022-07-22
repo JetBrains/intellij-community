@@ -17,6 +17,7 @@ import org.jetbrains.intellij.build.BuildScriptsLoggedError
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.runJava
 import java.io.File
@@ -59,15 +60,15 @@ fun copyDirWithFileFilter(fromDir: Path, targetDir: Path, fileFilter: Predicate<
   copyDir(sourceDir = fromDir, targetDir = targetDir, fileFilter = fileFilter)
 }
 
-fun zip(context: CompilationContext, targetFile: Path, dir: Path, compress: Boolean) {
-  zipWithPrefixes(context, targetFile, mapOf(dir to ""), compress)
+fun zip(context: CompilationContext, targetFile: Path, dir: Path, compress: Boolean, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE) {
+  zipWithPrefixes(context, targetFile, mapOf(dir to ""), compress, addDirEntriesMode)
 }
 
-fun zipWithPrefixes(context: CompilationContext, targetFile: Path, map: Map<Path, String>, compress: Boolean) {
+fun zipWithPrefixes(context: CompilationContext, targetFile: Path, map: Map<Path, String>, compress: Boolean, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE) {
   spanBuilder("pack")
     .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
     .useWithScope {
-      org.jetbrains.intellij.build.io.zip(targetFile = targetFile, dirs = map, compress = compress, addDirEntries = false)
+      org.jetbrains.intellij.build.io.zip(targetFile = targetFile, dirs = map, compress = compress, addDirEntriesMode = addDirEntriesMode)
     }
 }
 
