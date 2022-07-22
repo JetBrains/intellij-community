@@ -54,7 +54,6 @@ internal data class RecentProjectItem(
   override fun children(): List<RecentProjectTreeItem> = emptyList()
 
   companion object {
-    @JvmStatic
     fun openProjectAndLogRecent(file: Path, options: OpenProjectTask, projectGroup: ProjectGroup?) {
       ApplicationManager.getApplication().coroutineScope.launch {
         RecentProjectsManagerBase.getInstanceEx().openProject(file, options)
@@ -91,12 +90,10 @@ internal data class RecentProjectItem(
                               BitUtil.isSet(modifiers, InputEvent.SHIFT_DOWN_MASK) ||
                               event.place === ActionPlaces.WELCOME_SCREEN ||
                               LightEdit.owns(null)
-    val options = OpenProjectTask.build()
-      .withProjectToClose(null)
-      .withForceOpenInNewFrame(forceOpenInNewFrame)
-      .withRunConfigurators()
-
-    openProjectAndLogRecent(file, options, projectGroup)
+    openProjectAndLogRecent(file, OpenProjectTask {
+      this.forceOpenInNewFrame = forceOpenInNewFrame
+      runConfigurators = true
+    }, projectGroup)
   }
 
   fun searchName(): String {

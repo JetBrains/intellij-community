@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.impl.OpenProjectTaskKt;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem;
 import com.intellij.util.BitUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -61,14 +63,17 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     }
 
 
-    int modifiers = e.getModifiers();
-    boolean forceOpenInNewFrame = BitUtil.isSet(modifiers, InputEvent.CTRL_MASK)
-                                  || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)
-                                  || ActionPlaces.WELCOME_SCREEN.equals(e.getPlace())
-                                  || LightEdit.owns(project);
-    OpenProjectTask options =
-      OpenProjectTask.build().withProjectToClose(project).withForceOpenInNewFrame(forceOpenInNewFrame).withRunConfigurators();
-    RecentProjectItem.openProjectAndLogRecent(file, options, myProjectGroup);
+    OpenProjectTask options = OpenProjectTaskKt.OpenProjectTask(builder -> {
+      builder.setProjectToClose(project);
+      int modifiers = e.getModifiers();
+      builder.setForceOpenInNewFrame(BitUtil.isSet(modifiers, InputEvent.CTRL_MASK)
+                                       || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)
+                                       || ActionPlaces.WELCOME_SCREEN.equals(e.getPlace())
+                                       || LightEdit.owns(project));
+      builder.setRunConfigurators(true);
+      return Unit.INSTANCE;
+    });
+    RecentProjectItem.Companion.openProjectAndLogRecent(file, options, myProjectGroup);
   }
 
   public @SystemIndependent String getProjectPath() {

@@ -62,38 +62,36 @@ internal class RecentProjectFilteringTree(
   DefaultMutableTreeNode(RootItem(collectors))
 ) {
   init {
-    treeComponent.apply {
-      val projectActionButtonViewModel = ProjectActionButtonViewModel()
-      val filePathChecker = createFilePathChecker()
-      Disposer.register(parentDisposable, filePathChecker)
+    val projectActionButtonViewModel = ProjectActionButtonViewModel()
+    val filePathChecker = createFilePathChecker()
+    Disposer.register(parentDisposable, filePathChecker)
 
-      addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItem(this) }
-      addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)) { removeItem(tree) }
+    treeComponent.addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItem(treeComponent) }
+    treeComponent.addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)) { removeItem(treeComponent) }
 
-      val mouseListener = ProjectActionMouseListener(this, projectActionButtonViewModel, filePathChecker::isValid)
-      addMouseListener(mouseListener)
-      addMouseMotionListener(mouseListener)
-      addTreeWillExpandListener(ToggleStateListener())
+    val mouseListener = ProjectActionMouseListener(treeComponent, projectActionButtonViewModel, filePathChecker::isValid)
+    treeComponent.addMouseListener(mouseListener)
+    treeComponent.addMouseMotionListener(mouseListener)
+    treeComponent.addTreeWillExpandListener(ToggleStateListener())
 
-      putClientProperty(Control.Painter.KEY, Control.Painter.LEAF_WITHOUT_INDENT)
-      putClientProperty(
-        RenderingUtil.CUSTOM_SELECTION_BACKGROUND,
-        Supplier { ListUiUtil.WithTallRow.background(JList<Any>(), isSelected = true, hasFocus = true) }
-      )
+    treeComponent.putClientProperty(Control.Painter.KEY, Control.Painter.LEAF_WITHOUT_INDENT)
+    treeComponent.putClientProperty(
+      RenderingUtil.CUSTOM_SELECTION_BACKGROUND,
+      Supplier { ListUiUtil.WithTallRow.background(JList<Any>(), isSelected = true, hasFocus = true) }
+    )
 
-      SmartExpander.installOn(this)
-      TreeHoverToSelectionListener().addTo(this)
+    SmartExpander.installOn(treeComponent)
+    TreeHoverToSelectionListener().addTo(treeComponent)
 
-      isRootVisible = false
-      cellRenderer = ProjectActionRenderer(filePathChecker::isValid, projectActionButtonViewModel)
-      rowHeight = 0 // Fix tree renderer size on macOS
-      background = WelcomeScreenUIManager.getProjectsBackground()
-      toggleClickCount = 0
+    treeComponent.isRootVisible = false
+    treeComponent.cellRenderer = ProjectActionRenderer(filePathChecker::isValid, projectActionButtonViewModel)
+    treeComponent.rowHeight = 0 // Fix tree renderer size on macOS
+    treeComponent.background = WelcomeScreenUIManager.getProjectsBackground()
+    treeComponent.toggleClickCount = 0
 
-      setUI(FullRendererComponentTreeUI())
-      setExpandableItemsEnabled(false)
-      UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
-    }
+    treeComponent.setUI(FullRendererComponentTreeUI())
+    treeComponent.setExpandableItemsEnabled(false)
+    UIUtil.setCursor(treeComponent, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
 
     searchModel.updateStructure()
   }

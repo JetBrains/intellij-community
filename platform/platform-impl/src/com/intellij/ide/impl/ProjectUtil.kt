@@ -167,7 +167,7 @@ object ProjectUtil {
     }
     if (ProjectUtilCore.isValidProjectPath(file)) {
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
-      return ProjectManagerEx.getInstanceEx().openProjectAsync(file, options.withRunConfigurators())
+      return ProjectManagerEx.getInstanceEx().openProjectAsync(file, options.copy(runConfigurators = true))
     }
 
     if (!options.preventIprLookup && Files.isDirectory(file)) {
@@ -577,7 +577,7 @@ object ProjectUtil {
           return p
         }
       }
-      return ProjectManagerEx.getInstanceEx().openProject(existingFile, OpenProjectTask().withRunConfigurators())
+      return ProjectManagerEx.getInstanceEx().openProject(existingFile, OpenProjectTask().copy(runConfigurators = true))
     }
     val created = try {
       !Files.exists(file) && Files.createDirectories(file) != null || Files.isDirectory(file)
@@ -588,7 +588,7 @@ object ProjectUtil {
 
     var projectFile: Path? = null
     if (created) {
-      val options = OpenProjectTask().asNewProject().withRunConfigurators().withProjectName(name)
+      val options = OpenProjectTask().asNewProject().copy(runConfigurators = true, projectName = name)
       val project = ProjectManagerEx.getInstanceEx().newProject(file, options)
       if (project != null) {
         projectCreatedCallback?.projectCreated(project)
@@ -606,8 +606,11 @@ object ProjectUtil {
       return null
     }
 
-    val options = OpenProjectTask().withRunConfigurators().withCreatedByWizard().withoutVfsRefresh()
-    return ProjectManagerEx.getInstanceEx().openProject(projectFile, options)
+    return ProjectManagerEx.getInstanceEx().openProject(projectStoreBaseDir = projectFile, options = OpenProjectTask {
+      runConfigurators = true
+      isProjectCreatedWithWizard = true
+      isRefreshVfsNeeded = false
+    })
   }
 
   fun getProjectForWindow(window: Window?): Project? {

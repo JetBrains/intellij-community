@@ -97,8 +97,6 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
   fun withProject(project: Project?) = copy(project = project)
   fun withProjectName(projectName: String?) = copy(projectName = projectName)
   fun withRunConfigurators() = copy(runConfigurators = true)
-  fun withoutVfsRefresh() = copy(isRefreshVfsNeeded = false)
-  fun withCreatedByWizard() = copy(isProjectCreatedWithWizard = true)
 }
 
 class OpenProjectTaskBuilder internal constructor() {
