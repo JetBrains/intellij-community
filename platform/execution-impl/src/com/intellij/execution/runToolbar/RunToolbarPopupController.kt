@@ -14,6 +14,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.*
 import java.util.function.Supplier
+import javax.swing.SwingUtilities
 import javax.swing.event.AncestorEvent
 import javax.swing.event.AncestorListener
 
@@ -199,8 +200,16 @@ class RunToolbarPopupController(val project: Project,
     getPopupControllers().forEach { it.removeListener(this) }
   }
 
+  var firstShow = true
   override fun actionPerformedHandler() {
     show()
+    if(firstShow) {
+      cancel()
+      SwingUtilities.invokeLater {
+        show()
+        firstShow = false
+      }
+    }
   }
 }
 
