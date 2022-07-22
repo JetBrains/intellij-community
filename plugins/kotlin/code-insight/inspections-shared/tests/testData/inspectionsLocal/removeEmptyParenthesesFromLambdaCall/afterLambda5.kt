@@ -1,4 +1,4 @@
-// IS_APPLICABLE: false
+// PROBLEM: none
 
 fun <T> T.returnFun5(fn: (T) -> Boolean): ((T) -> T) -> Unit = {}
 

@@ -1,4 +1,4 @@
-// IS_APPLICABLE: false
+// PROBLEM: none
 
 fun returnFun2(i: Int): (() -> Unit) -> Unit = {}
 

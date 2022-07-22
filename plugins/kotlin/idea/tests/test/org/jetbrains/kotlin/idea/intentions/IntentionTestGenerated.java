@@ -14923,59 +14923,6 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/removeEmptyParenthesesFromLambdaCall")
-    public static class RemoveEmptyParenthesesFromLambdaCall extends AbstractIntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("afterLambda.kt")
-        public void testAfterLambda() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/afterLambda.kt");
-        }
-
-        @TestMetadata("afterLambda2.kt")
-        public void testAfterLambda2() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/afterLambda2.kt");
-        }
-
-        @TestMetadata("afterLambda3.kt")
-        public void testAfterLambda3() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/afterLambda3.kt");
-        }
-
-        @TestMetadata("afterLambda4.kt")
-        public void testAfterLambda4() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/afterLambda4.kt");
-        }
-
-        @TestMetadata("afterLambda5.kt")
-        public void testAfterLambda5() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/afterLambda5.kt");
-        }
-
-        @TestMetadata("afterLambda6.kt")
-        public void testAfterLambda6() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/afterLambda6.kt");
-        }
-
-        @TestMetadata("nextLine.kt")
-        public void testNextLine() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/nextLine.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/simple.kt");
-        }
-
-        @TestMetadata("suspend.kt")
-        public void testSuspend() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/suspend.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeEmptyPrimaryConstructor")
     public static class RemoveEmptyPrimaryConstructor extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {

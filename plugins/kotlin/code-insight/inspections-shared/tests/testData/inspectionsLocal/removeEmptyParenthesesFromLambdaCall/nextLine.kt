@@ -1,4 +1,4 @@
-// IS_APPLICABLE: false
+// PROBLEM: none
 
 fun foo(f: (Int) -> Unit) = f(4)
 
