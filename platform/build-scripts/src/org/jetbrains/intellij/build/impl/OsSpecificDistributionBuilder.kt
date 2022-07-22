@@ -29,8 +29,6 @@ interface OsSpecificDistributionBuilder {
 
   fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> = emptyList()
 
-  fun getArtifactNames(context: BuildContext): List<String> = emptyList()
-
   fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true) {
     TraceManager.spanBuilder("Permissions check for ${distribution.name}").useWithScope {
       val executableFilesPatterns = generateExecutableFilesPatterns(includeRuntime)

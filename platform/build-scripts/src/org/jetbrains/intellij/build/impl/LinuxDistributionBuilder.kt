@@ -145,17 +145,6 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     return patterns.addAll(context.getExtraExecutablePattern(OsFamily.LINUX))
   }
 
-  override fun getArtifactNames(context: BuildContext): List<String> {
-    val suffixes = ArrayList<String>()
-    if (customizer.buildTarGzWithoutBundledRuntime) {
-      suffixes.add(NO_JBR_SUFFIX)
-    }
-    if (!customizer.buildOnlyBareTarGz) {
-      suffixes.add("")
-    }
-    return suffixes.map { artifactName(context, it) }
-  }
-
   private val rootDirectoryName: String
     get() = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
 
