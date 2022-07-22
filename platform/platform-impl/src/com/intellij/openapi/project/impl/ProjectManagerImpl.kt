@@ -1084,12 +1084,19 @@ private suspend fun initProject(file: Path,
       // getting project name is not cheap and not possible at this moment
       indicator.text = ProjectBundle.message("project.loading.components")
     }
-    val activity = StartUpMeasurer.startActivity("project before loaded callbacks")
-    @Suppress("DEPRECATION", "removal")
-    ApplicationManager.getApplication().messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(file, project)
-    activity.end()
     coroutineContext.ensureActive()
-    registerComponents(project)
+
+    val registerComponentsActivity = createActivity(project) { "project ${StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX}" }
+    project.registerComponents()
+    registerComponentsActivity?.end()
+
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      @Suppress("TestOnlyProblems")
+      for (listener in ProjectServiceContainerCustomizer.getEp().extensionList) {
+        listener.serviceRegistered(project)
+      }
+    }
+
     coroutineContext.ensureActive()
     project.componentStore.setPath(file, isRefreshVfsNeeded, template)
     project.init(preloadServices, indicator)
@@ -1149,26 +1156,6 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
     }
   }
   return mode
-}
-
-private suspend fun registerComponents(project: ProjectImpl) {
-  var activity = createActivity(project) { "project ${StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX}" }
-  project.registerComponents()
-
-  activity = activity?.endAndStart("projectComponentRegistered")
-  val ep = ProjectServiceContainerCustomizer.getEp()
-  for (adapter in ep.sortedAdapters) {
-    coroutineContext.ensureActive()
-
-    val pluginDescriptor = adapter.pluginDescriptor
-    if (!isCorePlugin(pluginDescriptor)) {
-      logger<ProjectImpl>().error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
-      continue
-    }
-
-    (adapter.createInstance<ProjectServiceContainerCustomizer>(project) ?: continue).serviceRegistered(project)
-  }
-  activity?.end()
 }
 
 private inline fun createActivity(project: ProjectImpl, message: () -> String): Activity? {

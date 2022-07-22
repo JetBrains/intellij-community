@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
   val id = descriptor.pluginId
@@ -18,12 +19,10 @@ internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
          id.idString == "com.intellij.kotlinNative.platformDeps"
 }
 
-/**
- * Usage requires IJ Platform team approval (including plugin into white-list).
- */
-@ApiStatus.Internal
+@TestOnly
 interface ProjectServiceContainerCustomizer {
   companion object {
+    @TestOnly
     fun getEp(): ExtensionPointImpl<ProjectServiceContainerCustomizer> {
       return (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
         .getExtensionPoint("com.intellij.projectServiceContainerCustomizer")
