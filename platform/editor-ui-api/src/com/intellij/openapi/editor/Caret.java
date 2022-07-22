@@ -3,6 +3,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -182,6 +183,14 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * @return true if a range of text is selected, false otherwise.
    */
   boolean hasSelection();
+
+  /**
+   * Returns current selection, or empty range at caret offset if no selection exists.
+   * @see #getSelectionStart()
+   * @see #getSelectionEnd()
+   */
+  @NotNull
+  TextRange getSelectionRange();
 
   /**
    * Selects the specified range of text.

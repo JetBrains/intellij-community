@@ -30,6 +30,11 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
     return myEnd > myStart;
   }
 
+  @Override
+  public @NotNull TextRange getSelectionRange() {
+    return TextRange.create(myStart, myEnd);
+  }
+
   @NotNull
   @Override
   public ImaginaryEditor getEditor() {

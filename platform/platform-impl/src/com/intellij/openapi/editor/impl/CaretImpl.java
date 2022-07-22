@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.DocumentUtil;
@@ -1019,8 +1020,25 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   public boolean hasSelection() {
     validateContext(false);
     SelectionMarker marker = mySelectionMarker;
+    return hasSelection(marker);
+  }
+
+  private boolean hasSelection(SelectionMarker marker) {
     return marker != null && marker.isValid() && (marker.getEndOffset() > marker.getStartOffset()
                                                   || isVirtualSelectionEnabled() && marker.hasVirtualSelection());
+  }
+
+  @Override
+  public @NotNull TextRange getSelectionRange() {
+    validateContext(false);
+    SelectionMarker marker = mySelectionMarker;
+    if (hasSelection(marker)) {
+      return TextRange.create(marker.getStartOffset(), marker.getEndOffset());
+    }
+    else {
+      int offset = getOffset();
+      return TextRange.create(offset, offset);
+    }
   }
 
   @Override
