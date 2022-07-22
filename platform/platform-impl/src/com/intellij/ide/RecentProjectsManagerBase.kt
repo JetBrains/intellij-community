@@ -447,10 +447,10 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       else {
         openMultiple(openPaths)
       }
-      WelcomeFrame.showIfNoProjectOpened(null)
       return isOpened
     }
     finally {
+      WelcomeFrame.showIfNoProjectOpened(null)
       disableUpdatingRecentInfo.set(false)
     }
   }
