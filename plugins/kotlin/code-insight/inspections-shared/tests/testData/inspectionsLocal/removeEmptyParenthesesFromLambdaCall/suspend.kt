@@ -1,4 +1,4 @@
-// IS_APPLICABLE: false
+// PROBLEM: none
 fun suspend(body: () -> Int) {}
 
 fun main() {
