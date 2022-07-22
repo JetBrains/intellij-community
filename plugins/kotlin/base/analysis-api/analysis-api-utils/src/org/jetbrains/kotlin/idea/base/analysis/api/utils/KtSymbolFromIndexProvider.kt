@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfTypeSafe
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex
 import org.jetbrains.kotlin.name.Name
@@ -24,13 +25,50 @@ class KtSymbolFromIndexProvider(private val project: Project) {
         psiFilter: (KtClassOrObject) -> Boolean = { true },
     ): Sequence<KtNamedClassOrObjectSymbol> {
         val scope = analysisScope
-        val nameString = name.asString()
-
-        return KotlinClassShortNameIndex[nameString, project, scope]
+        return KotlinClassShortNameIndex[name.asString(), project, scope]
             .asSequence()
             .filter(psiFilter)
             .mapNotNull { it.getNamedClassOrObjectSymbol() }
     }
+
+    context(KtAnalysisSession)
+    fun getKotlinClassesByNameFilter(
+        nameFilter: (Name) -> Boolean,
+        psiFilter: (KtClassOrObject) -> Boolean = { true },
+    ): Sequence<KtNamedClassOrObjectSymbol> {
+        val scope = analysisScope
+        val index = KotlinFullClassNameIndex
+        return index.getAllKeys(project).asSequence()
+            .filter { fqName -> nameFilter(getShortName(fqName)) }
+            .flatMap { fqName -> index[fqName, project, scope] }
+            .filter(psiFilter)
+            .mapNotNull { it.getNamedClassOrObjectSymbol() }
+    }
+
+    context(KtAnalysisSession)
+    fun getJavaClassesByNameFilter(
+        nameFilter: (Name) -> Boolean,
+        psiFilter: (PsiClass) -> Boolean = { true }
+    ): Sequence<KtNamedClassOrObjectSymbol> {
+        val names = buildSet<Name> {
+            forEachNonKotlinCache { cache ->
+                cache.allClassNames.forEach { nameString ->
+                    if (Name.isValidIdentifier(nameString)) return@forEach
+                    val name = Name.identifier(nameString)
+                    if (nameFilter(name)) {
+                        add(name)
+                    }
+                }
+            }
+        }
+
+        return sequence {
+            names.forEach { name ->
+                yieldAll(getJavaClassesByName(name, psiFilter))
+            }
+        }
+    }
+
 
     context(KtAnalysisSession)
     fun getJavaClassesByName(
@@ -83,10 +121,12 @@ class KtSymbolFromIndexProvider(private val project: Project) {
 
     }
 
-    private inline fun SequenceScope<*>.forEachNonKotlinCache(action: SequenceScope<*>.(cache: PsiShortNamesCache) -> Unit) {
+    private inline fun forEachNonKotlinCache(action: (cache: PsiShortNamesCache) -> Unit) {
         for (cache in PsiShortNamesCache.EP_NAME.getExtensions(project)) {
             if (cache::class.java.name == "org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache") continue
             action(cache)
         }
     }
+
+    private fun getShortName(fqName: String) = Name.identifier(fqName.substringAfterLast('.'))
 }

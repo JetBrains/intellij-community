@@ -103,7 +103,7 @@ internal class FirWhenWithSubjectConditionContributor(
                 )
             }
 
-        getAvailableClassifiersFromIndex(indexHelper, scopeNameFilter, visibilityChecker)
+        getAvailableClassifiersFromIndex(symbolFromIndexProvider, scopeNameFilter, visibilityChecker)
             .forEach { classifier ->
                 if (classifier !is KtNamedSymbol || classifier in availableFromScope) return@forEach
 

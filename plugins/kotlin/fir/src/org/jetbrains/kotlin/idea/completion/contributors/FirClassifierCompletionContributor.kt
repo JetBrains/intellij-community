@@ -74,7 +74,7 @@ internal open class FirClassifierCompletionContributor(
             }
 
         getAvailableClassifiersFromIndex(
-            indexHelper,
+            symbolFromIndexProvider,
             scopeNameFilter,
             visibilityChecker
         )
