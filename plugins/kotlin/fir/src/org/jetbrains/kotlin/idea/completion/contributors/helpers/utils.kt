@@ -30,7 +30,7 @@ internal fun KtAnalysisSession.collectNonExtensions(
 }
     .filterNot { it.isExtension }
     .filter { symbolFilter(it) }
-    .filter { with(visibilityChecker) { isVisible(it) } }
+    .filter { visibilityChecker.isVisible(it) }
 
 
 private fun Name.toJavaGetterName(): Name? = identifierOrNullIfSpecial?.let { Name.identifier(JvmAbi.getterName(it)) }

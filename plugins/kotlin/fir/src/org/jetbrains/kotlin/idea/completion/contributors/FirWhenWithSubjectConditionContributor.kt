@@ -142,7 +142,7 @@ internal class FirWhenWithSubjectConditionContributor(
         allInheritors
             .asSequence()
             .filter { it.classIdIfNonLocal !in handledCasesClassIds }
-            .filter { with(visibilityChecker) { isVisible(it as KtClassifierSymbol) } }
+            .filter {  visibilityChecker.isVisible(it as KtClassifierSymbol) }
             .forEach { inheritor ->
                 val classId = inheritor.classIdIfNonLocal ?: return@forEach
                 addLookupElement(
@@ -210,7 +210,7 @@ internal class FirWhenWithSubjectConditionContributor(
         val allEnumEntrySymbols = classSymbol.getEnumEntries()
         allEnumEntrySymbols
             .filter { it.name !in handledCasesNames }
-            .filter { with(visibilityChecker) { isVisible(it) } }
+            .filter { visibilityChecker.isVisible(it) }
             .forEach { entry ->
                 addLookupElement(
                     "${classSymbol.name.asString()}.${entry.name.asString()}",

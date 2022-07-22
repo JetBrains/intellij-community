@@ -22,7 +22,7 @@ internal object FirClassifierProvider {
         yieldAll(
             originalKtFile.getScopeContextForPosition(position).scopes
                 .getClassifierSymbols(scopeNameFilter)
-                .filter { with(visibilityChecker) { isVisible(it) } }
+                .filter { visibilityChecker.isVisible(it) }
         )
     }
 
