@@ -63,7 +63,7 @@ internal class IntentionPreviewModel {
         var highlightingType = HighlightingType.UPDATED
         if (fragment.endLine2 - fragment.startLine2 == 1 && fragment.endLine1 - fragment.startLine1 == 1) {
           val prefix = StringUtil.commonPrefixLength(oldText, newText)
-          val suffix = StringUtil.commonSuffixLength(oldText, newText)
+          val suffix = StringUtil.commonSuffixLength(oldText, newText).coerceAtMost(oldText.length - prefix)
           if (prefix > 0 || suffix > 0) {
             var endPos = newText.length - suffix
             if (endPos > prefix) {
