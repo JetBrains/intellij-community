@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.preview
 
-import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.fragments.LineFragmentImpl
 import com.intellij.lang.LanguageCommenters
@@ -15,7 +14,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
@@ -42,8 +40,7 @@ internal class IntentionPreviewModel {
       val fileText = psiFileCopy.text
       val origFile = result.origFile
       val origText = origFile.text
-      val diff = squash(ComparisonManager.getInstance().compareLines(
-        origText, fileText, result.policy, DumbProgressIndicator.INSTANCE))
+      val diff = squash(result.lineFragments)
       var diffs = diff.mapNotNull { fragment ->
         val start = getOffset(fileText, fragment.startLine2)
         val end = getOffset(fileText, fragment.endLine2)
