@@ -5,7 +5,6 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -23,7 +22,6 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsSafe;
@@ -41,10 +39,8 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.RangeBlinker;
 import com.intellij.xml.util.XmlStringUtil;
@@ -56,8 +52,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.util.*;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -349,14 +343,13 @@ final class SearchForUsagesRunnable implements Runnable {
   public void run() {
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
 
-    AtomicBoolean findUsagesStartedShown = new AtomicBoolean();
-    searchUsages(findUsagesStartedShown);
-    endSearchForUsages(findUsagesStartedShown);
+    searchUsages();
+    endSearchForUsages();
 
     snapshot.logResponsivenessSinceCreation("Find Usages in " + myProject.getName());
   }
 
-  private void searchUsages(@NotNull AtomicBoolean findStartedBalloonShown) {
+  private void searchUsages() {
     ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
     if (current == null) throw new IllegalStateException("must run find usages under progress");
     ProgressIndicator indicator = ProgressWrapper.unwrapAll(current);
@@ -364,18 +357,7 @@ final class SearchForUsagesRunnable implements Runnable {
       CoreProgressManager.assertUnderProgress(indicator);
     }
     TooManyUsagesStatus.createFor(indicator);
-    AtomicBoolean showFindIsStartedBalloon = new AtomicBoolean(true);
 
-    ScheduledFuture<?> hurrayFindIsStartedBalloon = EdtScheduledExecutorService.getInstance().schedule(() -> {
-      if (!myProject.isDisposed() && showFindIsStartedBalloon.get() &&
-          // Don't show balloon if there is another one
-          ToolWindowManager.getInstance(myProject).getToolWindowBalloon(ToolWindowId.FIND) == null) {
-        notifyByFindBalloon(null, MessageType.WARNING,
-                            Collections.singletonList(StringUtil.escapeXmlEntities(UsageViewManagerImpl.getProgressTitle(myPresentation))));
-        findStartedBalloonShown.set(true);
-        showFindIsStartedBalloon.set(false);
-      }
-    }, ModalityState.NON_MODAL, 300, TimeUnit.MILLISECONDS);
     UsageSearcher usageSearcher = mySearcherFactory.create();
     long startSearchStamp = System.currentTimeMillis();
     usageSearcher.generate(usage -> {
@@ -430,31 +412,9 @@ final class SearchForUsagesRunnable implements Runnable {
     if (getUsageView(indicator, startSearchStamp) != null) {
       ApplicationManager.getApplication().invokeLater(() -> myUsageViewManager.showToolWindow(true), myProject.getDisposed());
     }
-
-    AtomicReference<ScheduledFuture<?>> hideFindIsStartedBalloon = new AtomicReference<>();
-    Disposable closeAllBalloons = () -> {
-      hurrayFindIsStartedBalloon.cancel(false);
-      hideFindIsStartedBalloon.get().cancel(false);
-    };
-
-    hideFindIsStartedBalloon.set(EdtScheduledExecutorService.getInstance().schedule(() -> {
-      if (!myProject.isDisposed() && findStartedBalloonShown.get()) {
-        Balloon balloon = ToolWindowManager.getInstance(myProject).getToolWindowBalloon(ToolWindowId.FIND);
-        if (balloon != null) {
-          balloon.hide();
-        }
-      }
-      showFindIsStartedBalloon.set(false);
-      Disposer.dispose(closeAllBalloons);
-    }, ModalityState.NON_MODAL, 3000, TimeUnit.MILLISECONDS));
-    // Avoid leaks when the usage view/project are closed suddenly but the scheduled tasks are still waiting in the queue.
-    // To do that, close all balloons and remove the callback from Disposer (to avoid mem leak of the "closeAllBalloons" callback)
-    // on usage view close/project close/hide the second balloon runnable, whichever comes first
-    Disposable parent = ObjectUtils.notNull(myUsageViewRef.get(), myProject);
-    Disposer.register(parent, closeAllBalloons);
   }
 
-  private void endSearchForUsages(@NotNull AtomicBoolean findStartedBalloonShown) {
+  private void endSearchForUsages() {
     assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
     int usageCount = myUsageCountWithoutDefinition.get();
     if (usageCount == 0) {
@@ -477,7 +437,6 @@ final class SearchForUsagesRunnable implements Runnable {
             MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
             notifyByFindBalloon(createGotToOptionsListener(mySearchFor), type, lines);
           }
-          findStartedBalloonShown.set(false);
         }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
     }
