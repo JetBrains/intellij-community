@@ -14,9 +14,7 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.util.parents
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
@@ -51,29 +49,27 @@ internal object MarkdownActionUtil {
   }
 
   @JvmStatic
-  fun findMarkdownTextEditor(event: AnActionEvent): Editor? {
-    val splitEditor = findSplitEditor(event)
-    if (splitEditor == null) {
-      val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return null
-      return when (psiFile.language) {
-        MarkdownLanguage.INSTANCE -> event.getData(CommonDataKeys.EDITOR)
-        else -> null
-      }
-    }
-    val mainEditor = splitEditor.textEditor
+  fun findMarkdownEditor(event: AnActionEvent): Editor? {
+    val file = event.getData(CommonDataKeys.PSI_FILE) ?: return null
     return when {
-      !mainEditor.component.isVisible -> null
-      else -> mainEditor.editor
+      file.language.isMarkdownLanguage() -> event.getData(CommonDataKeys.EDITOR)
+      else -> null
     }
   }
 
-  @RequiresBackgroundThread
-  fun findMarkdownTextEditorByPsiFile(event: AnActionEvent): Editor? {
-    val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return null
-    return when {
-      psiFile.language.isMarkdownLanguage() -> event.getData(CommonDataKeys.EDITOR)
-      else -> null
-    }
+  @JvmStatic
+  fun findRequiredMarkdownEditor(event: AnActionEvent): Editor {
+    val editor = findMarkdownEditor(event)
+    return checkNotNull(editor) { "Markdown editor was expected to be found in data context" }
+  }
+
+  @Deprecated(
+    message = "Use findMarkdownEditor instead",
+    replaceWith = ReplaceWith("findMarkdownEditor")
+  )
+  @JvmStatic
+  fun findMarkdownTextEditor(event: AnActionEvent): Editor? {
+    return findMarkdownEditor(event)
   }
 
   @RequiresEdt

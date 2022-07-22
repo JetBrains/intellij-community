@@ -44,7 +44,7 @@ internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
   }
 
   override fun isSelected(event: AnActionEvent): Boolean {
-    val editor = MarkdownActionUtil.findMarkdownTextEditorByPsiFile(event)
+    val editor = MarkdownActionUtil.findMarkdownEditor(event)
     val file = event.getData(CommonDataKeys.PSI_FILE)
     if (editor == null || file !is MarkdownFile) {
       event.presentation.isEnabledAndVisible = false
@@ -76,7 +76,7 @@ internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
   }
 
   override fun setSelected(event: AnActionEvent, state: Boolean) {
-    val editor = MarkdownActionUtil.findMarkdownTextEditor(event) ?: error("Could not find Markdown editor")
+    val editor = MarkdownActionUtil.findRequiredMarkdownEditor(event)
     val file = event.getRequiredData(CommonDataKeys.PSI_FILE)
 
     if (state) {

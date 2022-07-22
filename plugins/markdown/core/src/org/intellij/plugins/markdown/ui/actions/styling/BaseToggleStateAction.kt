@@ -35,7 +35,7 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
   protected abstract val targetNodeType: IElementType
 
   override fun update(event: AnActionEvent) {
-    val editor = MarkdownActionUtil.findMarkdownTextEditorByPsiFile(event)
+    val editor = MarkdownActionUtil.findMarkdownEditor(event)
     event.presentation.isEnabled = editor != null
     super.update(event)
   }
@@ -45,7 +45,7 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
   }
 
   override fun isSelected(event: AnActionEvent): Boolean {
-    if (MarkdownActionUtil.findMarkdownTextEditorByPsiFile(event) == null) {
+    if (MarkdownActionUtil.findMarkdownEditor(event) == null) {
       return false
     }
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return false
@@ -63,7 +63,7 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
   }
 
   override fun setSelected(event: AnActionEvent, state: Boolean) {
-    val editor = MarkdownActionUtil.findMarkdownTextEditorByPsiFile(event) ?: return
+    val editor = MarkdownActionUtil.findMarkdownEditor(event) ?: return
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return
     runWriteAction {
       executeCommand(file.project, templatePresentation.text) {

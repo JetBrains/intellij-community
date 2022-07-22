@@ -135,7 +135,7 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
 
   @Nullable
   private static Pair<PsiFile, Editor> getFileAndEditor(@NotNull AnActionEvent e) {
-    final Editor editor = MarkdownActionUtil.findMarkdownTextEditor(e);
+    final Editor editor = MarkdownActionUtil.findMarkdownEditor(e);
     final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     if (editor == null || psiFile == null || !psiFile.isValid()) {
       return null;
