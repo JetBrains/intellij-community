@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.execution.configurations.RemoteRunProfile;
@@ -33,6 +33,7 @@ import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -382,7 +383,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   public void markNodesObsolete() {
     Object root = myTreeModel.getRoot();
     if (root instanceof XValueContainerNode<?>) {
-      markNodesObsolete((XValueContainerNode<?>)root);
+      // avoid SOE
+      StreamEx.<XValueContainerNode<?>>ofTree((XValueContainerNode<?>)root, n -> StreamEx.of(n.getLoadedChildren()))
+        .forEach(XValueContainerNode::setObsolete);
     }
   }
 
@@ -408,11 +411,6 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.JUMP_TO_TYPE_SOURCE, this, this);
     DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.MARK_OBJECT, this, this);
     DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.EVALUATE_EXPRESSION, this, this);
-  }
-
-  private static void markNodesObsolete(final XValueContainerNode<?> node) {
-    node.setObsolete();
-    node.getLoadedChildren().forEach(XDebuggerTree::markNodesObsolete);
   }
 
   @Nullable
