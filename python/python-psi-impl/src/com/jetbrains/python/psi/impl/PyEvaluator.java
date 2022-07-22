@@ -192,6 +192,9 @@ public class PyEvaluator {
   @Nullable
   private static Boolean evaluateBoolean(@NotNull PyExpression expression) {
     if (expression instanceof PyBoolLiteralExpression) {
+      if (PyNames.DEBUG.equals(expression.getText())) {
+        return null;
+      }
       return ((PyBoolLiteralExpression)expression).getValue();
     }
     else if (expression instanceof PyReferenceExpression && LanguageLevel.forElement(expression).isPython2()) {
