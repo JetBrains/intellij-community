@@ -17,8 +17,8 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 final class GitRootChecker extends VcsRootChecker {
   @Override
-  public boolean isRoot(@NotNull String path) {
-    return GitUtil.isGitRoot(path);
+  public boolean isRoot(@NotNull VirtualFile path) {
+    return GitUtil.isGitRoot(path.toNioPath());
   }
 
   @Override

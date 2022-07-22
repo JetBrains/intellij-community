@@ -1,10 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.roots.VcsRootDetector;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
 
 /**
  * Provides methods to check if the given directory is a root of the given VCS. This is used e.g. by the {@link VcsRootDetector}
@@ -17,14 +21,32 @@ public abstract class VcsRootChecker {
   /**
    * Checks if the given path represents a root of the supported VCS.
    */
+  public boolean isRoot(@NotNull VirtualFile file) {
+    return isRoot(file.getPath());
+  }
+
+  /**
+   * @deprecated Override {@link #isRoot(VirtualFile)}
+   */
+  @Deprecated
   public boolean isRoot(@NotNull String path) {
-    return false;
+    Logger.getInstance(VcsRootChecker.class).warn("Deprecated API used in " + this, new Throwable());
+    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+    return file != null && isRoot(file);
   }
 
   /**
    * Checks if registered mapping can be used to perform VCS operations.
    * The difference with {@link #isRoot} is that this method should return {@code true} if unsure.
    */
+  public boolean validateRoot(@NotNull VirtualFile file) {
+    return isRoot(file);
+  }
+
+  /**
+   * @deprecated Override {@link #validateRoot(VirtualFile)}
+   */
+  @Deprecated
   public boolean validateRoot(@NotNull String path) {
     return isRoot(path);
   }
@@ -37,7 +59,7 @@ public abstract class VcsRootChecker {
   /**
    * Checks if the given directory looks like a VCS special directory, e.g. "{@code .git}".
    * <br/><br/>
-   * This is a quick rough check. A more precise is done in {@link #isRoot(String)}.
+   * This is a quick rough check. A more precise is done in {@link #isRoot(VirtualFile)}.
    */
   public boolean isVcsDir(@NotNull String dirName) {
     return false;

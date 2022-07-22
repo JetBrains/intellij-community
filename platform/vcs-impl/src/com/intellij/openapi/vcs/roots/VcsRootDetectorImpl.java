@@ -180,10 +180,9 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
 
   private @Nullable VcsRoot getVcsRootFor(@NotNull VirtualFile maybeRoot, @Nullable VirtualFile dirToCheckForIgnore) {
     ProgressManager.checkCanceled();
-    String path = maybeRoot.getPath();
     ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     return VcsRootChecker.EXTENSION_POINT_NAME.computeSafeIfAny(checker -> {
-      if (checker.isRoot(path) && (dirToCheckForIgnore == null || !checker.isIgnored(maybeRoot, dirToCheckForIgnore))) {
+      if (checker.isRoot(maybeRoot) && (dirToCheckForIgnore == null || !checker.isIgnored(maybeRoot, dirToCheckForIgnore))) {
         AbstractVcs vcs = projectLevelVcsManager.findVcsByName(checker.getSupportedVcs().getName());
         return vcs == null ? null : new VcsRoot(vcs, maybeRoot);
       }

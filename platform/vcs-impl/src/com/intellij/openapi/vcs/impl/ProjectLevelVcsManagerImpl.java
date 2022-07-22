@@ -629,7 +629,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       String vcsName = checker.getSupportedVcs().getName();
       checkedVcses.add(vcsName);
 
-      if (checker.isRoot(file.getPath())) {
+      if (checker.isRoot(file)) {
         return findVcsByName(vcsName);
       }
     }
