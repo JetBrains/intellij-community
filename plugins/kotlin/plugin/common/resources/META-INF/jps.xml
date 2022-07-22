@@ -27,7 +27,7 @@
             serviceInterface="org.jetbrains.kotlin.config.KotlinFacetSettingsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.facet.KotlinFacetSettingsProviderImpl"/>
 
-    <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.jps.KotlinJpsClasspathProvider"/>
+    <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.jps.KotlinJpsBuildProcessParametersProvider"/>
     <compiler.task execute="BEFORE" implementation="org.jetbrains.kotlin.idea.jps.SetupKotlinJpsPluginBeforeCompileTask"/>
     <projectFacetListener facet-type="kotlin-language" implementation="org.jetbrains.kotlin.idea.jps.KotlinFacetListener"/>
 

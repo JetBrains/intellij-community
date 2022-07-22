@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinJpsPluginClasspathDownloader
 import java.nio.file.Path
 
-class KotlinJpsClasspathProvider(private val project: Project) : BuildProcessParametersProvider() {
+class KotlinJpsBuildProcessParametersProvider(private val project: Project) : BuildProcessParametersProvider() {
     override fun getClassPath(): List<String> {
         val jpsPluginClasspath = KotlinJpsPluginSettings.jpsVersion(project)
             ?.let { LazyKotlinJpsPluginClasspathDownloader(it).getDownloadedIfUpToDateOrEmpty() }
