@@ -110,7 +110,7 @@ styleOptions ::= STYLE_OPT COLON STYLE_VAL (COMMA  STYLE_OPT COLON STYLE_VAL)*
 sequenceDocument ::= sequenceLines
 private sequenceLines ::= (sequenceLine | IGNORED) [sequenceLines]
 sequenceLine ::= sequenceStatement [separator] | separator
-private sequenceStatement ::= (PARTICIPANT | ACTOR) complexIdentifier [AS idAlias]
+private sequenceStatement ::= actorStatement
 	| signalStatement
 	| AUTONUMBER
 	| ACTIVATE complexIdentifier
@@ -126,6 +126,8 @@ private sequenceStatement ::= (PARTICIPANT | ACTOR) complexIdentifier [AS idAlia
 	| directive
 
 idAlias ::= ALIAS+
+
+actorStatement ::= (PARTICIPANT | ACTOR) complexIdentifier [AS idAlias]
 
 signalStatement ::= complexIdentifier signalType [PLUS | MINUS] complexIdentifier COLON MESSAGE
 signalType ::= SOLID_OPEN_ARROW
@@ -202,14 +204,18 @@ lineType ::= LINE | DOTTED_LINE
 stateDocument ::= stateLines
 private stateLines ::= stateLine [stateLines]
 stateLine ::= stateDiagramStatement [EOL] | EOL
-private stateDiagramStatement ::= stateId [ COLON LABEL | ARROW stateId [COLON LABEL] ]
-  | STATE description AS stateId
-  | STATE stateId OPEN_CURLY innerStateDocument CLOSE_CURLY
-  | STATE stateId ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
+private stateDiagramStatement ::= stateDeclaration
+	| stateId ARROW stateId [COLON LABEL]
+	| stateId
   | NOTE (RIGHT_OF | LEFT_OF) stateId noteContent
   | MINUS MINUS
   | DIRECTION DIR
 	| directive
+
+stateDeclaration ::= stateId COLON LABEL
+  | STATE description AS stateId
+  | STATE stateId OPEN_CURLY innerStateDocument CLOSE_CURLY
+  | STATE stateId ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
 
 innerStateDocument ::= innerStateLines
 private innerStateLines ::= innerStateLine [innerStateLines]
@@ -225,11 +231,12 @@ private noteContent ::= (EOL NOTE_CONTENT)* [EOL] END
 erDocument ::= erLines
 private erLines ::= erLine [erLines]
 erLine ::= erStatement [EOL] | EOL
-private erStatement ::= identifier [entityStatement]
+private erStatement ::= identifier relationship identifier COLON (LABEL | string)
+	| entityDeclaration
+	| identifier
 	| directive
 
-private entityStatement ::= relationship identifier COLON (LABEL | string)
-  | OPEN_CURLY erAttributesLines CLOSE_CURLY
+entityDeclaration ::= identifier OPEN_CURLY erAttributesLines CLOSE_CURLY
 
 relationship ::= relationshipLeft (IDENTIFYING | NON_IDENTIFYING) relationshipRight
 private relationshipLeft ::= ZERO_OR_ONE_LEFT | ONE_OR_MORE_LEFT | ZERO_OR_MORE_LEFT | ONLY_ONE

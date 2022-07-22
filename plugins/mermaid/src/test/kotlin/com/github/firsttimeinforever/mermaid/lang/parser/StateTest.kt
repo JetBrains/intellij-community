@@ -22,28 +22,30 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
-    >>>PsiElement(STATE)
-    >>>PsiWhiteSpace
-    >>>Element(DESCRIPTION)
-    >>>>Element(STRING)
-    >>>>>PsiElement(DOUBLE_QUOTE)
-    >>>>>PsiElement(STRING_VALUE)
-    >>>>>PsiElement(DOUBLE_QUOTE)
-    >>>PsiWhiteSpace
-    >>>PsiElement(AS)
-    >>>PsiWhiteSpace
-    >>>Element(STATE_ID)
-    >>>>Element(IDENTIFIER)
-    >>>>>PsiElement(ID)
+    >>>Element(STATE_DECLARATION)
+    >>>>PsiElement(STATE)
+    >>>>PsiWhiteSpace
+    >>>>Element(DESCRIPTION)
+    >>>>>Element(STRING)
+    >>>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>>>PsiElement(STRING_VALUE)
+    >>>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(AS)
+    >>>>PsiWhiteSpace
+    >>>>Element(STATE_ID)
+    >>>>>Element(IDENTIFIER)
+    >>>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
-    >>>Element(STATE_ID)
-    >>>>Element(IDENTIFIER)
-    >>>>>PsiElement(ID)
-    >>>PsiWhiteSpace
-    >>>PsiElement(COLON)
-    >>>PsiElement(LABEL)
+    >>>Element(STATE_DECLARATION)
+    >>>>Element(STATE_ID)
+    >>>>>Element(IDENTIFIER)
+    >>>>>>PsiElement(ID)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(COLON)
+    >>>>PsiElement(LABEL)
     """.trimIndent()
     doTest(content, expectedTree)
   }
@@ -167,113 +169,116 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
-    >>>PsiElement(STATE)
-    >>>PsiWhiteSpace
-    >>>Element(STATE_ID)
-    >>>>Element(IDENTIFIER)
-    >>>>>PsiElement(ID)
-    >>>PsiWhiteSpace
-    >>>PsiElement(OPEN_CURLY)
-    >>>Element(INNER_STATE_DOCUMENT)
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>PsiElement(EOL)
+    >>>Element(STATE_DECLARATION)
+    >>>>PsiElement(STATE)
     >>>>PsiWhiteSpace
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>Element(STATE_ID)
-    >>>>>>PsiElement(OPEN_SQUARE)
-    >>>>>>PsiElement(STAR)
-    >>>>>>PsiElement(CLOSE_SQUARE)
-    >>>>>PsiWhiteSpace
-    >>>>>PsiElement(ARROW)
-    >>>>>PsiWhiteSpace
-    >>>>>Element(STATE_ID)
-    >>>>>>Element(IDENTIFIER)
-    >>>>>>>PsiElement(ID)
-    >>>>>PsiElement(EOL)
+    >>>>Element(STATE_ID)
+    >>>>>Element(IDENTIFIER)
+    >>>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>PsiElement(STATE)
+    >>>>PsiElement(OPEN_CURLY)
+    >>>>Element(INNER_STATE_DOCUMENT)
+    >>>>>Element(INNER_STATE_LINE)
+    >>>>>>PsiElement(EOL)
     >>>>>PsiWhiteSpace
-    >>>>>Element(STATE_ID)
-    >>>>>>Element(IDENTIFIER)
-    >>>>>>>PsiElement(ID)
-    >>>>>PsiWhiteSpace
-    >>>>>PsiElement(OPEN_CURLY)
-    >>>>>Element(INNER_STATE_DOCUMENT)
-    >>>>>>Element(INNER_STATE_LINE)
-    >>>>>>>PsiElement(EOL)
+    >>>>>Element(INNER_STATE_LINE)
+    >>>>>>Element(STATE_ID)
+    >>>>>>>PsiElement(OPEN_SQUARE)
+    >>>>>>>PsiElement(STAR)
+    >>>>>>>PsiElement(CLOSE_SQUARE)
     >>>>>>PsiWhiteSpace
-    >>>>>>Element(INNER_STATE_LINE)
-    >>>>>>>Element(STATE_ID)
-    >>>>>>>>PsiElement(OPEN_SQUARE)
-    >>>>>>>>PsiElement(STAR)
-    >>>>>>>>PsiElement(CLOSE_SQUARE)
-    >>>>>>>PsiWhiteSpace
-    >>>>>>>PsiElement(ARROW)
-    >>>>>>>PsiWhiteSpace
-    >>>>>>>Element(STATE_ID)
-    >>>>>>>>Element(IDENTIFIER)
-    >>>>>>>>>PsiElement(ID)
-    >>>>>>>PsiElement(EOL)
+    >>>>>>PsiElement(ARROW)
     >>>>>>PsiWhiteSpace
-    >>>>>>Element(INNER_STATE_LINE)
-    >>>>>>>Element(STATE_ID)
-    >>>>>>>>Element(IDENTIFIER)
-    >>>>>>>>>PsiElement(ID)
-    >>>>>>>PsiWhiteSpace
-    >>>>>>>PsiElement(ARROW)
-    >>>>>>>PsiWhiteSpace
-    >>>>>>>Element(STATE_ID)
-    >>>>>>>>Element(IDENTIFIER)
-    >>>>>>>>>PsiElement(ID)
-    >>>>>>>PsiWhiteSpace
-    >>>>>>>PsiElement(EOL)
+    >>>>>>Element(STATE_ID)
+    >>>>>>>Element(IDENTIFIER)
+    >>>>>>>>PsiElement(ID)
+    >>>>>>PsiElement(EOL)
     >>>>>PsiWhiteSpace
-    >>>>>PsiElement(CLOSE_CURLY)
-    >>>>>PsiElement(EOL)
+    >>>>>Element(INNER_STATE_LINE)
+    >>>>>>Element(STATE_DECLARATION)
+    >>>>>>>PsiElement(STATE)
+    >>>>>>>PsiWhiteSpace
+    >>>>>>>Element(STATE_ID)
+    >>>>>>>>Element(IDENTIFIER)
+    >>>>>>>>>PsiElement(ID)
+    >>>>>>>PsiWhiteSpace
+    >>>>>>>PsiElement(OPEN_CURLY)
+    >>>>>>>Element(INNER_STATE_DOCUMENT)
+    >>>>>>>>Element(INNER_STATE_LINE)
+    >>>>>>>>>PsiElement(EOL)
+    >>>>>>>>PsiWhiteSpace
+    >>>>>>>>Element(INNER_STATE_LINE)
+    >>>>>>>>>Element(STATE_ID)
+    >>>>>>>>>>PsiElement(OPEN_SQUARE)
+    >>>>>>>>>>PsiElement(STAR)
+    >>>>>>>>>>PsiElement(CLOSE_SQUARE)
+    >>>>>>>>>PsiWhiteSpace
+    >>>>>>>>>PsiElement(ARROW)
+    >>>>>>>>>PsiWhiteSpace
+    >>>>>>>>>Element(STATE_ID)
+    >>>>>>>>>>Element(IDENTIFIER)
+    >>>>>>>>>>>PsiElement(ID)
+    >>>>>>>>>PsiElement(EOL)
+    >>>>>>>>PsiWhiteSpace
+    >>>>>>>>Element(INNER_STATE_LINE)
+    >>>>>>>>>Element(STATE_ID)
+    >>>>>>>>>>Element(IDENTIFIER)
+    >>>>>>>>>>>PsiElement(ID)
+    >>>>>>>>>PsiWhiteSpace
+    >>>>>>>>>PsiElement(ARROW)
+    >>>>>>>>>PsiWhiteSpace
+    >>>>>>>>>Element(STATE_ID)
+    >>>>>>>>>>Element(IDENTIFIER)
+    >>>>>>>>>>>PsiElement(ID)
+    >>>>>>>>>PsiWhiteSpace
+    >>>>>>>>>PsiElement(EOL)
+    >>>>>>>PsiWhiteSpace
+    >>>>>>>PsiElement(CLOSE_CURLY)
+    >>>>>>PsiElement(EOL)
+    >>>>>PsiWhiteSpace
+    >>>>>Element(INNER_STATE_LINE)
+    >>>>>>Element(STATE_DECLARATION)
+    >>>>>>>PsiElement(STATE)
+    >>>>>>>PsiWhiteSpace
+    >>>>>>>Element(STATE_ID)
+    >>>>>>>>Element(IDENTIFIER)
+    >>>>>>>>>PsiElement(ID)
+    >>>>>>>PsiWhiteSpace
+    >>>>>>>PsiElement(OPEN_CURLY)
+    >>>>>>>Element(INNER_STATE_DOCUMENT)
+    >>>>>>>>Element(INNER_STATE_LINE)
+    >>>>>>>>>PsiElement(EOL)
+    >>>>>>>>PsiWhiteSpace
+    >>>>>>>>Element(INNER_STATE_LINE)
+    >>>>>>>>>Element(STATE_ID)
+    >>>>>>>>>>PsiElement(OPEN_SQUARE)
+    >>>>>>>>>>PsiElement(STAR)
+    >>>>>>>>>>PsiElement(CLOSE_SQUARE)
+    >>>>>>>>>PsiWhiteSpace
+    >>>>>>>>>PsiElement(ARROW)
+    >>>>>>>>>PsiWhiteSpace
+    >>>>>>>>>Element(STATE_ID)
+    >>>>>>>>>>Element(IDENTIFIER)
+    >>>>>>>>>>>PsiElement(ID)
+    >>>>>>>>>PsiElement(EOL)
+    >>>>>>>>PsiWhiteSpace
+    >>>>>>>>Element(INNER_STATE_LINE)
+    >>>>>>>>>Element(STATE_ID)
+    >>>>>>>>>>Element(IDENTIFIER)
+    >>>>>>>>>>>PsiElement(ID)
+    >>>>>>>>>PsiWhiteSpace
+    >>>>>>>>>PsiElement(ARROW)
+    >>>>>>>>>PsiWhiteSpace
+    >>>>>>>>>Element(STATE_ID)
+    >>>>>>>>>>PsiElement(OPEN_SQUARE)
+    >>>>>>>>>>PsiElement(STAR)
+    >>>>>>>>>>PsiElement(CLOSE_SQUARE)
+    >>>>>>>>>PsiElement(EOL)
+    >>>>>>>PsiWhiteSpace
+    >>>>>>>PsiElement(CLOSE_CURLY)
+    >>>>>>PsiElement(EOL)
     >>>>PsiWhiteSpace
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>PsiElement(STATE)
-    >>>>>PsiWhiteSpace
-    >>>>>Element(STATE_ID)
-    >>>>>>Element(IDENTIFIER)
-    >>>>>>>PsiElement(ID)
-    >>>>>PsiWhiteSpace
-    >>>>>PsiElement(OPEN_CURLY)
-    >>>>>Element(INNER_STATE_DOCUMENT)
-    >>>>>>Element(INNER_STATE_LINE)
-    >>>>>>>PsiElement(EOL)
-    >>>>>>PsiWhiteSpace
-    >>>>>>Element(INNER_STATE_LINE)
-    >>>>>>>Element(STATE_ID)
-    >>>>>>>>PsiElement(OPEN_SQUARE)
-    >>>>>>>>PsiElement(STAR)
-    >>>>>>>>PsiElement(CLOSE_SQUARE)
-    >>>>>>>PsiWhiteSpace
-    >>>>>>>PsiElement(ARROW)
-    >>>>>>>PsiWhiteSpace
-    >>>>>>>Element(STATE_ID)
-    >>>>>>>>Element(IDENTIFIER)
-    >>>>>>>>>PsiElement(ID)
-    >>>>>>>PsiElement(EOL)
-    >>>>>>PsiWhiteSpace
-    >>>>>>Element(INNER_STATE_LINE)
-    >>>>>>>Element(STATE_ID)
-    >>>>>>>>Element(IDENTIFIER)
-    >>>>>>>>>PsiElement(ID)
-    >>>>>>>PsiWhiteSpace
-    >>>>>>>PsiElement(ARROW)
-    >>>>>>>PsiWhiteSpace
-    >>>>>>>Element(STATE_ID)
-    >>>>>>>>PsiElement(OPEN_SQUARE)
-    >>>>>>>>PsiElement(STAR)
-    >>>>>>>>PsiElement(CLOSE_SQUARE)
-    >>>>>>>PsiElement(EOL)
-    >>>>>PsiWhiteSpace
-    >>>>>PsiElement(CLOSE_CURLY)
-    >>>>>PsiElement(EOL)
-    >>>PsiWhiteSpace
-    >>>PsiElement(CLOSE_CURLY)
+    >>>>PsiElement(CLOSE_CURLY)
     """.trimIndent()
     doTest(content, expectedTree)
   }
@@ -299,15 +304,16 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
-    >>>PsiElement(STATE)
-    >>>PsiWhiteSpace
-    >>>Element(STATE_ID)
-    >>>>Element(IDENTIFIER)
-    >>>>>PsiElement(ID)
-    >>>PsiWhiteSpace
-    >>>PsiElement(ANNOTATION_START)
-    >>>PsiElement(ANNOTATION_VALUE)
-    >>>PsiElement(ANNOTATION_END)
+    >>>Element(STATE_DECLARATION)
+    >>>>PsiElement(STATE)
+    >>>>PsiWhiteSpace
+    >>>>Element(STATE_ID)
+    >>>>>Element(IDENTIFIER)
+    >>>>>>PsiElement(ID)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(ANNOTATION_START)
+    >>>>PsiElement(ANNOTATION_VALUE)
+    >>>>PsiElement(ANNOTATION_END)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
@@ -339,15 +345,16 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
-    >>>PsiElement(STATE)
-    >>>PsiWhiteSpace
-    >>>Element(STATE_ID)
-    >>>>Element(IDENTIFIER)
-    >>>>>PsiElement(ID)
-    >>>PsiWhiteSpace
-    >>>PsiElement(ANNOTATION_START)
-    >>>PsiElement(ANNOTATION_VALUE)
-    >>>PsiElement(ANNOTATION_END)
+    >>>Element(STATE_DECLARATION)
+    >>>>PsiElement(STATE)
+    >>>>PsiWhiteSpace
+    >>>>Element(STATE_ID)
+    >>>>>Element(IDENTIFIER)
+    >>>>>>PsiElement(ID)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(ANNOTATION_START)
+    >>>>PsiElement(ANNOTATION_VALUE)
+    >>>>PsiElement(ANNOTATION_END)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
@@ -366,15 +373,16 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
-    >>>PsiElement(STATE)
-    >>>PsiWhiteSpace
-    >>>Element(STATE_ID)
-    >>>>Element(IDENTIFIER)
-    >>>>>PsiElement(ID)
-    >>>PsiWhiteSpace
-    >>>PsiElement(ANNOTATION_START)
-    >>>PsiElement(ANNOTATION_VALUE)
-    >>>PsiElement(ANNOTATION_END)
+    >>>Element(STATE_DECLARATION)
+    >>>>PsiElement(STATE)
+    >>>>PsiWhiteSpace
+    >>>>Element(STATE_ID)
+    >>>>>Element(IDENTIFIER)
+    >>>>>>PsiElement(ID)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(ANNOTATION_START)
+    >>>>PsiElement(ANNOTATION_VALUE)
+    >>>>PsiElement(ANNOTATION_END)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
@@ -410,11 +418,12 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
-    >>>Element(STATE_ID)
-    >>>>Element(IDENTIFIER)
-    >>>>>PsiElement(ID)
-    >>>PsiElement(COLON)
-    >>>PsiElement(LABEL)
+    >>>Element(STATE_DECLARATION)
+    >>>>Element(STATE_ID)
+    >>>>>Element(IDENTIFIER)
+    >>>>>>PsiElement(ID)
+    >>>>PsiElement(COLON)
+    >>>>PsiElement(LABEL)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
@@ -500,67 +509,68 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
-    >>>PsiElement(STATE)
-    >>>PsiWhiteSpace
-    >>>Element(STATE_ID)
-    >>>>Element(IDENTIFIER)
-    >>>>>PsiElement(ID)
-    >>>PsiWhiteSpace
-    >>>PsiElement(OPEN_CURLY)
-    >>>Element(INNER_STATE_DOCUMENT)
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>PsiElement(EOL)
+    >>>Element(STATE_DECLARATION)
+    >>>>PsiElement(STATE)
     >>>>PsiWhiteSpace
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>Element(STATE_ID)
-    >>>>>>PsiElement(OPEN_SQUARE)
-    >>>>>>PsiElement(STAR)
-    >>>>>>PsiElement(CLOSE_SQUARE)
-    >>>>>PsiWhiteSpace
-    >>>>>PsiElement(ARROW)
-    >>>>>PsiWhiteSpace
-    >>>>>Element(STATE_ID)
-    >>>>>>Element(IDENTIFIER)
-    >>>>>>>PsiElement(ID)
-    >>>>>PsiElement(EOL)
+    >>>>Element(STATE_ID)
+    >>>>>Element(IDENTIFIER)
+    >>>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>PsiElement(MINUS)
-    >>>>>PsiElement(MINUS)
-    >>>>>PsiElement(EOL)
+    >>>>PsiElement(OPEN_CURLY)
+    >>>>Element(INNER_STATE_DOCUMENT)
+    >>>>>Element(INNER_STATE_LINE)
+    >>>>>>PsiElement(EOL)
+    >>>>>PsiWhiteSpace
+    >>>>>Element(INNER_STATE_LINE)
+    >>>>>>Element(STATE_ID)
+    >>>>>>>PsiElement(OPEN_SQUARE)
+    >>>>>>>PsiElement(STAR)
+    >>>>>>>PsiElement(CLOSE_SQUARE)
+    >>>>>>PsiWhiteSpace
+    >>>>>>PsiElement(ARROW)
+    >>>>>>PsiWhiteSpace
+    >>>>>>Element(STATE_ID)
+    >>>>>>>Element(IDENTIFIER)
+    >>>>>>>>PsiElement(ID)
+    >>>>>>PsiElement(EOL)
+    >>>>>PsiWhiteSpace
+    >>>>>Element(INNER_STATE_LINE)
+    >>>>>>PsiElement(MINUS)
+    >>>>>>PsiElement(MINUS)
+    >>>>>>PsiElement(EOL)
+    >>>>>PsiWhiteSpace
+    >>>>>Element(INNER_STATE_LINE)
+    >>>>>>Element(STATE_ID)
+    >>>>>>>PsiElement(OPEN_SQUARE)
+    >>>>>>>PsiElement(STAR)
+    >>>>>>>PsiElement(CLOSE_SQUARE)
+    >>>>>>PsiWhiteSpace
+    >>>>>>PsiElement(ARROW)
+    >>>>>>PsiWhiteSpace
+    >>>>>>Element(STATE_ID)
+    >>>>>>>Element(IDENTIFIER)
+    >>>>>>>>PsiElement(ID)
+    >>>>>>PsiElement(EOL)
+    >>>>>PsiWhiteSpace
+    >>>>>Element(INNER_STATE_LINE)
+    >>>>>>PsiElement(MINUS)
+    >>>>>>PsiElement(MINUS)
+    >>>>>>PsiElement(EOL)
+    >>>>>PsiWhiteSpace
+    >>>>>Element(INNER_STATE_LINE)
+    >>>>>>Element(STATE_ID)
+    >>>>>>>PsiElement(OPEN_SQUARE)
+    >>>>>>>PsiElement(STAR)
+    >>>>>>>PsiElement(CLOSE_SQUARE)
+    >>>>>>PsiWhiteSpace
+    >>>>>>PsiElement(ARROW)
+    >>>>>>PsiWhiteSpace
+    >>>>>>Element(STATE_ID)
+    >>>>>>>Element(IDENTIFIER)
+    >>>>>>>>PsiElement(ID)
+    >>>>>>PsiElement(EOL)
     >>>>PsiWhiteSpace
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>Element(STATE_ID)
-    >>>>>>PsiElement(OPEN_SQUARE)
-    >>>>>>PsiElement(STAR)
-    >>>>>>PsiElement(CLOSE_SQUARE)
-    >>>>>PsiWhiteSpace
-    >>>>>PsiElement(ARROW)
-    >>>>>PsiWhiteSpace
-    >>>>>Element(STATE_ID)
-    >>>>>>Element(IDENTIFIER)
-    >>>>>>>PsiElement(ID)
-    >>>>>PsiElement(EOL)
-    >>>>PsiWhiteSpace
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>PsiElement(MINUS)
-    >>>>>PsiElement(MINUS)
-    >>>>>PsiElement(EOL)
-    >>>>PsiWhiteSpace
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>Element(STATE_ID)
-    >>>>>>PsiElement(OPEN_SQUARE)
-    >>>>>>PsiElement(STAR)
-    >>>>>>PsiElement(CLOSE_SQUARE)
-    >>>>>PsiWhiteSpace
-    >>>>>PsiElement(ARROW)
-    >>>>>PsiWhiteSpace
-    >>>>>Element(STATE_ID)
-    >>>>>>Element(IDENTIFIER)
-    >>>>>>>PsiElement(ID)
-    >>>>>PsiElement(EOL)
-    >>>PsiWhiteSpace
-    >>>PsiElement(CLOSE_CURLY)
+    >>>>PsiElement(CLOSE_CURLY)
     """.trimIndent()
     doTest(content, expectedTree)
   }
@@ -602,36 +612,37 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
-    >>>PsiElement(STATE)
-    >>>PsiWhiteSpace
-    >>>Element(STATE_ID)
-    >>>>Element(IDENTIFIER)
-    >>>>>PsiElement(ID)
-    >>>PsiWhiteSpace
-    >>>PsiElement(OPEN_CURLY)
-    >>>Element(INNER_STATE_DOCUMENT)
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>PsiElement(EOL)
+    >>>Element(STATE_DECLARATION)
+    >>>>PsiElement(STATE)
     >>>>PsiWhiteSpace
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>PsiElement(DIRECTION)
-    >>>>>PsiWhiteSpace
-    >>>>>PsiElement(DIR)
-    >>>>>PsiElement(EOL)
+    >>>>Element(STATE_ID)
+    >>>>>Element(IDENTIFIER)
+    >>>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>Element(STATE_ID)
-    >>>>>>Element(IDENTIFIER)
-    >>>>>>>PsiElement(ID)
+    >>>>PsiElement(OPEN_CURLY)
+    >>>>Element(INNER_STATE_DOCUMENT)
+    >>>>>Element(INNER_STATE_LINE)
+    >>>>>>PsiElement(EOL)
     >>>>>PsiWhiteSpace
-    >>>>>PsiElement(ARROW)
+    >>>>>Element(INNER_STATE_LINE)
+    >>>>>>PsiElement(DIRECTION)
+    >>>>>>PsiWhiteSpace
+    >>>>>>PsiElement(DIR)
+    >>>>>>PsiElement(EOL)
     >>>>>PsiWhiteSpace
-    >>>>>Element(STATE_ID)
-    >>>>>>Element(IDENTIFIER)
-    >>>>>>>PsiElement(ID)
-    >>>>>PsiElement(EOL)
-    >>>PsiWhiteSpace
-    >>>PsiElement(CLOSE_CURLY)
+    >>>>>Element(INNER_STATE_LINE)
+    >>>>>>Element(STATE_ID)
+    >>>>>>>Element(IDENTIFIER)
+    >>>>>>>>PsiElement(ID)
+    >>>>>>PsiWhiteSpace
+    >>>>>>PsiElement(ARROW)
+    >>>>>>PsiWhiteSpace
+    >>>>>>Element(STATE_ID)
+    >>>>>>>Element(IDENTIFIER)
+    >>>>>>>>PsiElement(ID)
+    >>>>>>PsiElement(EOL)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CLOSE_CURLY)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
@@ -687,32 +698,33 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
-    >>>PsiElement(STATE)
-    >>>PsiWhiteSpace
-    >>>Element(STATE_ID)
-    >>>>Element(IDENTIFIER)
-    >>>>>PsiElement(ID)
-    >>>PsiWhiteSpace
-    >>>PsiElement(OPEN_CURLY)
-    >>>Element(INNER_STATE_DOCUMENT)
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>PsiElement(EOL)
+    >>>Element(STATE_DECLARATION)
+    >>>>PsiElement(STATE)
     >>>>PsiWhiteSpace
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>Element(STATE_ID)
-    >>>>>>Element(IDENTIFIER)
-    >>>>>>>PsiElement(ID)
+    >>>>Element(STATE_ID)
+    >>>>>Element(IDENTIFIER)
+    >>>>>>PsiElement(ID)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(OPEN_CURLY)
+    >>>>Element(INNER_STATE_DOCUMENT)
+    >>>>>Element(INNER_STATE_LINE)
+    >>>>>>PsiElement(EOL)
     >>>>>PsiWhiteSpace
-    >>>>>PsiElement(ARROW)
-    >>>>>PsiWhiteSpace
-    >>>>>Element(STATE_ID)
-    >>>>>>Element(IDENTIFIER)
-    >>>>>>>PsiElement(ID)
-    >>>>>PsiWhiteSpace
-    >>>>>PsiComment(LINE_COMMENT)
-    >>>>>PsiElement(EOL)
-    >>>PsiWhiteSpace
-    >>>PsiElement(CLOSE_CURLY)
+    >>>>>Element(INNER_STATE_LINE)
+    >>>>>>Element(STATE_ID)
+    >>>>>>>Element(IDENTIFIER)
+    >>>>>>>>PsiElement(ID)
+    >>>>>>PsiWhiteSpace
+    >>>>>>PsiElement(ARROW)
+    >>>>>>PsiWhiteSpace
+    >>>>>>Element(STATE_ID)
+    >>>>>>>Element(IDENTIFIER)
+    >>>>>>>>PsiElement(ID)
+    >>>>>>PsiWhiteSpace
+    >>>>>>PsiComment(LINE_COMMENT)
+    >>>>>>PsiElement(EOL)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CLOSE_CURLY)
     >>>PsiElement(EOL)
     >PsiWhiteSpace
     >PsiComment(LINE_COMMENT)

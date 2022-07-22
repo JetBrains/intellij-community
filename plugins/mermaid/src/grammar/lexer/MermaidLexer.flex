@@ -631,7 +631,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 }
 <requirement_diagram, requirement, req_element> {
 	[\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
-  [\w][^\r\n\{\<\>\-\=:;]*/\s*[\{\-<]? { return ID; }
+  [\w][^\s\{\<\>\-\=:;]* { return ID; }
 }
 <requirement_value> {
 	"high" { return Requirement.HIGH; }

@@ -12,30 +12,11 @@ interface MermaidNamedElement : PsiNameIdentifierOwner
 
 abstract class MermaidNamedPsiElement(node: ASTNode) : ASTWrapperPsiElement(node), MermaidNamedElement {
   override fun getNameIdentifier(): PsiElement {
-    var result: PsiElement = this
-    var process = true
-    containingFile.acceptChildren(object : MermaidVisitor() {
-      override fun visitPsiElement(o: PsiElement) {
-        if (process) {
-          o.acceptChildren(this)
-        }
-      }
-
-      override fun visitNamedElement(o: MermaidNamedElement) {
-        if (process && o.name.equals(name)) {
-          if (node.psi != o) {
-            result = o
-          }
-          process = false
-        }
-      }
-    })
-
-    return result
+    return this
   }
 
   override fun getName(): String {
-    return text
+    return text.trim()
   }
 
   override fun setName(name: String): MermaidNamedPsiElement? {

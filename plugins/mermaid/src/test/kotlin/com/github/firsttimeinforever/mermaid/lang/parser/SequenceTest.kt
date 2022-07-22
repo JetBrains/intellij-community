@@ -17,31 +17,33 @@ class SequenceTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(SEQUENCE_LINE)
-    >>>PsiElement(Sequence.PARTICIPANT)
-    >>>PsiWhiteSpace
-    >>>Element(COMPLEX_IDENTIFIER)
-    >>>>PsiElement(ID)
+    >>>Element(ACTOR_STATEMENT)
+    >>>>PsiElement(Sequence.PARTICIPANT)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
-    >>>PsiWhiteSpace
-    >>>PsiElement(AS)
-    >>>PsiWhiteSpace
-    >>>Element(ID_ALIAS)
-    >>>>PsiElement(ALIAS)
+    >>>>Element(COMPLEX_IDENTIFIER)
+    >>>>>PsiElement(ID)
+    >>>>>PsiWhiteSpace
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ALIAS)
+    >>>>PsiElement(AS)
+    >>>>PsiWhiteSpace
+    >>>>Element(ID_ALIAS)
+    >>>>>PsiElement(ALIAS)
+    >>>>>PsiWhiteSpace
+    >>>>>PsiElement(ALIAS)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(SEQUENCE_LINE)
-    >>>PsiElement(Sequence.ACTOR)
-    >>>PsiWhiteSpace
-    >>>Element(COMPLEX_IDENTIFIER)
-    >>>>PsiElement(ID)
-    >>>PsiWhiteSpace
-    >>>PsiElement(AS)
-    >>>PsiWhiteSpace
-    >>>Element(ID_ALIAS)
-    >>>>PsiElement(ALIAS)
+    >>>Element(ACTOR_STATEMENT)
+    >>>>PsiElement(Sequence.ACTOR)
+    >>>>PsiWhiteSpace
+    >>>>Element(COMPLEX_IDENTIFIER)
+    >>>>>PsiElement(ID)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(AS)
+    >>>>PsiWhiteSpace
+    >>>>Element(ID_ALIAS)
+    >>>>>PsiElement(ALIAS)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(SEQUENCE_LINE)
@@ -137,10 +139,11 @@ class SequenceTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(SEQUENCE_LINE)
-    >>>PsiElement(Sequence.PARTICIPANT)
-    >>>PsiWhiteSpace
-    >>>Element(COMPLEX_IDENTIFIER)
-    >>>>PsiElement(ID)
+    >>>Element(ACTOR_STATEMENT)
+    >>>>PsiElement(Sequence.PARTICIPANT)
+    >>>>PsiWhiteSpace
+    >>>>Element(COMPLEX_IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(SEQUENCE_LINE)
@@ -198,10 +201,11 @@ class SequenceTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(SEQUENCE_LINE)
-    >>>PsiElement(Sequence.PARTICIPANT)
-    >>>PsiWhiteSpace
-    >>>Element(COMPLEX_IDENTIFIER)
-    >>>>PsiElement(ID)
+    >>>Element(ACTOR_STATEMENT)
+    >>>>PsiElement(Sequence.PARTICIPANT)
+    >>>>PsiWhiteSpace
+    >>>>Element(COMPLEX_IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(SEQUENCE_LINE)
@@ -276,10 +280,11 @@ class SequenceTest : MermaidParserTestCase() {
     >>>>>PsiElement(EOL)
     >>>>PsiWhiteSpace
     >>>>Element(SEQUENCE_LINE)
-    >>>>>PsiElement(Sequence.PARTICIPANT)
-    >>>>>PsiWhiteSpace
-    >>>>>Element(COMPLEX_IDENTIFIER)
-    >>>>>>PsiElement(ID)
+    >>>>>Element(ACTOR_STATEMENT)
+    >>>>>>PsiElement(Sequence.PARTICIPANT)
+    >>>>>>PsiWhiteSpace
+    >>>>>>Element(COMPLEX_IDENTIFIER)
+    >>>>>>>PsiElement(ID)
     >>>>>PsiElement(SEMICOLON)
     >>>>PsiWhiteSpace
     >>>>Element(SEQUENCE_LINE)
