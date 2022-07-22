@@ -59,7 +59,7 @@ import com.intellij.util.BitUtil
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.PositionTracker
@@ -1480,7 +1480,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     val balloon = balloonBuilder.createBalloon()
     if (balloon is BalloonImpl) {
       NotificationsManagerImpl.frameActivateBalloonListener(balloon, Runnable {
-        AppExecutorUtil.getAppScheduledExecutorService().schedule({ balloon.setHideOnClickOutside(true) }, 100, TimeUnit.MILLISECONDS)
+        EdtExecutorService.getScheduledExecutorInstance().schedule({ balloon.setHideOnClickOutside(true) }, 100, TimeUnit.MILLISECONDS)
       })
     }
 
