@@ -533,6 +533,9 @@
     <extensionPoint name="projectViewPane" interface="com.intellij.ide.projectView.impl.AbstractProjectViewPane" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="projectViewPaneSelectionHelper" interface="com.intellij.ide.projectView.impl.ProjectViewPaneSelectionHelper" dynamic="true"/>
     <extensionPoint name="projectViewNodeDecorator" interface="com.intellij.ide.projectView.ProjectViewNodeDecorator" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="projectView.externalLibraries.workspaceModelNodesProvider"
+                    interface="com.intellij.ide.projectView.impl.nodes.ExternalLibrariesWorkspaceModelNodesProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="elementPreviewProvider" interface="com.intellij.codeInsight.preview.ElementPreviewProvider" dynamic="true"/>
     <extensionPoint name="previewHintProvider" interface="com.intellij.codeInsight.preview.PreviewHintProvider" dynamic="true"/>
