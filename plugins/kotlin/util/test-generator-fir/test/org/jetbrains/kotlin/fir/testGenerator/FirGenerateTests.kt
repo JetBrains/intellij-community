@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithLibr
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithStdlibFirTest
 import org.jetbrains.kotlin.idea.fir.highlighter.AbstractFirHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractFirJvmOptimizeImportsTest
-import org.jetbrains.kotlin.idea.fir.inspections.*
 import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDeclarationResolveTest
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
@@ -28,6 +27,9 @@ import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
 import org.jetbrains.kotlin.idea.fir.uast.*
+import org.jetbrains.kotlin.idea.k2.fe10bindings.inspections.AbstractFe10BindingIntentionTest
+import org.jetbrains.kotlin.idea.k2.fe10bindings.inspections.AbstractFe10BindingLocalInspectionTest
+import org.jetbrains.kotlin.idea.k2.fe10bindings.inspections.AbstractFe10BindingQuickFixTest
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
