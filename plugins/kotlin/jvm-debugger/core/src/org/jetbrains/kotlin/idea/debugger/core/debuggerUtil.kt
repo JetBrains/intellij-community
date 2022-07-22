@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.codegen.topLevelClassAsmType
-import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils
 import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
+import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getResolvedFunctionCall
@@ -227,7 +227,7 @@ fun findElementAtLine(file: KtFile, line: Int): PsiElement? {
         for (offset in lineStartOffset until lineEndOffset) {
             elementAt = file.findElementAt(offset)
             if (elementAt != null) {
-                topMostElement = CodeInsightUtils.getTopmostElementAtOffset(elementAt, offset)
+                topMostElement = getTopmostElementAtOffset(elementAt, offset)
                 if (topMostElement is KtElement) {
                     break
                 }
