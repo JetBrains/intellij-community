@@ -1,4 +1,4 @@
-// "Replace condition with Stream.ofNullable" "true"
+// "Replace 'if' statement with 'Stream.ofNullable()' call" "true"
 
 import java.util.*;
 import java.util.stream.Collectors;
