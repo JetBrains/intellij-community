@@ -48,7 +48,7 @@ public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAw
 
   protected abstract boolean nothingToCompare(@NotNull T repository);
 
-  @NotNull
+  @Nullable
   protected abstract JBPopup createPopup(@NotNull Project project, @NotNull T repository, @NotNull VirtualFile file);
 
 
@@ -61,6 +61,7 @@ public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAw
     assert !repository.isFresh();
 
     JBPopup popup = createPopup(project, repository, file);
+    if (popup == null) return;
 
     ApplicationManager.getApplication().invokeLater(() -> {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> popup.showCenteredInCurrentWindow(project));
