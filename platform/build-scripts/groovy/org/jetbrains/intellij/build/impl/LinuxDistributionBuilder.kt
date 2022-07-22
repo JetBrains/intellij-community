@@ -67,8 +67,9 @@ class LinuxDistributionBuilder(override val context: BuildContext,
       if (customizer.buildTarGzWithoutBundledRuntime &&
           (arch == JvmArchitecture.x64 || !context.shouldBuildDistributionForOS(OsFamily.LINUX, JvmArchitecture.x64))) {
         context.executeStep(spanBuilder("Build Linux .tar.gz without bundled Runtime").setAttribute("arch", arch.name),
-                            BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP) {
-          buildTarGz(runtimeDir = null, unixDistPath = osAndArchSpecificDistPath, suffix = NO_JBR_SUFFIX)
+                            BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP) {
+          val tarGzPath = buildTarGz(runtimeDir = null, unixDistPath = osAndArchSpecificDistPath, suffix = NO_JBR_SUFFIX)
+          checkExecutablePermissions(tarGzPath, rootDirectoryName, includeRuntime = false)
         }
       }
       if (customizer.buildOnlyBareTarGz) {
@@ -77,7 +78,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
       val runtimeDir = context.bundledRuntime.extract(getProductPrefix(context), OsFamily.LINUX, arch)
       val tarGzPath = buildTarGz(runtimeDir, osAndArchSpecificDistPath, suffix)
-      checkExecutablePermissions(tarGzPath, rootDirectoryName)
+      checkExecutablePermissions(tarGzPath, rootDirectoryName, includeRuntime = true)
 
       if (arch == JvmArchitecture.x64) {
         buildSnapPackage(runtimeDir, osAndArchSpecificDistPath)

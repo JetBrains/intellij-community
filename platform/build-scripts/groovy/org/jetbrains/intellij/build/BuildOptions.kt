@@ -67,8 +67,8 @@ class BuildOptions {
     /** Build Linux artifacts.  */
     const val LINUX_ARTIFACTS_STEP = "linux_artifacts"
 
-    /** Build Linux tar.gz artifact without bundled JRE.  */
-    const val LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP = "linux_tar_gz_without_jre"
+    /** Build Linux tar.gz artifact without bundled Runtime.  */
+    const val LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP = "linux_tar_gz_without_jre"
 
     /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced.  */
     const val WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
