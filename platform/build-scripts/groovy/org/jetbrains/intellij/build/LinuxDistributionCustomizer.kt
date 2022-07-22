@@ -22,9 +22,9 @@ abstract class LinuxDistributionCustomizer {
   var extraExecutables: PersistentList<String> = persistentListOf()
 
   /**
-   * If {@code true} a separate *-no-jdk.tar.gz artifact without runtime will be produced.
+   * If {@code true} a separate *-no-jbr.tar.gz artifact without runtime will be produced.
    */
-  var buildTarGzWithoutBundledRuntime = true
+  var buildTarGzWithoutBundledRuntime = false
 
   /**
    * If {@code true}, the only *-no-jbr.tar.gz will be produced, no other binaries for Linux will be built.
