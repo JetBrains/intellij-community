@@ -201,7 +201,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testJarHandlerDoNotCreateCopyWhenListingArchive() throws Exception {
+  public void testJarHandlerDoNotCreateCopyWhenListingArchive() {
     File jar = IoTestUtil.createTestJar(tempDir.newFile("test.jar"));
     JarFileSystemImpl fs = (JarFileSystemImpl)JarFileSystem.getInstance();
     fs.setNoCopyJarForPath(jar.getPath());
