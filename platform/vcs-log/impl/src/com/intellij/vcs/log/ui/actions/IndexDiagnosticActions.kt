@@ -3,21 +3,18 @@ package com.intellij.vcs.log.ui.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.util.Consumer
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.data.index.IndexDiagnostic.getDiffFor
 import com.intellij.vcs.log.data.index.IndexDiagnostic.getFirstCommits
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
@@ -55,21 +52,14 @@ abstract class IndexDiagnosticActionBase(dynamicText: Supplier<@NlsActions.Actio
     val commitIds = getCommitsToCheck(e, logManager)
     if (commitIds.isEmpty()) return
 
-    logManager.dataManager.commitDetailsGetter.loadCommitsData(commitIds, Consumer { commitDetails ->
-      runCheck(project, dataGetter, commitIds, commitDetails)
-    }, thisLogger()::error, null)
-  }
-
-  private fun runCheck(project: Project,
-                       dataGetter: IndexDataGetter,
-                       commitsList: List<Int>,
-                       detailsList: List<VcsFullCommitDetails>) {
     val report = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-      return@ThrowableComputable dataGetter.getDiffFor(commitsList, detailsList)
+      val detailsList = logManager.dataManager.commitDetailsGetter.getCommitDetails(commitIds)
+      return@ThrowableComputable dataGetter.getDiffFor(commitIds, detailsList)
     }, VcsLogBundle.message("vcs.log.index.diagnostic.progress.title"), false, project)
     if (report.isBlank()) {
-      VcsBalloonProblemNotifier.showOverVersionControlView(project, VcsLogBundle.message("vcs.log.index.diagnostic.success.message",
-                                                                                         commitsList.size),
+      VcsBalloonProblemNotifier.showOverVersionControlView(project,
+                                                           VcsLogBundle.message("vcs.log.index.diagnostic.success.message",
+                                                                                commitIds.size),
                                                            MessageType.INFO)
       return
     }
