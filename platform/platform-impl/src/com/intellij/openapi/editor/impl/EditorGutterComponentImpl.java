@@ -73,10 +73,7 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.BitUtil;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.IconUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.animation.AlphaAnimationContext;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -894,12 +891,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       docHighlighters.dispose();
       editorHighlighters.dispose();
     }
-  }
-
-  private static boolean isValidLine(@NotNull Document document, int line) {
-    if (line < 0) return false;
-    int lineCount = document.getLineCount();
-    return lineCount == 0 ? line == 0 : line < lineCount;
   }
 
   private static boolean less(RangeHighlighter h1, RangeHighlighter h2) {
@@ -2513,7 +2504,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private int convertPointToLineNumber(final Point p) {
     DocumentEx document = myEditor.getDocument();
     int line = EditorUtil.yPositionToLogicalLine(myEditor, p);
-    if (!isValidLine(document, line)) return -1;
+    if (!DocumentUtil.isValidLine(line, document)) return -1;
 
     int startOffset = document.getLineStartOffset(line);
     final FoldRegion region = myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
