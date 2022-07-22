@@ -45,6 +45,8 @@ class TestMethodWithoutAssertionInspection : AbstractBaseUastLocalInspectionTool
     .add("org.junit.rules.ExpectedException", "expect.*")
     .add(ORG_HAMCREST_MATCHER_ASSERT, "assertThat")
     .add("mockit.Verifications", "Verifications")
+    .add("kotlin.PreconditionsKt__AssertionsJVMKt", "assert")
+    .add("kotlin.test.AssertionsKt__AssertionsKt", "assert.*|fail.*|expect")
     .finishDefault()
 
   override fun createOptionsPanel(): JComponent? {
@@ -110,7 +112,7 @@ private class TestMethodWithoutAssertionVisitor(
                            else -> method.uastBody
                          } ?: return false
     val callExpression = lastExpression.castSafelyTo<UCallExpression>() ?: return false
-    val targetMethod = callExpression.resolve()?.toUElementOfType<UMethod>() ?: return false
+    val targetMethod = callExpression.resolveToUElement()?.castSafelyTo<UMethod>() ?: return false
     return containsAssertion(targetMethod)
   }
 

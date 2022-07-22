@@ -5,6 +5,7 @@ import com.intellij.codeInspection.tests.test.TestMethodWithoutAssertionInspecti
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.PathUtil
@@ -14,8 +15,10 @@ class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertio
   override fun getProjectDescriptor(): LightProjectDescriptor = object : JUnitProjectDescriptor(sdkLevel) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
-      val jar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))
-      PsiTestUtil.addLibrary(model, "kotlin-stdlib", jar.parent, jar.name)
+      val stdLibJar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))
+      PsiTestUtil.addLibrary(model, "kotlin-stdlib", stdLibJar.parent, stdLibJar.name)
+      val ktTestJar = File(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("kotlin-test").first())
+      PsiTestUtil.addLibrary(model, "kotlin-test", ktTestJar.parent, ktTestJar.name)
     }
   }
 
@@ -45,12 +48,12 @@ class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertio
       import mockit.*
 
       class TestMethodWithoutAssertion : TestCase() {
-          //@Test
-          //public fun fourOhTest2() { Assert.assertTrue(true) }
-          //
-          //public fun test2() { assertTrue(true) }
-          //
-          //public fun test3() { fail() }
+          @Test
+          public fun fourOhTest2() { Assert.assertTrue(true) }
+
+          public fun test2() { assertTrue(true) }
+
+          public fun test3() { fail() }
 
           @Test 
           public fun delegateOnly() { check() }
@@ -76,6 +79,21 @@ class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertio
           public fun testMethodWhichThrowsExceptionOnFailure() {
               if (true) throw AssertionError()
           }
+      }
+    """.trimIndent())
+  }
+
+  fun `test no highlighting kotlin stdlib assertion`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      import org.junit.Test
+      import kotlin.test.*
+      
+      class TestMethodWithAssertion {
+        @Test
+        public fun ktPrecondition1() { assert(true) }
+
+        @Test
+        public fun ktTestAssertion1() { assertTrue(true) }
       }
     """.trimIndent())
   }
