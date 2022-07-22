@@ -137,7 +137,7 @@ class WorkspaceFolderImporter(
       folders.add(ContentRootCollector.ExcludedFolder(testOutputPath))
     }
 
-    for (each in mavenProject.suitableImporters) {
+    for (each in MavenImporter.getSuitableImporters(mavenProject)) {
       val excludes = mutableListOf<String>()
       each.collectExcludedFolders(mavenProject, excludes)
       excludes.forEach { folders.add(ContentRootCollector.ExcludedFolderAndPreventSubfolders(toAbsolutePath(it))) }

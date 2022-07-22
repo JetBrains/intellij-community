@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +59,7 @@ public final class MavenLegacyModuleImporter {
   private MavenRootModelAdapter myRootModelAdapter;
 
   private IdeModifiableModelsProvider myProviderForExtensions;
-  private List<MavenImporter> mySuitableImporters;
+  private List<MavenImporter> mySuitableFacetsImporters;
 
   public MavenLegacyModuleImporter(Module module,
                                    MavenProjectsTree mavenTree,
@@ -139,13 +138,13 @@ public final class MavenLegacyModuleImporter {
     configLanguageLevel(level);
   }
 
-  public void preConfigFacets(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
+  void preConfigFacets(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
     MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), () -> {
       if (myModule.isDisposed()) return;
 
       final ModuleType moduleType = ModuleType.get(myModule);
 
-      for (final MavenImporter importer : mySuitableImporters) {
+      for (final MavenImporter importer : mySuitableFacetsImporters) {
         try {
           final MavenProjectChanges changes;
           if (myMavenProjectChanges == null) {
@@ -169,14 +168,14 @@ public final class MavenLegacyModuleImporter {
     });
   }
 
-  public void configFacets(final List<MavenProjectsProcessorTask> postTasks, Map<Class<? extends MavenImporter>, CountAndTime> counters) {
+  void configFacets(final List<MavenProjectsProcessorTask> postTasks, Map<Class<? extends MavenImporter>, CountAndTime> counters) {
     MavenUtil.smartInvokeAndWait(myModule.getProject(), ModalityState.defaultModalityState(), () -> {
       if (myModule.isDisposed()) return;
 
       final ModuleType moduleType = ModuleType.get(myModule);
 
       ApplicationManager.getApplication().runWriteAction(() -> {
-        for (final MavenImporter importer : mySuitableImporters) {
+        for (final MavenImporter importer : mySuitableFacetsImporters) {
           final MavenProjectChanges changes;
           if (myMavenProjectChanges == null) {
             if (importer.processChangedModulesOnly()) continue;
@@ -208,13 +207,13 @@ public final class MavenLegacyModuleImporter {
     });
   }
 
-  public void postConfigFacets(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
+  void postConfigFacets(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
     MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), () -> {
       if (myModule.isDisposed()) return;
 
       final ModuleType moduleType = ModuleType.get(myModule);
 
-      for (final MavenImporter importer : mySuitableImporters) {
+      for (final MavenImporter importer : mySuitableFacetsImporters) {
         try {
           final MavenProjectChanges changes;
           if (myMavenProjectChanges == null) {
@@ -451,18 +450,16 @@ public final class MavenLegacyModuleImporter {
     }
   }
 
-  public IdeModifiableModelsProvider getModifiableModelsProvider() {
-    return myProviderForExtensions;
+  boolean initFacetsImporters(boolean isWorkspaceImport) {
+    mySuitableFacetsImporters = MavenImporter.getSuitableImporters(myMavenProject, isWorkspaceImport);
+    return !mySuitableFacetsImporters.isEmpty();
   }
 
-  public void prepareForImporters(IdeModifiableModelsProvider providerForExtensions, boolean isLegacyImport) {
+  void prepareForFacets(IdeModifiableModelsProvider providerForExtensions) {
     myProviderForExtensions = providerForExtensions;
     MavenRootModelAdapter mavenRootModelAdapter = new MavenRootModelAdapter(
       new MavenRootModelAdapterLegacyImpl(myMavenProject, myModule, new ModifiableModelsProviderProxyWrapper(myProviderForExtensions)));
     setRootModelAdapter(mavenRootModelAdapter);
-
-    mySuitableImporters = ContainerUtil.filter(myMavenProject.getSuitableImporters(),
-                                               importer -> isLegacyImport || !importer.isMigratedToConfigurator());
   }
 
   @NotNull

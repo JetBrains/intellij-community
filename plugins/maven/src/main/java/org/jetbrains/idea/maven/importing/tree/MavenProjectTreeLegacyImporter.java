@@ -90,7 +90,7 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
         });
       });
 
-      configFacets(importers, postTasks, true);
+      configFacets(importers, postTasks, false);
     }
     else {
       finalizeImport(obsoleteModules);

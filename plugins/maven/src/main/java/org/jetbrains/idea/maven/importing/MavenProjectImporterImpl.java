@@ -130,7 +130,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
         });
       });
 
-      configFacets(importers, postTasks, true);
+      configFacets(importers, postTasks, false);
     }
     else {
       finalizeImport(obsoleteModules);

@@ -321,7 +321,7 @@ class WorkspaceProjectImporter(
                                   moduleType)
       }
     }
-    configFacets(legacyImporters, postTasks, false)
+    configFacets(legacyImporters, postTasks, /* isWorkspaceImport = */ true)
   }
 
   override fun createdModules(): List<Module> {
