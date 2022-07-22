@@ -7,6 +7,7 @@ import com.intellij.ide.impl.TrustStateListener
 import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -81,13 +82,15 @@ fun <L : Any, K> Project.messageBusFlow(
 }
 
 internal val Project.trustedProjectFlow: Flow<Boolean>
-    get() = messageBusFlow(TrustStateListener.TOPIC, { isTrusted() }) {
-        object : TrustStateListener {
-            override fun onProjectTrusted(project: Project) {
-                if (project == this@trustedProjectFlow) trySend(isTrusted())
+    get() {
+        return ApplicationManager.getApplication().messageBusFlow(TrustStateListener.TOPIC, { isTrusted() }) {
+            object : TrustStateListener {
+                override fun onProjectTrusted(project: Project) {
+                    if (project == this@trustedProjectFlow) trySend(isTrusted())
+                }
             }
-        }
-    }.distinctUntilChanged()
+        }.distinctUntilChanged()
+    }
 
 internal val Project.nativeModulesFlow: Flow<List<Module>>
     get() = messageBusFlow(ProjectTopics.MODULES, { getNativeModules() }) {

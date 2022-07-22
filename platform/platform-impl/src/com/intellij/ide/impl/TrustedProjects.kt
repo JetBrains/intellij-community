@@ -193,9 +193,9 @@ fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMod
 
 private fun isTrustedCheckDisabledForProduct(): Boolean = java.lang.Boolean.getBoolean("idea.trust.disabled")
 
-
-private fun isProjectImplicitlyTrusted(project: Project): Boolean =
-  isProjectImplicitlyTrusted(project.basePath?.let { Paths.get(it) }, project)
+private fun isProjectImplicitlyTrusted(project: Project): Boolean {
+  return isProjectImplicitlyTrusted(project.basePath?.let { Path.of(it) }, project)
+}
 
 @JvmOverloads
 @ApiStatus.Internal
@@ -212,9 +212,6 @@ fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project? = null): Boo
   }
   return false
 }
-
-@ApiStatus.Internal
-fun isPathTrustedInSettings(path: Path): Boolean = service<TrustedPathsSettings>().isPathTrusted(path)
 
 /**
  * Per-project "is this project trusted" setting from the previous version of the trusted API.
@@ -264,7 +261,7 @@ interface TrustStateListener {
   companion object {
     @JvmField
     @Topic.AppLevel
-    val TOPIC = Topic.create("Trusted project status", TrustStateListener::class.java)
+    val TOPIC = Topic(TrustStateListener::class.java, Topic.BroadcastDirection.NONE)
   }
 }
 

@@ -83,7 +83,7 @@ enum class ProjectOpenAction {
                         Path.of(projectPath),
                         OpenProjectTask { this.projectName = projectName; showWelcomeScreen = false }
                     )
-                ?: error("project $projectName at $projectPath is not loaded")
+                    ?: error("project $projectName at $projectPath is not loaded")
 
             return openingProject(application, project) {
                 with(project) {
@@ -113,10 +113,10 @@ enum class ProjectOpenAction {
                 "Gradle project $projectName at $path is accidentally disposed immediately after import"
             )
 
-                with(project) {
-                    trusted()
-                    setupJdk(jdk)
-                }
+            with(project) {
+                trusted()
+                setupJdk(jdk)
+            }
 
             refreshGradleProject(path, project)
 
@@ -135,9 +135,9 @@ enum class ProjectOpenAction {
 
             // WARNING: [VD] DO NOT SAVE PROJECT AS IT COULD PERSIST WRONG MODULES INFO
 
-//        runInEdtAndWait {
-//            PlatformTestUtil.saveProject(project)
-//        }
+            //        runInEdtAndWait {
+            //            PlatformTestUtil.saveProject(project)
+            //        }
         }
 
         override fun postOpenProject(project: Project, openProject: OpenProject) {
