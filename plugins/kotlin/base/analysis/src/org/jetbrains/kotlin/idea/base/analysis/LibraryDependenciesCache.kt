@@ -7,7 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.ProgressManager.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -87,7 +87,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
 
         for (module in modulesLibraryIsUsedIn) {
-            ProgressManager.checkCanceled()
+            checkCanceled()
             val (moduleLibraries, moduleSdks) = moduleDependenciesCache[module]
 
             libraries.addAll(moduleLibraries)
@@ -105,6 +105,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         val processedModules = HashSet<Module>()
         val condition = Condition<OrderEntry> { orderEntry ->
+            checkCanceled()
             orderEntry.safeAs<ModuleOrderEntry>()?.let {
                 it.module?.run { this !in processedModules } ?: false
             } ?: true
@@ -116,6 +117,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
 
             override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
+                checkCanceled()
                 libraryOrderEntry.library.safeAs<LibraryEx>()?.takeIf { !it.isDisposed }?.let {
                     libraries += LibraryInfoCache.getInstance(project)[it].mapNotNull { libraryInfo ->
                         LibraryDependencyCandidate.fromLibraryOrNull(
@@ -127,6 +129,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
 
             override fun visitJdkOrderEntry(jdkOrderEntry: JdkOrderEntry, value: Unit) {
+                checkCanceled()
                 jdkOrderEntry.jdk?.let { jdk ->
                     sdks += SdkInfo(project, jdk)
                 }
@@ -335,6 +338,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val libraryWrapper = libraryInfo.library.wrap()
             val modulesLibraryIsUsedIn = get(libraryWrapper)
             for (module in modulesLibraryIsUsedIn) {
+                checkCanceled()
                 val mappedModuleInfos = ideaModelInfosCache.getModuleInfosForModule(module)
                 if (mappedModuleInfos.any { it.platform.canDependOn(libraryInfo, module.isHMPPEnabled) }) {
                     yield(module)
