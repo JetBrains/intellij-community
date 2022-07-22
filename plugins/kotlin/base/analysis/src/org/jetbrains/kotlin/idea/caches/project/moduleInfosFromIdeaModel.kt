@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.caches.project
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -147,6 +148,7 @@ private fun collectModuleInfosFromIdeaModel(
     )
 }
 
+private val logger = Logger.getInstance(FineGrainedIdeaModelInfosCache::class.java)
 
 class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelInfosCache, Disposable {
     private val moduleCache: ModuleCache
@@ -160,6 +162,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
 
     init {
         val ideaModules = ideaModules()
+        logger.info("ideaModules: ${ideaModules.toList()}")
         moduleCache  = ModuleCache(ideaModules)
         libraryCache = LibraryCache(ideaModules)
         sdkCache = SdkCache()
@@ -171,6 +174,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
 
         allModules = cachedValuesManager.createCachedValue {
             val ideaModuleInfos = moduleCache.values().flatten() + libraryCache.values().flatten() + sdkCache.values()
+            logger.info("allModules: $ideaModuleInfos")
             CachedValueProvider.Result.create(ideaModuleInfos, modificationTracker)
         }
 
@@ -340,7 +344,9 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
                 val platformModules = mergePlatformModules(moduleCache.values().flatten(), platform)
                 val libraryInfos = libraryCache.values().flatten()
                 val sdkInfos = sdkCache.values()
-                platformModules + libraryInfos + sdkInfos
+                val ideaModuleInfos = platformModules + libraryInfos + sdkInfos
+                logger.info("forPlatform: $platform $ideaModuleInfos")
+                ideaModuleInfos
             }
         }
 
