@@ -2245,7 +2245,7 @@
     <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
     <registryKey key="ide.java.show.bundled.runtime" defaultValue="true" description="Enables using bundled JetBrains Runtime for execution"/>
     <vcs.codeVisionLanguageContext language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaVcsCodeVisionContext"/>
-    <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaReferencesCodeVisionProvider"/>
+    <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaReferencesCodeVisionProvider" order="first"/>
     <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaInheritorsCodeVisionProvider"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaCodeVisionProvider"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemHintProvider"/>
