@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 
 @ApiStatus.Experimental
@@ -58,15 +59,21 @@ interface MavenConfigurator {
   fun afterModelApplied(context: AppliedModelContext) {
   }
 
-  data class ModuleWithType<M>(val module: M, val type: MavenModuleType)
+  interface ModuleWithType<M> {
+    val module: M
+    val type: MavenModuleType
+  }
 
   /**
    * Every Maven project is represented by one or several IJ [Module]s. See [org.jetbrains.idea.maven.importing.MavenModuleType] for the list of possible module types.
    * Configuration implementation should be careful when configuring each [Module], e.g. [org.jetbrains.idea.maven.importing.MavenModuleType.TEST_ONLY] should be configured for test sources only.
    *
    */
-  data class MavenProjectWithModules<M>(val mavenProject: MavenProject,
-                                        val modules: List<ModuleWithType<M>>)
+  interface MavenProjectWithModules<M> {
+    val mavenProject: MavenProject
+    val changes: MavenProjectChanges
+    val modules: List<ModuleWithType<M>>
+  }
 
   interface Context<S : EntityStorage> : UserDataHolder {
     val project: Project

@@ -72,7 +72,7 @@ class WorkspaceProjectImporter(
           .map { (mavenProject, _) -> mavenProject }
         scheduleRefreshResolvedArtifacts(postTasks, changedProjectsOnly.asIterable())
 
-        createdModulesList.addAll(appliedProjectsWithModules.flatMap { (_, modules) -> modules.asSequence().map { it.module } })
+        createdModulesList.addAll(appliedProjectsWithModules.flatMap { it.modules.asSequence().map { it.module } })
       }
       finally {
         MavenUtil.invokeAndWaitWriteAction(myProject) { myModelsProvider.dispose() }
@@ -118,7 +118,10 @@ class WorkspaceProjectImporter(
     val dependenciesImportingContext = WorkspaceModuleImporter.DependenciesImportingContext()
     val folderImportingContext = WorkspaceFolderImporter.FolderImportingContext()
 
-    val projectToModules = mutableMapOf<MavenProject, MutableList<MavenConfigurator.ModuleWithType<ModuleEntity>>>()
+    class PartialModulesData(val changes: MavenProjectChanges,
+                             val modules: MutableList<MavenConfigurator.ModuleWithType<ModuleEntity>>)
+
+    val projectToModulesData = mutableMapOf<MavenProject, PartialModulesData>()
     for (importData in sortProjectsToImportByPrecedence(context)) {
       val moduleEntity = WorkspaceModuleImporter(myProject,
                                                  importData,
@@ -128,11 +131,15 @@ class WorkspaceProjectImporter(
                                                  dependenciesImportingContext,
                                                  folderImportingContext).importModule()
 
-      projectToModules
-        .computeIfAbsent(importData.mavenProject, Function { mutableListOf() })
-        .add(MavenConfigurator.ModuleWithType(moduleEntity, importData.moduleData.type))
+      val partialData = projectToModulesData.computeIfAbsent(importData.mavenProject, Function {
+        PartialModulesData(importData.changes ?: MavenProjectChanges.NONE, mutableListOf())
+      })
+      partialData.modules.add(ModuleWithTypeData(moduleEntity, importData.moduleData.type))
     }
-    val result = projectToModules.map { (mavenProject, modules) -> MavenConfigurator.MavenProjectWithModules(mavenProject, modules) }
+
+    val result = projectToModulesData.map { (mavenProject, partialData) ->
+      MavenProjectWithModulesData(mavenProject, partialData.changes, partialData.modules)
+    }
 
     configureModules(result, builder, contextData, configuratorsTimings)
     return result
@@ -178,7 +185,7 @@ class WorkspaceProjectImporter(
         // It's needed since otherwise 'replaceBySource' will merge pre-existing Module content with imported module content, resulting in
         // unexpected module configuration.
         val importedModuleNames = mavenProjectsWithModules
-          .flatMapTo(mutableSetOf()) { (_, modules) -> modules.asSequence().map { it.module.name } }
+          .flatMapTo(mutableSetOf()) { it.modules.asSequence().map { it.module.name } }
 
         storage
           .entities(ModuleEntity::class.java)
@@ -190,15 +197,16 @@ class WorkspaceProjectImporter(
       val storage = WorkspaceModel.getInstance(myProject).entityStorage.current
 
       // map ModuleEntities to the created Modules
-      for ((mavenProject, moduleEntities) in mavenProjectsWithModules) {
-        val appliedModules = moduleEntities.mapNotNull { (originalEntity, moduleType) ->
+      for (each in mavenProjectsWithModules) {
+        val appliedModules = each.modules.mapNotNull {
+          val originalEntity = it.module
           val appliedEntity = storage.resolve(originalEntity.persistentId) ?: return@mapNotNull null
           val module = storage.findModuleByEntity(appliedEntity) ?: return@mapNotNull null
-          MavenConfigurator.ModuleWithType<Module>(module, moduleType)
+          ModuleWithTypeData<Module>(module, it.type)
         }
 
         if (appliedModules.isNotEmpty()) {
-          result.add(MavenConfigurator.MavenProjectWithModules(mavenProject, appliedModules))
+          result.add(MavenProjectWithModulesData(each.mavenProject, each.changes, appliedModules))
         }
       }
 
@@ -309,16 +317,16 @@ class WorkspaceProjectImporter(
                                  projectChanges: Map<MavenProject, MavenProjectChanges>,
                                  moduleNameByProject: Map<MavenProject, String>,
                                  postTasks: List<MavenProjectsProcessorTask>) {
-    val legacyImporters = mavenProjectsWithModules.flatMap { (mavenProject, modules) ->
-      modules.asSequence().map { (module, moduleType) ->
-        MavenLegacyModuleImporter(module,
+    val legacyImporters = mavenProjectsWithModules.flatMap { projectWithModules ->
+      projectWithModules.modules.asSequence().map { moduleWithType ->
+        MavenLegacyModuleImporter(moduleWithType.module,
                                   myProjectsTree,
-                                  mavenProject,
-                                  projectChanges[mavenProject],
+                                  projectWithModules.mavenProject,
+                                  projectChanges[projectWithModules.mavenProject],
                                   moduleNameByProject,
                                   myImportingSettings,
                                   myModelsProvider,
-                                  moduleType)
+                                  moduleWithType.type)
       }
     }
     configFacets(legacyImporters, postTasks, /* isWorkspaceImport = */ true)
@@ -381,3 +389,12 @@ class WorkspaceProjectImporter(
     }
   }
 }
+
+private class ModuleWithTypeData<M>(
+  override val module: M,
+  override val type: MavenModuleType) : MavenConfigurator.ModuleWithType<M>
+
+private class MavenProjectWithModulesData<M>(
+  override val mavenProject: MavenProject,
+  override val changes: MavenProjectChanges,
+  override val modules: List<MavenConfigurator.ModuleWithType<M>>) : MavenConfigurator.MavenProjectWithModules<M>
