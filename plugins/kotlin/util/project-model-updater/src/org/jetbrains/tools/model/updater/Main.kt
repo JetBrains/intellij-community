@@ -22,7 +22,6 @@ fun main(args: Array<String>) {
         generateProjectModelFiles(root.resolve(".idea"), parsedArgs, isCommunity)
         patchProjectModelFiles(root.resolve(".idea"), parsedArgs, isCommunity)
     }
-    updateLatestGradlePluginVersion(communityRoot, parsedArgs.kotlinGradlePluginVersion)
 }
 
 private fun generateProjectModelFiles(dotIdea: File, args: Args, isCommunity: Boolean) {
@@ -58,23 +57,6 @@ private fun patchGitignore(dotIdea: File, kotlincArtifactsMode: KotlincArtifacts
             gitignore.writeText("$normalizedContent\n$ignoreRule")
         }
     }
-}
-
-/**
- * Updates the `KotlinGradlePluginVersions.kt` source file to contain the latest [kotlinGradlePluginVersion] in the source code.
- * The `KotlinGradlePluginVersions` source file can't directly read the `model.properties` file directly, since
- * the project model can be overwritten by the [main] args (see also [GeneratorPreferences.parse])
- */
-private fun updateLatestGradlePluginVersion(communityRoot: File, kotlinGradlePluginVersion: String) {
-    val sourceFile = communityRoot.resolve(
-        "plugins/kotlin/gradle/gradle-java/tests/test/org/jetbrains/kotlin/idea/codeInsight/gradle/KotlinGradlePluginVersions.kt"
-    )
-
-    val updatedFileContent = sourceFile.readText().replace(
-        Regex("""val latest = .*"""), "val latest = KotlinToolingVersion(\"$kotlinGradlePluginVersion\")"
-    )
-
-    sourceFile.writeText(updatedFileContent)
 }
 
 private fun Iterable<String>.toMapOfArgs(): Map<String, String> = associate { arg ->

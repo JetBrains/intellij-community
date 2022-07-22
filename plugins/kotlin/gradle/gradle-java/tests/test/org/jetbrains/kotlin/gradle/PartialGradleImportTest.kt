@@ -124,7 +124,7 @@ abstract class PartialGradleImportTest : MultiplePluginVersionGradleImportingTes
                         ${repositories(true)}
                     }
                     plugins {
-                        kotlin("multiplatform") version "$kotlinPluginVersion"
+                        kotlin("multiplatform") version "$kotlinPluginVersionString"
                     }
                 }
             """.trimIndent()

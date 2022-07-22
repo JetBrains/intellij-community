@@ -7,6 +7,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.notifications.disableNewKotlinCompilerAvailableNotification
 import org.jetbrains.kotlin.idea.notification.catchNotificationText
@@ -19,7 +20,7 @@ class GradleMigrateTest : MultiplePluginVersionGradleImportingTestCase() {
     @Test
     @TargetVersions("6.9+")
     fun testMigrateStdlib() {
-        if (kotlinPluginVersion != KotlinGradlePluginVersions.lastStable) {
+        if (TestedKotlinGradlePluginVersions.ALL_PUBLIC.last() != kotlinPluginVersion) {
             if (IS_UNDER_TEAMCITY) return else throw AssumptionViolatedException("Ignored KGP version $kotlinPluginVersion")
         }
 
@@ -30,14 +31,14 @@ class GradleMigrateTest : MultiplePluginVersionGradleImportingTestCase() {
                     ${GradleKotlinTestUtils.listRepositories(false, gradleVersion)}                    
                 }
                 dependencies {
-                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${KotlinGradlePluginVersions.V_1_5_32}"
+                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${TestedKotlinGradlePluginVersions.V_1_5_32}"
                 }
             }
 
             apply plugin: 'kotlin'
 
             dependencies {
-                implementation "org.jetbrains.kotlin:kotlin-stdlib:${KotlinGradlePluginVersions.V_1_5_32}"
+                implementation "org.jetbrains.kotlin:kotlin-stdlib:${TestedKotlinGradlePluginVersions.V_1_5_32}"
             }
             """,
             afterText =
@@ -47,14 +48,14 @@ class GradleMigrateTest : MultiplePluginVersionGradleImportingTestCase() {
                     ${GradleKotlinTestUtils.listRepositories(false, gradleVersion)}                    
                 }
                 dependencies {
-                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${KotlinGradlePluginVersions.V_1_6_21}"
+                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${TestedKotlinGradlePluginVersions.V_1_6_21}"
                 }
             }
 
             apply plugin: 'kotlin'
 
             dependencies {
-                implementation "org.jetbrains.kotlin:kotlin-stdlib:${KotlinGradlePluginVersions.V_1_6_21}"
+                implementation "org.jetbrains.kotlin:kotlin-stdlib:${TestedKotlinGradlePluginVersions.V_1_6_21}"
             }
             """
         )

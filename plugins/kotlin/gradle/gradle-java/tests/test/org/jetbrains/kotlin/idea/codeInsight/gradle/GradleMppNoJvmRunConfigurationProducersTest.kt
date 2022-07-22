@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.listRepositories
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer
@@ -204,7 +205,7 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
         })
 
         createProjectSubFile("build.gradle", buildscript {
-            withPlugin("org.jetbrains.kotlin.multiplatform", KotlinGradlePluginVersions.lastStable.toString())
+            withPlugin("org.jetbrains.kotlin.multiplatform", TestedKotlinGradlePluginVersions.ALL_PUBLIC.last().toString())
             withPrefix {
                 code(
                     """
