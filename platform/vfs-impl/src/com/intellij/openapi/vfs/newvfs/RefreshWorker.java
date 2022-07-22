@@ -174,7 +174,10 @@ final class RefreshWorker {
 
   private boolean fullDirRefresh(NewVirtualFileSystem fs, PersistentFS persistence, VirtualDirectoryImpl dir) {
     var t = System.nanoTime();
-    Pair<List<String>, List<VirtualFile>> snapshot = LocalFileSystemRefreshWorker.getDirectorySnapshot(dir);
+    Pair<List<String>, List<VirtualFile>> snapshot = ReadAction.compute(() -> {
+      VirtualFile[] children = dir.getChildren();
+      return Pair.create(getNames(children), Arrays.asList(children));
+    });
     myVfsTime.addAndGet(System.nanoTime() - t);
     if (snapshot == null) {
       return false;
@@ -286,10 +289,15 @@ final class RefreshWorker {
     var t = System.nanoTime();
     var changed = ReadAction.compute(() -> {
       checkCancelled(dir);
-      return LocalFileSystemRefreshWorker.areChildrenOrNamesChanged(dir, names, children);
+      VirtualFile[] currentChildren = dir.getChildren();
+      return !children.equals(Arrays.asList(currentChildren)) || !names.equals(getNames(currentChildren));
     });
     myVfsTime.addAndGet(System.nanoTime() - t);
     return changed;
+  }
+
+  private static List<String> getNames(VirtualFile[] children) {
+    return ContainerUtil.map(children, VirtualFile::getName);
   }
 
   private boolean partialDirRefresh(NewVirtualFileSystem fs, PersistentFS persistence, VirtualDirectoryImpl dir) {
