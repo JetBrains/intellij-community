@@ -128,7 +128,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     @NotNull
     @Override
     public Iterator<T> iterate(@Nullable T start, boolean fwd) {
-      JBTreeTraverser<T> traverser = JBTreeTraverser.<T>from(n -> {
+      JBTreeTraverser<T> traverser = JBTreeTraverser.from(n -> {
         int count = n.getChildCount();
         List<T> children = new ArrayList<>(count);
         for (int i = 0; i < count; ++i) {
