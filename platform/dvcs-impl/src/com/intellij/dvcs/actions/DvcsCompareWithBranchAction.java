@@ -1,12 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.actions;
 
-import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -16,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
-
-import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 /**
  * Compares selected file/folder with itself in another branch.
@@ -34,17 +29,11 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
 
   @Override
   protected @NotNull JBPopup createPopup(@NotNull Project project, @NotNull T repository, @NotNull VirtualFile file) {
-    String presentableRevisionName = chooseNotNull(repository.getCurrentBranchName(),
-                                                   DvcsUtil.getShortHash(Objects.requireNonNull(repository.getCurrentRevision())));
+    String presentableRevisionName = getPresentableCurrentBranchName(repository);
     List<String> branchNames = getBranchNamesExceptCurrent(repository);
 
-    return JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(branchNames)
-      .setTitle(DvcsBundle.message("popup.title.select.branch.to.compare"))
-      .setItemChosenCallback(selected -> showDiffWithBranchUnderModalProgress(project, file, presentableRevisionName, selected))
-      .setAutoselectOnMouseMove(true)
-      .setNamerForFiltering(o -> o)
-      .createPopup();
+    return createPopup(DvcsBundle.message("popup.title.select.branch.to.compare"), branchNames,
+                       selected -> showDiffWithBranchUnderModalProgress(project, file, presentableRevisionName, selected));
   }
 
   private void showDiffWithBranchUnderModalProgress(@NotNull final Project project,

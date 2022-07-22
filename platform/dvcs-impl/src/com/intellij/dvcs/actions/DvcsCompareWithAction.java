@@ -6,6 +6,7 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.ListSelection;
@@ -17,7 +18,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -34,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * Compares selected file/folder with itself in another revision.
@@ -82,6 +86,19 @@ public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAw
     return repository != null && !repository.isFresh() && !nothingToCompare(repository);
   }
 
+  @NotNull
+  protected static JBPopup createPopup(@NotNull @NlsContexts.PopupTitle String title,
+                                       @NotNull List<String> options,
+                                       @NotNull Consumer<String> onChosen) {
+    return JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(options)
+      .setTitle(title)
+      .setItemChosenCallback(onChosen::accept)
+      .setAutoselectOnMouseMove(true)
+      .setNamerForFiltering(o -> o)
+      .createPopup();
+  }
+
   protected static void showDiffBetweenRevision(@NotNull Project project,
                                                 @NotNull VirtualFile file,
                                                 @NotNull @Nls String revNumTitle1,
@@ -113,5 +130,16 @@ public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAw
       };
       DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.DEFAULT);
     }
+  }
+
+  @NotNull
+  protected static String getPresentableCurrentBranchName(Repository repository) {
+    String branchName = repository.getCurrentBranchName();
+    if (branchName != null) return branchName;
+
+    String revision = repository.getCurrentRevision();
+    if (revision != null) return DvcsUtil.getShortHash(revision);
+
+    return VcsBundle.message("diff.title.local");
   }
 }
