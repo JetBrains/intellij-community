@@ -5,8 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.Utils
-import com.intellij.openapi.editor.CaretState
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Caret
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlin.math.abs
 
@@ -31,18 +30,23 @@ internal object SelectionUtil {
     val session = Utils.getOrCreateUpdateSession(event)
     return session.compute(action, "obtainCaretSnapshot", ActionUpdateThread.EDT) {
       val editor = event.getData(CommonDataKeys.EDITOR) ?: return@compute null
-      return@compute editor.caretModel.caretsAndSelections.mapNotNull { it.toSnapshot(editor) }
+      return@compute editor.caretModel.allCarets.map { it.toSnapshot() }
     }
   }
 
-  private fun CaretState.toSnapshot(editor: Editor): CaretSnapshot? {
-    val caretPosition = caretPosition ?: return null
-    val selectionStart = selectionStart ?: caretPosition
-    val selectionEnd = selectionEnd ?: caretPosition
-    return CaretSnapshot(
-      offset = editor.logicalPositionToOffset(caretPosition),
-      selectionStart = editor.logicalPositionToOffset(selectionStart),
-      selectionEnd = editor.logicalPositionToOffset(selectionEnd)
-    )
+  /**
+   * Same as [obtainCaretSnapshots] but only for the primary caret.
+   */
+  @RequiresBackgroundThread
+  fun obtainPrimaryCaretSnapshot(action: AnAction, event: AnActionEvent): CaretSnapshot? {
+    val session = Utils.getOrCreateUpdateSession(event)
+    return session.compute(action, "obtainPrimaryCaretSnapshot", ActionUpdateThread.EDT) {
+      val editor = event.getData(CommonDataKeys.EDITOR) ?: return@compute null
+      return@compute editor.caretModel.primaryCaret.toSnapshot()
+    }
+  }
+
+  private fun Caret.toSnapshot(): CaretSnapshot {
+    return CaretSnapshot(offset, selectionStart, selectionEnd)
   }
 }
