@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.breakpoints.dialog.AddFieldBreakpointDialog
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ApplicabilityResult
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtDeclarationContainer
 import org.jetbrains.kotlin.psi.KtFile

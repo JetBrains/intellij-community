@@ -29,6 +29,8 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle;
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager;
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ApplicabilityResult;
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.LineBreakpointExpressionVisitor;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.KtElement;
 import org.jetbrains.kotlin.psi.*;

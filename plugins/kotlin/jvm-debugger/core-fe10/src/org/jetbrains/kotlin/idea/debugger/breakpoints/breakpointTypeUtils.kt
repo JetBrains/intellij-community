@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ApplicabilityResult
 import org.jetbrains.kotlin.idea.util.findElementsOfClassInRange
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -33,28 +34,6 @@ import java.util.*
 import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
 
 interface KotlinBreakpointType
-
-class ApplicabilityResult(val isApplicable: Boolean, val shouldStop: Boolean) {
-    companion object {
-        @JvmStatic
-        fun definitely(result: Boolean) = ApplicabilityResult(result, shouldStop = true)
-
-        @JvmStatic
-        fun maybe(result: Boolean) = ApplicabilityResult(result, shouldStop = false)
-
-        @JvmField
-        val UNKNOWN = ApplicabilityResult(isApplicable = false, shouldStop = false)
-
-        @JvmField
-        val DEFINITELY_YES = ApplicabilityResult(isApplicable = true, shouldStop = true)
-
-        @JvmField
-        val DEFINITELY_NO = ApplicabilityResult(isApplicable = false, shouldStop = true)
-
-        @JvmField
-        val MAYBE_YES = ApplicabilityResult(isApplicable = true, shouldStop = false)
-    }
-}
 
 fun isBreakpointApplicable(file: VirtualFile, line: Int, project: Project, checker: (PsiElement) -> ApplicabilityResult): Boolean {
     val psiFile = PsiManager.getInstance(project).findFile(file)

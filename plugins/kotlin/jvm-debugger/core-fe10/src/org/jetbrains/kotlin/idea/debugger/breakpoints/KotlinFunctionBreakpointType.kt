@@ -9,7 +9,8 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle.message
-import org.jetbrains.kotlin.idea.debugger.breakpoints.ApplicabilityResult.Companion.maybe
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ApplicabilityResult
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ApplicabilityResult.Companion.maybe
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*

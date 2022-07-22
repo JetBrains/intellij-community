@@ -1,6 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger.breakpoints
+package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -10,6 +10,28 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+
+class ApplicabilityResult(val isApplicable: Boolean, val shouldStop: Boolean) {
+    companion object {
+        @JvmStatic
+        fun definitely(result: Boolean) = ApplicabilityResult(result, shouldStop = true)
+
+        @JvmStatic
+        fun maybe(result: Boolean) = ApplicabilityResult(result, shouldStop = false)
+
+        @JvmField
+        val UNKNOWN = ApplicabilityResult(isApplicable = false, shouldStop = false)
+
+        @JvmField
+        val DEFINITELY_YES = ApplicabilityResult(isApplicable = true, shouldStop = true)
+
+        @JvmField
+        val DEFINITELY_NO = ApplicabilityResult(isApplicable = false, shouldStop = true)
+
+        @JvmField
+        val MAYBE_YES = ApplicabilityResult(isApplicable = true, shouldStop = false)
+    }
+}
 
 class LineBreakpointExpressionVisitor private constructor(
     private val document: Document,
