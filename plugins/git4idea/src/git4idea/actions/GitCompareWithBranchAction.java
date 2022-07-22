@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
@@ -82,7 +83,7 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
     if (changes.isEmpty() && GitHistoryUtils.getCurrentRevision(project, filePath, branchToCompare) == null) {
       throw new VcsException(fileDoesntExistInBranchError(file, branchToCompare));
     }
-    return changes.isEmpty() && !filePath.isDirectory() ? createChangesWithCurrentContentForFile(filePath, GitContentRevision
-      .createRevision(filePath, compareRevisionNumber, project)) : changes;
+    ContentRevision revision = GitContentRevision.createRevision(filePath, compareRevisionNumber, project);
+    return changes.isEmpty() && !filePath.isDirectory() ? createChangesWithCurrentContentForFile(filePath, revision) : changes;
   }
 }
