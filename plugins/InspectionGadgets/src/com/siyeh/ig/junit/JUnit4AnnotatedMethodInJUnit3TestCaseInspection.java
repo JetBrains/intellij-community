@@ -3,6 +3,7 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExpressionUtil;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -19,6 +20,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.InspectionGadgetsBundle;
@@ -168,14 +170,24 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
+      convertJUnit3ClassToJUnit4(getPsiClass(descriptor));
+    }
+
+    @Nullable
+    private static PsiClass getPsiClass(ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiMember)) {
-        return;
+      final PsiMember member = ObjectUtils.tryCast(element.getParent(), PsiMember.class);
+      return member == null ? null : member.getContainingClass();
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      PsiClass psiClass = getPsiClass(previewDescriptor);
+      if (psiClass == null) {
+        return IntentionPreviewInfo.EMPTY;
       }
-      final PsiMember member = (PsiMember)parent;
-      final PsiClass containingClass = member.getContainingClass();
-      convertJUnit3ClassToJUnit4(containingClass);
+      performConversion(psiClass);
+      return IntentionPreviewInfo.DIFF;
     }
   }
 
@@ -186,36 +198,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     final MultiMap<PsiElement, String> conflicts = checkForConflicts(junit3Class);
     if (conflicts == null) return; // cancelled by user
 
-    final Runnable runnable = () -> WriteAction.run(() -> {
-      final PsiReferenceList extendsList = junit3Class.getExtendsList();
-      if (extendsList == null) {
-        return;
-      }
-      for (PsiMethod method : junit3Class.getMethods()) {
-        @NonNls final String name = method.getName();
-        if (!method.hasModifierProperty(PsiModifier.STATIC) &&
-            PsiType.VOID.equals(method.getReturnType()) &&
-            method.getParameterList().isEmpty()) {
-          final PsiModifierList modifierList = method.getModifierList();
-          if (name.startsWith("test")) {
-            addAnnotationIfNotPresent(modifierList, "org.junit.Test");
-          }
-          else if (name.equals("setUp")) {
-            transformSetUpOrTearDownMethod(method);
-            addAnnotationIfNotPresent(modifierList, "org.junit.Before");
-          }
-          else if (name.equals("tearDown")) {
-            transformSetUpOrTearDownMethod(method);
-            addAnnotationIfNotPresent(modifierList, "org.junit.After");
-          }
-        }
-        method.accept(new MethodCallModifier());
-      }
-      final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
-      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
-        referenceElement.delete();
-      }
-    });
+    final Runnable runnable = () -> WriteAction.run(() -> performConversion(junit3Class));
     if (!conflicts.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         if (!BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
@@ -227,6 +210,37 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
       }
     }
     runnable.run();
+  }
+
+  private static void performConversion(PsiClass junit3Class) {
+    final PsiReferenceList extendsList = junit3Class.getExtendsList();
+    if (extendsList == null) {
+      return;
+    }
+    for (PsiMethod method : junit3Class.getMethods()) {
+      @NonNls final String name = method.getName();
+      if (!method.hasModifierProperty(PsiModifier.STATIC) &&
+          PsiType.VOID.equals(method.getReturnType()) &&
+          method.getParameterList().isEmpty()) {
+        final PsiModifierList modifierList = method.getModifierList();
+        if (name.startsWith("test")) {
+          addAnnotationIfNotPresent(modifierList, "org.junit.Test");
+        }
+        else if (name.equals("setUp")) {
+          transformSetUpOrTearDownMethod(method);
+          addAnnotationIfNotPresent(modifierList, "org.junit.Before");
+        }
+        else if (name.equals("tearDown")) {
+          transformSetUpOrTearDownMethod(method);
+          addAnnotationIfNotPresent(modifierList, "org.junit.After");
+        }
+      }
+      method.accept(new MethodCallModifier());
+    }
+    final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+    for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+      referenceElement.delete();
+    }
   }
 
   @Nullable

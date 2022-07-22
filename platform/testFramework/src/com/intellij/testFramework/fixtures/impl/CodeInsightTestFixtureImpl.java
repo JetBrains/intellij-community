@@ -14,6 +14,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.IntentionListStep;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
@@ -25,6 +26,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
@@ -713,10 +715,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void checkPreviewAndLaunchAction(@NotNull IntentionAction action) {
-    String text = getIntentionPreviewText(action);
-    assertNotNull(action.getText(), text);
-    launchAction(action);
-    assertEquals(action.getText(), getFile().getText(), text);
+    if (skipPreview(action)) {
+      launchAction(action);
+    } else {
+      String text = getIntentionPreviewText(action);
+      assertNotNull(action.getText(), text);
+      launchAction(action);
+      assertEquals(action.getText(), getFile().getText(), text);
+    }
+  }
+
+  private static boolean skipPreview(@NotNull IntentionAction action) {
+    return IntentionActionDelegate.unwrap(action) instanceof CleanupInspectionIntention;
   }
 
   @Override
