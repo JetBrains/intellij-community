@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,6 +34,7 @@ import java.util.function.Consumer;
 
 import static com.intellij.openapi.vfs.newvfs.VfsEventGenerationHelper.LOG;
 
+@SuppressWarnings("unused")
 final class LocalFileSystemRefreshWorker {
   private final boolean myIsRecursive;
   private final NewVirtualFile myRefreshRoot;
@@ -77,7 +78,7 @@ final class LocalFileSystemRefreshWorker {
   }
 
   private @NotNull RefreshContext createRefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistentFS) {
-    int parallelism = Registry.intValue("vfs.use.nio-based.local.refresh.worker.parallelism", Runtime.getRuntime().availableProcessors() - 1);
+    int parallelism = Registry.intValue("vfs.refresh.worker.parallelism", Runtime.getRuntime().availableProcessors() - 1);
     if (myIsRecursive && parallelism > 0 && !ApplicationManager.getApplication().isDispatchThread()) {
       return new ConcurrentRefreshContext(fs, persistentFS, parallelism);
     }
