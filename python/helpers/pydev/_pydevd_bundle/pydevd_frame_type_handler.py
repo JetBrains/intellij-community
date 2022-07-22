@@ -11,7 +11,7 @@ DUMMY_SPECIAL_VAR = '_dummy_special_var'
 DO_NOT_PROCESS_VARS = (DUMMY_SPECIAL_VAR, DUMMY_RET_VAL, DUMMY_IPYTHON_HIDDEN)
 
 
-class Handler:
+class Handler(object):
     def __init__(self, fun):
         self.lst = []
         self.fun = fun
@@ -119,7 +119,7 @@ class DefaultVarHandler(Handler):
 
 class DummyVarHandler(Handler):
     def __init__(self, fun, cls):
-        super().__init__(fun)
+        super(DummyVarHandler, self).__init__(fun)
         self.cls = cls
         self.added_var = False
 
@@ -130,7 +130,7 @@ class DummyVarHandler(Handler):
             self.lst.append(self.fun())
             self.added_var = True
         else:
-            super().handle(key, value, hidden_ns, evaluate_full_value, user_type_renderers)
+            super(DummyVarHandler, self).handle(key, value, hidden_ns, evaluate_full_value, user_type_renderers)
 
 
 def is_special_var(key, value):
