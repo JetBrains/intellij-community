@@ -27,7 +27,7 @@ import static com.intellij.openapi.vcs.history.VcsDiffUtil.createChangesWithCurr
 
 public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitRepository> {
   @Override
-  protected boolean noBranchesToCompare(@NotNull GitRepository repository) {
+  protected boolean nothingToCompare(@NotNull GitRepository repository) {
     int locals = repository.getBranches().getLocalBranches().size();
     boolean haveRemotes = !repository.getBranches().getRemoteBranches().isEmpty();
     if (repository.isOnBranch()) {  // there are other branches to compare
