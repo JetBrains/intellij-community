@@ -200,7 +200,7 @@ class RunToolbarPopupController(val project: Project,
     getPopupControllers().forEach { it.removeListener(this) }
   }
 
-  var firstShow = true
+  private var firstShow = true
   override fun actionPerformedHandler() {
     show()
     if(firstShow) {
