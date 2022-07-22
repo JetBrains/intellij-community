@@ -9,6 +9,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Provides methods to check if the given directory is a root of the given VCS. This is used e.g. by the {@link VcsRootDetector}
@@ -72,6 +74,14 @@ public abstract class VcsRootChecker {
    */
   public boolean isIgnored(@NotNull VirtualFile root, @NotNull VirtualFile checkForIgnore) {
     return false;
+  }
+
+  /**
+   * Check if a given VCS root has dependent directories, that should be checked even if not a part of the Project.
+   */
+  @NotNull
+  public List<VirtualFile> suggestDependentRoots(@NotNull VirtualFile vcsRoot) {
+    return Collections.emptyList();
   }
 
   /**
