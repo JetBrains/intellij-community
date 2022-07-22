@@ -2,6 +2,7 @@
 package git4idea.actions;
 
 import com.intellij.dvcs.branch.DvcsBranchUtil;
+import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -42,6 +43,10 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
     }
     GitRepository repo = GitBranchUtil.guessWidgetRepository(project);
     if (repo == null) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
+    if (!ToolbarSettings.getInstance().isEnabled()) {
       presentation.setEnabledAndVisible(false);
       return;
     }

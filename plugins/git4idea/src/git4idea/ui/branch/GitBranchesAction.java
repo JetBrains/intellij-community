@@ -15,6 +15,7 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -51,7 +52,8 @@ public class GitBranchesAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     e.getPresentation().setEnabledAndVisible(project != null && !project.isDisposed() &&
-                                             !GitRepositoryManager.getInstance(project).getRepositories().isEmpty());
+                                             !GitRepositoryManager.getInstance(project).getRepositories().isEmpty() &&
+                                             !ToolbarSettings.getInstance().isEnabled());
   }
 
   @Override
