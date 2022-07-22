@@ -19,7 +19,7 @@ Compile bytecode for x1
 InlineStackFrame fun1 (inlineStackTrace.kt:8)
     JavaValue[local] x1: int = 1 (inlineStackTrace.kt:4)
 KotlinStackFrame (inlineStackTrace.kt:113)
-    JavaValue[local] args: java.lang.String[] = []
+    JavaValue[local] args: java.lang.String[] = array_tests_label
 inlineStackTrace.kt:16
 Compile bytecode for x2
 InlineStackFrame fun2 (inlineStackTrace.kt:16)
@@ -27,7 +27,7 @@ InlineStackFrame fun2 (inlineStackTrace.kt:16)
 InlineStackFrame fun1 (inlineStackTrace.kt:8)
     JavaValue[local] x1: int = 1
 KotlinStackFrame (inlineStackTrace.kt:113)
-    JavaValue[local] args: java.lang.String[] = []
+    JavaValue[local] args: java.lang.String[] = array_tests_label
 inlineStackTrace.kt:25
 Compile bytecode for x3
 InlineStackFrame fun3 (inlineStackTrace.kt:25)
@@ -37,7 +37,7 @@ InlineStackFrame fun2 (inlineStackTrace.kt:16)
 InlineStackFrame fun1 (inlineStackTrace.kt:8)
     JavaValue[local] x1: int = 1
 KotlinStackFrame (inlineStackTrace.kt:113)
-    JavaValue[local] args: java.lang.String[] = []
+    JavaValue[local] args: java.lang.String[] = array_tests_label
 inlineStackTrace.kt:33
 Compile bytecode for x4
 InlineStackFrame fun4 (inlineStackTrace.kt:33)
@@ -47,7 +47,7 @@ InlineStackFrame fun2 (inlineStackTrace.kt:17)
 InlineStackFrame fun1 (inlineStackTrace.kt:8)
     JavaValue[local] x1: int = 1
 KotlinStackFrame (inlineStackTrace.kt:113)
-    JavaValue[local] args: java.lang.String[] = []
+    JavaValue[local] args: java.lang.String[] = array_tests_label
 inlineStackTrace.kt:41
 Compile bytecode for y1
 KotlinStackFrame (inlineStackTrace.kt:41)

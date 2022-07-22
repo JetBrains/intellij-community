@@ -7,7 +7,7 @@ KotlinStackFrame (capturedValues1.kt:17)
     JavaValue c2 = 3
     JavaValue b = 2
     JavaValue this (@foo) = 1000
-    JavaValue args: String[0]@uniqueID = []
+    JavaValue args: String[0]@uniqueID = array_tests_label
     JavaValue[local] this: java.lang.String = y
 Disconnected from the target VM
 
