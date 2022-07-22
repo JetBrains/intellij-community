@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.MathUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SameThreadExecutor;
@@ -42,8 +43,10 @@ import static com.intellij.openapi.vfs.newvfs.VfsEventGenerationHelper.LOG;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 final class RefreshWorker {
-  private static final int ourParallelism = Registry.intValue("vfs.refresh.worker.parallelism", 4, 1, Runtime.getRuntime().availableProcessors());
-  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("VFS Refresh", ourParallelism);
+  private static final int ourParallelism =
+    MathUtil.clamp(Registry.intValue("vfs.refresh.worker.parallelism", 4), 1, Runtime.getRuntime().availableProcessors());
+  private static final ExecutorService ourExecutor =
+    AppExecutorUtil.createBoundedApplicationPoolExecutor("VFS Refresh", ourParallelism);
 
   private final boolean myIsRecursive;
   private final Executor myExecutor;
