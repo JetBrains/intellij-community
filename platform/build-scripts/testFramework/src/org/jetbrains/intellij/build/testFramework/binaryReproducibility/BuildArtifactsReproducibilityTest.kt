@@ -28,10 +28,10 @@ class BuildArtifactsReproducibilityTest {
     }
     options.buildDateInSeconds = buildDateInSeconds
     options.randomSeedNumber = randomSeedNumber
-    // FIXME IJI-823 workaround
-    options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES)
+    options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES) // FIXME IJI-823 workaround
     options.buildStepsToSkip.remove(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)
     options.buildMacArtifactsWithRuntime = true
+    options.buildUnixSnaps = true
   }
 
   fun compare(context1: BuildContext, context2: BuildContext) {
