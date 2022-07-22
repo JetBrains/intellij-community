@@ -22,7 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
@@ -34,7 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.vcs.CompareWithLocalDialog;
-import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,23 +106,28 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
                                                     @NotNull final VirtualFile file,
                                                     @NotNull final @NlsSafe String head,
                                                     @NotNull final @NlsSafe String compare) {
-    FilePath filePath = VcsUtil.getFilePath(file);
     String revNumTitle1 = VcsDiffUtil.getRevisionTitle(compare, false);
     String revNumTitle2 = VcsDiffUtil.getRevisionTitle(head, true);
 
+    showDiffWithBranch(project, file, revNumTitle1, revNumTitle2, () -> getDiffChanges(project, file, compare));
+  }
+
+  private static void showDiffWithBranch(@NotNull Project project,
+                                         @NotNull VirtualFile file,
+                                         @NotNull @Nls String revNumTitle1,
+                                         @NotNull @Nls String revNumTitle2,
+                                         @NotNull ThrowableComputable<? extends Collection<Change>, ? extends VcsException> changesLoader) {
     if (file.isDirectory()) {
       String dialogTitle = VcsBundle.message("history.dialog.title.difference.between.versions.in",
-                                             revNumTitle1, revNumTitle2, filePath.getName());
-      CompareWithLocalDialog.showChanges(project, dialogTitle, CompareWithLocalDialog.LocalContent.AFTER, () -> {
-        return getDiffChanges(project, file, compare);
-      });
+                                             revNumTitle1, revNumTitle2, file.getName());
+      CompareWithLocalDialog.showChanges(project, dialogTitle, CompareWithLocalDialog.LocalContent.AFTER, changesLoader);
     }
     else {
       DiffRequestChain requestChain = new ChangeDiffRequestChain.Async() {
         @Override
         protected @NotNull ListSelection<ChangeDiffRequestProducer> loadRequestProducers() throws DiffRequestProducerException {
           try {
-            Collection<Change> changes = getDiffChanges(project, file, compare);
+            Collection<Change> changes = changesLoader.compute();
 
             Map<Key<?>, Object> changeContext = new HashMap<>(2);
             changeContext.put(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE, revNumTitle1);
