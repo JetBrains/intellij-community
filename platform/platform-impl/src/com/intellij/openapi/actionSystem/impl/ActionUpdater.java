@@ -227,7 +227,7 @@ final class ActionUpdater {
       if (myCurEDTWaitMillis > 200) {
         LOG.warn(myCurEDTWaitMillis + " ms to grab EDT for " + operationName);
       }
-      if (myCurEDTPerformMillis > 100) {
+      if (myCurEDTPerformMillis > 200) {
         LOG.error(elapsedReport(myCurEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX);
       }
       myCurEDTWaitMillis = myCurEDTPerformMillis = 0L;
@@ -438,7 +438,7 @@ final class ActionUpdater {
     }
     myPreCacheSlowDataKeys = false;
     long elapsed = TimeoutUtil.getDurationMillis(start);
-    if (elapsed > 50 && ActionPlaces.isShortcutPlace(myPlace)) {
+    if (elapsed > 200 && ActionPlaces.isShortcutPlace(myPlace)) {
       LOG.error(elapsedReport(elapsed, false, operationName) + OLD_EDT_MSG_SUFFIX);
     }
     else if (elapsed > 3000) {
