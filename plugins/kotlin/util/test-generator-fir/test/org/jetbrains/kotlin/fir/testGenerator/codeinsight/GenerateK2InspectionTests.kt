@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
+import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractSharedK2InspectionTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractSharedK2LocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2InspectionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2LocalInspectionTest
@@ -26,7 +27,6 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         testClass<AbstractK2InspectionTest> {
             val pattern = Patterns.forRegex("^(inspections\\.test)$")
             model("${idea}/inspections/redundantUnitReturnType", pattern = pattern)
-            model("${idea}/inspections/dataClassPrivateConstructor", pattern = pattern)
         }
     }
 
@@ -34,6 +34,11 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         testClass<AbstractSharedK2LocalInspectionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("inspectionsLocal", pattern = pattern)
+        }
+
+        testClass<AbstractSharedK2InspectionTest> {
+            val pattern = Patterns.forRegex("^(inspections\\.test)$")
+            model("inspections", pattern = pattern)
         }
     }
 }
