@@ -462,6 +462,10 @@ internal object BranchesDashboardActions {
   }
 
   class GroupingSettingsGroup : DefaultActionGroup(), DumbAware {
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     override fun update(e: AnActionEvent) {
       e.presentation.isPopupGroup = GroupBranchByRepositoryAction.isEnabledAndVisible(e)
     }
@@ -499,6 +503,10 @@ internal object BranchesDashboardActions {
   }
 
   class HideBranchesAction : DumbAwareAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     override fun update(e: AnActionEvent) {
       val properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES)
       e.presentation.isEnabledAndVisible = properties != null && properties.exists(SHOW_GIT_BRANCHES_LOG_PROPERTY)
@@ -574,6 +582,10 @@ internal object BranchesDashboardActions {
                                     icon: Icon? = null) :
     DumbAwareAction(text, description, icon) {
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     open fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {}
 
     override fun update(e: AnActionEvent) {
@@ -617,6 +629,10 @@ internal object BranchesDashboardActions {
 
   class UpdateBranchFilterInLogAction : DumbAwareAction() {
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     override fun update(e: AnActionEvent) {
       val branchFilters = e.getData(GIT_BRANCH_FILTERS)
       val uiController = e.getData(BRANCHES_UI_CONTROLLER)
@@ -632,6 +648,9 @@ internal object BranchesDashboardActions {
   }
 
   class NavigateLogToSelectedBranchAction : DumbAwareAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
 
     override fun update(e: AnActionEvent) {
       val branchFilters = e.getData(GIT_BRANCH_FILTERS)

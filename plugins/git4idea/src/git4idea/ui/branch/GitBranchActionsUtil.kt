@@ -4,29 +4,25 @@ package git4idea.ui.branch
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.branch.isGroupingEnabled
 import com.intellij.dvcs.branch.setGrouping
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.util.containers.ContainerUtil
 import git4idea.GitLocalBranch
 import git4idea.GitNotificationIdsHolder.Companion.BRANCHES_UPDATE_SUCCESSFUL
-import git4idea.GitNotificationIdsHolder.Companion.BRANCH_CHECKOUT_FAILED
-import git4idea.GitNotificationIdsHolder.Companion.BRANCH_CREATION_FAILED
 import git4idea.GitReference
 import git4idea.GitUtil
 import git4idea.GitVcs
-import git4idea.branch.*
+import git4idea.branch.GitBranchPair
+import git4idea.branch.GitBranchUtil
+import git4idea.branch.GitNewBranchDialog
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchSupport
-import git4idea.history.GitHistoryUtils
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.update.GitUpdateExecutionProcess
@@ -118,6 +114,9 @@ internal fun hasTrackingConflicts(conflictingLocalBranches: Map<GitRepository, G
 
 internal abstract class BranchGroupingAction(private val key: GroupingKey,
                                              icon: Icon? = null) : ToggleAction(key.text, key.description, icon), DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   abstract fun setSelected(e: AnActionEvent, key: GroupingKey, state: Boolean)
 
