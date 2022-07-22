@@ -65,7 +65,7 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
     }
 
     row("text:") {
-      text("text supports max line width and can contain links, try <a href='https://www.jetbrains.com'>jetbrains.com</a>")
+      text("text supports max line width and can contain links, try <a href='https://www.jetbrains.com'>jetbrains.com</a>.<br><icon src='AllIcons.General.Information'>&nbsp;It's possible to use line breaks and bundled icons")
     }
 
     row("link:") {
