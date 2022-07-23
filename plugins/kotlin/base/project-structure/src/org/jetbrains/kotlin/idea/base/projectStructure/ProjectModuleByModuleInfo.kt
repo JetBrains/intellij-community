@@ -63,25 +63,28 @@ internal class KtSourceModuleByModuleInfo(
     override val moduleName: String get() = ideaModule.name
 
     override val directRegularDependencies: List<KtModule>
-        get() = moduleInfo.module.cacheByClassInvalidatingOnRootModifications(KtSourceModuleByModuleInfo::class.java) {
-            val sourceRootType = when (moduleInfo) {
-                is ModuleProductionSourceInfo -> SourceKotlinRootType
-                is ModuleTestSourceInfo -> TestSourceKotlinRootType
-                else -> SourceKotlinRootType
-            }
-
-            ModuleDependencyCollector.getInstance(ideaModule.project)
-                .collectModuleDependencies(ideaModule, moduleInfo.platform, sourceRootType, includeExportedDependencies = true)
-                .asSequence()
-                .filterNot { it == moduleInfo }
-                .map(provider::getKtModuleByModuleInfo)
-                .toList()
-        }
+        get() = moduleInfo.dependencies(provider)
 
     override val languageVersionSettings: LanguageVersionSettings get() = moduleInfo.module.languageVersionSettings
 
     override val project: Project get() = ideaModule.project
 }
+
+private fun ModuleSourceInfo.dependencies(provider: ProjectStructureProviderIdeImpl): List<KtModule> =
+    module.cacheByClassInvalidatingOnRootModifications(KtSourceModuleByModuleInfo::class.java) {
+        val sourceRootType = when (this) {
+            is ModuleProductionSourceInfo -> SourceKotlinRootType
+            is ModuleTestSourceInfo -> TestSourceKotlinRootType
+            else -> SourceKotlinRootType
+        }
+
+        ModuleDependencyCollector.getInstance(project)
+            .collectModuleDependencies(module, platform, sourceRootType, includeExportedDependencies = true)
+            .asSequence()
+            .filterNot { it == this }
+            .map(provider::getKtModuleByModuleInfo)
+            .toList()
+    }
 
 internal class KtLibraryModuleByModuleInfo(
     private val moduleInfo: LibraryInfo,
