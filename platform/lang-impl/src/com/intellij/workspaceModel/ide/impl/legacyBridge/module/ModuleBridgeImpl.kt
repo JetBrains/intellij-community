@@ -95,7 +95,7 @@ internal class ModuleBridgeImpl(
   }
 
   override fun callCreateComponents() {
-    createComponents(null)
+    createComponents()
   }
 
   override fun initFacets() {

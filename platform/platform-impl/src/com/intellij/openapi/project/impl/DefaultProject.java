@@ -321,7 +321,7 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
     // do not leak internal delegate, use DefaultProject everywhere instead
     registerServiceInstance(Project.class, actualContainerInstance, ComponentManagerImpl.fakeCorePluginDescriptor);
     registerComponents();
-    createComponents(null);
+    createComponents();
     Disposer.register(actualContainerInstance, this);
   }
 

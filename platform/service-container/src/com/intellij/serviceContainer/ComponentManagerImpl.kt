@@ -396,18 +396,14 @@ abstract class ComponentManagerImpl(
     return {
       for (componentAdapter in componentAdapters.getImmutableSet()) {
         if (componentAdapter is MyComponentAdapter) {
-          componentAdapter.getInstance<Any>(this, keyClass = null, indicator = null)
+          componentAdapter.getInstance<Any>(this, keyClass = null)
         }
       }
     }
   }
 
-  protected fun createComponents(indicator: ProgressIndicator?) {
+  protected fun createComponents() {
     LOG.assertTrue(containerState.get() == ContainerState.PRE_INIT)
-
-    if (indicator != null) {
-      indicator.isIndeterminate = false
-    }
 
     val activity = when (val activityNamePrefix = activityNamePrefix()) {
       null -> null
@@ -416,7 +412,7 @@ abstract class ComponentManagerImpl(
 
     for (componentAdapter in componentAdapters.getImmutableSet()) {
       if (componentAdapter is MyComponentAdapter) {
-        componentAdapter.getInstance<Any>(this, keyClass = null, indicator = indicator)
+        componentAdapter.getInstance<Any>(this, keyClass = null)
       }
     }
 
@@ -570,11 +566,10 @@ abstract class ComponentManagerImpl(
         LOG.error("getComponent must be called on appropriate container (current: $this, expected: ${adapter.componentManager})")
       }
 
-      val indicator = ProgressManager.getGlobalProgressIndicator()
       if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-        adapter.throwAlreadyDisposedError(this, indicator)
+        adapter.throwAlreadyDisposedError(this, ProgressManager.getGlobalProgressIndicator())
       }
-      return adapter.getInstance(adapter.componentManager, interfaceClass, indicator = indicator)
+      return adapter.getInstance(adapter.componentManager, interfaceClass)
     }
     else {
       @Suppress("UNCHECKED_CAST")

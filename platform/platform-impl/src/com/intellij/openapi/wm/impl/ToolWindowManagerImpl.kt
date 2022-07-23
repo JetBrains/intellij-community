@@ -733,12 +733,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   override val lastActiveToolWindowId: String?
     get() = getLastActiveToolWindows().firstOrNull()?.id
 
-  fun getLastActiveToolWindows(): Iterable<ToolWindow> {
+  internal fun getLastActiveToolWindows(): Sequence<ToolWindow> {
     EDT.assertIsEdt()
     return (0 until activeStack.persistentSize).asSequence()
       .map { activeStack.peekPersistent(it).toolWindow }
       .filter { it.isAvailable }
-      .asIterable()
   }
 
   /**
@@ -1310,7 +1309,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   override fun canShowNotification(toolWindowId: String): Boolean {
     val readOnlyWindowInfo = idToEntry.get(toolWindowId)?.readOnlyWindowInfo
     val anchor = readOnlyWindowInfo?.anchor ?: return false
-    val isSplit = readOnlyWindowInfo?.isSplit ?: return false
+    val isSplit = readOnlyWindowInfo.isSplit
     return toolWindowPanes.values.firstNotNullOfOrNull { it.buttonManager.getStripeFor(anchor, isSplit).getButtonFor(toolWindowId) } != null
   }
 
@@ -1772,7 +1771,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   }
 
   private fun addFloatingDecorator(entry: ToolWindowEntry, info: WindowInfo) {
-    val frame = frameState!!.frame
+    val frame = frameState!!.frameOrNull
     val decorator = entry.toolWindow.getOrCreateDecoratorComponent()
     val floatingDecorator = FloatingDecorator(frame!!, decorator)
     floatingDecorator.apply(info)
@@ -1823,7 +1822,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
         size = decorator.preferredSize
       }
       window.size = size
-      window.setLocationRelativeTo(frameState!!.frame)
+      window.setLocationRelativeTo(frameState!!.frameOrNull)
     }
     entry.windowedDecorator = windowedDecorator
     Disposer.register(windowedDecorator, Disposable {

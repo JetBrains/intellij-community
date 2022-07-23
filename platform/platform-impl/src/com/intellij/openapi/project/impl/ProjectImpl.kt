@@ -200,7 +200,7 @@ open class ProjectImpl(filePath: Path, projectName: String?)
   @Internal
   final override fun activityNamePrefix() = "project "
 
-  internal suspend fun init(preloadServices: Boolean, indicator: ProgressIndicator?) {
+  internal suspend fun init(preloadServices: Boolean) {
     val app = ApplicationManager.getApplication()
 
     val container = this
@@ -215,7 +215,7 @@ open class ProjectImpl(filePath: Path, projectName: String?)
                                     onlyIfAwait = isLight)
         }
       }
-      createComponents(indicator)
+      createComponents()
     }
 
     coroutineContext.ensureActive()

@@ -20,12 +20,8 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.GlobalMenuLinux
-import com.intellij.openapi.wm.impl.IdeFrameDecorator
-import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
-import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.LinuxIdeMenuBar.Companion.doBindAppMenuOfParent
-import com.intellij.openapi.wm.impl.ProjectFrameHelper.appendTitlePart
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.ui.*
 import com.intellij.ui.mac.touchbar.TouchbarSupport
@@ -367,8 +363,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       }
 
       val builder = StringBuilder()
-      appendTitlePart(builder, frameTitle)
-      appendTitlePart(builder, fileTitle)
+      ProjectFrameHelper.appendTitlePart(builder, frameTitle)
+      ProjectFrameHelper.appendTitlePart(builder, fileTitle)
       title = builder.toString()
     }
 

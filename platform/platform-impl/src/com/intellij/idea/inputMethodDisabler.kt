@@ -91,7 +91,7 @@ private fun disableInputMethdosImpl() {
     getLogger().info("Input method disabler: disabled for any java.awt.Component.")
 
     val frames = WindowManagerEx.getInstanceEx().projectFrameHelpers
-      .map { fh -> SwingUtilities.getRoot(fh.frame) }
+      .map { fh -> SwingUtilities.getRoot(fh.frameOrNull) }
       .filter { c -> c != null }
 
     ApplicationManager.getApplication().executeOnPooledThread {

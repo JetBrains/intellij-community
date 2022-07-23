@@ -98,7 +98,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     if (beforeComponentCreation != null) {
       beforeComponentCreation.run();
     }
-    createComponents(null);
+    createComponents();
   }
 
   private boolean isPersistent() {

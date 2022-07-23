@@ -391,7 +391,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   public final void loadComponents() {
-    createComponents(null);
+    createComponents();
     StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED);
   }
 

@@ -141,7 +141,9 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
 
     // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
     // but it is OK, because registry is not and should not be used.
-    initConfigurationStore(app)
+    withContext(Dispatchers.IO) {
+      initConfigurationStore(app)
+    }
 
     launch {
       // ensure that base laf is set before initialization of LafManagerImpl

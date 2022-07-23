@@ -42,7 +42,8 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
                                                 val preparedToOpen: (suspend (Module) -> Unit)?,
                                                 val preventIprLookup: Boolean,
                                                 val processorChooser: ((List<Any>) -> Any)?,
-                                                val implOptions: Any?) {
+                                                val implOptions: Any?,
+                                                val showFrameAsap: Boolean) {
   @Internal
   constructor(forceOpenInNewFrame: Boolean = false,
               projectToClose: Project? = null,
@@ -77,6 +78,7 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
     processorChooser = null,
 
     implOptions = null,
+    showFrameAsap = false,
   )
 
   companion object {
@@ -103,6 +105,8 @@ class OpenProjectTaskBuilder internal constructor() {
   var projectName: String? = null
 
   var forceOpenInNewFrame: Boolean = false
+  @Internal
+  var showFrameAsap: Boolean = false
 
   var isNewProject: Boolean = false
   var useDefaultProjectAsTemplate: Boolean? = null
@@ -156,6 +160,7 @@ class OpenProjectTaskBuilder internal constructor() {
     builder()
     return OpenProjectTask(
       forceOpenInNewFrame = forceOpenInNewFrame,
+      showFrameAsap = showFrameAsap,
       preloadServices = preloadServices,
 
       projectToClose = projectToClose,

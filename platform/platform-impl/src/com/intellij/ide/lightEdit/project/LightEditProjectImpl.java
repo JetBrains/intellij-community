@@ -38,7 +38,7 @@ final class LightEditProjectImpl extends ProjectImpl implements LightEditCompati
     getComponentStore().setPath(projectPath, false, null);
     try {
       BuildersKt.runBlocking(EmptyCoroutineContext.INSTANCE, (scope, continuation) -> {
-        init$intellij_platform_ide_impl(true, null, continuation);
+        init$intellij_platform_ide_impl(true, continuation);
         return Unit.INSTANCE;
       });
     }

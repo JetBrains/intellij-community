@@ -67,7 +67,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
     fun Project.isNewProject(): Boolean = getUserData(PROJECT_NEWLY_OPENED) == true
 
-    fun Project.isLoadedFromCacheButHasNoModules(): Boolean = getUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES) == true
+    internal fun Project.isLoadedFromCacheButHasNoModules(): Boolean = getUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES) == true
 
     @JvmStatic
     fun getInstance() = getInstanceIfItExists()!!

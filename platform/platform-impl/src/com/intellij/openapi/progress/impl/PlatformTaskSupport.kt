@@ -190,7 +190,7 @@ private fun CoroutineScope.showModalIndicator(
   }
 }
 
-internal suspend fun ProgressDialogUI.updateFromSink(stateFlow: Flow<ProgressState>): Nothing {
+private suspend fun ProgressDialogUI.updateFromSink(stateFlow: Flow<ProgressState>): Nothing {
   stateFlow
     .throttle(50)
     .flowOn(Dispatchers.IO)

@@ -291,7 +291,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
   }
 
   // open for Rider
-  open suspend fun openProject(projectFile: Path, openProjectOptions: OpenProjectTask): Project? {
+  open suspend fun openProject(projectFile: Path, options: OpenProjectTask): Project? {
+    var effectiveOptions = options
+    if (options.implOptions == null) {
+      getProjectMetaInfo(projectFile)?.frame?.let { frameInfo ->
+        effectiveOptions = effectiveOptions.copy(implOptions = OpenProjectImplOptions(frameInfo = frameInfo))
+      }
+    }
+
     if (isValidProjectPath(projectFile)) {
       val projectManager = ProjectManagerEx.getInstanceEx()
       projectManager.openProjects.firstOrNull { isSameProject(projectFile, it) }?.let { project ->
@@ -300,14 +307,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
         }
         return project
       }
-      return projectManager.openProjectAsync(projectFile, openProjectOptions)
+      return projectManager.openProjectAsync(projectFile, effectiveOptions)
     }
     else {
       // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
       // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
       // IDEA-144453 IDEA rejects opening recent project if there are no .idea subfolder
       // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug were deleted
-      return ProjectUtil.openOrImportAsync(projectFile, openProjectOptions)
+      return ProjectUtil.openOrImportAsync(projectFile, effectiveOptions)
     }
   }
 
@@ -624,7 +631,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       return
     }
 
-    val frame = frameHelper.frame
+    val frame = frameHelper.frameOrNull
     if (frame == null) {
       LOG.warn("Cannot update frame info (project=${project.name}, reason=frame is null)")
       return
@@ -726,7 +733,7 @@ int32 "extendedState"
   }
 
   private fun takeASelfie(frameHelper: ProjectFrameHelper, workspaceId: String) {
-    val frame = frameHelper.frame!!
+    val frame = frameHelper.frameOrNull!!
     val width = frame.width
     val height = frame.height
     val image = ImageUtil.createImage(frame.graphicsConfiguration, width, height, BufferedImage.TYPE_INT_ARGB)
@@ -847,7 +854,7 @@ private fun convertToSystemIndependentPaths(list: MutableList<String>) {
 private open class MyProjectUiFrameManager(val frame: IdeFrameImpl, private val frameHelper: ProjectFrameHelper) : ProjectUiFrameManager {
   override fun getWindow() = frame
 
-  override suspend fun init(allocator: ProjectUiFrameAllocator) = frameHelper
+  override suspend fun createFrameHelper(allocator: ProjectUiFrameAllocator) = frameHelper
 
   fun dispose() {
     frame.dispose()

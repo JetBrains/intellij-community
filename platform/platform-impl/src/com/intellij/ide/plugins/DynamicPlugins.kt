@@ -3,7 +3,6 @@ package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
 import com.intellij.application.options.RegistryManager
-import com.intellij.configurationStore.StoreUtil.saveDocumentsAndProjectsAndApp
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveProjectsAndApp
@@ -901,7 +900,7 @@ private fun clearTemporaryLostComponent() {
     clearMethod.isAccessible = true
     loop@ for (frame in WindowManager.getInstance().allProjectFrames) {
       val window = when (frame) {
-        is ProjectFrameHelper -> frame.frame
+        is ProjectFrameHelper -> frame.frameOrNull
         is Window -> frame
         else -> continue@loop
       }

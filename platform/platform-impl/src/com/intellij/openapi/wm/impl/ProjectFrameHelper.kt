@@ -1,549 +1,472 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+package com.intellij.openapi.wm.impl
 
-import com.intellij.ide.RecentProjectsManagerBase;
-import com.intellij.notification.ActionCenter;
-import com.intellij.notification.NotificationsManager;
-import com.intellij.notification.impl.NotificationsManagerImpl;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.wm.ex.IdeFrameEx;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
-import com.intellij.ui.*;
-import com.intellij.util.containers.JBIterable;
-import com.intellij.util.io.SuperUserStatus;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.notification.ActionCenter
+import com.intellij.notification.NotificationsManager
+import com.intellij.notification.impl.NotificationsManagerImpl
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.MnemonicHelper
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.impl.MouseGestureManager
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
+import com.intellij.openapi.wm.ex.IdeFrameEx
+import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.impl.IdeFrameImpl.FrameHelper
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
+import com.intellij.ui.*
+import com.intellij.util.io.SuperUserStatus.isSuperUser
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.accessibility.AccessibleContextAccessor
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Image
+import java.awt.Rectangle
+import java.awt.Window
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
+import java.nio.file.Path
+import java.util.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicBoolean
+import javax.accessibility.AccessibleContext
+import javax.swing.*
 
-import javax.accessibility.AccessibleContext;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.File;
-import java.lang.reflect.Field;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
+open class ProjectFrameHelper(
+  private var frame: IdeFrameImpl?,
+  @field:Volatile @field:Suppress("unused") private var selfie: Image?
+) : IdeFrameEx, AccessibleContextAccessor, DataProvider, Disposable {
+  private var isUpdatingTitle = false
+  private var title: String? = null
+  private var fileTitle: String? = null
+  private var currentFile: Path? = null
+  private var project: Project? = null
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
-public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor, DataProvider, Disposable {
-  private static final Logger LOG = Logger.getInstance(ProjectFrameHelper.class);
+  @get:ApiStatus.Internal
+  var rootPane: IdeRootPane? = null
+    private set
 
-  private boolean isUpdatingTitle;
-
-  private String myTitle;
-  private String fileTitle;
-  private Path currentFile;
-
-  private Project project;
-
-  private IdeRootPane rootPane;
-  private BalloonLayout balloonLayout;
-
-  private @Nullable IdeFrameDecorator frameDecorator;
-
-  @SuppressWarnings("unused")
-  private volatile Image selfie;
-
-  private IdeFrameImpl frame;
+  private var balloonLayout: BalloonLayout? = null
+  private var frameDecorator: IdeFrameDecorator? = null
 
   // frame can be activated before project is assigned to it,
-  // so we remember the activation time and report it against the assgned project later
-  private Long activationTimestamp;
+  // so we remember the activation time and report it against the assigned project later
+  private var activationTimestamp: Long? = null
 
-  public ProjectFrameHelper(@NotNull IdeFrameImpl frame, @Nullable Image selfie) {
-    this.frame = frame;
-    this.selfie = selfie;
-    setupCloseAction();
-
-    preInit();
-
-    Disposer.register(ApplicationManager.getApplication(), this);
+  init {
+    setupCloseAction()
+    preInit()
+    @Suppress("LeakingThis")
+    Disposer.register(ApplicationManager.getApplication(), this)
   }
 
-  public static @Nullable ProjectFrameHelper getFrameHelper(@Nullable Window window) {
-    if (window == null) {
-      return null;
+  companion object {
+    private val LOG = logger<ProjectFrameHelper>()
+
+    @JvmStatic
+    fun getFrameHelper(window: Window?): ProjectFrameHelper? {
+      if (window == null) {
+        return null
+      }
+
+      val projectFrame = if (window is IdeFrameImpl) {
+        window
+      }
+      else {
+        SwingUtilities.getAncestorOfClass(IdeFrameImpl::class.java, window) as? IdeFrameImpl ?: return null
+      }
+      return projectFrame.frameHelper?.helper as? ProjectFrameHelper
     }
 
-    IdeFrameImpl projectFrame;
-    if (window instanceof IdeFrameImpl) {
-      projectFrame = (IdeFrameImpl)window;
+    val superUserSuffix: String?
+      get() = if (!isSuperUser) null else if (SystemInfoRt.isWindows) "Administrator" else "ROOT"
+
+    fun appendTitlePart(sb: StringBuilder, s: String?) {
+      appendTitlePart(sb, s, " \u2013 ")
     }
-    else {
-      projectFrame = (IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class, window);
-      if (projectFrame == null) {
-        return null;
+
+    private fun appendTitlePart(sb: StringBuilder, s: String?, separator: String) {
+      if (!s.isNullOrBlank()) {
+        if (sb.isNotEmpty()) {
+          sb.append(separator)
+        }
+        sb.append(s)
       }
     }
-    IdeFrameImpl.FrameHelper frameLightHelper = projectFrame.getFrameHelper();
-    return frameLightHelper == null ? null : (ProjectFrameHelper)frameLightHelper.getHelper();
+
+    private fun isTemporaryDisposed(frame: RootPaneContainer?): Boolean {
+      return ClientProperty.isTrue(frame?.rootPane, ScreenUtil.DISPOSE_TEMPORARY)
+    }
   }
 
-  private void preInit() {
-    rootPane = createIdeRootPane();
-    frame.setRootPane(rootPane);
+  private fun preInit() {
+    val rootPane = createIdeRootPane()
+    this.rootPane = rootPane
+    frame!!.rootPane = rootPane
     // NB!: the root pane must be set before decorator,
     // which holds its own client properties in a root pane
-    frameDecorator = IdeFrameDecorator.decorate(frame, this);
+    frameDecorator = IdeFrameDecorator.decorate(frame!!, this)
+    frame!!.setFrameHelper(object : FrameHelper {
+      override fun getData(dataId: String) = this@ProjectFrameHelper.getData(dataId)
 
-    frame.setFrameHelper(new IdeFrameImpl.FrameHelper() {
-      @Override
-      public @Nullable Object getData(@NotNull String dataId) {
-        return ProjectFrameHelper.this.getData(dataId);
-      }
-
-      @Override
-      @NlsSafe
-      public String getAccessibleName() {
-        StringBuilder builder = new StringBuilder();
-        if (project != null) {
-          builder.append(project.getName());
-          builder.append(" - ");
+      override fun getAccessibleName(): @NlsSafe String {
+        val builder = StringBuilder()
+        project?.let {
+          builder.append(it.name)
+          builder.append(" - ")
         }
-        builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
-        return builder.toString();
+        builder.append(ApplicationNamesInfo.getInstance().fullProductName)
+        return builder.toString()
       }
 
-      @Override
-      public void dispose() {
+      override fun dispose() {
         if (isTemporaryDisposed(frame)) {
-          frame.doDispose();
-          return;
-        }
-
-        Disposer.dispose(ProjectFrameHelper.this);
-      }
-
-      @Override
-      public @Nullable Project getProject() {
-        return project;
-      }
-
-      @Override
-      public @NotNull IdeFrame getHelper() {
-        return ProjectFrameHelper.this;
-      }
-
-      @Override
-      public void setTitle(@Nullable String title) {
-        if (isUpdatingTitle) {
-          frame.doSetTitle(title);
+          frame!!.doDispose()
         }
         else {
-          myTitle = title;
+          Disposer.dispose(this@ProjectFrameHelper)
         }
-
-        updateTitle();
       }
-    }, frameDecorator);
 
-    balloonLayout = ActionCenter.isEnabled()
-                      ? new ActionCenterBalloonLayout(rootPane, JBUI.insets(8))
-                      : new BalloonLayoutImpl(rootPane, JBUI.insets(8));
-    frame.setBackground(JBColor.PanelBackground);
+      override fun getProject() = this@ProjectFrameHelper.project
 
-    rootPane.prepareToolbar();
+      override fun getHelper() = this@ProjectFrameHelper
+
+      override fun setTitle(title: String?) {
+        if (isUpdatingTitle) {
+          frame!!.doSetTitle(title)
+        }
+        else {
+          this@ProjectFrameHelper.title = title
+        }
+        updateTitle()
+      }
+    }, frameDecorator)
+    balloonLayout = if (ActionCenter.isEnabled()) {
+      ActionCenterBalloonLayout(rootPane, JBUI.insets(8))
+    }
+    else {
+      BalloonLayoutImpl(rootPane, JBUI.insets(8))
+    }
+    frame!!.background = JBColor.PanelBackground
+    rootPane.prepareToolbar()
   }
 
-  protected @NotNull IdeRootPane createIdeRootPane() {
-    return new IdeRootPane(frame, this, this);
+  protected open fun createIdeRootPane(): IdeRootPane = IdeRootPane(frame!!, this, this)
+
+  fun releaseFrame() {
+    rootPane!!.removeToolbar()
+    WindowManagerEx.getInstanceEx().releaseFrame(this)
   }
 
-  public void releaseFrame() {
-    rootPane.removeToolbar();
-    WindowManagerEx.getInstanceEx().releaseFrame(this);
-  }
+  private val isInitialized = AtomicBoolean()
 
-  // purpose of delayed init - to show project frame as earlier as possible (and start loading of project too) and use it as project loading "splash"
+  // purpose of delayed init - to show project frame as early as possible (and start loading of project too) and use it as project loading "splash"
   // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
-  public void init() {
-    rootPane.createAndConfigureStatusBar(this, this);
-    MnemonicHelper.init(frame);
-    frame.setFocusTraversalPolicy(new IdeFocusTraversalPolicy());
+  fun init() {
+    if (!isInitialized.compareAndSet(false, true)) {
+      return
+    }
+
+    rootPane!!.createAndConfigureStatusBar(this, this)
+    val frame = frame!!
+    MnemonicHelper.init(frame)
+    frame.focusTraversalPolicy = IdeFocusTraversalPolicy()
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
-    if (SystemInfoRt.isLinux) {
-      frame.setIconImage(null);
+    if (SystemInfoRt.isMac) {
+      frame.iconImage = null
     }
-
-    IdeMenuBar.installAppMenuIfNeeded(frame);
-    // in production (not from sources) makes sense only on Linux
-    if (SystemInfoRt.isLinux) {
-      AppUIUtil.updateWindowIcon(frame);
+    else if (SystemInfoRt.isLinux) {
+      IdeMenuBar.installAppMenuIfNeeded(frame)
+      // in production (not from sources) makes sense only on Linux
+      AppUIUtil.updateWindowIcon(frame)
     }
-
-    MouseGestureManager.getInstance().add(this);
-
+    MouseGestureManager.getInstance().add(this)
     ApplicationManager.getApplication().invokeLater(
-      () -> ((NotificationsManagerImpl)NotificationsManager.getNotificationsManager()).dispatchEarlyNotifications(),
+      { (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).dispatchEarlyNotifications() },
       ModalityState.NON_MODAL,
-      __ -> frame == null);
+      { this.frame == null }
+    )
   }
 
-  @Override
-  public JComponent getComponent() {
-    return frame.getRootPane();
-  }
+  override fun getComponent(): JComponent? = frame?.rootPane
 
-  private void setupCloseAction() {
-    frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-    CloseProjectWindowHelper helper = createCloseProjectWindowHelper();
-    frame.addWindowListener(new WindowAdapter() {
-      @Override
-      public void windowClosing(@NotNull WindowEvent e) {
-        if (isTemporaryDisposed(frame) || LaterInvocator.isInModalContext(frame, project)) {
-          return;
+  private fun setupCloseAction() {
+    frame!!.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
+    val helper = createCloseProjectWindowHelper()
+    frame!!.addWindowListener(object : WindowAdapter() {
+      override fun windowClosing(e: WindowEvent) {
+        if (isTemporaryDisposed(frame!!) || LaterInvocator.isInModalContext(frame!!, project)) {
+          return
         }
 
-        Application app = ApplicationManager.getApplication();
-        if (app != null && !app.isDisposed()) {
-          helper.windowClosing(project);
+        val app = ApplicationManager.getApplication()
+        if (app != null && !app.isDisposed) {
+          helper.windowClosing(project)
         }
       }
-    });
+    })
   }
 
-  protected @NotNull CloseProjectWindowHelper createCloseProjectWindowHelper() {
-    return new CloseProjectWindowHelper();
+  protected open fun createCloseProjectWindowHelper(): CloseProjectWindowHelper {
+    return CloseProjectWindowHelper()
   }
 
-  @Override
-  public @Nullable IdeStatusBarImpl getStatusBar() {
-    return rootPane == null ? null : rootPane.getStatusBar();
+  override fun getStatusBar(): IdeStatusBarImpl? {
+    return if (rootPane == null) null else rootPane!!.statusBar
   }
 
-  @Override
-  public void setFrameTitle(String text) {
-    frame.setTitle(text);
+  override fun setFrameTitle(text: String) {
+    frame!!.title = text
   }
 
-  void frameReleased() {
+  fun frameReleased() {
     if (project != null) {
-      project = null;
+      project = null
       // already disposed
-      if (rootPane != null) {
-        rootPane.deinstallNorthComponents();
-      }
+      rootPane?.deinstallNorthComponents()
     }
-
-    fileTitle = null;
-    currentFile = null;
-    myTitle = null;
-    if (frame != null) {
-      frame.doSetTitle("");
-    }
+    fileTitle = null
+    currentFile = null
+    title = null
+    frame?.doSetTitle("")
   }
 
-  @Override
-  public void setFileTitle(@Nullable String fileTitle, @Nullable Path file) {
-    this.fileTitle = fileTitle;
-    currentFile = file;
-    updateTitle();
+  override fun setFileTitle(fileTitle: String?, file: Path?) {
+    this.fileTitle = fileTitle
+    currentFile = file
+    updateTitle()
   }
 
-  @Override
-  public @Nullable IdeRootPaneNorthExtension getNorthExtension(String key) {
-    return rootPane.findByName(key);
-  }
+  override fun getNorthExtension(key: String): IdeRootPaneNorthExtension? = rootPane?.findByName(key)
 
-  protected @NotNull List<TitleInfoProvider> getTitleInfoProviders() {
-    return TitleInfoProvider.EP.getExtensionList();
-  }
+  protected open val titleInfoProviders: List<TitleInfoProvider>
+    get() = TitleInfoProvider.EP.extensionList
 
-  void updateTitle() {
+  fun updateTitle() {
     if (isUpdatingTitle) {
-      return;
+      return
     }
-
-    isUpdatingTitle = true;
+    isUpdatingTitle = true
     try {
       if (AdvancedSettings.getBoolean("ide.show.fileType.icon.in.titleBar")) {
-        File ioFile = currentFile == null ? null : currentFile.toFile();
-        frame.getRootPane().putClientProperty("Window.documentFile", ioFile); // this property requires java.io.File
+        val ioFile = if (currentFile == null) null else currentFile!!.toFile()
+        frame!!.rootPane.putClientProperty("Window.documentFile", ioFile) // this property requires java.io.File
       }
-
-      StringBuilder builder = new StringBuilder();
-      appendTitlePart(builder, myTitle);
-      appendTitlePart(builder, fileTitle);
-      List<TitleInfoProvider> titleInfoProviders = getTitleInfoProviders();
+      val builder = StringBuilder()
+      appendTitlePart(builder, title)
+      appendTitlePart(builder, fileTitle)
+      val titleInfoProviders = titleInfoProviders
       if (!titleInfoProviders.isEmpty()) {
-        assert project != null;
-        for (TitleInfoProvider extension : titleInfoProviders) {
-          if (extension.isActive(project)) {
-            String it = extension.getValue(project);
+        assert(project != null)
+        for (extension in titleInfoProviders) {
+          if (extension.isActive(project!!)) {
+            val it = extension.getValue(project!!)
             if (!it.isEmpty()) {
-              appendTitlePart(builder, it, " ");
+              appendTitlePart(builder, it, " ")
             }
           }
         }
       }
-
-      if (builder.length() > 0) {
-        frame.doSetTitle(builder.toString());
+      if (builder.isNotEmpty()) {
+        frame!!.doSetTitle(builder.toString())
       }
     }
     finally {
-      isUpdatingTitle = false;
+      isUpdatingTitle = false
     }
   }
 
-  public static @Nullable String getSuperUserSuffix() {
-    return !SuperUserStatus.isSuperUser() ? null : SystemInfoRt.isWindows ? "Administrator" : "ROOT";
+  fun updateView() {
+    val rootPane = rootPane
+    rootPane!!.updateToolbar()
+    rootPane.updateMainMenuActions()
+    rootPane.updateNorthComponents()
   }
 
-  public void updateView() {
-    IdeRootPane rootPane = this.rootPane;
-    rootPane.updateToolbar();
-    rootPane.updateMainMenuActions();
-    rootPane.updateNorthComponents();
-  }
+  override fun getCurrentAccessibleContext(): AccessibleContext = frame!!.accessibleContext
 
-  @Override
-  public AccessibleContext getCurrentAccessibleContext() {
-    return frame.getAccessibleContext();
-  }
-
-  public static void appendTitlePart(@NotNull StringBuilder sb, @Nullable String s) {
-    appendTitlePart(sb, s, " \u2013 ");
-  }
-
-  private static void appendTitlePart(@NotNull StringBuilder sb, @Nullable String s, String separator) {
-    if (!Strings.isEmptyOrSpaces(s)) {
-      if (sb.length() > 0) {
-        sb.append(separator);
-      }
-      sb.append(s);
+  override fun getData(dataId: String): Any? {
+    val project = project
+    if (CommonDataKeys.PROJECT.`is`(dataId)) {
+      return if (project != null && project.isInitialized) project else null
     }
+    else if (IdeFrame.KEY.`is`(dataId)) {
+      return this
+    }
+    else if (PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS.`is`(dataId)) {
+      val manager = if (project != null && project.isInitialized) project.serviceIfCreated<ToolWindowManager>() else null
+      return if (manager is ToolWindowManagerImpl) manager.getLastActiveToolWindows().toList().toTypedArray() else null
+    }
+    else if (PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId)) {
+      return (if (project != null && project.isInitialized) FileEditorManager.getInstance(project) else null)?.selectedEditor
+    }
+    return null
   }
 
-  @Override
-  public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return project != null && project.isInitialized() ? project : null;
-    }
-    else if (IdeFrame.KEY.is(dataId)) {
-      return this;
-    }
-    else if (PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS.is(dataId)) {
-      ToolWindowManager manager = project != null && project.isInitialized() ? project.getServiceIfCreated(ToolWindowManager.class) : null;
-      return manager instanceof ToolWindowManagerImpl ? JBIterable.from(
-        ((ToolWindowManagerImpl)manager).getLastActiveToolWindows()).toArray(new ToolWindow[0]) : null;
-    }
-    else if (PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.is(dataId)) {
-      FileEditorManager manager = project != null && project.isInitialized() ? project.getComponent(FileEditorManager.class) : null;
-      return manager != null ? manager.getSelectedEditor() : null;
+  override fun getProject() = project
+
+  fun setProject(project: Project) {
+    if (this.project === project) {
+      return
     }
 
-    return null;
-  }
-
-  @Override
-  public @Nullable Project getProject() {
-    return project;
-  }
-
-  public void setProject(@NotNull Project project) {
-    if (this.project == project) {
-      return;
-    }
-
-    this.project = project;
-    if (rootPane != null) {
-      rootPane.setProject(project);
-      rootPane.installNorthComponents(project);
-      StatusBar statusBar = rootPane.getStatusBar();
-      if (statusBar != null) {
-        project.getMessageBus().connect().subscribe(StatusBar.Info.TOPIC, statusBar);
+    this.project = project
+    rootPane?.let { rootPane ->
+      rootPane.setProject(project)
+      rootPane.installNorthComponents(project)
+      rootPane.statusBar?.let {
+        project.messageBus.connect().subscribe(StatusBar.Info.TOPIC, it)
       }
     }
-
-    installDefaultProjectStatusBarWidgets(project);
-    updateTitle();
+    installDefaultProjectStatusBarWidgets(project)
+    updateTitle()
     if (selfie != null) {
-      StartupManager.getInstance(project).runAfterOpened(() -> {
-        selfie = null;
-      });
+      StartupManager.getInstance(project).runAfterOpened { selfie = null }
     }
-
-    if (frameDecorator != null) {
-      frameDecorator.setProject();
-    }
-    if (activationTimestamp != null) {
-      RecentProjectsManagerBase.getInstanceEx().setActivationTimestamp(project, activationTimestamp);
+    frameDecorator?.setProject()
+    activationTimestamp?.let {
+      RecentProjectsManagerBase.getInstanceEx().setActivationTimestamp(project, it)
     }
   }
 
-  protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
-    project.getService(StatusBarWidgetsManager.class).installPendingWidgets();
-    IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
-    PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
-
-    var navBar = rootPane.findByName(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
-    if (navBar instanceof StatusBarCentralWidget) {
-      statusBar.setCentralWidget((StatusBarCentralWidget)navBar);
+  protected open fun installDefaultProjectStatusBarWidgets(project: Project) {
+    project.service<StatusBarWidgetsManager>().installPendingWidgets()
+    val statusBar = statusBar!!
+    PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
+    val navBar = rootPane!!.findByName(IdeStatusBarImpl.NAVBAR_WIDGET_KEY)
+    if (navBar is StatusBarCentralWidget) {
+      statusBar.setCentralWidget(navBar)
     }
   }
 
-  public void appClosing() {
-    if (frameDecorator != null) {
-      frameDecorator.appClosing();
-    }
+  fun appClosing() {
+    frameDecorator?.appClosing()
   }
 
-  @Override
-  public void dispose() {
-    MouseGestureManager.getInstance().remove(this);
-
-    if (balloonLayout != null) {
-      //noinspection SSBasedInspection
-      ((BalloonLayoutImpl)balloonLayout).dispose();
-      balloonLayout = null;
+  override fun dispose() {
+    MouseGestureManager.getInstance().remove(this)
+    balloonLayout?.let {
+      balloonLayout = null
+      (it as BalloonLayoutImpl).dispose()
     }
 
     // clear both our and swing hard refs
-    if (rootPane != null) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        rootPane.removeNotify();
+    rootPane?.let { rootPane ->
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        rootPane.removeNotify()
       }
-      frame.setRootPane(new JRootPane());
-      rootPane = null;
+      frame!!.rootPane = JRootPane()
+      this.rootPane = null
     }
-
-    if (frame != null) {
-      frame.doDispose();
-      frame.setFrameHelper(null, null);
-      frame = null;
+    frame?.let {
+      it.doDispose()
+      it.setFrameHelper(null, null)
+      frame = null
     }
-    frameDecorator = null;
+    frameDecorator = null
   }
 
-  private static boolean isTemporaryDisposed(@Nullable RootPaneContainer frame) {
-    return ClientProperty.isTrue(frame == null ? null : frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY);
-  }
+  val frameOrNull: IdeFrameImpl?
+    get() = frame
 
-  public @Nullable IdeFrameImpl getFrameOrNull() {
-    return this.frame;
-  }
-
-  public @Nullable IdeFrameImpl getFrame() {
-    IdeFrameImpl frame = this.frame;
+  fun getFrame(): IdeFrameImpl? {
+    val frame = frame
     if (frame == null) {
+      @Suppress("DEPRECATION")
       if (Disposer.isDisposed(this)) {
-        LOG.error(getClass().getSimpleName() + " is already disposed");
+        LOG.error("${javaClass.simpleName} is already disposed")
       }
       else {
-        LOG.error("Frame is null, but " + getClass().getSimpleName() + " is not disposed yet");
+        LOG.error("Frame is null, but ${javaClass.simpleName} is not disposed yet")
       }
     }
-    return frame;
+    return frame
   }
 
-  public @NotNull IdeFrameImpl requireNotNullFrame() {
-    IdeFrameImpl frame = this.frame;
-    if (frame != null) {
-      return frame;
+  fun requireNotNullFrame(): IdeFrameImpl {
+    frame?.let {
+      return it
     }
+    @Suppress("DEPRECATION")
     if (Disposer.isDisposed(this)) {
-      throw new AssertionError(getClass().getSimpleName() + " is already disposed");
+      throw AssertionError("${javaClass.simpleName} is already disposed")
     }
     else {
-      throw new AssertionError("Frame is null, but " + getClass().getSimpleName() + " is not disposed yet");
+      throw AssertionError("Frame is null, but ${javaClass.simpleName} is not disposed yet")
     }
   }
 
-  @ApiStatus.Internal
-  public @Nullable IdeRootPane getRootPane() {
-    return rootPane;
+  override fun suggestChildFrameBounds(): Rectangle {
+    val b = frame!!.bounds
+    b.x += 100
+    b.width -= 200
+    b.y += 100
+    b.height -= 200
+    return b
   }
 
-  @Override
-  public @NotNull Rectangle suggestChildFrameBounds() {
-    Rectangle b = frame.getBounds();
-    b.x += 100;
-    b.width -= 200;
-    b.y += 100;
-    b.height -= 200;
-    return b;
-  }
+  override fun getBalloonLayout(): BalloonLayout? = balloonLayout
 
-  @Override
-  public final @Nullable BalloonLayout getBalloonLayout() {
-    return balloonLayout;
-  }
+  override fun isInFullScreen(): Boolean = frameDecorator?.isInFullScreen ?: false
 
-  @Override
-  public boolean isInFullScreen() {
-    return frameDecorator != null && frameDecorator.isInFullScreen();
-  }
-
-  @Override
-  public @NotNull CompletableFuture<?> toggleFullScreen(boolean state) {
-    if (temporaryFixForIdea156004(state) || frameDecorator == null) {
-      return CompletableFuture.completedFuture(null);
+  override fun toggleFullScreen(state: Boolean): CompletableFuture<*> {
+    val frameDecorator = frameDecorator
+    if (frameDecorator == null || temporaryFixForIdea156004(state)) {
+      return CompletableFuture.completedFuture(null)
     }
     else {
-      return frameDecorator.toggleFullScreen(state);
+      return frameDecorator.toggleFullScreen(state)
     }
   }
 
-  private boolean temporaryFixForIdea156004(boolean state) {
+  private fun temporaryFixForIdea156004(state: Boolean): Boolean {
     if (SystemInfoRt.isMac) {
       try {
-        Field modalBlockerField = Window.class.getDeclaredField("modalBlocker");
-        modalBlockerField.setAccessible(true);
-        Window modalBlocker = (Window)modalBlockerField.get(frame);
+        val modalBlockerField = Window::class.java.getDeclaredField("modalBlocker")
+        modalBlockerField.isAccessible = true
+        val modalBlocker = modalBlockerField.get(frame) as? Window
         if (modalBlocker != null) {
-          ApplicationManager.getApplication().invokeLater(() -> toggleFullScreen(state), ModalityState.NON_MODAL);
-          return true;
+          ApplicationManager.getApplication().invokeLater({ toggleFullScreen(state) }, ModalityState.NON_MODAL)
+          return true
         }
       }
-      catch (NoSuchFieldException | IllegalAccessException e) {
-        LOG.error(e);
+      catch (e: NoSuchFieldException) {
+        LOG.error(e)
+      }
+      catch (e: IllegalAccessException) {
+        LOG.error(e)
       }
     }
-
-    return false;
+    return false
   }
 
-  @Override
-  public void notifyProjectActivation() {
-    activationTimestamp = System.currentTimeMillis();
-    if (project != null) {
-      RecentProjectsManagerBase.getInstanceEx().setActivationTimestamp(project, activationTimestamp);
+  override fun notifyProjectActivation() {
+    val currentTimeMillis = System.currentTimeMillis()
+    activationTimestamp = currentTimeMillis
+    project?.let {
+      RecentProjectsManagerBase.getInstanceEx().setActivationTimestamp(it, currentTimeMillis)
     }
   }
 }

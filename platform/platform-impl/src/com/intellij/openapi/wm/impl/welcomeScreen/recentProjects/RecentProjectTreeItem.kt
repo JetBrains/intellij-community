@@ -7,11 +7,14 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
@@ -23,6 +26,7 @@ import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.InputEvent
 import java.nio.file.Files
 import java.nio.file.Path
+import javax.swing.SwingUtilities
 
 /**
  * Items of recent project tree:
@@ -85,14 +89,23 @@ internal data class RecentProjectItem(
       return
     }
 
+    if (event.place == ActionPlaces.WELCOME_SCREEN) {
+      val welcomeFrame = SwingUtilities.getAncestorOfClass(FlatWelcomeFrame::class.java,
+                                                           event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) as FlatWelcomeFrame?
+      if (welcomeFrame != null) {
+        Disposer.dispose(welcomeFrame)
+      }
+    }
+
     val modifiers = event.modifiers
     val forceOpenInNewFrame = BitUtil.isSet(modifiers, InputEvent.CTRL_DOWN_MASK) ||
                               BitUtil.isSet(modifiers, InputEvent.SHIFT_DOWN_MASK) ||
-                              event.place === ActionPlaces.WELCOME_SCREEN ||
+                              event.place == ActionPlaces.WELCOME_SCREEN ||
                               LightEdit.owns(null)
     openProjectAndLogRecent(file, OpenProjectTask {
       this.forceOpenInNewFrame = forceOpenInNewFrame
       runConfigurators = true
+      showFrameAsap = true
     }, projectGroup)
   }
 
@@ -103,7 +116,6 @@ internal data class RecentProjectItem(
       path = path.substring(home.length)
     }
     val groupName = RecentProjectsManagerBase.getInstanceEx().findGroup(projectPath)?.name.orEmpty()
-
     return "$groupName $path $displayName"
   }
 }

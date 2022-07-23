@@ -516,7 +516,7 @@
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
 
-    <applicationService serviceImplementation="com.intellij.ui.IdeUICustomization"/>
+    <applicationService serviceImplementation="com.intellij.ui.IdeUICustomization" preload="notHeadless"/>
 
     <!-- General -->
     <applicationConfigurable groupId="appearance" groupWeight="120" key="title.general" bundle="messages.IdeBundle" id="preferences.general"

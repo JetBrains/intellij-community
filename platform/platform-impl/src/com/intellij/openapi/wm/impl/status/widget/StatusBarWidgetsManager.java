@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status.widget;
 
 import com.intellij.ide.lightEdit.LightEdit;
@@ -204,9 +204,8 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     LOG.assertTrue(WindowManager.getInstance().getStatusBar(myProject) != null);
 
     synchronized (myWidgetFactories) {
-      List<StatusBarWidgetFactory> pendingFactories = new ArrayList<>(myPendingFactories);
+      List<StatusBarWidgetFactory> pendingFactories = List.copyOf(myPendingFactories);
       myPendingFactories.clear();
-
       for (StatusBarWidgetFactory factory : pendingFactories) {
         addWidgetFactory(factory);
       }

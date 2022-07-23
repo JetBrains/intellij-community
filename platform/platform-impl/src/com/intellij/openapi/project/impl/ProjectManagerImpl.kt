@@ -33,7 +33,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.*
@@ -178,7 +177,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         isRefreshVfsNeeded = true,
         preloadServices = true,
         template = null,
-        indicator = ProgressManager.getInstance().progressIndicator
       )
     }
     return project
@@ -527,11 +525,13 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
     var module: Module? = null
-    val project: Project = try {
-      frameAllocator.run {
-        activity.end()
-        val project: Project = options.project ?: prepareProject(options, projectStoreBaseDir)
-        try {
+    var result: Project? = null
+    try {
+      coroutineScope {
+        frameAllocator.run(this) { saveTemplateJob ->
+          activity.end()
+          val project = options.project ?: prepareProject(options, projectStoreBaseDir, saveTemplateJob)
+          result = project
           // must be under try-catch to dispose project on beforeOpen or preparedToOpen callback failures
           if (options.project == null) {
             val beforeOpen = options.beforeOpen
@@ -551,50 +551,58 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             }
           }
 
-          coroutineScope {
-            launch {
-              frameAllocator.projectLoaded(project)
-            }
-
-            if (!addToOpened(project)) {
-              throw CancellationException("project is already opened")
-            }
-
-            if (!options.isNewProject && !checkOldTrustedStateAndMigrate(project, projectStoreBaseDir)) {
-              throw CancellationException("not trusted")
-            }
-
-            tracer.spanBuilder("open project")
-              .setAttribute(AttributeKey.stringKey("project"), project.name)
-              .useWithScope {
-                runInitProjectActivities(project)
-              }
+          launch {
+            frameAllocator.projectLoaded(project)
           }
 
-          project
-        }
-        catch (e: CancellationException) {
-          withContext(NonCancellable) {
-            try {
-              withContext(Dispatchers.EDT) {
-                closeProject(project, saveProject = false, checkCanClose = false)
-              }
-            }
-            catch (secondException: Throwable) {
-              e.addSuppressed(secondException)
-            }
+          val isTrusted = async {
+            options.isNewProject || checkOldTrustedStateAndMigrate(project, projectStoreBaseDir)
           }
-          throw e
+
+          if (!addToOpened(project)) {
+            throw CancellationException("project is already opened")
+          }
+
+          tracer.spanBuilder("open project")
+            .setAttribute(AttributeKey.stringKey("project"), project.name)
+            .useWithScope {
+              runInitProjectActivities(project)
+            }
+
+          if (!isTrusted.await()) {
+            throw CancellationException("not trusted")
+          }
         }
       }
     }
     catch (e: CancellationException) {
       withContext(NonCancellable) {
+        result?.let { project ->
+          try {
+            withContext(Dispatchers.EDT) {
+              closeProject(project, saveProject = false, checkCanClose = false)
+            }
+          }
+          catch (secondException: Throwable) {
+            e.addSuppressed(secondException)
+          }
+        }
         failedToOpenProject(frameAllocator = frameAllocator, exception = null, options = options)
       }
       throw e
     }
     catch (e: Throwable) {
+      result?.let { project ->
+        try {
+          withContext(Dispatchers.EDT) {
+            closeProject(project, saveProject = false, checkCanClose = false)
+          }
+        }
+        catch (secondException: Throwable) {
+          e.addSuppressed(secondException)
+        }
+      }
+
       if (ApplicationManager.getApplication().isUnitTestMode) {
         throw e
       }
@@ -606,6 +614,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     finally {
       disableAutoSaveToken.finish()
     }
+
+    val project = result!!
 
     if (isRunStartUpActivitiesEnabled(project)) {
       (StartupManager.getInstance(project) as StartupManagerImpl).runStartupActivities()
@@ -635,9 +645,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
    * @return true if we should proceed with project opening, false if the process of project opening should be canceled.
    */
   private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
-    val trustedPaths = TrustedPaths.getInstance()
-    val trustedState = trustedPaths.getProjectPathTrustedState(projectStoreBaseDir)
-
+    val trustedState = TrustedPaths.getInstance().getProjectPathTrustedState(projectStoreBaseDir)
     if (trustedState != ThreeState.UNSURE) {
       // the trusted state of this project path is already known => proceed with opening
       return true
@@ -675,7 +683,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           isRefreshVfsNeeded = options.isRefreshVfsNeeded,
           preloadServices = options.preloadServices,
           template = template,
-          indicator = ProgressManager.getInstance().progressIndicator
         )
       }
       project.setTrusted(true)
@@ -699,7 +706,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       isRefreshVfsNeeded = options.isRefreshVfsNeeded,
       preloadServices = options.preloadServices,
       template = if (options.useDefaultProjectAsTemplate) defaultProject else null,
-      indicator = ProgressManager.getInstance().progressIndicator
     )
     project.setTrusted(true)
     return project
@@ -727,7 +733,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return project
   }
 
-  private suspend fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path): Project {
+  private suspend fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path, saveTemplateJob: Job?): Project {
     val project: Project
     val indicator = ProgressManager.getInstance().progressIndicator
     if (options.isNewProject) {
@@ -735,13 +741,13 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         removeProjectConfigurationAndCaches(projectStoreBaseDir)
       }
       project = instantiateProject(projectStoreBaseDir, options)
+      saveTemplateJob?.join()
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
       initProject(file = projectStoreBaseDir,
                   project = project,
                   isRefreshVfsNeeded = options.isRefreshVfsNeeded,
                   preloadServices = options.preloadServices,
-                  template = template,
-                  indicator = indicator)
+                  template = template)
 
       project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, true)
     }
@@ -767,8 +773,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                   project = project,
                   isRefreshVfsNeeded = options.isRefreshVfsNeeded,
                   preloadServices = options.preloadServices,
-                  template = null,
-                  indicator = indicator)
+                  template = null)
       if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
         StartupManager.getInstance(project).runAfterOpened {
           conversionResult.postStartupActivity(project)
@@ -1074,16 +1079,10 @@ private suspend fun initProject(file: Path,
                                 project: ProjectImpl,
                                 isRefreshVfsNeeded: Boolean,
                                 preloadServices: Boolean,
-                                template: Project?,
-                                indicator: ProgressIndicator?) {
+                                template: Project?) {
   LOG.assertTrue(!project.isDefault)
 
   try {
-    if (indicator != null) {
-      indicator.isIndeterminate = false
-      // getting project name is not cheap and not possible at this moment
-      indicator.text = ProjectBundle.message("project.loading.components")
-    }
     coroutineContext.ensureActive()
 
     val registerComponentsActivity = createActivity(project) { "project ${StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX}" }
@@ -1099,7 +1098,7 @@ private suspend fun initProject(file: Path,
 
     coroutineContext.ensureActive()
     project.componentStore.setPath(file, isRefreshVfsNeeded, template)
-    project.init(preloadServices, indicator)
+    project.init(preloadServices)
   }
   catch (initThrowable: Throwable) {
     try {
