@@ -22,17 +22,18 @@ import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 private val EP_NAME = ExtensionPointName<MainToolbarProjectWidgetFactory>("com.intellij.projectToolbarWidget")
 
 internal class MainToolbar: JPanel(HorizontalLayout(10)) {
-  private val layoutMap = mapOf(
+  private val layoutMap = EnumMap(mapOf(
     Position.Left to HorizontalLayout.LEFT,
     Position.Right to HorizontalLayout.RIGHT,
     Position.Center to HorizontalLayout.CENTER
-  )
+  ))
   private val visibleComponentsPool = VisibleComponentsPool()
   private val disposable = Disposer.newDisposable()
   private val mainMenuButton: MainMenuButton?
@@ -66,7 +67,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
       }
     }
 
-    createActionsBar()?.let { addWidget(it, Position.Right) }
+    createActionBar()?.let { addWidget(it, Position.Right) }
     addComponentListener(ResizeListener())
   }
 
@@ -81,7 +82,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     (widget as? Disposable)?.let { Disposer.register(disposable, it) }
   }
 
-  private fun createActionsBar(): JComponent? {
+  private fun createActionBar(): JComponent? {
     val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS) as ActionGroup?
     return group?.let {
       val toolbar = TitleActionToolbar(ActionPlaces.MAIN_TOOLBAR, it, true)
@@ -97,7 +98,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 
   private inner class ResizeListener : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
-      val visibleElementsWidth = components.filter { it.isVisible }.sumOf { it.preferredSize.width }
+      val visibleElementsWidth = components.asSequence().filter { it.isVisible }.sumOf { it.preferredSize.width }
       val componentWidth = size.width
       if (visibleElementsWidth > componentWidth) {
         decreaseVisibleSizeBy(visibleElementsWidth - componentWidth)
@@ -132,11 +133,11 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 }
 
 private class VisibleComponentsPool {
-  val elements = mapOf<Position, MutableList<JComponent>>(
-    Pair(Position.Left, mutableListOf()),
-    Pair(Position.Right, mutableListOf()),
-    Pair(Position.Center, mutableListOf())
-  )
+  val elements = EnumMap(mapOf<Position, MutableList<JComponent>>(
+    Position.Left to mutableListOf(),
+    Position.Right to mutableListOf(),
+    Position.Center to mutableListOf()
+  ))
 
   fun addElement(comp: JComponent, position: Position) = elements[position]!!.add(comp)
 

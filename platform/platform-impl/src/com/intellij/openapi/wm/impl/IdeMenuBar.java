@@ -28,7 +28,6 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.mac.screenmenu.MenuBar;
-import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.*;
@@ -70,19 +69,18 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private final TimerListener myTimerListener = new MyTimerListener();
   protected final CheckedDisposable myDisposable = Disposer.newCheckedDisposable();
 
-  @Nullable private final ClockPanel myClockPanel;
-  @Nullable private final MyExitFullScreenButton myButton;
-  @Nullable private final Animator myAnimator;
-  @Nullable private final Timer myActivationWatcher;
+  private final @Nullable ClockPanel myClockPanel;
+  private final @Nullable MyExitFullScreenButton myButton;
+  private final @Nullable Animator myAnimator;
+  private final @Nullable Timer myActivationWatcher;
   private final Alarm myUpdateAlarm = new Alarm();
-  @NotNull private State myState = State.EXPANDED;
+  private @NotNull State myState = State.EXPANDED;
   private double myProgress;
   private boolean myActivated;
 
   private final MenuBar myScreenMenuPeer = Menu.isJbScreenMenuEnabled() ? new MenuBar("MainMenu") : null;
 
-  @NotNull
-  public static IdeMenuBar createMenuBar() {
+  public static @NotNull IdeMenuBar createMenuBar() {
     return SystemInfoRt.isLinux ? new LinuxIdeMenuBar() : new IdeMenuBar();
   }
 
@@ -119,8 +117,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
-  @NotNull
-  public State getState() {
+  public @NotNull State getState() {
     // JMenuBar calls getBorder on init before our own init (super is called before our constructor).
     //noinspection ConstantConditions
     return myState == null ? State.EXPANDING : myState;
@@ -341,8 +338,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
   }
 
-  @Nullable
-  private Component findActualComponent(MouseEvent mouseEvent) {
+  private @Nullable Component findActualComponent(MouseEvent mouseEvent) {
     Component component = mouseEvent.getComponent();
     if (component == null) {
       return null;
@@ -610,7 +606,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
   }
 
-  private class MyActionListener implements ActionListener {
+  private final class MyActionListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
       if (getState() == State.EXPANDED || getState() == State.EXPANDING) {
