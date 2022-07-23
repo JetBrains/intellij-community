@@ -122,7 +122,7 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
         }
       }
     }.apply {
-      preferredSize = Dimension(400, 50)
+      preferredSize = Dimension(400, 30)
     }
 
     companion object {
