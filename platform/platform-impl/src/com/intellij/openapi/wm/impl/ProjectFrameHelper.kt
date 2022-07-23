@@ -309,20 +309,18 @@ open class ProjectFrameHelper(
 
   override fun getData(dataId: String): Any? {
     val project = project
-    if (CommonDataKeys.PROJECT.`is`(dataId)) {
-      return if (project != null && project.isInitialized) project else null
+    return when {
+      CommonDataKeys.PROJECT.`is`(dataId) -> if (project != null && project.isInitialized) project else null
+      IdeFrame.KEY.`is`(dataId) -> this
+      PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS.`is`(dataId) -> {
+        val manager = if (project != null && project.isInitialized) project.serviceIfCreated<ToolWindowManager>() else null
+        if (manager is ToolWindowManagerImpl) manager.getLastActiveToolWindows().toList().toTypedArray() else null
+      }
+      PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId) -> {
+        (if (project != null && project.isInitialized) FileEditorManager.getInstance(project) else null)?.selectedEditor
+      }
+      else -> null
     }
-    else if (IdeFrame.KEY.`is`(dataId)) {
-      return this
-    }
-    else if (PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS.`is`(dataId)) {
-      val manager = if (project != null && project.isInitialized) project.serviceIfCreated<ToolWindowManager>() else null
-      return if (manager is ToolWindowManagerImpl) manager.getLastActiveToolWindows().toList().toTypedArray() else null
-    }
-    else if (PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId)) {
-      return (if (project != null && project.isInitialized) FileEditorManager.getInstance(project) else null)?.selectedEditor
-    }
-    return null
   }
 
   override fun getProject() = project

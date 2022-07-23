@@ -100,7 +100,6 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       val showIndicatorJob = showModalIndicatorForProjectLoading(
         windowDeferred = deferredWindow,
         title = getProgressTitle(),
-        cancellation = TaskCancellation.cancellable(),
       )
       try {
         task(saveTemplateDeferred)
@@ -216,7 +215,6 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 private fun CoroutineScope.showModalIndicatorForProjectLoading(
   windowDeferred: Deferred<Window>,
   title: @NlsContexts.ProgressTitle String,
-  cancellation: TaskCancellation,
 ): Job {
   return launch(Dispatchers.IO) {
     delay(300L)
@@ -224,7 +222,8 @@ private fun CoroutineScope.showModalIndicatorForProjectLoading(
     val window = windowDeferred.await()
     withContext(Dispatchers.EDT) {
       val ui = ProgressDialogUI()
-      ui.initCancellation(cancellation) {
+      ui.progressBar.isIndeterminate = true
+      ui.initCancellation(TaskCancellation.cancellable()) {
         mainJob.cancel("button cancel")
       }
       ui.backgroundButton.isVisible = false
@@ -234,7 +233,7 @@ private fun CoroutineScope.showModalIndicatorForProjectLoading(
         cancelAction = {
           mainJob.cancel("dialog cancel")
         },
-        peerFactory = DialogWrapper.PeerFactory { GlassPaneDialogWrapperPeer(window, it) }
+        peerFactory = java.util.function.Function { GlassPaneDialogWrapperPeer(window, it) }
       )
       dialog.setUndecorated(true)
       dialog.pack()

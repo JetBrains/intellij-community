@@ -55,6 +55,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -317,14 +318,10 @@ public abstract class DialogWrapper {
     createDefaultActions();
   }
 
-  protected DialogWrapper(@NotNull PeerFactory peerFactory) {
-    myPeer = peerFactory.createPeer(this);
+  protected DialogWrapper(@NotNull Function<DialogWrapper, DialogWrapperPeer> peerFactory) {
+    myPeer = peerFactory.apply(this);
     myCreateSouthSection = false;
     createDefaultActions();
-  }
-
-  public interface PeerFactory {
-    @NotNull DialogWrapperPeer createPeer(@NotNull DialogWrapper dialogWrapper);
   }
 
   protected @NotNull @NlsContexts.Checkbox String getDoNotShowMessage() {
