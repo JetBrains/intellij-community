@@ -1,5 +1,3 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
 class Test : <caret> {
     fun test() {
     }

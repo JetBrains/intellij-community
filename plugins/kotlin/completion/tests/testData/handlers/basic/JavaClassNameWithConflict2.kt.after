@@ -1,6 +1,3 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
-
 package one
 open class Outer {
     class Nested

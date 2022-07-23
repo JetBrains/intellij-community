@@ -1,4 +1,3 @@
-// IGNORE_FIR
 class C {
     fun foo(){}
     protected fun foo(p: Int){}
