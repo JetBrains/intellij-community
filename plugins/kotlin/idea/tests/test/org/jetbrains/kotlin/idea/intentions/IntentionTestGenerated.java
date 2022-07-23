@@ -15155,24 +15155,6 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/removeEmptySecondaryConstructorBody")
-    public static class RemoveEmptySecondaryConstructorBody extends AbstractIntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("comment.kt")
-        public void testComment() throws Exception {
-            runTest("testData/intentions/removeEmptySecondaryConstructorBody/comment.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/removeEmptySecondaryConstructorBody/simple.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeExplicitLambdaParameterTypes")
     public static class RemoveExplicitLambdaParameterTypes extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {

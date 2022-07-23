@@ -1,7 +1,7 @@
-// IS_APPLICABLE: false
-
+// PROBLEM: none
 class Foo() {
+    var foo: Int? = null;
     constructor(a: Int) : this() <caret>{
-        //comment
+        foo = a
     }
 }
