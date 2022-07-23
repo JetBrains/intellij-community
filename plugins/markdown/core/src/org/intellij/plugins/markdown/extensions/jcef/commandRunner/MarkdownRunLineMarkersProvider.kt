@@ -109,7 +109,7 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
     private val values = ArrayList<String>(Collections.nCopies(placeholders.size, ""))
 
     init {
-      title = "Fill Placeholders Values"
+      title = MarkdownBundle.message("markdown.runner.launch.placeholder.dialog.title")
       init()
     }
 
