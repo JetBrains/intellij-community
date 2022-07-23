@@ -12,5 +12,6 @@
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="zstd-jni" level="project" />
+    <orderEntry type="library" name="commons-io" level="project" />
   </component>
 </module>

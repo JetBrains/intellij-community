@@ -9,7 +9,9 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.io.input.CloseShieldInputStream;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -36,6 +38,9 @@ import java.util.stream.Stream;
 @ApiStatus.Internal
 public final class BuildDependenciesUtil {
   private static final boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
+  private static final int octal_0111 = Integer.parseInt("111", 8);
+  private static final String _OS_NAME = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+  private static final boolean isWindows = _OS_NAME.startsWith("windows");
 
   @SuppressWarnings("HttpUrlsUsage")
   private static DocumentBuilder createDocumentBuilder() {
@@ -127,45 +132,52 @@ public final class BuildDependenciesUtil {
   }
 
   public static void extractZip(Path archiveFile, Path target, boolean stripRoot) throws Exception {
-    // avoid extra createDirectories calls
-    Set<Path> createdDirs = new HashSet<>();
     try (ZipFile zipFile = new ZipFile(FileChannel.open(archiveFile))) {
-      EntryNameConverter converter = new EntryNameConverter(archiveFile, target, stripRoot);
-
       Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
-      while (entries.hasMoreElements()) {
-        ZipArchiveEntry entry = entries.nextElement();
-        if (entry.getName().equals("__index__")) {
-          // don't unpack a special index file for JetBrains ZIP
-          continue;
-        }
-
-        Path entryPath = converter.getOutputPath(entry.getName(), entry.isDirectory());
-        if (entryPath == null) {
-          continue;
-        }
-
-        if (entry.isDirectory()) {
-          Files.createDirectories(entryPath);
-          createdDirs.add(entryPath);
-        }
-        else {
-          Path parent = entryPath.getParent();
-          if (createdDirs.add(parent)) {
-            Files.createDirectories(parent);
+      genericExtract(archiveFile, new ArchiveContent() {
+        @Override
+        public @Nullable Entry getNextEntry() {
+          if (!entries.hasMoreElements()) {
+            return null;
           }
 
-          try (InputStream is = zipFile.getInputStream(entry)) {
-            Files.copy(is, entryPath);
+          ZipArchiveEntry entry = entries.nextElement();
+          if (entry == null) {
+            return null;
           }
 
-          // 73 == 0111
-          if (isPosix && (entry.getUnixMode() & 73) != 0) {
-            //noinspection SpellCheckingInspection
-            Files.setPosixFilePermissions(entryPath, PosixFilePermissions.fromString("rwxr-xr-x"));
-          }
+          return new Entry() {
+            @Override
+            public @NotNull Type getType() {
+              if (entry.isUnixSymlink()) {
+                return Type.SYMLINK;
+              }
+
+              return entry.isDirectory() ? Type.DIR : Type.FILE;
+            }
+
+            @Override
+            public @NotNull String getName() {
+              return entry.getName();
+            }
+
+            @Override
+            public boolean isExecutable() {
+              return (entry.getUnixMode() & octal_0111) != 0;
+            }
+
+            @Override
+            public @Nullable String getLinkTarget() throws IOException {
+              return zipFile.getUnixSymlink(entry);
+            }
+
+            @Override
+            public @NotNull InputStream getInputStream() throws IOException {
+              return zipFile.getInputStream(entry);
+            }
+          };
         }
-      }
+      }, target, stripRoot);
     }
   }
 
@@ -191,36 +203,156 @@ public final class BuildDependenciesUtil {
     });
   }
 
-  private static void extractTarBasedArchive(Path archiveFile, Path target, boolean stripRoot, Function<InputStream, InputStream> unpacker) throws Exception {
-    try (TarArchiveInputStream archive = new TarArchiveInputStream(unpacker.apply(new BufferedInputStream(Files.newInputStream(archiveFile))))) {
-      final EntryNameConverter converter = new EntryNameConverter(archiveFile, target, stripRoot);
-
-      while (true) {
-        TarArchiveEntry entry = (TarArchiveEntry) archive.getNextEntry();
-        if (Objects.isNull(entry)) break;
-
-        Path entryPath = converter.getOutputPath(entry.getName(), entry.isDirectory());
-        if (entryPath == null) continue;
-
-        if (entry.isDirectory()) {
-          Files.createDirectories(entryPath);
-        }
-        else {
-          Files.createDirectories(entryPath.getParent());
-          if (entry.isSymbolicLink()) {
-            Files.createSymbolicLink(entryPath, Path.of(entry.getLinkName()));
+  private static void extractTarBasedArchive(Path archiveFile, Path target, boolean stripRoot, Function<InputStream, InputStream> unpacker)
+    throws Exception {
+    try (TarArchiveInputStream archive = new TarArchiveInputStream(
+      unpacker.apply(new BufferedInputStream(Files.newInputStream(archiveFile))))) {
+      genericExtract(archiveFile, new ArchiveContent() {
+        @Override
+        public @Nullable Entry getNextEntry() throws IOException {
+          TarArchiveEntry entry = archive.getNextTarEntry();
+          if (entry == null) {
+            return null;
           }
-          else {
-            Files.copy(archive, entryPath);
-            // 73 == 0111
-            if (isPosix && (entry.getMode() & 73) != 0) {
-              //noinspection SpellCheckingInspection
-              Files.setPosixFilePermissions(entryPath, PosixFilePermissions.fromString("rwxr-xr-x"));
+
+          return new Entry() {
+            @Override
+            public @NotNull Type getType() {
+              if (entry.isSymbolicLink()) {
+                return Type.SYMLINK;
+              }
+
+              if (entry.isDirectory()) {
+                return Type.DIR;
+              }
+
+              if (entry.isFile()) {
+                return Type.FILE;
+              }
+
+              throw new IllegalStateException(archiveFile + ": unknown entry type at '" + entry.getName() + "'");
+            }
+
+            @Override
+            public @NotNull String getName() {
+              return entry.getName();
+            }
+
+            @Override
+            public boolean isExecutable() {
+              return (entry.getMode() & octal_0111) != 0;
+            }
+
+            @Override
+            public @Nullable String getLinkTarget() {
+              return entry.getLinkName();
+            }
+
+            @Override
+            public @NotNull InputStream getInputStream() {
+              return CloseShieldInputStream.wrap(archive);
+            }
+          };
+        }
+      }, target, stripRoot);
+    }
+  }
+
+  private static void genericExtract(Path archiveFile, ArchiveContent archive, Path target, boolean stripRoot) throws IOException {
+    // avoid extra createDirectories calls
+    Set<Path> createdDirs = new HashSet<>();
+    EntryNameConverter converter = new EntryNameConverter(archiveFile, target, stripRoot);
+    Path canonicalTarget = target.normalize();
+
+    while (true) {
+      Entry entry = archive.getNextEntry();
+      if (entry == null) {
+        break;
+      }
+
+      if (entry.getName().equals("__index__")) {
+        // don't unpack a special index file for JetBrains ZIP
+        // TODO: to be removed from here, it's not the place to add arbitrary exclusions
+        continue;
+      }
+
+      Entry.Type type = entry.getType();
+
+      Path entryPath = converter.getOutputPath(entry.getName(), type == Entry.Type.DIR);
+      if (entryPath == null) {
+        continue;
+      }
+
+      if (type == Entry.Type.DIR) {
+        Files.createDirectories(entryPath);
+        createdDirs.add(entryPath);
+      }
+      else {
+        Path parent = entryPath.getParent();
+        if (createdDirs.add(parent)) {
+          Files.createDirectories(parent);
+        }
+
+        if (type == Entry.Type.SYMLINK) {
+          Path relativeSymlinkTarget = Path.of(Objects.requireNonNull(entry.getLinkTarget()));
+
+          Path resolvedTarget = entryPath.resolveSibling(relativeSymlinkTarget).normalize();
+          if (!resolvedTarget.startsWith(canonicalTarget) || resolvedTarget.equals(canonicalTarget)) {
+            throw new IllegalStateException(
+              archiveFile + ": symlink entry '" + entry.getName() +
+              "' points to outside of archive extraction directory, which is forbidden.\n" +
+              "resolved target = " + resolvedTarget + "\n" +
+              "root = " + canonicalTarget + "\n");
+          }
+
+          if (isWindows) {
+            // On Windows symlink creation is still gated by various registry keys
+
+            if (Files.isRegularFile(resolvedTarget)) {
+              Files.copy(resolvedTarget, entryPath);
             }
           }
+          else {
+            Files.createSymbolicLink(entryPath, relativeSymlinkTarget);
+          }
+        }
+        else if (type == Entry.Type.FILE) {
+          try (InputStream is = entry.getInputStream()) {
+            Files.copy(is, entryPath);
+          }
+
+          if (isPosix && entry.isExecutable()) {
+            //noinspection SpellCheckingInspection
+            Files.setPosixFilePermissions(entryPath, PosixFilePermissions.fromString("rwxr-xr-x"));
+          }
+        }
+        else {
+          throw new IllegalStateException("Unknown entry type: " + type);
         }
       }
     }
+  }
+
+  private interface ArchiveContent {
+    @Nullable Entry getNextEntry() throws IOException;
+  }
+
+  private interface Entry {
+    enum Type {FILE, DIR, SYMLINK}
+
+    @NotNull
+    Type getType();
+
+    @NotNull
+    String getName();
+
+    boolean isExecutable();
+
+    @Nullable
+    String getLinkTarget() throws IOException;
+
+    // entry should be the current entry
+    @NotNull InputStream getInputStream() throws IOException;
   }
 
   private static final class EntryNameConverter {
@@ -294,9 +426,11 @@ public final class BuildDependenciesUtil {
       throw new IllegalStateException("Normalized entry names should not end with forward slash: " + normalizedEntryName);
     }
     if (normalizedEntryName.contains(doubleForwardSlashString)) {
-      throw new IllegalStateException("Normalized entry name should not contain '" + doubleForwardSlashString + "': " + normalizedEntryName);
+      throw new IllegalStateException(
+        "Normalized entry name should not contain '" + doubleForwardSlashString + "': " + normalizedEntryName);
     }
-    if (normalizedEntryName.contains("..") && Arrays.stream(normalizedEntryName.split(forwardSlashString)).collect(Collectors.toList()).contains("..")) {
+    if (normalizedEntryName.contains("..") &&
+        Arrays.stream(normalizedEntryName.split(forwardSlashString)).collect(Collectors.toList()).contains("..")) {
       throw new IllegalStateException("Invalid entry name: " + normalizedEntryName);
     }
   }
