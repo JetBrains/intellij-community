@@ -56,7 +56,7 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
 
 
     val runAction = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.command", text) },
-                                      AllIcons.RunConfigurations.TestState.Run) {
+      AllIcons.RunConfigurations.TestState.Run) {
       override fun actionPerformed(e: AnActionEvent) {
         execute(e.project!!, dir, true, text, DefaultRunExecutor.getRunExecutorInstance(), RunnerPlace.EDITOR)
       }
