@@ -27,5 +27,3 @@ import foo.Bar.foobar
 fun f() {
     val k = foobar<caret>
 }
-
-

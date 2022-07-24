@@ -2,6 +2,7 @@
 // "Import" "true"
 // ERROR: Destructuring declaration initializer of type Some must have a 'component1()' function
 // ERROR: Destructuring declaration initializer of type Some must have a 'component2()' function
+/* IGNORE_FIR */
 
 package testing
 
@@ -37,6 +38,7 @@ operator fun Some.component1() = 1
 // "Import" "true"
 // ERROR: Destructuring declaration initializer of type Some must have a 'component1()' function
 // ERROR: Destructuring declaration initializer of type Some must have a 'component2()' function
+/* IGNORE_FIR */
 
 package testing
 
@@ -48,5 +50,6 @@ fun testing() {
     val (a, b) = <caret>Some()
 }
 //-----------------------
+
 
 

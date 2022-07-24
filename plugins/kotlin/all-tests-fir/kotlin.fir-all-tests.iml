@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.fir" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.fir.fir-fe10-binding" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent.tests" scope="RUNTIME" />
@@ -22,7 +21,6 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.testsFromCompiler" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.util.test-generator" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.util.test-generator-fir" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2.tests" scope="RUNTIME" />

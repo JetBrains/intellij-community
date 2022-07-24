@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators
 
-import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
@@ -52,7 +52,9 @@ abstract class AbstractKotlinApplicatorBasedIntention<PSI : KtElement, INPUT : K
         val input = getInput(element) ?: return
         if (input.isValidFor(element)) {
             val applicator = getApplicator() // TODO reuse existing applicator
-            applicator.applyTo(element, input, project, editor)
+            runWriteActionIfPhysical(element) {
+                applicator.applyTo(element, input, project, editor)
+            }
         }
     }
 

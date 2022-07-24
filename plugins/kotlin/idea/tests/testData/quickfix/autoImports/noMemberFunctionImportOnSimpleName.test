@@ -23,3 +23,5 @@ object Foo {
     fun foobar() {
     }
 }
+
+/* IGNORE_FIR */

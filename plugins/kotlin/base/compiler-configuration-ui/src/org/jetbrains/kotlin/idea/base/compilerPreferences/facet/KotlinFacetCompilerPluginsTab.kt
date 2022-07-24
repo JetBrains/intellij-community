@@ -1,4 +1,3 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.base.compilerPreferences.facet
 
@@ -10,7 +9,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.table.JBTable
 import org.jetbrains.kotlin.compiler.plugin.CliOptionValue
-import org.jetbrains.kotlin.compiler.plugin.parsePluginOption
+import org.jetbrains.kotlin.compiler.plugin.parseLegacyPluginOption
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 import java.awt.BorderLayout
@@ -27,7 +26,7 @@ class KotlinFacetCompilerPluginsTab(
 ) : FacetEditorTab() {
     companion object {
         fun parsePluginOptions(configuration: KotlinFacetConfiguration) =
-            configuration.settings.compilerArguments?.pluginOptions?.mapNotNull(::parsePluginOption) ?: emptyList()
+            configuration.settings.compilerArguments?.pluginOptions?.mapNotNull(::parseLegacyPluginOption) ?: emptyList()
     }
 
     class PluginInfo(val id: String, var options: List<String>)
@@ -115,7 +114,7 @@ class KotlinFacetCompilerPluginsTab(
 
     private inner class OptionValidator : FacetEditorValidator() {
         override fun check(): ValidationResult {
-            val invalidOptions = optionsByTable.filter { parsePluginOption(it) == null }
+            val invalidOptions = optionsByTable.filter { parseLegacyPluginOption(it) == null }
             if (invalidOptions.isNotEmpty()) {
                 @NlsSafe
                 val message = buildString {

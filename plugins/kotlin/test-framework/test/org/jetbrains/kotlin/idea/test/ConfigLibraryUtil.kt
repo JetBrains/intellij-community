@@ -16,10 +16,8 @@ import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
-import org.jetbrains.kotlin.idea.base.platforms.KotlinLibraryData
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import java.io.File
@@ -48,7 +46,7 @@ object ConfigLibraryUtil {
 
     fun configureKotlinStdlibJs(module: Module) {
         addLibrary(module, LIB_NAME_KOTLIN_STDLIB_JS, KotlinJavaScriptLibraryKind) {
-            addRoot(KotlinArtifacts.kotlinStdlibJs, OrderRootType.CLASSES)
+            addRoot(TestKotlinArtifacts.kotlinStdlibJs, OrderRootType.CLASSES)
         }
     }
 
@@ -60,11 +58,11 @@ object ConfigLibraryUtil {
 
     fun configureKotlinRuntime(module: Module) {
         addLibrary(module, LIB_NAME_JAVA_RUNTIME) {
-            addRoot(KotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
+            addRoot(TestKotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
         }
 
         addLibrary(module, LIB_NAME_KOTLIN_TEST) {
-            addRoot(KotlinArtifacts.kotlinTest, OrderRootType.CLASSES)
+            addRoot(TestKotlinArtifacts.kotlinTest, OrderRootType.CLASSES)
         }
     }
 
@@ -126,19 +124,6 @@ object ConfigLibraryUtil {
             }
 
             commit()
-        }
-    }
-
-    fun addLibraries(rootModel: ModifiableRootModel, vararg librariesData: KotlinLibraryData) {
-        rootModel.moduleLibraryTable.modifiableModel.apply {
-            for (libraryData in librariesData) {
-                val library = createLibrary(libraryData.libraryName, libraryData.kind)
-                library.modifiableModel.apply {
-                    addRoot(VfsUtil.getUrlForLibraryRoot(libraryData.classesRoot), OrderRootType.CLASSES)
-                    addRoot(VfsUtil.getUrlForLibraryRoot(libraryData.sourcesRoot), OrderRootType.SOURCES)
-                    commit()
-                }
-            }
         }
     }
 

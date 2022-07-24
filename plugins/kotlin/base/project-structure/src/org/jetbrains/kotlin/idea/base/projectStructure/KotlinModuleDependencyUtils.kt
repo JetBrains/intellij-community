@@ -29,11 +29,11 @@ class ModuleDependencyCollector(private val project: Project) {
         module: Module,
         platform: TargetPlatform,
         sourceRootType: KotlinSourceRootType,
-        includeTransitive: Boolean
+        includeExportedDependencies: Boolean
     ): Collection<IdeaModuleInfo> {
         val debugInfo = if (LOG.isDebugEnabled) ArrayList<String>() else null
 
-        val orderEnumerator = getOrderEnumerator(module, sourceRootType, includeTransitive)
+        val orderEnumerator = getOrderEnumerator(module, sourceRootType, includeExportedDependencies)
 
         val dependencyFilter = when {
             module.isHMPPEnabled -> HmppSourceModuleDependencyFilter(platform)
@@ -70,11 +70,11 @@ class ModuleDependencyCollector(private val project: Project) {
         return result
     }
 
-    private fun getOrderEnumerator(module: Module, sourceRootType: KotlinSourceRootType, includeTransitive: Boolean): OrderEnumerator {
+    private fun getOrderEnumerator(module: Module, sourceRootType: KotlinSourceRootType, includeExportedDependencies: Boolean): OrderEnumerator {
         val rootManager = ModuleRootManager.getInstance(module)
 
         val dependencyEnumerator = rootManager.orderEntries().compileOnly()
-        if (includeTransitive) {
+        if (includeExportedDependencies) {
             dependencyEnumerator.recursively().exportedOnly()
         }
 

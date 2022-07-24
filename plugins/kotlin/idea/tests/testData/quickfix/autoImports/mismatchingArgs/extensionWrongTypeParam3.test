@@ -2,6 +2,7 @@
 // "Import" "true"
 // ERROR: Not enough information to infer type variable T
 // COMPILER_ARGUMENTS: -XXLanguage:+NewInference
+/* IGNORE_FIR */
 
 package pack_one
 
@@ -19,6 +20,7 @@ fun foo() {}
 // "Import" "true"
 // ERROR: Not enough information to infer type variable T
 // COMPILER_ARGUMENTS: -XXLanguage:+NewInference
+/* IGNORE_FIR */
 
 package pack_one
 
@@ -28,4 +30,5 @@ fun <T> foo() {}
 fun main() {
     foo<caret>()
 }
+
 

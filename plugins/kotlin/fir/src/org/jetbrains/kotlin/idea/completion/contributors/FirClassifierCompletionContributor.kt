@@ -51,7 +51,7 @@ internal open class FirClassifierCompletionContributor(
         scope
             .getClassifierSymbols(scopeNameFilter)
             .filter { filterClassifiers(it) }
-            .filter { with(visibilityChecker) { isVisible(it) } }
+            .filter { visibilityChecker.isVisible(it) }
             .forEach { addClassifierSymbolToCompletion(it, context, ImportStrategy.DoNothing) }
     }
 
@@ -74,7 +74,7 @@ internal open class FirClassifierCompletionContributor(
             }
 
         getAvailableClassifiersFromIndex(
-            indexHelper,
+            symbolFromIndexProvider,
             scopeNameFilter,
             visibilityChecker
         )

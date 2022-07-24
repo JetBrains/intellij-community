@@ -7,5 +7,6 @@ import org.jetbrains.kotlin.analysis.api.components.KtExtensionApplicabilityResu
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 
 internal fun interface ExtensionApplicabilityChecker {
-    fun KtAnalysisSession.isApplicable(symbol: KtCallableSymbol): KtExtensionApplicabilityResult
+    context(KtAnalysisSession)
+    fun isApplicable(symbol: KtCallableSymbol): KtExtensionApplicabilityResult
 }

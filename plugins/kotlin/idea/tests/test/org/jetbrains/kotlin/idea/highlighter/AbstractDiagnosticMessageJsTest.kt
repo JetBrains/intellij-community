@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.js.analyze.TopDownAnalyzerFacadeForJS.analyzeFiles
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
@@ -21,7 +21,7 @@ abstract class AbstractDiagnosticMessageJsTest : AbstractDiagnosticMessageTest()
     override fun analyze(file: KtFile, languageVersionSettings: LanguageVersionSettings): AnalysisResult {
         val configuration = CompilerConfiguration().apply {
             put(CommonConfigurationKeys.MODULE_NAME, myFixture.module.name)
-            put(JSConfigurationKeys.LIBRARIES, jsStdlib())
+            put(JSConfigurationKeys.LIBRARIES, listOf(TestKotlinArtifacts.kotlinStdlibJs.absolutePath))
             put(CommonConfigurationKeys.DISABLE_INLINE, true)
             this.languageVersionSettings = languageVersionSettings
         }
@@ -34,10 +34,5 @@ abstract class AbstractDiagnosticMessageJsTest : AbstractDiagnosticMessageTest()
 
     override fun getPlatformSpecificDiagnosticField(diagnosticName: String): Field? {
         return getFieldOrNull(ErrorsJs::class.java, diagnosticName)
-    }
-
-    private fun jsStdlib(): List<String> {
-        val stdlibPath = KotlinArtifacts.kotlinStdlibJs
-        return listOf(stdlibPath.absolutePath)
     }
 }

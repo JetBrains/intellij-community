@@ -2,6 +2,7 @@
 // "Import" "true"
 // ERROR: Unresolved reference: foo()["str"]
 // ERROR: No get method providing array access
+/* IGNORE_FIR */
 
 package testing
 
@@ -28,6 +29,7 @@ operator fun Some.get(s: String) {}
 // "Import" "true"
 // ERROR: Unresolved reference: foo()["str"]
 // ERROR: No get method providing array access
+/* IGNORE_FIR */
 
 package testing
 
@@ -39,6 +41,4 @@ fun foo(): Some = Some()
 fun testing() {
     foo()<caret>["str"]
 }
-
-
 

@@ -6,8 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
+import org.jetbrains.kotlin.analysis.providers.KtModuleStateTracker
 import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 
@@ -20,14 +22,19 @@ internal class FirIdeKotlinModificationTrackerFactory(private val project: Proje
         return KotlinFirOutOfBlockModuleModificationTracker(module.ideaModule)
     }
 
-    override fun createLibrariesModificationTracker(): ModificationTracker {
+    override fun createLibrariesWideModificationTracker(): ModificationTracker {
         return LibraryModificationTracker.getInstance(project)
+    }
+
+    override fun createModuleStateTracker(module: KtModule): KtModuleStateTracker {
+        return KotlinModuleStateTrackerProvider.getInstance(project).getModuleStateTrackerFor(module)
     }
 
     @TestOnly
     override fun incrementModificationsCount() {
-      (createLibrariesModificationTracker() as SimpleModificationTracker).incModificationCount()
+        (createLibrariesWideModificationTracker() as SimpleModificationTracker).incModificationCount()
         project.getService(FirIdeModificationTrackerService::class.java).increaseModificationCountForAllModules()
+        KotlinModuleStateTrackerProvider.getInstance(project).incrementModificationCountForAllModules()
     }
 }
 

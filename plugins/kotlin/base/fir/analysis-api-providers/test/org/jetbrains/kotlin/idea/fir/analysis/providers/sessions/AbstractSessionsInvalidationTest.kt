@@ -63,7 +63,7 @@ abstract class AbstractSessionsInvalidationTest : AbstractMultiModuleTest() {
         val changedSessionsModulesNamesSorted = changedSessions
             .map { session ->
                 val moduleSession = session as LLFirModuleSession
-                val module = moduleSession.module as KtSourceModule
+                val module = moduleSession.ktModule as KtSourceModule
                 module.moduleName
             }
             .distinct()

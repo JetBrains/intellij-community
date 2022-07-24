@@ -1,6 +1,7 @@
 // FILE: first.before.kt
 // "Import" "true"
 // ERROR: Destructuring declaration initializer of type Some must have a 'component1()' function
+/* IGNORE_FIR */
 
 package testing
 
@@ -36,6 +37,7 @@ operator fun Some.component1() = 1
 // FILE: first.after.kt
 // "Import" "true"
 // ERROR: Destructuring declaration initializer of type Some must have a 'component1()' function
+/* IGNORE_FIR */
 
 package testing
 
@@ -46,5 +48,3 @@ fun testing() {
     val (a) = <caret>Some()
 }
 //-----------------------
-
-

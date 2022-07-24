@@ -397,6 +397,11 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../idea/tests/testData/parameterInfo/functionCall/SubstituteFromArgumentsOnTyping.kt");
         }
 
+        @TestMetadata("SubstitutedTypeParamInReceiver.kt")
+        public void testSubstitutedTypeParamInReceiver() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/SubstitutedTypeParamInReceiver.kt");
+        }
+
         @TestMetadata("SuperConstructorCall.kt")
         public void testSuperConstructorCall() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/functionCall/SuperConstructorCall.kt");
@@ -618,6 +623,16 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
         @TestMetadata("ReifiedNoParens.kt")
         public void testReifiedNoParens() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/typeArguments/ReifiedNoParens.kt");
+        }
+
+        @TestMetadata("SubstitutedTypeParamInReceiver.kt")
+        public void testSubstitutedTypeParamInReceiver() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/typeArguments/SubstitutedTypeParamInReceiver.kt");
+        }
+
+        @TestMetadata("SubstitutedTypeParamInReceiverNoParens.kt")
+        public void testSubstitutedTypeParamInReceiverNoParens() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/typeArguments/SubstitutedTypeParamInReceiverNoParens.kt");
         }
 
         @TestMetadata("VariableType.kt")

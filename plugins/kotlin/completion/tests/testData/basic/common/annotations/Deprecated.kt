@@ -1,3 +1,4 @@
+
 @Dep<caret>
 fun foo() { }
 

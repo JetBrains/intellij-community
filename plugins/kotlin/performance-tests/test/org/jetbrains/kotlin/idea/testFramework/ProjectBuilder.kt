@@ -19,7 +19,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.*
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.initDefaultProfile
 import org.jetbrains.kotlin.idea.performance.tests.utils.project.OpenProject
 import org.jetbrains.kotlin.idea.performance.tests.utils.project.ProjectOpenAction
@@ -314,7 +314,7 @@ class SpecialLibraryDescription(name: String, private val library: SpecialLibrar
         when(library) {
             SpecialLibrary.KOTLIN_STDLIB ->
                 ConfigLibraryUtil.addLibrary(module, name) {
-                    addRoot(KotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
+                    addRoot(TestKotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
                 }
         }
     }

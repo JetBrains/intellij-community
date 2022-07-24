@@ -17,7 +17,6 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.completion.test.KotlinCompletionTestCase
 import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously
@@ -25,6 +24,8 @@ import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationTest.Companion.useDefaultTemplate
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -111,28 +112,30 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
             module.addDependency(
                 projectLibrary(
                     "script-runtime",
-                    classesRoot = VfsUtil.findFileByIoFile(KotlinArtifacts.kotlinScriptRuntime, true)
+                    classesRoot = VfsUtil.findFileByIoFile(TestKotlinArtifacts.kotlinScriptRuntime, true)
                 )
             )
 
             if (environment["template-classes"] != null) {
-                module.addDependency(
-                    projectLibrary(
-                        "script-template-library",
-                        classesRoot = environment.toVirtualFile("template-classes")
+                environment.toVirtualFiles("template-classes").forEach {
+                    module.addDependency(
+                        projectLibrary("script-template-library", classesRoot = it)
                     )
-                )
+                }
             }
         }
 
         if (configureConflictingModule in environment) {
-            val sharedLib = environment.toVirtualFile("lib-classes")
-            val sharedLibSources = environment.toVirtualFile("lib-source")
             if (module == null) {
                 // Force create module if it doesn't exist
                 myModule = createTestModuleByName("mainModule")
             }
-            module.addDependency(projectLibrary("sharedLib", classesRoot = sharedLib, sourcesRoot = sharedLibSources))
+            val sharedLib = environment.toVirtualFiles("lib-classes")
+            val sharedLibSources = environment.toVirtualFiles("lib-source")
+            check(sharedLib.size == sharedLibSources.size) { "$sharedLib and $sharedLibSources must have the same length" }
+            sharedLib.zip(sharedLibSources).forEachIndexed { index, (lib, sources) ->
+                module.addDependency(projectLibrary("sharedLib_$index", classesRoot = lib, sourcesRoot = sources))
+            }
         }
 
         module?.let {
@@ -144,9 +147,10 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
         return createFileAndSyncDependencies(mainScriptFile)
     }
 
-    private fun Environment.toVirtualFile(name: String): VirtualFile {
-        val value = this[name] as? File ?: error("no file value for '$name'")
-        return VfsUtil.findFileByIoFile(value, true) ?: error("unable to look up a virtual file for $name: $value")
+    private fun Environment.toVirtualFiles(name: String): List<VirtualFile> {
+        val list = this[name] as? List<Any?> ?: error("'$name' must be a List")
+        return list.map { it as? File ?: error("'$name' list must contain only Files") }
+            .map { VfsUtil.findFileByIoFile(it, true) ?: error("unable to look up a virtual file for $name: $it") }
     }
 
     private val oldScripClasspath: String? = System.getProperty("kotlin.script.classpath")
@@ -213,9 +217,9 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
                     line.trim().substringAfter(prefix).split(";").forEach { entry ->
                         val (key, values) = entry.splitOrEmpty(":").map { it.trim() }
                         assert(key in validKeys) { "Unexpected key: $key" }
-                        env[key] = values.split(",").map {
+                        env[key] = values.split(",").flatMap {
                             val str = it.trim()
-                            defaultEnvironment[str] ?: str
+                            defaultEnvironment[str] ?: listOf(str)
                         }
                     }
                 }
@@ -250,7 +254,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
         return env
     }
 
-    private fun defaultEnvironment(path: String): Map<String, File?> {
+    private fun defaultEnvironment(path: String): Map<String, List<File>> {
         val templateOutDir = File(path, "template").takeIf { it.isDirectory }?.let {
             compileLibToDir(it, getScriptingClasspath())
         } ?: testDataFile("../defaultTemplate").takeIf { it.isDirectory }?.let {
@@ -274,22 +278,22 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
             moduleSrcDir = File(depModule.getModuleDir())
         }
 
-        return mapOf(
-          "runtime-classes" to KotlinArtifacts.kotlinStdlib,
-          "runtime-source" to KotlinArtifacts.kotlinStdlibSources,
-          "lib-classes" to libClasses,
-          "lib-source" to libSrcDir,
-          "module-classes" to moduleClasses,
-          "module-source" to moduleSrcDir,
-          "template-classes" to templateOutDir
-        )
+        return buildMap {
+            put("runtime-classes", listOf(TestKotlinArtifacts.kotlinStdlib))
+            put("runtime-source", listOf(TestKotlinArtifacts.kotlinStdlibSources, TestKotlinArtifacts.kotlinStdlibCommonSources))
+            libClasses?.let { put("lib-classes", listOf(it)) }
+            libSrcDir?.let { put("lib-source", listOf(it)) }
+            moduleClasses?.let { put("module-classes", listOf(it)) }
+            moduleSrcDir?.let { put("module-source", listOf(it)) }
+            templateOutDir?.let { put("template-classes", listOf(it)) }
+        }
     }
 
     protected fun getScriptingClasspath(): List<File> {
         return listOf(
-          KotlinArtifacts.kotlinScriptRuntime,
-          KotlinArtifacts.kotlinScriptingCommon,
-          KotlinArtifacts.kotlinScriptingJvm
+          TestKotlinArtifacts.kotlinScriptRuntime,
+          TestKotlinArtifacts.kotlinScriptingCommon,
+          TestKotlinArtifacts.kotlinScriptingJvm,
         )
     }
 

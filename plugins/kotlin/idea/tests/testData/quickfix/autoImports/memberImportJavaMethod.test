@@ -30,5 +30,3 @@ import foo.Bar.foobar
 fun f() {
     foobar<caret>()
 }
-
-

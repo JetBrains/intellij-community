@@ -36,6 +36,12 @@ object KotlinArtifactConstants {
     val KOTLIN_DIST_LOCATION_PREFIX: File = File(PathManager.getSystemPath(), "kotlin-dist-for-ide")
 }
 
+/**
+ * Layout of bundled Kotlin dist artifacts. Ideally, this class shouldn't exist at all, because bundled dist should be used only for
+ * compilation via JPS => no need to know about dist jars layout. Try to avoid using this class.
+ *
+ * For tests use [TestKotlinArtifacts]
+ */
 object KotlinArtifacts {
     private val kotlincLibDirectory: File = File(KotlinPluginLayout.kotlinc, "lib")
 
@@ -67,15 +73,6 @@ object KotlinArtifacts {
     val kotlinStdlibJs: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JS)
 
     @JvmStatic
-    val kotlinTest: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_TEST)
-
-    @JvmStatic
-    val kotlinTestJunit: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_TEST_JUNIT)
-
-    @JvmStatic
-    val kotlinTestJs: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_TEST_JS)
-
-    @JvmStatic
     val kotlinMainKts: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_MAIN_KTS)
 
     @JvmStatic
@@ -92,9 +89,6 @@ object KotlinArtifacts {
 
     @JvmStatic
     val lombokCompilerPlugin: File = File(kotlincLibDirectory, KotlinArtifactNames.LOMBOK_COMPILER_PLUGIN)
-
-    @JvmStatic
-    val kotlinAnnotationsJvm: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_ANNOTATIONS_JVM)
 
     @JvmStatic
     val trove4j: File = File(kotlincLibDirectory, KotlinArtifactNames.TROVE4J)
@@ -119,10 +113,4 @@ object KotlinArtifacts {
 
     @JvmStatic
     val kotlinxSerializationCompilerPlugin: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)
-
-    @JvmStatic
-    val parcelizeRuntime: File = File(kotlincLibDirectory, KotlinArtifactNames.PARCELIZE_RUNTIME)
-
-    @JvmStatic
-    val androidExtensionsRuntime: File = File(kotlincLibDirectory, KotlinArtifactNames.ANDROID_EXTENSIONS_RUNTIME)
 }

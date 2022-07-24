@@ -21,7 +21,7 @@ sealed class ModuleSourceInfoWithExpectedBy(private val forProduction: Boolean) 
     override fun dependencies(): List<IdeaModuleInfo> = module.cacheByClassInvalidatingOnRootModifications(this::class.java) {
         val sourceRootType = if (forProduction) SourceKotlinRootType else TestSourceKotlinRootType
         ModuleDependencyCollector.getInstance(module.project)
-            .collectModuleDependencies(module, platform, sourceRootType, includeTransitive = true)
+            .collectModuleDependencies(module, platform, sourceRootType, includeExportedDependencies = true)
             .toList()
     }
 
