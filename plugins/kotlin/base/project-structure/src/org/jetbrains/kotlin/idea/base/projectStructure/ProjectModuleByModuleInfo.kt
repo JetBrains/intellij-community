@@ -28,10 +28,10 @@ internal abstract class KtModuleByModuleInfoBase(
     open val directRegularDependencies: List<KtModule>
         get() = ideaModuleInfo.dependenciesWithoutSelf().map(provider::getKtModuleByModuleInfo).toList()
 
-    val directRefinementDependencies: List<KtModule>
+    open val directRefinementDependencies: List<KtModule>
         get() = ideaModuleInfo.expectedBy.map(provider::getKtModuleByModuleInfo)
 
-    val directFriendDependencies: List<KtModule>
+    open val directFriendDependencies: List<KtModule>
         get() = ideaModuleInfo.modulesWhoseInternalsAreVisible().map(provider::getKtModuleByModuleInfo)
 
     val contentScope: GlobalSearchScope get() = ideaModuleInfo.contentScope
@@ -93,6 +93,10 @@ internal class KtLibraryModuleByModuleInfo(
     override val libraryName: String
         get() = moduleInfo.library.name ?: "Unnamed library"
 
+    override val directRegularDependencies: List<KtModule> get() = emptyList()
+    override val directRefinementDependencies: List<KtModule> get() = emptyList()
+    override val directFriendDependencies: List<KtModule> get() = emptyList()
+
     override val librarySources: KtLibrarySourceModule
         get() = moduleInfo.sourcesModuleInfo.let { provider.getKtModuleByModuleInfo(it) as KtLibrarySourceModule }
 
@@ -110,6 +114,10 @@ internal class SdkKtModuleByModuleInfo(
     override val sdkName: String
         get() = moduleInfo.sdk.name
 
+    override val directRegularDependencies: List<KtModule> get() = emptyList()
+    override val directRefinementDependencies: List<KtModule> get() = emptyList()
+    override val directFriendDependencies: List<KtModule> get() = emptyList()
+
     override fun getBinaryRoots(): Collection<Path> {
         return moduleInfo.sdk.rootProvider.getFiles(OrderRootType.CLASSES).map { virtualFile ->
             Paths.get(virtualFile.fileSystem.extractPresentableUrl(virtualFile.path)).normalize()
@@ -125,6 +133,10 @@ internal class KtLibrarySourceModuleByModuleInfo(
 ) : KtModuleByModuleInfoBase(moduleInfo, provider), KtLibrarySourceModule {
     override val libraryName: String
         get() = moduleInfo.library.name ?: "Unnamed library"
+
+    override val directRegularDependencies: List<KtModule> get() = emptyList()
+    override val directRefinementDependencies: List<KtModule> get() = emptyList()
+    override val directFriendDependencies: List<KtModule> get() = emptyList()
 
     override val binaryLibrary: KtLibraryModule
         get() = provider.getKtModuleByModuleInfo(moduleInfo.binariesModuleInfo) as KtLibraryModule
