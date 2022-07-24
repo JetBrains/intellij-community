@@ -26,7 +26,7 @@ class SetterBackingFieldAssignmentInspection : AbstractKotlinInspection(), Clean
             val property = accessor.property
             val propertyContext = property.analyze()
             val propertyDescriptor = propertyContext[BindingContext.DECLARATION_TO_DESCRIPTOR, property] as? PropertyDescriptor ?: return
-            if (propertyContext[BindingContext.BACKING_FIELD_REQUIRED, propertyDescriptor] == false) return
+            if (propertyContext[BindingContext.BACKING_FIELD_REQUIRED, propertyDescriptor] != true) return
 
             val accessorContext by lazy { accessor.analyze() }
             val parameter = accessor.valueParameters.singleOrNull()
