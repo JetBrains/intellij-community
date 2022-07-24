@@ -39,6 +39,14 @@ fun importOrOpenProject(args: OpenProjectArgs, indicator: ProgressIndicator): Pr
   }
 }
 
+suspend fun importOrOpenProjectAsync(args: OpenProjectArgs, indicator: ProgressIndicator): Project {
+  LOG.info("Opening project from ${args.projectDir}...")
+  // most of the sensible operations would run in the same thread
+  return runTaskAndLogTime("open project") {
+    importOrOpenProjectImpl(args, indicator)
+  }
+}
+
 private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs, indicator: ProgressIndicator): Project {
   val vfsProject = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(args.projectDir)
                    ?: throw RuntimeException("Project path ${args.projectDir} is not found")

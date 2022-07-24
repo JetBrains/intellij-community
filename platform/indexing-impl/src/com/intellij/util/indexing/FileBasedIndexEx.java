@@ -43,6 +43,8 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.ObjectIterators;
+import kotlinx.coroutines.CompletableDeferredKt;
+import kotlinx.coroutines.Deferred;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,6 +108,10 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   @ApiStatus.Internal
   public abstract void waitUntilIndicesAreInitialized();
+
+  public @Nullable Deferred<?> untilIndicesAreInitialized() {
+    return CompletableDeferredKt.CompletableDeferred((Object)null);
+  }
 
   /**
    * @return true if index can be processed after it or

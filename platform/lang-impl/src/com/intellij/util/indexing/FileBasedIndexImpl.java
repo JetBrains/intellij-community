@@ -86,6 +86,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import kotlinx.coroutines.Deferred;
 import org.jetbrains.annotations.*;
 
 import java.io.IOException;
@@ -420,6 +421,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       throw new ServiceNotReadyException();
     }
     myRegisteredIndexes.waitUntilIndicesAreInitialized();
+  }
+
+  @Override
+  public @Nullable Deferred<?> untilIndicesAreInitialized() {
+    RegisteredIndexes registeredIndexes = myRegisteredIndexes;
+    return registeredIndexes == null ? null : registeredIndexes.getStateFuture();
   }
 
   static <K, V> void registerIndexer(@NotNull final FileBasedIndexExtension<K, V> extension,

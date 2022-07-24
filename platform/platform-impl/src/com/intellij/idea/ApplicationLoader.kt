@@ -43,7 +43,6 @@ import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asDeferred
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -219,10 +218,7 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
         }
       }
       else {
-        // todo run "IDEA - generate project shared index" to check why wrapping is required
-        CompletableFuture.runAsync {
-          starter.main(args)
-        }.asDeferred().join()
+        starter.main(args)
       }
       // no need to use pool once plugins are loaded
       ZipFilePool.POOL = null

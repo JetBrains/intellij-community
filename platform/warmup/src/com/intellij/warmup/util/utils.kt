@@ -4,10 +4,10 @@ package com.intellij.warmup.util
 import com.intellij.openapi.application.*
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
 
 fun <Y : Any> runAndCatchNotNull(errorMessage: String, action: () -> Y?): Y {
@@ -30,8 +30,7 @@ suspend fun yieldThroughInvokeLater() {
   assertInnocentThreadToWait()
 
   runTaskAndLogTime("Later Invocations in EDT") {
-    //we use an updated version of UIUtil::dispatchPendingFlushes that works from a non-EDT thread
-    check(!SwingUtilities.isEventDispatchThread()) { "Must not call from EDT" }
+    check(!EDT.isCurrentThreadEdt()) { "Must not call from EDT" }
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       // just wait
     }

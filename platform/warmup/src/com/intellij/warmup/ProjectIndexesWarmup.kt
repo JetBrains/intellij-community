@@ -2,26 +2,22 @@
 package com.intellij.warmup
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationStarter
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModernApplicationStarter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.platform.util.ArgsParser
 import com.intellij.util.SystemProperties
-import com.intellij.util.application
 import com.intellij.warmup.util.*
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import java.util.concurrent.CompletableFuture
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asDeferred
 import kotlin.math.max
 import kotlin.system.exitProcess
 
-internal class ProjectIndexesWarmup : ApplicationStarter {
+internal class ProjectIndexesWarmup : ModernApplicationStarter() {
   override val commandName: String
     get() = "warmup"
-
-  override val requiredModality: Int
-    get() = ApplicationStarter.NOT_IN_EDT
 
   override fun premain(args: List<String>) {
     if (System.getProperty("caches.indexerThreadsCount") == null) {
@@ -40,7 +36,7 @@ internal class ProjectIndexesWarmup : ApplicationStarter {
     SystemProperties.setProperty("intellij.progress.task.ignoreHeadless", true.toString())
   }
 
-  override fun main(args: List<String>) {
+  override suspend fun start(args: List<String>) {
     val commandArgs = try {
       val parser = ArgsParser(args)
       val commandArgs = OpenProjectArgsImpl(parser)
@@ -86,33 +82,33 @@ internal class ProjectIndexesWarmup : ApplicationStarter {
     waitForRefreshQueue()
 
     withLoggingProgresses {
-      application.invokeAndWait {
+      withContext(Dispatchers.EDT) {
         ProjectManager.getInstance().closeAndDispose(project)
       }
     }
 
     ConsoleLog.info("IDE Warm-up finished. Exiting the application...")
-    application.invokeAndWait {
+    withContext(Dispatchers.EDT) {
       ApplicationManager.getApplication().exit(false, true, false)
     }
   }
 }
 
-private fun waitForCachesSupports(project: Project) {
+private suspend fun waitForCachesSupports(project: Project) {
   val projectIndexesWarmupSupports = ProjectIndexesWarmupSupport.EP_NAME.getExtensions(project)
   ConsoleLog.info("Waiting for all ProjectIndexesWarmupSupport[${projectIndexesWarmupSupports.size}]...")
   val futures = projectIndexesWarmupSupports.mapNotNull { support ->
     try {
-      support.warmAdditionalIndexes()
+      support.warmAdditionalIndexes().asDeferred()
     }
     catch (t: Throwable) {
       ConsoleLog.error("Failed to warm additional indexes $support", t)
       null
     }
-  }.toTypedArray()
+  }
   try {
     withLoggingProgresses {
-      CompletableFuture.allOf(*futures).get()
+      futures.awaitAll()
     }
   }
   catch (t: Throwable) {
@@ -121,31 +117,35 @@ private fun waitForCachesSupports(project: Project) {
   ConsoleLog.info("All ProjectIndexesWarmupSupport.waitForCaches completed")
 }
 
-private fun waitForBuilders(project: Project, rebuild: Boolean, builders: Set<String>?) {
-  fun isBuilderEnabled(id: String): Boolean {
-    if (builders.isNullOrEmpty())
-      return true
-    return builders.contains(id)
-  }
+private suspend fun waitForBuilders(project: Project, rebuild: Boolean, builders: Set<String>?) {
+  fun isBuilderEnabled(id: String): Boolean = if (builders.isNullOrEmpty()) true else builders.contains(id)
 
   val projectBuildWarmupSupports = ProjectBuildWarmupSupport.EP_NAME.getExtensions(project).filter { builder ->
     isBuilderEnabled(builder.getBuilderId())
   }
   ConsoleLog.info("Starting additional project builders[${projectBuildWarmupSupports.size}] (rebuild=$rebuild)...")
-  val buildFutures = projectBuildWarmupSupports.mapNotNull { builder ->
-    ConsoleLog.info("Starting builder $builder for id ${builder.getBuilderId()}")
-    try {
-      builder.buildProject(rebuild)
-    }
-    catch (t: Throwable) {
-      ConsoleLog.error("Failed to call builder $builder", t)
-      null
-    }
-  }.toTypedArray()
   try {
     withLoggingProgresses {
-      CompletableFuture.allOf(*buildFutures).get()
+      coroutineScope {
+        for (builder in projectBuildWarmupSupports) {
+          launch {
+            try {
+              ConsoleLog.info("Starting builder $builder for id ${builder.getBuilderId()}")
+              builder.buildProject(rebuild)
+            }
+            catch (e: CancellationException) {
+              throw e
+            }
+            catch (e: Throwable) {
+              ConsoleLog.error("Failed to call builder $builder", e)
+            }
+          }
+        }
+      }
     }
+  }
+  catch (e: CancellationException) {
+    throw e
   }
   catch (t: Throwable) {
     ConsoleLog.error("An exception occurred while awaiting builders", t)
@@ -153,13 +153,11 @@ private fun waitForBuilders(project: Project, rebuild: Boolean, builders: Set<St
   ConsoleLog.info("All warmup builders completed")
 }
 
-private fun waitForRefreshQueue() {
-  runBlocking {
-    runTaskAndLogTime("RefreshQueue") {
-      while (RefreshQueueImpl.isRefreshInProgress()) {
-        ConsoleLog.info("RefreshQueue is in progress... ")
-        delay(500)
-      }
+private suspend fun waitForRefreshQueue() {
+  runTaskAndLogTime("RefreshQueue") {
+    while (RefreshQueueImpl.isRefreshInProgress()) {
+      ConsoleLog.info("RefreshQueue is in progress... ")
+      delay(500)
     }
   }
 }

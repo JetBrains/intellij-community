@@ -18,6 +18,7 @@ abstract class ModernApplicationStarter : ApplicationStarter {
   final override val requiredModality: Int
     get() = ApplicationStarter.NOT_IN_EDT
 
+  @Deprecated(message = "use start", level = DeprecationLevel.ERROR)
   final override fun main(args: List<String>) {
     throw UnsupportedOperationException("Use start(args)")
   }

@@ -22,6 +22,8 @@ import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage;
 import com.intellij.util.indexing.memory.InMemoryIndexStorage;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.IOUtil;
+import kotlinx.coroutines.Deferred;
+import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -30,7 +32,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 
@@ -201,11 +202,10 @@ public final class StubIndexImpl extends StubIndexEx {
       FileBasedIndex.getInstance();
 
       myStateFuture = new CompletableFuture<>();
-      Future<AsyncState> future = IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
-
+      Deferred<AsyncState> future = IndexDataInitializer.Companion.submitGenesisTaskAsync(new StubIndexInitialization());
       if (!IndexDataInitializer.ourDoAsyncIndicesInitialization) {
         try {
-          future.get();
+          FutureKt.asCompletableFuture(future).join();
         }
         catch (Throwable t) {
           LOG.error(t);
