@@ -45,7 +45,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
-import java.nio.file.Paths
+import java.nio.file.Path
 
 class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerBridgeImpl(project) {
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
@@ -316,7 +316,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   override fun loadModuleToBuilder(moduleName: String, filePath: String, diff: MutableEntityStorage): ModuleEntity {
     val builder = MutableEntityStorage.create()
     var errorMessage: String? = null
-    JpsProjectEntitiesLoader.loadModule(Paths.get(filePath), getJpsProjectConfigLocation(project)!!, builder, object : ErrorReporter {
+    JpsProjectEntitiesLoader.loadModule(Path.of(filePath), getJpsProjectConfigLocation(project)!!, builder, object : ErrorReporter {
       override fun reportError(message: String, file: VirtualFileUrl) {
         errorMessage = message
       }
@@ -325,7 +325,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       throw IOException("Failed to load module from $filePath: $errorMessage")
     }
     diff.addDiff(builder)
-    val moduleEntity = diff.entities(ModuleEntity::class.java).find { it.name == moduleName }
+    val moduleEntity = diff.entities(ModuleEntity::class.java).firstOrNull { it.name == moduleName }
     if (moduleEntity == null) {
       throw IOException("Failed to load module from $filePath")
     }

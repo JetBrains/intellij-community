@@ -6,6 +6,7 @@ import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
@@ -88,7 +89,7 @@ internal class ModuleBridgeLoaderService(private val project: Project) {
       LOG.debug { "Project component initialized" }
       val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
 
-      val moduleLoaderService = project.getService(ModuleBridgeLoaderService::class.java)
+      val moduleLoaderService = project.service<ModuleBridgeLoaderService>()
       moduleLoaderService.loadModuleJob.join()
 
       if (!workspaceModel.loadedFromCache) {

@@ -201,8 +201,6 @@ open class ProjectImpl(filePath: Path, projectName: String?)
   final override fun activityNamePrefix() = "project "
 
   internal suspend fun init(preloadServices: Boolean) {
-    val app = ApplicationManager.getApplication()
-
     val container = this
     coroutineScope {
       if (preloadServices) {
@@ -224,6 +222,7 @@ open class ProjectImpl(filePath: Path, projectName: String?)
                                                                                   ActivityCategory.DEFAULT)
     else null
     @Suppress("DEPRECATION", "removal")
+    val app = ApplicationManager.getApplication()
     app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this)
 
     activity = activity?.endAndStart("projectComponentCreated")

@@ -153,8 +153,6 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
   override val unloadedModuleDescriptions: Collection<UnloadedModuleDescription>
     get() = unloadedModules.values
 
-  override fun getFailedModulePaths(): Collection<ModulePath> = emptyList()
-
   override fun hasModuleGroups(): Boolean = hasModuleGroups(entityStore)
 
   override fun isModuleDependent(module: Module, onModule: Module): Boolean = ModuleRootManager.getInstance(module).isDependsOn(onModule)
