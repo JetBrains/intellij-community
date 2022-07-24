@@ -2,14 +2,11 @@
 
 package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 
-import com.intellij.ProjectTopics
 import com.intellij.lang.ASTNode
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.pom.PomManager
 import com.intellij.pom.PomModelAspect
 import com.intellij.pom.event.PomModelEvent
@@ -29,7 +26,6 @@ import java.util.concurrent.atomic.AtomicLong
 internal class FirIdeModificationTrackerService(project: Project) : Disposable {
     init {
         PomManager.getModel(project).addModelListener(Listener())
-        subscribeForRootChanges(project)
     }
 
     private val _projectGlobalOutOfBlockInKotlinFilesModificationCount = AtomicLong()
@@ -52,16 +48,6 @@ internal class FirIdeModificationTrackerService(project: Project) : Disposable {
     @TestOnly
     fun increaseModificationCountForModule(module: Module) {
         moduleModificationsState.increaseModificationCountForModule(module)
-    }
-
-
-    private fun subscribeForRootChanges(project: Project) {
-        project.messageBus.connect(this).subscribe(
-            ProjectTopics.PROJECT_ROOTS,
-            object : ModuleRootListener {
-                override fun rootsChanged(event: ModuleRootEvent) = increaseModificationCountForAllModules()
-            }
-        )
     }
 
     private inner class Listener : PomModelListener {
