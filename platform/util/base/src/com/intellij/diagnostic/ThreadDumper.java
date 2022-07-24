@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.util.ArrayUtil;
@@ -46,6 +46,11 @@ public final class ThreadDumper {
     sort(threadInfos);
     StringWriter writer = new StringWriter();
     StackTraceElement[] edtStack = dumpThreadInfos(threadInfos, writer);
+    String coroutineDump = CoroutineDumperKt.dumpCoroutines();
+    if (coroutineDump != null) {
+      writer.write("\n---------- Coroutine dump ----------\n");
+      writer.write(coroutineDump);
+    }
     return new ThreadDump(writer.toString(), edtStack, threadInfos);
   }
 
