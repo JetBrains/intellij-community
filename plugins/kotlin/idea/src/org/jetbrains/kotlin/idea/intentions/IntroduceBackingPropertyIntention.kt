@@ -34,7 +34,7 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
 
             val bindingContext = property.getResolutionFacade().analyzeWithAllCompilerChecks(property).bindingContext
             val descriptor = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, property) as? PropertyDescriptor ?: return false
-            if (bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, descriptor) == false) return false
+            if (bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, descriptor) != true) return false
 
             val containingClass = property.getStrictParentOfType<KtClassOrObject>() ?: return false
             if (containingClass.isExpectDeclaration()) return false
