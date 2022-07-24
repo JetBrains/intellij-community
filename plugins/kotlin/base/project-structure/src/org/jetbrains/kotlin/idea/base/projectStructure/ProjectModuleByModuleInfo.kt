@@ -4,16 +4,19 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.util.Key
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
+import org.jetbrains.kotlin.config.KotlinSourceRootType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import java.nio.file.Path
@@ -70,21 +73,43 @@ internal class KtSourceModuleByModuleInfo(
     override val project: Project get() = ideaModule.project
 }
 
-private fun ModuleSourceInfo.dependencies(provider: ProjectStructureProviderIdeImpl): List<KtModule> =
-    module.cacheByClassInvalidatingOnRootModifications(KtSourceModuleByModuleInfo::class.java) {
-        val sourceRootType = when (this) {
-            is ModuleProductionSourceInfo -> SourceKotlinRootType
-            is ModuleTestSourceInfo -> TestSourceKotlinRootType
-            else -> SourceKotlinRootType
-        }
-
-        ModuleDependencyCollector.getInstance(project)
-            .collectModuleDependencies(module, platform, sourceRootType, includeExportedDependencies = true)
-            .asSequence()
-            .filterNot { it == this }
-            .map(provider::getKtModuleByModuleInfo)
-            .toList()
+private fun ModuleSourceInfo.dependencies(provider: ProjectStructureProviderIdeImpl): List<KtModule> {
+    val sourceRootType = when (this) {
+        is ModuleProductionSourceInfo -> SourceKotlinRootType
+        is ModuleTestSourceInfo -> TestSourceKotlinRootType
+        else -> SourceKotlinRootType
     }
+    val key = when (sourceRootType) {
+        SourceKotlinRootType -> DependencyKeys.SOURCE_MODULE_DEPENDENCIES
+        TestSourceKotlinRootType -> DependencyKeys.TEST_MODULE_DEPENDENCIES
+    }
+    return CachedValuesManager.getManager(project).getCachedValue(
+        module,
+        key,
+        {
+            val dependencies = calculateModuleDependencies(sourceRootType, provider)
+            CachedValueProvider.Result.create(dependencies, ProjectRootModificationTracker.getInstance(project))
+        },
+        false
+    )
+}
+
+private fun ModuleSourceInfo.calculateModuleDependencies(
+    sourceRootType: KotlinSourceRootType,
+    provider: ProjectStructureProviderIdeImpl
+): List<KtModule> {
+    return ModuleDependencyCollector.getInstance(project)
+        .collectModuleDependencies(module, platform, sourceRootType, includeExportedDependencies = true)
+        .asSequence()
+        .filterNot { it == this }
+        .map(provider::getKtModuleByModuleInfo)
+        .toList()
+}
+
+private object DependencyKeys {
+    val SOURCE_MODULE_DEPENDENCIES = Key.create<CachedValue<List<KtModule>>>("SOURCE_MODULE_DEPENDENCIES")
+    val TEST_MODULE_DEPENDENCIES = Key.create<CachedValue<List<KtModule>>>("TEST_MODULE_DEPENDENCIES")
+}
 
 internal class KtLibraryModuleByModuleInfo(
     private val moduleInfo: LibraryInfo,
