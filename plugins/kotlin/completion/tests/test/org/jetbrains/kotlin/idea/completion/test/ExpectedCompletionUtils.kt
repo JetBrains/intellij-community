@@ -155,6 +155,8 @@ object ExpectedCompletionUtils {
         BLOCK_CODE_FRAGMENT,
         AstAccessControl.ALLOW_AST_ACCESS_DIRECTIVE,
         IgnoreTests.DIRECTIVES.FIR_COMPARISON,
+        IgnoreTests.DIRECTIVES.FIR_IDENTICAL,
+        IgnoreTests.DIRECTIVES.FIR_COMPARISON_MULTILINE_COMMENT,
     )
 
     fun itemsShouldExist(fileText: String, platform: TargetPlatform?): Array<CompletionProposal> = when {
