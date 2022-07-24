@@ -67,13 +67,14 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
     if (instance != null || !createIfNeeded) {
       return instance
     }
-    return getInstanceUncached(componentManager, keyClass, ProgressIndicatorProvider.getGlobalProgressIndicator())
+
+    LoadingState.COMPONENTS_REGISTERED.checkOccurred()
+    val indicator = ProgressIndicatorProvider.getGlobalProgressIndicator()
+    checkContainerIsActive(componentManager, indicator)
+    return getInstanceUncached(componentManager, keyClass, indicator)
   }
 
-  private fun <T : Any> getInstanceUncached(componentManager: ComponentManagerImpl, keyClass: Class<T>?, indicator: ProgressIndicator?): T {
-    LoadingState.COMPONENTS_REGISTERED.checkOccurred()
-    checkContainerIsActive(componentManager, indicator)
-
+  fun <T : Any> getInstanceUncached(componentManager: ComponentManagerImpl, keyClass: Class<T>?, indicator: ProgressIndicator?): T {
     val activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null
     val beforeLockTime = if (activityCategory == null) -1 else StartUpMeasurer.getCurrentTime()
 
@@ -100,17 +101,15 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
 
         val startTime = StartUpMeasurer.getCurrentTime()
         val implementationClass: Class<T>
-        when {
-          keyClass != null && isImplementationEqualsToInterface() -> {
-            implementationClass = keyClass
-            this.implementationClass = keyClass
-          }
-          else -> {
-            @Suppress("UNCHECKED_CAST")
-            implementationClass = getImplementationClass() as Class<T>
-            // check after loading class once again
-            checkContainerIsActive(componentManager, indicator)
-          }
+        if (keyClass != null && isImplementationEqualsToInterface()) {
+          implementationClass = keyClass
+          this.implementationClass = keyClass
+        }
+        else {
+          @Suppress("UNCHECKED_CAST")
+          implementationClass = getImplementationClass() as Class<T>
+          // check after loading class once again
+          checkContainerIsActive(componentManager, indicator)
         }
 
         instance = doCreateInstance(componentManager, implementationClass, indicator)

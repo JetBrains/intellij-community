@@ -1044,13 +1044,11 @@ abstract class ComponentManagerImpl(
       return
     }
 
-    val instance = adapter.getInstance<Any>(this, null)
-    if (instance != null) {
-      val implClass = instance.javaClass
-      // well, we don't know the interface class, so, we cannot add any service to a hot cache
-      if (Modifier.isFinal(implClass.modifiers)) {
-        serviceInstanceHotCache.putIfAbsent(implClass, instance)
-      }
+    val instance = adapter.getInstanceUncached<Any>(componentManager = this, keyClass = null, indicator = null)
+    // well, we don't know the interface class, so, we cannot add any service to a hot cache
+    val implClass = instance.javaClass
+    if (Modifier.isFinal(implClass.modifiers)) {
+      serviceInstanceHotCache.putIfAbsent(implClass, instance)
     }
   }
 
