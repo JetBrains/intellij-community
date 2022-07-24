@@ -25,9 +25,9 @@ abstract class ModuleManager : SimpleModificationTracker() {
      * @return the module manager instance.
      */
     @JvmStatic
-    fun getInstance(project: Project): ModuleManager = project.getComponent(ModuleManager::class.java)
+    fun getInstance(project: Project): ModuleManager = project.getService(ModuleManager::class.java)
 
-    fun getInstanceIfDefined(project: Project): ModuleManager? = project.getComponent(ModuleManager::class.java)
+    fun getInstanceIfDefined(project: Project): ModuleManager? = project.getService(ModuleManager::class.java)
   }
 
   /**
