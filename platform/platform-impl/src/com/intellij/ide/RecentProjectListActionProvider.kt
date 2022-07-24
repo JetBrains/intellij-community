@@ -141,10 +141,14 @@ open class RecentProjectListActionProvider {
 private fun getDuplicateProjectNames(openedPaths: Set<String>,
                                      recentPaths: Collection<String>,
                                      recentProjectManager: RecentProjectsManagerBase): Set<String> {
-  val duplicates = LinkedHashSet<String>()
+  val names = HashSet<String>()
+  val duplicates = HashSet<String>()
   // a project name should not be considered duplicate if a project is both in recent projects and open projects (IDEA-211955)
-  for (path in (openedPaths + recentPaths)) {
-    duplicates.add(recentProjectManager.getProjectName(path))
+  for (path in (openedPaths.asSequence() + recentPaths.asSequence())) {
+    val name = recentProjectManager.getProjectName(path)
+    if (!names.add(name)) {
+      duplicates.add(name)
+    }
   }
   return duplicates
 }
