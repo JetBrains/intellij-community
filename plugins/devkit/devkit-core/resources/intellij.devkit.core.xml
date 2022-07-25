@@ -418,7 +418,6 @@
       <action internal="true" class="org.jetbrains.idea.devkit.actions.ToggleHighlightingMarkupAction" id="ToggleHighlightingMarkup"/>
       <action class="org.jetbrains.idea.devkit.actions.ShuffleNamesAction" id="ShuffleNamesAction"/>
       <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction" id="ShowSerializedXml"/>
-      <action internal="true" class="org.jetbrains.idea.devkit.dom.generator.GenerateDomModelAction" id="GenerateDomModel"/>
       <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowHelpPageByIdAction" id="ShowHelpPageById"/>
       <action id="AnalyzeUnloadablePlugins" internal="true" class="org.jetbrains.idea.devkit.internal.AnalyzeUnloadablePluginsAction"/>
       <action id="AnalyzeEPUsage" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageAction"/>

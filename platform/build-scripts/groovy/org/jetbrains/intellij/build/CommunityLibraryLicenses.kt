@@ -274,8 +274,6 @@ object CommunityLibraryLicenses {
                    url = "https://code.google.com/p/decentxml").newBsd(),
     LibraryLicense(name = "docutils", attachedTo = "intellij.python", version = "0.12", license = "BSD",
                    url = "https://docutils.sourceforge.io/"),
-    LibraryLicense(libraryName = "DTDParser", version = "1.13", license = "LGPL", url = "https://sourceforge.net/projects/dtdparser/",
-                   licenseUrl = "https://www.opensource.org/licenses/lgpl-2.1"),
     LibraryLicense(name = "Eclipse JDT Core", attachedTo = "intellij.platform.jps.build", version = "4.2.1", license = "CPL 1.0",
                    url = "https://www.eclipse.org/jdt/core/index.php"),
     LibraryLicense(name = "Eclipse Layout Kernel", url = "https://www.eclipse.org/elk/", libraryName = "eclipse-layout-kernel").eplV1(),
