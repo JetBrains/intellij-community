@@ -19,8 +19,8 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.HelpIdAwareLinkListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.border.CustomLineBorder;
@@ -463,7 +463,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     editorPane.setBorder(null);
     editorPane.setContentType("text/html");
     editorPane.setEditorKit(kit);
-    editorPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+    editorPane.addHyperlinkListener(HelpIdAwareLinkListener.getInstance());
 
     return editorPane;
   }
@@ -707,7 +707,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
         String message;
         if (myUpdateDescriptor instanceof PluginNode && ((PluginNode)myUpdateDescriptor).getTags().contains(Tags.Freemium.name())) {
           message = IdeBundle.message("label.next.plugin.version.is.freemium");
-        } else {
+        }
+        else {
           message = IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or");
         }
         myLicensePanel.setText(message, true, false);
@@ -722,7 +723,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       String message;
       if (myPlugin instanceof PluginNode && ((PluginNode)myPlugin).getTags().contains(Tags.Freemium.name())) {
         message = IdeBundle.message("label.install.a.limited.functionality.for.free");
-      } else {
+      }
+      else {
         message = IdeBundle.message("label.use.the.trial.for.up.to.30.days.or");
       }
       myLicensePanel.setText(message, false, false);
