@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.MatchResultSink;
-import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -184,15 +183,15 @@ public class MatchContext {
     final PsiElement match = myMatchedNodes.get(0);
 
     if (!complexMatch) {
-      result.setMatchRef(new SmartPsiPointer(match));
+      result.setMatch(match);
       result.setMatchImage(match.getText());
     }
     else {
       for (final PsiElement matchStatement : myMatchedNodes) {
-        result.addChild(new MatchResultImpl(MatchResult.LINE_MATCH, matchStatement.getText(), new SmartPsiPointer(matchStatement), false));
+        result.addChild(new MatchResultImpl(MatchResult.LINE_MATCH, matchStatement.getText(), matchStatement, 0, -1, false));
       }
 
-      result.setMatchRef(new SmartPsiPointer(match));
+      result.setMatch(match);
       result.setMatchImage(match.getText());
       result.setName(MatchResult.MULTI_LINE_MATCH);
     }

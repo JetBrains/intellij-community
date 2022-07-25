@@ -3,9 +3,9 @@ package com.intellij.structuralsearch.inspection;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.MatchResult;
-import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ class MatchResultForPreview extends MatchResult {
   }
 
   @Override
-  public SmartPsiPointer getMatchRef() {
+  public SmartPsiElementPointer<?> getMatchRef() {
     throw new UnsupportedOperationException();
   }
 
