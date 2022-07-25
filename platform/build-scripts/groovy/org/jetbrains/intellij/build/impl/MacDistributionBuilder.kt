@@ -117,7 +117,8 @@ class MacDistributionBuilder(override val context: BuildContext,
     doCopyExtraFiles(macDistDir = osAndArchSpecificDistPath, arch = arch, copyDistFiles = false)
     context.executeStep(spanBuilder("build macOS artifacts").setAttribute("arch", arch.name), BuildOptions.MAC_ARTIFACTS_STEP) {
       val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
-      val publishArchive = !SystemInfoRt.isMac && context.proprietaryBuildTools.macHostProperties?.host == null
+      val publishSit = context.publishSitArchive
+      val publishZipOnly = !publishSit && context.options.buildStepsToSkip.contains(BuildOptions.MAC_DMG_STEP)
       val binariesToSign = customizer.getBinariesToSign(context, arch)
       if (!binariesToSign.isEmpty()) {
         context.executeStep(spanBuilder("sign binaries for macOS distribution")
@@ -129,14 +130,14 @@ class MacDistributionBuilder(override val context: BuildContext,
           ))
         }
       }
-      val macZip = (if (publishArchive || customizer.publishArchive) context.paths.artifactDir else context.paths.tempDir)
+      val macZip = (if (publishZipOnly) context.paths.artifactDir else context.paths.tempDir)
         .resolve("$baseName.mac.${arch.name}.zip")
       val macZipWithoutRuntime = macZip.resolveSibling(macZip.nameWithoutExtension + "-no-jdk.zip")
       val zipRoot = getMacZipRoot(customizer, context)
       val runtimeDist = context.bundledRuntime.extract(BundledRuntimeImpl.getProductPrefix(context), OsFamily.MACOS, arch)
       val directories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDist)
       val extraFiles = context.getDistFiles()
-      val compressionLevel = if (publishArchive) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED
+      val compressionLevel = if (publishSit || publishZipOnly) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED
       val errorsConsumer = context.messages::warning
       if (context.options.buildMacArtifactsWithRuntime) {
         buildMacZip(
@@ -163,8 +164,8 @@ class MacDistributionBuilder(override val context: BuildContext,
           errorsConsumer = errorsConsumer
         )
       }
-      if (publishArchive) {
-        Span.current().addEvent("skip DMG artifact producing because a macOS build agent isn't configured")
+      if (publishZipOnly) {
+        Span.current().addEvent("skip DMG and SIT artifacts producing")
         context.notifyArtifactBuilt(macZip)
         if (context.options.buildMacArtifactsWithoutRuntime) {
           context.notifyArtifactBuilt(macZipWithoutRuntime)

@@ -53,6 +53,14 @@ class BuildOptions {
     /** Build .dmg file for macOS. If skipped, only .sit archive will be produced.  */
     const val MAC_DMG_STEP = "mac_dmg"
 
+    /**
+     * Publish .sit file for macOS. If skipped, only .dmg archive will be produced.
+     * If skipped together with [MAC_DMG_STEP], only .zip archive will be produced.
+     *
+     * Note: .sit is required to build patches.
+     */
+    const val MAC_SIT_PUBLICATION_STEP = "mac_sit"
+
     /** Sign macOS distribution.  */
     const val MAC_SIGN_STEP = "mac_sign"
 

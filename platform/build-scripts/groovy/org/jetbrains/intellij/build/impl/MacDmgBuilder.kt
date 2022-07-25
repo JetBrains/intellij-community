@@ -18,6 +18,8 @@ import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
 
+internal val BuildContext.publishSitArchive get() = !options.buildStepsToSkip.contains(BuildOptions.MAC_SIT_PUBLICATION_STEP)
+
 internal fun MacDistributionBuilder.signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
                                                     context: BuildContext,
                                                     customizer: MacDistributionCustomizer,
@@ -42,7 +44,7 @@ internal fun MacDistributionBuilder.signAndBuildDmg(builtinModule: BuiltinModule
   validateProductJson(productJson, "Resources/", installationDirectories, installationArchives, context)
 
   val targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
-  val sitFile = (if (customizer.publishArchive) context.paths.artifactDir else context.paths.tempDir).resolve("$targetName.sit")
+  val sitFile = (if (context.publishSitArchive) context.paths.artifactDir else context.paths.tempDir).resolve("$targetName.sit")
 
   prepareMacZip(macZip, sitFile, productJson, zipRoot)
 
@@ -96,7 +98,7 @@ private fun buildAndSignWithMacBuilderHost(sitFile: Path,
     artifactDir = Path.of(context.paths.artifacts),
     dmgImage = dmgImage,
     artifactBuilt = context::notifyArtifactWasBuilt,
-    publishAppArchive = customizer.publishArchive,
+    publishAppArchive = context.publishSitArchive,
     jetSignClient = jetSignClient
   )
 }
@@ -113,7 +115,7 @@ private fun buildLocally(sitFile: Path,
       Files.createDirectories(tempDir)
       signSitLocally(sitFile, tempDir, sign, notarize, customizer, context)
     }
-  if (customizer.publishArchive) {
+  if (context.publishSitArchive) {
     context.notifyArtifactBuilt(sitFile)
   }
   context.executeStep("build DMG locally", BuildOptions.MAC_DMG_STEP) {
@@ -154,7 +156,7 @@ private fun signSitLocally(sourceFile: Path,
       context.proprietaryBuildTools.macHostProperties?.codesignString?.takeIf { sign } ?: "",
       if (notarize) "yes" else "no",
       customizer.bundleIdentifier,
-      customizer.publishArchive.toString(), // compress-input
+      context.publishSitArchive.toString(), // compress-input
       context.proprietaryBuildTools.signTool?.takeIf { sign }
         ?.commandLineClient(context, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
         ?.toString() ?: "null"
