@@ -63,9 +63,8 @@ private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 // for non-technical reasons this method cannot return CompletableFuture
 fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
+  val initAppActivity = startupStart!!.endAndStart(Activities.INIT_APP)
   runBlocking {
-    val initAppActivity = startupStart!!.endAndStart(Activities.INIT_APP)
-
     // event queue is replaced as part of "prepareUiFuture" task - application must be created only after that
     val prepareUiFutureWaitActivity = initAppActivity.startChild("prepare ui waiting")
 

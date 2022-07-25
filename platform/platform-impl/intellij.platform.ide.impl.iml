@@ -144,6 +144,7 @@
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="library" name="kotlinx-coroutines-debug" level="project" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
   </component>
 </module>

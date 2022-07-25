@@ -6,9 +6,7 @@ package com.intellij.idea
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
-import com.intellij.diagnostic.Activity
-import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.*
 import com.intellij.ide.*
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
 import com.intellij.ide.gdpr.ConsentOptions
@@ -44,6 +42,7 @@ import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
+import kotlinx.coroutines.debug.DebugProbes
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.io.BuiltInServer
 import sun.awt.AWTAutoShutdown
@@ -98,6 +97,7 @@ internal var shellEnvLoadFuture: Deferred<Boolean?>? = null
   private set
 
 /** Called via reflection from [Main.bootstrap].  */
+@OptIn(ExperimentalCoroutinesApi::class)
 fun start(mainClass: String,
           isHeadless: Boolean,
           setFlagsAgain: Boolean,
@@ -251,6 +251,11 @@ fun start(mainClass: String,
     // don't load EnvironmentUtil class in the main thread
     shellEnvLoadFuture = async(Dispatchers.IO) {
       EnvironmentUtil.loadEnvironment(StartUpMeasurer.startActivity("environment loading"))
+    }
+
+    launchAndMeasure("coroutine debug probes init") {
+      DebugProbes.enableCreationStackTraces = false
+      DebugProbes.install()
     }
 
     if (!configImportNeeded) {
