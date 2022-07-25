@@ -36,41 +36,25 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
       String left = UIBundle.message("tool.window.move.to.left.action.name");
       String bottom = UIBundle.message("tool.window.move.to.bottom.action.name");
       String right = UIBundle.message("tool.window.move.to.right.action.name");
-      if (ExperimentalUI.isNewUI()) {
-        switch (this) {
-          case LeftTop:
-            return left + " " + top;
-          case BottomLeft:
-            return left + " " + bottom;
-          case BottomRight:
-            return right + " " + bottom;
-          case RightTop:
-            return right + " " + top;
-          default:
-            throw new IllegalStateException("Should not be invoked");
-        }
-      }
-      else {
-        switch (this) {
-          case LeftTop:
-            return left + " " + top;
-          case LeftBottom:
-            return left + " " + bottom;
-          case BottomLeft:
-            return bottom + " " + left;
-          case BottomRight:
-            return bottom + " " + right;
-          case RightBottom:
-            return right + " " + bottom;
-          case RightTop:
-            return right + " " + top;
-          case TopRight:
-            return top + " " + right;
-          case TopLeft:
-            return top + " " + left;
-          default:
-            throw new IllegalStateException("Should not be invoked");
-        }
+      switch (this) {
+        case LeftTop:
+          return left + " " + top;
+        case BottomLeft:
+          return left + " " + bottom;
+        case BottomRight:
+          return right + " " + bottom;
+        case RightTop:
+          return right + " " + top;
+        case LeftBottom:
+          return bottom + " " + left;
+        case RightBottom:
+          return bottom + " " + right;
+        case TopRight:
+          return top + " " + right;
+        case TopLeft:
+          return top + " " + left;
+        default:
+          throw new IllegalStateException("Should not be invoked");
       }
     }
 
