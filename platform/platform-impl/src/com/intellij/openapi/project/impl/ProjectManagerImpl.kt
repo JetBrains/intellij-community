@@ -555,7 +555,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             frameAllocator.projectLoaded(project)
           }
 
-          val isTrusted = async {
+          // executed under modal progress - any or current modality must be passed
+          val isTrusted = async(ModalityState.any().asContextElement()) {
             options.isNewProject || checkOldTrustedStateAndMigrate(project, projectStoreBaseDir)
           }
 
