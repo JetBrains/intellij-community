@@ -863,6 +863,8 @@ private open class MyProjectUiFrameManager(val frame: IdeFrameImpl, private val 
 
 private fun updateSystemDockMenu() {
   if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-    SystemDock.updateMenu()
+    runActivity("system dock menu") {
+      SystemDock.updateMenu()
+    }
   }
 }

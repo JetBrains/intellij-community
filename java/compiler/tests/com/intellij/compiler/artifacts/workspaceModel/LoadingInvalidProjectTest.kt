@@ -10,6 +10,7 @@ import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.ClassRule
@@ -19,7 +20,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class LoadingInvalidProjectTest {
-
   @JvmField
   @Rule
   val tempDirectory = TemporaryDirectory()
@@ -35,7 +35,7 @@ class LoadingInvalidProjectTest {
   }
 
   @Test
-  fun `test duplicating artifacts`() {
+  fun `test duplicating artifacts`() = runBlocking {
     loadProjectAndCheckResults("duplicating-artifacts") { project ->
       val artifactsName = ReadAction.compute<String, Exception> { ArtifactManager.getInstance(project).artifacts.single().name }
       assertThat(artifactsName).isEqualTo("foo")
@@ -43,9 +43,12 @@ class LoadingInvalidProjectTest {
     }
   }
 
-  private fun loadProjectAndCheckResults(testDataDirName: String, checkProject: suspend (Project) -> Unit) {
+  private suspend fun loadProjectAndCheckResults(testDataDirName: String, checkProject: suspend (Project) -> Unit) {
     return com.intellij.testFramework.loadProjectAndCheckResults(
-      listOf(testDataRoot.resolve("common"), testDataRoot.resolve(testDataDirName)), tempDirectory, checkProject)
+      projectPaths = listOf(testDataRoot.resolve("common"), testDataRoot.resolve(testDataDirName)),
+      tempDirectory = tempDirectory,
+      checkProject = checkProject,
+    )
   }
 
   companion object {

@@ -3,10 +3,7 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
-import com.intellij.diagnostic.ActivityCategory
-import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.*
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
@@ -55,7 +52,6 @@ import java.nio.file.ClosedFileSystemException
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.coroutineContext
 
 @Internal
 open class ProjectImpl(filePath: Path, projectName: String?)
@@ -202,6 +198,7 @@ open class ProjectImpl(filePath: Path, projectName: String?)
 
   internal suspend fun init(preloadServices: Boolean) {
     val container = this
+    val app = ApplicationManager.getApplication()
     coroutineScope {
       if (preloadServices) {
         launch {
@@ -213,24 +210,16 @@ open class ProjectImpl(filePath: Path, projectName: String?)
                                     onlyIfAwait = isLight)
         }
       }
+
       createComponents()
+
+      runOnlyCorePluginExtensions((app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<ProjectServiceContainerInitializedListener>(
+        "com.intellij.projectServiceContainerInitializedListener")) {
+        launchAndMeasure(it.javaClass.simpleName) {
+          it.serviceCreated(this@ProjectImpl)
+        }
+      }
     }
-
-    coroutineContext.ensureActive()
-
-    var activity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity("projectComponentCreated event handling",
-                                                                                  ActivityCategory.DEFAULT)
-    else null
-    @Suppress("DEPRECATION", "removal")
-    val app = ApplicationManager.getApplication()
-    app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this)
-
-    activity = activity?.endAndStart("projectComponentCreated")
-    runOnlyCorePluginExtensions((app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<ProjectServiceContainerInitializedListener>(
-      "com.intellij.projectServiceContainerInitializedListener")) {
-      it.serviceCreated(this)
-    }
-    activity?.end()
   }
 
   @TestOnly

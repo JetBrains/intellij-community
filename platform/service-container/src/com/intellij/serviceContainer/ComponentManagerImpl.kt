@@ -412,7 +412,7 @@ abstract class ComponentManagerImpl(
 
     for (componentAdapter in componentAdapters.getImmutableSet()) {
       if (componentAdapter is MyComponentAdapter) {
-        componentAdapter.getInstance<Any>(this, keyClass = null)
+        componentAdapter.getInstanceUncached<Any>(this, keyClass = null, indicator = null)
       }
     }
 

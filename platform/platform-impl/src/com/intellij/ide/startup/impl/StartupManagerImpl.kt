@@ -37,6 +37,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
+import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
@@ -69,13 +70,17 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     fun addActivityEpListener(project: Project) {
       StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(object : ExtensionPointListener<StartupActivity?> {
         override fun extensionAdded(activity: StartupActivity, descriptor: PluginDescriptor) {
+          if (project is LightEditCompatible && activity !is LightEditCompatible) {
+            return
+          }
+
           val startupManager = getInstance(project) as StartupManagerImpl
           val pluginId = descriptor.pluginId
           @Suppress("SSBasedInspection")
           if (activity is DumbAware) {
             project.coroutineScope.launch {
               if (activity is ProjectPostStartupActivity) {
-                startupManager.runActivityAndMeasureDuration(activity, descriptor.pluginId, project !is LightEditCompatible)
+                activity.execute(project)
               }
               else {
                 startupManager.runActivityAndMeasureDuration(activity, pluginId)
@@ -171,12 +176,12 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode && !app.isDispatchThread) {
-      runPostStartupActivities()
+      runPostStartupActivities(async = false)
     }
     else {
       // doesn't block project opening
       project.coroutineScope.launch {
-        runPostStartupActivities()
+        runPostStartupActivities(async = true)
       }
       if (app.isUnitTestMode) {
         LOG.assertTrue(app.isDispatchThread)
@@ -222,7 +227,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
   }
 
   // Must be executed in a pooled thread outside of project loading modal task. The only exclusion - test mode.
-  private suspend fun runPostStartupActivities() {
+  private suspend fun runPostStartupActivities(async: Boolean) {
     try {
       LOG.assertTrue(isInitProjectActivitiesPassed)
       val snapshot = PerformanceWatcher.takeSnapshot()
@@ -235,9 +240,31 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       val counter = AtomicInteger()
       val dumbService = DumbService.getInstance(project)
       val isProjectLightEditCompatible = project is LightEditCompatible
+      val traceContext = Context.current()
       StartupActivity.POST_STARTUP_ACTIVITY.processExtensions { activity, pluginDescriptor ->
+        if (isProjectLightEditCompatible && activity !is LightEditCompatible) {
+          return@processExtensions
+        }
+
         if (activity is ProjectPostStartupActivity) {
-          runActivityAndMeasureDuration(activity, pluginDescriptor.pluginId, isProjectLightEditCompatible)
+          val pluginId = pluginDescriptor.pluginId
+          if (async) {
+            project.coroutineScope.launch {
+              val startTime = StartUpMeasurer.getCurrentTime()
+              val span = tracer.spanBuilder("run activity")
+                .setAttribute(AttributeKey.stringKey("class"), activity.javaClass.name)
+                .setAttribute(AttributeKey.stringKey("plugin"), pluginId.idString)
+                .startSpan()
+
+              withContext(traceContext.with(span).asContextElement()) {
+                activity.execute(project)
+              }
+              addCompletedActivity(startTime = startTime, runnableClass = activity.javaClass, pluginId = pluginId)
+            }
+          }
+          else {
+            activity.execute(project)
+          }
           return@processExtensions
         }
 
@@ -256,7 +283,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
           // DumbService.unsafeRunWhenSmart throws an assertion in LightEdit mode, see LightEditDumbService.unsafeRunWhenSmart
           if (!isProjectLightEditCompatible) {
             counter.incrementAndGet()
-            val traceContext = Context.current()
             dumbService.unsafeRunWhenSmart {
               traceContext.makeCurrent()
               val duration = runActivityAndMeasureDuration(activity, pluginDescriptor.pluginId)
@@ -315,23 +341,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     }
 
     return addCompletedActivity(startTime = startTime, runnableClass = activity.javaClass, pluginId = pluginId)
-  }
-
-  private suspend fun runActivityAndMeasureDuration(
-    activity: ProjectPostStartupActivity,
-    pluginId: PluginId,
-    isProjectLightEditCompatible: Boolean
-  ) {
-    val startTime = StartUpMeasurer.getCurrentTime()
-    tracer.spanBuilder("run activity")
-      .setAttribute(AttributeKey.stringKey("class"), activity.javaClass.name)
-      .setAttribute(AttributeKey.stringKey("plugin"), pluginId.idString)
-      .useWithScope {
-        if (!isProjectLightEditCompatible || activity is LightEditCompatible) {
-          activity.execute(project)
-        }
-      }
-    addCompletedActivity(startTime = startTime, runnableClass = activity.javaClass, pluginId = pluginId)
   }
 
   private suspend fun runPostStartupActivitiesRegisteredDynamically() {

@@ -28,7 +28,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.mac.touchbar.TouchbarSupport
@@ -216,11 +215,11 @@ private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<Str
 }
 
 private suspend fun postOpenUiTasks(app: Application) {
-  coroutineScope {
-    if (PluginManagerCore.isRunningFromSources()) {
-      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
-    }
+  if (PluginManagerCore.isRunningFromSources()) {
+    AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+  }
 
+  coroutineScope {
     if (SystemInfoRt.isMac) {
       launch {
         runActivity("mac touchbar on app init") {
@@ -236,9 +235,6 @@ private suspend fun postOpenUiTasks(app: Application) {
       }
     }
 
-    invokeLaterWithAnyModality("system dock menu") {
-      SystemDock.updateMenu()
-    }
     invokeLaterWithAnyModality("ScreenReader") {
       val generalSettings = GeneralSettings.getInstance()
       generalSettings.addPropertyChangeListener(GeneralSettings.PROP_SUPPORT_SCREEN_READERS, app, PropertyChangeListener { e ->
@@ -246,6 +242,8 @@ private suspend fun postOpenUiTasks(app: Application) {
       })
       ScreenReader.setActive(generalSettings.isSupportScreenReaders)
     }
+
+    startSystemHealthMonitor()
   }
 }
 

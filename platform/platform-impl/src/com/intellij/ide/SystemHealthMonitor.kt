@@ -3,8 +3,6 @@ package com.intellij.ide
 
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.UnixProcessManager
 import com.intellij.ide.actions.EditCustomVmOptionsAction
 import com.intellij.ide.plugins.PluginManagerCore
@@ -29,6 +27,7 @@ import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.IoErrorText
 import com.sun.jna.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.io.IOException
@@ -37,22 +36,23 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.seconds
 
-internal class SystemHealthMonitor : PreloadingActivity() {
-  override suspend fun execute() {
-    withContext(Dispatchers.IO) {
-      checkInstallationIntegrity()
-    }
-    checkIdeDirectories()
-    checkRuntime()
-    checkReservedCodeCacheSize()
-    checkEnvironment()
-    withContext(Dispatchers.IO) {
-      checkSignalBlocking()
-      checkTempDirEnvVars()
-    }
-    startDiskSpaceMonitoring()
+internal suspend fun startSystemHealthMonitor() {
+  withContext(Dispatchers.IO) {
+    checkInstallationIntegrity()
   }
+  checkIdeDirectories()
+  withContext(Dispatchers.IO) {
+    checkRuntime()
+  }
+  checkReservedCodeCacheSize()
+  checkEnvironment()
+  withContext(Dispatchers.IO) {
+    checkSignalBlocking()
+    checkTempDirEnvVars()
+  }
+  startDiskSpaceMonitoring()
 }
 
 private interface LibC : Library {
@@ -77,7 +77,7 @@ private interface LibC : Library {
   }
 }
 
-private val LOG = logger<SystemHealthMonitor>()
+private val LOG = logger<Application>()
 
 private class MyNotification(content: @NlsContexts.NotificationContent String,
                              type: NotificationType,
@@ -97,7 +97,7 @@ private fun checkInstallationIntegrity() {
   try {
     Files.list(Path.of(PathManager.getLibPath())).use { stream ->
       // see `LinuxDistributionBuilder#generateVersionMarker`
-      val markers = stream.filter { p -> p.fileName.toString().startsWith("build-marker-") }.count()
+      val markers = stream.filter { it.fileName.toString().startsWith("build-marker-") }.count()
       if (markers > 1) {
         showNotification(key = "mixed.bag.installation", suppressable = false, action = null,
                          ApplicationNamesInfo.getInstance().fullProductName)
@@ -132,7 +132,7 @@ private fun shorten(pathStr: String): String {
   }
 }
 
-private fun checkRuntime() {
+private suspend fun checkRuntime() {
   if (!CpuArch.isEmulated()) {
     return
   }
@@ -163,12 +163,13 @@ private fun checkRuntime() {
     if (Files.isRegularFile(configFile)) {
       switchAction = NotificationAction.createSimpleExpiring(IdeBundle.message("action.SwitchToJBR.text")) {
         try {
+          @Suppress("BlockingMethodInNonBlockingContext")
           Files.delete(configFile)
           ApplicationManagerEx.getApplicationEx().restart(true)
         }
-        catch (x: IOException) {
-          LOG.warn("cannot delete $configFile", x)
-          val content = IdeBundle.message("cannot.delete.jre.config", configFile, IoErrorText.message(x))
+        catch (e: IOException) {
+          LOG.warn("cannot delete $configFile", e)
+          val content = IdeBundle.message("cannot.delete.jre.config", configFile, IoErrorText.message(e))
           Notification(NOTIFICATION_GROUP_ID, content, NotificationType.ERROR).notify(null)
         }
       }
@@ -192,11 +193,21 @@ private fun isModernJBR(): Boolean {
   return jbrVersion == null || JavaVersion.current() >= jbrVersion.version
 }
 
-private fun isJbrOperational(): Boolean {
+@Suppress("BlockingMethodInNonBlockingContext")
+private suspend fun isJbrOperational(): Boolean {
   val bin = Path.of(PathManager.getBundledRuntimePath(), if (SystemInfoRt.isWindows) "bin/java.exe" else "bin/java")
   if (Files.isRegularFile(bin) && (SystemInfoRt.isWindows || Files.isExecutable(bin))) {
     try {
-      return CapturingProcessHandler(GeneralCommandLine(bin.toString(), "-version")).runProcess(30000).exitCode == 0
+      return withTimeout(30.seconds) {
+        ProcessBuilder(bin.toString(), "-version")
+          .redirectError(ProcessBuilder.Redirect.DISCARD)
+          .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+          .start()
+          .onExit()
+          .asDeferred()
+          .await()
+          .exitValue() == 0
+      }
     }
     catch (e: ExecutionException) {
       LOG.debug(e)

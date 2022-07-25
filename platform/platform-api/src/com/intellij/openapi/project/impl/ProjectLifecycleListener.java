@@ -13,13 +13,6 @@ public interface ProjectLifecycleListener {
   Topic<ProjectLifecycleListener> TOPIC = new Topic<>(ProjectLifecycleListener.class, Topic.BroadcastDirection.NONE);
 
   /**
-   * @deprecated Do not use.
-   */
-  @Deprecated(forRemoval = true)
-  default void projectComponentsInitialized(@NotNull Project project) {
-  }
-
-  /**
    * @deprecated Use {@link com.intellij.openapi.project.ProjectManagerListener#projectClosed(Project)}
    */
   @Deprecated(forRemoval = true)

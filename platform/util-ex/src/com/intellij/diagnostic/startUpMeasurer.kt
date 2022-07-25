@@ -19,9 +19,9 @@ inline fun <T> Activity?.runChild(name: String, task: () -> T): T {
 }
 
 inline fun <T> runActivity(@NonNls name: String, category: ActivityCategory = ActivityCategory.DEFAULT, task: () -> T): T {
-  val activity = StartUpMeasurer.startActivity(name, category)
+  val activity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity(name, category) else null
   val result = task()
-  activity.end()
+  activity?.end()
   return result
 }
 
