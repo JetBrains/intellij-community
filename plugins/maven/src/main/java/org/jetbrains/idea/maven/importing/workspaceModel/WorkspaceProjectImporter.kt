@@ -210,7 +210,7 @@ class WorkspaceProjectImporter(
         }
       }
 
-      afterModelApplied(result, builder, contextData, configuratorsTimings)
+      afterModelApplied(result, storage, contextData, configuratorsTimings)
     }
     return result
   }
