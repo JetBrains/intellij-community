@@ -56,7 +56,7 @@ class GitPushUpToCommitAction : GitLogSingleCommitAction() {
           commit.hash.asString()
         }
       VcsPushDialog(repository.project, listOf(repository), listOf(repository), repository,
-        GitPushSource.create(branch, referenceToPush ?: commit.hash.asString())).show()
+        GitPushSource.createRef(branch, referenceToPush ?: commit.hash.asString())).show()
     }
     if (branch == null) {
       VcsNotifier.getInstance(project).notifyError(PUSH_NOT_SUPPORTED, GitBundle.message("push.upto.here.not.supported.notification.title"),
