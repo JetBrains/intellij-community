@@ -18,8 +18,8 @@ import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.MarkdownRecursiveElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.*
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil.WhiteSpaces.isNewLine
-import org.intellij.plugins.markdown.util.MarkdownPsiUtil.processContainer
 
 internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
   override fun buildLanguageFoldRegions(descriptors: MutableList<FoldingDescriptor>, root: PsiElement, document: Document, quick: Boolean) {
@@ -89,7 +89,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
     private var lastProcessedHeader: MarkdownHeader? = null
 
     override fun visitHeader(header: MarkdownHeader) {
-      processContainer(header, {}) { nextHeader ->
+      MarkdownPsiStructureUtil.processContainer(header, {}) { nextHeader ->
         val regionEnd = skipNewLinesBackward(nextHeader)
         createRegionIfNeeded(header, regionEnd)
       }
