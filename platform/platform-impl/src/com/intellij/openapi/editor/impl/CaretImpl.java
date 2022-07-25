@@ -626,8 +626,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       myPositionMarker = null;
       positionMarker.dispose();
     }
-    if (mySelectionMarker != null) {
+    SelectionMarker selectionMarker = mySelectionMarker;
+    if (selectionMarker != null) {
       mySelectionMarker = null;
+      selectionMarker.dispose();
     }
     isValid = false;
     myDisposalTrace = new Throwable();
@@ -1168,6 +1170,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       else {
         setRangeMarkerEndPositionIsLead(endOffset != getOffset());
       }
+      SelectionMarker selectionMarker = mySelectionMarker;
+      if (selectionMarker != null) {
+        selectionMarker.dispose();
+      }
       mySelectionMarker = marker;
 
       if (fireListeners) {
@@ -1197,6 +1203,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         int endOffset = marker.getEndOffset();
         int caretOffset = getOffset();
         mySelectionMarker = null;
+        marker.dispose();
         myEditor.getSelectionModel().fireSelectionChanged(new SelectionEvent(myEditor, startOffset, endOffset, caretOffset, caretOffset));
       }
     });
