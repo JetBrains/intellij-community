@@ -614,7 +614,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   }
 
   private void assertNotUpdating() {
-    LOG.assertTrue(!myCaretModel.myIsInUpdate || !ApplicationManager.getApplication().isDispatchThread(),
+    LOG.assertTrue(isUpToDate() || !ApplicationManager.getApplication().isDispatchThread(),
                    "Caret model is in its update process. All requests are illegal at this point.");
   }
 
