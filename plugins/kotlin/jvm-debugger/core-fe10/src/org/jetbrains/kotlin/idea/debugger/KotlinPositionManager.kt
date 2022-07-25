@@ -51,8 +51,8 @@ import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.breakpoints.SourcePositionRefiner
-import org.jetbrains.kotlin.idea.debugger.breakpoints.getElementsAtLineIfAny
-import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getElementsAtLineIfAny
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil
 import org.jetbrains.kotlin.idea.debugger.core.containsKotlinStrata
 import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources

@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle.message
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isBreakpointApplicable
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isInlineOnly
 
 class KotlinFunctionBreakpointType :
     JavaMethodBreakpointType("kotlin-function", message("function.breakpoint.tab.title")),

@@ -35,6 +35,11 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import java.util.*
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isBreakpointApplicable
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getLambdasAtLineIfAny
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isInlineOnly
+
+interface KotlinBreakpointType
 
 class KotlinLineBreakpointType :
     JavaLineBreakpointType("kotlin-line", KotlinDebuggerCoreBundle.message("line.breakpoint.tab.title")),
