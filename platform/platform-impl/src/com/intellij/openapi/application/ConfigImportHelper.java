@@ -96,8 +96,7 @@ public final class ConfigImportHelper {
   private static final Set<String> SESSION_FILES = Set.of(PORT_FILE,
                                                           PORT_LOCK_FILE,
                                                           TOKEN_FILE,
-                                                          USER_WEB_TOKEN,
-                                                          BundledPluginsState.BUNDLED_PLUGINS_FILENAME);
+                                                          USER_WEB_TOKEN);
 
   private ConfigImportHelper() { }
 
@@ -849,31 +848,29 @@ public final class ConfigImportHelper {
     List<IdeaPluginDescriptor> pluginsToDownload = new ArrayList<>();
     Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = new HashMap<>();
 
-    if (Files.isDirectory(oldPluginsDir)) {
-      try {
-        Map<PluginId, Set<String>> brokenPluginVersions = options.brokenPluginVersions;
-        PluginLoadingResult result = PluginDescriptorLoader.loadDescriptors(oldPluginsDir,
-                                                                            options.bundledPluginPath,
-                                                                            brokenPluginVersions,
-                                                                            options.compatibleBuildNumber);
+    try {
+      Map<PluginId, Set<String>> brokenPluginVersions = options.brokenPluginVersions;
+      PluginLoadingResult result = PluginDescriptorLoader.loadDescriptors(oldPluginsDir,
+                                                                          options.bundledPluginPath,
+                                                                          brokenPluginVersions,
+                                                                          options.compatibleBuildNumber);
 
-        pluginIdMap.putAll(result.getIdMap());
-        partitionNonBundled(result.getIdMap().values(), pluginsToDownload, pluginsToMigrate, descriptor -> {
-          Set<String> brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(descriptor.getPluginId()) : null;
-          return brokenVersions != null && brokenVersions.contains(descriptor.getVersion());
-        });
+      pluginIdMap.putAll(result.getIdMap());
+      partitionNonBundled(result.getIdMap().values(), pluginsToDownload, pluginsToMigrate, descriptor -> {
+        Set<String> brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(descriptor.getPluginId()) : null;
+        return brokenVersions != null && brokenVersions.contains(descriptor.getVersion());
+      });
 
-        pluginIdMap.putAll(result.getIncompleteIdMap());
-        partitionNonBundled(result.getIncompleteIdMap().values(), pluginsToDownload, pluginsToMigrate, __ -> true);
-      }
-      catch (ExecutionException | InterruptedException e) {
-        log.info("Error loading list of plugins from old dir, migrating entire plugin directory");
-        FileUtil.copyDir(oldPluginsDir.toFile(), newPluginsDir.toFile());
-        return;
-      }
+      pluginIdMap.putAll(result.getIncompleteIdMap());
+      partitionNonBundled(result.getIncompleteIdMap().values(), pluginsToDownload, pluginsToMigrate, __ -> true);
     }
-    else {
-      log.info("Non-existing plugins directory: " + oldPluginsDir);
+    catch (ExecutionException | InterruptedException e) {
+      log.info("Error loading list of plugins from old dir, migrating entire plugin directory");
+      FileUtil.copyDir(oldPluginsDir.toFile(), newPluginsDir.toFile());
+      return;
+    }
+    catch (IOException e) {
+      log.info("Non-existing plugins directory: " + oldPluginsDir, e);
     }
 
     if (options.importSettings != null) {

@@ -771,7 +771,7 @@ fun loadDescriptor(file: Path,
   }
 }
 
-@Throws(ExecutionException::class, InterruptedException::class)
+@Throws(ExecutionException::class, InterruptedException::class, IOException::class)
 fun loadDescriptors(
   customPluginDir: Path,
   bundledPluginDir: Path?,
@@ -787,13 +787,17 @@ fun loadDescriptors(
   ).use { context ->
     runBlocking {
       val result = PluginLoadingResult()
+      val descriptors = loadDescriptorsFromDirs(
+        context = context,
+        customPluginDir = customPluginDir,
+        bundledPluginDir = bundledPluginDir,
+        zipFilePool = null,
+      ).awaitAll()
+
       result.addAll(
-        descriptors = loadDescriptorsFromDirs(context = context,
-                                              customPluginDir = customPluginDir,
-                                              bundledPluginDir = bundledPluginDir,
-                                              zipFilePool = null).awaitAll(),
+        descriptors = descriptors,
         overrideUseIfCompatible = false,
-        productBuildNumber = context.productBuildNumber()
+        productBuildNumber = context.productBuildNumber(),
       )
       result
     }
