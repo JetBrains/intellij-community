@@ -208,11 +208,12 @@ private enum class PanelState {
 
 private fun getCurrentState(): PanelState {
   val recentProjects = RecentProjectListActionProvider.getInstance().collectProjects()
-  return if (!recentProjects.isEmpty() || CloneableProjectsService.getInstance().collectCloneableProjects().isEmpty()) {
-    PanelState.NOT_EMPTY
+  val collectCloneableProjects = CloneableProjectsService.getInstance().collectCloneableProjects()
+  return if (recentProjects.isEmpty() && collectCloneableProjects.isEmpty()) {
+    PanelState.EMPTY
   }
   else {
-    PanelState.EMPTY
+    PanelState.NOT_EMPTY
   }
 }
 
