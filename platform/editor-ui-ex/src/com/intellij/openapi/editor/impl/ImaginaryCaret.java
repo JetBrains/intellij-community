@@ -73,6 +73,13 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void moveCaretRelatively(int columnShift, int lineShift, boolean withSelection, boolean scrollToCaret) {
+    if (lineShift == 0) {
+      myEnd += columnShift;
+      if (!withSelection) {
+        myStart = myEnd;
+      }
+      return;
+    }
     throw notImplemented();
   }
 
