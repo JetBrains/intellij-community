@@ -1030,7 +1030,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   @Override
   public @NotNull TextRange getSelectionRange() {
-    validateContext(false);
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     SelectionMarker marker = mySelectionMarker;
     if (hasSelection(marker)) {
       return TextRange.create(marker.getStartOffset(), marker.getEndOffset());
