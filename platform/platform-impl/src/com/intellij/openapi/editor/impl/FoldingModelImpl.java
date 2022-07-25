@@ -524,7 +524,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         int selectionEnd = caret.getSelectionEnd();
         if (isOffsetInsideCollapsedRegion(selectionStart) || isOffsetInsideCollapsedRegion(selectionEnd)) {
           caret.removeSelection();
-        } else if (selectionStart < myEditor.getDocument().getTextLength()) {
+        }
+        else if (caret.hasSelection() && selectionEnd <= myEditor.getDocument().getTextLength()) {
           caret.setSelection(selectionStart, selectionEnd);
         }
       }
@@ -678,7 +679,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+  public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
     if ((inlay.getPlacement() == Inlay.Placement.ABOVE_LINE || inlay.getPlacement() == Inlay.Placement.BELOW_LINE) &&
         (changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0) {
       myFoldTree.clearCachedInlayValues();
