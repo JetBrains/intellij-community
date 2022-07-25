@@ -95,7 +95,9 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       else {
         DataKey<?>[] keys = DataKey.allKeys();
         myDataKeysCount = updateDataKeyIndices(keys);
-        myCachedData = cacheComponentsData(components, initial, myDataManager, keys);
+        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FORCE_ASSERT)) {
+          myCachedData = cacheComponentsData(components, initial, myDataManager, keys);
+        }
         ourInstances.add(this);
       }
       //noinspection AssignmentToStaticFieldFromInstanceMethod

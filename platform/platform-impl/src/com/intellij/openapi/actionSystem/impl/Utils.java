@@ -698,7 +698,7 @@ public final class Utils {
     List<ActionPromoter> promoters = ContainerUtil.concat(
       ActionPromoter.EP_NAME.getExtensionList(), ContainerUtil.filterIsInstance(actions, ActionPromoter.class));
     for (ActionPromoter promoter : promoters) {
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FAST_TRACK)) {
+      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FORCE_ASSERT)) {
         List<AnAction> promoted = promoter.promote(readOnlyActions, frozenContext);
         if (promoted != null && !promoted.isEmpty()) {
           actions.removeAll(promoted);
