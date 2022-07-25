@@ -26,33 +26,33 @@ class SdkTestFixtureImpl(
   override fun setUp() {
     super.setUp()
 
-    sdk = setUpSdk(sdkType, versionFilter)
+    sdk = findOrCreateSdk()
   }
 
-  private fun setUpSdk(sdkType: SdkType, versionFilter: (String) -> Boolean): Sdk {
-    val table = ProjectJdkTable.getInstance()
-    for (sdk in runReadAction { table.allJdks }) {
-      val versionString = sdk.versionString
-      if (versionString != null && versionFilter(versionString)) {
-        return sdk
-      }
-    }
-    for (sdkHome in sdkType.suggestHomePaths()) {
-      if (sdkType.isValidSdkHome(sdkHome)) {
-        val versionString = sdkType.getVersionString(sdkHome)
-        if (versionString != null && versionFilter(versionString)) {
-          val sdk = createAndAddSdk(sdkHome, sdkType, testRootDisposable)
-          if (sdk != null) {
-            return sdk
-          }
-        }
-      }
-    }
-    throw AssertionError(
+  private fun findOrCreateSdk(): Sdk {
+    return findSdkInTable() ?: findAndAddSdk() ?: throw AssertionError(
       "Cannot find SDK with defined parameters. " +
       "Please, research SDK restrictions or discuss it with test author, " +
       "and install it manually."
     )
+  }
+
+  private fun findSdkInTable(): Sdk? {
+    val table = ProjectJdkTable.getInstance()
+    return runReadAction { table.allJdks }.asSequence()
+      .filter { it.versionString != null && versionFilter(it.versionString!!) }
+      .sortedBy { it.versionString }
+      .firstOrNull()
+  }
+
+  private fun findAndAddSdk(): Sdk? {
+    return sdkType.suggestHomePaths().asSequence()
+      .filter { sdkType.isValidSdkHome(it) }
+      .map { sdkType.getVersionString(it) to it }
+      .filter { it.first != null && versionFilter(it.first!!) }
+      .sortedBy { it.first }
+      .mapNotNull { createAndAddSdk(it.second, sdkType, testRootDisposable) }
+      .firstOrNull()
   }
 
   private fun createAndAddSdk(sdkHome: String, sdkType: SdkType, parentDisposable: Disposable): Sdk? {
