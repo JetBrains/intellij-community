@@ -3,35 +3,27 @@
 package org.jetbrains.kotlin.idea.debugger.breakpoints
 
 import com.intellij.debugger.SourcePosition
-import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.xdebugger.XDebuggerUtil
-import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.impl.XSourcePositionImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
-import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ApplicabilityResult
-import org.jetbrains.kotlin.idea.util.findElementsOfClassInRange
+import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.findElementsOfClassInRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.inline.INLINE_ONLY_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
-import java.util.*
-import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
 
 interface KotlinBreakpointType
 
@@ -89,50 +81,6 @@ private fun getTopmostParentOnLineOrSelf(element: PsiElement, document: Document
     }
 
     return current
-}
-
-fun computeLineBreakpointVariants(
-    project: Project,
-    position: XSourcePosition,
-    kotlinBreakpointType: KotlinLineBreakpointType,
-): List<JavaLineBreakpointType.JavaBreakpointVariant> {
-    val file = PsiManager.getInstance(project).findFile(position.file) as? KtFile ?: return emptyList()
-
-    val pos = SourcePosition.createFromLine(file, position.line)
-    val lambdas = getLambdasAtLineIfAny(pos)
-    if (lambdas.isEmpty()) return emptyList()
-
-    val result = LinkedList<JavaLineBreakpointType.JavaBreakpointVariant>()
-
-    val elementAt = pos.elementAt.parentsWithSelf.firstIsInstance<KtElement>()
-    val mainMethod = PsiTreeUtil.getParentOfType(elementAt, KtFunction::class.java, false)
-
-    var mainMethodAdded = false
-
-    if (mainMethod != null) {
-        val bodyExpression = mainMethod.bodyExpression
-        val isLambdaResult = bodyExpression is KtLambdaExpression && bodyExpression.functionLiteral in lambdas
-
-        if (!isLambdaResult) {
-            val variantElement = getTopmostElementAtOffset(elementAt, pos.offset)
-            result.add(kotlinBreakpointType.LineKotlinBreakpointVariant(position, variantElement, -1))
-            mainMethodAdded = true
-        }
-    }
-
-    lambdas.forEachIndexed { ordinal, lambda ->
-        val positionImpl = XSourcePositionImpl.createByElement(lambda.bodyExpression)
-
-        if (positionImpl != null) {
-            result.add(kotlinBreakpointType.LambdaJavaBreakpointVariant(positionImpl, lambda, ordinal))
-        }
-    }
-
-    if (mainMethodAdded && result.size > 1) {
-        result.add(kotlinBreakpointType.KotlinBreakpointVariant(position, lambdas.size))
-    }
-
-    return result
 }
 
 fun getLambdasAtLineIfAny(sourcePosition: SourcePosition): List<KtFunction> {
