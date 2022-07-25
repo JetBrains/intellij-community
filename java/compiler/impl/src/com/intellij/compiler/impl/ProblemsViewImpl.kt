@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.pom.Navigatable
+import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -38,7 +39,7 @@ internal class ProblemsViewImpl(project: Project) : ProblemsView(project) {
   private var panel: ProblemsViewPanel? = null
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val messageScope = createSupervisorCoroutineScope(project.coroutineScope, Dispatchers.Default.limitedParallelism(1))
+  private val messageScope = project.coroutineScope.childScope(Dispatchers.Default.limitedParallelism(1))
 
   private val state = NewErrorTreeViewPanel.MessageViewState()
   private val errorViewStructure = ErrorViewStructure(project, /* canHideWarnings = */ false)

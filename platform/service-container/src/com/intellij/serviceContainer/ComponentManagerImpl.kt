@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.ArrayUtil
+import com.intellij.util.childScope
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
@@ -138,8 +139,8 @@ abstract class ComponentManagerImpl(
   internal var componentContainerIsReadonly: String? = null
 
   private val coroutineScope: CoroutineScope? = when {
-    parent == null -> Main.mainScope?.let(::createSupervisorCoroutineScope) ?: CoroutineScope(SupervisorJob())
-    parent.parent == null -> createSupervisorCoroutineScope(parent.coroutineScope!!)
+    parent == null -> Main.mainScope?.childScope() ?: CoroutineScope(SupervisorJob())
+    parent.parent == null -> parent.coroutineScope!!.childScope()
     else -> null
   }
 
