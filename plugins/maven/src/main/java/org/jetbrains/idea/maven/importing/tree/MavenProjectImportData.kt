@@ -47,23 +47,17 @@ open class MavenModuleImportData(val mavenProject: MavenProject,
 open class MavenTreeModuleImportData(mavenProject: MavenProject,
                                      moduleData: ModuleData,
                                      val dependencies: List<MavenImportDependency<*>>,
-                                     val changes: MavenProjectChanges?) : MavenModuleImportData(mavenProject, moduleData) {
+                                     val changes: MavenProjectChanges) : MavenModuleImportData(mavenProject, moduleData) {
 
   val legacyModuleData: LegacyModuleData
     get() = moduleData as LegacyModuleData
 
-  fun hasChanges(): Boolean {
-    return changes != null && changes.hasChanges()
-  }
 }
 
 class MavenProjectImportData(val mavenProject: MavenProject,
                              val moduleData: ModuleData,
-                             val changes: MavenProjectChanges?,
+                             val changes: MavenProjectChanges,
                              val splittedMainAndTestModules: SplittedMainAndTestModules?) {
-  fun hasChanges(): Boolean {
-    return changes != null && changes.hasChanges()
-  }
 
   override fun toString(): String {
     return mavenProject.mavenId.toString()

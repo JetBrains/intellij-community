@@ -1234,8 +1234,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private void scheduleForNextImport(Collection<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
     synchronized (myImportingDataLock) {
       for (Pair<MavenProject, MavenProjectChanges> each : projectsWithChanges) {
-        MavenProjectChanges changes = each.second.mergedWith(myProjectsToImport.get(each.first));
-        myProjectsToImport.put(each.first, changes);
+        myProjectsToImport.compute(each.first, (__, previousChanges) ->
+          previousChanges == null ? each.second : MavenProjectChangesBuilder.merged(each.second, previousChanges)
+        );
       }
     }
   }

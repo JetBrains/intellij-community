@@ -33,8 +33,8 @@ import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
-import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
+import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
@@ -95,7 +95,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         postTasks: MutableList<MavenProjectsProcessorTask>
     ) {
 
-        if (changes.plugins) {
+        if (changes.hasPluginsChanges()) {
             contributeSourceDirectories(mavenProject, module, rootModel)
         }
 
@@ -125,7 +125,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             module.project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
         }
 
-        if (changes.dependencies) {
+        if (changes.hasDependencyChanges()) {
             scheduleDownloadStdlibSources(mavenProject, module)
 
             val targetLibraryKind = detectPlatformByExecutions(mavenProject)?.tooling?.libraryKind

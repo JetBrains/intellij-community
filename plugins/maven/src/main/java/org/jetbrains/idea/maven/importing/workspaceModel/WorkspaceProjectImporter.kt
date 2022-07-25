@@ -64,7 +64,7 @@ class WorkspaceProjectImporter(
 
         logConfiguratorTiming(configuratorsTimings, projectsWithModuleEntities)
 
-        configLegacyFacets(appliedProjectsWithModules, projectToImport, mavenProjectToModuleName, postTasks)
+        configLegacyFacets(appliedProjectsWithModules, mavenProjectToModuleName, postTasks)
 
         val changedProjectsOnly = projectToImport
           .asSequence()
@@ -93,11 +93,13 @@ class WorkspaceProjectImporter(
         if (newProjectToImport) MavenProjectChanges.ALL else originalProjectsChanges.getOrDefault(it, MavenProjectChanges.NONE)
       }
 
-    if (allProjectToImport.values.any { it.hasChanges() }) return true to allProjectToImport
-
-    // check for a situation, when we have a newly ignored project, but no other changes
-    val listOfProjectChanged = allProjectToImport.size != projectFilesFromPreviousImport.size
-    return listOfProjectChanged to allProjectToImport
+    var hasChanges = allProjectToImport.values.any { it.hasChanges() }
+    if (!hasChanges) {
+      // check for a situation, when we have a newly ignored project, but no other changes
+      val listOfProjectChanged = allProjectToImport.size != projectFilesFromPreviousImport.size
+      hasChanges = listOfProjectChanged
+    }
+    return hasChanges to allProjectToImport
   }
 
   private fun buildModuleNameMap(projectToImport: Map<MavenProject, MavenProjectChanges>): HashMap<MavenProject, String> {
@@ -112,8 +114,8 @@ class WorkspaceProjectImporter(
                             mavenProjectToModuleName: java.util.HashMap<MavenProject, String>,
                             contextData: UserDataHolderBase,
                             configuratorsTimings: MutableMap<Class<MavenConfigurator>, ConfiguratorTiming>): List<MavenConfigurator.MavenProjectWithModules<ModuleEntity>> {
-    val context = MavenProjectImportContextProvider(myProject, myProjectsTree, projectsToImport, myImportingSettings,
-                                                    mavenProjectToModuleName).getContext(projectsToImport.keys)
+    val context = MavenProjectImportContextProvider(myProject, myProjectsTree, myImportingSettings,
+                                                    mavenProjectToModuleName).getContext(projectsToImport)
 
     val dependenciesImportingContext = WorkspaceModuleImporter.DependenciesImportingContext()
     val folderImportingContext = WorkspaceFolderImporter.FolderImportingContext()
@@ -314,7 +316,6 @@ class WorkspaceProjectImporter(
   }
 
   private fun configLegacyFacets(mavenProjectsWithModules: List<MavenConfigurator.MavenProjectWithModules<Module>>,
-                                 projectChanges: Map<MavenProject, MavenProjectChanges>,
                                  moduleNameByProject: Map<MavenProject, String>,
                                  postTasks: List<MavenProjectsProcessorTask>) {
     val legacyImporters = mavenProjectsWithModules.flatMap { projectWithModules ->
@@ -322,7 +323,7 @@ class WorkspaceProjectImporter(
         MavenLegacyModuleImporter(moduleWithType.module,
                                   myProjectsTree,
                                   projectWithModules.mavenProject,
-                                  projectChanges[projectWithModules.mavenProject],
+                                  projectWithModules.changes,
                                   moduleNameByProject,
                                   myImportingSettings,
                                   myModelsProvider,

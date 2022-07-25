@@ -1252,25 +1252,25 @@ public class MavenProject {
     public MavenProjectChanges getChanges(State other) {
       if (myLastReadStamp == 0) return MavenProjectChanges.ALL;
 
-      MavenProjectChanges result = new MavenProjectChanges();
+      MavenProjectChangesBuilder result = new MavenProjectChangesBuilder();
 
-      result.packaging = !Objects.equals(myPackaging, other.myPackaging);
+      result.setHasPackagingChanges(!Objects.equals(myPackaging, other.myPackaging));
 
-      result.output = !Objects.equals(myFinalName, other.myFinalName)
-                      || !Objects.equals(myBuildDirectory, other.myBuildDirectory)
-                      || !Objects.equals(myOutputDirectory, other.myOutputDirectory)
-                      || !Objects.equals(myTestOutputDirectory, other.myTestOutputDirectory);
+      result.setHasOutputChanges(!Objects.equals(myFinalName, other.myFinalName)
+                                 || !Objects.equals(myBuildDirectory, other.myBuildDirectory)
+                                 || !Objects.equals(myOutputDirectory, other.myOutputDirectory)
+                                 || !Objects.equals(myTestOutputDirectory, other.myTestOutputDirectory));
 
-      result.sources = !Comparing.equal(mySources, other.mySources)
-                       || !Comparing.equal(myTestSources, other.myTestSources)
-                       || !Comparing.equal(myResources, other.myResources)
-                       || !Comparing.equal(myTestResources, other.myTestResources);
+      result.setHasSourceChanges(!Comparing.equal(mySources, other.mySources)
+                                 || !Comparing.equal(myTestSources, other.myTestSources)
+                                 || !Comparing.equal(myResources, other.myResources)
+                                 || !Comparing.equal(myTestResources, other.myTestResources));
 
       boolean repositoryChanged = !Comparing.equal(myLocalRepository, other.myLocalRepository);
 
-      result.dependencies = repositoryChanged || !Comparing.equal(myDependencies, other.myDependencies);
-      result.plugins = repositoryChanged || !Comparing.equal(myPlugins, other.myPlugins);
-      result.properties = !Comparing.equal(myProperties, other.myProperties);
+      result.setHasDependencyChanges(repositoryChanged || !Comparing.equal(myDependencies, other.myDependencies));
+      result.setHasPluginChanges(repositoryChanged || !Comparing.equal(myPlugins, other.myPlugins));
+      result.setHasPropertyChanges(!Comparing.equal(myProperties, other.myProperties));
       return result;
     }
 

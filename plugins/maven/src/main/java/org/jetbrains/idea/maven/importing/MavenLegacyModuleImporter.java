@@ -49,7 +49,7 @@ public final class MavenLegacyModuleImporter {
   private final MavenProjectsTree myMavenTree;
   private final MavenProject myMavenProject;
 
-  @Nullable
+  @NotNull
   private final MavenProjectChanges myMavenProjectChanges;
   private final Map<MavenProject, String> myMavenProjectToModuleName;
   private final MavenImportingSettings mySettings;
@@ -64,7 +64,7 @@ public final class MavenLegacyModuleImporter {
   public MavenLegacyModuleImporter(Module module,
                                    MavenProjectsTree mavenTree,
                                    MavenProject mavenProject,
-                                   @Nullable MavenProjectChanges changes,
+                                   @NotNull MavenProjectChanges changes,
                                    Map<MavenProject, String> mavenProjectToModuleName,
                                    MavenImportingSettings settings,
                                    ModifiableModelsProviderProxy modifiableModelsProvider,
@@ -81,16 +81,6 @@ public final class MavenLegacyModuleImporter {
     if (!FileUtil.namesEqual("pom", pomFile.getNameWithoutExtension())) {
       MavenPomPathModuleService.getInstance(module).setPomFileUrl(pomFile.getUrl());
     }
-  }
-
-  public MavenLegacyModuleImporter(Module module,
-                                   MavenProjectsTree mavenTree,
-                                   MavenProject mavenProject,
-                                   @Nullable MavenProjectChanges changes,
-                                   Map<MavenProject, String> mavenProjectToModuleName,
-                                   MavenImportingSettings settings,
-                                   ModifiableModelsProviderProxy modifiableModelsProvider) {
-    this(module, mavenTree, mavenProject, changes, mavenProjectToModuleName, settings, modifiableModelsProvider, null);
   }
 
   public ModifiableRootModel getRootModel() {
@@ -144,20 +134,14 @@ public final class MavenLegacyModuleImporter {
 
       final ModuleType moduleType = ModuleType.get(myModule);
 
+      var hasChanges = myMavenProjectChanges.hasChanges();
       for (final MavenImporter importer : mySuitableFacetsImporters) {
         try {
-          final MavenProjectChanges changes;
-          if (myMavenProjectChanges == null) {
-            if (importer.processChangedModulesOnly()) continue;
-            changes = MavenProjectChanges.NONE;
-          }
-          else {
-            changes = myMavenProjectChanges;
-          }
+          if (!hasChanges && importer.processChangedModulesOnly()) continue;
 
           if (importer.getModuleType() == moduleType) {
             measureImporterTime(importer, counters, true, () -> {
-              importer.preProcess(myModule, myMavenProject, changes, myProviderForExtensions);
+              importer.preProcess(myModule, myMavenProject, myMavenProjectChanges, myProviderForExtensions);
             });
           }
         }
@@ -175,15 +159,9 @@ public final class MavenLegacyModuleImporter {
       final ModuleType moduleType = ModuleType.get(myModule);
 
       ApplicationManager.getApplication().runWriteAction(() -> {
+        var hasChanges = myMavenProjectChanges.hasChanges();
         for (final MavenImporter importer : mySuitableFacetsImporters) {
-          final MavenProjectChanges changes;
-          if (myMavenProjectChanges == null) {
-            if (importer.processChangedModulesOnly()) continue;
-            changes = MavenProjectChanges.NONE;
-          }
-          else {
-            changes = myMavenProjectChanges;
-          }
+          if (!hasChanges && importer.processChangedModulesOnly()) continue;
 
           if (importer.getModuleType() == moduleType) {
             try {
@@ -193,7 +171,7 @@ public final class MavenLegacyModuleImporter {
                                  myRootModelAdapter,
                                  myMavenTree,
                                  myMavenProject,
-                                 changes,
+                                 myMavenProjectChanges,
                                  myMavenProjectToModuleName,
                                  postTasks);
               });
@@ -213,20 +191,14 @@ public final class MavenLegacyModuleImporter {
 
       final ModuleType moduleType = ModuleType.get(myModule);
 
+      var hasChanges = myMavenProjectChanges.hasChanges();
       for (final MavenImporter importer : mySuitableFacetsImporters) {
         try {
-          final MavenProjectChanges changes;
-          if (myMavenProjectChanges == null) {
-            if (importer.processChangedModulesOnly()) continue;
-            changes = MavenProjectChanges.NONE;
-          }
-          else {
-            changes = myMavenProjectChanges;
-          }
+          if (!hasChanges && importer.processChangedModulesOnly()) continue;
 
           if (importer.getModuleType() == moduleType) {
             measureImporterTime(importer, counters, false, () -> {
-              importer.postProcess(myModule, myMavenProject, changes, myProviderForExtensions);
+              importer.postProcess(myModule, myMavenProject, myMavenProjectChanges, myProviderForExtensions);
             });
           }
         }
