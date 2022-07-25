@@ -52,7 +52,7 @@ internal class SearchEverywhereItem(
     return usage.plainText == (other as SearchEverywhereItem).usage.plainText
   }
 
-  override fun hashCode() = usage.plainText.hashCode()
+  override fun hashCode(): Int = usage.plainText.hashCode()
 }
 
 @ApiStatus.Internal
