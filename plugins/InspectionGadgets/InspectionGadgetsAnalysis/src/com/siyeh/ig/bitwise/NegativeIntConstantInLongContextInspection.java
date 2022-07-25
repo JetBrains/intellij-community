@@ -2,14 +2,19 @@
 package com.siyeh.ig.bitwise;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.LiteralFormatUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -37,7 +42,14 @@ public class NegativeIntConstantInLongContextInspection extends AbstractBaseJava
       private void checkLongContext(@NotNull PsiExpression expression) {
         if (!PsiType.LONG.equals(ExpectedTypeUtils.findExpectedType(expression, true))) return;
         if (isInAssertEqualsLong(expression)) return;
-        holder.registerProblem(expression, InspectionGadgetsBundle.message("negative.int.constant.in.long.context.display.name"));
+        LocalQuickFix[] fixes = null;
+        if (expression instanceof PsiLiteralExpression) {
+          fixes = new LocalQuickFix[]{
+            new AddLongSuffixFix(),
+            new ConvertToLongFix()
+          };
+        }
+        holder.registerProblem(expression, InspectionGadgetsBundle.message("negative.int.constant.in.long.context.display.name"), fixes);
       }
     };
   }
@@ -59,5 +71,39 @@ public class NegativeIntConstantInLongContextInspection extends AbstractBaseJava
     if (!text.startsWith("0x") && !text.startsWith("0X")) return false;
     Integer value = tryCast(literal.getValue(), Integer.class);
     return value != null && value < 0;
+  }
+
+  private static class AddLongSuffixFix implements LocalQuickFix {
+    @Override
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("negative.int.constant.in.long.context.fix.add.suffix");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiLiteralExpression literal = tryCast(descriptor.getStartElement(), PsiLiteralExpression.class);
+      if (literal == null) return;
+      PsiType type = literal.getType();
+      if (!PsiType.INT.equals(type)) return;
+      new CommentTracker().replaceAndRestoreComments(literal, literal.getText() + "L");
+    }
+  }
+
+  private static class ConvertToLongFix implements LocalQuickFix {
+    @Override
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("negative.int.constant.in.long.context.fix.convert");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiLiteralExpression literal = tryCast(descriptor.getStartElement(), PsiLiteralExpression.class);
+      if (literal == null) return;
+      Integer value = tryCast(literal.getValue(), Integer.class);
+      if (value == null || value >= 0) return;
+      String longLiteral = Long.toHexString(value);
+      String result = LiteralFormatUtil.format(literal.getText().substring(0, 2) + longLiteral + "L", PsiType.LONG);
+      new CommentTracker().replaceAndRestoreComments(literal, result);
+    }
   }
 }
