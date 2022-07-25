@@ -213,7 +213,7 @@ public final class JavaCoverageSuite extends BaseCoverageSuite {
     }
     final String[] filteredPackageNames = getFilteredPackageNames();
     for (final String packName : filteredPackageNames) {
-      if (PsiNameHelper.isSubpackageOf(packageFQName, packName)) {
+      if (packName.isEmpty() || PsiNameHelper.isSubpackageOf(packageFQName, packName)) {
         return true;
       }
     }
