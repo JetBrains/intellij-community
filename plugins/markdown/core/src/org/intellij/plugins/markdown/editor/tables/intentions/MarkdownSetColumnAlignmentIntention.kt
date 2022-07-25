@@ -30,6 +30,10 @@ internal class MarkdownSetColumnAlignmentIntention: PsiElementBaseIntentionActio
     return cell != null && editor != null && cell.parentTable?.hasCorrectBorders() == true
   }
 
+  override fun startInWriteAction(): Boolean {
+    return false
+  }
+
   override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
     val cell = TableUtils.findCell(element)
     val table = cell?.parentTable
