@@ -41,6 +41,8 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.DocumentCommitProcessor
 import com.intellij.psi.impl.DocumentCommitThread
 import com.intellij.psi.impl.PsiManagerImpl
+import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.UITestUtil
 import com.intellij.testFramework.runInEdtAndWait
@@ -275,6 +277,9 @@ fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: 
 
   val commitThread = application.serviceIfCreated<DocumentCommitProcessor>() as? DocumentCommitThread
   commitThread?.waitForAllCommits(timeout, timeUnit)
+
+  val stubIndex = application.serviceIfCreated<StubIndex>() as? StubIndexImpl
+  stubIndex?.waitUntilStubIndexedInitialized()
 }
 
 @TestOnly
