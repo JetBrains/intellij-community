@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
-import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionStatusLine
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionStatusLine.Companion.greyText
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -29,8 +27,4 @@ abstract class BaseCloneDialogExtension : VcsCloneDialogExtension {
 
     return accounts.map { greyText(it.nameWithServer) }
   }
-
-  @Suppress("OverridingDeprecatedMember")
-  override fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent =
-    throw AssertionError("Shouldn't be called")
 }
