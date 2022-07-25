@@ -237,8 +237,8 @@ public class GitPushOperation {
   @NotNull
   private static List<GitRepository> getRejectedAndNotPushed(@NotNull final Map<GitRepository, GitPushRepoResult> results) {
     return filter(results.keySet(),
-                                repository -> results.get(repository).getType() == REJECTED_NO_FF ||
-                                              results.get(repository).getType() == NOT_PUSHED);
+                  repository -> results.get(repository).getType() == REJECTED_NO_FF ||
+                                results.get(repository).getType() == NOT_PUSHED);
   }
 
   @NotNull
@@ -413,8 +413,9 @@ public class GitPushOperation {
 
   private void savePushUpdateSettings(@NotNull PushUpdateSettings settings, boolean rebaseOverMergeDetected) {
     UpdateMethod updateMethod = settings.getUpdateMethod();
-    if (!rebaseOverMergeDetected // don't overwrite explicit "rebase" with temporary "merge" caused by merge commits
-        && mySettings.getUpdateMethod() != updateMethod && mySettings.getUpdateMethod() != UpdateMethod.BRANCH_DEFAULT) { // don't overwrite "branch default" setting
+    if (!rebaseOverMergeDetected && // don't overwrite explicit "rebase" with temporary "merge" caused by merge commits
+        mySettings.getUpdateMethod() != updateMethod &&
+        mySettings.getUpdateMethod() != UpdateMethod.BRANCH_DEFAULT) { // don't overwrite "branch default" setting
       mySettings.setUpdateMethod(updateMethod);
     }
   }
@@ -451,9 +452,12 @@ public class GitPushOperation {
   @NotNull
   private static UpdateMethod convertUpdateMethodFromDialogExitCode(PushRejectedExitCode exitCode) {
     switch (exitCode) {
-      case MERGE: return UpdateMethod.MERGE;
-      case REBASE: return UpdateMethod.REBASE;
-      default: throw new IllegalStateException("Unexpected exit code: " + exitCode);
+      case MERGE:
+        return UpdateMethod.MERGE;
+      case REBASE:
+        return UpdateMethod.REBASE;
+      default:
+        throw new IllegalStateException("Unexpected exit code: " + exitCode);
     }
   }
 
