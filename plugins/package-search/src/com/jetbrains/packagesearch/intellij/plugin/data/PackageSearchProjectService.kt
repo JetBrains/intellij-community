@@ -38,6 +38,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.batchAtIntervals
 import com.jetbrains.packagesearch.intellij.plugin.util.catchAndLog
 import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.mapLatestTimedWithLoading
 import com.jetbrains.packagesearch.intellij.plugin.util.modifiedBy
@@ -62,6 +63,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.consumeAsFlow
@@ -136,9 +138,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         }
         .catchAndLog(
             context = "${this::class.qualifiedName}#projectModulesSharedFlow",
-            message = "Error while elaborating latest project modules",
-            fallbackValue = emptyList(),
-            retryChannel = retryFromErrorChannel
+            message = "Error while elaborating latest project modules"
         )
         .shareIn(project.lifecycleScope, SharingStarted.Eagerly)
 
@@ -151,8 +151,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         .mapLatestTimedWithLoading("knownRepositoriesFlow", knownRepositoriesLoadingFlow) { dataProvider.fetchKnownRepositories() }
         .catchAndLog(
             context = "${this::class.qualifiedName}#knownRepositoriesFlow",
-            message = "Error while refreshing known repositories",
-            fallbackValue = emptyList()
+            message = "Error while refreshing known repositories"
         )
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
@@ -170,8 +169,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         .map { it.flatMap { it }.distinct() }
         .catchAndLog(
             context = "${this::class.qualifiedName}#projectModulesChangesFlow",
-            message = "Error while checking Modules changes",
-            fallbackValue = emptyList()
+            message = "Error while checking Modules changes"
         )
         .shareIn(project.lifecycleScope, SharingStarted.Eagerly)
 
@@ -188,9 +186,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         .map { it.values.toList() }
         .catchAndLog(
             context = "${this::class.qualifiedName}#moduleModelsStateFlow",
-            message = "Error while evaluating modules models",
-            fallbackValue = emptyList(),
-            retryChannel = retryFromErrorChannel
+            message = "Error while evaluating modules models"
         )
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
@@ -204,8 +200,7 @@ internal class PackageSearchProjectService(private val project: Project) {
             }
             .catchAndLog(
                 context = "${this::class.qualifiedName}#allInstalledKnownRepositoriesFlow",
-                message = "Error while evaluating installed repositories",
-                fallbackValue = KnownRepositories.All.EMPTY
+                message = "Error while evaluating installed repositories"
             )
             .stateIn(project.lifecycleScope, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
 
@@ -224,9 +219,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         }
         .catchAndLog(
             context = "${this::class.qualifiedName}#dependenciesByModuleStateFlow",
-            message = "Error while evaluating installed dependencies",
-            fallbackValue = emptyMap(),
-            retryChannel = retryFromErrorChannel
+            message = "Error while evaluating installed dependencies"
         )
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyMap())
 
@@ -241,9 +234,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         }
         .catchAndLog(
             context = "${this::class.qualifiedName}#installedPackagesStateFlow",
-            message = "Error while evaluating installed packages",
-            fallbackValue = emptyList(),
-            retryChannel = retryFromErrorChannel
+            message = "Error while evaluating installed packages"
         )
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
@@ -269,9 +260,7 @@ internal class PackageSearchProjectService(private val project: Project) {
     }
         .catchAndLog(
             context = "${this::class.qualifiedName}#packageUpgradesStateFlow",
-            message = "Error while evaluating packages upgrade candidates",
-            fallbackValue = PackageUpgradeCandidates.EMPTY,
-            retryChannel = retryFromErrorChannel
+            message = "Error while evaluating packages upgrade candidates"
         )
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, PackageUpgradeCandidates.EMPTY)
 
@@ -288,6 +277,7 @@ internal class PackageSearchProjectService(private val project: Project) {
             }
             .mapNotNull { readAction { PsiManager.getInstance(project).findFile(it) } }
             .onEach { readAction { DaemonCodeAnalyzer.getInstance(project).restart(it) } }
+            .catchAndLog("${this::class.qualifiedName}#inspectionsRestart")
             .launchIn(project.lifecycleScope)
 
         var controller: BackgroundLoadingBarController? = null
