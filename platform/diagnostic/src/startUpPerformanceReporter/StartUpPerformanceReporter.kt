@@ -50,7 +50,7 @@ class StartUpPerformanceReporter : InitProjectActivity, StartUpPerformanceServic
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
 
-    internal const val VERSION = "37"
+    internal const val VERSION = "38"
 
     internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->

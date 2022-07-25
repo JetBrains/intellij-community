@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.tree.IElementType
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.io.jackson.array
@@ -22,11 +23,13 @@ import org.bouncycastle.crypto.params.Argon2Parameters
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.management.ManagementFactory
+import java.nio.file.Files
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.Path
 
 internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityImpl>>,
                                    private val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
@@ -69,6 +72,22 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
       writer.writeNumberField("searchTime", TimeUnit.NANOSECONDS.toMillis(time - defineTime))
       writer.writeNumberField("defineTime", TimeUnit.NANOSECONDS.toMillis(defineTime))
       writer.writeNumberField("count", stats.getValue("classRequests"))
+
+      if (SystemInfo.isLinux) {
+        val vmTraceLocation = System.getProperty("idea.log.vmtrace.file")
+        if (vmTraceLocation != null) {
+          val vmTraceFile = Path(vmTraceLocation)
+          if (Files.exists(vmTraceFile)) {
+            val preparedCount = Files.lines(vmTraceFile).use { stream ->
+              stream
+                .filter { it.contains("Class prepared:") }
+                .count()
+            }
+
+            writer.writeNumberField("preparedCount", preparedCount)
+          }
+        }
+      }
     }
     writer.obj("resourceLoading") {
       writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stats.getValue("resourceLoadingTime")))
