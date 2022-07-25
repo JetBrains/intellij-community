@@ -236,12 +236,24 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   public void escape() {
-    myModel.setSelectedIndex(-1);
-    hideHint();
-    ToolWindowManager.getInstance(myProject).activateEditorComponent();
+    if (isNodePopupActive()) cancelPopup();
+    else {
+      myModel.setSelectedIndex(-1);
+      hideHint();
+      ToolWindowManager.getInstance(myProject).activateEditorComponent();
+    }
   }
 
   public void enter() {
+    if (isNodePopupActive()) {
+      SelectionIndexes indexes = selectionIndexes;
+      List<Object> popupObjects = getPopupObjectsFromSelection(indexes);
+      if (popupObjects != null && !popupObjects.isEmpty()) {
+        navigateInsideBar(indexes.myBarIndex, popupObjects.get(0), false);
+        return;
+      }
+    }
+
     int index = myModel.getSelectedIndex();
     if (index != -1) ctrlClick(index);
   }
@@ -360,11 +372,19 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   public void moveLeft() {
-    shiftFocus(-1);
+    move(-1);
   }
 
   public void moveRight() {
-    shiftFocus(1);
+    move(1);
+  }
+
+  private void move(int direction) {
+    boolean withPopup = isNodePopupActive();
+
+    if (withPopup) cancelPopup();
+    shiftFocus(direction);
+    if (withPopup) restorePopup();
   }
 
   void shiftFocus(int direction) {
@@ -623,20 +643,16 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
     if (!objects.isEmpty()) {
       final Object[] siblings = new Object[objects.size()];
-      //final Icon[] icons = new Icon[objects.size()];
       for (int i = 0; i < objects.size(); i++) {
         siblings[i] = objects.get(i);
-        //icons[i] = NavBarPresentation.getIcon(siblings[i], false);
       }
       final NavBarItem item = getItem(index);
 
       final int selectedIndex = index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0;
       myNodePopup = new NavBarPopup(this, index, siblings, index, selectedIndex);
       myModel.setSelectedIndex(index);
-     // if (item != null && item.isShowing()) {
-        myNodePopup.show(item);
-        item.update();
-     // }
+      myNodePopup.show(item);
+      item.update();
     }
   }
 
@@ -715,10 +731,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
   }
 
-  @Override
-  @Nullable
-  public Object getData(@NotNull String dataId) {
-    Object barObject = null;
+  private List<Object> getPopupObjectsFromSelection(SelectionIndexes selectionIndexes) {
+    Object barObject;
     List<Object> popupObjects = null;
 
     if (selectionIndexes != null) {
@@ -731,6 +745,20 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
           popupObjects.add(childObjects.get(index));
         }
       }
+    }
+
+    return popupObjects;
+  }
+
+  @Override
+  @Nullable
+  public Object getData(@NotNull String dataId) {
+    Object barObject = null;
+    List<Object> popupObjects = null;
+
+    if (selectionIndexes != null) {
+      barObject = myModel.getElement(selectionIndexes.myBarIndex);
+      popupObjects = getPopupObjectsFromSelection(selectionIndexes);
     }
 
     if (barObject == null) {

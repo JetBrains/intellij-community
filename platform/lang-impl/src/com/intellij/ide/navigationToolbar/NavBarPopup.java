@@ -191,50 +191,14 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       }
     });
 
-    ActionMap map = list.getActionMap();
-    map.put(ListActions.Left.ID, createMoveAction(panel, -1));
-    map.put(ListActions.Right.ID, createMoveAction(panel, 1));
-    installEnterAction(list, panel, sourceItemIndex, KeyEvent.VK_ENTER);
-    installEscapeAction(list, panel, KeyEvent.VK_ESCAPE);
     JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), o -> panel.getPresentation().getPresentableText(o, false));
     component.putClientProperty(JBLIST_KEY, list);
     OpenInRightSplitAction.Companion.overrideDoubleClickWithOneClick(component);
     return component;
   }
 
-  private static void installEnterAction(JBList list, NavBarPanel panel, int sourceItemIndex, int keyCode) {
-    AbstractAction action = new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        panel.navigateInsideBar(sourceItemIndex, list.getSelectedValue(), false);
-      }
-    };
-    list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
-  }
-
-  private static void installEscapeAction(JBList list, NavBarPanel panel, int keyCode) {
-    AbstractAction action = new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        panel.cancelPopup();
-      }
-    };
-    list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
-  }
-
   @NotNull
   public JBList<?> getList() {
     return ((JBList)getComponent().getClientProperty(JBLIST_KEY));
-  }
-
-  private static Action createMoveAction(@NotNull NavBarPanel panel, int direction) {
-    return new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        panel.cancelPopup();
-        panel.shiftFocus(direction);
-        panel.restorePopup();
-      }
-    };
   }
 }
