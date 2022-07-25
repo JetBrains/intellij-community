@@ -1,4 +1,4 @@
-// "Convert field to local variable in method 'getFoo1'" "true"
+// "Convert field to local variable in method 'getFoo1'" "true-preview"
 class Test {
 
     int getFoo1(boolean f) {
