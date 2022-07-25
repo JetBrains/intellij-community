@@ -477,6 +477,7 @@
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
     <configurator implementation="org.jetbrains.idea.maven.importing.MavenCompilerSettingsConfigurator"/>
     <importer implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
+    <configurator implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
     <configurator implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
 
