@@ -79,7 +79,7 @@ abstract class LibraryInfo(
     }
 
     override fun toString() =
-        "${this::class.simpleName}(libraryName=${library.name}${if (isDisposed) ", libraryRoots=${getLibraryRoots()})" else ""}"
+        "${this::class.simpleName}(libraryName=${library.name}${if (!isDisposed) ", libraryRoots=${getLibraryRoots()}" else " -disposed-"})"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
