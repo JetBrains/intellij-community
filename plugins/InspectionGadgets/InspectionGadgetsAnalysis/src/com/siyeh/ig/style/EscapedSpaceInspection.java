@@ -22,16 +22,33 @@ public class EscapedSpaceInspection extends AbstractBaseJavaLocalInspectionTool 
         if (!TypeUtils.isJavaLangString(type)) return;
         boolean block = literal.isTextBlock();
         String text = literal.getText();
-        int pos = 0;
+        int pos = 1;
         while (true) {
-          pos = text.indexOf("\\s", pos + 1);
-          if (pos == -1) return;
-          if (pos > 2 && text.startsWith("\\s", pos - 2)) continue;
-          if (text.startsWith("\\s", pos + 2)) continue;
-          if (block && (pos + 2 == text.length() || text.charAt(pos + 2) == '\n')) continue;
-          holder.registerProblem(literal, TextRange.create(pos, pos+2),
+          pos = text.indexOf('\\', pos);
+          if (pos == -1 || pos == text.length() - 1) return;
+          char next = text.charAt(pos + 1);
+          if (next == 'u') {
+            // unicode escape
+            pos += 6;
+            continue;
+          }
+          pos += 2;
+          if (next >= '0' && next <= '9') {
+            // octal escape
+            if (pos < text.length() && text.charAt(pos) >= '0' && text.charAt(pos) <= '9') pos++;
+            if (pos < text.length() && text.charAt(pos) >= '0' && text.charAt(pos) <= '9') pos++;
+            continue;
+          }
+          if (next != 's') {
+            // other escapes
+            continue;
+          }
+          if (pos > 4 && text.startsWith("\\s", pos - 4)) continue;
+          if (text.startsWith("\\s", pos)) continue;
+          if (block && (pos == text.length() || text.charAt(pos) == '\n')) continue;
+          holder.registerProblem(literal, TextRange.create(pos - 2, pos),
                                  InspectionGadgetsBundle.message("inspection.use.of.slash.s.message"),
-                                 new ReplaceWithSpaceFix(pos));
+                                 new ReplaceWithSpaceFix(pos - 2));
         }
       }
     };
