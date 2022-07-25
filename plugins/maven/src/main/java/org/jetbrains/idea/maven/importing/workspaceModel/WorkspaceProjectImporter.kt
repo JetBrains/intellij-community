@@ -87,7 +87,7 @@ class WorkspaceProjectImporter(
       .mapTo(FileCollectionFactory.createCanonicalFilePathSet()) { it.mavenProjectFilePath }
 
     val allProjectToImport = myProjectsTree.projects
-      .filter { !MavenProjectsManager.getInstance(myProject).isIgnored(it) }
+      .filter { !myProjectsTree.isIgnored(it) }
       .associateWith {
         val newProjectToImport = it.file.path !in projectFilesFromPreviousImport
         if (newProjectToImport) MavenProjectChanges.ALL else originalProjectsChanges.getOrDefault(it, MavenProjectChanges.NONE)
