@@ -16,12 +16,12 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.api
 
+import com.intellij.util.io.URLUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.api.http.requestString
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import org.apache.commons.httpclient.util.URIUtil
 import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import org.jetbrains.packagesearch.api.v2.ApiRepositoriesResponse
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
@@ -70,11 +70,11 @@ internal class PackageSearchApiClient(
             return emptyStandardV2PackagesWithRepos
         }
 
-        val joinedRepositoryIds = repositoryIds.joinToString(",") { URIUtil.encodeQuery(it) }
+        val joinedRepositoryIds = repositoryIds.joinToString(",") { URLUtil.encodeQuery(it) }
         val requestUrl = buildString {
             append(baseUrl)
             append("/package?query=")
-            append(URIUtil.encodeQuery(searchQuery))
+            append(URLUtil.encodeQuery(searchQuery))
             append("&onlyStable=")
             append(onlyStable.toString())
             append("&onlyMpp=")
@@ -103,7 +103,7 @@ internal class PackageSearchApiClient(
             PackageSearchBundle.message("packagesearch.search.client.error.no.versions.for.range")
         }
 
-        val joinedRange = range.joinToString(",") { URIUtil.encodeQuery(it) }
+        val joinedRange = range.joinToString(",") { URLUtil.encodeQuery(it) }
         val requestUrl = "$baseUrl/package?range=$joinedRange"
 
         return requestString(requestUrl, contentType.standard, timeoutInSeconds, headers)
