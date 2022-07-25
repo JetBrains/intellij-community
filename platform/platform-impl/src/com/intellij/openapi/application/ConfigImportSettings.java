@@ -2,12 +2,15 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 @ApiStatus.Internal
 public interface ConfigImportSettings {
@@ -43,7 +46,8 @@ public interface ConfigImportSettings {
   default void processPluginsToMigrate(@NotNull Path newConfigDir,
                                        @NotNull Path oldConfigDir,
                                        @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
-                                       @NotNull List<IdeaPluginDescriptor> pluginsToDownload) { }
+                                       @NotNull List<IdeaPluginDescriptor> pluginsToDownload,
+                                       @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) { }
 
   /**
    * @param prefix is a platform prefix of {@code configDirectory}
