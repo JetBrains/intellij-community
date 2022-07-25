@@ -142,7 +142,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     var writer = new StringWriter(t == null ? 256 : 4096);
 
     var source = category.substring(Math.max(category.length() - 30, 0));
-    writer.write(String.format("%1$tH:%1$tM:%1$tS,%1$tL %2$-5s %3$30s - ", System.currentTimeMillis(), level.getLevelName(), source));
+    writer.write(String.format("%1$tH:%1$tM:%1$tS,%1$tL %2$-6s %3$30s - ", System.currentTimeMillis(), level.getLevelName(), source));
     writer.write(message != null ? message : "");
     writer.write(System.lineSeparator());
     if (t != null) {
