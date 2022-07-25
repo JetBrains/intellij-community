@@ -278,7 +278,14 @@ public final class IncProjectBuilder {
       }
     }
     // compute estimated times for dirty targets
-    long estimatedWorkTime = calculateEstimatedBuildTime(myProjectDescriptor, targetsState, scope);
+    final long estimatedWorkTime = calculateEstimatedBuildTime(myProjectDescriptor, new Predicate<BuildTarget<?>>() {
+      private final Set<BuildTargetType<?>> allTargetsAffected = new HashSet<>(JavaModuleBuildTargetType.ALL_TYPES);
+      @Override
+      public boolean test(BuildTarget<?> target) {
+        // optimization, since we know here that all targets of types JavaModuleBuildTargetType are affected
+        return allTargetsAffected.contains(target.getTargetType()) || scope.isAffected(target);
+      }
+    });
     if (LOG.isDebugEnabled()) {
       LOG.debug("Rebuild heuristic: estimated build time / timeThreshold : " + estimatedWorkTime + " / " + timeThreshold);
     }
@@ -294,20 +301,13 @@ public final class IncProjectBuilder {
     }
   }
 
-  public static long calculateEstimatedBuildTime(ProjectDescriptor projectDescriptor, BuildTargetsState targetsState, CompileScope scope) {
+  public static long calculateEstimatedBuildTime(ProjectDescriptor projectDescriptor, Predicate<BuildTarget<?>> isAffected) {
+    final BuildTargetsState targetsState = projectDescriptor.getTargetsState();
     // compute estimated times for dirty targets
     long estimatedBuildTime = 0L;
 
-    final Predicate<BuildTarget<?>> isAffected = new Predicate<BuildTarget<?>>() {
-      private final Set<BuildTargetType<?>> allTargetsAffected = new HashSet<>(JavaModuleBuildTargetType.ALL_TYPES);
-      @Override
-      public boolean test(BuildTarget<?> target) {
-        // optimization, since we know here that all targets of types JavaModuleBuildTargetType are affected
-        return allTargetsAffected.contains(target.getTargetType()) || scope.isAffected(target);
-      }
-    };
     final BuildTargetIndex targetIndex = projectDescriptor.getBuildTargetIndex();
-    List<BuildTarget<?>> affectedTarget = new ArrayList<>();
+    int affectedTargets = 0;
     for (BuildTarget<?> target : targetIndex.getAllTargets()) {
       if (!targetIndex.isDummy(target)) {
         final long avgTimeToBuild = targetsState.getAverageBuildTime(target.getTargetType());
@@ -316,12 +316,12 @@ public final class IncProjectBuilder {
           // 2. need to check isAffected() since some targets (like artifacts) may be unaffected even for rebuild
           if (targetsState.getTargetConfiguration(target).isTargetDirty(projectDescriptor) && isAffected.test(target)) {
             estimatedBuildTime += avgTimeToBuild;
-            affectedTarget.add(target);
+            affectedTargets++;
           }
         }
       }
     }
-    LOG.info("Affected build targets count: " + affectedTarget.size());
+    LOG.info("Affected build targets count: " + affectedTargets);
     return estimatedBuildTime;
   }
 
