@@ -7,11 +7,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,6 +26,7 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.firstOrNull
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
@@ -313,10 +316,16 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
             if (useStrongMapForCaching) ConcurrentHashMap() else CollectionFactory.createConcurrentSoftMap()
         }
 
-        return cacheForCurrentModuleInfo.getOrPut(packageFqName) {
-            val packageExists = KotlinPackageIndexUtils.packageExists(packageFqName, moduleInfo.contentScope)
-            LOG.debugIfEnabled(project) { "Computed cache value for $packageFqName in $moduleInfo is $packageExists" }
-            packageExists
+        return try {
+          cacheForCurrentModuleInfo.getOrPut(packageFqName) {
+              val packageExists = KotlinPackageIndexUtils.packageExists(packageFqName, moduleInfo.contentScope)
+              LOG.debugIfEnabled(project) { "Computed cache value for $packageFqName in $moduleInfo is $packageExists" }
+              packageExists
+          }
+        } catch (e: IndexNotReadyException) {
+            DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+                KotlinPackageIndexUtils.packageExists(packageFqName, moduleInfo.contentScope)
+            })
         }
     }
 
