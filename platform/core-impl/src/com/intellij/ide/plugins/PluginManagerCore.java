@@ -70,8 +70,6 @@ public final class PluginManagerCore {
 
   public static final PluginId SPECIAL_IDEA_PLUGIN_ID = PluginId.getId("IDEA CORE");
 
-  static final String PROPERTY_PLUGIN_PATH = "plugin.path";
-
   static final @NonNls String DISABLE = "disable";
   static final @NonNls String ENABLE = "enable";
   static final @NonNls String EDIT = "edit";
