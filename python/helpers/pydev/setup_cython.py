@@ -20,12 +20,17 @@ IS_PY39_OR_GREATER = sys.version_info > (3, 9)
 
 
 def process_args():
+    extension_folder = None
     target_pydevd_name = None
     target_frame_eval = None
     force_cython = False
     target_arch = None
 
     for i, arg in enumerate(sys.argv[:]):
+        if arg == '--build-lib':
+            extension_folder = sys.argv[i + 1]
+            # It shouldn't be removed from sys.argv (among with --build-temp)
+            # because they're passed further to setup().
         if arg.startswith('--target-pyd-name='):
             sys.argv.remove(arg)
             target_pydevd_name = arg[len('--target-pyd-name='):]
@@ -39,11 +44,12 @@ def process_args():
             sys.argv.remove(arg)
             target_arch = arg[len('--target='):]
 
-    return target_pydevd_name, target_frame_eval, force_cython, target_arch
+    return bool(extension_folder), target_pydevd_name, target_frame_eval, \
+        force_cython, target_arch
 
 
 def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
-                    target_arch):
+                    target_arch, extended=False):
     pyx_file = os.path.join(os.path.dirname(__file__), dir_name,
                             "%s.pyx" % (extension_name,))
     has_pxd = False
@@ -97,14 +103,14 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
             # Always compile the .c (and not the .pyx) file (which we should keep
             # up-to-date by running build_tools/build.py).
             ext_modules = [Extension(
-                "%s.%s" % (dir_name, target_pydevd_name,),
+                "%s%s.%s" % (dir_name, "_ext" if extended else "", target_pydevd_name),
                 [os.path.join(dir_name, "%s.c" % target_pydevd_name), ],
                 # uncomment to generate pdbs for visual studio.
                 # extra_compile_args=["-Zi", "/Od"],
                 # extra_link_args=["-debug"],
                 extra_compile_args=extra_compile_args,
                 extra_link_args=extra_link_args,
-                )]
+            )]
 
         setup(
             name='Cythonize',
@@ -112,37 +118,37 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
         )
     finally:
         if target_pydevd_name != extension_name:
-            # noinspection PyBroadException
             try:
                 # noinspection PyUnboundLocalVariable
                 os.remove(new_pyx_file)
-            except:
+            except:  # noqa: 722
                 import traceback
                 traceback.print_exc()
             try:
                 # noinspection PyUnboundLocalVariable
                 os.remove(new_c_file)
-            except:
+            except: # noqa: 722
                 import traceback
                 traceback.print_exc()
             if has_pxd:
-                # noinspection PyBroadException
                 try:
                     # noinspection PyUnboundLocalVariable
                     os.remove(new_pxd_file)
-                except:
+                except:  # noqa: 722
                     import traceback
                     traceback.print_exc()
 
 
 def main():
-    target_pydevd_name, target_frame_eval, force_cython, target_arch = process_args()
+    extended, target_pydevd_name, target_frame_eval, force_cython, target_arch \
+        = process_args()
 
     extension_name = "pydevd_cython"
     target_pydevd_name = target_pydevd_name or extension_name
 
     build_extension(
-        "_pydevd_bundle", extension_name, target_pydevd_name, force_cython, target_arch)
+        "_pydevd_bundle", extension_name, target_pydevd_name, force_cython, target_arch,
+        extended)
 
     if IS_PY36_OR_GREATER:
         extension_name = "pydevd_frame_evaluator"
@@ -150,7 +156,8 @@ def main():
 
         target_frame_eval_common = "%s_%s" % (extension_name, "common")
         build_extension(frame_eval_dir_name, target_frame_eval_common,
-                        target_frame_eval_common, force_cython, target_arch)
+                        target_frame_eval_common, force_cython, target_arch,
+                        extended)
 
         if IS_PY39_OR_GREATER:
             extension_name += "_py39_and_above"
@@ -158,7 +165,7 @@ def main():
         target_frame_eval = target_frame_eval or extension_name
 
         build_extension(frame_eval_dir_name, extension_name, target_frame_eval,
-                        force_cython, target_arch)
+                        force_cython, target_arch, extended)
 
 
 if __name__ == "__main__":
