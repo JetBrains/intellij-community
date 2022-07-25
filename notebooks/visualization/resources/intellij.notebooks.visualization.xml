@@ -87,7 +87,7 @@
     <getDataRule
       key="NOTEBOOK_CELL_LINES_INTERVAL"
       implementationClass="org.jetbrains.plugins.notebooks.visualization.NotebookCellLinesIntervalDataRule"
-      type="fast"/>
+      type="context"/>
     <getDataRule
       key="EDITORS_WITH_OFFSETS_DATA_KEY"
       implementationClass="org.jetbrains.plugins.notebooks.visualization.EditorsWithOffsetsDataRule"
