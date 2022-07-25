@@ -1,6 +1,6 @@
 ## 38
 
-* `classLoading` changed - added `preparedCount` metric on Linux 
+* `classLoading` changed - added `preparedCount` and `loadedCount` metrics on Linux 
 
 ## 37
 
