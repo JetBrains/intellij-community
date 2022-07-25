@@ -8,6 +8,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Button.buttonOutlineColorStart
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
@@ -30,8 +31,7 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     header.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(StartupUiUtil.getLabelFont().size2D + JBUI.scale(4))
     vPanel.add(header)
     vPanel.add(rigid(0, 4))
-    val description = JLabel(
-      "<html>${getDescription()}</html>").also {
+    val description = JLabel("<html>${getDescription()}</html>").also {
       it.font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().size2D + (when {
         SystemInfo.isLinux -> JBUIScale.scale(-2)
         SystemInfo.isMac -> JBUIScale.scale(-1)
@@ -87,21 +87,21 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     return buttonPlace
   }
 
-  fun rigid(width: Int, height: Int): Component {
+  private fun rigid(width: Int, height: Int): Component {
     return scaledRigid(JBUI.scale(width), JBUI.scale(height))
   }
 
-  fun scaledRigid(width: Int, height: Int): Component {
+  private fun scaledRigid(width: Int, height: Int): Component {
     return (Box.createRigidArea(Dimension(width, height)) as JComponent).apply {
       alignmentX = Component.LEFT_ALIGNMENT
       alignmentY = Component.TOP_ALIGNMENT
     }
   }
 
-  abstract fun getHeaderLabel(): String
-  abstract fun getActionLabel(): String
+  abstract fun getHeaderLabel(): @Nls String
+  abstract fun getActionLabel(): @Nls String
   abstract fun runAction()
-  abstract fun getDescription(): String
+  abstract fun getDescription(): @Nls String
   abstract fun promoImage(): Icon
   protected open fun outLineColor() = buttonOutlineColorStart(false)
 }
