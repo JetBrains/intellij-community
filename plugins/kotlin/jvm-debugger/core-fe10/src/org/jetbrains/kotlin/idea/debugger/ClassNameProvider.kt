@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.ArrayList
 import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 
 class ClassNameProvider(
     private val project: Project,

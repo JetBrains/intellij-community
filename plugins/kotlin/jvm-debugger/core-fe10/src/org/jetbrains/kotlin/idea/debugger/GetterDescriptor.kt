@@ -18,6 +18,7 @@ import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Type
 import org.jetbrains.kotlin.idea.debugger.base.util.safeReturnType
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import java.util.concurrent.CompletableFuture
 
 class GetterDescriptor(

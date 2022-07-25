@@ -14,6 +14,7 @@ import com.intellij.ui.awt.RelativePoint
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.JList
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import javax.swing.ListCellRenderer
 
 class InlineFunctionHyperLinkInfo(

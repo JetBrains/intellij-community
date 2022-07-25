@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.function.Function
 import javax.swing.JComponent
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 
 class KotlinAlternativeSourceNotificationProvider : EditorNotificationProvider {
 

@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle.message
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper.getNavigationElement
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper.getOriginalElement
 import org.jetbrains.kotlin.idea.project.platform
@@ -44,6 +43,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle.message
 
 interface SourcePositionRefiner {
     fun refineSourcePosition(sourcePosition: SourcePosition): SourcePosition

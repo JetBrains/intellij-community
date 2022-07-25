@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
 import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSourcesAsync
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 
 class KotlinClassRenderer : ClassRenderer() {
     init {

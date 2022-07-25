@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass;
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade;
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinPsiElementMemberChooserObject;
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable;
-import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle;
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle;
 import org.jetbrains.kotlin.psi.KtClassOrObject;
 import org.jetbrains.kotlin.psi.KtDeclaration;
 import org.jetbrains.kotlin.psi.KtProperty;
