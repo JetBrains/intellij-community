@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger.breakpoints
+package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.impl.DebuggerUtilsEx
