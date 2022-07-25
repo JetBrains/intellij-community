@@ -438,11 +438,10 @@ private fun logPlugins(plugins: Collection<IdeaPluginDescriptorImpl>,
     appendPlugin(descriptor, target)
   }
 
-  for (plugin in loadingResult.getIncompletePlugins()) {
+  for ((pluginId, descriptor) in loadingResult.getIncompleteIdMap()) {
     // log only explicitly disabled plugins
-    val pluginId = plugin.pluginId
     if (context.isPluginDisabled(pluginId) && !disabledPlugins.contains(pluginId)) {
-      appendPlugin(plugin, disabled)
+      appendPlugin(descriptor, disabled)
     }
   }
 

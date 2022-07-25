@@ -806,7 +806,7 @@ public final class PluginManagerCore {
       checkEssentialPluginsAreAvailable(idMap);
     }
 
-    PluginSet pluginSet = pluginSetBuilder.createPluginSet(loadingResult.getIncompletePlugins());
+    PluginSet pluginSet = pluginSetBuilder.createPluginSet(loadingResult.getIncompleteIdMap().values());
     new ClassLoaderConfigurator(pluginSet, coreLoader).configure();
     return new PluginManagerState(pluginSet, disabledRequired, disabledAfterInit);
   }

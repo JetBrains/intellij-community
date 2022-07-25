@@ -895,7 +895,7 @@ public final class ConfigImportHelper {
       (isBroken ? pluginsToDownload : pluginsToMigrate).add(descriptor);
     }
 
-    for (IdeaPluginDescriptorImpl descriptor : result.getIncompletePlugins()) {
+    for (IdeaPluginDescriptorImpl descriptor : result.getIncompleteIdMap().values()) {
       if (descriptor.isBundled()) {
         continue;
       }

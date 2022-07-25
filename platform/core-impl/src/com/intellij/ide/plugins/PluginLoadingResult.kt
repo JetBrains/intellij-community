@@ -20,10 +20,6 @@ import java.util.*
 class PluginLoadingResult(private val checkModuleDependencies: Boolean = !PlatformUtils.isIntelliJ()) {
   private val incompletePlugins = HashMap<PluginId, IdeaPluginDescriptorImpl>()
 
-  fun getIncompletePlugins(): Collection<IdeaPluginDescriptorImpl> {
-    return if (incompletePlugins.isEmpty()) emptyList() else incompletePlugins.values
-  }
-
   @JvmField val enabledPluginsById = HashMap<PluginId, IdeaPluginDescriptorImpl>()
 
   private val idMap = HashMap<PluginId, IdeaPluginDescriptorImpl>()
@@ -42,6 +38,8 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     get() = enabledPluginsById.entries.sortedBy { it.key }.map { it.value }
 
   internal fun copyPluginErrors(): MutableMap<PluginId, PluginLoadingError> = HashMap(pluginErrors)
+
+  fun getIncompleteIdMap(): Map<PluginId, IdeaPluginDescriptorImpl> = incompletePlugins
 
   fun getIdMap(): Map<PluginId, IdeaPluginDescriptorImpl> = idMap
 
