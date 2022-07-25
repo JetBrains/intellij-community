@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
+import org.jetbrains.kotlin.idea.debugger.KotlinReentrantSourcePosition;
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle;
-import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager;
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ApplicabilityResult;
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinLineBreakpoint;
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.LineBreakpointExpressionVisitor;
@@ -59,7 +59,7 @@ public class KotlinLineBreakpointType extends JavaLineBreakpointType implements 
     public boolean matchesPosition(@NotNull LineBreakpoint<?> breakpoint, @NotNull SourcePosition position) {
         JavaBreakpointProperties properties = getProperties(breakpoint);
         if (properties == null || properties instanceof JavaLineBreakpointProperties) {
-            if (position instanceof KotlinPositionManager.KotlinReentrantSourcePosition) {
+            if (position instanceof KotlinReentrantSourcePosition) {
                 return false;
             }
 

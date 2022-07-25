@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 
-abstract class DelegateSourcePosition(private var delegate: SourcePosition) : SourcePosition() {
+sealed class DelegateSourcePosition(private var delegate: SourcePosition) : SourcePosition() {
     override fun getFile(): PsiFile = delegate.file
     override fun getElementAt(): PsiElement? = delegate.elementAt
     override fun getLine(): Int = delegate.line
@@ -27,3 +27,7 @@ abstract class DelegateSourcePosition(private var delegate: SourcePosition) : So
 
     override fun toString() = "DSP($delegate)"
 }
+
+class KotlinSourcePositionWithEntireLineHighlighted(delegate: SourcePosition) : DelegateSourcePosition(delegate)
+
+class KotlinReentrantSourcePosition(delegate: SourcePosition) : DelegateSourcePosition(delegate)

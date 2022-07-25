@@ -245,9 +245,6 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             .toList()
     }
 
-    class KotlinSourcePositionWithEntireLineHighlighted(delegate: SourcePosition) : DelegateSourcePosition(delegate)
-    class KotlinReentrantSourcePosition(delegate: SourcePosition) : DelegateSourcePosition(delegate)
-
     private fun getAlternativeSource(location: Location): PsiFile? {
         val manager = PsiManager.getInstance(debugProcess.project)
         val qName = location.declaringType().name()
@@ -539,7 +536,7 @@ private fun decorateSourcePosition(location: Location, sourcePosition: SourcePos
     if (lambda !is KtFunctionLiteral) return sourcePosition
     val lines = lambda.getLineRange() ?: return sourcePosition
     if (!location.hasVisibleInlineLambdasOnLines(lines)) {
-        return KotlinPositionManager.KotlinSourcePositionWithEntireLineHighlighted(sourcePosition)
+        return KotlinSourcePositionWithEntireLineHighlighted(sourcePosition)
     }
     return sourcePosition
 }
