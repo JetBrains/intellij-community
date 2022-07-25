@@ -114,8 +114,8 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
-  private inner class MyWorkspaceModelChangeListener : ContentRootChangeListener() {
-    override fun rootsDirectoriesChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
+  private inner class MyWorkspaceModelChangeListener : ContentRootChangeListener(skipFileChanges = true) {
+    override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
       if (added.isNotEmpty() && vcsManager.haveDefaultMapping() == null) {
         synchronized(dirtyContentRoots) {
           dirtyContentRoots.addAll(added)
@@ -132,13 +132,13 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
-  private inner class InitialMappingsDetectionListener : ContentRootChangeListener() {
+  private inner class InitialMappingsDetectionListener : ContentRootChangeListener(skipFileChanges = true) {
     override fun changed(event: VersionedStorageChange) {
       if (!vcsManager.needAutodetectMappings()) return
       super.changed(event)
     }
 
-    override fun rootsDirectoriesChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
+    override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
       queue.queue(DelayedFullScan())
     }
   }

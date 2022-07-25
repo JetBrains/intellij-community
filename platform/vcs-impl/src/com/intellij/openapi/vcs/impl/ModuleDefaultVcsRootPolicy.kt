@@ -46,8 +46,8 @@ open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(p
     return result
   }
 
-  private inner class MyModulesListener : ContentRootChangeListener() {
-    override fun rootsDirectoriesChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
+  private inner class MyModulesListener : ContentRootChangeListener(skipFileChanges = true) {
+    override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
       scheduleMappedRootsUpdate()
     }
   }

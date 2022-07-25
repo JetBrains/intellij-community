@@ -8,7 +8,9 @@ import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
-abstract class ContentRootChangeListener : WorkspaceModelChangeListener {
+abstract class ContentRootChangeListener(
+  val skipFileChanges: Boolean
+) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
     val removedUrls = mutableSetOf<VirtualFileUrl>()
     val addedUrls = mutableSetOf<VirtualFileUrl>()
@@ -23,19 +25,27 @@ abstract class ContentRootChangeListener : WorkspaceModelChangeListener {
       }
     }
 
-    val removed = removedUrls
+    var removed = removedUrls
+      .asSequence()
       .filter { !addedUrls.contains(it) } // Do not process 'modifications' of any kind (ex: excluded root changes).
       .mapNotNull { it.virtualFile }
-      .filter { it.isDirectory } // Filter-out 'file as content-roots'. Ex: Rider-project model.
-    val added = addedUrls
+    var added = addedUrls
+      .asSequence()
       .filter { !removedUrls.contains(it) }
       .mapNotNull { it.virtualFile }
-      .filter { it.isDirectory }
 
-    if (removed.isNotEmpty() || added.isNotEmpty()) {
-      rootsDirectoriesChanged(removed, added)
+    if (skipFileChanges) {
+      // Filter-out 'file as content-roots'. Ex: Rider-project model.
+      removed = removed.filter { it.isDirectory }
+      added = added.filter { it.isDirectory }
+    }
+
+    val removedList = removed.toList()
+    val addedList = added.toList()
+    if (removedList.isNotEmpty() || addedList.isNotEmpty()) {
+      contentRootsChanged(removedList, addedList)
     }
   }
 
-  abstract fun rootsDirectoriesChanged(removed: List<VirtualFile>, added: List<VirtualFile>)
+  abstract fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>)
 }
