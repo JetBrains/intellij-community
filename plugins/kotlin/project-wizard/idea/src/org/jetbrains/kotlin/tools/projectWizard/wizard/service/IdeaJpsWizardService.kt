@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard.service
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.jarRepository.JarRepositoryManager
+import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -20,6 +21,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
@@ -27,14 +29,17 @@ import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle.Companion.I
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ProjectImportingWizardService
+import org.jetbrains.kotlin.tools.projectWizard.core.service.isStable
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.inContextOfModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
+import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repository
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 import org.jetbrains.kotlin.tools.projectWizard.wizard.IdeWizard
@@ -59,6 +64,7 @@ class IdeaJpsWizardService(
     ): TaskResult<Unit> {
         KotlinSdkType.setUpIfNeeded()
         val projectImporter = ProjectImporter(project, modulesModel, path, modulesIrs)
+        addRepositoryForNonReleasedVersion()
         modulesBuilder.addModuleConfigurationUpdater(
             JpsModuleConfigurationUpdater(ideWizard.jpsData, projectImporter, project, reader)
         )
@@ -66,6 +72,22 @@ class IdeaJpsWizardService(
         projectImporter.import()
         Disposer.dispose(ideWizard.jpsData.libraryOptionsPanel)
         return UNIT_SUCCESS
+    }
+
+    private fun addRepositoryForNonReleasedVersion() {
+        val kotlinVersion = IdeaKotlinVersionProviderService().getKotlinVersion(ProjectKind.Singleplatform)
+        if (kotlinVersion.kind.isStable) return
+
+        val repository = kotlinVersion.repository
+        val currentRepositories = RemoteRepositoriesConfiguration.getInstance(project).repositories
+        if (currentRepositories.any { it.url == repository.url }) return
+
+        RemoteRepositoriesConfiguration.getInstance(project).repositories =
+            currentRepositories + RemoteRepositoryDescription(
+                repository.idForMaven,
+                repository.idForMaven,
+                repository.url
+            )
     }
 }
 
