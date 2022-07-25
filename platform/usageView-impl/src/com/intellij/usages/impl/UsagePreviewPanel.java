@@ -6,8 +6,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.findUsages.similarity.MostCommonUsagePatternsComponent;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -37,6 +36,7 @@ import com.intellij.usages.UsageContextPanel;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
+import com.intellij.usages.similarity.clustering.UsageCluster;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,6 +57,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import static com.intellij.find.findUsages.similarity.MostCommonUsagePatternsComponent.findClusteringSessionInUsageView;
+
 public class UsagePreviewPanel extends UsageContextPanelBase implements DataProvider {
   public static final String LINE_HEIGHT_PROPERTY = "UsageViewPanel.lineHeightProperty";
 
@@ -70,6 +72,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private @Nullable MostCommonUsagePatternsComponent myCommonUsagePatternsComponent;
   private @NotNull Set<GroupNode> myPreviousSelectedGroupNodes = new HashSet<>();
+  private @Nullable UsagePreviewToolbarWithSimilarUsagesLink myToolbar;
 
   public UsagePreviewPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
     this(project, presentation, false);
@@ -141,7 +144,6 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       setLineHeight(myEditor.getLineHeight());
       myEditor.setBorder(null);
       add(myEditor.getComponent(), BorderLayout.CENTER);
-
       invalidate();
       validate();
     }
@@ -352,7 +354,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     myCommonUsagePatternsComponent = null;
   }
 
-  private void releaseEditor() {
+  void releaseEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myEditor != null) {
       EditorFactory.getInstance().releaseEditor(myEditor);
@@ -401,6 +403,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       }
       else {
         updateLayoutLater(infos);
+        updateSimilarUsagesToolBar(infos, usageView);
       }
       myPreviousSelectedGroupNodes = selectedGroupNodes;
     }
@@ -409,7 +412,26 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     }
   }
 
-  private void showMostCommonUsagePatterns(@NotNull UsageViewImpl usageViewImpl, @NotNull Set<? extends @NotNull GroupNode> selectedGroupNodes) {
+  public void updateSimilarUsagesToolBar(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
+    if (Registry.is("similarity.find.usages.show.similar.usages.in.usage.preview")) {
+      if (myToolbar != null) {
+        remove(myToolbar);
+        revalidate();
+      }
+      ClusteringSearchSession session = findClusteringSessionInUsageView(usageView);
+      if (session != null) {
+        UsageCluster cluster = session.findCluster(infos);
+        if (cluster != null && cluster.getUsages().size() > 1) {
+          myToolbar = new UsagePreviewToolbarWithSimilarUsagesLink(this, usageView, infos, cluster);
+          add(myToolbar, BorderLayout.NORTH);
+        }
+      }
+    }
+  }
+
+
+  private void showMostCommonUsagePatterns(@NotNull UsageViewImpl usageViewImpl,
+                                           @NotNull Set<? extends @NotNull GroupNode> selectedGroupNodes) {
     if (!myPreviousSelectedGroupNodes.equals(selectedGroupNodes)) {
       releaseEditor();
       disposeMostCommonUsageComponent();
