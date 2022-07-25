@@ -97,6 +97,7 @@ data class LibraryLicense(
 
   fun getLibraryLicenseUrl(): String? = licenseUrl ?: PREDEFINED_LICENSE_URLS.get(license)
 
+  @Deprecated("Please specify exact URL for the Apache license, pointing to the repo of the dependency")
   fun apache(): LibraryLicense {
     require(license == null) { "No need to specify 'license' for Apache 2.0" }
     require(licenseUrl?.contains("apache.org/licenses") != true) { "No need to specify default 'licenseUrl' for Apache 2.0" }
@@ -106,6 +107,15 @@ data class LibraryLicense(
     )
   }
 
+  fun apache(licenseUrl: String): LibraryLicense {
+    require(license == null) { "No need to specify 'license' for Apache 2.0" }
+    return copy(
+      license = "Apache 2.0",
+      licenseUrl = licenseUrl
+    )
+  }
+
+  @Deprecated("Please specify exact URL for the BSD license, pointing to the repo of the dependency")
   fun simplifiedBsd(): LibraryLicense {
     require(license == null) { "No need to specify 'license' for Simplified BSD" }
     require(licenseUrl?.contains("opensource.org/licenses") != true) { "No need to specify default 'licenseUrl' for Simplified BSD" }
@@ -115,6 +125,14 @@ data class LibraryLicense(
     )
   }
 
+  fun simplifiedBsd(licenseUrl: String): LibraryLicense {
+    require(license == null) { "No need to specify 'license' for Simplified BSD" }
+    return copy(
+      license = "BSD 2-Clause",
+      licenseUrl = licenseUrl
+    )
+  }
+  @Deprecated("Please specify exact URL for the BSD license, pointing to the repo or Web site of the dependency")
   fun newBsd(): LibraryLicense {
     require(license == null) { "No need to specify 'license' for New BSD" }
     require(licenseUrl?.contains("opensource.org/licenses") != true) { "No need to specify default 'licenseUrl' for New BSD" }
@@ -124,6 +142,15 @@ data class LibraryLicense(
     )
   }
 
+  fun newBsd(licenseUrl: String): LibraryLicense {
+    require(license == null) { "No need to specify 'license' for New BSD" }
+    return copy(
+      license = "BSD 3-Clause",
+      licenseUrl = licenseUrl
+    )
+  }
+
+  @Deprecated("Please specify exact URL for the MIT license, pointing to the repo or Web site of the dependency")
   fun mit(): LibraryLicense {
     require(license == null) { "No need to specify 'license' for MIT" }
     require(licenseUrl?.contains("opensource.org/licenses") != true) { "No need to specify default 'licenseUrl' for MIT" }
@@ -133,8 +160,25 @@ data class LibraryLicense(
     )
   }
 
+  fun mit(licenseUrl: String): LibraryLicense {
+    require(license == null) { "No need to specify 'license' for MIT" }
+    return copy(
+      license = "MIT",
+      licenseUrl = licenseUrl
+    )
+  }
+
   fun eplV1(): LibraryLicense = epl(1)
   fun eplV2(): LibraryLicense = epl(2)
+  fun eplV2(licenseUrl: String): LibraryLicense = epl(licenseUrl, 2)
+
+  private fun epl(licenseUrl: String, v: Int): LibraryLicense {
+    require(license == null) { "No need to specify 'license' for EPL" }
+    return copy(
+      license = "Eclipse Public License ${v}.0",
+      licenseUrl = licenseUrl
+    )
+  }
 
   private fun epl(v: Int): LibraryLicense {
     require(v == 1 || v == 2) { "Version must be either 1 or 2 for Eclipse Public License" }
