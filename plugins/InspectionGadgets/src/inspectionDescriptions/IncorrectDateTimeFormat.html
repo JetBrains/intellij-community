@@ -11,12 +11,11 @@ Reports incorrect date time format patterns.
 </ul>
 <p>
   Examples:<br>
-  <code>DateTimeFormatter.ofPattern("[][]])"<br></code>
-  <code>DateTimeFormatter.ofPattern("TT")<br></code>
-  <code>DateTimeFormatter.ofPattern("[[")<br></code>
-  <code>DateTimeFormatter.ofPattern("{")<br></code>
-  <code>DateTimeFormatter.ofPattern("MMMMMM")<br></code>
+  <code>DateTimeFormatter.ofPattern("[][]]])"<br></code> ("]" doesn't have previous "[")
+  <code>DateTimeFormatter.ofPattern("TT")<br></code> (This pattern contains unsupported token "TT")
+  <code>DateTimeFormatter.ofPattern("{")<br></code> (This pattern contains reserved character "{")
 </p>
 <!-- tooltip end -->
+<p><small>New in 2022.3</small></p>
 </body>
 </html>

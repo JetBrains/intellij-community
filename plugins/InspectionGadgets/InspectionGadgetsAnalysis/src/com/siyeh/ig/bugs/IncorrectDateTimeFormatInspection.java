@@ -7,22 +7,24 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.ConstantExpressionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
 public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private interface CountVerifier {
-    boolean verifier(int count);
+    boolean verify(int count);
   }
 
   private static class RangeVerifier implements CountVerifier {
@@ -35,7 +37,7 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public boolean verifier(int count) {
+    public boolean verify(int count) {
       return count >= from && count <= to;
     }
   }
@@ -45,15 +47,14 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
   }
 
   private static class SetVerifier implements CountVerifier {
-    private final Set<Integer> set;
+    private final IntSet set;
 
     private SetVerifier(int... numbers) {
-      set = Arrays.stream(numbers).boxed()
-        .collect(Collectors.toSet());
+      set = IntOpenHashSet.of(numbers);
     }
 
     @Override
-    public boolean verifier(int count) {
+    public boolean verify(int count) {
       return set.contains(count);
     }
   }
@@ -62,7 +63,7 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
     return new SetVerifier(numbers);
   }
 
-  Map<Character, CountVerifier> DATE_TIME_FORMATTER_ALLOWED = Map.ofEntries(
+  private static final Map<Character, CountVerifier> DATE_TIME_FORMATTER_ALLOWED = Map.ofEntries(
     Map.entry('G', rangeOf(1, 5)),
     Map.entry('u', rangeOf(1, 19)),
     Map.entry('y', rangeOf(1, 19)),
@@ -121,9 +122,7 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
       }
 
       private void processExpression(@NotNull PsiExpression expression) {
-        Object patternObject = ConstantExpressionUtil.computeCastTo(expression,
-                                                                    PsiType.getJavaLangString(expression.getManager(),
-                                                                                              expression.getResolveScope()));
+        Object patternObject = ExpressionUtils.computeConstantExpression(expression);
         if (!(patternObject instanceof String)) return;
         String pattern = (String)patternObject;
         List<Token> tokens = new ArrayList<>();
@@ -142,7 +141,7 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
               continue;
             }
             else {
-              tokens.add(new Token(pos - length + 1, array, length));
+              tokens.add(new Token(array, pos - length + 1, length));
               checkPadding(expression, array, pos - length + 1, pos + 1);
             }
           }
@@ -168,20 +167,25 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
           }
           if (c == ']') {
             optionalDepth--;
+            checkOptionalDepthProblem(expression, optionalDepth, pos);
+            if (optionalDepth < 0) {
+              //reset after problem
+              optionalDepth = 0;
+            }
           }
         }
 
         checkInQuoteProblem(expression, inQuote, lastQuoteIndex);
-        checkOptionalDepthProblem(expression, optionalDepth);
 
         for (Token token : tokens) {
           checkAvailableCount(expression, token, holder);
         }
       }
 
-      private void checkOptionalDepthProblem(@NotNull PsiExpression expression, int optionalDepth) {
+      private void checkOptionalDepthProblem(@NotNull PsiExpression expression, int optionalDepth, int pos) {
         if (optionalDepth < 0) {
-          holder.registerProblem(expression, null,
+          TextRange range = ExpressionUtils.findStringLiteralRange(expression, pos, pos + 1);
+          holder.registerProblem(expression, range,
                                  InspectionGadgetsBundle.message("inspection.incorrect.date.format.message.unpaired", ']'),
                                  LocalQuickFix.EMPTY_ARRAY);
         }
@@ -190,11 +194,9 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
       private void checkInQuoteProblem(@NotNull PsiExpression expression, boolean inQuote, int lastQuoteIndex) {
         if (inQuote) {
           TextRange range = ExpressionUtils.findStringLiteralRange(expression, lastQuoteIndex, lastQuoteIndex + 1);
-          if (range != null) {
-            holder.registerProblem(expression, range,
-                                   InspectionGadgetsBundle.message("inspection.incorrect.date.format.message.unpaired", '\''),
-                                   LocalQuickFix.EMPTY_ARRAY);
-          }
+          holder.registerProblem(expression, range,
+                                 InspectionGadgetsBundle.message("inspection.incorrect.date.format.message.unpaired", '\''),
+                                 LocalQuickFix.EMPTY_ARRAY);
         }
       }
 
@@ -232,7 +234,7 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
           return;
         }
         CountVerifier verifier = DATE_TIME_FORMATTER_ALLOWED.get(token.character);
-        if (verifier == null || !verifier.verifier(token.length)) {
+        if (verifier == null || !verifier.verify(token.length)) {
           TextRange range = ExpressionUtils.findStringLiteralRange(expression, token.pos, token.pos + token.length);
           holder.registerProblem(expression, range,
                                  InspectionGadgetsBundle.message("inspection.incorrect.date.format.message.unsupported",
@@ -248,7 +250,7 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
     final int pos;
     final int length;
 
-    Token(int pos, char[] chars, int length) {
+    Token(char[] chars, int pos, int length) {
       this.character = chars[pos];
       this.pos = pos;
       this.length = length;
