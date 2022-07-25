@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.editor.tables.intentions
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
-import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -33,8 +32,6 @@ internal class MarkdownRemoveColumnIntention: PsiElementBaseIntentionAction() {
       return
     }
     val columnIndex = cell.columnIndex
-    executeCommand(table.project) {
-      table.removeColumn(columnIndex)
-    }
+    table.removeColumn(columnIndex)
   }
 }
