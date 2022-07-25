@@ -397,7 +397,8 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     project.coroutineScope.launch {
       delay(Registry.intValue("ide.background.post.startup.activity.delay", 5_000).toLong())
       // read action - dynamic plugin loading executed as a write action
-      val activities = readAction {
+      // readActionBlocking because maybe called several times, but addExtensionPointListener must be added only once
+      readActionBlocking {
         BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(
           object : ExtensionPointListener<StartupActivity> {
             override fun extensionAdded(extension: StartupActivity, pluginDescriptor: PluginDescriptor) {
@@ -411,7 +412,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         return@launch
       }
 
-      runBackgroundPostStartupActivities(activities)
+      runBackgroundPostStartupActivities(readAction { BACKGROUND_POST_STARTUP_ACTIVITY.extensionList })
     }
   }
 
