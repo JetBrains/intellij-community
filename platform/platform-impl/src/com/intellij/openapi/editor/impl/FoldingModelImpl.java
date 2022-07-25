@@ -141,7 +141,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   public int getEndOffset(@NotNull FoldingGroup group) {
-    final List<FoldRegion> regions = getGroupedRegions(group);
+    List<FoldRegion> regions = getGroupedRegions(group);
     int endOffset = 0;
     for (FoldRegion region : regions) {
       if (region.isValid()) {
@@ -154,14 +154,13 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   void refreshSettings() {
     updateTextAttributes();
 
-    runBatchFoldingOperation(() -> {
+    runBatchFoldingOperation(() ->
       myRegionTree.processAll(region -> {
         if (region instanceof CustomFoldRegion) {
           ((CustomFoldRegion)region).update();
         }
         return true;
-      });
-    });
+      }));
   }
 
   private void updateTextAttributes() {
@@ -359,7 +358,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  public void removeFoldRegion(@NotNull final FoldRegion region) {
+  public void removeFoldRegion(@NotNull FoldRegion region) {
     assertIsDispatchThreadForEditor();
     assertOurRegion(region);
 
@@ -383,7 +382,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     removeRegionFromGroup(region);
   }
 
-  void removeRegionFromGroup(@NotNull FoldRegion region) {
+  private void removeRegionFromGroup(@NotNull FoldRegion region) {
     myGroups.remove(region.getGroup(), region);
   }
 
@@ -622,7 +621,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     clearCachedValues();
   }
 
-  void clearCachedValues() {
+  private void clearCachedValues() {
     myFoldTree.clearCachedValues();
   }
 
@@ -728,7 +727,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  public void addListener(@NotNull final FoldingListener listener, @NotNull Disposable parentDisposable) {
+  public void addListener(@NotNull FoldingListener listener, @NotNull Disposable parentDisposable) {
     myListeners.add(listener);
     Disposer.register(parentDisposable, () -> myListeners.remove(listener));
   }
@@ -930,7 +929,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       finally {
         inCollectCall = false;
       }
-      final int oldLength = end - start;
+      int oldLength = end - start;
       if (oldLength > 0 /* document change can cause regions to become equal*/) {
         for (Object o : affected) {
           //noinspection unchecked
