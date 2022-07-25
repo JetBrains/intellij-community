@@ -49,6 +49,10 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
   }
 
   fun disposeUIResources() {
+    clearLanguagePanels()
+  }
+
+  private fun clearLanguagePanels() {
     languagePanels.forEach { it.configurable.disposeUIResources() }
     languagePanels.clear()
   }
@@ -64,7 +68,7 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
   }
 
   private fun recreateRuntimePanels() {
-    languagePanels.clear()
+    clearLanguagePanels()
     with(mainPanel) {
       removeAll()
       languagesList.resolvedConfigs().forEach {
