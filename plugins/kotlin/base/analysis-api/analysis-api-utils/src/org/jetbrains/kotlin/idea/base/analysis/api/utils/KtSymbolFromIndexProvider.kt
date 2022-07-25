@@ -53,7 +53,7 @@ class KtSymbolFromIndexProvider(private val project: Project) {
         val names = buildSet<Name> {
             forEachNonKotlinCache { cache ->
                 cache.allClassNames.forEach { nameString ->
-                    if (Name.isValidIdentifier(nameString)) return@forEach
+                    if (!Name.isValidIdentifier(nameString)) return@forEach
                     val name = Name.identifier(nameString)
                     if (nameFilter(name)) {
                         add(name)
