@@ -15,10 +15,12 @@ import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.border.Border
 
 internal abstract class ToolWindowToolbar : JPanel() {
   lateinit var defaults: List<String>
@@ -32,7 +34,7 @@ internal abstract class ToolWindowToolbar : JPanel() {
     background = JBUI.CurrentTheme.ToolWindow.background()
 
     val topWrapper = JPanel(BorderLayout())
-    border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 1, 0, 0, 1)
+    border = createBorder()
     topStripe.background = JBUI.CurrentTheme.ToolWindow.background()
     bottomStripe.background = JBUI.CurrentTheme.ToolWindow.background()
     topWrapper.background = JBUI.CurrentTheme.ToolWindow.background()
@@ -41,6 +43,9 @@ internal abstract class ToolWindowToolbar : JPanel() {
     add(topWrapper, BorderLayout.NORTH)
     add(bottomStripe, BorderLayout.SOUTH)
   }
+
+  open fun createBorder():Border = JBUI.Borders.empty()
+  open fun getBorderColor(): Color? = JBUI.CurrentTheme.ToolWindow.borderColor()
 
   abstract fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe
 
