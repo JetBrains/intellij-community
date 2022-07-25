@@ -1195,8 +1195,14 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final Object value1 = expression.getValue();
       final Object value2 = other.getValue();
       if ((value1 instanceof String || value1 instanceof Character) && (value2 instanceof String || value2 instanceof Character)) {
-        myMatchingVisitor.setResult(myMatchingVisitor.matchText(StructuralSearchUtil.normalize(value1.toString()),
-                                                                StructuralSearchUtil.normalize(value2.toString())));
+        String patternValue = value1.toString();
+        if (!patternValue.isEmpty() && patternValue.equals(patternValue.trim())) {
+          myMatchingVisitor.setResult(myMatchingVisitor.matchText(StructuralSearchUtil.normalize(patternValue),
+                                                                  StructuralSearchUtil.normalize(value2.toString())));
+        }
+        else {
+          myMatchingVisitor.setResult(myMatchingVisitor.matchText(patternValue, value2.toString()));
+        }
       }
       else if (value1 != null && value2 != null) {
         myMatchingVisitor.setResult(value1.equals(value2));

@@ -234,6 +234,12 @@ final class BuildOptions {
   static final String VALIDATE_MODULES_STRUCTURE = "intellij.build.module.structure"
   boolean validateModuleStructure = System.getProperty(VALIDATE_MODULES_STRUCTURE, "false").toBoolean()
 
+  /**
+   * Verify whether class files have a forbidden subpaths in them, false by default
+   */
+  static final String VALIDATE_CLASSFILE_SUBPATHS_PROPERTY = "intellij.verify.classfile.subpaths"
+  boolean validateClassFileSubpaths = System.getProperty(VALIDATE_CLASSFILE_SUBPATHS_PROPERTY, "false").toBoolean()
+
   @ApiStatus.Internal
   public boolean compressNonBundledPluginArchive = true
 

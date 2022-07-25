@@ -3,13 +3,12 @@ package com.intellij.util.indexing.diagnostic.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.intellij.util.indexing.diagnostic.ScanningType
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class JsonProjectIndexingHistoryTimes(
   val indexingReason: String? = null,
-  val scanningType: ScanningType = ScanningType.FULL,
+  val wasFullIndexing: Boolean = false,
   val totalUpdatingTime: JsonDuration = JsonDuration(),
   val indexingTime: JsonDuration = JsonDuration(),
   val contentLoadingVisibleTime: JsonDuration = JsonDuration(),

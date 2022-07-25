@@ -47,10 +47,7 @@ final class CrossPlatformDistributionBuilder {
     ProductInfoValidator.checkInArchive(context, targetFile, "")
     context.notifyArtifactBuilt(targetFile)
 
-    Map<String, String> checkerConfig = context.productProperties.versionCheckerConfig
-    if (checkerConfig != null) {
-      ClassVersionChecker.checkVersions(checkerConfig, context, targetFile)
-    }
+    ClassFileChecker.checkClassFiles(targetFile, context)
     return targetFile
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.screenmenu;
 
+import com.intellij.DynamicBundle;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -17,6 +18,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 public class Menu extends MenuItem {
@@ -48,6 +50,23 @@ public class Menu extends MenuItem {
       ourAppMenu.isInHierarchy = true;
     }
     return ourAppMenu;
+  }
+
+  public static void renameAppMenuItems(@Nullable DynamicBundle replacements) {
+    if (replacements == null) return;
+
+    Set<String> keySet = replacements.getResourceBundle().keySet();
+    if (keySet.isEmpty()) return;
+
+    String replace[] = new String[keySet.size()*2];
+    int c = 0;
+    for (String title: keySet) {
+      replace[c] = title;
+      replace[c + 1] = replacements.getMessage(title);
+      c += 2;
+    }
+
+    nativeRenameAppMenuItems(replace);
   }
 
   public void setOnOpen(Runnable fillMenuProcedure, Component component) {
@@ -264,6 +283,9 @@ public class Menu extends MenuItem {
   static
   private native long nativeGetAppMenu();
 
+  static
+  private native void nativeRenameAppMenuItems(String[] replacements);
+
   //
   // Static API
   //
@@ -274,7 +296,7 @@ public class Menu extends MenuItem {
 
     IS_ENABLED = false;
 
-    if (!SystemInfo.isMac) return false;
+    if (!SystemInfo.isMacOSMojave) return false;
     if (!Boolean.getBoolean("jbScreenMenuBar.enabled")) return false;
     if (Boolean.getBoolean("apple.laf.useScreenMenuBar")) {
       Logger.getInstance(Menu.class).info("apple.laf.useScreenMenuBar==true, default screen menu implementation will be used");

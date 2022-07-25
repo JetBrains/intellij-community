@@ -456,5 +456,15 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
 
   static class WSTokenInfo extends TokenInfo {
     WSTokenInfo(char ws) { super(String.valueOf(ws)); }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof WSTokenInfo && ((WSTokenInfo)obj).text.equals(text);
+    }
+
+    @Override
+    public int hashCode() {
+      return text.hashCode();
+    }
   }
 }

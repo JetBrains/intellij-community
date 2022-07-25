@@ -963,10 +963,8 @@ idea.fatal.error.notification=disabled
     DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(context)
     ProjectStructureMapping projectStructureMapping = distributionJARsBuilder.buildJARs(context)
     layoutShared(context)
-    Map<String, String> checkerConfig = context.productProperties.versionCheckerConfig
-    if (checkerConfig != null) {
-      ClassVersionChecker.checkVersions(checkerConfig, context, context.paths.distAllDir)
-    }
+
+    ClassFileChecker.checkClassFiles(context.paths.distAllDir, context)
 
     if (context.productProperties.buildSourcesArchive) {
       DistributionJARsBuilder.buildSourcesArchive(projectStructureMapping, context)

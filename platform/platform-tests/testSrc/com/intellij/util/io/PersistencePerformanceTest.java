@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +15,6 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
-import com.intellij.util.indexing.diagnostic.ScanningType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -109,7 +108,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       Thread.sleep(100);
       new IndexUpdateRunner(index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, UnindexedFilesUpdater.getNumberOfIndexingThreads())
         .indexFiles(getProject(), Collections.singletonList(new IndexUpdateRunner.FileSet(getProject(), "test files", files)),
-                    new EmptyProgressIndicator(), new ProjectIndexingHistoryImpl(getProject(), "Testing", ScanningType.PARTIAL));
+                    new EmptyProgressIndicator(), new ProjectIndexingHistoryImpl(getProject(), "Testing", false));
     }
     for (Future<Boolean> future : futures) {
       assertTrue(future.get());

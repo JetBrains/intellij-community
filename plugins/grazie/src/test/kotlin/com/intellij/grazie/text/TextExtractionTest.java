@@ -15,6 +15,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -319,6 +320,21 @@ public class TextExtractionTest extends BasePlatformTestCase {
       assertEquals(expected, extractor.buildTextContent(literal, TextContent.TextDomain.ALL).toString());
     }).assertTiming();
   }
+
+  public void testBuildingPerformance_complexPsi() {
+    String link = "{@link foo.bar.goo1.goo2.goo3.goo4.goo5.goo6.goo7#zoo(x.x1.x2.x3,y.y1.y2.y3,z.z1.z2.z3)}";
+    var text = "/** @return something if " + link.repeat(10_000) + " is not too expensive */";
+    PsiFile file = myFixture.configureByText("a.java", text);
+    TextExtractor extractor = new JavaTextExtractor();
+    PsiElement tag = PsiTreeUtil.findElementOfClassAtOffset(file, text.indexOf("something"), PsiDocTag.class, false);
+    PlatformTestUtil.startPerformanceTest("TextContent building from complex PSI", 400, () -> {
+      for (int i = 0; i < 10; i++) {
+        TextContent content = extractor.buildTextContent(tag, TextContent.TextDomain.ALL);
+        assertEquals("something if  is not too expensive", content.toString());
+      }
+    }).assertTiming();
+  }
+
 
   public void testCachingWorks() {
     TextExtractor delegate = TextExtractor.EP.forLanguage(MarkdownLanguage.INSTANCE);
