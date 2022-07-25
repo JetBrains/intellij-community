@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.project
 
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PathManager
@@ -12,7 +13,6 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.DirectoryIndex
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Path
 
@@ -31,7 +31,7 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) : Pro
     registerComponents()
     customizeRegisteredComponents()
     componentStore.setPath(projectPath, false, null)
-    runBlocking {
+    runUnderModalProgressIfIsEdt {
       init(preloadServices = true)
     }
   }
