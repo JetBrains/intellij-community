@@ -38,7 +38,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.platform.InspectorValueInfo
@@ -80,21 +79,19 @@ class FocusableLazyListState internal constructor(internal val listState: LazyLi
     val layoutInfo: FocusableLazyListLayoutInfo
         get() = listState.layoutInfo.asFocusable()
 
-    /**
-     * The index of the first item that is visible
-     */
+    /** The index of the first item that is visible */
     val firstVisibleItemIndex: Int get() = listState.firstVisibleItemIndex
 
     /**
-     * The scroll offset of the first visible item. Scrolling forward is positive - i.e., the
-     * amount that the item is offset backwards
+     * The scroll offset of the first visible item. Scrolling forward is
+     * positive - i.e., the amount that the item is offset backwards
      */
     val firstVisibleItemScrollOffset: Int get() = listState.firstVisibleItemScrollOffset
 
     /**
-     * [InteractionSource] that will be used to dispatch drag events when this
-     * list is being dragged. If you want to know whether the fling (or animated scroll) is in
-     * progress, use [isScrollInProgress].
+     * [InteractionSource] that will be used to dispatch drag events when
+     * this list is being dragged. If you want to know whether the fling (or
+     * animated scroll) is in progress, use [isScrollInProgress].
      */
     val interactionSource: InteractionSource get() = listState.interactionSource
 
@@ -134,65 +131,69 @@ private fun List<LazyListItemInfo>.asFocusable(): Sequence<FocusableLazyListItem
 }
 
 /**
- * Contains useful information about the currently displayed layout state of lazy lists like
- * [LazyColumn] or [LazyRow]. For example you can get the list of currently displayed item.
+ * Contains useful information about the currently displayed layout state
+ * of lazy lists like [LazyColumn] or [LazyRow]. For example you can get
+ * the list of currently displayed item.
  *
  * Use [LazyListState.layoutInfo] to retrieve this
  */
 interface FocusableLazyListLayoutInfo {
+
     /**
-     * The list of [LazyListItemInfo] representing all the currently visible items.
+     * The list of [LazyListItemInfo] representing all the currently visible
+     * items.
      */
     val visibleItemsInfo: Sequence<FocusableLazyListItemInfo>
 
     /**
-     * The start offset of the layout's viewport. You can think of it as a minimum offset which
-     * would be visible. Usually it is 0, but it can be negative if a content padding was applied
-     * as the content displayed in the content padding area is still visible.
+     * The start offset of the layout's viewport. You can think of it as a
+     * minimum offset which would be visible. Usually it is 0, but it can be
+     * negative if a content padding was applied as the content displayed in
+     * the content padding area is still visible.
      *
-     * You can use it to understand what items from [visibleItemsInfo] are fully visible.
+     * You can use it to understand what items from [visibleItemsInfo] are
+     * fully visible.
      */
     val viewportStartOffset: Int
 
     /**
-     * The end offset of the layout's viewport. You can think of it as a maximum offset which
-     * would be visible. Usually it is a size of the lazy list container plus a content padding.
+     * The end offset of the layout's viewport. You can think of it as a
+     * maximum offset which would be visible. Usually it is a size of the lazy
+     * list container plus a content padding.
      *
-     * You can use it to understand what items from [visibleItemsInfo] are fully visible.
+     * You can use it to understand what items from [visibleItemsInfo] are
+     * fully visible.
      */
     val viewportEndOffset: Int
 
-    /**
-     * The total count of items passed to [LazyColumn] or [LazyRow].
-     */
+    /** The total count of items passed to [LazyColumn] or [LazyRow]. */
     val totalItemsCount: Int
 }
 
 /**
- * Contains useful information about an individual item in lazy lists like [LazyColumn]
- *  or [LazyRow].
+ * Contains useful information about an individual item in lazy lists like
+ * [LazyColumn] or [LazyRow].
  *
  * @see LazyListLayoutInfo
  */
 interface FocusableLazyListItemInfo {
-    /**
-     * The index of the item in the list.
-     */
+
+    /** The index of the item in the list. */
     val index: Int
 
-    /**
-     * The key of the item which was passed to the item() or items() function.
-     */
+    /** The key of the item which was passed to the item() or items() function. */
     val key: FocusableKey
 
     /**
-     * The main axis offset of the item. It is relative to the start of the lazy list container.
+     * The main axis offset of the item. It is relative to the start of the
+     * lazy list container.
      */
     val offset: Int
 
     /**
-     * The main axis size of the item. Note that if you emit multiple layouts in the composable
-     * slot for the item then this size will be calculated as the sum of their sizes.
+     * The main axis size of the item. Note that if you emit multiple layouts
+     * in the composable slot for the item then this size will be calculated as
+     * the sum of their sizes.
      */
     val size: Int
 }
@@ -248,8 +249,10 @@ fun FocusableLazyColumn(
                     when (entry) {
                         is LazyListScopeContainer.Entry.Item ->
                             item(entry, lastFocusedIndex ?: -1) { index: Int -> lastFocusedIndex = index }
+
                         is LazyListScopeContainer.Entry.Items ->
                             items(entry, lastFocusedIndex ?: -1) { index: Int -> lastFocusedIndex = index }
+
                         is LazyListScopeContainer.Entry.StickyHeader ->
                             stickyHeader(entry, lastFocusedIndex ?: -1) { index: Int -> lastFocusedIndex = index }
                     }
@@ -266,7 +269,8 @@ private fun LazyListScope.stickyHeader(
     val fr = FocusRequester()
     stickyHeader(FocusableKey(fr, entry.key)) {
         BoxWithConstraints(
-            Modifier.focusRequester(fr)
+            Modifier
+                .focusRequester(fr)
                 .onFocusChanged { if (it.hasFocus) onItemFocused(entry.innerIndex) }
                 .focusable()
                 .appendIf(focusIndex == entry.innerIndex) { background(Color.Red) }
@@ -287,7 +291,8 @@ private fun LazyListScope.items(
     val requesters = List(entry.count) { FocusRequester() }
     items(count = entry.count, key = { FocusableKey(requesters[it], entry.key?.invoke(it)) }) { itemIndex ->
         BoxWithConstraints(
-            Modifier.focusRequester(requesters[entry.innerIndex + itemIndex])
+            Modifier
+                .focusRequester(requesters[entry.innerIndex + itemIndex])
                 .onFocusChanged { if (it.hasFocus) onItemFocused(entry.innerIndex + itemIndex) }
                 .focusable()
                 .appendIf(focusIndex == entry.innerIndex + itemIndex) { background(Color.Red) }
@@ -308,7 +313,8 @@ private fun LazyListScope.item(
     val fr = FocusRequester()
     item(FocusableKey(fr, entry.key)) {
         BoxWithConstraints(
-            Modifier.focusRequester(fr)
+            Modifier
+                .focusRequester(fr)
                 .onFocusChanged { if (it.hasFocus) onItemFocused(entry.innerIndex) }
                 .focusable()
                 .appendIf(focusIndex == entry.innerIndex) { background(Color.Red) }
@@ -326,32 +332,41 @@ internal class LazyListScopeContainer : LazyListScope {
     private var lastIndex = 0
 
     internal sealed class Entry {
+
         data class Item(val key: Any?, val innerIndex: Int, val content: @Composable LazyItemScope.() -> Unit) : Entry()
+
         data class Items(
             val count: Int,
             val key: ((index: Int) -> Any)?,
             val innerIndex: Int,
             val itemContent: @Composable LazyItemScope.(index: Int) -> Unit
         ) : Entry()
-        data class StickyHeader(val key: Any?, val innerIndex: Int, val content: @Composable LazyItemScope.() -> Unit) : Entry()
+
+        data class StickyHeader(
+            val key: Any?,
+            val innerIndex: Int,
+            val contentType: Any?,
+            val content: @Composable LazyItemScope.() -> Unit
+        ) : Entry()
     }
 
     internal val entries = mutableListOf<Entry>()
 
+    @Deprecated("Use the non deprecated overload", level = DeprecationLevel.HIDDEN)
     override fun item(key: Any?, content: @Composable LazyItemScope.() -> Unit) {
         entries.add(Entry.Item(key, lastIndex++, content))
     }
 
+    @Deprecated("Use the non deprecated overload", level = DeprecationLevel.HIDDEN)
     override fun items(count: Int, key: ((index: Int) -> Any)?, itemContent: @Composable LazyItemScope.(index: Int) -> Unit) {
         entries.add(Entry.Items(count, key, lastIndex, itemContent))
         lastIndex += count
     }
 
     @ExperimentalFoundationApi
-    override fun stickyHeader(key: Any?, content: @Composable LazyItemScope.() -> Unit) {
-        entries.add(Entry.StickyHeader(key, lastIndex++, content))
+    override fun stickyHeader(key: Any?, contentType: Any?, content: @Composable LazyItemScope.() -> Unit) {
+        entries.add(Entry.StickyHeader(key, lastIndex++, contentType, content))
     }
-
 }
 
 @Composable
