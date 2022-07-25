@@ -410,8 +410,8 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "JAXB (JSR 222) Reference Implementation", libraryName = "jaxb-runtime",
                    url = "https://github.com/javaee/jaxb-v2",
                    license = "CDDL 1.1 / GPL 2.0 + Classpath", licenseUrl = "https://oss.oracle.com/licenses/CDDL+GPL-1.1"),
-    LibraryLicense(libraryName = "Jaxen", license = "modified Apache", url = "https://github.com/jaxen-xpath/jaxen",
-                   licenseUrl = "https://github.com/jaxen-xpath/jaxen/blob/master/LICENSE.txt"),
+    LibraryLicense(libraryName = "Jaxen", url = "https://github.com/jaxen-xpath/jaxen")
+      .newBsd("https://github.com/jaxen-xpath/jaxen/blob/master/LICENSE.txt"),
     LibraryLicense(name = "Jayway JsonPath", libraryName = "jsonpath",
                    url = "https://github.com/json-path/JsonPath",
                    licenseUrl = "https://github.com/json-path/JsonPath/blob/master/LICENSE").apache(),
