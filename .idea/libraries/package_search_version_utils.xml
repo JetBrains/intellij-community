@@ -1,11 +1,15 @@
 <component name="libraryTable">
-  <library name="package-search-version-utils">
+  <library name="package-search-version-utils" type="repository">
+    <properties maven-id="org.jetbrains.packagesearch:pkgs-version-utils:1.0.1" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/pkgs-version-utils-1.0.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/pkgs-version-utils/1.0.1/pkgs-version-utils-1.0.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/pkgs-version-utils-1.0.1-sources.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>
