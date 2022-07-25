@@ -1,11 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -35,36 +33,7 @@ public final class HelpIdAwareLinkListener extends BrowserHyperlinkListener {
       final String wouldBeHelpId = description.trim().substring(HELP_LINK_MARKER.length()).trim();
 
       if (StringUtil.isNotEmpty(wouldBeHelpId)) {
-        final ApplicationNamesInfo nameInfo = ApplicationNamesInfo.getInstance();
-        final String editionName = nameInfo.getEditionName();
-
-        final String productWebPath;
-
-        final String productName = StringUtil.toLowerCase(nameInfo.getProductName());
-        switch (productName) {
-
-          case "rubymine":
-          case "ruby":
-            productWebPath = "ruby";
-            break;
-          case "intellij idea":
-          case "idea":
-            productWebPath = "idea";
-            break;
-          case "goland":
-            productWebPath = "go";
-            break;
-          case "appcode":
-            productWebPath = "objc";
-            break;
-          case "pycharm":
-            productWebPath = editionName != null && "edu".equals(StringUtil.toLowerCase(editionName)) ? "pycharm-edu" : "pycharm";
-            break;
-          default:
-            productWebPath = productName;
-        }
-
-        BrowserUtil.browse(String.format(URL_TEMPLATE, productWebPath, wouldBeHelpId, ApplicationInfo.getInstance().getShortVersion()));
+        HelpManager.getInstance().invokeHelp(wouldBeHelpId);
         return;
       }
     }
