@@ -136,6 +136,7 @@ val IntelliJPalette.Tab.Companion.darcula
 
 val IntelliJPalette.Companion.light
     get() = IntelliJPalette(
+        isLight = true,
         button = IntelliJPalette.Button.light,
         checkbox = IntelliJPalette.Checkbox.light,
         radioButton = IntelliJPalette.RadioButton.light,
@@ -160,6 +161,7 @@ val IntelliJPalette.Companion.light
 
 val IntelliJPalette.Companion.darcula
     get() = IntelliJPalette(
+        isLight = false,
         button = IntelliJPalette.Button.darcula,
         checkbox = IntelliJPalette.Checkbox.darcula,
         textField = IntelliJPalette.TextField.darcula,

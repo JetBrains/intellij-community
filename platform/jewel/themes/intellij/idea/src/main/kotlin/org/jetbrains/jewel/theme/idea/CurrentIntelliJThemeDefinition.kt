@@ -5,6 +5,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import com.intellij.icons.AllIcons
+import com.intellij.ui.JBColor
 import org.jetbrains.jewel.theme.intellij.IntelliJMetrics
 import org.jetbrains.jewel.theme.intellij.IntelliJPainters
 import org.jetbrains.jewel.theme.intellij.IntelliJPalette
@@ -47,6 +48,7 @@ suspend fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
     )
 
     val palette = IntelliJPalette(
+        isLight = JBColor.isBright(),
         button = buttonPalette,
         background = retrieveColorOrUnspecified("Panel.background"),
         text = retrieveColorOrUnspecified("Panel.foreground"),

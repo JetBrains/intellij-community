@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -93,10 +91,17 @@ fun Wizard(onFinish: () -> Unit) {
 
 @Composable
 fun WizardHeader(modifier: Modifier = Modifier, currentPage: MutableState<Int>) {
-    Box(modifier.background(Color(0xFF616161)).height(100.dp).fillMaxWidth()) {
+    Box(
+        modifier
+            .background(Color(0xFF616161))
+            .height(100.dp)
+            .fillMaxWidth()
+    ) {
         Row(modifier = modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                modifier = modifier.height(64.dp).padding(10.dp),
+                modifier = modifier
+                    .height(64.dp)
+                    .padding(10.dp),
                 painter = painterResource("imageasset/android-studio.svg"),
                 contentDescription = "logo",
                 tint = Color.Unspecified
@@ -116,7 +121,11 @@ fun WizardHeader(modifier: Modifier = Modifier, currentPage: MutableState<Int>) 
 @Composable
 fun WizardMainContent(modifier: Modifier = Modifier, currentPage: MutableState<Int>) {
     if (currentPage.value == 1) {
-        FirstPage(modifier.fillMaxWidth().fillMaxHeight())
+        FirstPage(
+            modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+        )
     } else if (currentPage.value == 2) {
         ConfirmIconPathPage(modifier)
     }
@@ -124,10 +133,16 @@ fun WizardMainContent(modifier: Modifier = Modifier, currentPage: MutableState<I
 
 @Composable
 fun WizardFooter(modifier: Modifier = Modifier, currentPage: MutableState<Int>, onFinish: () -> Unit) {
-    Box(modifier.height(50.dp).fillMaxWidth()) {
+    Box(
+        modifier
+            .height(50.dp)
+            .fillMaxWidth()
+    ) {
         Divider()
         Row(
-            modifier = modifier.fillMaxSize().padding(horizontal = 20.dp),
+            modifier = modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -160,9 +175,15 @@ fun DirectorySelection(modifier: Modifier = Modifier) {
 @Composable
 fun ResDirectoryLabelComboBox(modifier: Modifier = Modifier, outputDir: MutableState<String>) {
 
-    Row(modifier.height(30.dp).fillMaxWidth()) {
+    Row(
+        modifier
+            .height(30.dp)
+            .fillMaxWidth()
+    ) {
         Text(modifier = Modifier.padding(5.dp), text = "Res Directory:")
-        TextField(modifier = Modifier.fillMaxSize().padding(5.dp), value = outputDir.value, onValueChange = {})
+        TextField(modifier = Modifier
+            .fillMaxSize()
+            .padding(5.dp), value = outputDir.value, onValueChange = {})
     }
 }
 
@@ -211,7 +232,9 @@ fun OutputDirectoriesLabelTree(modifier: Modifier = Modifier, outputDir: Mutable
             )
             if (listState.layoutInfo.totalItemsCount > listState.layoutInfo.visibleItemsInfo.size) {
                 VerticalScrollbar(
-                    modifier = Modifier.align(Alignment.CenterEnd).padding(horizontal = 2.dp),
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(horizontal = 2.dp),
                     adapter = rememberScrollbarAdapter(listState)
                 )
             }
@@ -246,13 +269,22 @@ fun OutputFilePanel(modifier: Modifier = Modifier) {
             textFieldText = "512x512",
             textFieldEnabled = false
         )
-        Box(modifier.background(Color.Magenta).fillMaxSize().weight(1f))
+        Box(
+            modifier
+                .background(Color.Magenta)
+                .fillMaxSize()
+                .weight(1f)
+        )
     }
 }
 
 @Composable
 fun TextFieldWithLabel(modifier: Modifier = Modifier, label: String, textFieldText: String, textFieldEnabled: Boolean) {
-    Row(modifier.fillMaxWidth().padding(5.dp), horizontalArrangement = Arrangement.Start) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .padding(5.dp), horizontalArrangement = Arrangement.Start
+    ) {
         Text(label)
         Spacer(modifier.width(5.dp))
         TextField(modifier = modifier.fillMaxWidth(), value = textFieldText, onValueChange = {}, enabled = textFieldEnabled)
@@ -266,8 +298,9 @@ fun HelpIcon(modifier: Modifier = Modifier) {
         modifier = modifier,
         onClick = { uriHandler.openUri("https://developer.android.com/studio/write/image-asset-studio") },
     ) {
+        val helpIconPath = if (IntelliJTheme.palette.isLight) "imageasset/help.svg" else "imageasset/help_dark.svg"
         Icon(
-            Icons.Default.Info, // Help icon requires adding a new dependency, so we're using info instead
+            painterResource(helpIconPath), // Help icon requires adding a new dependency, so we're using info instead
             contentDescription = "help button",
             tint = Color.Unspecified // FIXME: tint is being applied regardless
         )
@@ -385,7 +418,10 @@ fun CommonLayer(
     modifier: Modifier = Modifier
 ) {
     Column(modifier) {
-        val subLabelModifier = Modifier.width(100.dp).padding(start = 10.dp)
+        val subLabelModifier =
+            Modifier
+                .width(100.dp)
+                .padding(start = 10.dp)
         val rowModifier = Modifier.height(30.dp)
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             Text("Layer name:", modifier = Modifier.width(100.dp))
@@ -464,9 +500,13 @@ fun BackgroundLayer(modifier: Modifier) {
 @Composable
 fun OptionsTab(modifier: Modifier) {
     Column(modifier) {
-        val subLabelModifier = Modifier.width(100.dp).padding(start = 10.dp)
+        val subLabelModifier =
+            Modifier
+                .width(100.dp)
+                .padding(start = 10.dp)
         val rowModifier = Modifier.height(30.dp)
         GroupHeader("Legacy Icon (API ≤ 25):", rowModifier)
+
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             var generate by remember { mutableStateOf(true) }
             Text("Generate:", modifier = subLabelModifier)
@@ -474,10 +514,13 @@ fun OptionsTab(modifier: Modifier) {
             RadioButtonRow(selected = generate, onClick = { generate = true }) { Text("Yes", modifier = radioButtonModifier) }
             RadioButtonRow(selected = !generate, onClick = { generate = false }) { Text("No", modifier = radioButtonModifier) }
         }
+
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             Text("Shape:", modifier = subLabelModifier)
         }
+
         GroupHeader("Round Icon (API = 25):", rowModifier)
+
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             var generate by remember { mutableStateOf(true) }
             Text("Generate:", modifier = subLabelModifier)
@@ -485,7 +528,9 @@ fun OptionsTab(modifier: Modifier) {
             RadioButtonRow(selected = generate, onClick = { generate = true }) { Text("Yes", modifier = radioButtonModifier) }
             RadioButtonRow(selected = !generate, onClick = { generate = false }) { Text("No", modifier = radioButtonModifier) }
         }
+
         GroupHeader("Google Play Store Icon", rowModifier)
+
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             var generate by remember { mutableStateOf(true) }
             Text("Generate:", modifier = subLabelModifier)
@@ -505,7 +550,11 @@ enum class OptionTabs {
 @Composable
 fun FirstPage(modifier: Modifier = Modifier) {
     Row(modifier = modifier) {
-        Box(modifier = Modifier.width(400.dp).padding(all = 20.dp)) {
+        Box(
+            modifier = Modifier
+                .width(400.dp)
+                .padding(all = 20.dp)
+        ) {
             Column {
                 val labelModifier = Modifier.width(100.dp)
                 Row(Modifier.height(30.dp)) {
@@ -514,7 +563,11 @@ fun FirstPage(modifier: Modifier = Modifier) {
                 }
                 Row(Modifier.height(30.dp)) {
                     Text("Name:", modifier = labelModifier.align(Alignment.CenterVertically))
-                    TextField(value = "ic_launcher", onValueChange = { }, modifier = Modifier.fillMaxWidth().align(Alignment.CenterVertically))
+                    TextField(
+                        value = "ic_launcher", onValueChange = { }, modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.CenterVertically)
+                    )
                 }
                 val tabState = rememberTabContainerState(OptionTabs.FOREGROUND)
                 TabRow(tabState) {
@@ -554,7 +607,12 @@ fun FirstPage(modifier: Modifier = Modifier) {
                         )
                     }
                 }
-                Box(modifier = Modifier.padding(20.dp).background(color = Color.Green).fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .padding(20.dp)
+                        .background(color = Color.Green)
+                        .fillMaxSize()
+                ) {
 
                 }
             }

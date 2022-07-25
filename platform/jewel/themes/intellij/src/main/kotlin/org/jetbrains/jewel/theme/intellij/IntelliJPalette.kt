@@ -5,6 +5,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 
 data class IntelliJPalette(
+    val isLight: Boolean,
+
     val button: Button,
     val checkbox: Checkbox,
     val radioButton: RadioButton,
