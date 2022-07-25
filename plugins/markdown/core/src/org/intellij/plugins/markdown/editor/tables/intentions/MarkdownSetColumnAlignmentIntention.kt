@@ -38,7 +38,7 @@ internal class MarkdownSetColumnAlignmentIntention: PsiElementBaseIntentionActio
     }
     invokeLater {
       val context = DataManager.getInstance().getDataContext(editor.component)
-      val group = ActionManager.getInstance().getAction("Markdown.TableColumnActions.ColumnAlignmentActions") as? ActionGroup
+      val group = ActionManager.getInstance().getAction("Markdown.TableColumnActions.ColumnAlignmentActions.Popup") as? ActionGroup
       requireNotNull(group)
       val popup = JBPopupFactory.getInstance().createActionGroupPopup(
         MarkdownBundle.message("markdown.set.column.alignment.intention.popup.text"),
