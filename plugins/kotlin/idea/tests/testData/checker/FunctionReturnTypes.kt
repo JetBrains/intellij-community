@@ -7,7 +7,7 @@ fun unitEmpty() : Unit {}
 fun unitEmptyReturn() : Unit {return}
 fun unitIntReturn() : Unit {return <error>1</error>}
 fun unitUnitReturn() : Unit {return Unit}
-fun test1() : Any = { <error>return</error> }
+fun test1() : Any = { <error><error>return</error></error> }
 fun test2() : Any = a@ {return@a 1}
 fun test3() : Any { <error>return</error> }
 
@@ -141,14 +141,14 @@ fun illegalConstantBlock(): String {
     return <error>1</error>
 }
 fun illegalIfBody(): Int =
-    if (1 < 2) <error>'a'</error> else { <error>1.0</error> }
+    if (1 < 2) <error>'a'</error> else <error>{ 1.0 }</error>
 fun illegalIfBlock(): Boolean {
     if (1 < 2)
         return false
     else { return <error>1</error> }
 }
 fun illegalReturnIf(): Char {
-    return if (1 < 2) 'a' else { <error>1</error> }
+    return if (1 < 2) 'a' else <error>{ 1 }</error>
 }
 
 fun returnNothing(): Nothing {
