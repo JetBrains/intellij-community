@@ -32,7 +32,7 @@ internal class OutdatedTableOfContentsInspection: LocalInspectionTool() {
       if (text != expectedToc) {
         holder.registerProblem(
           file,
-          "This TOC section does not correspond to the actual structure of the document",
+          MarkdownBundle.message("markdown.outdated.table.of.contents.inspection.description"),
           ProblemHighlightType.WARNING,
           range,
           UpdateTocSectionQuickFix(expectedToc)
