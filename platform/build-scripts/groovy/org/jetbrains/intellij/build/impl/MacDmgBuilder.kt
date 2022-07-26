@@ -8,6 +8,7 @@ import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
+import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.tasks.prepareMacZip
 import org.jetbrains.intellij.build.tasks.signMacApp
@@ -17,6 +18,7 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
+import kotlin.io.path.name
 
 internal val BuildContext.publishSitArchive get() = !options.buildStepsToSkip.contains(BuildOptions.MAC_SIT_PUBLICATION_STEP)
 
@@ -70,6 +72,22 @@ internal fun MacDistributionBuilder.signAndBuildDmg(builtinModule: BuiltinModule
     "$sitFile wasn't created"
   }
   checkExecutablePermissions(sitFile, zipRoot, isRuntimeBundled)
+  if (isRuntimeBundled) {
+    generateIntegrityManifest(sitFile, zipRoot, context, customizer)
+  }
+}
+
+private fun generateIntegrityManifest(sitFile: Path, sitRoot: String, context: BuildContext, customizer: MacDistributionCustomizer) {
+  if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
+    val tempSit = Files.createTempDirectory(context.paths.tempDir, "sit-")
+    try {
+      runProcess(args = listOf("7z", "x", "-bd", sitFile.toString()), workingDir = tempSit, logger = context.messages)
+      RepairUtilityBuilder.generateManifest(context, tempSit.resolve(sitRoot), sitFile.name)
+    }
+    finally {
+      NioFiles.deleteRecursively(tempSit)
+    }
+  }
 }
 
 private fun buildAndSignWithMacBuilderHost(sitFile: Path,

@@ -3,21 +3,21 @@ package org.jetbrains.intellij.build.impl.support
 
 import com.intellij.openapi.util.SystemInfoRt
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions.Companion.REPAIR_UTILITY_BUNDLE_STEP
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.JvmArchitecture.Companion.currentJvmArch
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.OsFamily.Companion.currentOs
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.runProcess
-
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-
-import java.util.*
-
 import java.nio.file.attribute.PosixFilePermission.*
+import java.util.*
 
 /**
  * Builds 'repair' command line utility which is a simple and automated way to fix the IDE when it cannot start:
@@ -36,13 +36,13 @@ import java.nio.file.attribute.PosixFilePermission.*
 class RepairUtilityBuilder {
   companion object {
     @Volatile
-    private lateinit var _binariesCache: Map<Binary, Path>
+    private lateinit var binariesCache: Map<Binary, Path>
 
     private fun getBinariesCacheOrSetIfNull(context: BuildContext): Map<Binary, Path> {
-      if (!::_binariesCache.isInitialized) {
-        _binariesCache = buildBinaries(context)
+      if (!::binariesCache.isInitialized) {
+        binariesCache = buildBinaries(context)
       }
-      return _binariesCache
+      return binariesCache
     }
 
     private val BINARIES: Collection<Binary> = listOf(
@@ -68,12 +68,10 @@ class RepairUtilityBuilder {
 
         val binary = findBinary(context, os, arch)
         val path = cache[binary]
-        if (path == null) {
-          context.messages.error("No binary was built for $os and $arch")
-          return@executeStep
+        require(path != null && binary != null) {
+          "No binary was built for $os and $arch"
         }
-
-        val repairUtilityTarget = distributionDir.resolve(binary!!.relativeTargetPath)
+        val repairUtilityTarget = distributionDir.resolve(binary.relativeTargetPath)
         Span.current().addEvent("copy $path to $repairUtilityTarget")
         Files.createDirectories(repairUtilityTarget.parent)
         Files.copy(path, repairUtilityTarget, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
@@ -94,7 +92,11 @@ class RepairUtilityBuilder {
           return@executeStep
         }
         val binary = findBinary(context, currentOs, currentJvmArch)
-        val binaryPath = repairUtilityProjectHome(context)!!.resolve(binary!!.relativeSourcePath)
+        requireNotNull(binary) {
+          "No binary was built for $currentOs and $currentJvmArch"
+        }
+        val binaryPath = repairUtilityProjectHome(context)?.resolve(binary.relativeSourcePath)
+        requireNotNull(binaryPath)
         val tmpDir = context.paths.tempDir.resolve(REPAIR_UTILITY_BUNDLE_STEP + UUID.randomUUID().toString())
         Files.createDirectories(tmpDir)
         try {
@@ -120,17 +122,6 @@ class RepairUtilityBuilder {
         Files.move(manifest, artifact, StandardCopyOption.REPLACE_EXISTING)
         return@executeStep
       }
-    }
-
-    @Synchronized
-    fun binaryFor(buildContext: BuildContext, os: OsFamily, arch: JvmArchitecture): Binary? {
-      if (!buildContext.options.buildStepsToSkip.contains(REPAIR_UTILITY_BUNDLE_STEP)) {
-        val cache = getBinariesCacheOrSetIfNull(buildContext)
-        if (!cache.isEmpty()) {
-          return findBinary(buildContext, os, arch)
-        }
-      }
-      return null
     }
 
     private fun findBinary(buildContext: BuildContext, os: OsFamily, arch: JvmArchitecture): Binary? {
