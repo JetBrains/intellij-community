@@ -1,204 +1,196 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.EntityInformation
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.impl.ConnectionId
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.SoftLinkable
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ComposedLinkEntityImpl: ComposedLinkEntity, WorkspaceEntityBase() {
-    
-    companion object {
-        
-        
-        val connections = listOf<ConnectionId>(
-        )
+open class ComposedLinkEntityImpl : ComposedLinkEntity, WorkspaceEntityBase() {
 
-    }
-        
-    @JvmField var _link: ComposedId? = null
-    override val link: ComposedId
-        get() = _link!!
-    
-    override fun connectionIdList(): List<ConnectionId> {
-        return connections
-    }
+  companion object {
 
-    class Builder(val result: ComposedLinkEntityData?): ModifiableWorkspaceEntityBase<ComposedLinkEntity>(), ComposedLinkEntity.Builder {
-        constructor(): this(ComposedLinkEntityData())
-        
-        override fun applyToBuilder(builder: MutableEntityStorage) {
-            if (this.diff != null) {
-                if (existsInBuilder(builder)) {
-                    this.diff = builder
-                    return
-                }
-                else {
-                    error("Entity ComposedLinkEntity is already created in a different builder")
-                }
-            }
-            
-            this.diff = builder
-            this.snapshot = builder
-            addToBuilder()
-            this.id = getEntityData().createEntityId()
-            
-            // Process linked entities that are connected without a builder
-            processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
-        }
-    
-        fun checkInitialization() {
-            val _diff = diff
-            if (!getEntityData().isLinkInitialized()) {
-                error("Field ComposedLinkEntity#link should be initialized")
-            }
-            if (!getEntityData().isEntitySourceInitialized()) {
-                error("Field ComposedLinkEntity#entitySource should be initialized")
-            }
-        }
-        
-        override fun connectionIdList(): List<ConnectionId> {
-            return connections
-        }
-    
-        
-        override var link: ComposedId
-            get() = getEntityData().link
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().link = value
-                changedProperty.add("link")
-                
-            }
-            
-        override var entitySource: EntitySource
-            get() = getEntityData().entitySource
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().entitySource = value
-                changedProperty.add("entitySource")
-                
-            }
-        
-        override fun getEntityData(): ComposedLinkEntityData = result ?: super.getEntityData() as ComposedLinkEntityData
-        override fun getEntityClass(): Class<ComposedLinkEntity> = ComposedLinkEntity::class.java
-    }
-}
-    
-class ComposedLinkEntityData : WorkspaceEntityData<ComposedLinkEntity>(), SoftLinkable {
-    lateinit var link: ComposedId
 
-    fun isLinkInitialized(): Boolean = ::link.isInitialized
+    val connections = listOf<ConnectionId>(
+    )
 
-    override fun getLinks(): Set<PersistentEntityId<*>> {
-        val result = HashSet<PersistentEntityId<*>>()
-        result.add(link)
-        return result
-    }
+  }
 
-    override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
-        index.index(this, link)
-    }
+  @JvmField
+  var _link: ComposedId? = null
+  override val link: ComposedId
+    get() = _link!!
 
-    override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
-        // TODO verify logic
-        val mutablePreviousSet = HashSet(prev)
-        val removedItem_link = mutablePreviousSet.remove(link)
-        if (!removedItem_link) {
-            index.index(this, link)
-        }
-        for (removed in mutablePreviousSet) {
-            index.remove(this, removed)
-        }
-    }
+  override fun connectionIdList(): List<ConnectionId> {
+    return connections
+  }
 
-    override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
-        var changed = false
-        val link_data =         if (link == oldLink) {
-            changed = true
-            newLink as ComposedId
+  class Builder(val result: ComposedLinkEntityData?) : ModifiableWorkspaceEntityBase<ComposedLinkEntity>(), ComposedLinkEntity.Builder {
+    constructor() : this(ComposedLinkEntityData())
+
+    override fun applyToBuilder(builder: MutableEntityStorage) {
+      if (this.diff != null) {
+        if (existsInBuilder(builder)) {
+          this.diff = builder
+          return
         }
         else {
-            null
+          error("Entity ComposedLinkEntity is already created in a different builder")
         }
-        if (link_data != null) {
-            link = link_data
-        }
-        return changed
+      }
+
+      this.diff = builder
+      this.snapshot = builder
+      addToBuilder()
+      this.id = getEntityData().createEntityId()
+
+      // Process linked entities that are connected without a builder
+      processLinkedEntities(builder)
+      checkInitialization() // TODO uncomment and check failed tests
     }
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ComposedLinkEntity> {
-        val modifiable = ComposedLinkEntityImpl.Builder(null)
-        modifiable.allowModifications {
-          modifiable.diff = diff
-          modifiable.snapshot = diff
-          modifiable.id = createEntityId()
-          modifiable.entitySource = this.entitySource
-        }
-        modifiable.changedProperty.clear()
-        return modifiable
+    fun checkInitialization() {
+      val _diff = diff
+      if (!getEntityData().isLinkInitialized()) {
+        error("Field ComposedLinkEntity#link should be initialized")
+      }
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field ComposedLinkEntity#entitySource should be initialized")
+      }
     }
 
-    override fun createEntity(snapshot: EntityStorage): ComposedLinkEntity {
-        val entity = ComposedLinkEntityImpl()
-        entity._link = link
-        entity.entitySource = entitySource
-        entity.snapshot = snapshot
-        entity.id = createEntityId()
-        return entity
+    override fun connectionIdList(): List<ConnectionId> {
+      return connections
     }
 
-    override fun getEntityInterface(): Class<out WorkspaceEntity> {
-        return ComposedLinkEntity::class.java
-    }
 
-    override fun serialize(ser: EntityInformation.Serializer) {
-    }
+    override var link: ComposedId
+      get() = getEntityData().link
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().link = value
+        changedProperty.add("link")
 
-    override fun deserialize(de: EntityInformation.Deserializer) {
-    }
+      }
 
-    override fun equals(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as ComposedLinkEntityData
-        
-        if (this.link != other.link) return false
-        if (this.entitySource != other.entitySource) return false
-        return true
-    }
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
 
-    override fun equalsIgnoringEntitySource(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as ComposedLinkEntityData
-        
-        if (this.link != other.link) return false
-        return true
-    }
+      }
 
-    override fun hashCode(): Int {
-        var result = entitySource.hashCode()
-        result = 31 * result + link.hashCode()
-        return result
+    override fun getEntityData(): ComposedLinkEntityData = result ?: super.getEntityData() as ComposedLinkEntityData
+    override fun getEntityClass(): Class<ComposedLinkEntity> = ComposedLinkEntity::class.java
+  }
+}
+
+class ComposedLinkEntityData : WorkspaceEntityData<ComposedLinkEntity>(), SoftLinkable {
+  lateinit var link: ComposedId
+
+  fun isLinkInitialized(): Boolean = ::link.isInitialized
+
+  override fun getLinks(): Set<PersistentEntityId<*>> {
+    val result = HashSet<PersistentEntityId<*>>()
+    result.add(link)
+    return result
+  }
+
+  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+    index.index(this, link)
+  }
+
+  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+    // TODO verify logic
+    val mutablePreviousSet = HashSet(prev)
+    val removedItem_link = mutablePreviousSet.remove(link)
+    if (!removedItem_link) {
+      index.index(this, link)
     }
+    for (removed in mutablePreviousSet) {
+      index.remove(this, removed)
+    }
+  }
+
+  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
+    var changed = false
+    val link_data = if (link == oldLink) {
+      changed = true
+      newLink as ComposedId
+    }
+    else {
+      null
+    }
+    if (link_data != null) {
+      link = link_data
+    }
+    return changed
+  }
+
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ComposedLinkEntity> {
+    val modifiable = ComposedLinkEntityImpl.Builder(null)
+    modifiable.allowModifications {
+      modifiable.diff = diff
+      modifiable.snapshot = diff
+      modifiable.id = createEntityId()
+      modifiable.entitySource = this.entitySource
+    }
+    modifiable.changedProperty.clear()
+    return modifiable
+  }
+
+  override fun createEntity(snapshot: EntityStorage): ComposedLinkEntity {
+    val entity = ComposedLinkEntityImpl()
+    entity._link = link
+    entity.entitySource = entitySource
+    entity.snapshot = snapshot
+    entity.id = createEntityId()
+    return entity
+  }
+
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return ComposedLinkEntity::class.java
+  }
+
+  override fun serialize(ser: EntityInformation.Serializer) {
+  }
+
+  override fun deserialize(de: EntityInformation.Deserializer) {
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    other as ComposedLinkEntityData
+
+    if (this.link != other.link) return false
+    if (this.entitySource != other.entitySource) return false
+    return true
+  }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    other as ComposedLinkEntityData
+
+    if (this.link != other.link) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = entitySource.hashCode()
+    result = 31 * result + link.hashCode()
+    return result
+  }
 }

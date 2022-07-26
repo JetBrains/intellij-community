@@ -23,32 +23,34 @@ interface LinkedListEntity : WorkspaceEntityWithPersistentId {
   override val persistentId: LinkedListEntityId
     get() = LinkedListEntityId(myName)
 
-
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: LinkedListEntity, ModifiableWorkspaceEntity<LinkedListEntity>, ObjBuilder<LinkedListEntity> {
-      override var myName: String
-      override var entitySource: EntitySource
-      override var next: LinkedListEntityId
+  interface Builder : LinkedListEntity, ModifiableWorkspaceEntity<LinkedListEntity>, ObjBuilder<LinkedListEntity> {
+    override var myName: String
+    override var entitySource: EntitySource
+    override var next: LinkedListEntityId
   }
-  
-  companion object: Type<LinkedListEntity, Builder>() {
-      operator fun invoke(myName: String, next: LinkedListEntityId, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LinkedListEntity {
-          val builder = builder()
-          builder.myName = myName
-          builder.entitySource = entitySource
-          builder.next = next
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<LinkedListEntity, Builder>() {
+    operator fun invoke(myName: String,
+                        next: LinkedListEntityId,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): LinkedListEntity {
+      val builder = builder()
+      builder.myName = myName
+      builder.entitySource = entitySource
+      builder.next = next
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: LinkedListEntity, modification: LinkedListEntity.Builder.() -> Unit) = modifyEntity(LinkedListEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: LinkedListEntity, modification: LinkedListEntity.Builder.() -> Unit) = modifyEntity(
+  LinkedListEntity.Builder::class.java, entity, modification)
 //endregion
 
 fun MutableEntityStorage.addLinkedListEntity(name: String, next: LinkedListEntityId): LinkedListEntity {

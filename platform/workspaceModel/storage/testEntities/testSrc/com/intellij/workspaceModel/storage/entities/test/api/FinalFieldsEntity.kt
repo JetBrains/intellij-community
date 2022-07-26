@@ -29,31 +29,32 @@ interface FinalFieldsEntity: WorkspaceEntity {
   fun isReadOnly(): Boolean {
     return !isEditable() && descriptor.url != null
   }
+
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: FinalFieldsEntity, ModifiableWorkspaceEntity<FinalFieldsEntity>, ObjBuilder<FinalFieldsEntity> {
-      override var descriptor: AnotherDataClass
-      override var entitySource: EntitySource
-      override var description: String
-      override var anotherVersion: Int
+  interface Builder : FinalFieldsEntity, ModifiableWorkspaceEntity<FinalFieldsEntity>, ObjBuilder<FinalFieldsEntity> {
+    override var descriptor: AnotherDataClass
+    override var entitySource: EntitySource
+    override var description: String
+    override var anotherVersion: Int
   }
-  
-  companion object: Type<FinalFieldsEntity, Builder>() {
-      operator fun invoke(descriptor: AnotherDataClass, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FinalFieldsEntity {
-          val builder = builder()
-          builder.descriptor = descriptor
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<FinalFieldsEntity, Builder>() {
+    operator fun invoke(descriptor: AnotherDataClass, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FinalFieldsEntity {
+      val builder = builder()
+      builder.descriptor = descriptor
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FinalFieldsEntity, modification: FinalFieldsEntity.Builder.() -> Unit) = modifyEntity(FinalFieldsEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: FinalFieldsEntity, modification: FinalFieldsEntity.Builder.() -> Unit) = modifyEntity(
+  FinalFieldsEntity.Builder::class.java, entity, modification)
 //endregion
 
 data class AnotherDataClass(val name: String, val version: Int, val source: Boolean, val displayName: String? = null, val url: String? = null,
