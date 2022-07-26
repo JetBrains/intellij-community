@@ -2,7 +2,9 @@
 package training.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.text.showActionKeyPopup
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -10,11 +12,15 @@ import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
 import training.FeaturesTrainerIcons
 import training.dsl.TaskTextProperties
+import training.learn.LearnBundle
 import training.learn.lesson.LessonManager
+import training.statistic.StatisticBase
+import training.util.invokeActionForFocusContext
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -430,7 +436,13 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
 
   private fun showShortcutBalloon(point: Point2D, height: Int, actionName: String?) {
     if (actionName == null) return
-    showActionKeyPopup(this, point.toPoint(), height, actionName)
+    showActionKeyPopup(this, point.toPoint(), height, actionName) { panel ->
+      panel.add(ActionLink(LearnBundle.message("shortcut.balloon.apply.this.action")) {
+        val action = ActionManager.getInstance().getAction(actionName)
+        invokeActionForFocusContext(action)
+        StatisticBase.logShortcutClicked(actionName)
+      })
+    }
   }
 
   private fun appendClickableRange(clickable: String, attributeSet: SimpleAttributeSet): IntRange {
