@@ -40,7 +40,7 @@ abstract class ClientAwareComponentManager constructor(
     return session?.doGetService(serviceClass, createIfNeeded, false)
   }
 
-  override fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
+  override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   listenerCallbacks: MutableList<in Runnable>?) {
@@ -61,7 +61,7 @@ abstract class ClientAwareComponentManager constructor(
     }
   }
 
-  override fun postPreloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
+  override fun postPreloadServices(modules: List<IdeaPluginDescriptorImpl>,
                                    activityPrefix: String,
                                    syncScope: CoroutineScope,
                                    onlyIfAwait: Boolean) {

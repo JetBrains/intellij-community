@@ -1047,7 +1047,7 @@ private fun loadModules(
 ) {
   fun registerComponents(componentManager: ComponentManager) {
     (componentManager as ComponentManagerImpl).registerComponents(
-      modules = modules.asSequence(),
+      modules = modules.toList(),
       app = app,
       precomputedExtensionModel = null,
       listenerCallbacks = listenerCallbacks,

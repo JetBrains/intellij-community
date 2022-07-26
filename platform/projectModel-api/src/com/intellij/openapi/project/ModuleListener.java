@@ -17,7 +17,10 @@ import java.util.List;
  */
 @ApiStatus.OverrideOnly
 public interface ModuleListener extends EventListener {
-  
+  /**
+   * @deprecated Use {@link #modulesAdded(Project, List)}
+   */
+  @Deprecated
   default void moduleAdded(@NotNull Project project, @NotNull Module module) {
   }
 

@@ -73,7 +73,6 @@ interface RunConfigurationTemplateProvider {
   fun getRunConfigurationTemplate(factory: ConfigurationFactory, runManager: RunManagerImpl): RunnerAndConfigurationSettingsImpl?
 }
 
-// open for Upsource (UpsourceRunManager overrides to disable loadState (empty impl))
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
 open class RunManagerImpl @JvmOverloads constructor(val project: Project, sharedStreamProvider: StreamProvider? = null) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
@@ -85,7 +84,6 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     @JvmStatic
     fun getInstanceImpl(project: Project) = getInstance(project) as RunManagerImpl
 
-    @JvmStatic
     fun canRunConfiguration(environment: ExecutionEnvironment): Boolean {
       return environment.runnerAndConfigurationSettings?.let { canRunConfiguration(it, environment.executor) } ?: false
     }

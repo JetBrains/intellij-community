@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.ProjectTopics
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -11,7 +12,6 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.*
 import com.intellij.openapi.module.impl.*
@@ -81,24 +81,41 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
   val entityStore = WorkspaceModel.getInstance(project).entityStorage
 
   suspend fun loadModules(entities: Sequence<ModuleEntity>) {
-    val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames
-    val (unloadedEntities, loadedEntities) = entities.partition { it.name in unloadedModuleNames }
-    LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
+    val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
+    val corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID }
+    val result = coroutineScope {
+      val precomputedExtensionModel = precomputeExtensionModel()
 
-    val precomputedExtensionModel = precomputeExtensionModel()
+      val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames
+      val (unloadedEntities, loadedEntities) = entities.partition { it.name in unloadedModuleNames }
+      LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
 
-    val tasks = loadedEntities.map { moduleEntity ->
-      project.coroutineScope.async {
-        runCatching {
-          val module = createModuleInstance(moduleEntity, entityStore, null, false, precomputedExtensionModel)
-          moduleEntity to module
-        }.getOrLogException(LOG)
+      val result = loadedEntities.map { moduleEntity ->
+        async {
+          try {
+            val module = createModuleInstance(moduleEntity = moduleEntity,
+                                              versionedStorage = entityStore,
+                                              diff = null,
+                                              isNew = false,
+                                              precomputedExtensionModel = precomputedExtensionModel,
+                                              plugins = plugins,
+                                              corePlugin = corePlugin)
+            moduleEntity to module
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            LOG.error(e)
+            null
+          }
+        }
       }
-    }
 
-    val result = tasks.awaitAll()
+      UnloadedModuleDescriptionBridge.createDescriptions(unloadedEntities).associateByTo(unloadedModules) { it.name }
 
-    UnloadedModuleDescriptionBridge.createDescriptions(unloadedEntities).associateByTo(unloadedModules) { it.name }
+      result
+    }.awaitAll()
 
     val modules = LinkedHashSet<ModuleBridge>(result.size)
     WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
@@ -326,9 +343,9 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     diff: MutableEntityStorage?,
     isNew: Boolean,
     precomputedExtensionModel: PrecomputedExtensionModel?,
+    plugins: List<IdeaPluginDescriptorImpl>,
+    corePlugin: IdeaPluginDescriptorImpl?,
   ): ModuleBridge {
-    val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
-    val corePlugin = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
     val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)
 
     val module = createModule(

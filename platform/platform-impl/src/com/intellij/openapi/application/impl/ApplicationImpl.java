@@ -51,7 +51,6 @@ import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
 import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
-import kotlin.sequences.Sequence;
 import kotlinx.coroutines.BuildersKt;
 import kotlinx.coroutines.GlobalScope;
 import kotlinx.coroutines.future.FutureKt;
@@ -61,6 +60,7 @@ import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -371,7 +371,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public final void load() {
     PluginManagerCore.scheduleDescriptorLoading(GlobalScope.INSTANCE);
-    Sequence<IdeaPluginDescriptorImpl> modules = FutureKt.asCompletableFuture(PluginManagerCore.getInitPluginFuture())
+    List<IdeaPluginDescriptorImpl> modules = FutureKt.asCompletableFuture(PluginManagerCore.getInitPluginFuture())
       .join().getEnabledModules();
 
     registerComponents(modules, this, null, null);

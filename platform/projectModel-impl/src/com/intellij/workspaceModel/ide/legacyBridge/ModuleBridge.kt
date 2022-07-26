@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -6,8 +6,8 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.serviceContainer.PrecomputedExtensionModel
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
@@ -34,7 +34,7 @@ interface ModuleBridge : ModuleEx {
   fun onImlFileMoved(newModuleFileUrl: VirtualFileUrl)
 
   fun registerComponents(corePlugin: IdeaPluginDescriptor?,
-                         modules: Sequence<IdeaPluginDescriptorImpl>,
+                         modules: List<IdeaPluginDescriptorImpl>,
                          precomputedExtensionModel: PrecomputedExtensionModel?,
                          app: Application?,
                          listenerCallbacks: MutableList<in Runnable>?)

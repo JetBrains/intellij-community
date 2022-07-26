@@ -21,7 +21,10 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.util.messages.MessageBus
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.plus
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -46,7 +49,6 @@ abstract class ClientSessionImpl(
     registerComponents()
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
   fun preloadServices(syncScope: CoroutineScope) {
     assert(containerState.get() == ContainerState.PRE_INIT)
     val exceptionHandler = CoroutineExceptionHandler { _, exception ->
@@ -75,7 +77,7 @@ abstract class ClientSessionImpl(
   /**
    * only per-client services are supported (no components, extensions, listeners)
    */
-  override fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
+  override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   listenerCallbacks: MutableList<in Runnable>?) {

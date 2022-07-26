@@ -138,7 +138,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       }
     }
 
-    registerActions(PluginManagerCore.getPluginSet().getRawListOfEnabledModules());
+    registerActions(PluginManagerCore.getPluginSet().getEnabledModules());
 
     EP.forEachExtensionSafe(customizer -> customizer.customize(this));
     DYNAMIC_EP_NAME.forEachExtensionSafe(customizer -> customizer.registerActions(this));

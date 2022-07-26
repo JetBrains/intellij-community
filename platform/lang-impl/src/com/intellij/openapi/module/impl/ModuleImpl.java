@@ -195,21 +195,6 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   }
 
   @Override
-  public void projectOpened() {
-    //noinspection removal,UnnecessaryFullyQualifiedName
-    processInitializedComponents(com.intellij.openapi.module.ModuleComponent.class, (component, __) -> {
-      try {
-        //noinspection removal
-        component.projectOpened();
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      return Unit.INSTANCE;
-    });
-  }
-
-  @Override
   public void projectClosed() {
     @SuppressWarnings({"removal", "UnnecessaryFullyQualifiedName"})
     List<com.intellij.openapi.module.ModuleComponent> components = new ArrayList<>();
@@ -247,13 +232,13 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return isModuleAdded;
   }
 
+  @SuppressWarnings({"UnnecessaryFullyQualifiedName", "removal"})
   @Override
-  public void moduleAdded() {
+  public void moduleAdded(List<com.intellij.openapi.module.ModuleComponent> oldComponents) {
     isModuleAdded = true;
     //noinspection removal,UnnecessaryFullyQualifiedName
     processInitializedComponents(com.intellij.openapi.module.ModuleComponent.class, (component, __) -> {
-      //noinspection removal
-      component.moduleAdded();
+      oldComponents.add(component);
       return Unit.INSTANCE;
     });
   }

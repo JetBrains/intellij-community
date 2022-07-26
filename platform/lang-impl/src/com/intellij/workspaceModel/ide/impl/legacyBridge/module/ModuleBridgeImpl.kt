@@ -87,7 +87,7 @@ internal class ModuleBridgeImpl(
     (PathMacroManager.getInstance(this) as? ModulePathMacroManager)?.onImlFileMoved()
   }
 
-  override fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
+  override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   listenerCallbacks: MutableList<in Runnable>?) {
@@ -103,7 +103,7 @@ internal class ModuleBridgeImpl(
   }
 
   override fun registerComponents(corePlugin: IdeaPluginDescriptor?,
-                                  modules: Sequence<IdeaPluginDescriptorImpl>,
+                                  modules: List<IdeaPluginDescriptorImpl>,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   app: Application?,
                                   listenerCallbacks: MutableList<in Runnable>?) {

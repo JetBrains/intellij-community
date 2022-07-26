@@ -235,7 +235,7 @@ abstract class ComponentManagerImpl(
                        listenerCallbacks = null)
   }
 
-  open fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
+  open fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                               app: Application?,
                               precomputedExtensionModel: PrecomputedExtensionModel?,
                               listenerCallbacks: MutableList<in Runnable>?) {
@@ -989,7 +989,7 @@ abstract class ComponentManagerImpl(
 
   open fun activityNamePrefix(): String? = null
 
-  fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
+  fun preloadServices(modules: List<IdeaPluginDescriptorImpl>,
                       activityPrefix: String,
                       syncScope: CoroutineScope,
                       onlyIfAwait: Boolean = false) {
@@ -1032,7 +1032,7 @@ abstract class ComponentManagerImpl(
     postPreloadServices(modules, activityPrefix, syncScope, onlyIfAwait)
   }
 
-  protected open fun postPreloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
+  protected open fun postPreloadServices(modules: List<IdeaPluginDescriptorImpl>,
                                          activityPrefix: String,
                                          syncScope: CoroutineScope,
                                          onlyIfAwait: Boolean) {
