@@ -25,43 +25,45 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
     override val persistentId: FacetId
         get() = FacetId(name, facetType, moduleId)
 
+  //region generated code
+  @GeneratedCodeApiVersion(1)
+  interface Builder : FacetEntity, ModifiableWorkspaceEntity<FacetEntity>, ObjBuilder<FacetEntity> {
+    override var name: String
+    override var entitySource: EntitySource
+    override var module: ModuleEntity
+    override var facetType: String
+    override var configurationXmlTag: String?
+    override var moduleId: ModuleId
+    override var underlyingFacet: FacetEntity?
+  }
 
-    //region generated code
-    //@formatter:off
-    @GeneratedCodeApiVersion(1)
-    interface Builder: FacetEntity, ModifiableWorkspaceEntity<FacetEntity>, ObjBuilder<FacetEntity> {
-        override var name: String
-        override var entitySource: EntitySource
-        override var module: ModuleEntity
-        override var facetType: String
-        override var configurationXmlTag: String?
-        override var moduleId: ModuleId
-        override var underlyingFacet: FacetEntity?
+  companion object : Type<FacetEntity, Builder>() {
+    operator fun invoke(name: String,
+                        facetType: String,
+                        moduleId: ModuleId,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): FacetEntity {
+      val builder = builder()
+      builder.name = name
+      builder.entitySource = entitySource
+      builder.facetType = facetType
+      builder.moduleId = moduleId
+      init?.invoke(builder)
+      return builder
     }
-    
-    companion object: Type<FacetEntity, Builder>() {
-        operator fun invoke(name: String, facetType: String, moduleId: ModuleId, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FacetEntity {
-            val builder = builder()
-            builder.name = name
-            builder.entitySource = entitySource
-            builder.facetType = facetType
-            builder.moduleId = moduleId
-            init?.invoke(builder)
-            return builder
-        }
-    }
-    //@formatter:on
-    //endregion
+  }
+  //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FacetEntity, modification: FacetEntity.Builder.() -> Unit) = modifyEntity(FacetEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: FacetEntity, modification: FacetEntity.Builder.() -> Unit) = modifyEntity(
+  FacetEntity.Builder::class.java, entity, modification)
+
 var FacetEntity.Builder.childrenFacets: @Child List<FacetEntity>
-    by WorkspaceEntity.extension()
-
+  by WorkspaceEntity.extension()
 var FacetEntity.Builder.facetExternalSystemIdEntity: @Child FacetExternalSystemIdEntity?
-    by WorkspaceEntity.extension()
-
+  by WorkspaceEntity.extension()
 //endregion
 
 val FacetEntity.childrenFacets: List<@Child FacetEntity>
