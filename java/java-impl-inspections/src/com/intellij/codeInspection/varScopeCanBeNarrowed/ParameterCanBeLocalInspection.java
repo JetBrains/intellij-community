@@ -4,7 +4,6 @@ package com.intellij.codeInspection.varScopeCanBeNarrowed;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -92,7 +91,6 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
 
     final Set<PsiParameter> result = filterParameters(controlFlow, parameters);
     if (result.isEmpty()) return Collections.emptyList();
-    //noinspection SuspiciousMethodCalls
     result.retainAll(ControlFlowUtil.getWrittenVariables(controlFlow, 0, controlFlow.getSize(), false));
     if (result.isEmpty()) return Collections.emptyList();
     for (final PsiReferenceExpression readBeforeWrite : ControlFlowUtil.getReadBeforeWrite(controlFlow)) {
@@ -139,11 +137,6 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      WriteAction.run(() -> super.applyFix(project, descriptor));
-    }
-
-    @Override
     protected PsiElement applyChanges(@NotNull final Project project,
                                       @NotNull final String localName,
                                       @Nullable final PsiExpression initializer,
@@ -167,20 +160,15 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
         final String visibilityModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());
 
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-        SmartPsiElementPointer<PsiElement> newDeclaration = SmartPointerManager.createPointer(WriteAction.compute(() -> moveDeclaration(elementFactory, localName, parameter, initializer, action, references)));
-        var processor = 
-          JavaRefactoringFactory.getInstance(project)
-            .createChangeSignatureProcessor(method, false, visibilityModifier, method.getName(), method.getReturnType(), newParams, null, null, null, null);
+        SmartPsiElementPointer<PsiElement> newDeclaration = SmartPointerManager.createPointer(moveDeclaration(elementFactory, localName, parameter, initializer, action, references));
+        var processor = JavaRefactoringFactory.getInstance(project).createChangeSignatureProcessor(
+          method, false, visibilityModifier, method.getName(), method.getReturnType(), newParams, null, null, null, null
+        );
 
         processor.run();
         return newDeclaration.getElement();
       }
       return null;
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
     }
 
     @NotNull

@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -41,9 +43,15 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final V variable = getVariable(descriptor);
     if (variable == null || !variable.isValid()) return; //weird. should not get here when field becomes invalid
+    if (!FileModificationService.getInstance().prepareFileForWrite(variable.getContainingFile())) return;
     final PsiFile myFile = variable.getContainingFile();
 
     try {
@@ -66,11 +74,13 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
       final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(newVariable.getInitializer());
 
       if (VariableAccessUtils.isLocalVariableCopy(newVariable, initializer)) {
-        for (PsiReference reference : ReferencesSearch.search(newVariable).findAll()) {
-          CommonJavaInlineUtil.getInstance()
-            .inlineVariable(newVariable, initializer, (PsiJavaCodeReferenceElement)reference, null);
-        }
-        declaration.delete();
+        Collection<PsiReference> references = ReferencesSearch.search(newVariable).findAll();
+        WriteAction.run(() -> {
+          for (PsiReference reference : references) {
+            CommonJavaInlineUtil.getInstance().inlineVariable(newVariable, initializer, (PsiJavaCodeReferenceElement)reference, null);
+          }
+          declaration.delete();
+        });
       }
     }
   }
@@ -119,7 +129,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
 
     final PsiElement firstElement = getLowestOffsetElement(references);
     final String localName = suggestLocalName(project, variable, anchorBlock);
-
+    if (firstElement == null) return null;
     final PsiElement anchor = getAnchorElement(anchorBlock, firstElement);
 
 
@@ -161,7 +171,8 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
                                     @Nullable final PsiExpression initializer,
                                     @NotNull final V variable,
                                     @NotNull final Collection<? extends PsiReference> references,
-                                    final boolean delete, @NotNull final NotNullFunction<? super PsiDeclarationStatement, ? extends PsiElement> action) {
+                                    final boolean delete,
+                                    @NotNull final NotNullFunction<? super PsiDeclarationStatement, ? extends PsiElement> action) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
     final PsiElement newDeclaration = moveDeclaration(elementFactory, localName, variable, initializer, action, references);
@@ -174,9 +185,11 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
   protected void deleteSourceVariable(@NotNull Project project, @NotNull V variable, PsiElement newDeclaration) {
     CommentTracker tracker = new CommentTracker();
     beforeDelete(project, variable, newDeclaration);
-    variable.normalizeDeclaration();
-    tracker.delete(variable);
-    tracker.insertCommentsBefore(newDeclaration);
+    WriteAction.run(() -> {
+      variable.normalizeDeclaration();
+      tracker.delete(variable);
+      tracker.insertCommentsBefore(newDeclaration);
+    });
   }
 
   protected PsiElement moveDeclaration(PsiElementFactory elementFactory,
@@ -185,16 +198,19 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
                                        PsiExpression initializer,
                                        NotNullFunction<? super PsiDeclarationStatement, ? extends PsiElement> action,
                                        Collection<? extends PsiReference> references) {
-    final PsiDeclarationStatement declaration = elementFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer);
-    if (references.stream()
-                  .map(PsiReference::getElement)
-                  .anyMatch(element -> element instanceof PsiExpression &&
-                                       PsiUtil.isAccessedForWriting((PsiExpression)element))) {
-      PsiUtil.setModifierProperty((PsiLocalVariable)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
-    }
-    final PsiElement newDeclaration = action.fun(declaration);
-    retargetReferences(elementFactory, localName, references);
-    return newDeclaration;
+    final PsiDeclarationStatement declaration =
+      elementFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer);
+    return WriteAction.compute(() -> {
+      if (references.stream()
+        .map(PsiReference::getElement)
+        .anyMatch(element -> element instanceof PsiExpression &&
+                             PsiUtil.isAccessedForWriting((PsiExpression)element))) {
+        PsiUtil.setModifierProperty((PsiLocalVariable)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
+      }
+      final PsiElement newDeclaration = action.fun(declaration);
+      retargetReferences(elementFactory, localName, references);
+      return newDeclaration;
+    });
   }
 
   @Nullable

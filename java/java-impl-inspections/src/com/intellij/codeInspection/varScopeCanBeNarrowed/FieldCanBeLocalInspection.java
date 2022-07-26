@@ -10,6 +10,7 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -418,18 +419,18 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       if (containingClass == null) return newDeclarations;
       final PsiClass scope = findVariableScope(containingClass);
       if (!groupByCodeBlocks(ReferencesSearch.search(variable, new LocalSearchScope(scope)).findAll(), refs)) return newDeclarations;
-
       PsiElement declaration;
       for (Collection<PsiReference> psiReferences : refs.values()) {
         declaration = super.moveDeclaration(project, variable, psiReferences, false);
         if (declaration != null) newDeclarations.add(declaration);
       }
-
-      if (!newDeclarations.isEmpty()) {
-        final PsiElement lastDeclaration = newDeclarations.get(newDeclarations.size() - 1);
-        deleteSourceVariable(project, variable, lastDeclaration);
-      }
-      return newDeclarations;
+      return WriteAction.compute(() -> {
+        if (!newDeclarations.isEmpty()) {
+          final PsiElement lastDeclaration = newDeclarations.get(newDeclarations.size() - 1);
+          deleteSourceVariable(project, variable, lastDeclaration);
+        }
+        return newDeclarations;
+      });
     }
 
     @Override
