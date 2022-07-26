@@ -64,11 +64,16 @@ public final class TestLoggerFactory implements Logger.Factory {
   public static boolean reconfigure() {
     try {
       var customConfigPath = System.getProperty(PathManager.PROPERTY_LOG_CONFIG_FILE);
-      var logProperties = customConfigPath != null ? Path.of(customConfigPath) : Path.of(PathManager.getHomePath(), "test-log.properties");
+      var logProperties = customConfigPath != null ? Path.of(customConfigPath)
+                                                   : Path.of(PathManager.getHomePath(), "test-log.properties");
       if (Files.exists(logProperties)) {
+        System.out.println("Configuring j.u.l.LogManager from file: " + logProperties);
         try (InputStream in = new BufferedInputStream(Files.newInputStream(logProperties))) {
           LogManager.getLogManager().readConfiguration(in);
         }
+      }
+      else {
+        System.err.println("Configuration file for j.u.l.LogManager does not exist: " + logProperties);
       }
 
       var logDir = getTestLogDir();
