@@ -140,6 +140,7 @@ public class GitConflictResolver {
    *
    * @return {@code true} if there is nothing to merge anymore, {@code false} if unmerged files remain or in the case of error.
    */
+  @RequiresBackgroundThread
   public final boolean merge() {
     return merge(false);
   }
