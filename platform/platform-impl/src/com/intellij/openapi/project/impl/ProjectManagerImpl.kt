@@ -1095,7 +1095,7 @@ private suspend fun initProject(file: Path,
     project.componentStore.setPath(file, isRefreshVfsNeeded, template)
 
     coroutineScope {
-      val isTrusted = async { isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }
+      val isTrusted = async { !isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }
 
       preloadServicesAndCreateComponents(project, preloadServices)
       projectInitListeners {
