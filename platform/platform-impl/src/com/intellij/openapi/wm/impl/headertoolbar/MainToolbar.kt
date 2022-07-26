@@ -71,8 +71,14 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     addComponentListener(ResizeListener())
   }
 
+  override fun addNotify() {
+    super.addNotify()
+    mainMenuButton?.menuShortcutHandler?.registerShortcuts(rootPane)
+  }
+
   override fun removeNotify() {
     super.removeNotify()
+    mainMenuButton?.menuShortcutHandler?.unregisterShortcuts()
     Disposer.dispose(disposable)
   }
 
