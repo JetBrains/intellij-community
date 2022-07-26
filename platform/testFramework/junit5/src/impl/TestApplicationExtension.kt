@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
 internal class TestApplicationExtension : BeforeAllCallback, AfterEachCallback {
 
   override fun beforeAll(context: ExtensionContext) {
-    context.root.getStore(ExtensionContext.Namespace.GLOBAL).testApplication()
+    context.testApplication().getOrThrow()
   }
 
   override fun afterEach(context: ExtensionContext) {
@@ -27,18 +27,22 @@ internal class TestApplicationExtension : BeforeAllCallback, AfterEachCallback {
 }
 
 @TestOnly
-private fun ExtensionContext.Store.testApplication() {
-  getOrComputeIfAbsent("application") {
-    initTestApplication()
-    TestApplicationResource()
-  }
+private fun ExtensionContext.testApplication(): Result<Unit> {
+  val store = root.getStore(ExtensionContext.Namespace.GLOBAL)
+  val resource = store.getOrComputeIfAbsent("application") {
+    TestApplicationResource(initTestApplication())
+  } as TestApplicationResource
+  return resource.initializationResult
 }
 
 @TestOnly
-private class TestApplicationResource : ExtensionContext.Store.CloseableResource {
+private class TestApplicationResource(val initializationResult: Result<Unit>) : ExtensionContext.Store.CloseableResource {
 
   override fun close() {
     check(!EDT.isCurrentThreadEdt())
+    if (!initializationResult.isSuccess) {
+      return
+    }
     runBlocking {
       withTimeout(Duration.ofSeconds(20).toMillis()) {
         withContext(Dispatchers.EDT) {

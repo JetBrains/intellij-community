@@ -63,8 +63,8 @@ val isApplicationInitialized: Boolean
 
 @TestOnly
 @Internal
-fun initTestApplication() {
-  (applicationInitializationResult ?: doInitTestApplication()).getOrThrow()
+fun initTestApplication(): Result<Unit> {
+  return (applicationInitializationResult ?: doInitTestApplication())
 }
 
 @TestOnly
