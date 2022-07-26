@@ -1,6 +1,6 @@
 <idea-plugin implementation-detail="true">
   <name>Settings Sync</name>
-  <id>com.jetbrains.settingsSync</id>
+  <id>com.intellij.settingsSync</id>
   <category>IDE Settings</category>
   <description><![CDATA[
   <p>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers.</p>
