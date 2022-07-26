@@ -70,8 +70,12 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -1248,21 +1252,16 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     @Override
     public Object getData(@NotNull String dataId) {
-      final AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
-
-      if (currentProjectViewPane != null) {
-        final Object paneSpecificData = currentProjectViewPane.getData(dataId);
-        if (paneSpecificData != null) return paneSpecificData;
+      AbstractProjectViewPane selectedPane = getCurrentProjectViewPane();
+      if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+        Iterable<DataProvider> paneProviders = selectedPane == null ? null : PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.getData(selectedPane);
+        DataProvider paneProvider = paneProviders == null ? null : CompositeDataProvider.compose(paneProviders);
+        DataProvider provider = slowId -> getSlowData(slowId, paneProvider);
+        return paneProvider == null ? Collections.singletonList(provider) : List.of(provider, paneProvider);
       }
-
-      if (PlatformCoreDataKeys.MODULE.is(dataId)) {
-        VirtualFile[] virtualFiles = (VirtualFile[])getData(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName());
-        if (virtualFiles == null || virtualFiles.length <= 1) return null;
-        final Set<Module> modules = new HashSet<>();
-        for (VirtualFile virtualFile : virtualFiles) {
-          modules.add(ModuleUtilCore.findModuleForFile(virtualFile, myProject));
-        }
-        return modules.size() == 1 ? modules.iterator().next() : null;
+      Object paneData = selectedPane == null ? null : selectedPane.getData(dataId);
+      if (paneData != null) {
+        return paneData;
       }
       if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
         return myCopyPasteDelegator.getCutProvider();
@@ -1283,6 +1282,20 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return ProjectViewImpl.this;
       }
 
+      return null;
+    }
+
+    private @Nullable Object getSlowData(@NotNull String dataId, @Nullable DataProvider paneSlowProvider) {
+      if (PlatformCoreDataKeys.MODULE.is(dataId)) {
+        VirtualFile[] virtualFiles = paneSlowProvider == null ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(paneSlowProvider);
+        if (virtualFiles == null || virtualFiles.length < 1) return null;
+        if (virtualFiles.length == 1) return ModuleUtilCore.findModuleForFile(virtualFiles[0], myProject);
+        Set<Module> modules = new HashSet<>();
+        for (VirtualFile virtualFile : virtualFiles) {
+          ContainerUtil.addIfNotNull(modules, ModuleUtilCore.findModuleForFile(virtualFile, myProject));
+        }
+        return ContainerUtil.getOnlyItem(modules);
+      }
       return null;
     }
   }

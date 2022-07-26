@@ -39,7 +39,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,30 +95,26 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
   }
 
   @Override
-  public Object getData(@NotNull final String dataId) {
+  protected @Nullable Object getSlowDataFromSelection(@Nullable Object @NotNull [] selectedUserObjects,
+                                                      @Nullable Object @Nullable [] singleSelectedPathUserObjects,
+                                                      @NotNull String dataId) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      final PackageElement selectedPackageElement = getSelectedPackageElement();
-      if (selectedPackageElement != null) {
+      Object o = selectedUserObjects.length != 1 ? null : getValueFromNode(selectedUserObjects[0]);
+      if (o instanceof PackageElement) {
         return myDeletePSIElementProvider;
       }
     }
     if (PackageElement.DATA_KEY.is(dataId)) {
-      final PackageElement packageElement = getSelectedPackageElement();
+      Object o = selectedUserObjects.length != 1 ? null : getValueFromNode(selectedUserObjects[0]);
+      return o instanceof PackageElement ? o : null;
     }
     if (PlatformCoreDataKeys.MODULE.is(dataId)) {
-      final PackageElement packageElement = getSelectedPackageElement();
-      if (packageElement != null) {
-        return packageElement.getModule();
+      Object o = selectedUserObjects.length != 1 ? null : getValueFromNode(selectedUserObjects[0]);
+      if (o instanceof PackageElement) {
+        return ((PackageElement)o).getModule();
       }
     }
-    return super.getData(dataId);
-  }
-
-  @Nullable
-  private PackageElement getSelectedPackageElement() {
-    AbstractTreeNode node = TreeUtil.getLastUserObject(AbstractTreeNode.class, getSelectedPath());
-    Object selected = node == null ? null : node.getValue();
-    return selected instanceof PackageElement ? (PackageElement)selected : null;
+    return super.getSlowDataFromSelection(selectedUserObjects, singleSelectedPathUserObjects, dataId);
   }
 
   @Override
