@@ -1518,12 +1518,11 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
     final VirtualFile target = createProjectSubDir("target");
     createProjectSubDirsWithFile("anno",
+                                 "test-anno",
                                  "target/generated-sources/foo",
                                  "target/generated-sources/annotations",
                                  "target/generated-sources/test-annotations",
                                  "target/generated-test-sources/foo");
-
-    createProjectSubDir("test-anno");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1562,11 +1561,13 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
       if (shouldKeepGeneratedFolders) {
         assertTestSources("project",
                           "src/test/java",
-                          "target/generated-test-sources/foo");
+                          "target/generated-test-sources/foo",
+                          "test-anno");
       }
       else {
         assertTestSources("project",
-                          "src/test/java");
+                          "src/test/java",
+                          "test-anno");
       }
       assertTestResources("project", "src/test/resources");
     };
@@ -1674,13 +1675,12 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
   @Test
   public void testCustomAnnotationProcessorSources() throws Exception {
     createStdProjectFolders();
-    createProjectSubDirsWithFile("anno",
+    createProjectSubDirsWithFile("custom-annotations",
+                                 "custom-test-annotations",
                                  "target/generated-sources/foo",
                                  "target/generated-sources/annotations",
                                  "target/generated-sources/test-annotations",
                                  "target/generated-test-sources/foo");
-
-    createProjectSubDir("test-anno");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1693,27 +1693,67 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                   "   <artifactId>maven-compiler-plugin</artifactId>" +
                   "   <version>2.3.2</version>" +
                   "   <configuration>" +
-                  "     <generatedSourcesDirectory>${basedir}/anno</generatedSourcesDirectory>" +
-                  "     <generatedTestSourcesDirectory>${basedir}/test-anno</generatedTestSourcesDirectory>" +
+                  "     <generatedSourcesDirectory>${basedir}/custom-annotations</generatedSourcesDirectory>" +
+                  "     <generatedTestSourcesDirectory>${basedir}/custom-test-annotations</generatedTestSourcesDirectory>" +
                   "   </configuration>" +
                   "  </plugin>" +
                   " </plugins>" +
                   "</build>");
 
     assertSources("project",
-                  "anno",
+                  "custom-annotations",
                   "src/main/java",
                   "target/generated-sources/annotations",
                   "target/generated-sources/foo",
                   "target/generated-sources/test-annotations");
-    assertResources("project", "src/main/resources");
-
     assertTestSources("project",
                       "src/test/java",
-                      "target/generated-test-sources/foo");
-    assertTestResources("project", "src/test/resources");
+                      "target/generated-test-sources/foo",
+                      "custom-test-annotations");
   }
 
+  @Test
+  public void testCustomAnnotationProcessorSourcesUnderMainGeneratedFolder() throws Exception {
+    if (!supportsImportOfNonExistingFolders()) {
+      createStdProjectFolders();
+    }
+    createProjectSubDirsWithFile("target/generated-sources/foo",
+                                 "target/generated-sources/annotations",
+                                 "target/generated-sources/custom-annotations",      // this and...
+                                 "target/generated-sources/custom-test-annotations", // this, are explicitly specified as annotation folders
+                                 "target/generated-test-sources/foo",
+                                 "target/generated-test-sources/test-annotations"
+    );
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  " <plugins>" +
+                  "  <plugin>" +
+                  "   <groupId>org.apache.maven.plugins</groupId>" +
+                  "   <artifactId>maven-compiler-plugin</artifactId>" +
+                  "   <version>2.3.2</version>" +
+                  "   <configuration>" +
+                  "     <generatedSourcesDirectory>${basedir}/target/generated-sources/custom-annotations</generatedSourcesDirectory>" +
+                  "     <generatedTestSourcesDirectory>${basedir}/target/generated-sources/custom-test-annotations</generatedTestSourcesDirectory>" +
+                  "   </configuration>" +
+                  "  </plugin>" +
+                  " </plugins>" +
+                  "</build>");
+
+    assertSources("project",
+                  "src/main/java",
+                  "target/generated-sources/foo",
+                  "target/generated-sources/annotations",
+                  "target/generated-sources/custom-annotations");
+    assertTestSources("project",
+                      "src/test/java",
+                      "target/generated-sources/custom-test-annotations",
+                      "target/generated-test-sources/foo",
+                      "target/generated-test-sources/test-annotations");
+  }
 
   @Test
   public void testModuleWorkingDirWithMultiplyContentRoots() {

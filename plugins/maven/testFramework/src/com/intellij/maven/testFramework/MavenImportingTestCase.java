@@ -255,7 +255,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void assertExcludes(String moduleName, String... expectedExcludes) {
     ContentEntry contentRoot = getContentRoot(moduleName);
-    doAssertContentFolders(contentRoot, Arrays.asList(contentRoot.getExcludeFolders()), false, expectedExcludes);
+    doAssertContentFolders(contentRoot, Arrays.asList(contentRoot.getExcludeFolders()), expectedExcludes);
   }
 
   protected void assertContentRootExcludes(String moduleName, String contentRoot, String... expectedExcudes) {
@@ -272,13 +272,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return myProjectsManager.getProjectsTree();
   }
 
-  private static void doAssertContentFolders(ContentEntry e, final List<? extends ContentFolder> folders, String... expected) {
-    doAssertContentFolders(e, folders, true, expected);
-  }
-
   private static void doAssertContentFolders(ContentEntry e,
                                              final List<? extends ContentFolder> folders,
-                                             boolean checkOrder,
                                              String... expected) {
     List<String> actual = new ArrayList<>();
     for (ContentFolder f : folders) {
@@ -293,19 +288,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       actual.add(folderUrl);
     }
 
-    if (MavenProjectImporter.isImportToWorkspaceModelEnabled()) {
-      // The new workspace model currently doesn't return source folders in the same order that they were added.
-      // Actually, we don't care about the source folders order as it shouldn't affect functionality.
-      checkOrder = false;
-    }
-
-    if (checkOrder) {
-      assertOrderedElementsAreEqual(actual, Arrays.asList(expected));
-    }
-    else {
-      assertSameElements("Unexpected list of folders in content root " + e.getUrl(),
-                         actual, Arrays.asList(expected));
-    }
+    assertSameElements("Unexpected list of folders in content root " + e.getUrl(),
+                       actual, Arrays.asList(expected));
   }
 
   protected void assertModuleOutput(String moduleName, String output, String testOutput) {
