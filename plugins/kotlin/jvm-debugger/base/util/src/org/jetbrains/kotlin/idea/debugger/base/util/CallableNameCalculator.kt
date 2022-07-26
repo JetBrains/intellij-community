@@ -81,4 +81,3 @@ object CallableNameCalculator {
         return KotlinPsiHeuristics.hasPublishedApiAnnotation(declaration)
     }
 }
-

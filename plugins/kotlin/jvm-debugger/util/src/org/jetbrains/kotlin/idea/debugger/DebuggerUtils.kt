@@ -101,7 +101,7 @@ object DebuggerUtils {
         return null
     }
 
-    fun chooseApplicableFile(files: List<KtFile>, location: Location): KtFile {
+    private fun chooseApplicableFile(files: List<KtFile>, location: Location): KtFile {
         return if (Registry.`is`("kotlin.debugger.analysis.api.file.applicability.checker")) {
             FileApplicabilityChecker.findApplicable(files, location)
         } else {
