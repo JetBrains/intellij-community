@@ -1009,7 +1009,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
     Point point = new Point(contentPanel.getWidth() / 2, next ? contentPanel.getHeight() - JBUIScale.scale(40) : JBUIScale.scale(40));
 
-    if (editor == null) {
+    if (editor == null || editor.isDisposed()) {
       final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       final HintHint hintHint = createNotifyHint(contentPanel, point, next);
       hint.show(contentPanel, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hintHint);
