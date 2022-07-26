@@ -448,6 +448,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     }
 
     private void updateActiveLineNumberIcon(@NotNull EditorGutterComponentEx gutter, @Nullable Icon icon, @Nullable Integer line) {
+      if (gutter.getClientProperty("editor.gutter.context.menu") != null) return;
       boolean requireRepaint = false;
       if (gutter.getClientProperty("line.number.hover.icon") != icon) {
         gutter.putClientProperty("line.number.hover.icon", icon);
