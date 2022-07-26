@@ -30,6 +30,7 @@ import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.idea.base.analysis.libraries.LibraryDependencyCandidate
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
 import org.jetbrains.kotlin.idea.base.projectStructure.*
@@ -70,9 +71,26 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
     private fun computeLibrariesAndSdksUsedWith(libraryInfo: LibraryInfo): LibraryDependencies {
         val (dependencyCandidates, sdks) = computeLibrariesAndSdksUsedWithNoFilter(libraryInfo)
-        val libraryDependenciesFilter = DefaultLibraryDependenciesFilter union SharedNativeLibraryToNativeInteropFallbackDependenciesFilter
+
+        // Maven is Gradle Metadata unaware, and therefore needs stricter filter. See KTIJ-15758
+        val importedFromMaven = project.isImportedFromMaven()
+        val libraryDependenciesFilter = if (importedFromMaven)
+            StrictEqualityForPlatformSpecificCandidatesFilter
+        else
+            DefaultLibraryDependenciesFilter union SharedNativeLibraryToNativeInteropFallbackDependenciesFilter
         val libraries = libraryDependenciesFilter(libraryInfo.platform, dependencyCandidates).flatMap { it.libraries }
         return LibraryDependencies(libraries, sdks.toList())
+    }
+
+    // Two corner-cases to cover:
+    // - Maven Plugin is disabled, thus `MavenProjectsManager.getInstance` returns null
+    // - There are no Maven Plugin at all, thus it throws NCDFE. It shouldn't happen in production (Maven
+    //   plugin is bundled, and there's no easy way to remove it), but might happen in some tests
+    // In both cases we just want to degrade gracefully and choose default (non-Maven) path
+    private fun Project.isImportedFromMaven() = try {
+        MavenProjectsManager.getInstance(this)?.isMavenizedProject ?: false
+    } catch (e: NoClassDefFoundError) {
+        false
     }
 
     //NOTE: used LibraryRuntimeClasspathScope as reference
@@ -447,4 +465,5 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
         }
     }
+
 }
