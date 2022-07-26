@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,11 +135,8 @@ public final class MavenLegacyModuleImporter {
 
       final ModuleType moduleType = ModuleType.get(myModule);
 
-      var hasChanges = myMavenProjectChanges.hasChanges();
       for (final MavenImporter importer : mySuitableFacetsImporters) {
         try {
-          if (!hasChanges && importer.processChangedModulesOnly()) continue;
-
           if (importer.getModuleType() == moduleType) {
             measureImporterTime(importer, counters, true, () -> {
               importer.preProcess(myModule, myMavenProject, myMavenProjectChanges, myProviderForExtensions);
@@ -159,10 +157,7 @@ public final class MavenLegacyModuleImporter {
       final ModuleType moduleType = ModuleType.get(myModule);
 
       ApplicationManager.getApplication().runWriteAction(() -> {
-        var hasChanges = myMavenProjectChanges.hasChanges();
         for (final MavenImporter importer : mySuitableFacetsImporters) {
-          if (!hasChanges && importer.processChangedModulesOnly()) continue;
-
           if (importer.getModuleType() == moduleType) {
             try {
               measureImporterTime(importer, counters, false, () -> {
@@ -191,11 +186,8 @@ public final class MavenLegacyModuleImporter {
 
       final ModuleType moduleType = ModuleType.get(myModule);
 
-      var hasChanges = myMavenProjectChanges.hasChanges();
       for (final MavenImporter importer : mySuitableFacetsImporters) {
         try {
-          if (!hasChanges && importer.processChangedModulesOnly()) continue;
-
           if (importer.getModuleType() == moduleType) {
             measureImporterTime(importer, counters, false, () -> {
               importer.postProcess(myModule, myMavenProject, myMavenProjectChanges, myProviderForExtensions);
@@ -424,6 +416,16 @@ public final class MavenLegacyModuleImporter {
 
   boolean initFacetsImporters(boolean isWorkspaceImport) {
     mySuitableFacetsImporters = MavenImporter.getSuitableImporters(myMavenProject, isWorkspaceImport);
+
+    // We must run all importers when we import into Workspace Model:
+    //  in Workspace model the project is recreated from scratch. But for the importers for which processChangedModulesOnly = true,
+    //  we don't know whether they rely on the fact, that previously imported data is kept in the project model on reimport.
+    if (!isWorkspaceImport) {
+      if (!myMavenProjectChanges.hasChanges()) {
+        mySuitableFacetsImporters = ContainerUtil.filter(mySuitableFacetsImporters, (it) -> !it.processChangedModulesOnly());
+      }
+    }
+
     return !mySuitableFacetsImporters.isEmpty();
   }
 
