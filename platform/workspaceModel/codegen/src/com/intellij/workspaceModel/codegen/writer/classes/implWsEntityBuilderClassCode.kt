@@ -1,18 +1,19 @@
 package com.intellij.workspaceModel.codegen.classes
 
 import com.intellij.workspaceModel.codegen.*
-import com.intellij.workspaceModel.codegen.deft.ObjType
-import com.intellij.workspaceModel.codegen.deft.TCollection
 import com.intellij.workspaceModel.codegen.fields.implWsBuilderFieldCode
 import com.intellij.workspaceModel.codegen.fields.implWsBuilderIsInitializedCode
 import com.intellij.workspaceModel.codegen.utils.fqn
 import com.intellij.workspaceModel.codegen.utils.lines
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.writer.allFields
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 
-fun ObjType<*, *>.implWsEntityBuilderCode(): String {
+fun ObjClass<*>.implWsEntityBuilderCode(): String {
   return """
     class Builder(val result: $javaDataName?): ${ModifiableWorkspaceEntityBase::class.fqn}<$javaFullName>(), $javaBuilderName {
         constructor(): this($javaDataName())
@@ -25,7 +26,7 @@ ${
             line("this.diff = builder")
             line("return")
           }) {
-            line("error(\"Entity $javaFullName is already created in a different builder\")")
+            line("error(\"Entity $name is already created in a different builder\")")
           }
         }
         line()
@@ -34,9 +35,9 @@ ${
         line("addToBuilder()")
         line("this.id = getEntityData().createEntityId()")
         line()
-        list(structure.vfuFields) {
-          val suffix = if (type is TCollection<*, *>) ".toHashSet()" else ""
-          "index(this, \"$javaName\", this.$javaName$suffix)"
+        list(vfuFields) {
+          val suffix = if (valueType is ValueType.Collection<*, *>) ".toHashSet()" else ""
+          "index(this, \"$name\", this.$name$suffix)"
         }
         if (name == LibraryEntity::class.simpleName) {
           line("indexLibraryRoots(${LibraryEntity::roots.name})")
@@ -52,7 +53,7 @@ ${
 
       section("fun checkInitialization()") {
         line("val _diff = diff")
-        list(structure.allFields.noPersistentId().noOptional().noDefaultValue()) { lineBuilder, field ->
+        list(allFields.noPersistentId().noOptional().noDefaultValue()) { lineBuilder, field ->
           lineBuilder.implWsBuilderIsInitializedCode(field)
         }
       }
@@ -78,9 +79,9 @@ ${
     }
   }
         
-        ${structure.allFields.filter { it.name != "persistentId" }.lines("        ") { implWsBuilderFieldCode }.trimEnd()}
+        ${allFields.filter { it.name != "persistentId" }.lines("        ") { implWsBuilderFieldCode }.trimEnd()}
         
-        override fun getEntityData(): $javaDataName${if (abstract) "<T>" else ""} = result ?: super.getEntityData() as $javaDataName${if (abstract) "<T>" else ""}
+        override fun getEntityData(): $javaDataName${if (openness.extendable) "<T>" else ""} = result ?: super.getEntityData() as $javaDataName${if (openness.extendable) "<T>" else ""}
         override fun getEntityClass(): Class<$javaFullName> = $javaFullName::class.java
     }
     """.trimIndent()

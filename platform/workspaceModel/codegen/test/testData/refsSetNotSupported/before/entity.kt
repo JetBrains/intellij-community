@@ -22,4 +22,5 @@ interface PrimaryEntity : WorkspaceEntity {
 
   val mainEntity: MainEntity
 }
+
 val MainEntity.primaryEntities: Set<@Child PrimaryEntity>

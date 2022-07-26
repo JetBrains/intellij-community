@@ -1,20 +1,15 @@
 package com.intellij.workspaceModel.codegen.fields
 
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.codegen.*
-import com.intellij.workspaceModel.codegen.fields.javaType
-import com.intellij.workspaceModel.codegen.getRefType
-import com.intellij.workspaceModel.codegen.isRefType
-import com.intellij.workspaceModel.codegen.refsFields
-import com.intellij.workspaceModel.codegen.deft.model.KtObjModule
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.utils.fqn1
 import com.intellij.workspaceModel.codegen.utils.fqn2
-import com.intellij.workspaceModel.codegen.deft.*
-import com.intellij.workspaceModel.codegen.deft.Field
-import com.intellij.workspaceModel.codegen.deft.MemberOrExtField
+import com.intellij.workspaceModel.codegen.writer.*
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.impl.*
 
-val Field<*, *>.implWsEntityFieldCode: String
+val ObjProperty<*, *>.implWsEntityFieldCode: String
   get() = buildString {
     if (hasSetter) {
       if (isOverride && name !in listOf("name", "entitySource")) {
@@ -22,24 +17,24 @@ val Field<*, *>.implWsEntityFieldCode: String
       }
       else append(implWsBlockingCode)
     } else {
-      append("override var $javaName: ${type.javaType} = super<${owner.javaFullName}>.$javaName\n")
+      append("override var $javaName: ${valueType.javaType} = super<${owner.javaFullName}>.$javaName\n")
     }
   }
 
-private val Field<*, *>.implWsBlockingCode: String
-  get() = implWsBlockCode(type, name, "")
+private val ObjProperty<*, *>.implWsBlockingCode: String
+  get() = implWsBlockCode(valueType, name, "")
 
-internal fun Field<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, optionalSuffix: String = ""): String {
+internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, optionalSuffix: String = ""): String {
   return when (fieldType) {
-    TInt -> "override var $javaName: ${fieldType.javaType} = 0"
-    TBoolean -> "override var $javaName: ${fieldType.javaType} = false"
-    TString -> """            
+    ValueType.Int -> "override var $name: ${fieldType.javaType} = 0"
+    ValueType.Boolean -> "override var $name: ${fieldType.javaType} = false"
+    ValueType.String -> """            
             @JvmField var $implFieldName: String? = null
-            override val $javaName: ${fieldType.javaType}${optionalSuffix}
+            override val $name: ${fieldType.javaType}${optionalSuffix}
                 get() = $implFieldName${if (optionalSuffix.isBlank()) "!!" else ""}
                                 
         """.trimIndent()
-    is TRef -> {
+    is ValueType.ObjRef -> {
       val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else ""
       """
             override val $name: ${fieldType.javaType}$optionalSuffix
@@ -47,11 +42,11 @@ internal fun Field<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, 
                 
             """.trimIndent()
     }
-    is TList<*> -> {
+    is ValueType.List<*> -> {
       if (fieldType.isRefType()) {
         val connectionName = name.uppercase() + "_CONNECTION_ID"
         val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else ""
-        if ((fieldType.elementType as TRef<*>).targetObjType.abstract) {
+        if ((fieldType.elementType as ValueType.ObjRef<*>).target.openness.extendable) {
           """
                 override val $name: ${fieldType.javaType}$optionalSuffix
                     get() = snapshot.${fqn2(EntityStorage::extractOneToAbstractManyChildren)}<${fieldType.elementType.javaType}>($connectionName, this)$notNullAssertion.toList()
@@ -70,13 +65,13 @@ internal fun Field<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, 
         val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else ""
         """
                 @JvmField var $implFieldName: ${fieldType.javaType}? = null
-                override val $javaName: ${fieldType.javaType}$optionalSuffix
+                override val $name: ${fieldType.javaType}$optionalSuffix
                     get() = $implFieldName$notNullAssertion   
                 
                 """.trimIndent()
       }
     }
-    is TSet<*> -> {
+    is ValueType.Set<*> -> {
       if (fieldType.isRefType()) {
         error("Set of references is not supported")
       }
@@ -90,18 +85,18 @@ internal fun Field<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, 
                 """.trimIndent()
       }
     }
-    is TMap<*, *> -> """
+    is ValueType.Map<*, *> -> """
             @JvmField var $implFieldName: ${fieldType.javaType}? = null
-            override val $javaName: ${fieldType.javaType}$optionalSuffix
+            override val $name: ${fieldType.javaType}$optionalSuffix
                 get() = $implFieldName${if (optionalSuffix.isBlank()) "!!" else ""}
         """.trimIndent()
-    is TOptional<*> -> when (fieldType.type) {
-      TInt, TBoolean -> "override var $javaName: ${fieldType.javaType} = null"
+    is ValueType.Optional<*> -> when (fieldType.type) {
+      ValueType.Int, ValueType.Boolean -> "override var $name: ${fieldType.javaType} = null"
       else -> implWsBlockCode(fieldType.type, name, "?")
     }
-    is TBlob<*> -> """            
-            @JvmField var $implFieldName: ${fieldType.javaSimpleName}? = null
-            override val $javaName: ${fieldType.javaSimpleName}$optionalSuffix
+    is ValueType.JvmClass -> """            
+            @JvmField var $implFieldName: ${fieldType.javaClassName}? = null
+            override val $name: ${fieldType.javaClassName}$optionalSuffix
                 get() = $implFieldName${if (optionalSuffix.isBlank()) "!!" else ""}
                                 
         """.trimIndent()
@@ -109,42 +104,41 @@ internal fun Field<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, 
   }
 }
 
-internal val Field<*, *>.implWsBlockingCodeOverride: String
+internal val ObjProperty<*, *>.implWsBlockingCodeOverride: String
   get() {
-    val originalField = owner.structure.refsFields.first { it.type.javaType == type.javaType }
+    val originalField = owner.refsFields.first { it.type.javaType == type.javaType }
     val connectionName = originalField.name.uppercase() + "_CONNECTION_ID"
     var valueType = referencedField.type
-    val notNullAssertion = if (valueType is TOptional<*>) "" else "!!"
-    if (valueType is TOptional<*>) {
-      valueType = valueType.type as ValueType<Any?>
+    val notNullAssertion = if (valueType is ValueType.Optional<*>) "" else "!!"
+    if (valueType is ValueType.Optional<*>) {
+      valueType = valueType.type
     }
     val getterName = when (valueType) {
-      is TList<*> -> if (owner.abstract)
+      is ValueType.List<*> -> if (owner.openness.extendable)
         fqn1(EntityStorage::extractOneToAbstractManyParent)
       else
         fqn1(EntityStorage::extractOneToManyParent)
-      is TRef<*> -> if (owner.abstract)
+      is ValueType.ObjRef<*> -> if (owner.openness.extendable)
         fqn1(EntityStorage::extractOneToAbstractOneParent)
       else
         fqn1(EntityStorage::extractOneToOneParent)
       else -> error("Unsupported reference type")
     }
     return """
-            override val $javaName: ${type.javaType}
+            override val $name: ${type.javaType}
                 get() = snapshot.$getterName($connectionName, this)$notNullAssertion
                 
         """.trimIndent()
   }
 
-internal val MemberOrExtField<*, *>.referencedField: MemberOrExtField<*, *>
+internal val ObjProperty<*, *>.referencedField: ObjProperty<*, *>
   get() {
     val ref = type.getRefType()
     val declaredReferenceFromChild =
-      ref.targetObjType.structure.refsFields.filter { it.type.getRefType().targetObjType == owner && it != this } +
-      ((ref.targetObjType.module as? KtObjModule)?.extFields?.filter { it.type.getRefType().targetObjType == owner && it.owner == ref.targetObjType && it != this }
-       ?: emptyList())
+      ref.target.refsFields.filter { it.type.getRefType().target == owner && it != this } +
+      setOf(ref.target.module, receiver.module).flatMap { it.extensions }.filter { it.type.getRefType().target == owner && it.owner == ref.target && it != this }
     if (declaredReferenceFromChild.isEmpty()) {
-      error("Reference should be declared at both entities. It exist at ${owner.name}#$name but absent at ${ref.targetObjType.name}")
+      error("Reference should be declared at both entities. It exist at ${owner.name}#$name but absent at ${ref.target.name}")
     }
     if (declaredReferenceFromChild.size > 1) {
       error(
