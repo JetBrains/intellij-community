@@ -2,8 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,11 +23,6 @@ public final class ComponentUtil {
   @Deprecated
   public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
     component.putClientProperty(key, value);
-  }
-
-  public static boolean isDisableAutoRequestFocus() {
-    return Registry.is("suppress.focus.stealing.disable.auto.request.focus", true)
-           && !(SystemInfo.isXfce || SystemInfo.isI3);
   }
 
   public static boolean isMinimized(@Nullable Window window) {

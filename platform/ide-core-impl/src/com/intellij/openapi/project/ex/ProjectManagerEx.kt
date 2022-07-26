@@ -5,12 +5,20 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import kotlin.io.path.name
 
 abstract class ProjectManagerEx : ProjectManager() {
+
   companion object {
+
+    @Experimental
+    @JvmField
+    val IS_PER_PROJECT_INSTANCE_ENABLED: Boolean = java.lang.Boolean.getBoolean("ide.per.project.instance")
+
     @JvmStatic
     fun getInstanceEx(): ProjectManagerEx = ApplicationManager.getApplication().getService(ProjectManager::class.java) as ProjectManagerEx
 
@@ -22,6 +30,10 @@ abstract class ProjectManagerEx : ProjectManager() {
       val projectManager = getInstanceIfCreated()
       return projectManager?.openProjects?.toList() ?: emptyList()
     }
+
+    @Experimental
+    @JvmStatic
+    fun isChildProcessPath(path: Path): Boolean = path.name.startsWith("perProject_")
   }
 
   @Suppress("UNUSED_PARAMETER")

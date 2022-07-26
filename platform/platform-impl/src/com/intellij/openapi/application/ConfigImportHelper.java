@@ -21,6 +21,7 @@ import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.*;
@@ -80,7 +81,7 @@ public final class ConfigImportHelper {
 
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
-  private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
+  public static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
 
   private static final String CONFIG = "config";
   private static final String[] OPTIONS = {
@@ -471,7 +472,17 @@ public final class ConfigImportHelper {
     List<Path> exactCandidates = new ArrayList<>();
     List<Path> otherPreferredCandidates = new ArrayList<>();
     for (Path home : homes) {
-      if (home == null || !Files.isDirectory(home)) continue;
+      if (home == null || !Files.isDirectory(home)) {
+        continue;
+      }
+
+      if (home.equals(newConfigDir.getParent()) &&
+          ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED &&
+          ProjectManagerEx.isChildProcessPath(newConfigDir)) {
+        exactCandidates.add(home);
+        break;
+      }
+
       boolean dotted = !SystemInfoRt.isMac && home == historicHome;
 
       try (DirectoryStream<Path> stream = Files.newDirectoryStream(home)) {

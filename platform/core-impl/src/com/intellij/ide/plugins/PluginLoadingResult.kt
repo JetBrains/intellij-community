@@ -3,6 +3,8 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.PlatformUtils
@@ -12,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
+import kotlin.io.path.name
 
 // https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
 // If a plugin does not include any module dependency tags in its plugin.xml,
@@ -63,9 +66,17 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     }
   }
 
+  /**
+   * @see [com.intellij.openapi.project.ex.ProjectManagerEx]
+   */
   fun addAll(descriptors: Iterable<IdeaPluginDescriptorImpl?>, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber) {
+    val isMainProcess = java.lang.Boolean.getBoolean("ide.per.project.instance")
+                        && !PathManager.getPluginsDir().name.startsWith("perProject_")
+
+    val applicationInfoEx = ApplicationInfoImpl.getShadowInstance()
     for (descriptor in descriptors) {
-      if (descriptor != null) {
+      if (descriptor != null
+          && (!isMainProcess || applicationInfoEx.isEssentialPlugin(descriptor.pluginId))) {
         add(descriptor, overrideUseIfCompatible, productBuildNumber)
       }
     }
@@ -73,6 +84,12 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
 
   private fun add(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber) {
     val pluginId = descriptor.pluginId
+    if (java.lang.Boolean.getBoolean("ide.per.project.instance")
+        && !PathManager.getPluginsDir().name.startsWith("perProject_")
+        && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId)) {
+      return
+    }
+
     descriptor.isIncomplete?.let { error ->
       addIncompletePlugin(descriptor, error.takeIf { !it.isDisabledError })
       return
