@@ -57,7 +57,7 @@ public abstract class CloudApplicationRuntime extends DeploymentRuntime {
     myDeployment = deployment;
   }
 
-  protected Deployment getDeploymentModel() {
+  public Deployment getDeploymentModel() {
     return myDeployment;
   }
 
