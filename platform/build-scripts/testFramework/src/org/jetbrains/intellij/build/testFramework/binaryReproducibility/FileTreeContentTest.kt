@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.testFramework.binaryReproducibility
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.Decompressor
 import java.nio.file.Files
@@ -10,6 +11,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 import kotlin.streams.toList
 
@@ -30,7 +32,7 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
         else -> throw IllegalArgumentException()
       }
       if (assertion != null) throw assertion
-      println("Byte-to-byte identical: $path1 and $path2.")
+      println("Done.")
     }
   }
 
@@ -64,10 +66,25 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
         path1.unpackingDir().also { Decompressor.Tar(path1).extract(it) },
         path2.unpackingDir().also { Decompressor.Tar(path2).extract(it) }
       ).error ?: AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
-      "zip", "jar", "ijx" -> assertTheSameDirectoryContent(
+      "zip", "jar", "ijx", "sit" -> assertTheSameDirectoryContent(
         path1.unpackingDir().also { Decompressor.Zip(path1).withZipExtensions().extract(it) },
         path2.unpackingDir().also { Decompressor.Zip(path2).withZipExtensions().extract(it) }
       ).error ?: AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
+      "dmg" -> {
+        saveDiff(relativeFilePath, path1, path2)
+        println("dmg cannot be built reproducibly, content comparison is required")
+        if (SystemInfo.isMac) {
+          path1.mountDmg { dmg1Content ->
+            path2.mountDmg { dmg2Content ->
+              assertTheSameDirectoryContent(dmg1Content, dmg2Content).error
+            }
+          }
+        }
+        else {
+          println("macOS is required to compare content of dmg, skipping")
+          null
+        }
+      }
       else -> if (path1.checksum() != path2.checksum()) {
         saveDiff(relativeFilePath, path1, path2)
         AssertionError("Checksum mismatch for $relativeFilePath")
@@ -78,20 +95,19 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
       val permError = AssertionError("Permissions mismatch for $relativeFilePath: ${path1.permissions()} vs ${path2.permissions()}")
       contentError?.addSuppressed(permError) ?: return permError
     }
-    requireNotNull(contentError)
     return contentError
   }
 
   private fun saveDiff(relativePath: String, file1: Path, file2: Path) {
-    fun fileIn(subdir: String) = diffDir.resolve(subdir).resolve(relativePath).apply {
-      parent.createDirectories()
-    }
+    fun fileIn(subdir: String, path: String = relativePath) =
+      diffDir.resolve(subdir).resolve(path).apply {
+        parent.createDirectories()
+      }
     val artifacts1 = fileIn("artifacts1")
     val artifacts2 = fileIn("artifacts2")
     file1.writeContent(artifacts1)
     file2.writeContent(artifacts2)
-    fileIn("diff")
-      .resolveSibling(relativePath.removeSuffix(".txt") + ".diff.txt")
+    fileIn("diff", relativePath.removeSuffix(".txt") + ".diff.txt")
       .writeText(diff(artifacts1, artifacts2))
   }
 
@@ -113,8 +129,9 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
 
   private fun Path.writeContent(target: Path) {
     when (extension) {
-      "jar", "zip", "tar.gz", "gz", "tar", "ijx" -> error("$this is expected to be already unpacked")
+      "jar", "zip", "tar.gz", "gz", "tar", "ijx", "sit" -> error("$this is expected to be already unpacked")
       "class" -> target.writeText(process("javap", "-verbose", "$this"))
+      "dmg" -> target.writeText(process("7z", "l", "$this", ignoreExitCode = true))
       else -> copyTo(target, overwrite = true)
     }
   }
@@ -129,12 +146,30 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
     return unpackingDir
   }
 
-  private fun diff(path1: Path, path2: Path) = process("git", "diff", "--no-index", "--", "$path1", "$path2")
+  private fun diff(path1: Path, path2: Path) = process("git", "diff", "--no-index", "--", "$path1", "$path2", ignoreExitCode = true)
 
-  private fun process(vararg command: String): String {
+  private fun <T> Path.mountDmg(action: (mountPoint: Path) -> T): T {
+    require(SystemInfo.isMac)
+    require(extension == "dmg")
+    val mountPoint = Path.of("/Volumes/${UUID.randomUUID()}")
+    require(!mountPoint.exists())
+    process("hdiutil", "attach", "-mountpoint", "$mountPoint", "$this")
+    return try {
+      action(mountPoint)
+    }
+    finally {
+      process("diskutil", "unmount", "$mountPoint")
+    }
+  }
+
+  private fun process(vararg command: String, ignoreExitCode: Boolean = false): String {
     val process = ProcessBuilder(*command).start()
     val output = process.inputStream.bufferedReader().use { it.readText() }
-    process.waitFor()
+    if (!process.waitFor(10, TimeUnit.MINUTES)) {
+      process.destroyForcibly().waitFor()
+      error("${command.joinToString(separator = " ")} timed out")
+    }
+    require(ignoreExitCode || process.exitValue() == 0) { output }
     return output
   }
 
