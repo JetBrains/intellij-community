@@ -579,7 +579,9 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
         Disposer.dispose(editor.getFileEditor());
       }
     }
-    myFocusWatcher.deinstall(myFocusWatcher.getTopComponent());
+    if (myFocusWatcher != null) {
+      myFocusWatcher.deinstall(myFocusWatcher.getTopComponent());
+    }
   }
 
   public void addEditor(@NotNull FileEditor editor, @NotNull FileEditorProvider provider) {
