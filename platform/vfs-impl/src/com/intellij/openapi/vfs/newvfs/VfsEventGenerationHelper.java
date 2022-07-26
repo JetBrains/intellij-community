@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.RefreshWorker.RefreshCancelledException;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
@@ -28,25 +29,23 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static com.intellij.openapi.vfs.newvfs.RefreshWorker.LOG;
 
 final class VfsEventGenerationHelper {
-  static final Logger LOG = Logger.getInstance(RefreshWorker.class);
+  private final Map<Thread, Pair<List<VFileEvent>, Integer>> myState = new ConcurrentHashMap<>();
 
-  private final List<VFileEvent> myEvents = new ArrayList<>();
-  private int myMarkedStart = -1;
-
-  @NotNull
-  public List<VFileEvent> getEvents() {
-    return myEvents;
+  @NotNull List<VFileEvent> getEvents() {
+    var events = new ArrayList<VFileEvent>();
+    myState.values().forEach(v -> events.addAll(v.first));
+    return events;
   }
 
-  static boolean checkDirty(@NotNull NewVirtualFile file) {
-    boolean fileDirty = file.isDirty();
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("file=" + file + " dirty=" + fileDirty);
-    }
-    return fileDirty;
+  private List<VFileEvent> events() {
+    return myState.computeIfAbsent(Thread.currentThread(), __ -> new Pair<>(new ArrayList<>(), -1)).first;
   }
 
   void checkContentChanged(@NotNull VirtualFile file, long oldTimestamp, long newTimestamp, long oldLength, long newLength) {
@@ -55,25 +54,15 @@ final class VfsEventGenerationHelper {
         "update file=" + file +
         (oldTimestamp != newTimestamp ? " TS=" + oldTimestamp + "->" + newTimestamp : "") +
         (oldLength != newLength ? " len=" + oldLength + "->" + newLength : ""));
-      myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, oldTimestamp, newTimestamp, oldLength, newLength, true));
+      events().add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, oldTimestamp, newTimestamp, oldLength, newLength, true));
     }
-  }
-
-  private static Path getChildPath(@NotNull String parentPath, @NotNull String childName) {
-    try {
-      return Paths.get(parentPath, childName);
-    }
-    catch (InvalidPathException e) {
-      LOG.warn("Invalid child name: '" + childName + "'", e);
-    }
-    return null;
   }
 
   void scheduleCreation(@NotNull VirtualFile parent,
                         @NotNull String childName,
                         @NotNull FileAttributes attributes,
                         @Nullable String symlinkTarget,
-                        @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled) throws RefreshWorker.RefreshCancelledException {
+                        @NotNull ThrowableRunnable<RefreshCancelledException> checkCanceled) throws RefreshCancelledException {
     if (LOG.isTraceEnabled()) {
       LOG.trace("create parent=" + parent + " name=" + childName + " attr=" + attributes);
     }
@@ -83,7 +72,7 @@ final class VfsEventGenerationHelper {
         Path childPath = getChildPath(parent.getPath(), childName);
         if (childPath != null && shouldScanDirectory(parent, childPath, childName)) {
           List<Path> relevantExcluded = ContainerUtil.mapNotNull(ProjectManagerEx.getInstanceEx().getAllExcludedUrls(), url -> {
-            Path path = Paths.get(VirtualFileManager.extractPath(url));
+            Path path = Path.of(VirtualFileManager.extractPath(url));
             return path.startsWith(childPath) ? path : null;
           });
           children = scanChildren(childPath, relevantExcluded, checkCanceled);
@@ -93,14 +82,24 @@ final class VfsEventGenerationHelper {
         LOG.warn("Invalid child name: '" + childName + "'", e);
       }
     }
-    myEvents.add(new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children));
+    events().add(new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children));
     VFileEvent event = VfsImplUtil.generateCaseSensitivityChangedEventForUnknownCase(parent, childName);
     if (event != null) {
-      myEvents.add(event);
+      events().add(event);
     }
   }
 
-  private static boolean shouldScanDirectory(@NotNull VirtualFile parent, @NotNull Path child, @NotNull String childName) {
+  private static Path getChildPath(String parentPath, String childName) {
+    try {
+      return Path.of(parentPath, childName);
+    }
+    catch (InvalidPathException e) {
+      LOG.warn("Invalid child name: '" + childName + "'", e);
+      return null;
+    }
+  }
+
+  private static boolean shouldScanDirectory(VirtualFile parent, Path child, String childName) {
     if (FileTypeManager.getInstance().isFileIgnored(childName)) return false;
     for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
       if (ReadAction.compute(() -> ProjectFileIndex.getInstance(openProject).isUnderIgnored(parent))) {
@@ -108,7 +107,7 @@ final class VfsEventGenerationHelper {
       }
       String projectRootPath = openProject.getBasePath();
       if (projectRootPath != null) {
-        Path path = Paths.get(projectRootPath);
+        Path path = Path.of(projectRootPath);
         if (child.startsWith(path)) return true;
       }
     }
@@ -116,22 +115,24 @@ final class VfsEventGenerationHelper {
   }
 
   void beginTransaction() {
-    myMarkedStart = myEvents.size();
+    var thread = Thread.currentThread();
+    var state = myState.get(thread);
+    myState.put(thread, state != null ? new Pair<>(state.first, state.first.size()) : new Pair<>(new ArrayList<>(), 0));
   }
 
   void endTransaction(boolean success) {
+    var thread = Thread.currentThread();
+    var state = myState.get(thread);
+    var events = state.first;
     if (!success) {
-      myEvents.subList(myMarkedStart, myEvents.size()).clear();
+      events.subList(state.second, events.size()).clear();
     }
-    myMarkedStart = -1;
+    myState.put(thread, new Pair<>(events, -1));
   }
 
   // scan all children of "root" (except excluded dirs) recursively and return them in the ChildInfo[] array
   // null means error during scan
-  private static ChildInfo @Nullable [] scanChildren(@NotNull Path root,
-                                                     @NotNull List<? extends Path> excluded,
-                                                     @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled)
-  throws RefreshWorker.RefreshCancelledException {
+  private static ChildInfo @Nullable [] scanChildren(Path root, List<Path> excluded, ThrowableRunnable<RefreshCancelledException> checkCanceled) throws RefreshCancelledException {
     // top of the stack contains list of children found so far in the current directory
     Stack<List<ChildInfo>> stack = new Stack<>();
     ChildInfo fakeRoot = new ChildInfoImpl("", null, null, null);
@@ -208,7 +209,7 @@ final class VfsEventGenerationHelper {
 
   void scheduleDeletion(@NotNull VirtualFile file) {
     if (LOG.isTraceEnabled()) LOG.trace("delete file=" + file);
-    myEvents.add(new VFileDeleteEvent(null, file, true));
+    events().add(new VFileDeleteEvent(null, file, true));
   }
 
   void checkSymbolicLinkChange(@NotNull VirtualFile child, String oldTarget, String currentTarget) {
@@ -232,10 +233,6 @@ final class VfsEventGenerationHelper {
 
   void scheduleAttributeChange(@NotNull VirtualFile file, @VirtualFile.PropName @NotNull String property, Object current, Object upToDate) {
     if (LOG.isTraceEnabled()) LOG.trace("update file=" + file + ' ' + property + '=' + current + "->" + upToDate);
-    myEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
-  }
-
-  void addAllEventsFrom(@NotNull VfsEventGenerationHelper otherHelper) {
-    myEvents.addAll(otherHelper.myEvents);
+    events().add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
   }
 }

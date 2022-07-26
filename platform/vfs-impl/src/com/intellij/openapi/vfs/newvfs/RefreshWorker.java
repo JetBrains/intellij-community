@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -39,10 +40,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.vfs.newvfs.VfsEventGenerationHelper.LOG;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 final class RefreshWorker {
+  static final Logger LOG = Logger.getInstance(RefreshWorker.class);
+
   private static final int ourParallelism =
     MathUtil.clamp(Registry.intValue("vfs.refresh.worker.parallelism", 4), 1, Runtime.getRuntime().availableProcessors());
   private static final ExecutorService ourExecutor =
@@ -432,7 +434,9 @@ final class RefreshWorker {
                                             @Nullable NewVirtualFile parent,
                                             NewVirtualFile child,
                                             FileAttributes childAttributes) {
-    if (!VfsEventGenerationHelper.checkDirty(child)) {
+    boolean fileDirty = child.isDirty();
+    if (LOG.isTraceEnabled()) LOG.trace("file=" + child + " dirty=" + fileDirty);
+    if (!fileDirty) {
       return;
     }
 
