@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseIn
   @NonNls
   static String calculateReplacementExpression(PsiMethodCallExpression expression,
                                                CommentTracker commentTracker,
-                                               boolean isFullyQualified) {
+                                               boolean fullyQualified) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final PsiNewExpression qualifier = ObjectUtils.tryCast(methodExpression.getQualifierExpression(), PsiNewExpression.class);
     if (qualifier == null) return null;
@@ -67,10 +67,8 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseIn
     final PsiExpression arg = argumentList.getExpressions()[0];
     final PsiType type = qualifier.getType();
     if (type == null) return null;
-    final String qualifierType = type.getPresentableText();
-    final String canonicalType = type.getCanonicalText();
-    final String name = isFullyQualified ? canonicalType : qualifierType;
-    final String conversionName = JavaPsiBoxingUtils.getParseMethod(canonicalType);
+    final String name = fullyQualified ? type.getCanonicalText() : type.getPresentableText();
+    final String conversionName = JavaPsiBoxingUtils.getParseMethod(type);
     if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_BOOLEAN, type) && !PsiUtil.isLanguageLevel5OrHigher(expression)) {
       return name + '.' + "valueOf" + '(' + commentTracker.text(arg) + ").booleanValue()";
     }

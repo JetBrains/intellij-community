@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     }
 
     private UnnecessaryBoxingFix(PsiType retType) {
-      this.name = CommonQuickFixBundle.message("fix.replace.with.x", getParseMethod(retType));
+      this.name = CommonQuickFixBundle.message("fix.replace.with.x", JavaPsiBoxingUtils.getParseMethod(retType));
     }
 
     @Override
@@ -106,7 +106,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       final CommentTracker commentTracker = new CommentTracker();
       if (unboxedExpressionType.getCanonicalText().equals("java.lang.String")) {
         PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
-        final String parseMethodName = getParseMethod(methodCall.getType());
+        final String parseMethodName = JavaPsiBoxingUtils.getParseMethod(methodCall.getType());
         if (parseMethodName == null) {
           return;
         }
@@ -249,7 +249,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       if (TypeUtils.isJavaLangString(boxedExpressionType)) {
         final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
         final PsiType methodReturnType = method.getReturnType();
-        if (expectedType instanceof PsiPrimitiveType && getParseMethod(methodReturnType) != null) {
+        if (expectedType instanceof PsiPrimitiveType && JavaPsiBoxingUtils.getParseMethod(methodReturnType) != null) {
           registerError(expression, methodReturnType);
         }
         return;
@@ -335,14 +335,5 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       }
       return false;
     }
-  }
-
-  @Nullable
-  private static String getParseMethod(@Nullable PsiType type) {
-    if (type == null) {
-      return null;
-    }
-    final String typeText = type.getCanonicalText();
-    return JavaPsiBoxingUtils.getParseMethod(typeText);
   }
 }

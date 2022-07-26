@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,10 +24,13 @@ public final class JavaPsiBoxingUtils {
   }
 
   /**
-   * Get parse method name without qualifier for given full class name.
+   * Get parse method name without qualifier for the specified boxed type,
+   * or {@code null} if the parameter is not a boxed type.
    */
   @Nullable
-  public static String getParseMethod(@Nullable String className) {
-    return parseMethodsMap.get(className);
+  public static String getParseMethod(@Nullable PsiType type) {
+    if (type == null) return null;
+    final String typeText = type.getCanonicalText();
+    return parseMethodsMap.get(typeText);
   }
 }
