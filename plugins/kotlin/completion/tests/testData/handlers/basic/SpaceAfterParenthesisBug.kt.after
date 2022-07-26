@@ -1,3 +1,6 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
+
 class Pair(val first: Int, val second: Int)
 
 fun foo(p: Pair) {

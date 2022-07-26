@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 fun some(a : Statement<caret>)
 
 // INVOCATION_COUNT: 1

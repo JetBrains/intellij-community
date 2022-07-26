@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 
 @Dep<caret>
 fun foo() { }
