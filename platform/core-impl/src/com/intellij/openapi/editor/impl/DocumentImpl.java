@@ -1202,7 +1202,11 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public String toString() {
-    return "DocumentImpl[" + FileDocumentManager.getInstance().getFile(this) + (isInEventsHandling() ? ",inEventHandling" : "") + "]";
+    return "DocumentImpl[" + FileDocumentManager.getInstance().getFile(this) +
+           (isInEventsHandling() ? ",inEventHandling" : "") +
+           (!myAssertThreading ? ",nonWriteThreadOnly" : "") +
+           (myAcceptSlashR ? ",acceptSlashR" : "") +
+           "]";
   }
 
   @NotNull
