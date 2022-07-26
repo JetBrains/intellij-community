@@ -20,7 +20,7 @@ final class IdeErrorsIcon extends JLabel {
     "ide-errors-icon-blinking-timeouts",
     ICON_BLINKING_TIMEOUT_MILLIS,
     true,
-    null);
+    null).setRestartTimerOnAdd(true);
 
   IdeErrorsIcon(boolean enableBlink) {
     myEnableBlink = enableBlink;
