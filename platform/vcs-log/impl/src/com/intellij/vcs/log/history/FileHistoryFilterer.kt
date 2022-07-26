@@ -121,11 +121,11 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
         val isInitial = commitCount == CommitCountStage.INITIAL
 
         val indexDataGetter = index.dataGetter
-        scope.setAttribute("File path", filePath.toString())
+        scope.setAttribute("filePath", filePath.toString())
         if (indexDataGetter != null && index.isIndexed(root) && dataPack.isFull) {
           cancelLastTask(false)
           val visiblePack = filterWithIndex(indexDataGetter, dataPack, oldVisiblePack, sortType, filters, isInitial)
-          scope.setAttribute("Type", "index")
+          scope.setAttribute("type", "index")
           if (checkNotEmpty(dataPack, visiblePack, true)) {
             return Pair(visiblePack, commitCount)
           }
@@ -135,7 +135,7 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
           if (vcs.vcsHistoryProvider != null) {
             try {
               val visiblePack = filterWithProvider(vcs, dataPack, sortType, filters, isInitial)
-              scope.setAttribute("Type", "history provider")
+              scope.setAttribute("type", "history provider")
               checkNotEmpty(dataPack, visiblePack, false)
               return@filter Pair(visiblePack, commitCount)
             }
@@ -263,8 +263,8 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
           Rename(r.filePath1, r.filePath2, storage.getCommitIndex(r.hash1, root), storage.getCommitIndex(r.hash2, root))
         }
 
-        it.setAttribute("Renames size", renames.size.toLong())
-        it.setAttribute("Number of addition-deletions",fileHistory.unmatchedAdditionsDeletions.size.toLong())
+        it.setAttribute("renamesSize", renames.size.toLong())
+        it.setAttribute("numberOfAdditionDeletions",fileHistory.unmatchedAdditionsDeletions.size.toLong())
 
         val result = MultiMap<UnorderedPair<Int>, Rename>()
         renames.forEach { result.putValue(it.commits, it) }

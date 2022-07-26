@@ -124,7 +124,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       @Override
       public void each(@NotNull VirtualFile root, @NotNull VcsLogProvider provider) throws VcsException {
         Span spanForRoot = TRACER.spanBuilder("loading commits").startSpan();
-        spanForRoot.setAttribute("Root name", root.getName());
+        spanForRoot.setAttribute("rootName", root.getName());
         try (Scope ignored = spanForRoot.makeCurrent()) {
           VcsLogProvider.DetailedLogData data = provider.readFirstBlock(root, requirements.get(root));
           logInfo.put(root, compactCommits(data.getCommits(), root));

@@ -439,7 +439,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     throws IOException, VcsException {
 
     LOG.debug("Shelving of " + changes.size() + " changes...");
-    Span totalSpan = myTracer.spanBuilder("total shelving").setAttribute("changes size", changes.size()).startSpan();
+    Span totalSpan = myTracer.spanBuilder("total shelving").setAttribute("changesSize", changes.size()).startSpan();
     Scope scope = totalSpan.makeCurrent();
 
     Path schemePatchDir = generateUniqueSchemePatchDir(commitMessage, true);
@@ -490,7 +490,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
       Span mainSpan = myTracer.spanBuilder("batch shelving").setAttribute("batch", batchIndex).startSpan();
       try (Scope ignored = mainSpan.makeCurrent()) {
         if (baseContentsPreloadSize > 0) {
-          Span span = myTracer.spanBuilder("preloading base revisions").setAttribute("changes size", list.size()).startSpan();
+          Span span = myTracer.spanBuilder("preloading base revisions").setAttribute("changesSize", list.size()).startSpan();
           preloadBaseRevisions(list);
           span.end();
         }

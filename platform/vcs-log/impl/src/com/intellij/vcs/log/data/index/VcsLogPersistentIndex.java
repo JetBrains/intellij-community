@@ -581,8 +581,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     private void report() {
       String formattedTime = StopWatch.formatTime(getCurrentTimeMillis() - myStartTime);
-      mySpan.setAttribute("Number of commits", myNewIndexedCommits.get());
-      mySpan.setAttribute("Root name", myRoot.getName());
+      mySpan.setAttribute("numberOfCommits", myNewIndexedCommits.get());
+      mySpan.setAttribute("rootName", myRoot.getName());
       if (myFull) {
         LOG.info(formattedTime +
                  " for indexing " +
@@ -591,8 +591,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       else {
         int leftCommits = myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get();
         String leftCommitsMessage = (leftCommits > 0) ? ". " + leftCommits + " commits left" : "";
-        mySpan.setAttribute("Total commits", myCommits.size());
-        mySpan.setAttribute("Commits left", leftCommits);
+        mySpan.setAttribute("totalCommits", myCommits.size());
+        mySpan.setAttribute("commitsLeft", leftCommits);
 
         LOG.info(formattedTime +
                  " for indexing " +
@@ -651,7 +651,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       int limit = myIndexingLimit.get(myRoot).get();
       boolean isOvertime = time >= (Math.max(limit, 1L) * 60 * 1000) && !myBigRepositoriesList.isBig(myRoot);
       if (isOvertime || (myBigRepositoriesList.isBig(myRoot) && !indicator.isCanceled())) {
-        mySpan.setAttribute("Cancelled", true);
+        mySpan.setAttribute("cancelled", true);
         LOG.warn("Indexing " + myRoot.getName() + " was cancelled after " + StopWatch.formatTime(time));
         if (isOvertime) {
           myBigRepositoriesList.addRepository(myRoot);

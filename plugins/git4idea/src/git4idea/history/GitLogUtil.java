@@ -174,7 +174,7 @@ public final class GitLogUtil {
       handler.endOptions();
 
       Span span =
-        TraceManager.INSTANCE.getTracer("vcs").spanBuilder("loading commit metadata").setAttribute("root name", root.getName()).startSpan();
+        TraceManager.INSTANCE.getTracer("vcs").spanBuilder("loading commit metadata").setAttribute("rootName", root.getName()).startSpan();
       GitLogOutputSplitter<GitLogRecord> handlerListener = new GitLogOutputSplitter<>(handler, parser, recordConsumer);
       Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError();
       handlerListener.reportErrors();

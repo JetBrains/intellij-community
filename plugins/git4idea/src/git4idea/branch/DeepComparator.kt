@@ -357,7 +357,7 @@ class DeepComparator(private val project: Project,
   }
 
   private inline fun <R> recordSpan(root: VirtualFile, @NonNls actionName: String, block: () -> R): R {
-    TraceManager.getTracer("vcs").spanBuilder(actionName).setAttribute("root name", root.name).useWithScope {
+    TraceManager.getTracer("vcs").spanBuilder(actionName).setAttribute("rootName", root.name).useWithScope {
       return block()
     }
   }
