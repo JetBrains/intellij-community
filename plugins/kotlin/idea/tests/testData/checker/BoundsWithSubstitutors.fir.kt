@@ -1,4 +1,3 @@
-
     open class A<T>
     class B<X : A<X>>()
 

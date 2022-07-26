@@ -1,4 +1,3 @@
-
 class Rule(val apply: () -> Unit)
 
 fun foo() {

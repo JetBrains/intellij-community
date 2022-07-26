@@ -1,4 +1,3 @@
-
 package qualified_expressions
 
 fun test(s: IntRange?) {

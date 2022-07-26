@@ -1,4 +1,3 @@
-
 open class A() {
   fun foo() {
       if (this is B) {
