@@ -1,13 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.similarity.internal;
 
+import com.intellij.ide.scratch.RootType;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -20,10 +22,11 @@ import com.intellij.psi.*;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider;
-import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.openapi.application.ActionsKt.runWriteAction;
+import java.io.IOException;
+
+import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
 public class ShowUsageFeaturesInternalAction extends AnAction {
 
@@ -41,7 +44,7 @@ public class ShowUsageFeaturesInternalAction extends AnAction {
     assert directory != null;
     final Ref<PsiFile> featuresDump = new Ref<>();
     calculateFeaturesForUsage(editor, file, project, featuresDump);
-    createFileWithFeatures(directory, featuresDump).navigate(true);
+    //createFileWithFeatures(directory, featuresDump).navigate(true);
   }
 
   @Override
@@ -58,30 +61,47 @@ public class ShowUsageFeaturesInternalAction extends AnAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final Bag features = new Bag();
+        Ref<PsiElement> element = new Ref<>();
         ApplicationManager.getApplication().runReadAction(() -> {
-          PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-          if (element != null) {
+          element.set(file.findElementAt(editor.getCaretModel().getOffset()));
+          if (!element.isNull()) {
             UsageSimilarityFeaturesProvider.EP_NAME.forEachExtensionSafe(provider -> {
-              features.addAll(provider.getFeatures(element));
-            });
+                                                                           features.addAll(provider.getFeatures(element.get()));
+                                                                         }
+            );
           }
         });
-        featuresDump.set(
-          PsiFileFactory.getInstance(project).createFileFromText("features" + System.currentTimeMillis(), PlainTextFileType.INSTANCE,
-                                                                 StringUtil.join(
-                                                                   features.getBag().object2IntEntrySet(), ",\n"),
-                                                                 LocalTimeCounter.currentTime(), false, false));
+        writeCommandAction(project).compute(() -> {
+          ScratchFileService fileService = ScratchFileService.getInstance();
+          try {
+            VirtualFile scratchFile = fileService.findFile(RootType.findById("scratches"), getFeaturesFileName(file, element.get(), editor),
+                                                           ScratchFileService.Option.create_new_always);
+            PsiFile psiFile = PsiManager.getInstance(project).findFile(scratchFile);
+            featuresDump.set(psiFile);
+            final Document document = psiFile != null ? PsiDocumentManager.getInstance(project).getDocument(psiFile) : null;
+            if (document != null) {
+              document.insertString(document.getTextLength(), StringUtil.join(features.getBag().object2IntEntrySet(), ",\n"));
+              PsiDocumentManager.getInstance(project).commitDocument(document);
+              psiFile.navigate(true);
+            }
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+          return true;
+        });
       }
     });
   }
 
-  private static @NotNull PsiFile createFileWithFeatures(@NotNull PsiDirectory directory, @NotNull Ref<PsiFile> featuresDumpFile) {
-    return runWriteAction(() ->
-                          {
-                            final PsiElement featureDumpFile = directory.add(featuresDumpFile.get());
-                            assert featureDumpFile instanceof PsiFile;
-                            return (PsiFile)featureDumpFile;
-                          }
-    );
+  @NotNull
+  private static String getFeaturesFileName(@NotNull PsiFile file, @NotNull PsiElement element, @NotNull Editor editor) {
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    String fileName = file.getName();
+    return "features" +
+           fileName.substring(0, fileName.lastIndexOf('.')) +
+           (document != null ? document.getLineNumber(editor.getCaretModel().getOffset()) : "") +
+           "-" + element.getText() + "-" +
+           ".txt";
   }
 }
