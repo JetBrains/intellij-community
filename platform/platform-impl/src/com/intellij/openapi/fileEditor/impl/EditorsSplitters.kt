@@ -434,15 +434,15 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       val manager = manager
       window.setForegroundAt(index, manager.getFileColor(file))
       var resultAttributes = TextAttributes()
-
-      resultAttributes.foregroundColor = colorScheme.getColor(getForegroundColorForFile(manager.project, file))
       var attributes = if (manager.isProblem(file)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
       if (composite.isPreview) {
         val italic = TextAttributes(null, null, null, null, Font.ITALIC)
         attributes = if (attributes == null) italic else TextAttributes.merge(italic, attributes)
       }
       resultAttributes = TextAttributes.merge(resultAttributes, attributes)
-      window.setTextAttributes(index, resultAttributes)
+      window.setTextAttributes(index, resultAttributes.apply {
+        this.foregroundColor = colorScheme.getColor(getForegroundColorForFile(manager.project, file))
+      })
     }
   }
 

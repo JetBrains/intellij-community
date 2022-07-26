@@ -6,10 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 fun getForegroundColorForFile(project: Project, file: VirtualFile): ColorKey? {
-  val firstOrNull = EditorTabColorProvider.EP_NAME.extensionList.firstOrNull {
-    val editorTabColor = it.getEditorTabForegroundColor(project, file)
-    return@firstOrNull editorTabColor != null
+  return EditorTabColorProvider.EP_NAME.extensionList.firstNotNullOfOrNull {
+    it.getEditorTabForegroundColor(project, file)
   }
-  return firstOrNull?.getEditorTabForegroundColor(project, file)
 }
 
