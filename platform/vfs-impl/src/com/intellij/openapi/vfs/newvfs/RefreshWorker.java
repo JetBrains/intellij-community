@@ -160,15 +160,14 @@ final class RefreshWorker {
   private void processQueue(List<VFileEvent> events, NewVirtualFileSystem fs, PersistentFS persistence) throws RefreshCancelledException {
     nextDir:
     while (!mySemaphore.isUp()) {
-      VirtualDirectoryImpl dir = (VirtualDirectoryImpl)myRefreshQueue.pollFirst();
+      var dir = (VirtualDirectoryImpl)myRefreshQueue.pollFirst();
       if (dir == null) {
         TimeoutUtil.sleep(10);
         continue;
       }
 
       try {
-        boolean fullSync = dir.allChildrenLoaded();
-        boolean succeeded;
+        boolean fullSync = dir.allChildrenLoaded(), succeeded;
 
         do {
           (fullSync ? myFullScans : myPartialScans).incrementAndGet();
@@ -202,7 +201,7 @@ final class RefreshWorker {
     var t = System.nanoTime();
     Pair<List<String>, List<VirtualFile>> snapshot = ReadAction.compute(() -> {
       VirtualFile[] children = dir.getChildren();
-      return Pair.create(getNames(children), Arrays.asList(children));
+      return new Pair<>(getNames(children), Arrays.asList(children));
     });
     myVfsTime.addAndGet(System.nanoTime() - t);
     if (snapshot == null) {
@@ -262,7 +261,7 @@ final class RefreshWorker {
       for (Map.Entry<String, FileAttributes> e : map.entrySet()) {
         String name = e.getKey();
         FileAttributes attributes = e.getValue();
-        updatedMap.add(Pair.create(nameToFile.get(name), attributes));
+        updatedMap.add(new Pair<>(nameToFile.get(name), attributes));
       }
     }
     else {
