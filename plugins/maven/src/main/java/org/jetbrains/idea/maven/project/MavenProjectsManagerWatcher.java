@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
@@ -35,7 +35,7 @@ import java.util.concurrent.ExecutorService;
 
 import static org.jetbrains.idea.maven.project.MavenGeneralSettingsWatcher.registerGeneralSettingsWatcher;
 
-public class MavenProjectsManagerWatcher {
+public final class MavenProjectsManagerWatcher {
 
   private static final Logger LOG = Logger.getInstance(MavenProjectsManagerWatcher.class);
 
@@ -240,13 +240,19 @@ public class MavenProjectsManagerWatcher {
     }
 
     @Override
-    public void moduleAdded(@NotNull final Project project, @NotNull final Module module) {
-      if (Registry.is("maven.modules.do.not.ignore.on.delete")) return;
-      // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
+    public void modulesAdded(@NotNull Project project, @NotNull List<Module> modules) {
+      if (Registry.is("maven.modules.do.not.ignore.on.delete")) {
+        return;
+      }
 
+      // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-      MavenProject mavenProject = projectsManager.findProject(module);
-      if (mavenProject != null) projectsManager.setIgnoredState(Collections.singletonList(mavenProject), false);
+      for (Module module : modules) {
+        MavenProject mavenProject = projectsManager.findProject(module);
+        if (mavenProject != null) {
+          projectsManager.setIgnoredState(Collections.singletonList(mavenProject), false);
+        }
+      }
     }
   }
 }
