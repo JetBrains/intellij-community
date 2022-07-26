@@ -31,12 +31,15 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SuppressWarnings("UnstableApiUsage")
 @ApiStatus.Internal
 public final class BuildDependenciesUtil {
+  private static final Logger LOG = Logger.getLogger(BuildDependenciesUtil.class.getName());
+
   private static final boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
   private static final int octal_0111 = Integer.parseInt("111", 8);
   private static final String _OS_NAME = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
@@ -298,11 +301,11 @@ public final class BuildDependenciesUtil {
 
           Path resolvedTarget = entryPath.resolveSibling(relativeSymlinkTarget).normalize();
           if (!resolvedTarget.startsWith(canonicalTarget) || resolvedTarget.equals(canonicalTarget)) {
-            throw new IllegalStateException(
-              archiveFile + ": symlink entry '" + entry.getName() +
-              "' points to outside of archive extraction directory, which is forbidden.\n" +
+            LOG.fine(archiveFile + ": skipping symlink entry '" + entry.getName() +
+              "' which points outside of archive extraction directory, which is forbidden.\n" +
               "resolved target = " + resolvedTarget + "\n" +
               "root = " + canonicalTarget + "\n");
+            continue;
           }
 
           if (isWindows) {
