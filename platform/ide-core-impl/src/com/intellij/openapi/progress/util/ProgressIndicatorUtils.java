@@ -19,12 +19,10 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
@@ -117,45 +115,18 @@ public final class ProgressIndicatorUtils {
     }, progressIndicator);
   }
 
-  private static final List<Runnable> ourWACancellations = ContainerUtil.createLockFreeCopyOnWriteList();
-
-  static {
-    Application app = ApplicationManager.getApplication();
-    app.addApplicationListener(new ApplicationListener() {
-      @Override
-      public void beforeWriteActionStart(@NotNull Object action) {
-        cancelActionsToBeCancelledBeforeWrite();
-      }
-    }, app);
-  }
-
   @ApiStatus.Internal
   public static void cancelActionsToBeCancelledBeforeWrite() {
-    for (Runnable cancellation : ourWACancellations) {
-      cancellation.run();
-    }
+    ProgressIndicatorUtilService.getInstance(ApplicationManager.getApplication()).cancelActionsToBeCancelledBeforeWrite();
   }
 
   @ApiStatus.Internal
-  public static boolean runActionAndCancelBeforeWrite(@NotNull ApplicationEx application, @NotNull Runnable cancellation, @NotNull Runnable action) {
-    if (isWriteActionRunningOrPending(application)) {
-      cancellation.run();
-      return false;
-    }
-
-    ourWACancellations.add(cancellation);
-    try {
-      if (isWriteActionRunningOrPending(application)) {
-        // the listener might not be notified if write action was requested concurrently with the listener addition
-        cancellation.run();
-        return false;
-      }
-      action.run();
-      return true;
-    }
-    finally {
-      ourWACancellations.remove(cancellation);
-    }
+  public static boolean runActionAndCancelBeforeWrite(
+    @NotNull ApplicationEx application,
+    @NotNull Runnable cancellation,
+    @NotNull Runnable action
+  ) {
+    return ProgressIndicatorUtilService.getInstance(application).runActionAndCancelBeforeWrite(cancellation, action);
   }
 
   private static @NotNull Runnable indicatorCancellation(@NotNull ProgressIndicator progressIndicator) {
