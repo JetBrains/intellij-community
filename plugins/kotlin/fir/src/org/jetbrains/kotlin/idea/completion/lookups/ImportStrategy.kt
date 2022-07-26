@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.analysis.api.fir.utils.addImportToFile
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMemberSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
-import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -18,28 +17,7 @@ internal sealed class ImportStrategy {
     data class InsertFqNameAndShorten(val fqName: FqName) : ImportStrategy()
 }
 
-internal fun KtAnalysisSession.detectImportStrategy(symbol: KtSymbol): ImportStrategy = when (symbol) {
-    is KtCallableSymbol -> detectImportStrategyForCallableSymbol(symbol)
-    is KtClassLikeSymbol -> detectImportStrategyForClassLikeSymbol(symbol)
-    else -> ImportStrategy.DoNothing
-}
 
-internal fun KtAnalysisSession.detectImportStrategyForCallableSymbol(symbol: KtCallableSymbol): ImportStrategy {
-    if (symbol !is KtPossibleMemberSymbol || symbol.symbolKind == KtSymbolKind.CLASS_MEMBER) return ImportStrategy.DoNothing
-
-    val propertyId = symbol.callableIdIfNonLocal?.asSingleFqName() ?: return ImportStrategy.DoNothing
-
-    return if (symbol.isExtension) {
-        ImportStrategy.AddImport(propertyId)
-    } else {
-        ImportStrategy.InsertFqNameAndShorten(propertyId)
-    }
-}
-
-internal fun KtAnalysisSession.detectImportStrategyForClassLikeSymbol(symbol: KtClassLikeSymbol): ImportStrategy {
-    val classId = symbol.classIdIfNonLocal ?: return ImportStrategy.DoNothing
-    return ImportStrategy.InsertFqNameAndShorten(classId.asSingleFqName())
-}
 
 internal fun addCallableImportIfRequired(targetFile: KtFile, nameToImport: FqName) {
     if (!alreadyHasImport(targetFile, nameToImport)) {

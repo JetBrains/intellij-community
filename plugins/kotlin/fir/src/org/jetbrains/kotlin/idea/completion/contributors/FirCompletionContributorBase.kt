@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.completion.contributors
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
@@ -14,11 +13,16 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMemberSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.completion.ItemPriority
-import org.jetbrains.kotlin.idea.completion.LookupElementFactory
 import org.jetbrains.kotlin.idea.completion.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
@@ -26,15 +30,16 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadat
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider.getCallableMetadata
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.priority
+import org.jetbrains.kotlin.idea.completion.utils.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 internal class FirCompletionContributorOptions(
@@ -63,6 +68,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     protected val indexHelper: HLIndexHelper get() = basicContext.indexHelper
     protected val symbolFromIndexProvider: KtSymbolFromIndexProvider get() = basicContext.symbolFromIndexProvider
     protected val lookupElementFactory: KotlinFirLookupElementFactory get() = basicContext.lookupElementFactory
+    protected val importStrategyDetector: ImportStrategyDetector get() = basicContext.importStrategyDetector
     protected val visibleScope = basicContext.visibleScope
 
 
@@ -76,7 +82,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         // Don't offer any hidden deprecated items.
         if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
         with(lookupElementFactory) {
-            createLookupElement(symbol)
+            createLookupElement(symbol, importStrategyDetector)
                 .let(sink::addElement)
         }
     }
@@ -84,7 +90,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     protected fun KtAnalysisSession.addClassifierSymbolToCompletion(
         symbol: KtClassifierSymbol,
         context: WeighingContext,
-        importingStrategy: ImportStrategy = detectImportStrategy(symbol),
+        importingStrategy: ImportStrategy = importStrategyDetector.detectImportStrategy(symbol),
     ) {
         if (symbol !is KtNamedSymbol) return
         // Don't offer any deprecated items that could leads to compile errors.
@@ -92,7 +98,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         val lookup = with(lookupElementFactory) {
             when (symbol) {
                 is KtClassLikeSymbol -> createLookupElementForClassLikeSymbol(symbol, importingStrategy)
-                is KtTypeParameterSymbol -> createLookupElement(symbol)
+                is KtTypeParameterSymbol -> createLookupElement(symbol, importStrategyDetector)
             }
         } ?: return
         lookup.availableWithoutImport = importingStrategy == ImportStrategy.DoNothing

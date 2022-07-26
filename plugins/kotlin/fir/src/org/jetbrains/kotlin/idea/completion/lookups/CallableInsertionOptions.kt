@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion.lookups
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.idea.completion.utils.ImportStrategyDetector
 
 internal data class CallableInsertionOptions(
     val importingStrategy: ImportStrategy,
@@ -17,8 +18,8 @@ internal data class CallableInsertionOptions(
         copy(insertionStrategy = newInsertionStrategy)
 }
 
-internal fun KtAnalysisSession.detectCallableOptions(symbol: KtCallableSymbol): CallableInsertionOptions = CallableInsertionOptions(
-    importingStrategy = detectImportStrategy(symbol),
+internal fun KtAnalysisSession.detectCallableOptions(symbol: KtCallableSymbol, importStrategyDetector: ImportStrategyDetector): CallableInsertionOptions = CallableInsertionOptions(
+    importingStrategy = importStrategyDetector.detectImportStrategy(symbol),
     insertionStrategy = when (symbol) {
         is KtFunctionSymbol -> CallableInsertionStrategy.AsCall
         else -> CallableInsertionStrategy.AsIdentifier

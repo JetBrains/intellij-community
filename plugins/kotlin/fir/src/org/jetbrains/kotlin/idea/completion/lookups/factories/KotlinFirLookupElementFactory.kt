@@ -4,15 +4,16 @@ package org.jetbrains.kotlin.idea.completion.lookups.factories
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.detectCallableOptions
-import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
+import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.detectCallableOptions
+import org.jetbrains.kotlin.idea.completion.utils.ImportStrategyDetector
 import org.jetbrains.kotlin.name.FqName
+import java.net.UnknownHostException
 
 internal class KotlinFirLookupElementFactory {
     private val classLookupElementFactory = ClassLookupElementFactory()
@@ -21,14 +22,20 @@ internal class KotlinFirLookupElementFactory {
     private val typeParameterLookupElementFactory = TypeParameterLookupElementFactory()
     private val packagePartLookupElementFactory = PackagePartLookupElementFactory()
 
-    fun KtAnalysisSession.createLookupElement(symbol: KtNamedSymbol, substitutor: KtSubstitutor = KtSubstitutor.Empty(token)): LookupElement {
+    fun KtAnalysisSession.createLookupElement(
+        symbol: KtNamedSymbol,
+        importStrategyDetector: ImportStrategyDetector,
+        importingStrategy: ImportStrategy? = null,
+        substitutor: KtSubstitutor = KtSubstitutor.Empty(token)
+    ): LookupElement {
         return when (symbol) {
             is KtCallableSymbol -> createCallableLookupElement(
                 symbol,
-                detectCallableOptions(symbol),
+                detectCallableOptions(symbol, importStrategyDetector),
                 substitutor,
             )
-            is KtClassLikeSymbol -> with(classLookupElementFactory) { createLookup(symbol) }
+
+            is KtClassLikeSymbol -> with(classLookupElementFactory) { createLookup(symbol, importingStrategy ?: importStrategyDetector.detectImportStrategy(symbol)) }
             is KtTypeParameterSymbol -> with(typeParameterLookupElementFactory) { createLookup(symbol) }
             else -> throw IllegalArgumentException("Cannot create a lookup element for $symbol")
         }
@@ -51,7 +58,7 @@ internal class KotlinFirLookupElementFactory {
 
     fun KtAnalysisSession.createLookupElementForClassLikeSymbol(
         symbol: KtClassLikeSymbol,
-        importingStrategy: ImportStrategy = detectImportStrategy(symbol)
+        importingStrategy: ImportStrategy,
     ): LookupElement? {
         if (symbol !is KtNamedSymbol) return null
         return with(classLookupElementFactory) { createLookup(symbol, importingStrategy) }

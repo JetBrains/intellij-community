@@ -8,11 +8,12 @@ import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.utils.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -26,6 +27,7 @@ internal class FirBasicCompletionContext(
     val targetPlatform: TargetPlatform,
     val indexHelper: HLIndexHelper,
     val symbolFromIndexProvider: KtSymbolFromIndexProvider,
+    val importStrategyDetector: ImportStrategyDetector,
     val lookupElementFactory: KotlinFirLookupElementFactory = KotlinFirLookupElementFactory(),
 ) {
     val visibleScope = KotlinSourceFilterScope.projectFiles(originalKtFile.resolveScope, project)
@@ -39,6 +41,7 @@ internal class FirBasicCompletionContext(
             val targetPlatform = originalKtFile.platform
             val project = originalKtFile.project
             val indexHelper = createIndexHelper(parameters)
+
             return FirBasicCompletionContext(
                 parameters,
                 LookupElementSink(result, firParameters),
@@ -49,6 +52,7 @@ internal class FirBasicCompletionContext(
                 targetPlatform,
                 indexHelper,
                 KtSymbolFromIndexProvider(project),
+                ImportStrategyDetector(originalKtFile, project),
             )
         }
 
