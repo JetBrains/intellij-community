@@ -3,8 +3,8 @@ package com.intellij.ide.ui.text
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManager
-import com.intellij.openapi.options.ConfigurableUi
-import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.options.Configurable.NoScroll
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
@@ -14,22 +14,24 @@ import com.intellij.util.text.CustomJBDateTimeFormatter
 import com.intellij.util.text.DateTimeFormatManager
 import com.intellij.util.text.JBDateFormat
 import java.util.*
-import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.event.DocumentEvent
 
 /**
  * @author Konstantin Bulenkov
  */
-class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : ConfigurableUi<DateTimeFormatManager> {
-  private val ui: DialogPanel
+class DateTimeFormatConfigurable : BoundSearchableConfigurable(
+  IdeBundle.message("date.time.format.configurable"),
+  "ide.date.format"
+), NoScroll {
 
   private lateinit var dateFormatField: Cell<JBTextField>
   private lateinit var use24HourCheckbox: Cell<JBCheckBox>
   private lateinit var datePreviewField: Cell<JEditorPane>
 
-  init {
-    ui = panel {
+  override fun createPanel(): DialogPanel {
+    val settings = DateTimeFormatManager.getInstance()
+    return panel {
       lateinit var overrideSystemDateFormatting: Cell<JBCheckBox>
 
       row {
@@ -79,6 +81,11 @@ class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : Configurab
       }.topGap(TopGap.SMALL)
 
       updateCommentField()
+
+      onApply {
+        JBDateFormat.invalidateCustomFormatter()
+        LafManager.getInstance().updateUI()
+      }
     }
   }
 
@@ -88,17 +95,4 @@ class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : Configurab
     calendar.set(1999, 11, 31, 23, 59, 59)
     datePreviewField.text(formatter.formatDateTime(calendar.time))
   }
-
-  override fun reset(settings: DateTimeFormatManager) = ui.reset()
-
-  override fun isModified(settings: DateTimeFormatManager): Boolean = ui.isModified()
-
-  @Throws(ConfigurationException::class)
-  override fun apply(settings: DateTimeFormatManager) {
-    ui.apply()
-    JBDateFormat.invalidateCustomFormatter()
-    LafManager.getInstance().updateUI()
-  }
-
-  override fun getComponent(): JComponent = ui
 }
