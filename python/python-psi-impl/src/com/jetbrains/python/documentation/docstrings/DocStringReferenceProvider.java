@@ -87,8 +87,8 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
           final SectionBasedDocString sectioned = (SectionBasedDocString)docString;
           result.addAll(referencesFromFields(expr, offset, sectioned.getParameterFields(), ReferenceType.PARAMETER));
           result.addAll(referencesFromFields(expr, offset, sectioned.getKeywordArgumentFields(), ReferenceType.KEYWORD));
-          result.addAll(referencesFromFields(expr, offset, sectioned.getAttributeFields(), 
-                                             PyUtil.isTopLevel(element) ? ReferenceType.GLOBAL_VARIABLE : ReferenceType.INSTANCE_VARIABLE));
+          result.addAll(referencesFromFields(expr, offset, sectioned.getAttributeFields(),
+                                             PyUtil.isTopLevel(element) ? ReferenceType.GLOBAL_VARIABLE : ReferenceType.VARIABLE));
           result.addAll(referencesFromFields(expr, offset, sectioned.getReturnFields(), null));
         }
         return result.toArray(PsiReference.EMPTY_ARRAY);
