@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.util.ProgressDialogUI
 import com.intellij.openapi.progress.util.ProgressDialogWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer
@@ -46,8 +45,10 @@ import javax.swing.SwingUtilities
 import kotlin.math.min
 
 internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
-  open suspend fun <T : Any> run(scope: CoroutineScope, task: suspend (saveTemplateJob: Job?) -> T): T {
-    return task(scope.saveTemplateAsync(options))
+  open suspend fun <T : Any> run(task: suspend CoroutineScope.(saveTemplateJob: Job?) -> T): T {
+    return coroutineScope {
+      task(saveTemplateAsync(options))
+    }
   }
 
   /**
@@ -78,34 +79,36 @@ private fun CoroutineScope.saveTemplateAsync(options: OpenProjectTask): Job? {
 internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val projectStoreBaseDir: Path) : ProjectFrameAllocator(options) {
   private val deferredProjectFrameHelper = CompletableDeferred<ProjectFrameHelper>()
 
-  override suspend fun <T : Any> run(scope: CoroutineScope, task: suspend (saveTemplateJob: Job?) -> T): T {
-    val deferredWindow = scope.async(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val frameManager = createFrameManager()
-      val frameHelper = frameManager.createFrameHelper(this@ProjectUiFrameAllocator)
-      frameHelper.init()
-      val window = frameManager.getWindow()
-      // implOptions == null - not via recents project - show frame immediately
-      if (options.showFrameAsap || options.implOptions == null) {
-        frameManager.getWindow().isVisible = true
+  override suspend fun <T : Any> run(task: suspend CoroutineScope.(saveTemplateJob: Job?) -> T): T {
+    return coroutineScope {
+      val deferredWindow = async(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        val frameManager = createFrameManager()
+        val frameHelper = frameManager.createFrameHelper(this@ProjectUiFrameAllocator)
+        frameHelper.init()
+        val window = frameManager.getWindow()
+        // implOptions == null - not via recents project - show frame immediately
+        if (options.showFrameAsap || options.implOptions == null) {
+          frameManager.getWindow().isVisible = true
+        }
+
+        deferredProjectFrameHelper.complete(frameHelper)
+        window
       }
 
-      deferredProjectFrameHelper.complete(frameHelper)
-      window
-    }
+      withModalContext {
+        // execute saveTemplateAsync under modal progress - write-safe context for saving template settings
+        val saveTemplateDeferred = saveTemplateAsync(options)
 
-    return withModalContext {
-      // execute saveTemplateAsync under modal progress - write-safe context for saving template settings
-      val saveTemplateDeferred = saveTemplateAsync(options)
-
-      val showIndicatorJob = showModalIndicatorForProjectLoading(
-        windowDeferred = deferredWindow,
-        title = getProgressTitle(),
-      )
-      try {
-        task(saveTemplateDeferred)
-      }
-      finally {
-        showIndicatorJob.cancel()
+        val showIndicatorJob = showModalIndicatorForProjectLoading(
+          windowDeferred = deferredWindow,
+          title = getProgressTitle(),
+        )
+        try {
+          task(saveTemplateDeferred)
+        }
+        finally {
+          showIndicatorJob.cancel()
+        }
       }
     }
   }
@@ -150,13 +153,13 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
   override suspend fun projectLoaded(project: Project) {
     val windowManager = WindowManager.getInstance() as WindowManagerImpl
     val frameHelper = deferredProjectFrameHelper.await()
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    withContext(Dispatchers.EDT) {
       runActivity("project frame assigning") {
         windowManager.assignFrame(frameHelper, project)
       }
 
       // not as a part of a project modal dialog
-      val projectScope = (project as ProjectEx).coroutineScope
+      val projectScope = project.coroutineScope
       projectScope.launch {
         val toolWindowManager = ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl ?: return@launch
         // OpenFilesActivity inits component

@@ -18,10 +18,6 @@ import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -50,7 +46,6 @@ import org.jetbrains.annotations.TestOnly
 import java.lang.Runnable
 import java.nio.file.ClosedFileSystemException
 import java.nio.file.Path
-import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 
 @Internal
@@ -68,10 +63,24 @@ open class ProjectImpl(filePath: Path, projectName: String?)
     @TestOnly
     const val LIGHT_PROJECT_NAME: @NonNls String = "light_temp"
 
-    @JvmField
-    var ourClassesAreLoaded = false
-
     private val CREATION_TRACE = Key.create<String>("ProjectImpl.CREATION_TRACE")
+
+    internal fun CoroutineScope.preloadServicesAndCreateComponents(project: ProjectImpl, preloadServices: Boolean) {
+      if (preloadServices) {
+        launch {
+          // for light projects, preload only services that are essential
+          // ("await" means "project component loading activity is completed only when all such services are completed")
+          project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                                  activityPrefix = "project ",
+                                  syncScope = this,
+                                  onlyIfAwait = project.isLight)
+        }
+      }
+
+      launch {
+        project.createComponents()
+      }
+    }
   }
 
   private val earlyDisposable = AtomicReference(Disposer.newDisposable())
@@ -99,6 +108,7 @@ open class ProjectImpl(filePath: Path, projectName: String?)
 
     cachedName = projectName
     // light project may be changed later during test, so we need to remember its initial state
+    @Suppress("TestOnlyProblems")
     isLight = ApplicationManager.getApplication().isUnitTestMode && filePath.toString().contains(LIGHT_PROJECT_NAME)
   }
 
@@ -195,32 +205,6 @@ open class ProjectImpl(filePath: Path, projectName: String?)
 
   @Internal
   final override fun activityNamePrefix() = "project "
-
-  internal suspend fun init(preloadServices: Boolean) {
-    val container = this
-    val app = ApplicationManager.getApplication()
-    coroutineScope {
-      if (preloadServices) {
-        launch {
-          // for light projects, preload only services that are essential
-          // ("await" means "project component loading activity is completed only when all such services are completed")
-          container.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-                                    activityPrefix = "project ",
-                                    syncScope = this,
-                                    onlyIfAwait = isLight)
-        }
-      }
-
-      createComponents()
-
-      runOnlyCorePluginExtensions((app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<ProjectServiceContainerInitializedListener>(
-        "com.intellij.projectServiceContainerInitializedListener")) {
-        launchAndMeasure(it.javaClass.simpleName) {
-          it.serviceCreated(this@ProjectImpl)
-        }
-      }
-    }
-  }
 
   @TestOnly
   fun setTemporarilyDisposed(value: Boolean) {
@@ -376,32 +360,6 @@ open class ProjectImpl(filePath: Path, projectName: String?)
   private fun storeCreationTrace() {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       putUserData(CREATION_TRACE, ExceptionUtil.currentStackTrace())
-    }
-  }
-}
-
-private suspend inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl<T>, crossinline executor: suspend (T) -> Unit) {
-  for (adapter in ep.sortedAdapters) {
-    val pluginDescriptor = adapter.pluginDescriptor
-    if (!isCorePlugin(pluginDescriptor)) {
-      logger<ProjectImpl>().error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
-      continue
-    }
-
-    try {
-      executor(adapter.createInstance(ep.componentManager) ?: continue)
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: PluginException) {
-      logger<ProjectImpl>().error(e)
-    }
-    catch (e: Throwable) {
-      logger<ProjectImpl>().error(PluginException(e, pluginDescriptor.pluginId))
     }
   }
 }
