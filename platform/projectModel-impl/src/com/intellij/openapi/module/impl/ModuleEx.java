@@ -28,10 +28,6 @@ public interface ModuleEx extends Module {
 
   void clearScopesCache();
 
-  default long getOptionsModificationCount() {
-    return 0;
-  }
-
   /**
    * @return true if this module can store settings in its IComponentStore
    */
