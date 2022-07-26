@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.ui.tree.actions.XAddToWatchesTreeAction;
@@ -44,6 +45,11 @@ final class AddToWatchesAction extends XDebuggerActionBase {
     else {
       super.update(event);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
