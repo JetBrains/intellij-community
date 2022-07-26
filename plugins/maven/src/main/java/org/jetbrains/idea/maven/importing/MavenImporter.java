@@ -127,7 +127,11 @@ public abstract class MavenImporter {
     resolve(project, mavenProject, nativeMavenProject, embedder);
   }
 
+  /**
+   * This is 'work in progress' API and must not be used directly until further notice
+   */
   @ApiStatus.Experimental
+  @ApiStatus.Internal
   public boolean isMigratedToConfigurator() { return false; }
 
   /**
