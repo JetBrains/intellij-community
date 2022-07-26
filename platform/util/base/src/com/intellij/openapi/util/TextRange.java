@@ -245,6 +245,10 @@ public class TextRange implements Segment, Serializable {
     return ((long)start << 32) | end;
   }
 
+  public static long deltaScalarRange(long range, int deltaStart, int deltaEnd) {
+    return range + ((long)deltaStart << 32) + deltaEnd;
+  }
+
   public static long union(long range1, long range2) {
     if (range1 == range2) return range1;
     int start = Math.min(startOffset(range1), startOffset(range2));
@@ -253,7 +257,7 @@ public class TextRange implements Segment, Serializable {
   }
 
   public static int endOffset(long range) {
-    return (int)range & Integer.MAX_VALUE;
+    return (int)range & 0x7fffffff;
   }
 
   public static int startOffset(long range) {

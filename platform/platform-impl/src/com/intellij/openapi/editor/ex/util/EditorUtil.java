@@ -703,7 +703,7 @@ public final class EditorUtil {
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(lineStartOffset);
       if (foldRegion instanceof CustomFoldRegion) {
         int startY = editor.visualLineToY(editor.offsetToVisualLine(foldRegion.getStartOffset(), false));
-        OurInterval interval = new OurInterval(startY, startY + ((CustomFoldRegion)foldRegion).getHeightInPixels());
+        Interval interval = new TextRangeInterval(startY, startY + ((CustomFoldRegion)foldRegion).getHeightInPixels());
         return Pair.create(interval, foldRegion.getStartOffset() == document.getLineStartOffset(logicalLine) &&
                                      foldRegion.getEndOffset() == document.getLineEndOffset(logicalLine) ? interval : null);
       }
@@ -718,7 +718,7 @@ public final class EditorUtil {
     int endY = (endVisualLine == startVisualLine ? startY : editor.visualLineToY(endVisualLine)) + lineHeight;
     int startYEx = topOverlapped ? startY + lineHeight : startY;
     int endYEx = bottomOverlapped ? endY - lineHeight : endY;
-    return Pair.create(new OurInterval(startY, endY), startYEx < endYEx ? new OurInterval(startYEx, endYEx) : null);
+    return Pair.create(new TextRangeInterval(startY, endY), startYEx < endYEx ? new TextRangeInterval(startYEx, endYEx) : null);
   }
 
   /**
@@ -736,12 +736,12 @@ public final class EditorUtil {
     if (editor instanceof EditorImpl) {
       VisualLinesIterator iterator = new VisualLinesIterator((EditorImpl)editor, visualLine);
       if (!iterator.atEnd()) {
-        return new OurInterval(iterator.getStartLogicalLine(), iterator.getEndLogicalLine());
+        return new TextRangeInterval(iterator.getStartLogicalLine(), iterator.getEndLogicalLine());
       }
     }
     int startLogicalLine = editor.visualToLogicalPosition(new VisualPosition(visualLine, 0, false)).line;
     int endLogicalLine= editor.visualToLogicalPosition(new VisualPosition(visualLine, Integer.MAX_VALUE, true)).line;
-    return new OurInterval(startLogicalLine, endLogicalLine);
+    return new TextRangeInterval(startLogicalLine, endLogicalLine);
   }
 
   public static int yPositionToLogicalLine(@NotNull Editor editor, @NotNull MouseEvent event) {
@@ -1163,25 +1163,5 @@ public final class EditorUtil {
   private static class EditorNotification {
     private static final Key<Long> LAST_MAX_CARETS_NOTIFY_TIMESTAMP = Key.create("last.max.carets.notify.timestamp");
     private static final long MAX_CARETS_NOTIFY_INTERVAL_MS = 10_000;
-  }
-
-  private static class OurInterval implements Interval {
-    private final int intervalStart;
-    private final int intervalEnd;
-
-    private OurInterval(int intervalStart, int intervalEnd) {
-      this.intervalStart = intervalStart;
-      this.intervalEnd = intervalEnd;
-    }
-
-    @Override
-    public int intervalStart() {
-      return intervalStart;
-    }
-
-    @Override
-    public int intervalEnd() {
-      return intervalEnd;
-    }
   }
 }

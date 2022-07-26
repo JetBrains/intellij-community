@@ -1546,13 +1546,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
             !Boolean.TRUE.equals(myEditor.getUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION)) &&
             needToShiftWhiteSpaces(e)) {
           int afterInserted = e.getOffset() + e.getNewLength();
-          setIntervalStart(afterInserted);
-          setIntervalEnd(afterInserted);
+          setRange(TextRange.toScalarRange(afterInserted, afterInserted));
         }
         int offset = intervalStart();
         if (DocumentUtil.isInsideSurrogatePair(getDocument(), offset)) {
-          setIntervalStart(offset - 1);
-          setIntervalEnd(offset - 1);
+          setRange(TextRange.toScalarRange(offset - 1, offset - 1));
         }
       }
       else {
@@ -1568,8 +1566,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
           }
         }
         newOffset = DocumentUtil.alignToCodePointBoundary(getDocument(), newOffset);
-        setIntervalStart(newOffset);
-        setIntervalEnd(newOffset);
+        setRange(TextRange.toScalarRange(newOffset, newOffset));
       }
       myLogicalColumnAdjustment = 0;
       myVisualColumnAdjustment = 0;
@@ -1595,8 +1592,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     protected void onReTarget(@NotNull DocumentEvent e) {
       int offset = intervalStart();
       if (DocumentUtil.isInsideSurrogatePair(getDocument(), offset)) {
-        setIntervalStart(offset - 1);
-        setIntervalEnd(offset - 1);
+        setRange(TextRange.toScalarRange(offset - 1, offset - 1));
       }
     }
   }
@@ -1632,10 +1628,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     protected void changedUpdateImpl(@NotNull DocumentEvent e) {
       super.changedUpdateImpl(e);
       if (isValid()) {
-        int startOffset = intervalStart();
-        int endOffset = intervalEnd();
-        if (DocumentUtil.isInsideSurrogatePair(getDocument(), startOffset)) setIntervalStart(startOffset - 1);
-        if (DocumentUtil.isInsideSurrogatePair(getDocument(), endOffset)) setIntervalStart(endOffset - 1);
+        alignToSurrogatePairBoundaries();
       }
       if (endVirtualOffset > 0 && isValid()) {
         Document document = e.getDocument();
@@ -1647,16 +1640,16 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
     }
 
+    private void alignToSurrogatePairBoundaries() {
+      long alignedRange = TextRange.deltaScalarRange(toScalarRange(),
+      DocumentUtil.isInsideSurrogatePair(getDocument(), getStartOffset()) ? -1 : 0,
+      DocumentUtil.isInsideSurrogatePair(getDocument(), getEndOffset()) ? -1 : 0);
+      setRange(alignedRange);
+    }
+
     @Override
     protected void onReTarget(@NotNull DocumentEvent e) {
-      int start = intervalStart();
-      if (DocumentUtil.isInsideSurrogatePair(getDocument(), start)) {
-        setIntervalStart(start - 1);
-      }
-      int end = intervalEnd();
-      if (DocumentUtil.isInsideSurrogatePair(getDocument(), end)) {
-        setIntervalStart(end - 1);
-      }
+      alignToSurrogatePairBoundaries();
     }
 
     @Override
