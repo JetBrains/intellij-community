@@ -1,4 +1,4 @@
-// "Create inner class 'MyTableModel'" "true"
+// "Create inner class 'MyTableModel'" "true-preview"
 
 public class Test {
     public static void main() {

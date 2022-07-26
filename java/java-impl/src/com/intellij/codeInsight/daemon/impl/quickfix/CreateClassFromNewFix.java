@@ -85,8 +85,8 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
       if (aClass.isPhysical()) {
         getReferenceElement(newExpression).bindToElement(aClass);
-        aClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(aClass);
       }
+      aClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(aClass);
       final Template template = templateBuilder.buildTemplate();
       template.setToReformat(true);
 
