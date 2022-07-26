@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -72,6 +73,17 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
   }
 
   @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiJavaCodeReferenceElement element = getRefElement();
+    if (element == null) return IntentionPreviewInfo.EMPTY;
+    element = PsiTreeUtil.findSameElementInCopy(element, file);
+    PsiClass[] targets = getPossibleTargets(element);
+    if (targets.length == 0) return IntentionPreviewInfo.EMPTY;
+    doInvoke(targets[0], getSuperClassName(element));
+    return IntentionPreviewInfo.DIFF;
+  }
+
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return super.isAvailable(project, editor, file) && getPossibleTargets(getRefElement()).length > 0;
   }
@@ -117,9 +129,13 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
   }
 
   private void doInvoke(final PsiClass aClass, final String superClassName) throws IncorrectOperationException {
-    PsiJavaCodeReferenceElement ref = getRefElement();
+    PsiJavaCodeReferenceElement ref;
+    if (!aClass.isPhysical()) {
+      ref = PsiTreeUtil.findSameElementInCopy(getRefElement(), aClass.getContainingFile());
+    } else {
+      ref = getRefElement();
+    }
     assert ref != null;
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(aClass)) return;
     String refName = ref.getReferenceName();
     LOG.assertTrue(refName != null);
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
@@ -139,8 +155,13 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     }
     CreateFromUsageBaseFix.setupGenericParameters(created, ref);
 
-    WriteCommandAction.runWriteCommandAction(aClass.getProject(), getText(), null,
-                                             () -> ref.bindToElement(aClass.add(created)),
-                                             aClass.getContainingFile());
+    if (!aClass.isPhysical()) {
+      aClass.add(created);
+    } else {
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(aClass)) return;
+      WriteCommandAction.runWriteCommandAction(aClass.getProject(), getText(), null,
+                                               () -> ref.bindToElement(aClass.add(created)),
+                                               aClass.getContainingFile());
+    }
   }
 }
