@@ -204,12 +204,12 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/ben-manes/caffeine/blob/master/LICENSE"),
     LibraryLicense(name = "CGLib", libraryName = "CGLIB", url = "https://github.com/cglib/cglib/")
       .apache("https://github.com/cglib/cglib/blob/master/LICENSE"),
-    LibraryLicense(name = "classgraph", libraryName = "classgraph",
-                   url = "https://github.com/classgraph/classgraph")
-      .mit("https://github.com/codehaus/classworlds/blob/master/classworlds/LICENSE.txt"),
+    LibraryLicense(name = "classgraph", libraryName = "classgraph", license = "codehaus",
+                   url = "https://github.com/classgraph/classgraph",
+                   licenseUrl = "https://github.com/codehaus/classworlds/blob/master/classworlds/LICENSE.txt"),
     LibraryLicense(name = "classworlds", libraryName = "Maven", transitiveDependency = true, version = "1.1", license = "codehaus",
-                   url = "https://github.com/codehaus/classworlds")
-      .mit("https://github.com/codehaus/classworlds/blob/master/classworlds/LICENSE.txt"),
+                   url = "https://github.com/codehaus/classworlds",
+                   licenseUrl = "https://github.com/codehaus/classworlds/blob/master/classworlds/LICENSE.txt"),
     LibraryLicense(name = "Common Annotations for the JavaTM Platform API", libraryName = "javax.annotation-api",
                    url = "https://github.com/javaee/javax.annotation",
                    license = "CDDL 1.1 / GPL 2.0 + Classpath", licenseUrl = "https://oss.oracle.com/licenses/CDDL+GPL-1.1"),
