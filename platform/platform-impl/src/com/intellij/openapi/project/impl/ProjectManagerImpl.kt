@@ -29,7 +29,6 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
@@ -1099,10 +1098,7 @@ private suspend fun initProject(file: Path,
       val isTrusted = async { isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }
 
       preloadServicesAndCreateComponents(project, preloadServices)
-      runOnlyCorePluginExtensions((ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
-                                    .getExtensionPoint<ProjectServiceContainerInitializedListener>(
-                                      "com.intellij.projectServiceContainerInitializedListener"
-                                    )) {
+      projectInitListeners {
         launchAndMeasure(it.javaClass.simpleName) {
           it.serviceCreated(project)
         }
@@ -1174,28 +1170,26 @@ private inline fun createActivity(project: ProjectImpl, message: () -> String): 
   return if (!StartUpMeasurer.isEnabled() || project.isDefault) null else StartUpMeasurer.startActivity(message(), ActivityCategory.DEFAULT)
 }
 
-internal suspend inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl<T>, crossinline executor: suspend (T) -> Unit) {
+internal suspend inline fun projectInitListeners(crossinline executor: suspend (ProjectServiceContainerInitializedListener) -> Unit) {
+  val extensionArea = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
+  val ep = extensionArea
+    .getExtensionPoint<ProjectServiceContainerInitializedListener>("com.intellij.projectServiceContainerInitializedListener")
   for (adapter in ep.sortedAdapters) {
     val pluginDescriptor = adapter.pluginDescriptor
     if (!isCorePlugin(pluginDescriptor)) {
-      logger<ProjectImpl>().error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
+      LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
       continue
     }
 
     try {
       executor(adapter.createInstance(ep.componentManager) ?: continue)
     }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
     catch (e: CancellationException) {
       throw e
     }
-    catch (e: PluginException) {
-      logger<ProjectImpl>().error(e)
-    }
     catch (e: Throwable) {
-      logger<ProjectImpl>().error(PluginException(e, pluginDescriptor.pluginId))
+      LOG.error(e)
     }
   }
+  ep.reset()
 }
