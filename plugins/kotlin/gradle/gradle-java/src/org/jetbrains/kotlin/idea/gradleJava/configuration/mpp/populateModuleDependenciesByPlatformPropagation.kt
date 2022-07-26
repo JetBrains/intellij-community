@@ -50,6 +50,17 @@ private fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesB
          */
         .filter { it.packaging != "aar" }
 
+        /*
+        For 'common' (more than one listed platform) source sets:
+        Project dependencies will not be propagated, but will come from the listed 'source sets' dependencies instead.
+        This is due to the fact that 'findCompilationsToPropagateDependenciesFrom' might not include the full list of
+        compilations that the source set participates in.
+        Therefore, the intersection of dependencies might contain to many visible source sets to other projects.
+
+        The mechanism below is more correct in this case.
+         */
+        .filter { sourceSet.actualPlatforms.platforms.size == 1 || it !is ExternalProjectDependency }
+
     /*
     Dependency Propagation will not work for project <-> project dependencies.
     Source sets that shall receive propagated dependencies still report proper project <-> project dependencies.
