@@ -253,9 +253,11 @@ fun start(mainClass: String,
       EnvironmentUtil.loadEnvironment(StartUpMeasurer.startActivity("environment loading"))
     }
 
-    launchAndMeasure("coroutine debug probes init") {
-      DebugProbes.enableCreationStackTraces = false
-      DebugProbes.install()
+    if (java.lang.Boolean.getBoolean("idea.enable.coroutine.dump")) {
+      launchAndMeasure("coroutine debug probes init") {
+        DebugProbes.enableCreationStackTraces = false
+        DebugProbes.install()
+      }
     }
 
     if (!configImportNeeded) {
