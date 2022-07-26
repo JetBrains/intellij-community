@@ -71,6 +71,10 @@ class ActionButton extends IconButton implements ActionListener {
     return myButton;
   }
 
+  public Presentation getPrevPresentation() {
+    return myPrevPresentation;
+  }
+
   protected void repaintComponent(Component c) {
     c.repaint();
   }
