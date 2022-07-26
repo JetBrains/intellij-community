@@ -79,8 +79,13 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         val withRuntime = renameObject.getNullableString("withRuntime")
         val libraryInfos = renameObject.getAsJsonArray("libraries")?.map { it.asString!! }
         if (libraryInfos != null) {
-            val jarPaths = listOf(TestKotlinArtifacts.kotlinStdlib) + libraryInfos.map {
-                File(PlatformTestUtil.getCommunityPath(), it.substringAfter("@"))
+            val jarPaths = listOf(TestKotlinArtifacts.kotlinStdlib) + libraryInfos.map { libraryInfo ->
+                if ("@" in libraryInfo) {
+                    File(PlatformTestUtil.getCommunityPath(), libraryInfo.substringAfter("@"))
+                }
+                else {
+                    ConfigLibraryUtil.ATTACHABLE_LIBRARIES[libraryInfo]
+                }
             }
             return KotlinWithJdkAndRuntimeLightProjectDescriptor(jarPaths, listOf(TestKotlinArtifacts.kotlinStdlibSources))
         }

@@ -3,7 +3,7 @@ package test
 import org.junit.Test
 import org.junit.Assert.*
 
-class FooKtTest {
+class BarKtTest {
     @Test
     fun foo1() {
 
