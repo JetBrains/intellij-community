@@ -20,7 +20,6 @@ import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -56,8 +55,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.time.Duration
 import java.util.concurrent.TimeUnit
-
-private val LOG: Logger = Logger.getInstance("com.intellij.testFramework.common.TestApplicationKt")
 
 private var applicationInitializationResult: Result<Unit>? = null
 
@@ -103,7 +100,6 @@ fun loadApp(setupEventQueue: Runnable) {
 }
 
 @TestOnly
-@OptIn(DelicateCoroutinesApi::class)
 private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   val loadedModuleFuture = PluginManagerCore.getInitPluginFuture()
 
