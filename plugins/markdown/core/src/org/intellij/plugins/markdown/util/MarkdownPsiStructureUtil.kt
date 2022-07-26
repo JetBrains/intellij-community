@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.util
 
+import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
@@ -47,6 +48,13 @@ internal object MarkdownPsiStructureUtil {
     MarkdownTokenTypeSets.HEADER_LEVEL_5_SET,
     MarkdownTokenTypeSets.HEADER_LEVEL_6_SET
   )
+
+  /**
+   * @return true if element is on the file top level.
+   */
+  internal fun ASTNode.isTopLevel(): Boolean {
+    return treeParent?.hasType(MarkdownElementTypes.MARKDOWN_FILE) == true
+  }
 
   @JvmStatic
   fun isSimpleNestedList(itemChildren: Array<PsiElement>): Boolean {

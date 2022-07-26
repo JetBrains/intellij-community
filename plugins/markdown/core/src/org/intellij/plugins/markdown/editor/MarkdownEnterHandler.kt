@@ -18,6 +18,7 @@ import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil.isTopLevel
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 
 /**
@@ -50,7 +51,7 @@ internal class MarkdownEnterHandler : EnterHandlerDelegateAdapter() {
     }
 
     val fence = MarkdownCodeFenceUtils.getCodeFence(element)
-    if (fence != null && !MarkdownPsiUtil.isTopLevel(fence.node)) {
+    if (fence != null && !fence.isTopLevel()) {
       val indent = MarkdownCodeFenceUtils.getIndent(fence) ?: return Result.Continue
 
       EditorModificationUtil.insertStringAtCaret(editor, "\n${indent}")

@@ -1,15 +1,11 @@
 package org.intellij.plugins.markdown.util
 
-import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 
 internal object MarkdownPsiUtil {
-  /** Check if node is on a top-level -- meaning its parent is root of file   */
-  fun isTopLevel(node: ASTNode) = node.treeParent.hasType(MarkdownTokenTypeSets.MARKDOWN_FILE)
-
   object WhiteSpaces {
     /** Check if element is new line */
     @JvmStatic
