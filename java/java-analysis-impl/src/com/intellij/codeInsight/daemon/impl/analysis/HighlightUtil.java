@@ -1301,7 +1301,7 @@ public final class HighlightUtil {
           int p = expression.getTextRange().getEndOffset();
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(p, p).endOfLine().descriptionAndTooltip(message).create();
         }
-        else {
+        else if (text.length() > 3) {
           int i = 3;
           char c = text.charAt(i);
           while (PsiLiteralUtil.isTextBlockWhiteSpace(c)) {
