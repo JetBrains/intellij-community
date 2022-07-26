@@ -925,6 +925,10 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
                                                                          @NotNull VirtualFile file,
                                                                          @NotNull FileEditorOpenOptions options) {
+    if (forbidSplitFor(file) && !window.isFileOpen(file)) {
+      closeFile(file);
+    }
+
     Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       Pair<FileEditor[], FileEditorProvider[]> editorsProvidersPair = openFileImpl4(window, file, null, options);
