@@ -6,7 +6,6 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.processOpenedProjects
-import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 
 internal class MarkdownLafListener: LafManagerListener {
 
@@ -14,8 +13,6 @@ internal class MarkdownLafListener: LafManagerListener {
     if (!LoadingState.APP_STARTED.isOccurred) {
       return
     }
-
-    CodeFenceGeneratingProvider.notifyLaFChanged()
     processOpenedProjects { project ->
       project.serviceIfCreated<MarkdownSettings>()?.let { settings ->
         val publisher = project.messageBus.syncPublisher(MarkdownSettings.ChangeListener.TOPIC)
