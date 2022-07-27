@@ -4,17 +4,19 @@ import com.intellij.cce.EvaluationPluginBundle
 import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.filter.impl.TypeFilter
-import com.intellij.ui.layout.*
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
 import java.awt.event.ItemEvent
 import javax.swing.JCheckBox
-import javax.swing.JRadioButton
 
-class TypeUIConfigurable(previousState: EvaluationFilter, private val layout: LayoutBuilder) : UIConfigurable {
+class TypeUIConfigurable(previousState: EvaluationFilter, private val panel: Panel) : UIConfigurable {
   private val types: MutableList<TypeProperty> =
     if (previousState == EvaluationFilter.ACCEPT_ALL) mutableListOf()
     else (previousState as TypeFilter).values.toMutableList()
 
-  private val allButton = JRadioButton(EvaluationPluginBundle.message("evaluation.settings.filters.type.all"))
+  private val allButton = JBCheckBox(EvaluationPluginBundle.message("evaluation.settings.filters.type.all"))
   private val typeButtons = mutableListOf<JCheckBox>()
 
   override val view: Row = createView()
@@ -23,21 +25,20 @@ class TypeUIConfigurable(previousState: EvaluationFilter, private val layout: La
     return if (types.isEmpty()) EvaluationFilter.ACCEPT_ALL else TypeFilter(types)
   }
 
-  private fun createView(): Row = layout.row {
-    cell {
-      label(EvaluationPluginBundle.message("evaluation.settings.filters.type.title"))
-      allButton()
+  private fun createView(): Row {
+    return panel.row(EvaluationPluginBundle.message("evaluation.settings.filters.type.title")) {
+      cell(allButton)
       checkBox(EvaluationPluginBundle.message("evaluation.settings.filters.type.keywords")).configure(TypeProperty.KEYWORD)
       checkBox(EvaluationPluginBundle.message("evaluation.settings.filters.type.methods")).configure(TypeProperty.METHOD_CALL)
       checkBox(EvaluationPluginBundle.message("evaluation.settings.filters.type.fields")).configure(TypeProperty.FIELD)
       checkBox(EvaluationPluginBundle.message("evaluation.settings.filters.type.variables")).configure(TypeProperty.VARIABLE)
       checkBox(EvaluationPluginBundle.message("evaluation.settings.filters.type.types")).configure(TypeProperty.TYPE_REFERENCE)
       checkBox(EvaluationPluginBundle.message("evaluation.settings.filters.type.arguments")).configure(TypeProperty.ARGUMENT_NAME)
+      allButton.configure()
     }
-    allButton.configure()
   }
 
-  private fun JRadioButton.configure() {
+  private fun JBCheckBox.configure() {
     isSelected = types.isEmpty()
     addItemListener { event ->
       if (event.stateChange == ItemEvent.SELECTED) {
@@ -50,7 +51,7 @@ class TypeUIConfigurable(previousState: EvaluationFilter, private val layout: La
     }
   }
 
-  private fun CellBuilder<JCheckBox>.configure(value: TypeProperty) {
+  private fun Cell<JCheckBox>.configure(value: TypeProperty) {
     typeButtons.add(component)
     component.isSelected = types.contains(value)
     component.addItemListener { event ->
