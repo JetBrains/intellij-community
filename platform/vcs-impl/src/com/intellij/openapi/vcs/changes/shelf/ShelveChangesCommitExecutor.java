@@ -50,11 +50,6 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
 
   private class ShelveChangesCommitSession implements CommitSession {
     @Override
-    public boolean canExecute(Collection<Change> changes, String commitMessage) {
-      return changes.size() > 0;
-    }
-
-    @Override
     public void execute(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
       if (changes.size() > 0 && !ChangesUtil.hasFileChanges(changes)) {
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
