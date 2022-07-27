@@ -11,7 +11,8 @@ import org.intellij.markdown.parser.sequentialparsers.SequentialParser
 internal class FrontMatterHeaderBlock(
   private val startPosition: LookaheadText.Position,
   constraints: MarkdownConstraints,
-  private val productionHolder: ProductionHolder
+  private val productionHolder: ProductionHolder,
+  private val openingDelimiterText: String
 ): MarkerBlockImpl(constraints, productionHolder.mark()) {
   private var lastContentPosition: LookaheadText.Position? = null
   private lateinit var closingDelimiterPosition: LookaheadText.Position
@@ -33,7 +34,7 @@ internal class FrontMatterHeaderBlock(
     if (shouldClose) {
       return MarkerBlock.ProcessingResult.DEFAULT
     }
-    if (!FrontMatterHeaderMarkerProvider.isDelimiterLine(position.currentLine)) {
+    if (!isDelimiterLine(position.currentLine)) {
       lastContentPosition = position
       return MarkerBlock.ProcessingResult.CANCEL
     }
@@ -51,6 +52,10 @@ internal class FrontMatterHeaderBlock(
     productionHolder.addProduction(listOf(contentNode, delimiterNode))
     shouldClose = true
     return MarkerBlock.ProcessingResult.CANCEL
+  }
+
+  private fun isDelimiterLine(line: String): Boolean {
+    return FrontMatterHeaderMarkerProvider.isDelimiterLine(line) && line == openingDelimiterText
   }
 
   override fun getDefaultAction(): MarkerBlock.ClosingAction {
