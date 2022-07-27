@@ -31,7 +31,7 @@ class ProviderWithSettings<T: Any>(
   val info: ProviderInfo<T>,
   var settings: T
 ) {
-  val configurable by lazy { provider.createConfigurable(settings) }
+  val configurable: ImmediateConfigurable by lazy { provider.createConfigurable(settings) }
 
   val provider: InlayHintsProvider<T>
   get() = info.provider

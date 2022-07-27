@@ -17,7 +17,10 @@ private class InlayHintsSettingsSearchableContributor : SearchableOptionContribu
       val id = SingleLanguageInlayHintsConfigurable.getId(providerInfo.language)
       addOption(processor, name, id)
       val providerWithSettings = provider.withSettings(providerInfo.language, InlayHintsSettings.instance())
-      for (case in providerWithSettings.configurable.cases) {
+      val configurable = providerWithSettings.configurable
+      @Suppress("SENSELESS_COMPARISON") // for some reason (kotlin bug?) there is no check between kotlin and java and sometimes here comes null
+      require (configurable != null) { "Configurable must not be null, provider: ${provider.key.id}" }
+      for (case in configurable.cases) {
         addOption(processor, case.name, id)
       }
     }
