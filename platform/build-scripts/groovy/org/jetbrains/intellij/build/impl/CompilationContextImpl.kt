@@ -17,7 +17,7 @@ import org.jetbrains.intellij.build.TracerProviderManager.flush
 import org.jetbrains.intellij.build.TracerProviderManager.setOutput
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
-import org.jetbrains.intellij.build.dependencies.Jdk11Downloader
+import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
 import org.jetbrains.intellij.build.impl.JdkUtils.readModulesFromReleaseFile
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
@@ -301,8 +301,8 @@ class CompilationContextImpl private constructor(model: JpsModel,
     paths = BuildPathsImpl(communityHome, projectHome, buildOut, logDir)
     dependenciesProperties = DependenciesProperties(paths)
     bundledRuntime = BundledRuntimeImpl(options, paths, dependenciesProperties, messages::error, messages::info)
-    stableJdkHome = Jdk11Downloader.getJdkHome(paths.communityHomeDir)
-    stableJavaExecutable = Jdk11Downloader.getJavaExecutable(stableJdkHome)
+    stableJdkHome = JdkDownloader.getJdkHome(paths.communityHomeDir)
+    stableJavaExecutable = JdkDownloader.getJavaExecutable(stableJdkHome)
   }
 }
 
@@ -362,7 +362,7 @@ private class BuildPathsImpl(communityHome: BuildDependenciesCommunityRoot, proj
 }
 
 private fun defineJavaSdk(context: CompilationContext) {
-  val homePath = Jdk11Downloader.getJdkHome(context.paths.communityHomeDir)
+  val homePath = JdkDownloader.getJdkHome(context.paths.communityHomeDir)
   val jbrHome = toCanonicalPath(homePath.toString())
   val jbrVersionName = "11"
   defineJdk(context.projectModel.global, jbrVersionName, jbrHome, context.messages)

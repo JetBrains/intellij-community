@@ -91,8 +91,9 @@ class BundledRuntimeImpl(
 
   /**
    * Update this method together with:
-   *  `com.jetbrains.gateway.downloader.CodeWithMeClientDownloader#downloadClientAndJdk(java.lang.String, java.lang.String, com.intellij.openapi.progress.ProgressIndicator)`
-   *  `UploadingAndSigning#getMissingJbrs(java.lang.String)`
+   *  [com.intellij.remoteDev.downloader.CodeWithMeClientDownloader.downloadClientAndJdk]
+   *  [UploadingAndSigning.getMissingJbrs]
+   *  [org.jetbrains.intellij.build.dependencies.JdkDownloader.getUrl]
    */
   override fun archiveName(prefix: String, arch: JvmArchitecture, os: OsFamily, forceVersionWithUnderscores: Boolean): String {
     val split = build.split('b')

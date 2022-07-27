@@ -7,13 +7,14 @@ import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.apache.commons.cli.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
-import org.jetbrains.intellij.build.dependencies.Jdk11Downloader;
+import org.jetbrains.intellij.build.dependencies.JdkDownloader;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -157,13 +158,13 @@ public class JpsBootstrapMain {
   private Path downloadJdk() {
     Path jdkHome;
     if (JpsBootstrapUtil.underTeamCity) {
-      jdkHome = Jdk11Downloader.getJdkHome(communityHome);
+      jdkHome = JdkDownloader.getJdkHome(communityHome);
       SetParameterServiceMessage setParameterServiceMessage = new SetParameterServiceMessage(
         "jps.bootstrap.java.home", jdkHome.toString()
       );
       System.out.println(setParameterServiceMessage.asString());
       setParameterServiceMessage = new SetParameterServiceMessage(
-        "jps.bootstrap.java.executable", Jdk11Downloader.getJavaExecutable(jdkHome).toString());
+        "jps.bootstrap.java.executable", JdkDownloader.getJavaExecutable(jdkHome).toString());
       System.out.println(setParameterServiceMessage.asString());
     }
     else {
@@ -206,6 +207,10 @@ public class JpsBootstrapMain {
     List<String> args = new ArrayList<>();
     args.add("-ea");
     args.add("-Xmx" + buildTargetXmx);
+
+    Path openedPackagesPath = communityHome.getCommunityRoot().resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt");
+    List<String> openedPackages = ContainerUtil.filter(Files.readAllLines(openedPackagesPath), it -> !it.isBlank());
+    args.addAll(openedPackages);
 
     args.addAll(convertPropertiesToCommandLineArgs(systemProperties));
 
