@@ -200,11 +200,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       List<String> names = new VariableNameGenerator(initializer, VariableKind.LOCAL_VARIABLE).byExpression(initializer)
         .byType(localVariable.getType()).generateAll(true);
       PsiIdentifier identifier = Objects.requireNonNull(localVariable.getNameIdentifier());
-      if (!file.isPhysical()) {
-        identifier.replace(JavaPsiFacade.getElementFactory(project).createIdentifier(names.get(0)));
-        return;
-      }
-      
+
       TemplateBuilderImpl builder = new TemplateBuilderImpl(localVariable);
       builder.setEndVariableAfter(localVariable.getNameIdentifier());
 
@@ -255,7 +251,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
         @Override
         public void templateFinished(@NotNull Template template, boolean brokenOff) {
-          ApplicationManager.getApplication().runWriteAction(() -> {
+          Runnable action = () -> {
             PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
             CaretModel caretModel = editor.getCaretModel();
@@ -264,8 +260,13 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
             if (declarationStatement != null) {
               caretModel.moveToOffset(declarationStatement.getTextRange().getEndOffset());
             }
-            new EnterAction().actionPerformed(editor, DataManager.getInstance().getDataContext());
-          });
+            new EnterAction().getHandler().execute(editor, null, DataManager.getInstance().getDataContext());
+          };
+          if (file.isPhysical()) {
+            ApplicationManager.getApplication().runWriteAction(action);
+          } else {
+            action.run();
+          }
         }
       });
     }
