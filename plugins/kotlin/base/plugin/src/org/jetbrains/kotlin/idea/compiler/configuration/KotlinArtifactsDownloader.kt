@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.K
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.OLD_KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyZipUnpacker
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TarGzipUnpacker
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactDownloader.DownloadContext
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.awt.EventQueue
@@ -245,5 +246,18 @@ object KotlinArtifactsDownloader {
             "$KOTLIN_MAVEN_GROUP_ID:$artifactId:$version",
             getMavenRepos(project).joinToString("\n") { it.url }.prependIndent()
         ) + "\n\n" + suggestion
+    }
+
+    fun downloadNativePrebuilt(downloadURL: String, downloadOut: String) {
+        val url = URL(downloadURL)
+
+        url.openStream().use {
+            Files.copy(it, Paths.get(downloadOut))
+        }
+    }
+
+    fun unpackPrebuildArchive(source: String, target: String) {
+        TarGzipUnpacker.decompressTarGzipFile(Paths.get(source), Paths.get(target))
+        File(source).delete()
     }
 }

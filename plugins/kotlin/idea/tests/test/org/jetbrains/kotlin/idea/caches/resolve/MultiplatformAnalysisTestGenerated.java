@@ -223,6 +223,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("testData/multiplatform/multiplatformLibrary/");
     }
 
+    @TestMetadata("nativeStdlib")
+    public void testNativeStdlib() throws Exception {
+        runTest("testData/multiplatform/nativeStdlib/");
+    }
+
     @TestMetadata("overrideExpect")
     public void testOverrideExpect() throws Exception {
         runTest("testData/multiplatform/overrideExpect/");
