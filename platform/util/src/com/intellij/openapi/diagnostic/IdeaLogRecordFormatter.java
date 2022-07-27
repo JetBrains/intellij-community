@@ -2,6 +2,7 @@
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -18,13 +19,20 @@ public class IdeaLogRecordFormatter extends Formatter {
   private final boolean myWithDateTime;
 
   public IdeaLogRecordFormatter() {
-    myWithDateTime = true;
-    myLogCreation = System.currentTimeMillis();
+    this(true);
   }
 
-  public IdeaLogRecordFormatter(IdeaLogRecordFormatter copyFrom, boolean withDateTime) {
-    myLogCreation = copyFrom.myLogCreation;
+  public IdeaLogRecordFormatter(boolean withDateTime) {
+    this(withDateTime, null);
+  }
+
+  public IdeaLogRecordFormatter(boolean withDateTime, @Nullable IdeaLogRecordFormatter copyFrom) {
     myWithDateTime = withDateTime;
+    myLogCreation = copyFrom != null ? copyFrom.getStartedMillis() : System.currentTimeMillis();
+  }
+
+  protected long getStartedMillis() {
+    return myLogCreation;
   }
 
   @Override
@@ -34,10 +42,12 @@ public class IdeaLogRecordFormatter extends Formatter {
       loggerName = smartAbbreviate(loggerName);
     }
     String level = record.getLevel() == Level.WARNING ? "WARN" : record.getLevel().toString();
+    long startedMillis = getStartedMillis();
+    long relativeToStartedMillis = (startedMillis == 0) ? 0 : (record.getMillis() - startedMillis);
     String result = String.format(
       myWithDateTime ? FORMAT_WITH_DATE_TIME : FORMAT_WITHOUT_DATE_TIME,
       record.getMillis(),
-      record.getMillis() - myLogCreation,
+      relativeToStartedMillis,
       level,
       loggerName,
       formatMessage(record),

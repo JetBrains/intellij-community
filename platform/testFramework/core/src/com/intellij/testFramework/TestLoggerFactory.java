@@ -3,10 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.DefaultLogger;
-import com.intellij.openapi.diagnostic.JulLogger;
-import com.intellij.openapi.diagnostic.LogLevel;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -28,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.LogManager;
+import java.util.logging.StreamHandler;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.application.PathManager.PROPERTY_LOG_PATH;
@@ -46,6 +44,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final int MAX_BUFFER_LENGTH = 10_000_000;
 
   private final StringBuilder myBuffer = new StringBuilder();
+  private long myTestStartedMillis;
   private boolean myInitialized;
   // when {@code true}, logs produced during a failed test are saved to a separate file instead of being dumped to the stdout
   private boolean mySplitTestLogs = Boolean.getBoolean("idea.split.test.logs");
@@ -222,6 +221,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     var factory = getTestLoggerFactory();
     if (factory != null) {
       factory.clearLogBuffer();  // clear buffer from tests which failed to report their termination properly
+      factory.myTestStartedMillis = System.currentTimeMillis();
     }
   }
 
@@ -246,6 +246,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   public static void onTestFinished(boolean success, @NotNull String testName) {
     var factory = getTestLoggerFactory();
     if (factory != null) {
+      factory.myTestStartedMillis = 0;
       factory.dumpLogBuffer(success, testName);
     }
   }
@@ -464,6 +465,24 @@ public final class TestLoggerFactory implements Logger.Factory {
           return false;
         }
       }
+    }
+  }
+
+  public static class LogToStdoutJulHandler extends StreamHandler {
+    public LogToStdoutJulHandler() {
+      super(System.out, new WithTimeSinceTestStartedJulFormatter());
+    }
+  }
+
+  private static class WithTimeSinceTestStartedJulFormatter extends IdeaLogRecordFormatter {
+    private WithTimeSinceTestStartedJulFormatter() {
+      super(false);
+    }
+
+    @Override
+    protected long getStartedMillis() {
+      TestLoggerFactory factory = getTestLoggerFactory();
+      return factory == null ? 0L : factory.myTestStartedMillis;
     }
   }
 }

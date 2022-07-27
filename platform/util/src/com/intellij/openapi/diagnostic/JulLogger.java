@@ -162,7 +162,7 @@ public class JulLogger extends Logger {
 
     if (enableConsoleLogger && logConsole) {
       ConsoleHandler consoleHandler = new ConsoleHandler();
-      consoleHandler.setFormatter(new IdeaLogRecordFormatter(layout, showDateInConsole));
+      consoleHandler.setFormatter(new IdeaLogRecordFormatter(showDateInConsole, layout));
       consoleHandler.setLevel(java.util.logging.Level.WARNING);
       rootLogger.addHandler(consoleHandler);
     }
