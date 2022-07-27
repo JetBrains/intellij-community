@@ -7,6 +7,8 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -35,17 +37,15 @@ internal class GHTokenCredentialsUi(
     tokenTextField.text = token
   }
 
-  override fun LayoutBuilder.centerPanel() {
-    row(message("credentials.server.field")) { serverTextField(pushX, growX) }
+  override fun Panel.centerPanel() {
+    row(message("credentials.server.field")) { cell(serverTextField).horizontalAlign(HorizontalAlign.FILL) }
     row(message("credentials.token.field")) {
-      cell {
-        tokenTextField(
-          comment = message("login.insufficient.scopes", GHSecurityUtil.MASTER_SCOPES),
-          constraints = *arrayOf(pushX, growX)
-        )
-        button(message("credentials.button.generate")) { browseNewTokenUrl() }
-          .enableIf(serverTextField.serverValid)
-      }
+      cell(tokenTextField)
+        .comment(message("login.insufficient.scopes", GHSecurityUtil.MASTER_SCOPES))
+        .horizontalAlign(HorizontalAlign.FILL)
+        .resizableColumn()
+      button(message("credentials.button.generate")) { browseNewTokenUrl() }
+        .enabledIf(serverTextField.serverValid)
     }
   }
 

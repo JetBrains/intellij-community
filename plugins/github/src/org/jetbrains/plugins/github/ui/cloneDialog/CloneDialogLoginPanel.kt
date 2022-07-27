@@ -22,7 +22,8 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.EMPTY_LABEL
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
@@ -120,12 +121,10 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
     clearErrors()
   }
 
-  private fun LayoutBuilder.buttonPanel() =
-    row("") {
-      cell {
-        loginButton()
-        backLink().withLargeLeftGap()
-      }
+  private fun Panel.buttonPanel() =
+    row(EMPTY_LABEL) {
+      cell(loginButton)
+      cell(backLink)
     }
 
   fun cancelLogin() {
