@@ -1,14 +1,8 @@
+<!--suppress PluginXmlDynamicPlugin -->
 <idea-plugin>
-  <!--suppress PluginXmlDynamicPlugin -->
   <project-components>
     <component>
       <implementation-class>com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.RootsChangeWatcher</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher</implementation-class>
     </component>
 
     <component>
@@ -42,9 +36,11 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.RootsChangeWatcher$RootsChangeWatcherDelegator"/>
     <projectService
       serviceInterface="com.intellij.openapi.module.ModuleManager"
       serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge" preload="await"/>
+    <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher"/>
 
     <startupActivity
       implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge$ModuleManagerInitProjectActivity"

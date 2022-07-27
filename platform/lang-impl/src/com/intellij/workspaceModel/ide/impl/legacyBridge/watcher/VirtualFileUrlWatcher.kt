@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.watcher
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
@@ -10,7 +11,6 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import kotlin.reflect.KClass
 
 open class VirtualFileUrlWatcher(val project: Project) {
@@ -91,8 +91,7 @@ open class VirtualFileUrlWatcher(val project: Project) {
   }
 
   companion object {
-    @JvmStatic
-    fun getInstance(project: Project): VirtualFileUrlWatcher = project.getComponent(VirtualFileUrlWatcher::class.java)
+    fun getInstance(project: Project): VirtualFileUrlWatcher = project.service()
 
     internal fun calculateAffectedEntities(storage: EntityStorage, virtualFileUrl: VirtualFileUrl,
                                            aggregator: MutableList<EntityWithVirtualFileUrl>) {
@@ -130,8 +129,8 @@ private class EntitySourceFileWatcher<T : EntitySource>(
       val urlFromContainer = containerToUrl(entitySource as T)
       if (!FileUtil.startsWith(urlFromContainer, oldUrl)) continue
 
-      val newVfurl = virtualFileManager.fromUrl(newUrl + urlFromContainer.substring(oldUrl.length))
-      val newEntitySource = createNewSource(entitySource, newVfurl)
+      val newVfsUrl = virtualFileManager.fromUrl(newUrl + urlFromContainer.substring(oldUrl.length))
+      val newEntitySource = createNewSource(entitySource, newVfsUrl)
 
       mapOfEntities.values.flatten().forEach {
         diff.modifyEntity(ModifiableWorkspaceEntity::class.java, it) { this.entitySource = newEntitySource }
