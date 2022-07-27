@@ -31,8 +31,6 @@
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
 
-    <projectService serviceImplementation="com.intellij.workspaceModel.ide.WorkspaceModelTopics"/>
-
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl"
                     serviceInterface="com.intellij.workspaceModel.ide.JpsProjectLoadingManager"/>
 
