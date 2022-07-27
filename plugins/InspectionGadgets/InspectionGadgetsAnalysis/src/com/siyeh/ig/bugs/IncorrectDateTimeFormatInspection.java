@@ -18,56 +18,26 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntPredicate;
 
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
 public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInspectionTool {
 
-  private interface CountVerifier {
-    boolean verify(int count);
+  private static IntPredicate rangeOf(int from, int to) {
+    return count -> count >= from && count <= to;
   }
 
-  private static class RangeVerifier implements CountVerifier {
-    private final int from;
-    private final int to;
-
-    private RangeVerifier(int from, int to) {
-      this.from = from;
-      this.to = to;
-    }
-
-    @Override
-    public boolean verify(int count) {
-      return count >= from && count <= to;
-    }
+  private static IntPredicate setOf(int... numbers) {
+    return  count -> IntOpenHashSet.of(numbers).contains(count);
   }
 
-  private static RangeVerifier rangeOf(int from, int to) {
-    return new RangeVerifier(from, to);
-  }
-
-  private static class SetVerifier implements CountVerifier {
-    private final IntSet set;
-
-    private SetVerifier(int... numbers) {
-      set = IntOpenHashSet.of(numbers);
-    }
-
-    @Override
-    public boolean verify(int count) {
-      return set.contains(count);
-    }
-  }
-
-  private static SetVerifier setOf(int... numbers) {
-    return new SetVerifier(numbers);
-  }
-
-  private static final Map<Character, CountVerifier> DATE_TIME_FORMATTER_ALLOWED = Map.ofEntries(
+  private static final Map<Character, IntPredicate> DATE_TIME_FORMATTER_ALLOWED = Map.ofEntries(
     Map.entry('G', rangeOf(1, 5)),
     Map.entry('u', rangeOf(1, 19)),
     Map.entry('y', rangeOf(1, 19)),
-    Map.entry('Y', rangeOf(1, Integer.MAX_VALUE)), //according to refs must be until 19, but now there is no exception
+    //according to the specification, must not exceed 19 but current implementation doesn't restrict this
+    Map.entry('Y', rangeOf(1, Integer.MAX_VALUE)),
     Map.entry('Q', rangeOf(1, 5)),
     Map.entry('q', rangeOf(1, 5)),
     Map.entry('M', rangeOf(1, 5)),
@@ -230,11 +200,11 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
           return;
         }
         if (token.character == 'p') {
-          //check during tokenizing
+          //checked during tokenizing
           return;
         }
-        CountVerifier verifier = DATE_TIME_FORMATTER_ALLOWED.get(token.character);
-        if (verifier == null || !verifier.verify(token.length)) {
+        IntPredicate verifier = DATE_TIME_FORMATTER_ALLOWED.get(token.character);
+        if (verifier == null || !verifier.test(token.length)) {
           TextRange range = ExpressionUtils.findStringLiteralRange(expression, token.pos, token.pos + token.length);
           holder.registerProblem(expression, range,
                                  InspectionGadgetsBundle.message("inspection.incorrect.date.format.message.unsupported",
