@@ -12,6 +12,7 @@ import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.ide.ui.NavBarLocation;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
@@ -36,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
@@ -75,7 +77,8 @@ import java.util.function.Supplier;
  * @author Konstantin Bulenkov
  * @author Anna Kozlova
  */
-public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Disposable, Queryable {
+public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Disposable, Queryable,
+                                                   InfoAndProgressPanel.ScrollableToSelected {
 
   private final NavBarModel myModel;
 
@@ -99,6 +102,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private boolean myDisposed = false;
   private RelativePoint myLocationCache;
   private SelectionIndexes selectionIndexes = null;
+  private int scrollingLimit = -1;
 
   private static class SelectionIndexes {
     private final int myBarIndex;
@@ -396,10 +400,30 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
   }
 
-  protected void scrollSelectionToVisible() {
+
+  @Override
+  public void updateScrollToSelectedLimit(Limit limit) {
+    switch (limit) {
+      case LIMIT_ONCE:
+        scrollingLimit = 1;
+        break;
+      case UNLIMITED:
+        scrollingLimit = -1;
+    }
+  }
+
+  protected void scrollSelectionToVisible(boolean isOnSelectionChange) {
+    if (!isOnSelectionChange
+        && UISettings.getInstance().getNavBarLocation() == NavBarLocation.BOTTOM
+        && scrollingLimit == 0) {
+      return;
+    }
+
     final int selectedIndex = myModel.getSelectedIndex();
     if (selectedIndex == -1 || selectedIndex >= myList.size()) return;
     scrollRectToVisible(myList.get(selectedIndex).getBounds());
+
+    if (scrollingLimit > 0) scrollingLimit--;
   }
 
   @Nullable
