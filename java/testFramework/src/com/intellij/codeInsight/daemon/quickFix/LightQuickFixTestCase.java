@@ -303,6 +303,9 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         if (Files.exists(path)) {
           assertSameLinesWithFile(path.toString(), previewContent);
         } else {
+          if (previewContent.isEmpty()) {
+            fail("No preview was generated for '" + action.getText() + "'");
+          }
           assertEquals(getFile().getText(), previewContent);
         }
       }
