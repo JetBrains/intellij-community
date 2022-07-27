@@ -1,4 +1,4 @@
-// "Fuse ArrayList into the Stream API chain" "true"
+// "Fuse ArrayList into the Stream API chain" "true-preview"
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;

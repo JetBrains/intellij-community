@@ -1,4 +1,4 @@
-// "Remove switch branch 'Day dd && true'" "true"
+// "Remove switch branch 'Day dd && true'" "true-preview"
 enum Day {
     MONDAY, TUESDAY, WEDNESDAY
 }
