@@ -95,6 +95,8 @@
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelClassTypeArgumentInfoHandler"/>
     <codeInsight.parameterInfo language="kotlin"
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionTypeArgumentInfoHandler"/>
+    <lang.psiDocumentation id="KotlinDocumentationTargetFactory"
+                           implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationTargetFactory"/>
   </extensions>
 
   <xi:include href="scripting-support.xml" xpointer="xpointer(/idea-plugin/*)"/>

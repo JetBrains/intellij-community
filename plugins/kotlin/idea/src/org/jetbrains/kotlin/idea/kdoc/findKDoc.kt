@@ -13,7 +13,10 @@ import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
+import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
+import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
@@ -35,9 +38,13 @@ fun DeclarationDescriptor.findKDoc(
 private typealias DescriptorToPsi = (DeclarationDescriptorWithSource) -> PsiElement?
 
 fun KtElement.findKDoc(descriptorToPsi: DescriptorToPsi): KDocContent? {
+    return findKDoc()
+        ?: this.lookupInheritedKDoc(descriptorToPsi)
+}
+
+fun KtElement.findKDoc(): KDocContent? {
     return this.lookupOwnedKDoc()
         ?: this.lookupKDocInContainer()
-        ?: this.lookupInheritedKDoc(descriptorToPsi)
 }
 
 private fun KtElement.lookupOwnedKDoc(): KDocContent? {

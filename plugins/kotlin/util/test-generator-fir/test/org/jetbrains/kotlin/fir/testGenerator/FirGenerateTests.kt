@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelMultiFileJvmBas
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractFirKeywordCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelBasicCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
+import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesFirTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesWithDisableComponentSearchFirTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithLibraryFirTest
@@ -27,9 +28,6 @@ import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
 import org.jetbrains.kotlin.idea.fir.uast.*
-import org.jetbrains.kotlin.idea.k2.fe10bindings.inspections.AbstractFe10BindingIntentionTest
-import org.jetbrains.kotlin.idea.k2.fe10bindings.inspections.AbstractFe10BindingLocalInspectionTest
-import org.jetbrains.kotlin.idea.k2.fe10bindings.inspections.AbstractFe10BindingQuickFixTest
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
@@ -198,6 +196,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractHLImplementationSearcherTest> {
             model("search/implementations", pattern = KT_WITHOUT_DOTS)
+        }
+        
+        testClass<AbstractFirQuickDocTest> {
+            model("quickDoc", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""))
         }
     }
 
