@@ -6,15 +6,14 @@ import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.test.addChildEntity
 import com.intellij.workspaceModel.storage.entities.test.addParentEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
-import com.intellij.workspaceModel.storage.impl.ReplaceBySourceAsGraph
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
+import com.intellij.workspaceModel.storage.impl.ReplaceBySourceAsGraph
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
-import org.hamcrest.CoreMatchers.isA
-import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.hamcrest.CoreMatchers.isA
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -77,7 +76,8 @@ class ReplaceBySourceAsTreeTest {
     info: String = "",
     stringMapProperty: MutableMap<String, String> = HashMap(),
   ): SampleWithPersistentIdEntity {
-    val entity = SampleWithPersistentIdEntity(booleanProperty, stringProperty, stringListProperty, stringMapProperty, fileProperty, source) {
+    val entity = SampleWithPersistentIdEntity(booleanProperty, stringProperty, stringListProperty, stringMapProperty, fileProperty,
+                                              source) {
       this.children = emptyList()
     }
     this.addEntity(entity)
@@ -86,33 +86,33 @@ class ReplaceBySourceAsTreeTest {
 
   @Test
   fun `add entity`() {
-    builder.addSampleWpidEntity("hello2", SampleEntitySource("2"))
+    builder add NamedEntity("hello2", SampleEntitySource("2"))
     val replacement = createEmptyBuilder()
-    replacement.addSampleWpidEntity("hello1", SampleEntitySource("1"))
+    replacement add NamedEntity("hello1", SampleEntitySource("1"))
     builder.replaceBySource({ it == SampleEntitySource("1") }, replacement)
-    assertEquals(setOf("hello1", "hello2"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
+    assertEquals(setOf("hello1", "hello2"), builder.entities(NamedEntity::class.java).mapTo(HashSet()) { it.myName })
     builder.assertConsistency()
   }
 
   @Test
   fun `remove entity`() {
     val source1 = SampleEntitySource("1")
-    builder.addSampleWpidEntity("hello1", source1)
-    builder.addSampleWpidEntity("hello2", SampleEntitySource("2"))
+    builder add NamedEntity("hello1", source1)
+    builder add NamedEntity("hello2", SampleEntitySource("2"))
     builder.replaceBySource({ it == source1 }, createEmptyBuilder())
-    assertEquals("hello2", builder.singleSampleEntity().stringProperty)
+    assertEquals("hello2", builder.entities(NamedEntity::class.java).single().myName)
     builder.assertConsistency()
   }
 
   @Test
   fun `remove and add entity`() {
     val source1 = SampleEntitySource("1")
-    builder.addSampleWpidEntity("hello1", source1)
-    builder.addSampleWpidEntity("hello2", SampleEntitySource("2"))
+    builder add NamedEntity("hello1", source1)
+    builder add NamedEntity("hello2", SampleEntitySource("2"))
     val replacement = createEmptyBuilder()
-    replacement.addSampleWpidEntity("updated", source1)
+    replacement add NamedEntity("updated", source1)
     builder.replaceBySource({ it == source1 }, replacement)
-    assertEquals(setOf("hello2", "updated"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
+    assertEquals(setOf("hello2", "updated"), builder.entities(NamedEntity::class.java).mapTo(HashSet()) { it.myName })
     builder.assertConsistency()
   }
 
@@ -121,12 +121,12 @@ class ReplaceBySourceAsTreeTest {
     val sourceA1 = SampleEntitySource("a1")
     val sourceA2 = SampleEntitySource("a2")
     val sourceB = SampleEntitySource("b")
-    builder.addSampleWpidEntity("a", sourceA1)
-    builder.addSampleWpidEntity("b", sourceB)
+    builder add NamedEntity("a", sourceA1)
+    builder add NamedEntity("b", sourceB)
     val replacement = createEmptyBuilder()
-    replacement.addSampleWpidEntity("new", sourceA2)
+    replacement add NamedEntity("new", sourceA2)
     builder.replaceBySource({ it is SampleEntitySource && it.name.startsWith("a") }, replacement)
-    assertEquals(setOf("b", "new"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
+    assertEquals(setOf("b", "new"), builder.entities(NamedEntity::class.java).mapTo(HashSet()) { it.myName })
     builder.assertConsistency()
   }
 
@@ -134,12 +134,15 @@ class ReplaceBySourceAsTreeTest {
   fun `work with different entity sources`() {
     val sourceA1 = SampleEntitySource("a1")
     val sourceA2 = SampleEntitySource("a2")
-    val parentEntity = builder.addParentEntity(source = sourceA1)
+    val parentEntity = builder add NamedEntity("hello", sourceA1)
     val replacement = createBuilderFrom(builder)
-    replacement.addChildEntity(parentEntity = parentEntity, source = sourceA2)
+    replacement add NamedChildEntity("child", sourceA2) {
+      this.parentEntity = parentEntity
+    }
     builder.replaceBySource({ it == sourceA2 }, replacement)
-    assertEquals(1, builder.toSnapshot().entities(XParentEntity::class.java).toList().size)
-    assertEquals(1, builder.toSnapshot().entities(XChildEntity::class.java).toList().size)
+    assertEquals(1, builder.toSnapshot().entities(NamedEntity::class.java).toList().size)
+    assertEquals(1, builder.toSnapshot().entities(NamedChildEntity::class.java).toList().size)
+    assertEquals("child", builder.toSnapshot().entities(NamedEntity::class.java).single().children.single().childProperty)
     builder.assertConsistency()
   }
 
@@ -569,8 +572,9 @@ class ReplaceBySourceAsTreeTest {
     assertEquals("foo", child.parentEntity.additionalProperty)
   }
 
-  private infix fun MutableEntityStorage.add(entity: WorkspaceEntity) {
+  private infix fun <T: WorkspaceEntity> MutableEntityStorage.add(entity: T): T {
     this.addEntity(entity)
+    return entity
   }
 
   private val trueSources: (EntitySource) -> Boolean = { true }
@@ -654,7 +658,7 @@ class ReplaceBySourceAsTreeTest {
     val anotherParent = replacement.addOoParentWithPidEntity(source = MySource)
     replacement.addOoChildForParentWithPidEntity(anotherParent, source = MySource)
 
-    ReplaceBySourceAsGraph().replaceBySourceAsGraph(builder, replacement, {it is MySource }, true)
+    ReplaceBySourceAsGraph().replaceBySourceAsGraph(builder, replacement, { it is MySource }, true)
 
     builder.assertConsistency()
   }
