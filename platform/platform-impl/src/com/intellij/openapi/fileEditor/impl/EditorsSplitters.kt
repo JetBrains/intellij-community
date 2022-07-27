@@ -439,6 +439,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
         attributes = if (attributes == null) italic else TextAttributes.merge(italic, attributes)
       }
       resultAttributes = TextAttributes.merge(resultAttributes, attributes)
+      window.setForegroundAt(index, manager.getFileColor(file))
       window.setTextAttributes(index, resultAttributes.apply {
         this.foregroundColor = colorScheme.getColor(getForegroundColorForFile(manager.project, file))
       })
