@@ -19,16 +19,20 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.codegen.deft.model.KtObjModule
 import com.intellij.workspaceModel.codegen.engine.GeneratedCode
 import com.intellij.workspaceModel.codegen.engine.impl.CodeGeneratorImpl
 import com.intellij.workspaceModel.codegen.model.convertToObjModules
+import com.intellij.workspaceModel.codegen.utils.Imports
 import com.intellij.workspaceModel.storage.*
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.children
+import org.jetbrains.kotlin.resolve.ImportPath
 
 val SKIPPED_TYPES = setOf(WorkspaceEntity::class.simpleName,
                           ReferableWorkspaceEntity::class.simpleName,
@@ -75,43 +79,50 @@ object CodeWriter {
 
       CommandProcessor.getInstance().executeCommand(project, Runnable {
         ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread("Generating Code", project, null) { indicator ->
-          indicator.text = "Writing code"
+          indicator.text = "Removing old code"
           val psiFactory = KtPsiFactory(project)
           ktClasses.values.flatMapTo(HashSet()) { listOfNotNull(it.containingFile.node, it.body?.node) }.forEach {
             removeChildrenInGeneratedRegions(it)
           }
           val topLevelDeclarations = MultiMap.create<KtFile, Pair<KtClass, List<KtDeclaration>>>()
+          val importsByFile = FactoryMap.create<KtFile, Imports> { Imports(it.packageFqName.asString()) }
           val generatedFiles = ArrayList<KtFile>()
-          generated.forEach { code ->
-            val ktClass = ktClasses[code.target.javaFullName]!!
-            addInnerDeclarations(ktClass, code)
+          indicator.text = "Writing code"
+          generated.forEachIndexed { i, code ->
+            indicator.fraction = 0.2 * i / generated.size
+            val apiClass = ktClasses[code.target.javaFullName.decoded]!!
+            val apiFile = apiClass.containingKtFile
+            val apiImports = importsByFile.getValue(apiFile)
+            addInnerDeclarations(apiClass, code, apiImports)
             val topLevelCode = code.topLevelCode
             if (topLevelCode != null) {
-              val ktFile = ktClass.containingKtFile
-              val declarations = psiFactory.createFile(code.topLevelCode).declarations
-              topLevelDeclarations.putValue(ktFile, ktClass to declarations)
+              val declarations = psiFactory.createFile(apiImports.findAndRemoveFqns(code.topLevelCode)).declarations
+              topLevelDeclarations.putValue(apiFile, apiClass to declarations)
             }
             val implementationClassText = code.implementationClass
             if (implementationClassText != null) {
-              val sourceFile = ktClass.containingFile.virtualFile
+              val sourceFile = apiClass.containingFile.virtualFile
               val packageFolder = createPackageFolderIfMissing(sourceFolder, sourceFile, genFolder)
               val targetDirectory = PsiManager.getInstance(project).findDirectory(packageFolder)!!
-              val implFile = psiFactory.createFile("${code.target.name}Impl.kt", implementationClassText)
-              ktClass.containingKtFile.importDirectives.forEach { import ->
-                implFile.importList!!.add(psiFactory.createNewLine())
-                implFile.importList!!.add(import)
+              val implImports = Imports(apiFile.packageFqName.asString())
+              val implFile = psiFactory.createFile("${code.target.name}Impl.kt", implImports.findAndRemoveFqns(implementationClassText))
+              apiClass.containingKtFile.importDirectives.mapNotNull { it.importPath }.forEach { import ->
+                implImports.add(import.pathStr)
               }
               targetDirectory.findFile(implFile.name)?.delete()
               //todo remove other old generated files
-              generatedFiles.add(targetDirectory.add(implFile) as KtFile)
+              val addedFile = targetDirectory.add(implFile) as KtFile
+              generatedFiles.add(addedFile)
+              importsByFile[addedFile] = implImports
             }
           }
 
           indicator.text = "Formatting generated code"
+          importsByFile.forEach { (file, imports) ->
+            addImports(file, imports.set)
+          }
           generatedFiles.forEachIndexed { i, file ->
-            indicator.fraction = 0.5 * i / generatedFiles.size
-            val processed = ShortenReferences.DEFAULT.process(file)
-            CodeStyleManager.getInstance(project).reformat(processed)
+            CodeStyleManager.getInstance(project).reformat(file)
           }
           topLevelDeclarations.entrySet().forEachIndexed { i, (file, placeAndDeclarations) ->
             indicator.fraction = 0.5 + 0.25 * i / topLevelDeclarations.size()
@@ -128,9 +139,6 @@ object CodeWriter {
               addGeneratedRegionEndComment(file, newElements.last())
               addedElements.addAll(newElements)
             }
-            for (declaration in addedElements) {
-              ShortenReferences.DEFAULT.process(declaration)
-            }
           }
 
           val filesWithGeneratedRegions = ktClasses.values.groupBy { it.containingFile }.toList()
@@ -146,10 +154,28 @@ object CodeWriter {
     }
   }
 
-  private fun addInnerDeclarations(ktClass: KtClass, code: GeneratedCode) {
+  private fun addImports(file: KtFile, imports: Collection<String>) {
+    val psiFactory = KtPsiFactory(file.project)
+    val importList = file.importList ?: error("no imports in ${file.name}")
+    val existingImports = importList.imports.mapNotNullTo(HashSet()) { it.importedFqName?.asString() }
+    imports.sorted().filterNot { it in existingImports }.forEach { imported ->
+      val place = importList.imports.find { imported < (it.importedFqName?.asString() ?: "") }
+      val importDirective = psiFactory.createImportDirective(ImportPath.fromString(imported))
+      if (place != null) {
+        val added = importList.addBefore(importDirective, place)
+        importList.addAfter(psiFactory.createNewLine(), added)
+      }
+      else {
+        val added = importList.add(importDirective)
+        importList.addBefore(psiFactory.createNewLine(), added)
+      }
+    }
+  }
+
+  private fun addInnerDeclarations(ktClass: KtClass, code: GeneratedCode, imports: Imports) {
     val psiFactory = KtPsiFactory(ktClass.project)
-    val builderInterface = ShortenReferences.DEFAULT.process(ktClass.addDeclaration(psiFactory.createClass(code.builderInterface)))
-    val companionObject = ShortenReferences.DEFAULT.process(ktClass.addDeclaration(psiFactory.createObject(code.companionObject)))
+    val builderInterface = ktClass.addDeclaration(psiFactory.createClass(imports.findAndRemoveFqns(code.builderInterface)))
+    val companionObject = ktClass.addDeclaration(psiFactory.createObject(imports.findAndRemoveFqns(code.companionObject)))
     val body = ktClass.getOrCreateBody()
     addGeneratedRegionStartComment(body, builderInterface)
     addGeneratedRegionEndComment(body, companionObject)

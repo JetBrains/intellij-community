@@ -3,18 +3,14 @@ package com.intellij.workspaceModel.codegen.fields
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.codegen.isRefType
-import com.intellij.workspaceModel.codegen.utils.fqn1
-import com.intellij.workspaceModel.codegen.utils.fqn2
-import com.intellij.workspaceModel.codegen.utils.fqn3
-import com.intellij.workspaceModel.codegen.utils.fqn4
-import com.intellij.workspaceModel.codegen.deft.TRef
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.utils.*
 import com.intellij.workspaceModel.codegen.writer.owner
 
-data class RefMethods(val getter: String, val setter: String)
+data class RefMethods(val getter: QualifiedName, val setter: QualifiedName)
 
-infix fun String.getterWithSetter(setter: String): RefMethods = RefMethods(this, setter)
+infix fun QualifiedName.getterWithSetter(setter: QualifiedName): RefMethods = RefMethods(this, setter)
 
 fun ObjProperty<*, *>.refNames(): RefMethods {
   if (!valueType.isRefType()) error("Call this on ref field")

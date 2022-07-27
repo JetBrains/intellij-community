@@ -22,8 +22,6 @@ fun ObjClass<*>.implWsEntityCode(): String {
   return """
 package ${module.name}    
 
-import com.intellij.workspaceModel.storage.impl.*    
-
 @${GeneratedCodeApiVersion::class.fqn}(${CodeGeneratorVersions.API_VERSION})
 @${GeneratedCodeImplVersion::class.fqn}(${CodeGeneratorVersions.IMPL_VERSION})
 ${if (openness.instantiatable) "open" else "abstract"} class $javaImplName: $javaFullName, ${WorkspaceEntityBase::class.fqn}() {

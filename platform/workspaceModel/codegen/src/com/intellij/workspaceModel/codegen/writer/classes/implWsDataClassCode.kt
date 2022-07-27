@@ -44,7 +44,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
   val hasSoftLinks = hasSoftLinks()
   val softLinkable = if (hasSoftLinks) SoftLinkable::class.fqn else null
   return lines {
-    section("class $javaDataName : ${sups(entityDataBaseClass, softLinkable)}") label@{
+    section("class $javaDataName : ${sups(entityDataBaseClass, softLinkable?.encodedString)}") label@{
       listNl(allFields.noRefs().noEntitySource().noPersistentId()) { implWsDataFieldCode }
 
       listNl(allFields.noRefs().noEntitySource().noPersistentId().noOptional().noDefaultValue()) { implWsDataFieldInitializedCode }

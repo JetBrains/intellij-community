@@ -5,9 +5,9 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import java.util.Date
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
-import java.util.Date
 
 interface UnknownPropertyTypeEntity : WorkspaceEntity {
   val date: Date

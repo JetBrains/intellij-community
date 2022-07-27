@@ -11,13 +11,15 @@ import java.io.File
 import java.nio.file.Path
 
 class IntellijEntitiesGenerationTest : CodeGenerationTestBase() {
-  private enum class IntellijEntitiesPackage(val apiRelativePath: String, val implRelativePath: String) {
+  private enum class IntellijEntitiesPackage(val apiRelativePath: String, val implRelativePath: String, val keepPropertiesWithUnknownType: Boolean = false) {
     Bridges("platform/workspaceModel/storage/src/com/intellij/workspaceModel/storage/bridgeEntities/api",
             "platform/workspaceModel/storage/gen/com/intellij/workspaceModel/storage/bridgeEntities/api"),
     Eclipse("plugins/eclipse/src/org/jetbrains/idea/eclipse/workspaceModel",
             "plugins/eclipse/gen/org/jetbrains/idea/eclipse/workspaceModel"),
-    Tests("platform/workspaceModel/storage/testEntities/testSrc/com/intellij/workspaceModel/storage/entities",
-          "platform/workspaceModel/storage/testEntities/gen/com/intellij/workspaceModel/storage/entities");
+    Tests("platform/workspaceModel/storage/testEntities/testSrc/com/intellij/workspaceModel/storage/entities/test/api",
+          "platform/workspaceModel/storage/testEntities/gen/com/intellij/workspaceModel/storage/entities/test/api", true),
+    UnknownPropertyType("platform/workspaceModel/storage/testEntities/testSrc/com/intellij/workspaceModel/storage/entities/unknowntypes/test/api",
+          "platform/workspaceModel/storage/testEntities/gen/com/intellij/workspaceModel/storage/entities/unknowntypes/test/api", true);
     
     val apiPath: Path
       get() = Path.of(PlatformTestUtil.getCommunityPath(), apiRelativePath)
@@ -41,6 +43,10 @@ class IntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     doTest(IntellijEntitiesPackage.Tests)
   }
 
+  fun `test unknown property type entities generation`() {
+    doTest(IntellijEntitiesPackage.UnknownPropertyType)
+  }
+
   fun `test update code`() {
     val propertyKey = "intellij.workspace.model.update.entities"
     if (!SystemProperties.getBooleanProperty(propertyKey, false)) {
@@ -51,7 +57,7 @@ class IntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     for (entitiesPackage in IntellijEntitiesPackage.values()) {
       val packageName = entitiesPackage.name
       myFixture.copyDirectoryToProject(entitiesPackage.apiRelativePath, packageName)
-      val (srcRoot, genRoot) = generateCode(packageName, entitiesPackage == IntellijEntitiesPackage.Tests)
+      val (srcRoot, genRoot) = generateCode(packageName, entitiesPackage.keepPropertiesWithUnknownType)
       runWriteActionAndWait {
         val apiDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(entitiesPackage.apiPath)!!
         val implDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(entitiesPackage.implPath)!!
@@ -63,6 +69,6 @@ class IntellijEntitiesGenerationTest : CodeGenerationTestBase() {
 
   private fun doTest(entitiesPackage: IntellijEntitiesPackage) {
     myFixture.copyDirectoryToProject(entitiesPackage.apiRelativePath, "")
-    generateAndCompare(entitiesPackage.apiPath, entitiesPackage.implPath, false)
+    generateAndCompare(entitiesPackage.apiPath, entitiesPackage.implPath, entitiesPackage.keepPropertiesWithUnknownType)
   }
 }

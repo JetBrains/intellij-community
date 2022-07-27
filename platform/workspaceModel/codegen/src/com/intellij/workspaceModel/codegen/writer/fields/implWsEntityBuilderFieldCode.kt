@@ -202,7 +202,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                     getEntityData().${field.javaName} = value
                     changedProperty.add("${field.javaName}")
                     ${
-    if (javaType == "VirtualFileUrl")
+    if (javaType.decoded == "VirtualFileUrl")
       """val _diff = diff
       |                    if (_diff != null) index(this, "${field.javaName}", value)
                         """.trimMargin()
