@@ -86,7 +86,7 @@ public final class TestLoggerFactory implements Logger.Factory {
       var logProperties = customConfigPath != null ? Path.of(customConfigPath)
                                                    : Path.of(PathManager.getHomePath(), "test-log.properties");
       if (Files.exists(logProperties)) {
-        System.out.println("Configuring j.u.l.LogManager from file: " + logProperties);
+        if (customConfigPath != null) System.out.println("Configuring j.u.l.LogManager from file: " + logProperties);
         try (InputStream in = new BufferedInputStream(Files.newInputStream(logProperties))) {
           LogManager.getLogManager().readConfiguration(in);
         }
