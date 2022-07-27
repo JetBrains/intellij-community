@@ -7,6 +7,7 @@ class Main {
         break;
       else
         i++;
+      System.out.println("asd");
     }
   }
 }

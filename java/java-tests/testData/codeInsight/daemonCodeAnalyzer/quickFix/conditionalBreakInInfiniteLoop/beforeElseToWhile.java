@@ -8,6 +8,7 @@ class Main {
       } else {
         i++;
       }
+      System.out.println("asda");
     }
   }
 }

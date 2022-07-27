@@ -4,6 +4,7 @@ class Main {
     int i = 0;
       while (i < 12) {
           i++;
+          System.out.println("asda");
       }
   }
 }

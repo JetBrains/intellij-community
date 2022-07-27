@@ -8,6 +8,7 @@ class Main {
       } else {
         break;
       }
+      System.out.println("asd");
     }
   }
 }
