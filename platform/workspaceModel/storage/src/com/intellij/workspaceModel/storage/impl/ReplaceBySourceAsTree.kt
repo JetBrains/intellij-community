@@ -1,10 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
-import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.ReplaceBySourceOperation
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.memberProperties
 
 /**
  * # Replace By Source as a tree
@@ -33,12 +34,42 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     val thisEntitiesToReplace = thisStorage.entitiesBySource(entityFilter)
     val replaceWithEntitiesToReplace = replaceWithStorage.entitiesBySource(entityFilter)
 
-    for (thisEntityToReplace in thisEntitiesToReplace.values.flatMap { it.values }) {
+    for (thisEntityToReplace in thisEntitiesToReplace.values.flatMap { it.values }.flatten()) {
       thisEntityToReplace as WorkspaceEntityBase
 
       val thisEntitiesTrack = ArrayList<WorkspaceEntityBase>()
       val thisRootEntity = buildRootTrack(thisEntityToReplace, thisEntitiesTrack)
       processParent(thisRootEntity, thisEntitiesTrack)
+    }
+
+    applyOperations()
+  }
+
+  private fun applyOperations() {
+    for ((id, operation) in operations) {
+      when (operation) {
+        is Operation.Relabel -> {
+          // TODO: Terrible modification using reflection, but it's simpler to use it now
+          val thisEntityData = thisStorage.entityDataByIdOrDie(id)
+          val thisEntity = thisEntityData.createEntity(thisStorage)
+          val replaceWithEntity = replaceWithStorage.entityDataByIdOrDie(operation.replaceWithEntityId).createEntity(replaceWithStorage)
+          val fieldsToUpdate = thisEntityData::class.memberProperties.map { it.name }
+          thisStorage.modifyEntity(ModifiableWorkspaceEntity::class.java, thisEntity) {
+            val myInterface = this::class.java.interfaces.single()
+            val myInterfaceSnapshot = thisEntity::class.java.interfaces.single()
+            myInterface.kotlin.memberProperties.filter { it.name in fieldsToUpdate }
+              .filterIsInstance<KMutableProperty1<WorkspaceEntity, Any>>()
+              .forEach {
+                val newValue = myInterfaceSnapshot.kotlin.memberProperties
+                  .filterIsInstance<KProperty1<WorkspaceEntity, Any>>().single { sn -> sn.name == it.name }.get(replaceWithEntity)
+                it.set(this, newValue)
+              }
+          }
+        }
+        Operation.Remove -> {
+          thisStorage.removeEntity(id)
+        }
+      }
     }
   }
 
@@ -68,9 +99,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     val continueProcess = findAndReplaceRootEntity(rootEntity)
     rootTrack.remove(rootEntity).also { require(it) }
 
-    require(continueProcess) {
-      TODO()
-    }
+    if (!continueProcess) return
 
     val replaceWithRoot = replaceWithStorage.resolve(rootEntity.persistentId)!!
 
@@ -131,7 +160,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     val thisChildren = thisStorage.refs.getChildrenRefsOfParentBy((thisRootEntity as WorkspaceEntityBase).id.asParent())
 
     // TODO: This search won't work for abstract entities
-    val thisFoundChildren = thisChildren.filterKeys { it.parentClass.findWorkspaceEntity() == childExample::class.java }
+    val thisFoundChildren = thisChildren.filterKeys { it.childClass == (childExample as WorkspaceEntityBase).id.clazz }
     require(thisFoundChildren.size < 2) { "Got unexpected amount of children" }
     require(thisFoundChildren.isNotEmpty()) { "How this may happen? Because we have at least one child in our trace" }
 
@@ -142,7 +171,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     val replaceWothChildren = replaceWithStorage.refs.getChildrenRefsOfParentBy((replaceWithRoot as WorkspaceEntityBase).id.asParent())
 
     // TODO: This search won't work for abstract entities
-    val replaceWithFoundChildren = replaceWothChildren.filterKeys { it.parentClass.findWorkspaceEntity() == childExample::class.java }
+    val replaceWithFoundChildren = replaceWothChildren.filterKeys { it.childClass == (childExample as WorkspaceEntityBase).id.clazz }
     require(replaceWithFoundChildren.size < 2) { "Got unexpected amount of children" }
 
     val replaceWithEntityIds = if (replaceWithFoundChildren.isEmpty()) {
