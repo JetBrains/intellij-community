@@ -52,6 +52,11 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   private TestLoggerFactory() { }
 
+  private static @Nullable TestLoggerFactory getTestLoggerFactory() {
+    Logger.Factory factory = Logger.getFactory();
+    return factory instanceof TestLoggerFactory ? (TestLoggerFactory)factory : null;
+  }
+
   @Override
   public synchronized @NotNull Logger getLoggerInstance(@NotNull String category) {
     if (!myInitialized && reconfigure()) {
@@ -214,9 +219,9 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void onTestStarted() {
-    var factory = Logger.getFactory();
-    if (factory instanceof TestLoggerFactory) {
-      ((TestLoggerFactory)factory).clearLogBuffer();  // clear buffer from tests which failed to report their termination properly
+    var factory = getTestLoggerFactory();
+    if (factory != null) {
+      factory.clearLogBuffer();  // clear buffer from tests which failed to report their termination properly
     }
   }
 
@@ -239,19 +244,19 @@ public final class TestLoggerFactory implements Logger.Factory {
    * @param testName used for the log file name
    */
   public static void onTestFinished(boolean success, @NotNull String testName) {
-    var factory = Logger.getFactory();
-    if (factory instanceof TestLoggerFactory) {
-      ((TestLoggerFactory)factory).dumpLogBuffer(success, testName);
+    var factory = getTestLoggerFactory();
+    if (factory != null) {
+      factory.dumpLogBuffer(success, testName);
     }
   }
 
   public static void logTestFailure(@NotNull Throwable t) {
-    var factory = Logger.getFactory();
-    if (factory instanceof TestLoggerFactory) {
+    var factory = getTestLoggerFactory();
+    if (factory != null) {
       String comparisonFailures = dumpComparisonFailures(t);
       String message = comparisonFailures != null ? "test failed: " + comparisonFailures : "Test failed";
 
-      ((TestLoggerFactory)factory).buffer(LogLevel.ERROR, "#TestFramework", message, t);
+      factory.buffer(LogLevel.ERROR, "#TestFramework", message, t);
     }
   }
 
