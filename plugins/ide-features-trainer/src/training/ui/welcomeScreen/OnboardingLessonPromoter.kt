@@ -25,26 +25,28 @@ import javax.swing.JPanel
 @ApiStatus.Internal
 open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
                                     @NonNls private val languageName: String) : BannerStartPagePromoter() {
-  override fun promoImage(): Icon = FeaturesTrainerIcons.Img.PluginIcon
+  override val promoImage: Icon
+    get() = FeaturesTrainerIcons.Img.PluginIcon
 
   override fun getPromotionForInitialState(): JPanel? {
     scheduleOnboardingFeedback()
     return super.getPromotionForInitialState()
   }
 
-  override fun getHeaderLabel(): String =
-    LearnBundle.message("welcome.promo.header")
+  override val headerLabel: String
+    get() = LearnBundle.message("welcome.promo.header")
 
-  override fun getActionLabel(): String =
-    LearnBundle.message("welcome.promo.start.tour")
+  override val actionLabel: String
+    get() = LearnBundle.message("welcome.promo.start.tour")
 
   override fun runAction() =
     startOnboardingLessonWithSdk()
 
-  override fun getDescription(): String =
-    LearnBundle.message("welcome.promo.description", LessonUtil.productName, languageName)
+  override val description: String
+    get() = LearnBundle.message("welcome.promo.description", LessonUtil.productName, languageName)
 
-  override fun outLineColor(): Color = UISettings.getInstance().separatorColor
+  override val outLineColor: Color
+    get() = UISettings.getInstance().separatorColor
 
   private fun startOnboardingLessonWithSdk() {
     val lesson = CourseManager.instance.lessonsForModules.find { it.id == lessonId }

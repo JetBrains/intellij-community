@@ -5,14 +5,10 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBUI.CurrentTheme.Button.buttonOutlineColorStart
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Font
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.border.MatteBorder
@@ -27,11 +23,11 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     vPanel.layout = BoxLayout(vPanel, BoxLayout.PAGE_AXIS)
     vPanel.alignmentY = Component.TOP_ALIGNMENT
 
-    val header = JLabel(getHeaderLabel())
+    val header = JLabel(headerLabel)
     header.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(StartupUiUtil.getLabelFont().size2D + JBUI.scale(4))
     vPanel.add(header)
     vPanel.add(rigid(0, 4))
-    val description = JLabel("<html>${getDescription()}</html>").also {
+    val description = JLabel("<html>${description}</html>").also {
       it.font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().size2D + (when {
         SystemInfo.isLinux -> JBUIScale.scale(-2)
         SystemInfo.isMac -> JBUIScale.scale(-1)
@@ -42,7 +38,7 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     vPanel.add(description)
     val jButton = JButton()
     jButton.isOpaque = false
-    jButton.action = object : AbstractAction(getActionLabel()) {
+    jButton.action = object : AbstractAction(actionLabel) {
       override fun actionPerformed(e: ActionEvent?) {
         runAction()
       }
@@ -55,12 +51,12 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     hPanel.add(vPanel)
     hPanel.add(Box.createHorizontalGlue())
     hPanel.add(rigid(20, 0))
-    val picture = JLabel(promoImage())
+    val picture = JLabel(promoImage)
     picture.alignmentY = Component.TOP_ALIGNMENT
     hPanel.add(picture)
 
     rPanel.add(NonOpaquePanel().apply {
-      border = MatteBorder(JBUI.scale(1), 0, 0, 0, outLineColor())
+      border = MatteBorder(JBUI.scale(1), 0, 0, 0, outLineColor)
     })
     rPanel.add(rigid(0, 20))
     rPanel.add(hPanel)
@@ -98,10 +94,11 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     }
   }
 
-  abstract fun getHeaderLabel(): @Nls String
-  abstract fun getActionLabel(): @Nls String
-  abstract fun runAction()
-  abstract fun getDescription(): @Nls String
-  abstract fun promoImage(): Icon
-  protected open fun outLineColor() = buttonOutlineColorStart(false)
+  protected abstract val headerLabel: @Nls String
+  protected abstract val actionLabel: @Nls String
+  protected abstract val description: @Nls String
+  protected abstract val promoImage: Icon
+  protected open val outLineColor: Color get() = JBUI.CurrentTheme.Button.buttonOutlineColorStart(false)
+
+  protected abstract fun runAction()
 }

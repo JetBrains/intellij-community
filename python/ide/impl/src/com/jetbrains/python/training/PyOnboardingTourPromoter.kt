@@ -8,7 +8,8 @@ import javax.swing.Icon
 import javax.swing.JPanel
 
 internal class PyOnboardingTourPromoter : OnboardingLessonPromoter("python.onboarding", "Python") {
-  override fun promoImage(): Icon = IconLoader.getIcon("img/pycharm-onboarding-tour.png", PyOnboardingTourPromoter::class.java.classLoader)
+  override val promoImage: Icon
+    get() = IconLoader.getIcon("img/pycharm-onboarding-tour.png", PyOnboardingTourPromoter::class.java.classLoader)
 
   override fun getPromotionForInitialState(): JPanel? {
     if (ApplicationNamesInfo.getInstance().fullProductNameWithEdition.equals("PyCharm Edu")) {
