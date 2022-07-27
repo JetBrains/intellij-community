@@ -27,6 +27,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.NonModalCommitUsagesCollector.logStateChanged
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.CalledInAny
 import java.util.*
 
@@ -40,14 +42,16 @@ internal fun AnActionEvent.getProjectCommitMode(): CommitMode? =
   project?.let { CommitModeManager.getInstance(it).getCurrentCommitMode() }
 
 internal class NonModalCommitCustomization : ApplicationInitializedListener {
-  override suspend fun execute() {
+  override suspend fun execute(asyncScope: CoroutineScope) {
     if (!isNewUser()) {
       return
     }
 
     PropertiesComponent.getInstance().setValue(KEY, true)
     appSettings.COMMIT_FROM_LOCAL_CHANGES = true
-    logStateChanged(null)
+    asyncScope.launch {
+      logStateChanged(null)
+    }
   }
 
   companion object {

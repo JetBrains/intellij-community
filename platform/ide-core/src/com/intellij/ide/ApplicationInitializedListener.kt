@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -16,7 +17,7 @@ interface ApplicationInitializedListener {
    * Write actions and time-consuming activities are not recommended because directly affects application start time.
    */
   @JvmDefault
-  suspend fun execute() {
+  suspend fun execute(asyncScope: CoroutineScope) {
     @Suppress("DEPRECATION")
     componentsInitialized()
   }

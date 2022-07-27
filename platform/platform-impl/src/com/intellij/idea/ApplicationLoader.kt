@@ -464,9 +464,10 @@ private fun processProgramArguments(args: List<String>): List<String> {
 
 
 fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedListener>) {
+  val asyncScope = ApplicationManager.getApplication().coroutineScope
   for (listener in listeners) {
     launch {
-      listener.execute()
+      listener.execute(asyncScope)
     }
   }
 }
