@@ -10,17 +10,12 @@ import java.util.Locale;
 import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.info;
 
 /**
- * Provides a reasonable stable version of JDK 11 for current platform
+ * Provides a reasonable stable version of JDK for current platform
  * <p>
  * JDK is used for compiling and running build scripts, compiling intellij project
  * It's currently fixed here to be the same on all build agents and also in Docker images
  */
-public final class Jdk11Downloader {
-  private static final String CORRETTO_VERSION = "11.0.14.9.1";
-
-  // Corretto 11 is not available on macOS aarch64
-  private static final URI ZULU_MACOS_AARCH64_URL = URI.create("https://cache-redirector.jetbrains.com/cdn.azul.com/zulu/bin/zulu11.50.19-ca-jdk11.0.12-macosx_aarch64.tar.gz");
-
+public final class JdkDownloader {
   public static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot) {
     OS os = OS.getCurrent();
     Arch arch = Arch.getCurrent();
@@ -28,22 +23,11 @@ public final class Jdk11Downloader {
   }
 
   static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot, OS os, Arch arch) {
-    URI jdkUrl;
-    if (os == OS.MACOSX && arch == Arch.ARM64) {
-      // Corretto 11 is not available on macOS aarch64
-      jdkUrl = ZULU_MACOS_AARCH64_URL;
-    }
-    else {
-      jdkUrl = getCorrettoUrl(os, arch);
-    }
+    URI jdkUrl = getUrl(communityRoot, os, arch);
 
     Path jdkArchive = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, jdkUrl);
     Path jdkExtracted = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot, jdkArchive, BuildDependenciesExtractOptions.STRIP_ROOT);
     info("jps-bootstrap JDK is at " + jdkExtracted);
-
-    if (jdkUrl == ZULU_MACOS_AARCH64_URL) {
-      jdkExtracted = jdkExtracted.resolve("zulu-11.jdk");
-    }
 
     Path jdkHome;
     if (os == OS.MACOSX) {
@@ -70,18 +54,19 @@ public final class Jdk11Downloader {
     throw new IllegalStateException("No java executables were found under " + jdkHome);
   }
 
-  private static URI getCorrettoUrl(OS os, Arch arch) {
+  private static URI getUrl(BuildDependenciesCommunityRoot communityRoot, OS os, Arch arch) {
     String archString;
     String osString;
-    String ext = os == OS.WINDOWS ? ".zip" : ".tar.gz";
-    String suffix = os == OS.WINDOWS ? "-jdk" : "";
+    String version;
+    String build;
+    String ext = ".tar.gz";
 
     switch (os) {
       case WINDOWS:
         osString = "windows";
         break;
       case MACOSX:
-        osString = "macosx";
+        osString = "osx";
         break;
       case LINUX:
         osString = "linux";
@@ -101,8 +86,18 @@ public final class Jdk11Downloader {
         throw new IllegalStateException("Unsupported arch: " + arch);
     }
 
-    return URI.create("https://cache-redirector.jetbrains.com/corretto.aws/downloads/resources/" +
-      CORRETTO_VERSION + "/amazon-corretto-" + CORRETTO_VERSION + "-" + osString + "-" + archString + suffix + ext);
+    var dependenciesProperties = BuildDependenciesDownloader.getDependenciesProperties(communityRoot);
+    var jdkBuild = dependenciesProperties.get("jdkBuild");
+    var jdkBuildSplit = jdkBuild.split("b");
+    if (jdkBuildSplit.length != 2) {
+      throw new IllegalStateException("Malformed jdkBuild property: " + jdkBuild);
+    }
+    version = jdkBuildSplit[0];
+    build = "b" + jdkBuildSplit[1];
+
+    return URI.create("https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-" +
+                      version + "-" + osString + "-" +
+                      archString + "-" + build + ext);
   }
 
   enum OS {

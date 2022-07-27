@@ -7,13 +7,14 @@ import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.apache.commons.cli.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
-import org.jetbrains.intellij.build.dependencies.Jdk11Downloader;
+import org.jetbrains.intellij.build.dependencies.JdkDownloader;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -146,7 +147,7 @@ public class JpsBootstrapMain {
   private void main() throws Throwable {
     Path jdkHome;
     if (JpsBootstrapUtil.underTeamCity) {
-      jdkHome = Jdk11Downloader.getJdkHome(communityHome);
+      jdkHome = JdkDownloader.getJdkHome(communityHome);
     }
     else {
       // On local run JDK was already downloaded via jps-bootstrap.{sh,cmd}
@@ -167,7 +168,7 @@ public class JpsBootstrapMain {
 
     if (underTeamCity) {
       SetParameterServiceMessage setParameterServiceMessage = new SetParameterServiceMessage(
-        "jps.bootstrap.java.executable", Jdk11Downloader.getJavaExecutable(jdkHome).toString());
+        "jps.bootstrap.java.executable", JdkDownloader.getJavaExecutable(jdkHome).toString());
       System.out.println(setParameterServiceMessage.asString());
     }
   }
@@ -187,6 +188,10 @@ public class JpsBootstrapMain {
     List<String> args = new ArrayList<>();
     args.add("-ea");
     args.add("-Xmx" + buildTargetXmx);
+
+    Path openedPackagesPath = communityHome.getCommunityRoot().resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt");
+    List<String> openedPackages = ContainerUtil.filter(Files.readAllLines(openedPackagesPath), it -> !it.isBlank());
+    args.addAll(openedPackages);
 
     args.addAll(convertPropertiesToCommandLineArgs(systemProperties));
 
