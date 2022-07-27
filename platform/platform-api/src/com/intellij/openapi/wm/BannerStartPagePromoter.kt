@@ -1,33 +1,55 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm
 
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.InplaceButton
+import com.intellij.ui.JBColor
+import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Font
+import java.awt.Rectangle
 import java.awt.event.ActionEvent
 import javax.swing.*
-import javax.swing.border.MatteBorder
 
 abstract class BannerStartPagePromoter : StartPagePromoter {
   override fun getPromotionForInitialState(): JPanel? {
     val rPanel: JPanel = NonOpaquePanel()
-    rPanel.layout = BoxLayout(rPanel, BoxLayout.PAGE_AXIS)
-    rPanel.border = JBUI.Borders.empty(JBUI.scale(10), JBUI.scale(32))
+    rPanel.border = JBUI.Borders.empty(JBUI.scale(10), JBUI.scale(16))
 
     val vPanel: JPanel = NonOpaquePanel()
     vPanel.layout = BoxLayout(vPanel, BoxLayout.PAGE_AXIS)
     vPanel.alignmentY = Component.TOP_ALIGNMENT
 
+    val headerPanel: JPanel = NonOpaquePanel()
+    headerPanel.layout = BoxLayout(headerPanel, BoxLayout.X_AXIS)
+    headerPanel.alignmentX = Component.LEFT_ALIGNMENT
+
     val header = JLabel(headerLabel)
     header.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(StartupUiUtil.getLabelFont().size2D + JBUI.scale(4))
-    vPanel.add(header)
+
+    headerPanel.add(header)
+    headerPanel.add(Box.createHorizontalGlue())
+
+    val closeIcons = IconButton(null, AllIcons.Actions.Close, AllIcons.Actions.CloseDarkGrey)
+    val closeButton = InplaceButton(closeIcons) {
+      //TODO("Not yet implemented")
+    }
+    closeButton.maximumSize = Dimension(16, 16)
+    headerPanel.add(closeButton)
+
+    vPanel.add(headerPanel)
     vPanel.add(rigid(0, 4))
     val description = JLabel("<html>${description}</html>").also {
+      it.alignmentX = Component.LEFT_ALIGNMENT
       it.font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().size2D + (when {
         SystemInfo.isLinux -> JBUIScale.scale(-2)
         SystemInfo.isMac -> JBUIScale.scale(-1)
@@ -38,27 +60,26 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     vPanel.add(description)
     val jButton = JButton()
     jButton.isOpaque = false
+    jButton.alignmentX = Component.LEFT_ALIGNMENT
     jButton.action = object : AbstractAction(actionLabel) {
       override fun actionPerformed(e: ActionEvent?) {
         runAction()
       }
     }
-    vPanel.add(rigid(0, 18))
+
+    vPanel.add(Box.createVerticalGlue())
     vPanel.add(buttonPixelHunting(jButton))
 
-    val hPanel: JPanel = NonOpaquePanel()
+    val hPanel: JPanel = BackgroundRoundedPanel(JBUI.scale(16))
+    hPanel.background = JBColor.namedColor("WelcomeScreen.SidePanel.background", JBColor(0xF2F2F2, 0x3C3F41))
     hPanel.layout = BoxLayout(hPanel, BoxLayout.X_AXIS)
-    hPanel.add(vPanel)
-    hPanel.add(Box.createHorizontalGlue())
-    hPanel.add(rigid(20, 0))
+    hPanel.border = JBUI.Borders.empty(JBUI.scale(12), JBUI.scale(16), JBUI.scale(16), JBUI.scale(16))
     val picture = JLabel(promoImage)
     picture.alignmentY = Component.TOP_ALIGNMENT
     hPanel.add(picture)
+    hPanel.add(rigid(20, 0))
+    hPanel.add(vPanel)
 
-    rPanel.add(NonOpaquePanel().apply {
-      border = MatteBorder(JBUI.scale(1), 0, 0, 0, outLineColor)
-    })
-    rPanel.add(rigid(0, 20))
     rPanel.add(hPanel)
     return rPanel
   }
@@ -98,7 +119,6 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
   protected abstract val actionLabel: @Nls String
   protected abstract val description: @Nls String
   protected abstract val promoImage: Icon
-  protected open val outLineColor: Color get() = JBUI.CurrentTheme.Button.buttonOutlineColorStart(false)
 
   protected abstract fun runAction()
 }

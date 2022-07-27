@@ -15,10 +15,8 @@ import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
-import training.ui.UISettings
 import training.ui.showOnboardingFeedbackNotification
 import training.util.resetPrimaryLanguage
-import java.awt.Color
 import javax.swing.Icon
 import javax.swing.JPanel
 
@@ -44,9 +42,6 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
 
   override val description: String
     get() = LearnBundle.message("welcome.promo.description", LessonUtil.productName, languageName)
-
-  override val outLineColor: Color
-    get() = UISettings.getInstance().separatorColor
 
   private fun startOnboardingLessonWithSdk() {
     val lesson = CourseManager.instance.lessonsForModules.find { it.id == lessonId }
