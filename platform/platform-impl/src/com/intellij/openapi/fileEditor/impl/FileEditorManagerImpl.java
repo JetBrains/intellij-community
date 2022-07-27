@@ -178,6 +178,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   private final List<EditorComposite> myOpenedComposites = new CopyOnWriteArrayList<>();
 
   private final MessageListenerList<FileEditorManagerListener> myListenerList;
+  private boolean myDisposed = false;
 
   public FileEditorManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -220,7 +221,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   private void registerEditor(@NotNull Editor editor) {
     Project project = editor.getProject();
-    if (project == null || project.isDisposed()) {
+    if (project == null || project.isDisposed() || myDisposed) {
       return;
     }
     if (editor instanceof EditorEx) {
@@ -249,7 +250,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
             comp = parent;
           }
         }
-      });
+      }, this);
     }
   }
 
@@ -272,6 +273,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   @Override
   public void dispose() {
     fileToUpdateTitle = null;
+    myDisposed = true;
   }
 
   private void dumbModeFinished(@NotNull Project project) {
