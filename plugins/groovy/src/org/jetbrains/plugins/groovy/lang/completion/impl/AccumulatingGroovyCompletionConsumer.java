@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion.impl;
 
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -34,7 +35,7 @@ public class AccumulatingGroovyCompletionConsumer implements GroovyCompletionCon
   }
 
   @Override
-  public void fastElementsProcessed() {
+  public void fastElementsProcessed(CompletionParameters parameters) {
     Set<LookupElement> newSet = new HashSet<>(myAccumulator);
     myAccumulator.clear();
     myResultSet.addAllElements(newSet);

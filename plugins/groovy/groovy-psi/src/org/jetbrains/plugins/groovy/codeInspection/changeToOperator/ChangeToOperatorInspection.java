@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -68,29 +68,7 @@ public class ChangeToOperatorInspection extends BaseInspection {
 
   @Nullable
   protected GroovyFix getFix(@NotNull Transformation transformation, @NotNull String methodName) {
-    return new GroovyFix() {
-      @Nls
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return GroovyBundle.message("replace.with.operator.fix", methodName);
-      }
-
-      @Override
-      protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-        PsiElement call = descriptor.getPsiElement().getParent();
-        if (call == null) return;
-        call = call.getParent();
-        if (!(call instanceof GrMethodCall)) return;
-        GrMethodCall methodCall = (GrMethodCall) call;
-        GrExpression invokedExpression = methodCall.getInvokedExpression();
-        if (!(invokedExpression instanceof GrReferenceExpression)) return;
-
-        Options options = getOptions();
-        if(!transformation.couldApply(methodCall, options)) return;
-        transformation.apply(methodCall, options);
-      }
-    };
+    return new OperatorToMethodFix(transformation, methodName, getOptions());
   }
 
   @Nullable
@@ -100,6 +78,42 @@ public class ChangeToOperatorInspection extends BaseInspection {
     return method.getName();
   }
 
+
+  private static class OperatorToMethodFix extends GroovyFix {
+
+    private final @SafeFieldForPreview Transformation myTransformation;
+
+    private final String methodName;
+
+    private final @SafeFieldForPreview Options myOptions;
+
+    private OperatorToMethodFix(Transformation transformation, String name, Options options) {
+      myTransformation = transformation;
+      methodName = name;
+      myOptions = options;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return GroovyBundle.message("replace.with.operator.fix", methodName);
+    }
+
+    @Override
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
+      PsiElement call = descriptor.getPsiElement().getParent();
+      if (call == null) return;
+      call = call.getParent();
+      if (!(call instanceof GrMethodCall)) return;
+      GrMethodCall methodCall = (GrMethodCall) call;
+      GrExpression invokedExpression = methodCall.getInvokedExpression();
+      if (!(invokedExpression instanceof GrReferenceExpression)) return;
+
+      if(!myTransformation.couldApply(methodCall, myOptions)) return;
+      myTransformation.apply(methodCall, myOptions);
+    }
+  }
 
   @Override
   public JComponent createGroovyOptionsPanel() {
