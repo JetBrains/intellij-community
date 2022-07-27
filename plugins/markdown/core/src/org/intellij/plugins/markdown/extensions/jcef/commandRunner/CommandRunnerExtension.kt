@@ -17,7 +17,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -27,52 +26,29 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownUsageCollector.Companion.RUNNER_EXECUTED
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
-import org.intellij.plugins.markdown.fileActions.utils.MarkdownFileEditorUtils
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
-import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import java.util.concurrent.ConcurrentHashMap
 
-internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
-                                      private val provider: Provider)
-  : MarkdownBrowserPreviewExtension, MarkdownEditorWithPreview.SplitLayoutListener {
-
+internal class CommandRunnerExtension(
+  val panel: MarkdownHtmlPanel,
+  private val provider: Provider
+): MarkdownBrowserPreviewExtension {
   override val scripts: List<String> = listOf("commandRunner/commandRunner.js")
   override val styles: List<String> = listOf("commandRunner/commandRunner.css")
   private val hash2Cmd = mutableMapOf<String, String>()
-  private var splitEditor: MarkdownEditorWithPreview? = null
 
   init {
     panel.browserPipe?.subscribe(RUN_LINE_EVENT, this::runLine)
     panel.browserPipe?.subscribe(RUN_BLOCK_EVENT, this::runBlock)
-    panel.browserPipe?.subscribe(PAGE_READY_EVENT, this::onPageReady)
-    invokeLater {
-      MarkdownFileEditorUtils.findMarkdownSplitEditor(panel.project!!, panel.virtualFile!!)?.let {
-        splitEditor = it
-        it.addLayoutListener(this)
-      }
-    }
-
     Disposer.register(this) {
       panel.browserPipe?.removeSubscription(RUN_LINE_EVENT, ::runLine)
       panel.browserPipe?.removeSubscription(RUN_BLOCK_EVENT, ::runBlock)
-      splitEditor?.removeLayoutListener(this)
     }
   }
-
-  override fun onLayoutChange(oldLayout: TextEditorWithPreview.Layout?, newLayout: TextEditorWithPreview.Layout) {
-    panel.browserPipe?.send(LAYOUT_CHANGE_EVENT, newLayout.name)
-  }
-
-  private fun onPageReady(ready: String) {
-    splitEditor?.let {
-      panel.browserPipe?.send(LAYOUT_CHANGE_EVENT, it.layout.name)
-    }
-  }
-
 
   override val resourceProvider: ResourceProvider = ResourceProvider.aggregating(
     CommandRunnerResourceProvider(),
@@ -137,7 +113,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
   }
 
   private fun getHtmlForLineRunner(insideFence: Boolean, hash: String): String {
-    val cssClass = "run-icon hidden" + if (insideFence) " code-block" else ""
+    val cssClass = "run-icon" + if (insideFence) " code-block" else ""
     return "<a class='$cssClass' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
            "<img src='$RUN_LINE_ICON'>" +
            "</a>"
@@ -156,7 +132,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
       val lines = codeFenceRawContent.trimEnd().lines()
       val firstLineHash = if (lines.size > 1) processLine(lines[0], false) else null
       val firstLineData = if (firstLineHash.isNullOrBlank()) "" else "data-firstLine='$firstLineHash'"
-      val cssClass = "run-icon hidden code-block"
+      val cssClass = "run-icon code-block"
       return "<a class='${cssClass}' href='#' role='button' " +
              "data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash' " +
              "data-commandtype='block'" +
@@ -275,8 +251,6 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
   companion object {
     private const val RUN_LINE_EVENT = "runLine"
     private const val RUN_BLOCK_EVENT = "runBlock"
-    private const val PAGE_READY_EVENT = "pageReady"
-    private const val LAYOUT_CHANGE_EVENT = "layoutChange"
     private const val RUN_LINE_ICON = "commandRunner/run.png"
     private const val RUN_BLOCK_ICON = "commandRunner/runrun.png"
 
