@@ -527,7 +527,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
         }
       }
     }
-    consumer.fastElementsProcessed();
+    consumer.fastElementsProcessed(parameters);
     if (GroovyCompletionUtil.isSlowCompletionEnabled()) {
       addSlowVariants.run();
     }

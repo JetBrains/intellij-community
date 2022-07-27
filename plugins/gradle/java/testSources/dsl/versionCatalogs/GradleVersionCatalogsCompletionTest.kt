@@ -5,6 +5,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -50,6 +51,39 @@ class GradleVersionCatalogsCompletionTest : GradleCodeInsightTestCase() {
     }
   }
 
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testCompletionLong(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_VERSION_CATALOG_FIXTURE) {
+      testCompletion("""
+        dependencies {
+          implementation(libs.<caret>)
+        }""".trimIndent(), "groovy.core", "groovy.json.foo")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testCompletionLong2(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_VERSION_CATALOG_FIXTURE) {
+      testCompletion("""
+        dependencies {
+          implementation(libs.groovy.<caret>)
+        }""".trimIndent(), "core", "json.foo")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testCompletionLong3(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_VERSION_CATALOG_FIXTURE) {
+      testCompletion("""
+        plugins {
+          alias(libs.<caret>)
+        }""".trimIndent(), "plugins.jmh.aa.bb")
+    }
+  }
+
   companion object {
     private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
       .create("GradleVersionCatalogs-completion") {
@@ -75,6 +109,30 @@ class GradleVersionCatalogsCompletionTest : GradleCodeInsightTestCase() {
       jmh = { id = "me.champeau.jmh", version = "0.6.5" }
       """.trimIndent())
       }
+
+    private val JAVA_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
+      .create("GradleVersionCatalogs-completion-java") {
+        withSettingsFile {
+          setProjectName("GradleVersionCatalogs-completion-java")
+          enableFeaturePreview("VERSION_CATALOGS")
+        }
+        withBuildFile("plugins { id 'java' }")
+        withFile("gradle/libs.versions.toml", /* language=TOML */ """
+      [versions]
+      groovy = "3.0.5"
+
+      [libraries]
+      groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
+      groovy-json-foo = { module = "org.codehaus.groovy:groovy-json", version.ref = "groovy" }
+
+      [bundles]
+      groovy-aa-bb = ["groovy-core", "groovy-json-foo"]
+
+      [plugins]
+      jmh-aa-bb = { id = "me.champeau.jmh", version = "0.6.5" }
+      """.trimIndent())
+      }
+
   }
 
 }
