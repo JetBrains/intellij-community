@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AssumptionViolatedException;
@@ -24,6 +25,7 @@ import java.lang.invoke.MethodType;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.StreamHandler;
 import java.util.regex.Pattern;
@@ -62,7 +64,20 @@ public final class TestLoggerFactory implements Logger.Factory {
       myInitialized = true;
     }
 
-    return new TestLogger(category, this);
+    java.util.logging.Logger julLogger = java.util.logging.Logger.getLogger(category);
+    configureLogToStdoutIfDebug(julLogger);
+    return new TestLogger(julLogger, this);
+  }
+
+  /**
+   * If the logger has the "FINE" level, add a LogToStdoutJulHandler that streams its log records
+   * to STDOUT with a timestamp relative to the test started timestamp.
+   */
+  private static void configureLogToStdoutIfDebug(@NotNull java.util.logging.Logger julLogger) {
+    if (julLogger.isLoggable(Level.FINE) &&
+        ContainerUtil.findInstance(julLogger.getHandlers(), LogToStdoutJulHandler.class) == null) {
+      julLogger.addHandler(new LogToStdoutJulHandler());
+    }
   }
 
   public static boolean reconfigure() {
@@ -343,8 +358,8 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final class TestLogger extends JulLogger {
     private final TestLoggerFactory myFactory;
 
-    private TestLogger(String category, TestLoggerFactory factory) {
-      super(java.util.logging.Logger.getLogger(category));
+    private TestLogger(@NotNull java.util.logging.Logger julLogger, @NotNull TestLoggerFactory factory) {
+      super(julLogger);
       myFactory = factory;
     }
 
@@ -468,14 +483,15 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  public static class LogToStdoutJulHandler extends StreamHandler {
-    public LogToStdoutJulHandler() {
+  private static class LogToStdoutJulHandler extends StreamHandler {
+    LogToStdoutJulHandler() {
       super(System.out, new WithTimeSinceTestStartedJulFormatter());
+      setLevel(Level.ALL);
     }
   }
 
   private static class WithTimeSinceTestStartedJulFormatter extends IdeaLogRecordFormatter {
-    private WithTimeSinceTestStartedJulFormatter() {
+    WithTimeSinceTestStartedJulFormatter() {
       super(false);
     }
 
