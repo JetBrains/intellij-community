@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.hours
@@ -49,10 +50,15 @@ private fun randomShuffle(tips: List<TipAndTrickBean>): RecommendationDescriptio
 
 @Service
 internal class TipsOrderUtil {
-  private class RecommendationsStartupActivity : ProjectPostStartupActivity {
+  internal class RecommendationsStartupActivity : ProjectPostStartupActivity {
     private val isScheduled = AtomicBoolean()
 
     override suspend fun execute(project: Project) {
+      if (LocalDate.now().isAfter(LocalDate.of(2022, 12, 1))) {
+        // Update the date if the experiment is still needed after the date
+        return
+      }
+
       if (!isScheduled.compareAndSet(false, true)) {
         return
       }
