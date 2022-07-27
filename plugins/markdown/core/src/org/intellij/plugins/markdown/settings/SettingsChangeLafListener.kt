@@ -7,8 +7,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.processOpenedProjects
 
-internal class MarkdownLafListener: LafManagerListener {
-
+internal class SettingsChangeLafListener: LafManagerListener {
   override fun lookAndFeelChanged(source: LafManager) {
     if (!LoadingState.APP_STARTED.isOccurred) {
       return

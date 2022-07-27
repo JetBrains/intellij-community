@@ -407,7 +407,7 @@ Includes the following features:</p>
 
   <applicationListeners>
     <listener topic="com.intellij.ide.ui.LafManagerListener"
-              class="org.intellij.plugins.markdown.settings.MarkdownLafListener"/>
+              class="org.intellij.plugins.markdown.settings.SettingsChangeLafListener"/>
     <listener topic="com.intellij.ide.ui.LafManagerListener"
               class="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter$InvalidateCacheLafListener"/>
   </applicationListeners>
