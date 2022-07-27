@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache.LibraryDependencies
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
 import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache.Companion.isFineGrainedCacheInvalidationEnabled
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
@@ -205,9 +206,9 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         override fun rootsChanged(event: ModuleRootEvent) {
             // SDK could be changed (esp in tests) out of message bus subscription
-            val jdks = ProjectJdkTable.getInstance().allJdks.toHashSet()
+            val sdks = project.allSdks()
             invalidateEntries(
-                { _, value -> value.sdk.any { it.sdk !in jdks } },
+                { _, value -> value.sdk.any { it.sdk !in sdks } },
                 // unable to check entities properly: an event could be not the last
                 validityCondition = null
             )
@@ -249,10 +250,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         override fun rootsChanged(event: ModuleRootEvent) {
             // SDK could be changed (esp in tests) out of message bus subscription
-            val jdks = ProjectJdkTable.getInstance().allJdks.toHashSet()
+            val sdks = project.allSdks()
 
             invalidateEntries(
-                { _, (_, sdkInfos) -> sdkInfos.any { it.sdk !in jdks } },
+                { _, (_, sdkInfos) -> sdkInfos.any { it.sdk !in sdks } },
                 // unable to check entities properly: an event could be not the last
                 validityCondition = null
             )

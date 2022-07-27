@@ -94,12 +94,12 @@ internal class SdkInfoCacheImpl(project: Project) :
 
     override fun rootsChanged(event: ModuleRootEvent) {
         // SDK could be changed (esp in tests) out of message bus subscription
-        val jdks = ProjectJdkTable.getInstance().allJdks.toHashSet()
+        val sdks = project.allSdks()
         useCache { instance ->
             val iterator = instance.entries.iterator()
             while (iterator.hasNext()) {
                 val (key, value) = iterator.next()
-                if (key.safeAs<SdkInfo>()?.sdk?.let { it !in jdks } == true || value.sdk?.sdk?.let { it !in jdks } == true) {
+                if (key.safeAs<SdkInfo>()?.sdk?.let { it !in sdks } == true || value.sdk?.sdk?.let { it !in sdks } == true) {
                     iterator.remove()
                 }
             }

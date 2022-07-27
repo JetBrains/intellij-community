@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.caches.project
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -149,8 +148,6 @@ private fun collectModuleInfosFromIdeaModel(
     )
 }
 
-private val logger = Logger.getInstance(FineGrainedIdeaModelInfosCache::class.java)
-
 class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelInfosCache, Disposable {
     private val moduleCache: ModuleCache
     private val libraryCache: LibraryCache
@@ -162,7 +159,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
     private val modificationTracker = SimpleModificationTracker()
 
     init {
-        val ideaModules = ideaModules()
+        val ideaModules = project.ideaModules()
         moduleCache  = ModuleCache(ideaModules)
         libraryCache = LibraryCache(ideaModules)
         sdkCache = SdkCache(ideaModules)
@@ -181,8 +178,6 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
         Disposer.register(this, libraryCache)
         Disposer.register(this, sdkCache)
     }
-
-    private fun ideaModules(): Array<out Module> = runReadAction { ModuleManager.getInstance(project).modules }
 
     override fun dispose() = Unit
 
@@ -267,7 +262,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
             }
 
             // force calculations
-            ideaModules().forEach(::calculateLibrariesForModule)
+            project.ideaModules().forEach(::calculateLibrariesForModule)
 
             modificationTracker.incModificationCount()
         }
@@ -286,21 +281,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
                                                        ModuleRootListener {
 
         init {
-            allJdks(modules).forEach(::get)
-        }
-
-        private fun sdks(module: Module): List<Sdk> =
-            ModuleRootManager.getInstance(module).orderEntries.mapNotNull { orderEntry ->
-                checkCanceled()
-                orderEntry.safeAs<JdkOrderEntry>()?.jdk
-            }
-
-        private fun allJdks(modules: Array<out Module>? = null): Set<Sdk> = runReadAction {
-            val sdks = ProjectJdkTable.getInstance().allJdks.toHashSet()
-            val moduleArray = modules ?: ideaModules()
-            checkCanceled()
-            moduleArray.flatMapTo(sdks, ::sdks)
-            sdks
+            project.allSdks(modules).forEach(::get)
         }
 
         override fun calculate(key: Sdk): SdkInfo = SdkInfo(project, key)
@@ -334,11 +315,11 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
 
         override fun rootsChanged(event: ModuleRootEvent) {
             // SDK could be changed (esp in tests) out of message bus subscription
-            val jdks = allJdks().toHashSet()
-            invalidateEntries({ k, _ -> k !in jdks  })
+            val sdks = project.allSdks()
+            invalidateEntries({ k, _ -> k !in sdks  })
 
             // force calculation
-            jdks.forEach(::get)
+            sdks.forEach(::get)
 
             modificationTracker.incModificationCount()
         }
@@ -351,7 +332,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
             val outdatedModuleSdks: Set<Sdk> = moduleChanges.asSequence()
                 .mapNotNull { it.oldEntity }
                 .mapNotNull { storageBefore.findModuleByEntity(it) }
-                .flatMapTo(hashSetOf(), ::sdks)
+                .flatMapTo(hashSetOf(), ::moduleSdks)
 
             if (outdatedModuleSdks.isNotEmpty()) {
                 invalidateKeys(outdatedModuleSdks)
@@ -360,7 +341,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
             val updatedModuleSdks: Set<Sdk> = moduleChanges.asSequence()
                 .mapNotNull { it.newEntity }
                 .mapNotNull { storageAfter.findModuleByEntity(it) }
-                .flatMapTo(hashSetOf(), ::sdks)
+                .flatMapTo(hashSetOf(), ::moduleSdks)
 
             updatedModuleSdks.forEach(::get)
 
