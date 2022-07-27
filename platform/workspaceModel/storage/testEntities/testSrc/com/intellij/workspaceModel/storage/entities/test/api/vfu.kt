@@ -1,7 +1,6 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.deft.ObjBuilder
@@ -10,6 +9,8 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 
 
 
@@ -149,6 +150,39 @@ interface ListVFUEntity : WorkspaceEntity {
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ListVFUEntity, modification: ListVFUEntity.Builder.() -> Unit) = modifyEntity(
   ListVFUEntity.Builder::class.java, entity, modification)
+//endregion
+
+interface SetVFUEntity : WorkspaceEntity {
+  val data: String
+  val fileProperty: Set<VirtualFileUrl>
+
+  //region generated code
+  @GeneratedCodeApiVersion(1)
+  interface Builder : SetVFUEntity, ModifiableWorkspaceEntity<SetVFUEntity>, ObjBuilder<SetVFUEntity> {
+    override var data: String
+    override var entitySource: EntitySource
+    override var fileProperty: MutableSet<VirtualFileUrl>
+  }
+
+  companion object : Type<SetVFUEntity, Builder>() {
+    operator fun invoke(data: String,
+                        fileProperty: Set<VirtualFileUrl>,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): SetVFUEntity {
+      val builder = builder()
+      builder.data = data
+      builder.entitySource = entitySource
+      builder.fileProperty = fileProperty.toMutableWorkspaceSet()
+      init?.invoke(builder)
+      return builder
+    }
+  }
+  //endregion
+}
+
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: SetVFUEntity, modification: SetVFUEntity.Builder.() -> Unit) = modifyEntity(
+  SetVFUEntity.Builder::class.java, entity, modification)
 //endregion
 
 fun MutableEntityStorage.addVFUEntity(

@@ -13,7 +13,7 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -23,7 +23,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
+open class SetVFUEntityImpl : SetVFUEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -39,16 +39,16 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
     get() = _data!!
 
   @JvmField
-  var _fileProperty: List<VirtualFileUrl>? = null
-  override val fileProperty: List<VirtualFileUrl>
+  var _fileProperty: Set<VirtualFileUrl>? = null
+  override val fileProperty: Set<VirtualFileUrl>
     get() = _fileProperty!!
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: ListVFUEntityData?) : ModifiableWorkspaceEntityBase<ListVFUEntity>(), ListVFUEntity.Builder {
-    constructor() : this(ListVFUEntityData())
+  class Builder(val result: SetVFUEntityData?) : ModifiableWorkspaceEntityBase<SetVFUEntity>(), SetVFUEntity.Builder {
+    constructor() : this(SetVFUEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -57,7 +57,7 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
           return
         }
         else {
-          error("Entity ListVFUEntity is already created in a different builder")
+          error("Entity SetVFUEntity is already created in a different builder")
         }
       }
 
@@ -75,13 +75,13 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isDataInitialized()) {
-        error("Field ListVFUEntity#data should be initialized")
+        error("Field SetVFUEntity#data should be initialized")
       }
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ListVFUEntity#entitySource should be initialized")
+        error("Field SetVFUEntity#entitySource should be initialized")
       }
       if (!getEntityData().isFilePropertyInitialized()) {
-        error("Field ListVFUEntity#fileProperty should be initialized")
+        error("Field SetVFUEntity#fileProperty should be initialized")
       }
     }
 
@@ -107,15 +107,15 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
 
       }
 
-    private val filePropertyUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
+    private val filePropertyUpdater: (value: Set<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
       if (_diff != null) index(this, "fileProperty", value.toHashSet())
       changedProperty.add("fileProperty")
     }
-    override var fileProperty: MutableList<VirtualFileUrl>
+    override var fileProperty: MutableSet<VirtualFileUrl>
       get() {
         val collection_fileProperty = getEntityData().fileProperty
-        if (collection_fileProperty !is MutableWorkspaceList) return collection_fileProperty
+        if (collection_fileProperty !is MutableWorkspaceSet) return collection_fileProperty
         collection_fileProperty.setModificationUpdateAction(filePropertyUpdater)
         return collection_fileProperty
       }
@@ -125,20 +125,20 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
         filePropertyUpdater.invoke(value)
       }
 
-    override fun getEntityData(): ListVFUEntityData = result ?: super.getEntityData() as ListVFUEntityData
-    override fun getEntityClass(): Class<ListVFUEntity> = ListVFUEntity::class.java
+    override fun getEntityData(): SetVFUEntityData = result ?: super.getEntityData() as SetVFUEntityData
+    override fun getEntityClass(): Class<SetVFUEntity> = SetVFUEntity::class.java
   }
 }
 
-class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
+class SetVFUEntityData : WorkspaceEntityData<SetVFUEntity>() {
   lateinit var data: String
-  lateinit var fileProperty: MutableList<VirtualFileUrl>
+  lateinit var fileProperty: MutableSet<VirtualFileUrl>
 
   fun isDataInitialized(): Boolean = ::data.isInitialized
   fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ListVFUEntity> {
-    val modifiable = ListVFUEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SetVFUEntity> {
+    val modifiable = SetVFUEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff
       modifiable.snapshot = diff
@@ -149,25 +149,25 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ListVFUEntity {
-    val entity = ListVFUEntityImpl()
+  override fun createEntity(snapshot: EntityStorage): SetVFUEntity {
+    val entity = SetVFUEntityImpl()
     entity._data = data
-    entity._fileProperty = fileProperty.toList()
+    entity._fileProperty = fileProperty.toSet()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
   }
 
-  override fun clone(): ListVFUEntityData {
+  override fun clone(): SetVFUEntityData {
     val clonedEntity = super.clone()
-    clonedEntity as ListVFUEntityData
-    clonedEntity.fileProperty = clonedEntity.fileProperty.toMutableWorkspaceList()
+    clonedEntity as SetVFUEntityData
+    clonedEntity.fileProperty = clonedEntity.fileProperty.toMutableWorkspaceSet()
     return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return ListVFUEntity::class.java
+    return SetVFUEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -180,7 +180,7 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
     if (other == null) return false
     if (this::class != other::class) return false
 
-    other as ListVFUEntityData
+    other as SetVFUEntityData
 
     if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
@@ -192,7 +192,7 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
     if (other == null) return false
     if (this::class != other::class) return false
 
-    other as ListVFUEntityData
+    other as SetVFUEntityData
 
     if (this.data != other.data) return false
     if (this.fileProperty != other.fileProperty) return false

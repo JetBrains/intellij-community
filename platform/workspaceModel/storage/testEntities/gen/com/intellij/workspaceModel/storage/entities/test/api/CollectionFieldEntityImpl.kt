@@ -1,6 +1,5 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
-import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -14,16 +13,15 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
+open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -34,21 +32,21 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
   }
 
   @JvmField
-  var _data: String? = null
-  override val data: String
-    get() = _data!!
+  var _versions: Set<Int>? = null
+  override val versions: Set<Int>
+    get() = _versions!!
 
   @JvmField
-  var _fileProperty: List<VirtualFileUrl>? = null
-  override val fileProperty: List<VirtualFileUrl>
-    get() = _fileProperty!!
+  var _names: List<String>? = null
+  override val names: List<String>
+    get() = _names!!
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: ListVFUEntityData?) : ModifiableWorkspaceEntityBase<ListVFUEntity>(), ListVFUEntity.Builder {
-    constructor() : this(ListVFUEntityData())
+  class Builder(val result: CollectionFieldEntityData?) : ModifiableWorkspaceEntityBase<CollectionFieldEntity>(), CollectionFieldEntity.Builder {
+    constructor() : this(CollectionFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -57,7 +55,7 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
           return
         }
         else {
-          error("Entity ListVFUEntity is already created in a different builder")
+          error("Entity CollectionFieldEntity is already created in a different builder")
         }
       }
 
@@ -66,7 +64,6 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
       addToBuilder()
       this.id = getEntityData().createEntityId()
 
-      index(this, "fileProperty", this.fileProperty.toHashSet())
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -74,14 +71,14 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
-      if (!getEntityData().isDataInitialized()) {
-        error("Field ListVFUEntity#data should be initialized")
+      if (!getEntityData().isVersionsInitialized()) {
+        error("Field CollectionFieldEntity#versions should be initialized")
       }
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ListVFUEntity#entitySource should be initialized")
+        error("Field CollectionFieldEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isFilePropertyInitialized()) {
-        error("Field ListVFUEntity#fileProperty should be initialized")
+      if (!getEntityData().isNamesInitialized()) {
+        error("Field CollectionFieldEntity#names should be initialized")
       }
     }
 
@@ -90,12 +87,21 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
     }
 
 
-    override var data: String
-      get() = getEntityData().data
+    private val versionsUpdater: (value: Set<Int>) -> Unit = { value ->
+
+      changedProperty.add("versions")
+    }
+    override var versions: MutableSet<Int>
+      get() {
+        val collection_versions = getEntityData().versions
+        if (collection_versions !is MutableWorkspaceSet) return collection_versions
+        collection_versions.setModificationUpdateAction(versionsUpdater)
+        return collection_versions
+      }
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
+        getEntityData().versions = value
+        versionsUpdater.invoke(value)
       }
 
     override var entitySource: EntitySource
@@ -107,38 +113,37 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
 
       }
 
-    private val filePropertyUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-      val _diff = diff
-      if (_diff != null) index(this, "fileProperty", value.toHashSet())
-      changedProperty.add("fileProperty")
+    private val namesUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("names")
     }
-    override var fileProperty: MutableList<VirtualFileUrl>
+    override var names: MutableList<String>
       get() {
-        val collection_fileProperty = getEntityData().fileProperty
-        if (collection_fileProperty !is MutableWorkspaceList) return collection_fileProperty
-        collection_fileProperty.setModificationUpdateAction(filePropertyUpdater)
-        return collection_fileProperty
+        val collection_names = getEntityData().names
+        if (collection_names !is MutableWorkspaceList) return collection_names
+        collection_names.setModificationUpdateAction(namesUpdater)
+        return collection_names
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().fileProperty = value
-        filePropertyUpdater.invoke(value)
+        getEntityData().names = value
+        namesUpdater.invoke(value)
       }
 
-    override fun getEntityData(): ListVFUEntityData = result ?: super.getEntityData() as ListVFUEntityData
-    override fun getEntityClass(): Class<ListVFUEntity> = ListVFUEntity::class.java
+    override fun getEntityData(): CollectionFieldEntityData = result ?: super.getEntityData() as CollectionFieldEntityData
+    override fun getEntityClass(): Class<CollectionFieldEntity> = CollectionFieldEntity::class.java
   }
 }
 
-class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
-  lateinit var data: String
-  lateinit var fileProperty: MutableList<VirtualFileUrl>
+class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
+  lateinit var versions: MutableSet<Int>
+  lateinit var names: MutableList<String>
 
-  fun isDataInitialized(): Boolean = ::data.isInitialized
-  fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
+  fun isVersionsInitialized(): Boolean = ::versions.isInitialized
+  fun isNamesInitialized(): Boolean = ::names.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ListVFUEntity> {
-    val modifiable = ListVFUEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<CollectionFieldEntity> {
+    val modifiable = CollectionFieldEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff
       modifiable.snapshot = diff
@@ -149,25 +154,26 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ListVFUEntity {
-    val entity = ListVFUEntityImpl()
-    entity._data = data
-    entity._fileProperty = fileProperty.toList()
+  override fun createEntity(snapshot: EntityStorage): CollectionFieldEntity {
+    val entity = CollectionFieldEntityImpl()
+    entity._versions = versions.toSet()
+    entity._names = names.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
   }
 
-  override fun clone(): ListVFUEntityData {
+  override fun clone(): CollectionFieldEntityData {
     val clonedEntity = super.clone()
-    clonedEntity as ListVFUEntityData
-    clonedEntity.fileProperty = clonedEntity.fileProperty.toMutableWorkspaceList()
+    clonedEntity as CollectionFieldEntityData
+    clonedEntity.versions = clonedEntity.versions.toMutableWorkspaceSet()
+    clonedEntity.names = clonedEntity.names.toMutableWorkspaceList()
     return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return ListVFUEntity::class.java
+    return CollectionFieldEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -180,11 +186,11 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
     if (other == null) return false
     if (this::class != other::class) return false
 
-    other as ListVFUEntityData
+    other as CollectionFieldEntityData
 
-    if (this.data != other.data) return false
+    if (this.versions != other.versions) return false
     if (this.entitySource != other.entitySource) return false
-    if (this.fileProperty != other.fileProperty) return false
+    if (this.names != other.names) return false
     return true
   }
 
@@ -192,17 +198,17 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
     if (other == null) return false
     if (this::class != other::class) return false
 
-    other as ListVFUEntityData
+    other as CollectionFieldEntityData
 
-    if (this.data != other.data) return false
-    if (this.fileProperty != other.fileProperty) return false
+    if (this.versions != other.versions) return false
+    if (this.names != other.names) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + data.hashCode()
-    result = 31 * result + fileProperty.hashCode()
+    result = 31 * result + versions.hashCode()
+    result = 31 * result + names.hashCode()
     return result
   }
 }
