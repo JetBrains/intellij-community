@@ -12,8 +12,8 @@ import java.nio.file.Path
 
 class IntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   private enum class IntellijEntitiesPackage(val apiRelativePath: String, val implRelativePath: String, val keepPropertiesWithUnknownType: Boolean = false) {
-    Bridges("platform/workspaceModel/storage/src/com/intellij/workspaceModel/storage/bridgeEntities/api",
-            "platform/workspaceModel/storage/gen/com/intellij/workspaceModel/storage/bridgeEntities/api"),
+    Bridges("platform/workspaceModel/storage/src/com/intellij/workspaceModel/storage",
+            "platform/workspaceModel/storage/gen/com/intellij/workspaceModel/storage"),
     Eclipse("plugins/eclipse/src/org/jetbrains/idea/eclipse/workspaceModel",
             "plugins/eclipse/gen/org/jetbrains/idea/eclipse/workspaceModel"),
     Tests("platform/workspaceModel/storage/testEntities/testSrc/com/intellij/workspaceModel/storage/entities/test/api",

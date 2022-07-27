@@ -90,6 +90,8 @@ object CodeWriter {
           indicator.text = "Writing code"
           generated.forEachIndexed { i, code ->
             indicator.fraction = 0.2 * i / generated.size
+            if (code.target.name in SKIPPED_TYPES) return@forEachIndexed
+            
             val apiClass = ktClasses[code.target.javaFullName.decoded]!!
             val apiFile = apiClass.containingKtFile
             val apiImports = importsByFile.getValue(apiFile)
