@@ -31,7 +31,7 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
     return  count -> IntOpenHashSet.of(numbers).contains(count);
   }
 
-  private static final Map<Character, IntPredicate> DATE_TIME_FORMATTER_ALLOWED = Map.ofEntries(
+  private static final Map<Character, IntPredicate> ALLOWED_DATE_TIME_FORMATTER = Map.ofEntries(
     Map.entry('G', rangeOf(1, 5)),
     Map.entry('u', rangeOf(1, 19)),
     Map.entry('y', rangeOf(1, 19)),
@@ -202,7 +202,7 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
           //checked during tokenizing
           return;
         }
-        IntPredicate verifier = DATE_TIME_FORMATTER_ALLOWED.get(token.character);
+        IntPredicate verifier = ALLOWED_DATE_TIME_FORMATTER.get(token.character);
         if (verifier == null || !verifier.test(token.length)) {
           TextRange range = ExpressionUtils.findStringLiteralRange(expression, token.pos, token.pos + token.length);
           holder.registerProblem(expression, range,
