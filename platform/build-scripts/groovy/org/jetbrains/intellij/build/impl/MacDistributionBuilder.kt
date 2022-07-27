@@ -166,7 +166,9 @@ class MacDistributionBuilder(override val context: BuildContext,
       }
       if (publishZipOnly) {
         Span.current().addEvent("skip DMG and SIT artifacts producing")
-        context.notifyArtifactBuilt(macZip)
+        if (context.options.buildMacArtifactsWithRuntime) {
+          context.notifyArtifactBuilt(macZip)
+        }
         if (context.options.buildMacArtifactsWithoutRuntime) {
           context.notifyArtifactBuilt(macZipWithoutRuntime)
         }

@@ -119,7 +119,12 @@ private fun buildLocally(sitFile: Path,
     context.notifyArtifactBuilt(sitFile)
   }
   context.executeStep("build DMG locally", BuildOptions.MAC_DMG_STEP) {
-    buildDmgLocally(tempDir, targetName, customizer, context)
+    if (SystemInfoRt.isMac) {
+      buildDmgLocally(tempDir, targetName, customizer, context)
+    }
+    else {
+      Span.current().addEvent("DMG can be built only on macOS")
+    }
   }
 
   NioFiles.deleteRecursively(tempDir)
