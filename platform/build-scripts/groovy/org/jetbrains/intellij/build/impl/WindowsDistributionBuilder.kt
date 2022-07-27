@@ -23,7 +23,6 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
 import java.util.function.BiPredicate
-import kotlin.io.path.name
 
 internal class WindowsDistributionBuilder(
   override val context: BuildContext,
@@ -144,12 +143,12 @@ internal class WindowsDistributionBuilder(
 
     val exePath1 = exePath
     if (zipWithJbrPath != null && exePath1 != null) {
-      checkThatExeInstallerAndZipWithJbrAreTheSame(zipWithJbrPath, exePath1)
+      checkThatExeInstallerAndZipWithJbrAreTheSame(zipWithJbrPath, exePath1, arch)
       return
     }
   }
 
-  private fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path, exePath: Path) {
+  private fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path, exePath: Path, arch: JvmArchitecture) {
     if (context.options.isInDevelopmentMode) {
       Span.current().addEvent("comparing .zip and .exe skipped in development mode")
       return
@@ -172,7 +171,7 @@ internal class WindowsDistributionBuilder(
 
       runProcess(listOf("diff", "-q", "-r", tempZip.toString(), tempExe.toString()), null, context.messages)
       if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
-        RepairUtilityBuilder.generateManifest(context, tempExe, exePath.name)
+        RepairUtilityBuilder.generateManifest(context, tempExe, OsFamily.WINDOWS, arch)
       }
     }
     finally {

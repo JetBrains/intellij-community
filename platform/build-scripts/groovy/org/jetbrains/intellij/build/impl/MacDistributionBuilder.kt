@@ -377,6 +377,7 @@ class MacDistributionBuilder(override val context: BuildContext,
                         macZip = macZip,
                         isRuntimeBundled = true,
                         suffix = suffix,
+                        arch = arch,
                         notarize = notarize)
       })
     }
@@ -394,6 +395,7 @@ class MacDistributionBuilder(override val context: BuildContext,
                         macZip = macZipWithoutRuntime,
                         isRuntimeBundled = false,
                         suffix = "-no-jdk$suffix",
+                        arch = arch,
                         notarize = notarize)
       })
     }

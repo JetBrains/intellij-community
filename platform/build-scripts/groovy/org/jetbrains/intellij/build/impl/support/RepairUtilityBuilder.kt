@@ -46,14 +46,28 @@ class RepairUtilityBuilder {
     }
 
     private val BINARIES: Collection<Binary> = listOf(
-      Binary(OsFamily.LINUX, JvmArchitecture.x64, "bin/repair-linux-amd64", "bin/repair"),
-      Binary(OsFamily.LINUX, JvmArchitecture.aarch64, "bin/repair-linux-arm64", "bin/repair"),
-      Binary(OsFamily.WINDOWS, JvmArchitecture.x64, "bin/repair.exe", "bin/repair.exe"),
-      Binary(OsFamily.MACOS, JvmArchitecture.x64, "bin/repair-darwin-amd64", "bin/repair"),
-      Binary(OsFamily.MACOS, JvmArchitecture.aarch64, "bin/repair-darwin-arm64", "bin/repair")
+      Binary(OsFamily.LINUX, JvmArchitecture.x64, "bin/repair-linux-amd64", "bin/repair", "linux_amd64"),
+      Binary(OsFamily.LINUX, JvmArchitecture.aarch64, "bin/repair-linux-arm64", "bin/repair", "linux_arm64"),
+      Binary(OsFamily.WINDOWS, JvmArchitecture.x64, "bin/repair.exe", "bin/repair.exe", "windows_amd64"),
+      Binary(OsFamily.MACOS, JvmArchitecture.x64, "bin/repair-darwin-amd64", "bin/repair", "darwin_amd64"),
+      Binary(OsFamily.MACOS, JvmArchitecture.aarch64, "bin/repair-darwin-arm64", "bin/repair", "darwin_arm64")
     )
 
-    class Binary(val os: OsFamily, val arch: JvmArchitecture, val relativeSourcePath: String, val relativeTargetPath: String)
+    class Binary(
+      val os: OsFamily, val arch: JvmArchitecture,
+      val relativeSourcePath: String, val relativeTargetPath: String,
+      val integrityManifestUrlVariable: String
+    ) {
+      val integrityManifestSuffix: String
+        get() = when (arch) {
+                  JvmArchitecture.x64 -> ""
+                  JvmArchitecture.aarch64 -> "-" + arch.fileSuffix
+                } + when (os) {
+                  OsFamily.LINUX -> ".tar.gz"
+                  OsFamily.MACOS -> ".dmg"
+                  OsFamily.WINDOWS -> ".exe"
+                } + ".manifest"
+    }
 
     @Synchronized
     fun bundle(context: BuildContext, os: OsFamily, arch: JvmArchitecture, distributionDir: Path) {
@@ -80,7 +94,7 @@ class RepairUtilityBuilder {
     }
 
     @Synchronized
-    fun generateManifest(context: BuildContext, unpackedDistribution: Path, manifestFileNamePrefix: String) {
+    fun generateManifest(context: BuildContext, unpackedDistribution: Path, os: OsFamily, arch: JvmArchitecture) {
       context.executeStep(spanBuilder("generate installation integrity manifest")
                             .setAttribute("dir", unpackedDistribution.toString()), REPAIR_UTILITY_BUNDLE_STEP) {
         if (Files.notExists(unpackedDistribution)) {
@@ -91,11 +105,15 @@ class RepairUtilityBuilder {
         if (cache.isEmpty()) {
           return@executeStep
         }
-        val binary = findBinary(context, currentOs, currentJvmArch)
-        requireNotNull(binary) {
+        val manifestGenerator = findBinary(context, currentOs, currentJvmArch)
+        val distributionBinary = findBinary(context, os, arch)
+        requireNotNull(manifestGenerator) {
           "No binary was built for $currentOs and $currentJvmArch"
         }
-        val binaryPath = repairUtilityProjectHome(context)?.resolve(binary.relativeSourcePath)
+        requireNotNull(distributionBinary) {
+          "No binary was built for $os and $arch"
+        }
+        val binaryPath = repairUtilityProjectHome(context)?.resolve(manifestGenerator.relativeSourcePath)
         requireNotNull(binaryPath)
         val tmpDir = context.paths.tempDir.resolve(REPAIR_UTILITY_BUNDLE_STEP + UUID.randomUUID().toString())
         Files.createDirectories(tmpDir)
@@ -117,8 +135,8 @@ class RepairUtilityBuilder {
           val repairLog = tmpDir.resolve("repair.log")
           context.messages.error("Unable to generate installation integrity manifest: ${Files.readString(repairLog)}")
         }
-
-        val artifact = context.paths.artifactDir.resolve("${manifestFileNamePrefix}.manifest")
+        val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
+        val artifact = context.paths.artifactDir.resolve("${baseName}${distributionBinary.integrityManifestSuffix}")
         Files.move(manifest, artifact, StandardCopyOption.REPLACE_EXISTING)
         return@executeStep
       }
@@ -156,7 +174,15 @@ class RepairUtilityBuilder {
         else {
           try {
             runProcess(listOf("docker", "--version"), null, buildContext.messages)
-            runProcess(listOf("bash", "build.sh"), projectHome, buildContext.messages)
+            val baseUrl = buildContext.applicationInfo.patchesUrl?.removeSuffix("/") ?: error("Missing download url")
+            val baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+            val manifestUrls = BINARIES.associate {
+              it.integrityManifestUrlVariable to "$baseUrl/$baseName${it.integrityManifestSuffix}"
+            }
+            manifestUrls.forEach { (envVar, url) ->
+              buildContext.messages.info("$envVar=$url")
+            }
+            runProcess(listOf("bash", "build.sh"), projectHome, buildContext.messages, additionalEnvVariables = manifestUrls)
           }
           catch (e: Throwable) {
             if (TeamCityHelper.isUnderTeamCity) {
