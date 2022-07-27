@@ -2,6 +2,7 @@ package com.intellij.workspaceModel.storage.entities.test.api
 
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -105,17 +106,17 @@ interface EntityWithSoftLinks : WorkspaceEntity {
   interface Builder : EntityWithSoftLinks, ModifiableWorkspaceEntity<EntityWithSoftLinks>, ObjBuilder<EntityWithSoftLinks> {
     override var link: OnePersistentId
     override var entitySource: EntitySource
-    override var manyLinks: List<OnePersistentId>
+    override var manyLinks: MutableList<OnePersistentId>
     override var optionalLink: OnePersistentId?
     override var inContainer: Container
     override var inOptionalContainer: Container?
-    override var inContainerList: List<Container>
-    override var deepContainer: List<TooDeepContainer>
+    override var inContainerList: MutableList<Container>
+    override var deepContainer: MutableList<TooDeepContainer>
     override var sealedContainer: SealedContainer
-    override var listSealedContainer: List<SealedContainer>
+    override var listSealedContainer: MutableList<SealedContainer>
     override var justProperty: String
     override var justNullableProperty: String?
-    override var justListProperty: List<String>
+    override var justListProperty: MutableList<String>
     override var deepSealedClass: DeepSealedOne
     override var children: List<SoftLinkReferencedChild>
   }
@@ -136,14 +137,14 @@ interface EntityWithSoftLinks : WorkspaceEntity {
       val builder = builder()
       builder.link = link
       builder.entitySource = entitySource
-      builder.manyLinks = manyLinks
+      builder.manyLinks = manyLinks.toMutableWorkspaceList()
       builder.inContainer = inContainer
-      builder.inContainerList = inContainerList
-      builder.deepContainer = deepContainer
+      builder.inContainerList = inContainerList.toMutableWorkspaceList()
+      builder.deepContainer = deepContainer.toMutableWorkspaceList()
       builder.sealedContainer = sealedContainer
-      builder.listSealedContainer = listSealedContainer
+      builder.listSealedContainer = listSealedContainer.toMutableWorkspaceList()
       builder.justProperty = justProperty
-      builder.justListProperty = justListProperty
+      builder.justListProperty = justListProperty.toMutableWorkspaceList()
       builder.deepSealedClass = deepSealedClass
       init?.invoke(builder)
       return builder

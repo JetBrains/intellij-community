@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -36,7 +37,7 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
     override var name: String
     override var entitySource: EntitySource
     override var type: String?
-    override var dependencies: List<ModuleDependencyItem>
+    override var dependencies: MutableList<ModuleDependencyItem>
     override var contentRoots: List<ContentRootEntity>
     override var customImlData: ModuleCustomImlDataEntity?
     override var groupPath: ModuleGroupPathEntity?
@@ -53,7 +54,7 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
       val builder = builder()
       builder.name = name
       builder.entitySource = entitySource
-      builder.dependencies = dependencies
+      builder.dependencies = dependencies.toMutableWorkspaceList()
       init?.invoke(builder)
       return builder
     }
@@ -116,14 +117,14 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
   interface Builder : ModuleGroupPathEntity, ModifiableWorkspaceEntity<ModuleGroupPathEntity>, ObjBuilder<ModuleGroupPathEntity> {
     override var module: ModuleEntity
     override var entitySource: EntitySource
-    override var path: List<String>
+    override var path: MutableList<String>
   }
 
   companion object : Type<ModuleGroupPathEntity, Builder>() {
     operator fun invoke(path: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleGroupPathEntity {
       val builder = builder()
       builder.entitySource = entitySource
-      builder.path = path
+      builder.path = path.toMutableWorkspaceList()
       init?.invoke(builder)
       return builder
     }

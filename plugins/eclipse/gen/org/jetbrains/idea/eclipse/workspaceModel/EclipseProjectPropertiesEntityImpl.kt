@@ -18,6 +18,8 @@ import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -187,32 +189,56 @@ open class EclipseProjectPropertiesEntityImpl : EclipseProjectPropertiesEntity, 
         changedProperty.add("variablePaths")
       }
 
-    override var eclipseUrls: List<VirtualFileUrl>
-      get() = getEntityData().eclipseUrls
+    private val eclipseUrlsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
+      val _diff = diff
+      if (_diff != null) index(this, "eclipseUrls", value.toHashSet())
+      changedProperty.add("eclipseUrls")
+    }
+    override var eclipseUrls: MutableList<VirtualFileUrl>
+      get() {
+        val collection_eclipseUrls = getEntityData().eclipseUrls
+        if (collection_eclipseUrls !is MutableWorkspaceList) return collection_eclipseUrls
+        collection_eclipseUrls.setModificationUpdateAction(eclipseUrlsUpdater)
+        return collection_eclipseUrls
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().eclipseUrls = value
-        val _diff = diff
-        if (_diff != null) index(this, "eclipseUrls", value.toHashSet())
-        changedProperty.add("eclipseUrls")
+        eclipseUrlsUpdater.invoke(value)
       }
 
-    override var unknownCons: List<String>
-      get() = getEntityData().unknownCons
+    private val unknownConsUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("unknownCons")
+    }
+    override var unknownCons: MutableList<String>
+      get() {
+        val collection_unknownCons = getEntityData().unknownCons
+        if (collection_unknownCons !is MutableWorkspaceList) return collection_unknownCons
+        collection_unknownCons.setModificationUpdateAction(unknownConsUpdater)
+        return collection_unknownCons
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().unknownCons = value
-
-        changedProperty.add("unknownCons")
+        unknownConsUpdater.invoke(value)
       }
 
-    override var knownCons: List<String>
-      get() = getEntityData().knownCons
+    private val knownConsUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("knownCons")
+    }
+    override var knownCons: MutableList<String>
+      get() {
+        val collection_knownCons = getEntityData().knownCons
+        if (collection_knownCons !is MutableWorkspaceList) return collection_knownCons
+        collection_knownCons.setModificationUpdateAction(knownConsUpdater)
+        return collection_knownCons
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().knownCons = value
-
-        changedProperty.add("knownCons")
+        knownConsUpdater.invoke(value)
       }
 
     override var forceConfigureJdk: Boolean
@@ -246,9 +272,9 @@ open class EclipseProjectPropertiesEntityImpl : EclipseProjectPropertiesEntity, 
 
 class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPropertiesEntity>() {
   lateinit var variablePaths: Map<String, String>
-  lateinit var eclipseUrls: List<VirtualFileUrl>
-  lateinit var unknownCons: List<String>
-  lateinit var knownCons: List<String>
+  lateinit var eclipseUrls: MutableList<VirtualFileUrl>
+  lateinit var unknownCons: MutableList<String>
+  lateinit var knownCons: MutableList<String>
   var forceConfigureJdk: Boolean = false
   var expectedModuleSourcePlace: Int = 0
   lateinit var srcPlace: Map<String, Int>
@@ -276,9 +302,9 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
   override fun createEntity(snapshot: EntityStorage): EclipseProjectPropertiesEntity {
     val entity = EclipseProjectPropertiesEntityImpl()
     entity._variablePaths = variablePaths
-    entity._eclipseUrls = eclipseUrls
-    entity._unknownCons = unknownCons
-    entity._knownCons = knownCons
+    entity._eclipseUrls = eclipseUrls.toList()
+    entity._unknownCons = unknownCons.toList()
+    entity._knownCons = knownCons.toList()
     entity.forceConfigureJdk = forceConfigureJdk
     entity.expectedModuleSourcePlace = expectedModuleSourcePlace
     entity._srcPlace = srcPlace
@@ -286,6 +312,15 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): EclipseProjectPropertiesEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as EclipseProjectPropertiesEntityData
+    clonedEntity.eclipseUrls = clonedEntity.eclipseUrls.toMutableWorkspaceList()
+    clonedEntity.unknownCons = clonedEntity.unknownCons.toMutableWorkspaceList()
+    clonedEntity.knownCons = clonedEntity.knownCons.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

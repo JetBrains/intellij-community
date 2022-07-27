@@ -12,6 +12,8 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -137,14 +139,22 @@ open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
         if (_diff != null) index(this, "directoryPath", value)
       }
 
-    override var notNullRoots: List<VirtualFileUrl>
-      get() = getEntityData().notNullRoots
+    private val notNullRootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
+      val _diff = diff
+      if (_diff != null) index(this, "notNullRoots", value.toHashSet())
+      changedProperty.add("notNullRoots")
+    }
+    override var notNullRoots: MutableList<VirtualFileUrl>
+      get() {
+        val collection_notNullRoots = getEntityData().notNullRoots
+        if (collection_notNullRoots !is MutableWorkspaceList) return collection_notNullRoots
+        collection_notNullRoots.setModificationUpdateAction(notNullRootsUpdater)
+        return collection_notNullRoots
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().notNullRoots = value
-        val _diff = diff
-        if (_diff != null) index(this, "notNullRoots", value.toHashSet())
-        changedProperty.add("notNullRoots")
+        notNullRootsUpdater.invoke(value)
       }
 
     override fun getEntityData(): VFUEntity2Data = result ?: super.getEntityData() as VFUEntity2Data
@@ -156,7 +166,7 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
   lateinit var data: String
   var filePath: VirtualFileUrl? = null
   lateinit var directoryPath: VirtualFileUrl
-  lateinit var notNullRoots: List<VirtualFileUrl>
+  lateinit var notNullRoots: MutableList<VirtualFileUrl>
 
   fun isDataInitialized(): Boolean = ::data.isInitialized
   fun isDirectoryPathInitialized(): Boolean = ::directoryPath.isInitialized
@@ -179,11 +189,18 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
     entity._data = data
     entity._filePath = filePath
     entity._directoryPath = directoryPath
-    entity._notNullRoots = notNullRoots
+    entity._notNullRoots = notNullRoots.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): VFUEntity2Data {
+    val clonedEntity = super.clone()
+    clonedEntity as VFUEntity2Data
+    clonedEntity.notNullRoots = clonedEntity.notNullRoots.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

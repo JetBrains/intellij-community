@@ -4,6 +4,7 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -57,7 +58,7 @@ interface VFUEntity2 : WorkspaceEntity {
     override var entitySource: EntitySource
     override var filePath: VirtualFileUrl?
     override var directoryPath: VirtualFileUrl
-    override var notNullRoots: List<VirtualFileUrl>
+    override var notNullRoots: MutableList<VirtualFileUrl>
   }
 
   companion object : Type<VFUEntity2, Builder>() {
@@ -70,7 +71,7 @@ interface VFUEntity2 : WorkspaceEntity {
       builder.data = data
       builder.entitySource = entitySource
       builder.directoryPath = directoryPath
-      builder.notNullRoots = notNullRoots
+      builder.notNullRoots = notNullRoots.toMutableWorkspaceList()
       init?.invoke(builder)
       return builder
     }

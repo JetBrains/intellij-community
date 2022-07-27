@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -33,8 +34,8 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
     override var name: String
     override var entitySource: EntitySource
     override var tableId: LibraryTableId
-    override var roots: List<LibraryRoot>
-    override var excludedRoots: List<VirtualFileUrl>
+    override var roots: MutableList<LibraryRoot>
+    override var excludedRoots: MutableList<VirtualFileUrl>
     override var sdk: SdkEntity?
     override var libraryProperties: LibraryPropertiesEntity?
     override var libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
@@ -51,8 +52,8 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
       builder.name = name
       builder.entitySource = entitySource
       builder.tableId = tableId
-      builder.roots = roots
-      builder.excludedRoots = excludedRoots
+      builder.roots = roots.toMutableWorkspaceList()
+      builder.excludedRoots = excludedRoots.toMutableWorkspaceList()
       init?.invoke(builder)
       return builder
     }

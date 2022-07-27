@@ -17,6 +17,8 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
@@ -170,28 +172,44 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
 
       }
 
-    override var roots: List<LibraryRoot>
-      get() = getEntityData().roots
+    private val rootsUpdater: (value: List<LibraryRoot>) -> Unit = { value ->
+
+      val _diff = diff
+      if (_diff != null) {
+        indexLibraryRoots(value)
+      }
+
+      changedProperty.add("roots")
+    }
+    override var roots: MutableList<LibraryRoot>
+      get() {
+        val collection_roots = getEntityData().roots
+        if (collection_roots !is MutableWorkspaceList) return collection_roots
+        collection_roots.setModificationUpdateAction(rootsUpdater)
+        return collection_roots
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().roots = value
-
-        val _diff = diff
-        if (_diff != null) {
-          indexLibraryRoots(value)
-        }
-
-        changedProperty.add("roots")
+        rootsUpdater.invoke(value)
       }
 
-    override var excludedRoots: List<VirtualFileUrl>
-      get() = getEntityData().excludedRoots
+    private val excludedRootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
+      val _diff = diff
+      if (_diff != null) index(this, "excludedRoots", value.toHashSet())
+      changedProperty.add("excludedRoots")
+    }
+    override var excludedRoots: MutableList<VirtualFileUrl>
+      get() {
+        val collection_excludedRoots = getEntityData().excludedRoots
+        if (collection_excludedRoots !is MutableWorkspaceList) return collection_excludedRoots
+        collection_excludedRoots.setModificationUpdateAction(excludedRootsUpdater)
+        return collection_excludedRoots
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().excludedRoots = value
-        val _diff = diff
-        if (_diff != null) index(this, "excludedRoots", value.toHashSet())
-        changedProperty.add("excludedRoots")
+        excludedRootsUpdater.invoke(value)
       }
 
     override var sdk: SdkEntity?
@@ -306,8 +324,8 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
 class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<LibraryEntity>(), SoftLinkable {
   lateinit var name: String
   lateinit var tableId: LibraryTableId
-  lateinit var roots: List<LibraryRoot>
-  lateinit var excludedRoots: List<VirtualFileUrl>
+  lateinit var roots: MutableList<LibraryRoot>
+  lateinit var excludedRoots: MutableList<VirtualFileUrl>
 
   fun isNameInitialized(): Boolean = ::name.isInitialized
   fun isTableIdInitialized(): Boolean = ::tableId.isInitialized
@@ -422,12 +440,20 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     val entity = LibraryEntityImpl()
     entity._name = name
     entity._tableId = tableId
-    entity._roots = roots
-    entity._excludedRoots = excludedRoots
+    entity._roots = roots.toList()
+    entity._excludedRoots = excludedRoots.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): LibraryEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as LibraryEntityData
+    clonedEntity.roots = clonedEntity.roots.toMutableWorkspaceList()
+    clonedEntity.excludedRoots = clonedEntity.excludedRoots.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun persistentId(): PersistentEntityId<*> {

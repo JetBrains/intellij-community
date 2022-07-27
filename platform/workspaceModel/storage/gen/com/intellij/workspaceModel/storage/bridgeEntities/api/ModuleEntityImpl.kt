@@ -17,6 +17,8 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
@@ -185,13 +187,21 @@ open class ModuleEntityImpl : ModuleEntity, WorkspaceEntityBase() {
         changedProperty.add("type")
       }
 
-    override var dependencies: List<ModuleDependencyItem>
-      get() = getEntityData().dependencies
+    private val dependenciesUpdater: (value: List<ModuleDependencyItem>) -> Unit = { value ->
+
+      changedProperty.add("dependencies")
+    }
+    override var dependencies: MutableList<ModuleDependencyItem>
+      get() {
+        val collection_dependencies = getEntityData().dependencies
+        if (collection_dependencies !is MutableWorkspaceList) return collection_dependencies
+        collection_dependencies.setModificationUpdateAction(dependenciesUpdater)
+        return collection_dependencies
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().dependencies = value
-
-        changedProperty.add("dependencies")
+        dependenciesUpdater.invoke(value)
       }
 
     // List of non-abstract referenced types
@@ -421,7 +431,7 @@ open class ModuleEntityImpl : ModuleEntity, WorkspaceEntityBase() {
 class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEntity>(), SoftLinkable {
   lateinit var name: String
   var type: String? = null
-  lateinit var dependencies: List<ModuleDependencyItem>
+  lateinit var dependencies: MutableList<ModuleDependencyItem>
 
   fun isNameInitialized(): Boolean = ::name.isInitialized
   fun isDependenciesInitialized(): Boolean = ::dependencies.isInitialized
@@ -565,7 +575,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
       }
     }
     if (dependencies_data != null) {
-      dependencies = dependencies_data
+      dependencies = dependencies_data as MutableList
     }
     return changed
   }
@@ -586,11 +596,18 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     val entity = ModuleEntityImpl()
     entity._name = name
     entity._type = type
-    entity._dependencies = dependencies
+    entity._dependencies = dependencies.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): ModuleEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as ModuleEntityData
+    clonedEntity.dependencies = clonedEntity.dependencies.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun persistentId(): PersistentEntityId<*> {

@@ -12,6 +12,10 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
@@ -81,13 +85,21 @@ open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBas
     }
 
 
-    override var versions: Set<Int>
-      get() = getEntityData().versions
+    private val versionsUpdater: (value: Set<Int>) -> Unit = { value ->
+
+      changedProperty.add("versions")
+    }
+    override var versions: MutableSet<Int>
+      get() {
+        val collection_versions = getEntityData().versions
+        if (collection_versions !is MutableWorkspaceSet) return collection_versions
+        collection_versions.setModificationUpdateAction(versionsUpdater)
+        return collection_versions
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().versions = value
-
-        changedProperty.add("versions")
+        versionsUpdater.invoke(value)
       }
 
     override var entitySource: EntitySource
@@ -99,13 +111,21 @@ open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBas
 
       }
 
-    override var names: List<String>
-      get() = getEntityData().names
+    private val namesUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("names")
+    }
+    override var names: MutableList<String>
+      get() {
+        val collection_names = getEntityData().names
+        if (collection_names !is MutableWorkspaceList) return collection_names
+        collection_names.setModificationUpdateAction(namesUpdater)
+        return collection_names
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().names = value
-
-        changedProperty.add("names")
+        namesUpdater.invoke(value)
       }
 
     override fun getEntityData(): CollectionFieldEntityData = result ?: super.getEntityData() as CollectionFieldEntityData
@@ -114,8 +134,8 @@ open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBas
 }
 
 class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
-  lateinit var versions: Set<Int>
-  lateinit var names: List<String>
+  lateinit var versions: MutableSet<Int>
+  lateinit var names: MutableList<String>
 
   fun isVersionsInitialized(): Boolean = ::versions.isInitialized
   fun isNamesInitialized(): Boolean = ::names.isInitialized
@@ -134,12 +154,20 @@ class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
 
   override fun createEntity(snapshot: EntityStorage): CollectionFieldEntity {
     val entity = CollectionFieldEntityImpl()
-    entity._versions = versions
-    entity._names = names
+    entity._versions = versions.toSet()
+    entity._names = names.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): CollectionFieldEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as CollectionFieldEntityData
+    clonedEntity.versions = clonedEntity.versions.toMutableWorkspaceSet()
+    clonedEntity.names = clonedEntity.names.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

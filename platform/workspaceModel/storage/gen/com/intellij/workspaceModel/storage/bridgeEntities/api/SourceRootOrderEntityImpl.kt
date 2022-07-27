@@ -14,6 +14,8 @@ import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -142,14 +144,22 @@ open class SourceRootOrderEntityImpl : SourceRootOrderEntity, WorkspaceEntityBas
 
       }
 
-    override var orderOfSourceRoots: List<VirtualFileUrl>
-      get() = getEntityData().orderOfSourceRoots
+    private val orderOfSourceRootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
+      val _diff = diff
+      if (_diff != null) index(this, "orderOfSourceRoots", value.toHashSet())
+      changedProperty.add("orderOfSourceRoots")
+    }
+    override var orderOfSourceRoots: MutableList<VirtualFileUrl>
+      get() {
+        val collection_orderOfSourceRoots = getEntityData().orderOfSourceRoots
+        if (collection_orderOfSourceRoots !is MutableWorkspaceList) return collection_orderOfSourceRoots
+        collection_orderOfSourceRoots.setModificationUpdateAction(orderOfSourceRootsUpdater)
+        return collection_orderOfSourceRoots
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().orderOfSourceRoots = value
-        val _diff = diff
-        if (_diff != null) index(this, "orderOfSourceRoots", value.toHashSet())
-        changedProperty.add("orderOfSourceRoots")
+        orderOfSourceRootsUpdater.invoke(value)
       }
 
     override fun getEntityData(): SourceRootOrderEntityData = result ?: super.getEntityData() as SourceRootOrderEntityData
@@ -158,7 +168,7 @@ open class SourceRootOrderEntityImpl : SourceRootOrderEntity, WorkspaceEntityBas
 }
 
 class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
-  lateinit var orderOfSourceRoots: List<VirtualFileUrl>
+  lateinit var orderOfSourceRoots: MutableList<VirtualFileUrl>
 
   fun isOrderOfSourceRootsInitialized(): Boolean = ::orderOfSourceRoots.isInitialized
 
@@ -176,11 +186,18 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
 
   override fun createEntity(snapshot: EntityStorage): SourceRootOrderEntity {
     val entity = SourceRootOrderEntityImpl()
-    entity._orderOfSourceRoots = orderOfSourceRoots
+    entity._orderOfSourceRoots = orderOfSourceRoots.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): SourceRootOrderEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as SourceRootOrderEntityData
+    clonedEntity.orderOfSourceRoots = clonedEntity.orderOfSourceRoots.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

@@ -13,6 +13,8 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.deft.ObjBuilder
@@ -104,14 +106,22 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
 
       }
 
-    override var fileProperty: List<VirtualFileUrl>
-      get() = getEntityData().fileProperty
+    private val filePropertyUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
+      val _diff = diff
+      if (_diff != null) index(this, "fileProperty", value.toHashSet())
+      changedProperty.add("fileProperty")
+    }
+    override var fileProperty: MutableList<VirtualFileUrl>
+      get() {
+        val collection_fileProperty = getEntityData().fileProperty
+        if (collection_fileProperty !is MutableWorkspaceList) return collection_fileProperty
+        collection_fileProperty.setModificationUpdateAction(filePropertyUpdater)
+        return collection_fileProperty
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().fileProperty = value
-        val _diff = diff
-        if (_diff != null) index(this, "fileProperty", value.toHashSet())
-        changedProperty.add("fileProperty")
+        filePropertyUpdater.invoke(value)
       }
 
     override fun getEntityData(): ListVFUEntityData = result ?: super.getEntityData() as ListVFUEntityData
@@ -121,7 +131,7 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
 
 class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
   lateinit var data: String
-  lateinit var fileProperty: List<VirtualFileUrl>
+  lateinit var fileProperty: MutableList<VirtualFileUrl>
 
   fun isDataInitialized(): Boolean = ::data.isInitialized
   fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
@@ -141,11 +151,18 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
   override fun createEntity(snapshot: EntityStorage): ListVFUEntity {
     val entity = ListVFUEntityImpl()
     entity._data = data
-    entity._fileProperty = fileProperty
+    entity._fileProperty = fileProperty.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): ListVFUEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as ListVFUEntityData
+    clonedEntity.fileProperty = clonedEntity.fileProperty.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

@@ -14,6 +14,8 @@ import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
@@ -200,23 +202,39 @@ open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
         if (_diff != null) index(this, "url", value)
       }
 
-    override var excludedUrls: List<VirtualFileUrl>
-      get() = getEntityData().excludedUrls
+    private val excludedUrlsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
+      val _diff = diff
+      if (_diff != null) index(this, "excludedUrls", value.toHashSet())
+      changedProperty.add("excludedUrls")
+    }
+    override var excludedUrls: MutableList<VirtualFileUrl>
+      get() {
+        val collection_excludedUrls = getEntityData().excludedUrls
+        if (collection_excludedUrls !is MutableWorkspaceList) return collection_excludedUrls
+        collection_excludedUrls.setModificationUpdateAction(excludedUrlsUpdater)
+        return collection_excludedUrls
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().excludedUrls = value
-        val _diff = diff
-        if (_diff != null) index(this, "excludedUrls", value.toHashSet())
-        changedProperty.add("excludedUrls")
+        excludedUrlsUpdater.invoke(value)
       }
 
-    override var excludedPatterns: List<String>
-      get() = getEntityData().excludedPatterns
+    private val excludedPatternsUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("excludedPatterns")
+    }
+    override var excludedPatterns: MutableList<String>
+      get() {
+        val collection_excludedPatterns = getEntityData().excludedPatterns
+        if (collection_excludedPatterns !is MutableWorkspaceList) return collection_excludedPatterns
+        collection_excludedPatterns.setModificationUpdateAction(excludedPatternsUpdater)
+        return collection_excludedPatterns
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().excludedPatterns = value
-
-        changedProperty.add("excludedPatterns")
+        excludedPatternsUpdater.invoke(value)
       }
 
     // List of non-abstract referenced types
@@ -301,8 +319,8 @@ open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
 
 class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
   lateinit var url: VirtualFileUrl
-  lateinit var excludedUrls: List<VirtualFileUrl>
-  lateinit var excludedPatterns: List<String>
+  lateinit var excludedUrls: MutableList<VirtualFileUrl>
+  lateinit var excludedPatterns: MutableList<String>
 
   fun isUrlInitialized(): Boolean = ::url.isInitialized
   fun isExcludedUrlsInitialized(): Boolean = ::excludedUrls.isInitialized
@@ -323,12 +341,20 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
   override fun createEntity(snapshot: EntityStorage): ContentRootEntity {
     val entity = ContentRootEntityImpl()
     entity._url = url
-    entity._excludedUrls = excludedUrls
-    entity._excludedPatterns = excludedPatterns
+    entity._excludedUrls = excludedUrls.toList()
+    entity._excludedPatterns = excludedPatterns.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): ContentRootEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as ContentRootEntityData
+    clonedEntity.excludedUrls = clonedEntity.excludedUrls.toMutableWorkspaceList()
+    clonedEntity.excludedPatterns = clonedEntity.excludedPatterns.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

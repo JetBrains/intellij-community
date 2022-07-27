@@ -15,6 +15,8 @@ import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -141,13 +143,21 @@ open class ModuleGroupPathEntityImpl : ModuleGroupPathEntity, WorkspaceEntityBas
 
       }
 
-    override var path: List<String>
-      get() = getEntityData().path
+    private val pathUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("path")
+    }
+    override var path: MutableList<String>
+      get() {
+        val collection_path = getEntityData().path
+        if (collection_path !is MutableWorkspaceList) return collection_path
+        collection_path.setModificationUpdateAction(pathUpdater)
+        return collection_path
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().path = value
-
-        changedProperty.add("path")
+        pathUpdater.invoke(value)
       }
 
     override fun getEntityData(): ModuleGroupPathEntityData = result ?: super.getEntityData() as ModuleGroupPathEntityData
@@ -156,7 +166,7 @@ open class ModuleGroupPathEntityImpl : ModuleGroupPathEntity, WorkspaceEntityBas
 }
 
 class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
-  lateinit var path: List<String>
+  lateinit var path: MutableList<String>
 
   fun isPathInitialized(): Boolean = ::path.isInitialized
 
@@ -174,11 +184,18 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
 
   override fun createEntity(snapshot: EntityStorage): ModuleGroupPathEntity {
     val entity = ModuleGroupPathEntityImpl()
-    entity._path = path
+    entity._path = path.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): ModuleGroupPathEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as ModuleGroupPathEntityData
+    clonedEntity.path = clonedEntity.path.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

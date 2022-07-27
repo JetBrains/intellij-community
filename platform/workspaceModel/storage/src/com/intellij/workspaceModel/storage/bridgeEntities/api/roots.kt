@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage.bridgeEntities.api
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.annotations.Child
@@ -30,8 +31,8 @@ interface ContentRootEntity : WorkspaceEntity {
     override var module: ModuleEntity
     override var entitySource: EntitySource
     override var url: VirtualFileUrl
-    override var excludedUrls: List<VirtualFileUrl>
-    override var excludedPatterns: List<String>
+    override var excludedUrls: MutableList<VirtualFileUrl>
+    override var excludedPatterns: MutableList<String>
     override var sourceRoots: List<SourceRootEntity>
     override var sourceRootOrder: SourceRootOrderEntity?
   }
@@ -45,8 +46,8 @@ interface ContentRootEntity : WorkspaceEntity {
       val builder = builder()
       builder.entitySource = entitySource
       builder.url = url
-      builder.excludedUrls = excludedUrls
-      builder.excludedPatterns = excludedPatterns
+      builder.excludedUrls = excludedUrls.toMutableWorkspaceList()
+      builder.excludedPatterns = excludedPatterns.toMutableWorkspaceList()
       init?.invoke(builder)
       return builder
     }
@@ -114,7 +115,7 @@ interface SourceRootOrderEntity : WorkspaceEntity {
   interface Builder : SourceRootOrderEntity, ModifiableWorkspaceEntity<SourceRootOrderEntity>, ObjBuilder<SourceRootOrderEntity> {
     override var contentRootEntity: ContentRootEntity
     override var entitySource: EntitySource
-    override var orderOfSourceRoots: List<VirtualFileUrl>
+    override var orderOfSourceRoots: MutableList<VirtualFileUrl>
   }
 
   companion object : Type<SourceRootOrderEntity, Builder>() {
@@ -123,7 +124,7 @@ interface SourceRootOrderEntity : WorkspaceEntity {
                         init: (Builder.() -> Unit)? = null): SourceRootOrderEntity {
       val builder = builder()
       builder.entitySource = entitySource
-      builder.orderOfSourceRoots = orderOfSourceRoots
+      builder.orderOfSourceRoots = orderOfSourceRoots.toMutableWorkspaceList()
       init?.invoke(builder)
       return builder
     }

@@ -5,6 +5,7 @@ import com.intellij.workspaceModel.ide.JpsFileDependentEntitySource
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -42,9 +43,9 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
     override var module: ModuleEntity
     override var entitySource: EntitySource
     override var variablePaths: Map<String, String>
-    override var eclipseUrls: List<VirtualFileUrl>
-    override var unknownCons: List<String>
-    override var knownCons: List<String>
+    override var eclipseUrls: MutableList<VirtualFileUrl>
+    override var unknownCons: MutableList<String>
+    override var knownCons: MutableList<String>
     override var forceConfigureJdk: Boolean
     override var expectedModuleSourcePlace: Int
     override var srcPlace: Map<String, Int>
@@ -63,9 +64,9 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
       val builder = builder()
       builder.entitySource = entitySource
       builder.variablePaths = variablePaths
-      builder.eclipseUrls = eclipseUrls
-      builder.unknownCons = unknownCons
-      builder.knownCons = knownCons
+      builder.eclipseUrls = eclipseUrls.toMutableWorkspaceList()
+      builder.unknownCons = unknownCons.toMutableWorkspaceList()
+      builder.knownCons = knownCons.toMutableWorkspaceList()
       builder.forceConfigureJdk = forceConfigureJdk
       builder.expectedModuleSourcePlace = expectedModuleSourcePlace
       builder.srcPlace = srcPlace

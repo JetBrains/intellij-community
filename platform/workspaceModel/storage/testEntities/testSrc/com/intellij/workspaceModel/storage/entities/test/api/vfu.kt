@@ -1,6 +1,7 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.deft.ObjBuilder
@@ -125,7 +126,7 @@ interface ListVFUEntity : WorkspaceEntity {
   interface Builder : ListVFUEntity, ModifiableWorkspaceEntity<ListVFUEntity>, ObjBuilder<ListVFUEntity> {
     override var data: String
     override var entitySource: EntitySource
-    override var fileProperty: List<VirtualFileUrl>
+    override var fileProperty: MutableList<VirtualFileUrl>
   }
 
   companion object : Type<ListVFUEntity, Builder>() {
@@ -136,7 +137,7 @@ interface ListVFUEntity : WorkspaceEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
-      builder.fileProperty = fileProperty
+      builder.fileProperty = fileProperty.toMutableWorkspaceList()
       init?.invoke(builder)
       return builder
     }

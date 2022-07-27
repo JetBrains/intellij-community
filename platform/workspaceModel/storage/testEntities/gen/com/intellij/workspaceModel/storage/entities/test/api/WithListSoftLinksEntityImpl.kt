@@ -15,6 +15,8 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -105,13 +107,21 @@ open class WithListSoftLinksEntityImpl : WithListSoftLinksEntity, WorkspaceEntit
 
       }
 
-    override var links: List<NameId>
-      get() = getEntityData().links
+    private val linksUpdater: (value: List<NameId>) -> Unit = { value ->
+
+      changedProperty.add("links")
+    }
+    override var links: MutableList<NameId>
+      get() {
+        val collection_links = getEntityData().links
+        if (collection_links !is MutableWorkspaceList) return collection_links
+        collection_links.setModificationUpdateAction(linksUpdater)
+        return collection_links
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().links = value
-
-        changedProperty.add("links")
+        linksUpdater.invoke(value)
       }
 
     override fun getEntityData(): WithListSoftLinksEntityData = result ?: super.getEntityData() as WithListSoftLinksEntityData
@@ -121,7 +131,7 @@ open class WithListSoftLinksEntityImpl : WithListSoftLinksEntity, WorkspaceEntit
 
 class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistentId<WithListSoftLinksEntity>(), SoftLinkable {
   lateinit var myName: String
-  lateinit var links: List<NameId>
+  lateinit var links: MutableList<NameId>
 
   fun isMyNameInitialized(): Boolean = ::myName.isInitialized
   fun isLinksInitialized(): Boolean = ::links.isInitialized
@@ -172,7 +182,7 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
       }
     }
     if (links_data != null) {
-      links = links_data
+      links = links_data as MutableList
     }
     return changed
   }
@@ -192,11 +202,18 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
   override fun createEntity(snapshot: EntityStorage): WithListSoftLinksEntity {
     val entity = WithListSoftLinksEntityImpl()
     entity._myName = myName
-    entity._links = links
+    entity._links = links.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): WithListSoftLinksEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as WithListSoftLinksEntityData
+    clonedEntity.links = clonedEntity.links.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun persistentId(): PersistentEntityId<*> {

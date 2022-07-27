@@ -16,6 +16,8 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
@@ -206,13 +208,21 @@ open class EntityWithSoftLinksImpl : EntityWithSoftLinks, WorkspaceEntityBase() 
 
       }
 
-    override var manyLinks: List<OnePersistentId>
-      get() = getEntityData().manyLinks
+    private val manyLinksUpdater: (value: List<OnePersistentId>) -> Unit = { value ->
+
+      changedProperty.add("manyLinks")
+    }
+    override var manyLinks: MutableList<OnePersistentId>
+      get() {
+        val collection_manyLinks = getEntityData().manyLinks
+        if (collection_manyLinks !is MutableWorkspaceList) return collection_manyLinks
+        collection_manyLinks.setModificationUpdateAction(manyLinksUpdater)
+        return collection_manyLinks
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().manyLinks = value
-
-        changedProperty.add("manyLinks")
+        manyLinksUpdater.invoke(value)
       }
 
     override var optionalLink: OnePersistentId?
@@ -242,22 +252,38 @@ open class EntityWithSoftLinksImpl : EntityWithSoftLinks, WorkspaceEntityBase() 
 
       }
 
-    override var inContainerList: List<Container>
-      get() = getEntityData().inContainerList
+    private val inContainerListUpdater: (value: List<Container>) -> Unit = { value ->
+
+      changedProperty.add("inContainerList")
+    }
+    override var inContainerList: MutableList<Container>
+      get() {
+        val collection_inContainerList = getEntityData().inContainerList
+        if (collection_inContainerList !is MutableWorkspaceList) return collection_inContainerList
+        collection_inContainerList.setModificationUpdateAction(inContainerListUpdater)
+        return collection_inContainerList
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().inContainerList = value
-
-        changedProperty.add("inContainerList")
+        inContainerListUpdater.invoke(value)
       }
 
-    override var deepContainer: List<TooDeepContainer>
-      get() = getEntityData().deepContainer
+    private val deepContainerUpdater: (value: List<TooDeepContainer>) -> Unit = { value ->
+
+      changedProperty.add("deepContainer")
+    }
+    override var deepContainer: MutableList<TooDeepContainer>
+      get() {
+        val collection_deepContainer = getEntityData().deepContainer
+        if (collection_deepContainer !is MutableWorkspaceList) return collection_deepContainer
+        collection_deepContainer.setModificationUpdateAction(deepContainerUpdater)
+        return collection_deepContainer
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().deepContainer = value
-
-        changedProperty.add("deepContainer")
+        deepContainerUpdater.invoke(value)
       }
 
     override var sealedContainer: SealedContainer
@@ -269,13 +295,21 @@ open class EntityWithSoftLinksImpl : EntityWithSoftLinks, WorkspaceEntityBase() 
 
       }
 
-    override var listSealedContainer: List<SealedContainer>
-      get() = getEntityData().listSealedContainer
+    private val listSealedContainerUpdater: (value: List<SealedContainer>) -> Unit = { value ->
+
+      changedProperty.add("listSealedContainer")
+    }
+    override var listSealedContainer: MutableList<SealedContainer>
+      get() {
+        val collection_listSealedContainer = getEntityData().listSealedContainer
+        if (collection_listSealedContainer !is MutableWorkspaceList) return collection_listSealedContainer
+        collection_listSealedContainer.setModificationUpdateAction(listSealedContainerUpdater)
+        return collection_listSealedContainer
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().listSealedContainer = value
-
-        changedProperty.add("listSealedContainer")
+        listSealedContainerUpdater.invoke(value)
       }
 
     override var justProperty: String
@@ -294,13 +328,21 @@ open class EntityWithSoftLinksImpl : EntityWithSoftLinks, WorkspaceEntityBase() 
         changedProperty.add("justNullableProperty")
       }
 
-    override var justListProperty: List<String>
-      get() = getEntityData().justListProperty
+    private val justListPropertyUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("justListProperty")
+    }
+    override var justListProperty: MutableList<String>
+      get() {
+        val collection_justListProperty = getEntityData().justListProperty
+        if (collection_justListProperty !is MutableWorkspaceList) return collection_justListProperty
+        collection_justListProperty.setModificationUpdateAction(justListPropertyUpdater)
+        return collection_justListProperty
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().justListProperty = value
-
-        changedProperty.add("justListProperty")
+        justListPropertyUpdater.invoke(value)
       }
 
     override var deepSealedClass: DeepSealedOne
@@ -358,17 +400,17 @@ open class EntityWithSoftLinksImpl : EntityWithSoftLinks, WorkspaceEntityBase() 
 
 class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), SoftLinkable {
   lateinit var link: OnePersistentId
-  lateinit var manyLinks: List<OnePersistentId>
+  lateinit var manyLinks: MutableList<OnePersistentId>
   var optionalLink: OnePersistentId? = null
   lateinit var inContainer: Container
   var inOptionalContainer: Container? = null
-  lateinit var inContainerList: List<Container>
-  lateinit var deepContainer: List<TooDeepContainer>
+  lateinit var inContainerList: MutableList<Container>
+  lateinit var deepContainer: MutableList<TooDeepContainer>
   lateinit var sealedContainer: SealedContainer
-  lateinit var listSealedContainer: List<SealedContainer>
+  lateinit var listSealedContainer: MutableList<SealedContainer>
   lateinit var justProperty: String
   var justNullableProperty: String? = null
-  lateinit var justListProperty: List<String>
+  lateinit var justListProperty: MutableList<String>
   lateinit var deepSealedClass: DeepSealedOne
 
   fun isLinkInitialized(): Boolean = ::link.isInitialized
@@ -690,7 +732,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
       }
     }
     if (manyLinks_data != null) {
-      manyLinks = manyLinks_data
+      manyLinks = manyLinks_data as MutableList
     }
     var optionalLink_data_optional = if (optionalLink != null) {
       val optionalLink___data = if (optionalLink!! == oldLink) {
@@ -762,7 +804,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
       }
     }
     if (inContainerList_data != null) {
-      inContainerList = inContainerList_data
+      inContainerList = inContainerList_data as MutableList
     }
     val deepContainer_data = deepContainer.map {
       val it_goDeeper_data = it.goDeeper.map {
@@ -824,7 +866,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
       }
     }
     if (deepContainer_data != null) {
-      deepContainer = deepContainer_data
+      deepContainer = deepContainer_data as MutableList
     }
     val _sealedContainer = sealedContainer
     val res_sealedContainer = when (_sealedContainer) {
@@ -958,7 +1000,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
       }
     }
     if (listSealedContainer_data != null) {
-      listSealedContainer = listSealedContainer_data
+      listSealedContainer = listSealedContainer_data as MutableList
     }
     val _deepSealedClass = deepSealedClass
     val res_deepSealedClass = when (_deepSealedClass) {
@@ -1010,22 +1052,33 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
   override fun createEntity(snapshot: EntityStorage): EntityWithSoftLinks {
     val entity = EntityWithSoftLinksImpl()
     entity._link = link
-    entity._manyLinks = manyLinks
+    entity._manyLinks = manyLinks.toList()
     entity._optionalLink = optionalLink
     entity._inContainer = inContainer
     entity._inOptionalContainer = inOptionalContainer
-    entity._inContainerList = inContainerList
-    entity._deepContainer = deepContainer
+    entity._inContainerList = inContainerList.toList()
+    entity._deepContainer = deepContainer.toList()
     entity._sealedContainer = sealedContainer
-    entity._listSealedContainer = listSealedContainer
+    entity._listSealedContainer = listSealedContainer.toList()
     entity._justProperty = justProperty
     entity._justNullableProperty = justNullableProperty
-    entity._justListProperty = justListProperty
+    entity._justListProperty = justListProperty.toList()
     entity._deepSealedClass = deepSealedClass
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): EntityWithSoftLinksData {
+    val clonedEntity = super.clone()
+    clonedEntity as EntityWithSoftLinksData
+    clonedEntity.manyLinks = clonedEntity.manyLinks.toMutableWorkspaceList()
+    clonedEntity.inContainerList = clonedEntity.inContainerList.toMutableWorkspaceList()
+    clonedEntity.deepContainer = clonedEntity.deepContainer.toMutableWorkspaceList()
+    clonedEntity.listSealedContainer = clonedEntity.listSealedContainer.toMutableWorkspaceList()
+    clonedEntity.justListProperty = clonedEntity.justListProperty.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

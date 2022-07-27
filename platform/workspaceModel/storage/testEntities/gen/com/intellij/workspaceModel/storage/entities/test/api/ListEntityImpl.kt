@@ -13,6 +13,8 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -76,13 +78,21 @@ open class ListEntityImpl : ListEntity, WorkspaceEntityBase() {
     }
 
 
-    override var data: List<String>
-      get() = getEntityData().data
+    private val dataUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("data")
+    }
+    override var data: MutableList<String>
+      get() {
+        val collection_data = getEntityData().data
+        if (collection_data !is MutableWorkspaceList) return collection_data
+        collection_data.setModificationUpdateAction(dataUpdater)
+        return collection_data
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().data = value
-
-        changedProperty.add("data")
+        dataUpdater.invoke(value)
       }
 
     override var entitySource: EntitySource
@@ -100,7 +110,7 @@ open class ListEntityImpl : ListEntity, WorkspaceEntityBase() {
 }
 
 class ListEntityData : WorkspaceEntityData<ListEntity>() {
-  lateinit var data: List<String>
+  lateinit var data: MutableList<String>
 
   fun isDataInitialized(): Boolean = ::data.isInitialized
 
@@ -118,11 +128,18 @@ class ListEntityData : WorkspaceEntityData<ListEntity>() {
 
   override fun createEntity(snapshot: EntityStorage): ListEntity {
     val entity = ListEntityImpl()
-    entity._data = data
+    entity._data = data.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): ListEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as ListEntityData
+    clonedEntity.data = clonedEntity.data.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

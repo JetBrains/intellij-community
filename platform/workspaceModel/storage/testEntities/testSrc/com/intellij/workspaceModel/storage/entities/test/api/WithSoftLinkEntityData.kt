@@ -1,6 +1,7 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -219,7 +220,7 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
   interface Builder : WithListSoftLinksEntity, ModifiableWorkspaceEntity<WithListSoftLinksEntity>, ObjBuilder<WithListSoftLinksEntity> {
     override var myName: String
     override var entitySource: EntitySource
-    override var links: List<NameId>
+    override var links: MutableList<NameId>
   }
 
   companion object : Type<WithListSoftLinksEntity, Builder>() {
@@ -230,7 +231,7 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
       val builder = builder()
       builder.myName = myName
       builder.entitySource = entitySource
-      builder.links = links
+      builder.links = links.toMutableWorkspaceList()
       init?.invoke(builder)
       return builder
     }

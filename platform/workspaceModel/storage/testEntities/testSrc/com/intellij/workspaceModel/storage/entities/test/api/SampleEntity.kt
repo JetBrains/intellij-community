@@ -1,6 +1,7 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -28,7 +29,7 @@ interface SampleEntity : WorkspaceEntity {
     override var booleanProperty: Boolean
     override var entitySource: EntitySource
     override var stringProperty: String
-    override var stringListProperty: List<String>
+    override var stringListProperty: MutableList<String>
     override var stringMapProperty: Map<String, String>
     override var fileProperty: VirtualFileUrl
     override var children: List<ChildSampleEntity>
@@ -48,7 +49,7 @@ interface SampleEntity : WorkspaceEntity {
       builder.booleanProperty = booleanProperty
       builder.entitySource = entitySource
       builder.stringProperty = stringProperty
-      builder.stringListProperty = stringListProperty
+      builder.stringListProperty = stringListProperty.toMutableWorkspaceList()
       builder.stringMapProperty = stringMapProperty
       builder.fileProperty = fileProperty
       init?.invoke(builder)

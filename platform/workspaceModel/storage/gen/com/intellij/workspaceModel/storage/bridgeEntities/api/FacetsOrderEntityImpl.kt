@@ -15,6 +15,8 @@ import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import org.jetbrains.deft.ObjBuilder
@@ -96,13 +98,21 @@ open class FacetsOrderEntityImpl : FacetsOrderEntity, WorkspaceEntityBase() {
     }
 
 
-    override var orderOfFacets: List<String>
-      get() = getEntityData().orderOfFacets
+    private val orderOfFacetsUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("orderOfFacets")
+    }
+    override var orderOfFacets: MutableList<String>
+      get() {
+        val collection_orderOfFacets = getEntityData().orderOfFacets
+        if (collection_orderOfFacets !is MutableWorkspaceList) return collection_orderOfFacets
+        collection_orderOfFacets.setModificationUpdateAction(orderOfFacetsUpdater)
+        return collection_orderOfFacets
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().orderOfFacets = value
-
-        changedProperty.add("orderOfFacets")
+        orderOfFacetsUpdater.invoke(value)
       }
 
     override var entitySource: EntitySource
@@ -155,7 +165,7 @@ open class FacetsOrderEntityImpl : FacetsOrderEntity, WorkspaceEntityBase() {
 }
 
 class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
-  lateinit var orderOfFacets: List<String>
+  lateinit var orderOfFacets: MutableList<String>
 
   fun isOrderOfFacetsInitialized(): Boolean = ::orderOfFacets.isInitialized
 
@@ -173,11 +183,18 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
 
   override fun createEntity(snapshot: EntityStorage): FacetsOrderEntity {
     val entity = FacetsOrderEntityImpl()
-    entity._orderOfFacets = orderOfFacets
+    entity._orderOfFacets = orderOfFacets.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): FacetsOrderEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as FacetsOrderEntityData
+    clonedEntity.orderOfFacets = clonedEntity.orderOfFacets.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

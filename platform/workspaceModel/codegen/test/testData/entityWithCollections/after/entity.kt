@@ -5,6 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -15,9 +17,9 @@ interface CollectionFieldEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : CollectionFieldEntity, ModifiableWorkspaceEntity<CollectionFieldEntity>, ObjBuilder<CollectionFieldEntity> {
-    override var versions: Set<Int>
+    override var versions: MutableSet<Int>
     override var entitySource: EntitySource
-    override var names: List<String>
+    override var names: MutableList<String>
   }
 
   companion object : Type<CollectionFieldEntity, Builder>() {
@@ -26,9 +28,9 @@ interface CollectionFieldEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): CollectionFieldEntity {
       val builder = builder()
-      builder.versions = versions
+      builder.versions = versions.toMutableWorkspaceSet()
       builder.entitySource = entitySource
-      builder.names = names
+      builder.names = names.toMutableWorkspaceList()
       init?.invoke(builder)
       return builder
     }

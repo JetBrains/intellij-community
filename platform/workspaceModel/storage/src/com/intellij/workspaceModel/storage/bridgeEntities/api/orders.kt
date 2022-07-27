@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -23,7 +24,7 @@ interface FacetsOrderEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : FacetsOrderEntity, ModifiableWorkspaceEntity<FacetsOrderEntity>, ObjBuilder<FacetsOrderEntity> {
-    override var orderOfFacets: List<String>
+    override var orderOfFacets: MutableList<String>
     override var entitySource: EntitySource
     override var moduleEntity: ModuleEntity
   }
@@ -31,7 +32,7 @@ interface FacetsOrderEntity : WorkspaceEntity {
   companion object : Type<FacetsOrderEntity, Builder>() {
     operator fun invoke(orderOfFacets: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FacetsOrderEntity {
       val builder = builder()
-      builder.orderOfFacets = orderOfFacets
+      builder.orderOfFacets = orderOfFacets.toMutableWorkspaceList()
       builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
@@ -176,7 +177,7 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ArtifactsOrderEntity, ModifiableWorkspaceEntity<ArtifactsOrderEntity>, ObjBuilder<ArtifactsOrderEntity> {
-    override var orderOfArtifacts: List<String>
+    override var orderOfArtifacts: MutableList<String>
     override var entitySource: EntitySource
   }
 
@@ -185,7 +186,7 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): ArtifactsOrderEntity {
       val builder = builder()
-      builder.orderOfArtifacts = orderOfArtifacts
+      builder.orderOfArtifacts = orderOfArtifacts.toMutableWorkspaceList()
       builder.entitySource = entitySource
       init?.invoke(builder)
       return builder

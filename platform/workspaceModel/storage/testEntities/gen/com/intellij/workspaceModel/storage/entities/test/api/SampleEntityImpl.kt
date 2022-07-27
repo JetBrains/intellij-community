@@ -14,6 +14,8 @@ import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -158,13 +160,21 @@ open class SampleEntityImpl : SampleEntity, WorkspaceEntityBase() {
         changedProperty.add("stringProperty")
       }
 
-    override var stringListProperty: List<String>
-      get() = getEntityData().stringListProperty
+    private val stringListPropertyUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("stringListProperty")
+    }
+    override var stringListProperty: MutableList<String>
+      get() {
+        val collection_stringListProperty = getEntityData().stringListProperty
+        if (collection_stringListProperty !is MutableWorkspaceList) return collection_stringListProperty
+        collection_stringListProperty.setModificationUpdateAction(stringListPropertyUpdater)
+        return collection_stringListProperty
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().stringListProperty = value
-
-        changedProperty.add("stringListProperty")
+        stringListPropertyUpdater.invoke(value)
       }
 
     override var stringMapProperty: Map<String, String>
@@ -250,7 +260,7 @@ open class SampleEntityImpl : SampleEntity, WorkspaceEntityBase() {
 class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
   var booleanProperty: Boolean = false
   lateinit var stringProperty: String
-  lateinit var stringListProperty: List<String>
+  lateinit var stringListProperty: MutableList<String>
   lateinit var stringMapProperty: Map<String, String>
   lateinit var fileProperty: VirtualFileUrl
   var nullableData: String? = null
@@ -278,7 +288,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
     val entity = SampleEntityImpl()
     entity.booleanProperty = booleanProperty
     entity._stringProperty = stringProperty
-    entity._stringListProperty = stringListProperty
+    entity._stringListProperty = stringListProperty.toList()
     entity._stringMapProperty = stringMapProperty
     entity._fileProperty = fileProperty
     entity._nullableData = nullableData
@@ -287,6 +297,13 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): SampleEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as SampleEntityData
+    clonedEntity.stringListProperty = clonedEntity.stringListProperty.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
