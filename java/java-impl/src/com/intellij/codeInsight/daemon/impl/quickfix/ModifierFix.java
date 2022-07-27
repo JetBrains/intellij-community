@@ -47,7 +47,8 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
       LOG.error("Supplied modifierList is not physical: " +
                 modifierList.getClass() + "; " +
                 modifierList.getParent().getClass() + "; " +
-                modifierList.getContainingFile().getClass());
+                modifierList.getContainingFile().getClass() + "\n" +
+                "Modifier = " + modifier + "; shouldHave = " + shouldHave);
     }
     myModifier = modifier;
     myShouldHave = shouldHave;
