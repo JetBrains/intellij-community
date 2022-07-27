@@ -432,7 +432,6 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       val index = window.findCompositeIndex(composite)
       LOG.assertTrue(index != -1)
       val manager = manager
-      window.setForegroundAt(index, manager.getFileColor(file))
       var resultAttributes = TextAttributes()
       var attributes = if (manager.isProblem(file)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
       if (composite.isPreview) {
