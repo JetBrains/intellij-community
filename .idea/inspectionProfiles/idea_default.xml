@@ -796,6 +796,9 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="version" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Alarm constructor can be simplified" text="new Alarm(Alarm.ThreadToUse.SWING_THREAD)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="false" replacement="new Alarm()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="Anonymous Disposable passed to method" description="Do not pass Disposer.newDisposable() or similar to method expecting Disposable, because it can cause memory leak via Disposer tree.&#10;Instead, pass Disposable which you can guarantee to be disposed at the time needed." problemDescriptor="Anonymous Disposable passed to method: possible memory leak" text="new $f$($s1$, com.intellij.openapi.util.Disposer.$newDisposable$($a$), $s2$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
