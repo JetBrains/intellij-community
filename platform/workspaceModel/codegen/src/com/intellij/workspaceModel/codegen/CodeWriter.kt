@@ -123,10 +123,10 @@ object CodeWriter {
             addImports(file, imports.set)
           }
           generatedFiles.forEachIndexed { i, file ->
+            indicator.fraction = 0.2 + 0.7 * i / generatedFiles.size
             CodeStyleManager.getInstance(project).reformat(file)
           }
-          topLevelDeclarations.entrySet().forEachIndexed { i, (file, placeAndDeclarations) ->
-            indicator.fraction = 0.5 + 0.25 * i / topLevelDeclarations.size()
+          topLevelDeclarations.entrySet().forEach { (file, placeAndDeclarations) ->
             val addedElements = ArrayList<KtDeclaration>()
             for ((place, declarations) in placeAndDeclarations) {
               var nextPlace: PsiElement = place
@@ -144,7 +144,7 @@ object CodeWriter {
 
           val filesWithGeneratedRegions = ktClasses.values.groupBy { it.containingFile }.toList()
           filesWithGeneratedRegions.forEachIndexed { i, (file, classes) ->
-            indicator.fraction = 0.75 + 0.25 * i / filesWithGeneratedRegions.size
+            indicator.fraction = 0.9 + 0.1 * i / filesWithGeneratedRegions.size
             reformatCodeInGeneratedRegions(file, classes.mapNotNull { it.body?.node } + listOf(file.node))
           }
 
