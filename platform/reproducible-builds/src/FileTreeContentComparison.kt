@@ -219,7 +219,9 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
       "$this is expected to be directory"
     }
     return Files.walk(this).use { paths ->
-      paths.filter { it.name != ".DS_Store" }.toList()
+      paths.filter { it.name != ".DS_Store" }
+        .filter { it.name != ".CacheDeleteDiscardedCaches" }
+        .toList()
     }
   }
 

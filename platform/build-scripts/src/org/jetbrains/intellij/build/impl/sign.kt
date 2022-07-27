@@ -24,11 +24,13 @@ import net.schmizz.sshj.userauth.method.AuthPassword
 import net.schmizz.sshj.userauth.method.PasswordResponseProvider
 import net.schmizz.sshj.userauth.password.PasswordFinder
 import net.schmizz.sshj.userauth.password.Resource
+import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.io.info
 import org.jetbrains.intellij.build.io.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.io.warn
+import org.jetbrains.jps.api.GlobalOptions
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
@@ -55,6 +57,7 @@ private const val regularFileMode = 420
 private const val executableFileMode = 511
 
 internal fun signMacApp(
+  context: BuildContext,
   host: String,
   user: String,
   password: String,
@@ -107,11 +110,11 @@ internal fun signMacApp(
       publishAppArchive.toString(),
       "/Users/$user/$remoteDir/${jetSignClient.name}"
     )
-
+    val buildDate = "${GlobalOptions.BUILD_DATE_IN_SECONDS}=${context.options.buildDateInSeconds}"
     val env = sequenceOf("ARTIFACTORY_URL", "SERVICE_ACCOUNT_NAME", "SERVICE_ACCOUNT_TOKEN")
-      .joinToString(separator = " ", postfix = " ") {
-        "$it=${System.getenv(it)}"
-      }
+      .map { "$it=${System.getenv(it)}" }
+      .plus(buildDate)
+      .joinToString(separator = " ", postfix = " ")
     spanBuilder("sign mac app").setAttribute("file", appArchiveFile.toString()).useWithScope {
       signFile(remoteDir = remoteDir,
                commandString = "$env'$remoteDir/signapp.sh' '${args.joinToString("' '")}'",
@@ -137,7 +140,7 @@ internal fun signMacApp(
       spanBuilder("build dmg").setAttribute("file", dmgFile.toString()).useWithScope {
         processFile(localFile = dmgFile,
                     ssh = ssh,
-                    commandString = "/bin/bash -l '$remoteDir/makedmg.sh' '${fileNameWithoutExt}' '$fullBuildNumber'",
+                    commandString = "$buildDate /bin/bash -l '$remoteDir/makedmg.sh' '$fileNameWithoutExt' '$fullBuildNumber'",
                     artifactDir = artifactDir,
                     artifactBuilt = artifactBuilt,
                     taskLogClassifier = "dmg")

@@ -19,6 +19,7 @@ import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.io.writeNewFile
+import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -129,6 +130,7 @@ private suspend fun buildAndSignWithMacBuilderHost(sitFile: Path,
     "JetSign client is missing, cannot proceed with signing"
   }
   signMacApp(
+    context = context,
     host = macHostProperties.host!!,
     user = macHostProperties.userName!!,
     password = macHostProperties.password!!,
@@ -168,7 +170,7 @@ private suspend fun buildLocally(sitFile: Path,
   }
   context.executeStep(spanBuilder("build DMG locally"), BuildOptions.MAC_DMG_STEP) {
     if (SystemInfoRt.isMac) {
-      buildDmgLocally(tempDir, targetName, customizer, context)
+      buildDmgLocally(tempDir, targetName, customizer, context, isContentSigned = sign)
     }
     else {
       Span.current().addEvent("DMG can be built only on macOS")
@@ -220,19 +222,25 @@ private suspend fun signSitLocally(sourceFile: Path,
   Files.move(targetFile, sourceFile, StandardCopyOption.REPLACE_EXISTING)
 }
 
-private suspend fun buildDmgLocally(tempDir: Path, targetFileName: String, customizer: MacDistributionCustomizer, context: BuildContext) {
+private suspend fun buildDmgLocally(tempDir: Path, targetFileName: String, customizer: MacDistributionCustomizer, context: BuildContext, isContentSigned: Boolean) {
   val dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
   Files.copy(Path.of((if (context.applicationInfo.isEAP) customizer.dmgImagePathForEAP else null) ?: customizer.dmgImagePath),
              dmgImageCopy)
   val scriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
   Files.copy(scriptDir.resolve("makedmg.sh"), tempDir.resolve("makedmg.sh"),
              StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+  NioFiles.setExecutable(tempDir.resolve("makedmg.sh"))
   Files.copy(scriptDir.resolve("makedmg.py"), tempDir.resolve("makedmg.py"),
              StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
   val artifactDir = context.paths.artifactDir
   Files.createDirectories(artifactDir)
   val dmgFile = artifactDir.resolve("${targetFileName}.dmg")
-  runProcess(args = listOf("./makedmg.sh", targetFileName, context.fullBuildNumber, dmgFile.toString()), workingDir = tempDir)
+  val cleanUpExploded = true
+  runProcess(
+    args = listOf("./makedmg.sh", targetFileName, context.fullBuildNumber, "$dmgFile", "${context.fullBuildNumber}.exploded", "$cleanUpExploded", "$isContentSigned"),
+    additionalEnvVariables = mapOf(GlobalOptions.BUILD_DATE_IN_SECONDS to "${context.options.buildDateInSeconds}"),
+    workingDir = tempDir
+  )
   context.notifyArtifactBuilt(dmgFile)
 }
 
