@@ -432,7 +432,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
               }
               if (myLastIcon != null) {
                 gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                updateActiveLineNumberIcon(gutter, myLastIcon, e.getVisualPosition().line);
+                updateActiveLineNumberIcon(gutter, myLastIcon, e.getLogicalPosition().line);
               }
               else {
                 updateActiveLineNumberIcon(gutter, null, null);
