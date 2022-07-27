@@ -5,7 +5,7 @@ import com.intellij.ide.starter.sdk.JdkDownloaderFacade
 import com.intellij.ide.starter.sdk.JdkVersion
 import com.intellij.ide.starter.tests.examples.data.TestCases
 import com.jetbrains.performancePlugin.commands.chain.exitApp
-//import com.jetbrains.performancePlugin.commands.setupSdk
+import com.jetbrains.performancePlugin.commands.setupSdk
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName

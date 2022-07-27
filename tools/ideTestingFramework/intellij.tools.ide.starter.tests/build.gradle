@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'kotlin'
 
 buildscript {
-  ext.kotlin_version = '1.7.0'
+  ext.kotlin_version = '1.6.21'
   ext.jackson_version = '2.13.3'
 
   repositories {
@@ -40,14 +40,17 @@ dependencies {
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
   implementation "org.jetbrains.intellij.deps:gradle-api:7.4"
-  implementation "org.kodein.di:kodein-di-jvm:7.13.0"
+  implementation "org.kodein.di:kodein-di-jvm:7.9.0"
 
-  implementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
+  implementation("com.jetbrains.intellij.performanceTesting:performance-testing-commands:222-SNAPSHOT") {
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-common'
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib'
+  }
 
-  testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-maven-commands:LATEST-TRUNK-SNAPSHOT'
-  testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-gradle-commands:LATEST-TRUNK-SNAPSHOT'
-  testImplementation 'com.jetbrains.intellij.dynamicPlugins:dynamic-plugins-performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
-  testImplementation 'com.jetbrains.intellij.tools:ide-starter:LATEST-TRUNK-SNAPSHOT'
+  testImplementation('com.jetbrains.intellij.tools:ide-starter:222-SNAPSHOT') {
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-common'
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib'
+  }
 
   testImplementation 'junit:junit:4.13.2'
 
@@ -63,7 +66,9 @@ dependencies {
 }
 
 configurations {
-  testImplementation.exclude(group: 'com.jetbrains.intellij.remoteDev')
+  implementation.exclude(group: 'io.ktor')
+  implementation.exclude(group: 'com.jetbrains.infra')
+  implementation.exclude(group: 'com.jetbrains.intellij.remoteDev')
 }
 
 compileKotlin {
