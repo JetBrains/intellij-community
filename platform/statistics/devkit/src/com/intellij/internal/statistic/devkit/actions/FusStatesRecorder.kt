@@ -11,7 +11,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectEx
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -40,10 +39,13 @@ internal object FusStatesRecorder {
       }
       service<EventLogListenersManager>().subscribe(subscriber, recorderId)
       try {
-        val logApplicationStatesFuture = statesLogger.logApplicationStates()
-        val logProjectStatesFuture = statesLogger.logProjectStates(project, indicator)
-        val settingsFuture = (project as ProjectEx).coroutineScope.async {
+        project.coroutineScope.async {
           coroutineScope {
+            launch {
+              statesLogger.logApplicationStates()
+              statesLogger.logProjectStates(project, indicator)
+            }
+
             for (extension in FeatureUsageStateEventTracker.EP_NAME.extensions) {
               launch {
                 extension.reportNow()
@@ -51,11 +53,12 @@ internal object FusStatesRecorder {
             }
           }
         }.asCompletableFuture()
-        CompletableFuture.allOf(logApplicationStatesFuture, logProjectStatesFuture, settingsFuture)
-          .thenCompose { val logger = getEventLogProvider(recorderId).logger
+          .thenCompose {
+            val logger = getEventLogProvider(recorderId).logger
             if (logger is StatisticsFileEventLogger) {
               logger.flush()
-            } else {
+            }
+            else {
               CompletableFuture.completedFuture(null)
             }
           }
