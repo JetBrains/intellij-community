@@ -15,13 +15,13 @@ import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class SessionDialog @JvmOverloads constructor(
+class SessionDialog(
   title: @Nls String,
   project: Project,
   private val mySession: CommitSession,
   private val myChanges: List<Change>,
   private val myCommitMessage: String?,
-  private val myConfigurationComponent: JComponent? = mySession.getAdditionalConfigurationUI(myChanges, myCommitMessage)
+  private val myConfigurationComponent: JComponent?
 ) : DialogWrapper(project, true) {
 
   private val myCenterPanel = JPanel(BorderLayout())
@@ -49,6 +49,26 @@ class SessionDialog @JvmOverloads constructor(
   override fun getHelpId(): String? = mySession.helpId
 
   companion object {
+    /**
+     * return true if commit operation should proceed
+     */
+    @JvmStatic
+    fun configureCommitSession(project: Project,
+                               title: @Nls String,
+                               commitSession: CommitSession,
+                               changes: List<Change>,
+                               commitMessage: String?): Boolean {
+      val configurationUI = commitSession.getAdditionalConfigurationUI(changes, commitMessage) ?: return true
+      val sessionDialog = SessionDialog(title, project, commitSession, changes, commitMessage, configurationUI)
+      if (sessionDialog.showAndGet()) {
+        return true
+      }
+      else {
+        commitSession.executionCanceled()
+        return false
+      }
+    }
+
     @NonNls
     const val VCS_CONFIGURATION_UI_TITLE = "Vcs.SessionDialog.title"
   }

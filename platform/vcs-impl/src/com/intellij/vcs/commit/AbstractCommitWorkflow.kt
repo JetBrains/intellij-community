@@ -290,14 +290,8 @@ abstract class AbstractCommitWorkflow(val project: Project) {
                                      session: CommitSession,
                                      changes: List<Change>,
                                      commitMessage: String): Boolean {
-    val sessionConfigurationUi = session.getAdditionalConfigurationUI(changes, commitMessage) ?: return true
-    val sessionDialog = SessionDialog(executor.getPresentableText(), project, session, changes, commitMessage, sessionConfigurationUi)
-
-    if (sessionDialog.showAndGet()) return true
-    else {
-      session.executionCanceled()
-      return false
-    }
+    val title = executor.getPresentableText()
+    return SessionDialog.configureCommitSession(project, title, session, changes, commitMessage)
   }
 
   protected open fun processExecuteCustomChecksResult(executor: CommitExecutor,
