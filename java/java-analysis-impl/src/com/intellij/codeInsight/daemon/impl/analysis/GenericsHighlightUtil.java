@@ -449,7 +449,7 @@ public final class GenericsHighlightUtil {
   }
 
   /**
-   * @param skipMethodInSelf pass false if you check if method in {@code aClass} can be deleted
+   * @param skipMethodInSelf pass false if to check if method in {@code aClass} can be deleted
    *
    * @return error message if class inherits 2 unrelated default methods or abstract and default methods which do not belong to one hierarchy
    */
@@ -786,8 +786,8 @@ public final class GenericsHighlightUtil {
 
   static HighlightInfo checkReferenceTypeUsedAsTypeArgument(@NotNull PsiTypeElement typeElement, @NotNull LanguageLevel level) {
     PsiType type = typeElement.getType();
-    if (type != PsiType.NULL && type instanceof PsiPrimitiveType ||
-        type instanceof PsiWildcardType && ((PsiWildcardType)type).getBound() instanceof PsiPrimitiveType) {
+    PsiType wildCardBind = type instanceof PsiWildcardType ? ((PsiWildcardType)type).getBound() : null;
+    if (type != PsiType.NULL && type instanceof PsiPrimitiveType || wildCardBind instanceof PsiPrimitiveType) {
       PsiElement element = new PsiMatcherImpl(typeElement)
         .parent(PsiMatchers.hasClass(PsiReferenceParameterList.class))
         .parent(PsiMatchers.hasClass(PsiJavaCodeReferenceElement.class, PsiNewExpression.class))
@@ -799,16 +799,11 @@ public final class GenericsHighlightUtil {
       String text = JavaErrorBundle.message("generics.type.argument.cannot.be.of.primitive.type");
       HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(text).create();
 
-      PsiType toConvert = type;
-      if (type instanceof PsiWildcardType) {
-        toConvert = ((PsiWildcardType)type).getBound();
-      }
-      if (toConvert instanceof PsiPrimitiveType) {
-        PsiClassType boxedType = ((PsiPrimitiveType)toConvert).getBoxedType(typeElement);
-        if (boxedType != null) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createReplacePrimitiveWithBoxedTypeAction(
-            typeElement, toConvert.getPresentableText(), ((PsiPrimitiveType)toConvert).getBoxedTypeName()));
-        }
+      PsiPrimitiveType toConvert = (PsiPrimitiveType)(type instanceof PsiWildcardType ? wildCardBind : type);
+      PsiClassType boxedType = toConvert.getBoxedType(typeElement);
+      if (boxedType != null) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createReplacePrimitiveWithBoxedTypeAction(
+          typeElement, toConvert.getPresentableText(), toConvert.getBoxedTypeName()));
       }
       return highlightInfo;
     }
@@ -878,7 +873,7 @@ public final class GenericsHighlightUtil {
 
   /**
    * @param expr expression to analyze
-   * @return a enum class, whose non-constant static fields cannot be used at given place, 
+   * @return enum class, whose non-constant static fields cannot be used at given place,
    * null if there's no such restriction 
    */
   public static @Nullable PsiClass getEnumClassForExpressionInInitializer(@NotNull PsiExpression expr) {
@@ -1376,7 +1371,7 @@ public final class GenericsHighlightUtil {
   }
 
   /**
-   * http://docs.oracle.com/javase/specs/jls/se7/html/jls-4.html#jls-4.8
+   * see <a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-4.html#jls-4.8">JLS 4.8 on raw types</a>
    */
   static HighlightInfo checkRawOnParameterizedType(@NotNull PsiJavaCodeReferenceElement parent, @Nullable PsiElement resolved) {
     PsiReferenceParameterList list = parent.getParameterList();
@@ -1501,7 +1496,7 @@ public final class GenericsHighlightUtil {
       if (resolve instanceof PsiField) {
         GlobalSearchScope resolveScope = ref.getResolveScope();
         JavaPsiFacade facade = JavaPsiFacade.getInstance(ref.getProject());
-        message = isTypeAccessible(((PsiField)resolve).getType(), new HashSet<PsiClass>(), false, true, resolveScope, facade);
+        message = isTypeAccessible(((PsiField)resolve).getType(), new HashSet<>(), false, true, resolveScope, facade);
       }
     }
 

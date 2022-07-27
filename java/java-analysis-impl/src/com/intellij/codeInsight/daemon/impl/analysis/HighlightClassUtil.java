@@ -239,7 +239,7 @@ public final class HighlightClassUtil {
     if (!(parent instanceof PsiDeclarationStatement)) {
       parent = aClass;
     }
-    PsiElement element = null;
+    PsiElement element;
     while (parent != null) {
       if (parent instanceof PsiFile) break;
       element = checkSiblings ? parent.getPrevSibling() : null;
@@ -1246,12 +1246,12 @@ public final class HighlightClassUtil {
       }
       PsiFile parentFile = psiClass.getContainingFile();
       PsiManager manager = parentFile.getManager();
-      boolean hasOutsideClasses = inheritors.stream()
-        .anyMatch(inheritor -> !manager.areElementsEquivalent(inheritor.getNavigationElement().getContainingFile(), parentFile));
+      boolean hasOutsideClasses = ContainerUtil.exists(inheritors, inheritor -> !manager.areElementsEquivalent(
+        inheritor.getNavigationElement().getContainingFile(), parentFile));
       if (hasOutsideClasses) {
         Map<PsiJavaCodeReferenceElement, PsiClass> permittedClassesRefs = getPermittedClassesRefs(psiClass);
         Collection<PsiClass> permittedClasses = permittedClassesRefs.values();
-        boolean hasMissingInheritors = inheritors.stream().anyMatch(inheritor -> !permittedClasses.contains(inheritor));
+        boolean hasMissingInheritors = ContainerUtil.exists(inheritors, inheritor -> !permittedClasses.contains(inheritor));
         if (hasMissingInheritors) {
           HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .range(nameIdentifier)

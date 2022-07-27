@@ -2714,8 +2714,8 @@ public final class HighlightUtil {
         .create());
     });
   }
-  @SuppressWarnings("AssignmentToForLoopParameter")
-  private static String parseUnicodeEscapes(String text, BiConsumer<Integer, Integer> illegalEscapeConsumer) {
+
+  private static @NotNull String parseUnicodeEscapes(@NotNull String text, BiConsumer<? super Integer, ? super Integer> illegalEscapeConsumer) {
     // JLS 3.3
     if (!text.contains("\\u")) return text;
     StringBuilder result = new StringBuilder();
@@ -3277,19 +3277,17 @@ public final class HighlightUtil {
 
     if (newExpression.getArgumentList() == null) {
       PsiField field = clazz.findFieldByName(memberName.getText(), true);
-      if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) return true;
+      return field != null && field.hasModifierProperty(PsiModifier.STATIC);
     }
-    else {
-      PsiMethod[] methods = clazz.findMethodsByName(memberName.getText(), true);
-      if (methods.length == 0) return false;
-      for (PsiMethod method : methods) {
-        if (method.hasModifierProperty(PsiModifier.STATIC)) {
-          PsiClass containingClass = method.getContainingClass();
-          assert containingClass != null;
-          if (!containingClass.isInterface() || containingClass == clazz) {
-            // a static method in an interface is not resolvable from its subclasses
-            return true;
-          }
+    PsiMethod[] methods = clazz.findMethodsByName(memberName.getText(), true);
+    if (methods.length == 0) return false;
+    for (PsiMethod method : methods) {
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = method.getContainingClass();
+        assert containingClass != null;
+        if (!containingClass.isInterface() || containingClass == clazz) {
+          // a static method in an interface is not resolvable from its subclasses
+          return true;
         }
       }
     }
