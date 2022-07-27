@@ -19,7 +19,7 @@ fun ObjClass<*>.implWsEntityBuilderCode(): String {
         constructor(): this($javaDataName())
         
 ${
-    lines("        ") {
+    lines(2) {
       section("override fun applyToBuilder(builder: ${MutableEntityStorage::class.fqn})") {
         `if`("this.diff != null") {
           ifElse("existsInBuilder(builder)", {

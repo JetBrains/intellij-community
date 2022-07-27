@@ -182,7 +182,7 @@ class DeserializationVisitor(linesBuilder: LinesBuilder) : InterfaceVisitor {
   override fun visitListStart(varName: String, itemVarName: String, listArgumentType: ValueType<*>): Boolean {
     if (listArgumentType.isRefType()) return true
 
-    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
+    val sub = LinesBuilder(StringBuilder(), builder.indentLevel + 1)
     builders.add(sub)
     return true
   }
@@ -226,7 +226,7 @@ class DeserializationVisitor(linesBuilder: LinesBuilder) : InterfaceVisitor {
   override fun visitOptionalStart(varName: String, notNullVarName: String, type: ValueType<*>): Boolean {
     if (type.isRefType()) return true
 
-    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
+    val sub = LinesBuilder(StringBuilder(), builder.indentLevel+1, builder.indentSize)
     builders.add(sub)
     return true
   }
@@ -298,7 +298,7 @@ class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeq
   override fun visitListStart(varName: String, itemVarName: String, listArgumentType: ValueType<*>): Boolean {
     if (listArgumentType.isRefType()) return true
 
-    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
+    val sub = LinesBuilder(StringBuilder(), builder.indentLevel+1, builder.indentSize)
     linesBuilder.add(sub)
     return true
   }
@@ -323,7 +323,7 @@ class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeq
                              valueType: ValueType<*>): Boolean {
     if (keyType.isRefType() || valueType.isRefType()) return true
 
-    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
+    val sub = LinesBuilder(StringBuilder(), builder.indentLevel+1, builder.indentSize)
     linesBuilder.add(sub)
     return true
   }
@@ -349,7 +349,7 @@ class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeq
   override fun visitOptionalStart(varName: String, notNullVarName: String, type: ValueType<*>): Boolean {
     if (type.isRefType()) return true
 
-    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
+    val sub = LinesBuilder(StringBuilder(), builder.indentLevel+1, builder.indentSize)
     linesBuilder.add(sub)
     return true
   }

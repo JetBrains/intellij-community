@@ -136,7 +136,7 @@ private fun processSealedClass(thisClass: ValueType.SealedClass<*>,
   if (generateNewName) context.line("val $newVarName = $varName")
   context.section("when ($newVarName)") {
     listBuilder(thisClass.subclasses) { item ->
-      val linesBuilder = LinesBuilder(StringBuilder(), "${context.indent}    ").wrapper()
+      val linesBuilder = LinesBuilder(StringBuilder(), context.indentLevel+1, context.indentSize).wrapper()
       if (item is ValueType.SealedClass) {
         processSealedClass(item, newVarName, linesBuilder, operation, generateNewName)
       }
@@ -208,7 +208,7 @@ private fun ValueType<*>.processType(
     }
     is ValueType.Collection<*, *> -> {
       var name: String? = "${varName.clean()}_data"
-      val builder = lines(indent = context.indent) {
+      val builder = lines(context.indentLevel) {
         section("val $name = $varName.map") label@{
           val returnVar = elementType.processType(
             this@label,
@@ -231,7 +231,7 @@ private fun ValueType<*>.processType(
     }
     is ValueType.Optional<*> -> {
       var name: String? = "${varName.clean()}_data_optional"
-      val builder = lines(indent = context.indent) {
+      val builder = lines(context.indentLevel) {
         lineNoNl("var $name = ")
         ifElse("$varName != null", labelIf@{
           val returnVar = type.processType(

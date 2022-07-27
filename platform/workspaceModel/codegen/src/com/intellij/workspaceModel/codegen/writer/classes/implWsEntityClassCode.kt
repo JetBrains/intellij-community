@@ -46,7 +46,7 @@ ${getLinksOfConnectionIds(this)}
 }
 
 private fun getLinksOfConnectionIds(type: ObjClass<*>): String {
-  return lines("        ") {
+  return lines(2) {
     line("val connections = listOf<${ConnectionId::class.fqn}>(")
     type.allRefsFields.forEach {
       line("    " + it.refsConnectionId + ",")

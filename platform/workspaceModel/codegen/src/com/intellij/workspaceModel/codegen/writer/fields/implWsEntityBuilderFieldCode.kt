@@ -79,7 +79,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
       val connectionName = field.refsConnectionId
       val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else error("It's prohibited to have nullable reference list")
       if ((elementType as ValueType.ObjRef<*>).target.openness.extendable) {
-        lines(indent = "    ") {
+        lines(level = 1) {
           sectionNoBrackets("override var ${field.javaName}: $javaType$optionalSuffix") {
             section("get()") {
               line("val _diff = diff")

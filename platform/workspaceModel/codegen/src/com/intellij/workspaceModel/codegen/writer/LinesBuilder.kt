@@ -2,8 +2,8 @@ package com.intellij.workspaceModel.codegen.utils
 
 class LinesBuilder(
   val result: StringBuilder,
-  val indent: String,
-  val delayed: String? = null
+  val indentLevel: Int,
+  val indentSize: Int = 4
 ) {
   var first = true
 
@@ -15,10 +15,9 @@ class LinesBuilder(
   fun lineNoNl(str: String) {
     if (first) {
       first = false
-      if (delayed != null) result.append(delayed)
     }
 
-    result.append(indent)
+    result.append(" ".repeat(indentLevel * indentSize))
     result.append(str)
   }
 
@@ -29,12 +28,12 @@ class LinesBuilder(
   }
 
   fun section(s: LinesBuilder.() -> Unit) {
-    LinesBuilder(result, "$indent    ").s()
+    LinesBuilder(result, indentLevel + 1, indentSize).s()
   }
 
   fun section(head: String, s: LinesBuilder.() -> Unit) {
     lineNoNl(head)
-    val sub = LinesBuilder(result, "$indent    ")
+    val sub = LinesBuilder(result, indentLevel+1, indentSize)
     sub.result.append(" {\n")
     sub.s()
     line("}")
@@ -42,14 +41,14 @@ class LinesBuilder(
 
   fun sectionNoBrackets(head: String, s: LinesBuilder.() -> Unit) {
     lineNoNl(head)
-    val sub = LinesBuilder(result, "$indent    ")
+    val sub = LinesBuilder(result, indentLevel+1, indentSize)
     sub.result.append("\n")
     sub.s()
   }
 }
 
-inline fun lines(indent: String = "", lines: LinesBuilder.() -> Unit): String {
+inline fun lines(level: Int = 0, lines: LinesBuilder.() -> Unit): String {
   val result = StringBuilder()
-  LinesBuilder(result, indent).lines()
+  LinesBuilder(result, level).lines()
   return result.toString()
 }
