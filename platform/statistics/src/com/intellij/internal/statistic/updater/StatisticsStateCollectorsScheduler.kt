@@ -29,15 +29,15 @@ internal class StatisticsStateCollectorsScheduler : ApplicationInitializedListen
     private val allowExecution = AtomicBoolean(true)
   }
 
-  override fun componentsInitialized() {
-    if (!StatisticsUploadAssistant.isSendAllowed()) {
-      return
-    }
-
-    allowExecution.set(true)
-
+  override suspend fun execute() {
     // avoid overlapping logging from periodic scheduler and OneTimeLogger (long indexing case)
     ApplicationManager.getApplication().coroutineScope.launch {
+      if (!StatisticsUploadAssistant.isSendAllowed()) {
+        return@launch
+      }
+
+      allowExecution.set(true)
+
       delay(LOG_APPLICATION_STATES_INITIAL_DELAY)
       allowExecution.set(false)
       FUStateUsagesLogger.create().logApplicationStates()

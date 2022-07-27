@@ -1,37 +1,40 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+package com.intellij.openapi.wm.impl
 
-import com.intellij.ide.lightEdit.LightEditServiceListener;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManagerListener;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.lightEdit.LightEditServiceListener
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.startup.ProjectPostStartupActivity
+import kotlinx.coroutines.coroutineScope
 
-public final class WindowDressing implements ProjectManagerListener, LightEditServiceListener {
-  @Override
-  public void projectOpened(@NotNull Project project) {
-    ActionManagerEx.doWithLazyActionManager(manager -> {
-      ((ProjectWindowActionGroup)manager.getAction("OpenProjectWindows")).addProject(project);
-    });
+class WindowDressing : ProjectManagerListener, LightEditServiceListener {
+  companion object {
+    @JvmStatic
+    val windowActionGroup: ProjectWindowActionGroup
+      get() = ActionManager.getInstance().getAction("OpenProjectWindows") as ProjectWindowActionGroup
   }
 
-  @Override
-  public void projectClosed(@NotNull Project project) {
-    getWindowActionGroup().removeProject(project);
+  private class MyStartupActivity : ProjectPostStartupActivity {
+    override suspend fun execute(project: Project) {
+      coroutineScope {
+        ActionManagerEx.withLazyActionManager(scope = this) {
+          (it.getAction("OpenProjectWindows") as ProjectWindowActionGroup).addProject(project)
+        }
+      }
+    }
   }
 
-  public static @NotNull ProjectWindowActionGroup getWindowActionGroup() {
-    return (ProjectWindowActionGroup)ActionManager.getInstance().getAction("OpenProjectWindows");
+  override fun projectClosed(project: Project) {
+    windowActionGroup.removeProject(project)
   }
 
-  @Override
-  public void lightEditWindowOpened(@NotNull Project project) {
-    getWindowActionGroup().addProject(project);
+  override fun lightEditWindowOpened(project: Project) {
+    windowActionGroup.addProject(project)
   }
 
-  @Override
-  public void lightEditWindowClosed(@NotNull Project project) {
-    getWindowActionGroup().removeProject(project);
+  override fun lightEditWindowClosed(project: Project) {
+    windowActionGroup.removeProject(project)
   }
 }

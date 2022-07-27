@@ -4,16 +4,13 @@ package com.intellij.ide.lightEdit.project
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
-import com.intellij.openapi.project.impl.runOnlyCorePluginExtensions
+import com.intellij.openapi.project.impl.projectInitListeners
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.DirectoryIndex
@@ -39,11 +36,7 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) : Pro
     runUnderModalProgressIfIsEdt {
       coroutineScope {
         preloadServicesAndCreateComponents(project = this@LightEditProjectImpl, preloadServices = true)
-        runOnlyCorePluginExtensions(
-          (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
-            .getExtensionPoint<ProjectServiceContainerInitializedListener>(
-              "com.intellij.projectServiceContainerInitializedListener"
-            )) {
+        projectInitListeners {
           it.serviceCreated(this@LightEditProjectImpl)
         }
       }

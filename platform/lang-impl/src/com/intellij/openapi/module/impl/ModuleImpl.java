@@ -194,13 +194,8 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   @Override
   public void projectClosed() {
     @SuppressWarnings({"removal", "UnnecessaryFullyQualifiedName"})
-    List<com.intellij.openapi.module.ModuleComponent> components = new ArrayList<>();
-    //noinspection removal,UnnecessaryFullyQualifiedName
-    processInitializedComponents(com.intellij.openapi.module.ModuleComponent.class, (component, __) -> {
-      components.add(component);
-      return Unit.INSTANCE;
-    });
-
+    List<com.intellij.openapi.module.ModuleComponent> components =
+      collectInitializedComponents(com.intellij.openapi.module.ModuleComponent.class);
     for (int i = components.size() - 1; i >= 0; i--) {
       try {
         //noinspection removal

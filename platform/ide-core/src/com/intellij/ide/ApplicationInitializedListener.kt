@@ -7,22 +7,20 @@ import org.jetbrains.annotations.ApiStatus
  * Use extension point `com.intellij.applicationInitializedListener` to register listener.
  * Please note - you cannot use [ExtensionPointName.findExtension] because this extension point is cleared up after app loading.
  *
- *
  * Not part of [ApplicationLoadListener] to avoid class loading before application initialization.
  */
 @ApiStatus.Internal
 interface ApplicationInitializedListener {
-  /** Perform the preloading. */
+  /**
+   * Invoked when all application level components are initialized.
+   * Write actions and time-consuming activities are not recommended because directly affects application start time.
+   */
   @JvmDefault
   suspend fun execute() {
     @Suppress("DEPRECATION")
     componentsInitialized()
   }
 
-  /**
-   * Invoked when all application level components are initialized.
-   * Write actions and time-consuming activities are not recommended because directly affects application start time.
-   */
   @Deprecated("Use {@link #execute()}", ReplaceWith("execute()"))
   fun componentsInitialized() {
   }

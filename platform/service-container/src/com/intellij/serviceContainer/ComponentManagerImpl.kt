@@ -995,25 +995,25 @@ abstract class ComponentManagerImpl(
                       onlyIfAwait: Boolean = false) {
     val asyncScope = coroutineScope!!
     for (plugin in modules) {
-      serviceLoop@ for (service in getContainerDescriptor(plugin).services) {
+      for (service in getContainerDescriptor(plugin).services) {
         if (!isServiceSuitable(service) || (service.os != null && !isSuitableForOs(service.os))) {
-          continue@serviceLoop
+          continue
         }
 
-        val scope: CoroutineScope? = when (service.preload) {
+        val scope: CoroutineScope = when (service.preload) {
           PreloadMode.TRUE -> if (onlyIfAwait) null else asyncScope
           PreloadMode.NOT_HEADLESS -> if (onlyIfAwait || getApplication()!!.isHeadlessEnvironment) null else asyncScope
           PreloadMode.NOT_LIGHT_EDIT -> if (onlyIfAwait || Main.isLightEdit()) null else asyncScope
           PreloadMode.AWAIT -> syncScope
           PreloadMode.FALSE -> null
           else -> throw IllegalStateException("Unknown preload mode ${service.preload}")
+        } ?: continue
+
+        if (isServicePreloadingCancelled) {
+          return
         }
 
-        scope?.launch {
-          if (isServicePreloadingCancelled || isDisposed) {
-            return@launch
-          }
-
+        scope.launch {
           val activity = StartUpMeasurer.startActivity("${service.`interface`} preloading")
           try {
             preloadService(service)
@@ -1303,6 +1303,21 @@ abstract class ComponentManagerImpl(
         }
       }
     }
+  }
+
+  fun <T : Any> collectInitializedComponents(aClass: Class<T>): List<T> {
+    // we must use instances only from our adapter (could be service or something else).
+    val result = mutableListOf<T>()
+    for (adapter in componentAdapters.getImmutableSet()) {
+      if (adapter is MyComponentAdapter) {
+        val component = adapter.getInitializedInstance()
+        if (component != null && aClass.isAssignableFrom(component.javaClass)) {
+          @Suppress("UNCHECKED_CAST")
+          result.add(component as T)
+        }
+      }
+    }
+    return result
   }
 
   final override fun getActivityCategory(isExtension: Boolean): ActivityCategory {

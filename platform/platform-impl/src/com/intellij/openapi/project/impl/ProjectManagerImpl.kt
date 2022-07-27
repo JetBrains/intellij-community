@@ -29,7 +29,6 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
@@ -63,6 +62,7 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.context.Context
+import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -529,6 +529,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
     var module: Module? = null
     var result: Project? = null
+    var reopeningEditorJob: Deferred<Job?>? = null
     try {
       frameAllocator.run { saveTemplateJob ->
         activity.end()
@@ -553,7 +554,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           }
         }
 
-        launch {
+        reopeningEditorJob = async {
           frameAllocator.projectLoaded(project)
         }
 
@@ -609,6 +610,13 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     val project = result!!
+
+    // wait for reopeningEditorJob
+    // 1. part of open project task
+    // 2. runStartupActivities can consume a lot of CPU and editor restoring can be delayed, but it is a bad UX
+    runActivity("editor reopening waiting") {
+      reopeningEditorJob?.await()?.join()
+    }
 
     if (isRunStartUpActivitiesEnabled(project)) {
       (StartupManager.getInstance(project) as StartupManagerImpl).runStartupActivities()
@@ -847,49 +855,44 @@ private fun message(e: Throwable): String {
 
 @Internal
 @VisibleForTesting
-suspend fun runInitProjectActivities(project: Project) {
+fun CoroutineScope.runInitProjectActivities(project: Project) {
   val traceContext = Context.current()
-  coroutineScope {
-    launch {
-      (StartupManager.getInstance(project) as StartupManagerImpl).initProject(null)
-    }
+  launch(traceContext.asContextElement()) {
+    (StartupManager.getInstance(project) as StartupManagerImpl).initProject(null)
+  }
 
-    val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
-    launch(Dispatchers.EDT) {
-      waitEdtActivity.end()
-
-      val activity = StartUpMeasurer.startActivity("project opened callbacks")
-      runActivity("projectOpened event executing") {
-        tracer.spanBuilder("execute projectOpened handlers").setParent(traceContext).useWithScope {
-          @Suppress("DEPRECATION", "removal")
-          ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
-        }
+  val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
+  launchAndMeasure("projectOpened event executing", Dispatchers.EDT) {
+    waitEdtActivity.end()
+      tracer.spanBuilder("projectOpened event executing").setParent(traceContext).useWithScope {
+        @Suppress("DEPRECATION", "removal")
+        ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
       }
+  }
 
-      coroutineContext.ensureActive()
+  @Suppress("DEPRECATION")
+  val projectComponents = (project as ComponentManagerImpl)
+    .collectInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java)
+  if (projectComponents.isEmpty()) {
+    return
+  }
 
-      @Suppress("DEPRECATION")
-      (project as ComponentManagerImpl)
-        .processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
-          coroutineContext.ensureActive()
-          try {
-            val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
-                                                                  pluginDescriptor.pluginId.idString)
-            component.projectOpened()
-            componentActivity.end()
-          }
-          catch (e: CancellationException) {
-            throw e
-          }
-          catch (e: ProcessCanceledException) {
-            throw e
-          }
-          catch (e: Throwable) {
-            LOG.error(e)
-          }
-        }
-
-      activity.end()
+  launchAndMeasure("projectOpened component executing", Dispatchers.EDT) {
+    for (component in projectComponents) {
+      try {
+        val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER)
+        component.projectOpened()
+        componentActivity.end()
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
     }
   }
 }
@@ -931,12 +934,8 @@ private fun fireProjectClosed(project: Project) {
   LifecycleUsageTriggerCollector.onProjectClosed(project)
   publisher.projectClosed(project)
   @Suppress("DEPRECATION")
-  val projectComponents = ArrayList<com.intellij.openapi.components.ProjectComponent>()
-  @Suppress("DEPRECATION")
-  (project as ComponentManagerImpl).processInitializedComponents(
-    com.intellij.openapi.components.ProjectComponent::class.java) { component, _ ->
-    projectComponents.add(component)
-  }
+  val projectComponents = (project as ComponentManagerImpl)
+    .collectInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java)
 
   // see "why is called after message bus" in the fireProjectOpened
   for (i in projectComponents.indices.reversed()) {
@@ -1099,10 +1098,7 @@ private suspend fun initProject(file: Path,
       val isTrusted = async { !isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }
 
       preloadServicesAndCreateComponents(project, preloadServices)
-      runOnlyCorePluginExtensions((ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
-                                    .getExtensionPoint<ProjectServiceContainerInitializedListener>(
-                                      "com.intellij.projectServiceContainerInitializedListener"
-                                    )) {
+      projectInitListeners {
         launchAndMeasure(it.javaClass.simpleName) {
           it.serviceCreated(project)
         }
@@ -1174,28 +1170,25 @@ private inline fun createActivity(project: ProjectImpl, message: () -> String): 
   return if (!StartUpMeasurer.isEnabled() || project.isDefault) null else StartUpMeasurer.startActivity(message(), ActivityCategory.DEFAULT)
 }
 
-internal suspend inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl<T>, crossinline executor: suspend (T) -> Unit) {
+internal suspend inline fun projectInitListeners(crossinline executor: suspend (ProjectServiceContainerInitializedListener) -> Unit) {
+  val extensionArea = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
+  val ep = extensionArea
+    .getExtensionPoint<ProjectServiceContainerInitializedListener>("com.intellij.projectServiceContainerInitializedListener")
   for (adapter in ep.sortedAdapters) {
     val pluginDescriptor = adapter.pluginDescriptor
     if (!isCorePlugin(pluginDescriptor)) {
-      logger<ProjectImpl>().error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
+      LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
       continue
     }
 
     try {
       executor(adapter.createInstance(ep.componentManager) ?: continue)
     }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
     catch (e: CancellationException) {
       throw e
     }
-    catch (e: PluginException) {
-      logger<ProjectImpl>().error(e)
-    }
     catch (e: Throwable) {
-      logger<ProjectImpl>().error(PluginException(e, pluginDescriptor.pluginId))
+      LOG.error(e)
     }
   }
 }

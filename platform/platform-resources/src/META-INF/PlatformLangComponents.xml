@@ -38,6 +38,8 @@
       implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge$ModuleManagerInitProjectActivity"
       order="first"/>
 
+    <postStartupActivity implementation="com.intellij.openapi.wm.impl.WindowDressing$MyStartupActivity" />
+
     <applicationService serviceInterface="com.intellij.openapi.command.undo.UndoManager"
                         serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="await"/>
 
@@ -121,6 +123,7 @@
 
     <projectService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater"
                     serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl" preload="await"/>
+
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->

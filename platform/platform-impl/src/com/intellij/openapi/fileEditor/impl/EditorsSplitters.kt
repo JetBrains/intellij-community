@@ -252,33 +252,27 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   suspend fun restoreEditors(): JPanel? {
     val element = splittersElement ?: return null
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
-    return runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
+    runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
       val component = UIBuilder(this).process(element, topPanel)
       if (component != null) {
         component.isFocusable = false
       }
-      component
+      return component
     }
   }
 
   fun addSelectedEditorsTo(result: MutableCollection<FileEditor>) {
     for (window in windows) {
-      val composite = window.selectedComposite
-      if (composite != null) {
-        val editor = composite.selectedEditor
-        if (!result.contains(editor)) {
-          result.add(editor)
-        }
+      val editor = window.selectedComposite?.selectedEditor
+      if (editor != null && !result.contains(editor)) {
+        result.add(editor)
       }
     }
     val currentWindow = currentWindow
     if (currentWindow != null && !windows.contains(currentWindow)) {
-      val composite = currentWindow.selectedComposite
-      if (composite != null) {
-        val editor = composite.selectedEditor
-        if (!result.contains(editor)) {
-          result.add(editor)
-        }
+      val editor = currentWindow.selectedComposite?.selectedEditor
+      if (editor != null && !result.contains(editor)) {
+        result.add(editor)
       }
     }
   }

@@ -3,6 +3,7 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
+import com.intellij.diagnostic.launchAndMeasure
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManagerBase
@@ -13,7 +14,10 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.withModalContext
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.impl.restoreOpenedFiles
 import com.intellij.openapi.progress.TaskCancellation
 import com.intellij.openapi.progress.util.ProgressDialogUI
 import com.intellij.openapi.progress.util.ProgressDialogWrapper
@@ -56,7 +60,7 @@ internal open class ProjectFrameAllocator(private val options: OpenProjectTask) 
    * But start-up and post start-up activities are not yet executed.
    * Executed under a modal progress dialog.
    */
-  open suspend fun projectLoaded(project: Project) {}
+  open suspend fun projectLoaded(project: Project): Job? = null
 
   open suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
     cannotConvertException?.let { throw cannotConvertException }
@@ -150,37 +154,49 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
     }
   }
 
-  override suspend fun projectLoaded(project: Project) {
+  override suspend fun projectLoaded(project: Project): Job? {
     val windowManager = WindowManager.getInstance() as WindowManagerImpl
     val frameHelper = deferredProjectFrameHelper.await()
-    withContext(Dispatchers.EDT) {
+    return withContext(Dispatchers.EDT) {
       runActivity("project frame assigning") {
         windowManager.assignFrame(frameHelper, project)
       }
 
+      val fileEditorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return@withContext null
+      val editorSplitters = fileEditorManager.init()
+
       // not as a part of a project modal dialog
-      val projectScope = project.coroutineScope
-      projectScope.launch {
-        val toolWindowManager = ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl ?: return@launch
-        // OpenFilesActivity inits component
-        val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
-        runActivity("tool window pane creation") {
-          toolWindowManager.init(frameHelper, fileEditorManager)
-        }
-      }
-      projectScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        val rootPane = frameHelper.rootPane!!
-        runActivity("north components updating") {
-          rootPane.updateNorthComponents()
-        }
+      project.coroutineScope.scheduleUi(editorSplitters, fileEditorManager, frameHelper, project)
+    }
+  }
 
-        runActivity("toolbar updating") {
-          rootPane.initOrCreateToolbar(project)
-        }
-
-        frameHelper.frameOrNull?.isVisible = true
+  private fun CoroutineScope.scheduleUi(editorSplitters: EditorsSplitters,
+                                        fileEditorManager: FileEditorManagerImpl,
+                                        frameHelper: ProjectFrameHelper,
+                                        project: Project): Job {
+    val reopeningEditorJob = launch {
+      runActivity("editor reopening") {
+        restoreOpenedFiles(fileEditorManager, editorSplitters, project)
       }
     }
+
+    launchAndMeasure("tool window pane creation") {
+      val toolWindowManager = ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl ?: return@launchAndMeasure
+      toolWindowManager.init(frameHelper, editorSplitters)
+    }
+    launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      val rootPane = frameHelper.rootPane!!
+      runActivity("north components updating") {
+        rootPane.updateNorthComponents()
+      }
+
+      runActivity("toolbar updating") {
+        rootPane.initOrCreateToolbar(project)
+      }
+
+      frameHelper.frameOrNull?.isVisible = true
+    }
+    return reopeningEditorJob
   }
 
   override suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
@@ -236,7 +252,7 @@ private fun CoroutineScope.showModalIndicatorForProjectLoading(
         cancelAction = {
           mainJob.cancel("dialog cancel")
         },
-        peerFactory = java.util.function.Function { GlassPaneDialogWrapperPeer(window, it) }
+        peerFactory = { GlassPaneDialogWrapperPeer(window, it) }
       )
       dialog.setUndecorated(true)
       dialog.pack()

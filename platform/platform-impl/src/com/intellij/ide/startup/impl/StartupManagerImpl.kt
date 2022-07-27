@@ -194,7 +194,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     runActivities(initProjectStartupActivities)
     val app = ApplicationManager.getApplication()
     val extensionPoint = (app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<StartupActivity>("com.intellij.startupActivity")
-
     // do not create extension if not allow-listed
     for (adapter in extensionPoint.sortedAdapters) {
       coroutineContext.ensureActive()

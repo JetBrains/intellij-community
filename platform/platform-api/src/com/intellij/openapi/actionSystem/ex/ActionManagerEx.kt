@@ -1,75 +1,114 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.actionSystem.ex;
+package com.intellij.openapi.actionSystem.ex
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.extensions.PluginId;
-import kotlin.Unit;
-import kotlin.coroutines.EmptyCoroutineContext;
-import kotlinx.coroutines.BuildersKt;
-import kotlinx.coroutines.CoroutineStart;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.extensions.PluginId
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import java.util.function.Consumer
+import javax.swing.KeyStroke
 
-import javax.swing.*;
-import java.util.Comparator;
-import java.util.function.Consumer;
+@Suppress("DeprecatedCallableAddReplaceWith")
+abstract class ActionManagerEx : ActionManager() {
+  companion object {
+    @JvmStatic
+    fun getInstanceEx(): ActionManagerEx = getInstance() as ActionManagerEx
 
-public abstract class ActionManagerEx extends ActionManager {
-  public static ActionManagerEx getInstanceEx() {
-    return (ActionManagerEx)getInstance();
+    /**
+     * Similar to [KeyStroke.getKeyStroke] but allows keys in lower case.
+     *
+     * I.e. "control x" is accepted and interpreted as "control X".
+     *
+     * @return null if string cannot be parsed.
+     */
+    @JvmStatic
+    fun getKeyStroke(s: String): KeyStroke? {
+      var result = try {
+        KeyStroke.getKeyStroke(s)
+      }
+      catch (ignore: Exception) {
+        null
+      }
+
+      if (result == null && s.length >= 2 && s[s.length - 2] == ' ') {
+        try {
+          val s1 = s.substring(0, s.length - 1) + s[s.length - 1].uppercaseChar()
+          result = KeyStroke.getKeyStroke(s1)
+        }
+        catch (ignored: Exception) {
+        }
+      }
+      return result
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun doWithLazyActionManager(whatToDo: Consumer<ActionManager>) {
+      withLazyActionManager(scope = null, task = whatToDo::accept)
+    }
+
+    @ApiStatus.Internal
+    inline fun withLazyActionManager(scope: CoroutineScope?, crossinline task: (ActionManager) -> Unit) {
+      val app = ApplicationManager.getApplication()
+      val created = app.serviceIfCreated<ActionManager>()
+      if (created == null) {
+        // IO, because getInstance is blocking (there is no non-blocking API to get service yet)
+        (scope ?: app.coroutineScope).launch(Dispatchers.IO) {
+          val actionManager = getInstance()
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            task(actionManager)
+          }
+        }
+      }
+      else {
+        task(created)
+      }
+    }
   }
 
-  @NotNull
-  public abstract ActionToolbar createActionToolbar(@NotNull String place,
-                                                    @NotNull ActionGroup group,
-                                                    boolean horizontal,
-                                                    boolean decorateButtons);
+  abstract fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean, decorateButtons: Boolean): ActionToolbar
 
   /**
-   * Do not call directly, prefer {@link ActionUtil} methods.
+   * Do not call directly, prefer [ActionUtil] methods.
    */
   @ApiStatus.Internal
-  public abstract void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event);
+  abstract fun fireBeforeActionPerformed(action: AnAction, event: AnActionEvent)
 
   /**
-   * Do not call directly, prefer {@link ActionUtil} methods.
+   * Do not call directly, prefer [ActionUtil] methods.
    */
   @ApiStatus.Internal
-  public abstract void fireAfterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result);
+  abstract fun fireAfterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult)
 
-
-  /**
-   * @deprecated use {@link #fireBeforeActionPerformed(AnAction, AnActionEvent)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public final void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-    fireBeforeActionPerformed(action, event);
+  @Deprecated("use {@link #fireBeforeActionPerformed(AnAction, AnActionEvent)} instead")
+  fun fireBeforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+    fireBeforeActionPerformed(action, event)
   }
 
-  /**
-   * @deprecated use {@link #fireAfterActionPerformed(AnAction, AnActionEvent, AnActionResult)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public final void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-    fireAfterActionPerformed(action, event, AnActionResult.PERFORMED);
+  @Deprecated("use {@link #fireAfterActionPerformed(AnAction, AnActionEvent, AnActionResult)} instead")
+  fun fireAfterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+    fireAfterActionPerformed(action, event, AnActionResult.PERFORMED)
   }
 
-  public abstract void fireBeforeEditorTyping(char c, @NotNull DataContext dataContext);
+  abstract fun fireBeforeEditorTyping(c: Char, dataContext: DataContext)
 
-  public abstract void fireAfterEditorTyping(char c, @NotNull DataContext dataContext);
+  abstract fun fireAfterEditorTyping(c: Char, dataContext: DataContext)
 
   /**
    * For logging purposes
    */
+  abstract val lastPreformedActionId: String?
 
-  public abstract String getLastPreformedActionId();
-
-  public abstract String getPrevPreformedActionId();
+  abstract val prevPreformedActionId: String?
 
   /**
    * A comparator that compares action ids (String) by the order of action registration.
@@ -77,61 +116,14 @@ public abstract class ActionManagerEx extends ActionManager {
    * @return a negative integer if the action that corresponds to the first id was registered earlier than the action that corresponds
    * to the second id; zero if both ids are equal; a positive number otherwise.
    */
-  @NotNull
-  public abstract Comparator<String> getRegistrationOrderComparator();
+  abstract val registrationOrderComparator: Comparator<String>
 
-  /**
-   * Similar to {@link KeyStroke#getKeyStroke(String)} but allows keys in lower case.
-   * <p/>
-   * I.e. "control x" is accepted and interpreted as "control X".
-   *
-   * @return null if string cannot be parsed.
-   */
-  @Nullable
-  public static KeyStroke getKeyStroke(@NotNull String s) {
-    KeyStroke result = null;
-    try {
-      result = KeyStroke.getKeyStroke(s);
-    }
-    catch (Exception ex) {
-      //ok
-    }
-    if (result == null && s.length() >= 2 && s.charAt(s.length() - 2) == ' ') {
-      try {
-        String s1 = s.substring(0, s.length() - 1) + Character.toUpperCase(s.charAt(s.length() - 1));
-        result = KeyStroke.getKeyStroke(s1);
-      }
-      catch (Exception ignored) {
-      }
-    }
-    return result;
-  }
+  abstract fun getPluginActions(pluginId: PluginId): Array<String>
 
-
-  public abstract String @NotNull [] getPluginActions(@NotNull PluginId pluginId);
-
-  public abstract boolean isActionPopupStackEmpty();
+  abstract val isActionPopupStackEmpty: Boolean
 
   /**
    * Allows receiving notifications when popup menus created from action groups are shown and hidden.
    */
-  public abstract void addActionPopupMenuListener(@NotNull ActionPopupMenuListener listener, @NotNull Disposable parentDisposable);
-
-  @ApiStatus.Internal
-  public static void doWithLazyActionManager(@NotNull Consumer<? super ActionManager> whatToDo) {
-    Application app = ApplicationManager.getApplication();
-    ActionManager created = app.getServiceIfCreated(ActionManager.class);
-    if (created == null) {
-      // reuse default dispatcher thread
-      BuildersKt.launch(app.getCoroutineScope(), EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
-        ActionManager actionManager = getInstance();
-        app.invokeLater(() -> whatToDo.accept(actionManager), ModalityState.any());
-        return Unit.INSTANCE;
-      });
-    }
-    else {
-      whatToDo.accept(created);
-    }
-  }
+  abstract fun addActionPopupMenuListener(listener: ActionPopupMenuListener, parentDisposable: Disposable)
 }
-

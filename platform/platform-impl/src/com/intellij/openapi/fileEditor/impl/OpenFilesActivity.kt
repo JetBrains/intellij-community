@@ -7,50 +7,37 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.isNotificationSilentMode
-import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-internal class OpenFilesActivity : InitProjectActivity {
-  override suspend fun run(project: Project) {
-    val fileEditorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return
-    val editorSplitters = withContext(Dispatchers.EDT) {
-      fileEditorManager.init()
+internal suspend fun restoreOpenedFiles(fileEditorManager: FileEditorManagerImpl, editorSplitters: EditorsSplitters, project: Project) {
+  val panel = editorSplitters.restoreEditors()
+  val hasOpenFiles = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    if (panel != null) {
+      editorSplitters.doOpenFiles(panel)
     }
+    fileEditorManager.initDockableContentFactory()
 
-    // allow to be executed not under a modal progress dialog
-    project.coroutineScope.launch {
-      val panel = editorSplitters.restoreEditors()
-      val hasOpenFiles = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        if (panel != null) {
-          editorSplitters.doOpenFiles(panel)
-        }
-        fileEditorManager.initDockableContentFactory()
+    EditorsSplitters.stopOpenFilesActivity(project)
+    fileEditorManager.hasOpenFiles()
+  }
 
-        EditorsSplitters.stopOpenFilesActivity(project)
-        fileEditorManager.hasOpenFiles()
-      }
+  if (!hasOpenFiles && !isNotificationSilentMode(project)) {
+    project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true)
+    findAndOpenReadmeIfNeeded(project)
+  }
 
-      if (!hasOpenFiles && !isNotificationSilentMode(project)) {
-        project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true)
-        findAndOpenReadmeIfNeeded(project)
-      }
-
-      // later
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
-          LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime))
-        }
-      }
+  // later
+  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
+      LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime))
     }
   }
 }

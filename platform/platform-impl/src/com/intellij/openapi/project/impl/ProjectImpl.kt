@@ -67,14 +67,12 @@ open class ProjectImpl(filePath: Path, projectName: String?)
 
     internal fun CoroutineScope.preloadServicesAndCreateComponents(project: ProjectImpl, preloadServices: Boolean) {
       if (preloadServices) {
-        launch {
-          // for light projects, preload only services that are essential
-          // ("await" means "project component loading activity is completed only when all such services are completed")
-          project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-                                  activityPrefix = "project ",
-                                  syncScope = this,
-                                  onlyIfAwait = project.isLight)
-        }
+        // for light projects, preload only services that are essential
+        // ("await" means "project component loading activity is completed only when all such services are completed")
+        project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                                activityPrefix = "project ",
+                                syncScope = this,
+                                onlyIfAwait = project.isLight)
       }
 
       launch {
