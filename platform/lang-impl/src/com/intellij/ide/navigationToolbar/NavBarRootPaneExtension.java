@@ -334,7 +334,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
     if (!ExperimentalUI.isNewUI() && uiSettings.getShowNavigationBar() &&
         !uiSettings.getShowMainToolbar() && !uiSettings.getPresentationMode()) {
       ToolbarSettings toolbarSettings = ToolbarSettings.getInstance();
-      return !toolbarSettings.isVisible() || !toolbarSettings.isEnabled();
+      return !toolbarSettings.isVisible() || !toolbarSettings.isAvailable();
     }
     return false;
   }

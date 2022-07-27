@@ -41,7 +41,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
       presentation.setEnabledAndVisible(false);
       return;
     }
-    if (!ToolbarSettings.getInstance().isEnabled()) {
+    if (!ToolbarSettings.getInstance().isAvailable()) {
       presentation.setEnabledAndVisible(false);
       return;
     }

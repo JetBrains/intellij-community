@@ -5,6 +5,7 @@ import com.intellij.execution.runToolbar.data.RWActiveListener
 import com.intellij.execution.runToolbar.data.RWSlotListener
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
@@ -147,7 +148,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
           }
         })
 
-        isVisible = RunToolbarProcess.isSettingsAvailable
+        isVisible = ToolbarSettings.getInstance().isAvailable && RunToolbarProcess.isSettingsAvailable
       })
 
       add(newSlotDetails, "skip")

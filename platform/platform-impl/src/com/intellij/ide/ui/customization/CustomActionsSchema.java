@@ -81,7 +81,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
 
   public CustomActionsSchema() {
     idToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.getMainMenuTitle());
-    if (ToolbarSettings.getInstance().isEnabled()) {
+    if (ToolbarSettings.getInstance().isAvailable()) {
       idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR, ActionsTreeUtil.getExperimentalToolbar());
       idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN, ActionsTreeUtil.getExperimentalToolbarXamarin());
     }

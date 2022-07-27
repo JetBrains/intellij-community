@@ -82,7 +82,7 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
     incModificationCount()
 
     val panel = extension.panel
-    if (panel.isEnabled && panel.isVisible && ToolbarSettings.getInstance().isEnabled) {
+    if (panel.isEnabled && panel.isVisible && ToolbarSettings.getInstance().isAvailable) {
       CompletableFuture.supplyAsync(::correctedToolbarActions, AppExecutorUtil.getAppExecutorService())
         .thenAcceptAsync({ placeToActionGroup ->
                            applyTo(placeToActionGroup, panel, extension.layout)
@@ -224,7 +224,7 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
     logger.info("Show new main toolbar: ${ToolbarSettings.getInstance().isVisible}")
 
     val toolbarSettings = ToolbarSettings.getInstance()
-    panel.isEnabled = toolbarSettings.isEnabled
+    panel.isEnabled = toolbarSettings.isAvailable
     panel.isVisible = toolbarSettings.isVisible && !settings.presentationMode
     project.messageBus.syncPublisher(ExperimentalToolbarStateListener.TOPIC).refreshVisibility()
 
