@@ -10,6 +10,9 @@ import kotlin.reflect.KClass
 
 
 /**
+ *
+ * THIS INFORMATION IS COMPLETELY OUTDATED. Please, CONTACT #ij-workspace-model IF YOU NEED TO CREATE A NEW ENTITY.
+ *
  * For creating a new entity, you should perform the following steps:
  *
  * - Choose the name of the entity, e.g. MyModuleEntity
