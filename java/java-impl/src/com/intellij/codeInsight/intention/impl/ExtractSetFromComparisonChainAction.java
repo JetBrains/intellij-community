@@ -4,11 +4,13 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -64,11 +66,24 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
   }
 
   @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    if (element == null) return IntentionPreviewInfo.EMPTY;
+    extract(project, editor, element);
+    return IntentionPreviewInfo.DIFF;
+  }
+
+  @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
+    extract(project, editor, element);
+  }
+
+  private void extract(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    boolean preview = !element.isPhysical();
     List<ExpressionToConstantComparison> comparisons = comparisons(element).toList();
     if (comparisons.size() < 2) return;
     PsiClass containingClass = ClassUtils.getContainingStaticClass(element);
@@ -107,11 +122,16 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
       }
     }
     Extractor extractor = new Extractor();
-    WriteAction.run(extractor);
+    if (preview) {
+      extractor.run();
+    }
+    else {
+      WriteAction.run(extractor);
+    }
     PsiElement result = extractor.resultPtr == null ? null : extractor.resultPtr.getElement();
     if (result == null || !result.isValid()) return;
 
-    if (!copies.isEmpty()) {
+    if (!copies.isEmpty() && !preview) {
       int answer = ApplicationManager.getApplication().isUnitTestMode() ? Messages.YES :
                    Messages.showYesNoDialog(project,
                                             JavaBundle.message("intention.extract.set.from.comparison.chain.duplicates",

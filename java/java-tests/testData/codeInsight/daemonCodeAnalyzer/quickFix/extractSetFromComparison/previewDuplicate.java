@@ -1,12 +1,18 @@
 // "Extract Set from comparison chain" "true-preview"
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
+
 public class Test {
-  enum Status {
+    private static final Set<Status> STATUSES = Collections.unmodifiableSet(EnumSet.of(Status.VALID, Status.PENDING));
+
+    enum Status {
     VALID, PENDING, INVALID, UNKNOWN;
   }
 
   void test1(Status status) {
-    if(status =<caret>= Status.VALID || status == Status.PENDING) {
+    if(STATUSES.contains(status)) {
       System.out.println("ok");
     }
   }
