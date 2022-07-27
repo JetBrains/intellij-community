@@ -20,15 +20,13 @@ import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.KtSuccessCallInfo
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
+import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.kdoc.*
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.appendHighlighted
@@ -41,7 +39,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-class KotlinDocumentationTarget(val element: PsiElement, val originalElement: PsiElement?) : DocumentationTarget {
+internal class KotlinDocumentationTarget(val element: PsiElement, val originalElement: PsiElement?) : DocumentationTarget {
     override fun createPointer(): Pointer<out DocumentationTarget> {
         val elementPtr = element.createSmartPointer()
         val originalElementPtr = originalElement?.createSmartPointer()
@@ -108,14 +106,15 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
       element is KtEnumEntry && !quickNavigation -> {
           val ordinal = element.containingClassOrObject?.body?.run { getChildrenOfType<KtEnumEntry>().indexOf(element) }
 
+          val project = element.project
           return buildString {
               renderKotlinDeclaration(element, false) {
                   definition {
                       it.inherit()
                       ordinal?.let {
                           append("<br>")
-                          appendHighlighted("// ") { asInfo }
-                          appendHighlighted(KotlinBundle.message("quick.doc.text.enum.ordinal", ordinal)) { asInfo }
+                          appendHighlighted("// ", project) { asInfo }
+                          appendHighlighted(KotlinBundle.message("quick.doc.text.enum.ordinal", ordinal), project) { asInfo }
                       }
                   }
               }
@@ -164,11 +163,11 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
             ?.let {
                 @Nls val link = StringBuilder()
                 val highlighted =
-                    if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) KDocRenderer.highlight(it) { asClassName }
+                    if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) KDocRenderer.highlight(it, ktDeclaration.project) { asClassName }
                     else it
                 DocumentationManagerUtil.createHyperlink(link, it, highlighted, false, false)
                 HtmlChunk.fragment(
-                    HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/classKotlin.svg"),
+                    HtmlChunk.icon("class", KotlinIcons.CLASS),
                     HtmlChunk.nbsp(),
                     HtmlChunk.raw(link.toString()),
                     HtmlChunk.br()
@@ -180,7 +179,7 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
             ?.takeIf { containingSymbol == null }
             ?.let {
                 HtmlChunk.fragment(
-                    HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"),
+                    HtmlChunk.icon("file", KotlinIcons.FILE),
                     HtmlChunk.nbsp(),
                     HtmlChunk.text(it),
                     HtmlChunk.br()
@@ -203,10 +202,8 @@ private fun StringBuilder.renderEnumSpecialFunction(
         // element is not an KtReferenceExpression, but KtClass of enum
         // so reference extracted from originalElement
         analyze(referenceExpression) {
-            val info = referenceExpression.resolveCall()
-            val functionCall = (info as? KtSuccessCallInfo)?.call as? KtFunctionCall<*>
-            val symbol: KtCallableSymbol? = functionCall?.symbol
-            val name = (symbol as? KtNamedSymbol)?.name?.asString()
+            val symbol = referenceExpression.mainReference.resolveToSymbol() as? KtNamedSymbol
+            val name = symbol?.name?.asString()
             if (name != null) {
                 val containingClass = symbol.getContainingSymbol() as? KtClassOrObjectSymbol
                 val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedClassSymbol }
@@ -258,7 +255,7 @@ private fun StringBuilder.renderKotlinDeclaration(
 
                 if (!onlyDefinition) {
                     description {
-                        renderKDoc(symbol, this@analyze, this)
+                        renderKDoc(symbol, this)
                     }
                 }
                 getContainerInfo(declaration).toString().takeIf { it.isNotBlank() }?.let { info ->
@@ -272,13 +269,12 @@ private fun StringBuilder.renderKotlinDeclaration(
     }
 }
 
-private fun renderKDoc(
+private fun KtAnalysisSession.renderKDoc(
     symbol: KtSymbol,
-    ktAnalysisSession: KtAnalysisSession,
     stringBuilder: StringBuilder,
 ) {
     val declaration = symbol.psi as? KtElement
-    val kDoc = ktAnalysisSession.findKDoc(symbol)
+    val kDoc = findKDoc(symbol)
     if (kDoc != null) {
         stringBuilder.renderKDoc(kDoc.contentTag, kDoc.sections)
         return

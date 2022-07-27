@@ -370,6 +370,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
             } else if (element is KtEnumEntry && !quickNavigation) {
                 val ordinal = element.containingClassOrObject?.body?.run { getChildrenOfType<KtEnumEntry>().indexOf(element) }
 
+                val project = element.project
                 @Suppress("HardCodedStringLiteral")
                 return buildString {
                     insert(buildKotlinDeclaration(element, quickNavigation)) {
@@ -377,8 +378,8 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                             it.inherit()
                             ordinal?.let {
                                 append("<br>")
-                                appendHighlighted("// ") { asInfo }
-                                appendHighlighted(KotlinBundle.message("quick.doc.text.enum.ordinal", ordinal)) { asInfo }
+                                appendHighlighted("// ", project) { asInfo }
+                                appendHighlighted(KotlinBundle.message("quick.doc.text.enum.ordinal", ordinal), project) { asInfo }
                             }
                         }
                     }
@@ -577,7 +578,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                 ?.let {
                     @Nls val link = StringBuilder().apply {
                         val highlighted =
-                            if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) highlight(it.asString()) { asClassName }
+                            if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) highlight(it.asString(), element.project) { asClassName }
                             else it.asString()
                         DocumentationManagerUtil.createHyperlink(this, it.asString(), highlighted, false, false)
                     }

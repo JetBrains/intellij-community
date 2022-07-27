@@ -650,20 +650,22 @@ object KDocRenderer {
 
     fun StringBuilder.appendHighlighted(
         value: String,
+        project : Project,
         attributesBuilder: KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes>.()
         -> KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes
     ) {
-        with(createHighlightingManager(project = null)) {
+        with(createHighlightingManager(project)) {
             this@appendHighlighted.appendHighlighted(value, attributesBuilder())
         }
     }
 
     fun highlight(
         value: String,
+        project : Project,
         attributesBuilder: KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes>.()
         -> KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes
     ): String {
-        return StringBuilder().apply { appendHighlighted(value, attributesBuilder) }.toString()
+        return buildString { appendHighlighted(value, project, attributesBuilder) }
     }
 
     fun StringBuilder.appendCodeSnippetHighlightedByLexer(project: Project, codeSnippet: String) {
@@ -675,7 +677,7 @@ object KDocRenderer {
     private data class TextAttributesAdapter(val attributes: TextAttributes) :
             KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes
 
-    fun createHighlightingManager(project: Project?): KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes> {
+    fun createHighlightingManager(project: Project): KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes> {
         if (!DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled()) {
             return KotlinIdeDescriptorRendererHighlightingManager.NO_HIGHLIGHTING
         }
@@ -695,7 +697,7 @@ object KDocRenderer {
             override fun StringBuilder.appendCodeSnippetHighlightedByLexer(codeSnippet: String) {
                 HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
                     this,
-                    project!!,
+                    project,
                     KotlinLanguage.INSTANCE,
                     codeSnippet,
                     DocumentationSettings.getHighlightingSaturation(false)
@@ -704,9 +706,7 @@ object KDocRenderer {
 
             private fun resolveKey(key: TextAttributesKey): TextAttributesAdapter {
                 return TextAttributesAdapter(
-                    EditorColorsManager.getInstance().globalScheme.getAttributes(
-                        key
-                    )!!
+                    EditorColorsManager.getInstance().globalScheme.getAttributes(key)
                 )
             }
 
