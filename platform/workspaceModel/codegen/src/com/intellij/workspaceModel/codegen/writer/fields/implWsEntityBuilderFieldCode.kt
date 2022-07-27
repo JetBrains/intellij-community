@@ -11,6 +11,8 @@ import com.intellij.workspaceModel.codegen.writer.javaName
 import com.intellij.workspaceModel.codegen.writer.owner
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
 
 val ObjProperty<*, *>.implWsBuilderFieldCode: String
   get() = valueType.implWsBuilderBlockingCode(this)
@@ -152,13 +154,21 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
     }
     else {
       """
-            override var ${field.javaName}: List<${wsFqn(elementType.javaType)}>
-                get() = getEntityData().${field.javaName}
+            private val ${field.javaName}Updater: (value: List<${wsFqn(elementType.javaType)}>) -> Unit = { value ->
+                ${elementType.addVirtualFileIndex(field)}
+                changedProperty.add("${field.javaName}")
+            }
+            override var ${field.javaName}: MutableList<${wsFqn(elementType.javaType)}>
+                get() { 
+                    val collection_${field.javaName} = getEntityData().${field.javaName}
+                    if (collection_${field.javaName} !is ${MutableWorkspaceList::class.fqn}) return collection_${field.javaName}
+                    collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
+                    return collection_${field.javaName}
+                }
                 set(value) {
                     checkModificationAllowed()
                     getEntityData().${field.javaName} = value
-                    ${elementType.addVirtualFileIndex(field)}
-                    changedProperty.add("${field.javaName}")
+                    ${field.javaName}Updater.invoke(value)
                 }
                 
             """.trimIndent()
@@ -170,13 +180,21 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
       error("Set of references is not supported")
     } else {
       """
-            override var ${field.javaName}: Set<${wsFqn(elementType.javaType)}>
-                get() = getEntityData().${field.javaName}
+            private val ${field.javaName}Updater: (value: Set<${wsFqn(elementType.javaType)}>) -> Unit = { value ->
+                ${elementType.addVirtualFileIndex(field)}
+                changedProperty.add("${field.javaName}")
+            }
+            override var ${field.javaName}: MutableSet<${wsFqn(elementType.javaType)}>
+                get() { 
+                    val collection_${field.javaName} = getEntityData().${field.javaName}
+                    if (collection_${field.javaName} !is ${MutableWorkspaceSet::class.fqn}) return collection_${field.javaName}
+                    collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
+                    return collection_${field.javaName}
+                }
                 set(value) {
                     checkModificationAllowed()
                     getEntityData().${field.javaName} = value
-                    ${elementType.addVirtualFileIndex(field)}
-                    changedProperty.add("${field.javaName}")
+                    ${field.javaName}Updater.invoke(value)
                 }
                 
             """.trimIndent()

@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.codegen.classes
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.isRefType
 import com.intellij.workspaceModel.codegen.utils.LinesBuilder
 import com.intellij.workspaceModel.codegen.utils.fqn
 import com.intellij.workspaceModel.codegen.utils.lines
@@ -156,7 +157,13 @@ private fun ObjClass<*>.operateUpdateLink(context: LinesBuilder) {
     val retType = field.valueType.processType(context, field.name)
     if (retType != null) {
       context.`if`("$retType != null") {
-        line("${field.name} = $retType")
+        if (field.valueType is ValueType.Set<*> && !field.valueType.isRefType()) {
+          line("${field.name} = $retType as MutableSet")
+        } else if (field.valueType is ValueType.List<*> && !field.valueType.isRefType()) {
+          line("${field.name} = $retType as MutableList")
+        } else {
+          line("${field.name} = $retType")
+        }
       }
     }
   }

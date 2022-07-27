@@ -4,9 +4,12 @@ package com.intellij.workspaceModel.codegen
 import com.intellij.workspaceModel.codegen.classes.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.fields.javaMutableType
 import com.intellij.workspaceModel.codegen.fields.javaType
 import com.intellij.workspaceModel.codegen.fields.wsCode
 import com.intellij.workspaceModel.codegen.utils.fqn
+import com.intellij.workspaceModel.codegen.utils.fqn7
 import com.intellij.workspaceModel.codegen.utils.lines
 import com.intellij.workspaceModel.codegen.writer.allFields
 import com.intellij.workspaceModel.codegen.writer.isStandardInterface
@@ -16,6 +19,8 @@ import com.intellij.workspaceModel.storage.CodeGeneratorVersions
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -51,7 +56,13 @@ fun ObjClass<*>.generateCompanionObject(): String = lines {
       section("operator fun invoke($fields, init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
         line("val builder = builder()")
         list(mandatoryFields) {
-          "builder.$name = $name"
+          if (this.type is ValueType.Set<*> && !this.type.isRefType()) {
+            "builder.$name = $name.${fqn7(Collection<*>::toMutableWorkspaceSet)}()"
+          } else if (this.type is ValueType.List<*> && !this.type.isRefType()) {
+            "builder.$name = $name.${fqn7(Collection<*>::toMutableWorkspaceList)}()"
+          } else {
+            "builder.$name = $name"
+          }
         }
         line("init?.invoke(builder)")
         line("return builder")
@@ -73,7 +84,7 @@ fun ObjClass<*>.generateCompanionObject(): String = lines {
 fun ObjClass<*>.generateExtensionCode(): String? {
   val fields = module.extensions.filter { it.receiver == this || it.receiver.module != module && it.valueType.isRefType() && it.valueType.getRefType().target == this }
   if (openness.extendable && fields.isEmpty()) return null
-  
+
   return lines {
     if (!openness.extendable) {
       line("fun ${MutableEntityStorage::class.fqn}.modifyEntity(entity: $name, modification: $name.Builder.() -> Unit) = modifyEntity($name.Builder::class.java, entity, modification)")
@@ -83,5 +94,8 @@ fun ObjClass<*>.generateExtensionCode(): String? {
 }
 
 val ObjProperty<*, *>.wsBuilderApi: String
-  get() = "override var $javaName: ${type.javaType}"
+  get() {
+    val returnType = if (type is ValueType.Collection<*, *> && !type.isRefType()) type.javaMutableType else type.javaType
+    return "override var $javaName: $returnType"
+  }
 

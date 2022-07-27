@@ -36,8 +36,16 @@ private fun ObjProperty<*, *>.implWsDataBlockCode(fieldType: ValueType<*>, name:
     ValueType.Boolean -> "var $javaName: ${fieldType.javaType} = false"
     ValueType.String -> "lateinit var $javaName: String"
     is ValueType.ObjRef<*> -> error("Reference type at EntityData not supported")
-    is ValueType.Collection<*, *>, is ValueType.Map<*, *> -> {
+    is ValueType.Collection<*, *> -> {
       if (fieldType.isRefType()) error("Reference type at EntityData not supported")
+      if (!isOptional) {
+        "lateinit var $javaName: ${fieldType.javaMutableType}"
+      }
+      else {
+        "var $javaName: ${fieldType.javaMutableType}? = null"
+      }
+    }
+    is ValueType.Map<*, *> -> {
       if (!isOptional) {
         "lateinit var $javaName: ${fieldType.javaType}"
       }
