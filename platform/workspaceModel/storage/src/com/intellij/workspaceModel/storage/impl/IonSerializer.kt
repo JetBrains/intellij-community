@@ -36,7 +36,7 @@ class IonSerializer(@Suppress("UNUSED_PARAMETER") virtualFileManager: VirtualFil
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun deserializeCache(stream: InputStream): MutableEntityStorage {
+  override fun deserializeCache(stream: InputStream): Result<MutableEntityStorage?> {
     val configuration = ReadConfiguration(allowAnySubTypes = true)
     val ion = ObjectSerializer.instance
 
@@ -62,6 +62,6 @@ class IonSerializer(@Suppress("UNUSED_PARAMETER") virtualFileManager: VirtualFil
       family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData -> builder.createAddEvent(entityData) }
     }
 
-    return builder
+    return Result.success(builder)
   }
 }

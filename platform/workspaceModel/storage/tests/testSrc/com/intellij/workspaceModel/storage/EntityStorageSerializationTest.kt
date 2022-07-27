@@ -90,7 +90,8 @@ class EntityStorageSerializationTest {
     serializer.serializeCache(stream, builder.toSnapshot())
 
     val byteArray = stream.toByteArray()
-    val deserialized = (deserializer.deserializeCache(ByteArrayInputStream(byteArray)) as? MutableEntityStorageImpl)?.toSnapshot()
+    val deserialized = (deserializer.deserializeCache(
+      ByteArrayInputStream(byteArray)).getOrThrow() as? MutableEntityStorageImpl)?.toSnapshot()
 
     assertNull(deserialized)
   }
@@ -152,7 +153,7 @@ class EntityStorageSerializationTest {
 
     val result = serializer.deserializeCache(inputStream)
 
-    assertNull(result)
+    assertNull(result.getOrThrow())
   }
 }
 

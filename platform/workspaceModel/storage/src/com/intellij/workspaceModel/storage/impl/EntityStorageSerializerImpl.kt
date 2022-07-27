@@ -398,18 +398,18 @@ class EntityStorageSerializerImpl(
     }
   }
 
-  override fun deserializeCache(stream: InputStream): MutableEntityStorage? {
-    return Input(stream, KRYO_BUFFER_SIZE).use { input ->
+  override fun deserializeCache(stream: InputStream): Result<MutableEntityStorage?> {
+    val deserializedCache = Input(stream, KRYO_BUFFER_SIZE).use { input ->
       val (kryo, classesCache) = createKryo()
 
       try { // Read version
         val cacheVersion = input.readString()
         if (cacheVersion != serializerDataFormatVersion) {
           LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
-          return null
+          return Result.success(null)
         }
 
-        if (!checkContributedVersion(kryo, input)) return null
+        if (!checkContributedVersion(kryo, input)) return Result.success(null)
 
         readAndRegisterClasses(input, kryo, classesCache)
 
@@ -455,10 +455,10 @@ class EntityStorageSerializerImpl(
         builder
       }
       catch (e: Exception) {
-        LOG.warn("Exception at project deserialization", e)
-        null
+        return Result.failure(e)
       }
     }
+    return Result.success(deserializedCache)
   }
 
   private fun checkContributedVersion(kryo: Kryo, input: Input): Boolean {
@@ -803,7 +803,7 @@ class EntityStorageSerializerImpl(
   @TestOnly
   @Suppress("UNCHECKED_CAST")
   fun deserializeCacheAndDiffLog(storeStream: InputStream, diffLogStream: InputStream): MutableEntityStorage? {
-    val builder = this.deserializeCache(storeStream) ?: return null
+    val builder = this.deserializeCache(storeStream).getOrThrow() ?: return null
 
     var log: ChangeLog
     Input(diffLogStream, KRYO_BUFFER_SIZE).use { input ->

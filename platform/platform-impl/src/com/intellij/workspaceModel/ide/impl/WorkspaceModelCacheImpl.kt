@@ -104,30 +104,34 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
   override fun dispose() = Unit
 
   override fun loadCache(): EntityStorage? {
-    try {
-      val cacheFileAttributes = cacheFile.basicAttributesIfExists() ?: return null
-      val invalidateCachesMarkerFileAttributes = invalidateCachesMarkerFile.basicAttributesIfExists()
-      if ((invalidateCachesMarkerFileAttributes != null && cacheFileAttributes.lastModifiedTime() < invalidateCachesMarkerFileAttributes.lastModifiedTime()) ||
-          invalidateProjectCacheMarkerFile.exists() && cacheFileAttributes.lastModifiedTime() < invalidateProjectCacheMarkerFile.lastModified()) {
-        LOG.info("Skipping project model cache since '$invalidateCachesMarkerFile' is present and newer than cache file '$cacheFile'")
-        Files.deleteIfExists(cacheFile)
-        return null
-      }
-
-      LOG.debug("Loading project model cache from $cacheFile")
-
-      val start = System.currentTimeMillis()
-      val builder = cacheFile.inputStream().use { serializer.deserializeCache(it) }
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Loaded project model cache from $cacheFile in ${System.currentTimeMillis() - start}ms")
-      }
-
-      return builder
-    }
-    catch (t: Throwable) {
-      LOG.warn("Could not deserialize project model cache from $cacheFile", t)
+    val cacheFileAttributes = cacheFile.basicAttributesIfExists() ?: return null
+    val invalidateCachesMarkerFileAttributes = invalidateCachesMarkerFile.basicAttributesIfExists()
+    if ((invalidateCachesMarkerFileAttributes != null && cacheFileAttributes.lastModifiedTime() < invalidateCachesMarkerFileAttributes.lastModifiedTime()) ||
+        invalidateProjectCacheMarkerFile.exists() && cacheFileAttributes.lastModifiedTime() < invalidateProjectCacheMarkerFile.lastModified()) {
+      LOG.info("Skipping project model cache since '$invalidateCachesMarkerFile' is present and newer than cache file '$cacheFile'")
+      runCatching { Files.deleteIfExists(cacheFile) }
       return null
     }
+
+    LOG.debug("Loading project model cache from $cacheFile")
+
+    val start = System.currentTimeMillis()
+    val deserializationResult = cacheFile.inputStream().use { serializer.deserializeCache(it) }
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Loaded project model cache from $cacheFile in ${System.currentTimeMillis() - start}ms")
+    }
+
+    return deserializationResult
+      .onSuccess {
+        when {
+          it != null -> LOG.debug("Loaded project model cache from $cacheFile in ${System.currentTimeMillis() - start}ms")
+          else -> LOG.debug("Cannot load project model from $cacheFile in ${System.currentTimeMillis() - start}ms")
+        }
+      }
+      .onFailure {
+        LOG.warn("Could not deserialize project model cache from $cacheFile", it)
+      }
+      .getOrNull()
   }
 
   // Serialize and atomically replace cacheFile. Delete temporary file in any cache to avoid junk in cache folder
