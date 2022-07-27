@@ -47,6 +47,7 @@ import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
@@ -660,19 +661,26 @@ object CodeWithMeClientDownloader {
     return jbrDirectory ?: error("Unable to find target content directory starts with 'jbr' inside MacOS package: '$root'")
   }
 
-  fun createSymlinkToJdkFromGuest(guestRoot: Path, jdkRoot: Path) {
+  fun createSymlinkToJdkFromGuest(guestRoot: Path, jdkRoot: Path): Path {
     val linkTarget = if (SystemInfo.isMac) detectMacOsJbrDirectory(jdkRoot) else detectTrueJdkRoot(jdkRoot)
     val guestHome = findCwmGuestHome(guestRoot)
-    createSymlink(guestHome / "jbr", linkTarget)
+    val link = guestHome / "jbr"
+    createSymlink(link, linkTarget)
+    return link
   }
 
   private fun createSymlink(link: Path, target: Path) {
     val targetRealPath = target.toRealPath()
-    if (link.exists() && link.toRealPath() == targetRealPath) {
+    val linkExists = true
+    val linkRealPath = if (link.exists(LinkOption.NOFOLLOW_LINKS)) link.toRealPath() else null
+    val isSymlink = FileSystemUtil.getAttributes(link.toFile())?.isSymLink == true
+
+    LOG.info("$link: exists=$linkExists, realPath=$linkRealPath, isSymlink=$isSymlink")
+    if (linkExists && isSymlink && linkRealPath == targetRealPath) {
       LOG.info("Symlink/junction '$link' is UP-TO-DATE and points to '$target'")
     }
     else {
-      Files.deleteIfExists(link)
+      FileUtil.deleteWithRenamingIfExists(link)
 
       LOG.info("Creating symlink/junction '$link' -> '$target'")
 
