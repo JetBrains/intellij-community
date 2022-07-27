@@ -41,8 +41,8 @@ import org.junit.*
 import org.junit.Assert.*
 import java.io.File
 import java.nio.file.Files
+import java.util.stream.Collectors
 import kotlin.io.path.name
-import kotlin.streams.toList
 
 class DelayedProjectSynchronizerTest {
   @Rule
@@ -89,7 +89,7 @@ class DelayedProjectSynchronizerTest {
 
   private fun checkSerializersConsistency(project: Project) {
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
-    val serializers = JpsProjectModelSynchronizer.getInstance(project)!!.getSerializers()
+    val serializers = JpsProjectModelSynchronizer.getInstance(project).getSerializers()
     serializers.checkConsistency(getJpsProjectConfigLocation(project)!!, storage, VirtualFileUrlManager.getInstance(project))
   }
 
@@ -132,10 +132,10 @@ class DelayedProjectSynchronizerTest {
         }
       }
       val storage = WorkspaceModel.getInstance(project).entityStorage.current
-      JpsProjectModelSynchronizer.getInstance(project)!!.getSerializers().saveAllEntities(storage, projectData.configLocation)
+      JpsProjectModelSynchronizer.getInstance(project).getSerializers().saveAllEntities(storage, projectData.configLocation)
     }
     val librariesFolder = projectData.projectDir.toPath().resolve(".idea/libraries/")
-    val librariesPaths = Files.list(librariesFolder).sorted().toList()
+    val librariesPaths = Files.list(librariesFolder).use { it.collect(Collectors.toList()).sorted() }
     assertEquals(4, librariesPaths.size)
     assertThat(librariesPaths.map { it.name }).containsAll(listOf("foo.xml", "jarDir.xml", "junit.xml", "log4j.xml"))
     assertTrue(librariesPaths[0].readText().contains("library name=\"foo\""))

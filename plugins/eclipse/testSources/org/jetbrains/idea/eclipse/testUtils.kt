@@ -132,5 +132,5 @@ internal fun forceSave(project: Project) {
     it.moduleFile!!.delete(project)
     it.stateStore.clearCaches()
   }
-  JpsProjectModelSynchronizer.getInstance(project)!!.markAllEntitiesAsDirty()
+  JpsProjectModelSynchronizer.getInstance(project).markAllEntitiesAsDirty()
 }

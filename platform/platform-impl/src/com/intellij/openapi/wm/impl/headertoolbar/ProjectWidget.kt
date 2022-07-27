@@ -39,7 +39,6 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.event.InputEvent
-import java.util.concurrent.Executor
 import java.util.function.Function
 import javax.swing.*
 import kotlin.properties.Delegates
@@ -56,11 +55,10 @@ internal class ProjectWidgetFactory : MainToolbarProjectWidgetFactory {
   override fun getPosition(): Position = Position.Center
 }
 
-private class ProjectWidgetUpdater(val proj: Project, val widget: ProjectWidget) : FileEditorManagerListener, UISettingsListener, ProjectManagerListener {
+private class ProjectWidgetUpdater(private val proj: Project,
+                                   private val widget: ProjectWidget) : FileEditorManagerListener, UISettingsListener, ProjectManagerListener {
   private var file: VirtualFile? by Delegates.observable(null) { _, _, _ -> updateText() }
   private var settings: UISettings by Delegates.observable(UISettings.getInstance()) { _, _, _ -> updateText() }
-
-  private val swingExecutor: Executor = Executor(SwingUtilities::invokeLater)
 
   init {
     file = FileEditorManager.getInstance(proj).selectedFiles.firstOrNull()
@@ -92,8 +90,9 @@ private class ProjectWidgetUpdater(val proj: Project, val widget: ProjectWidget)
     return name.substring(0, maxLength - extension.length) + "..." + extension
   }
 
-  private fun cutProject(value: String, maxLength: Int): String =
-    if (value.length <= maxLength) value else value.substring(0, maxLength) + "..."
+  private fun cutProject(value: String, maxLength: Int): String {
+    return if (value.length <= maxLength) value else value.substring(0, maxLength) + "..."
+  }
 
   fun subscribe() {
     ApplicationManager.getApplication().messageBus.connect(widget).subscribe(UISettingsListener.TOPIC, this)
@@ -101,11 +100,11 @@ private class ProjectWidgetUpdater(val proj: Project, val widget: ProjectWidget)
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
-    swingExecutor.execute { settings = uiSettings }
+    SwingUtilities.invokeLater { settings = uiSettings }
   }
 
   override fun selectionChanged(event: FileEditorManagerEvent) {
-    swingExecutor.execute { file = event.newFile }
+    SwingUtilities.invokeLater { file = event.newFile }
   }
 }
 

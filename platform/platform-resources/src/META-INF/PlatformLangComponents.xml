@@ -2,10 +2,6 @@
 <idea-plugin>
   <project-components>
     <component>
-      <implementation-class>com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.fileEditor.FileEditorManager</interface-class>
       <implementation-class>com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl</implementation-class>
       <!--suppress PluginXmlValidity -->
@@ -22,10 +18,6 @@
       <interface-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzer</interface-class>
       <implementation-class>com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl</implementation-class>
       <loadForDefaultProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</interface-class>
-      <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl</implementation-class>
     </component>
   </project-components>
 
@@ -126,6 +118,9 @@
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringUiService" serviceImplementation="com.intellij.refactoring.RefactoringUiServiceImpl"/>
     
     <postStartupActivity implementation="com.intellij.ide.RecentProjectsManagerBase$MyProjectPostStartupActivity"/>
+
+    <projectService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater"
+                    serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl" preload="await"/>
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->

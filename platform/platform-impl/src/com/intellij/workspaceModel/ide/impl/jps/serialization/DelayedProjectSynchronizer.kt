@@ -26,7 +26,7 @@ class DelayedProjectSynchronizer : ProjectPostStartupActivity {
 
   companion object {
     private suspend fun doSync(project: Project) {
-      val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project) ?: return
+      val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
       if (!(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
         return
       }

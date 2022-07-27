@@ -93,11 +93,11 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
   }, delay = 300, parentDisposable = this)
 
   private fun reloadAdditionalConfigurations(project: Project) {
-    JpsProjectModelSynchronizer.getInstance(project)?.reloadProjectEntities()
+    JpsProjectModelSynchronizer.getInstance(project).reloadProjectEntities()
   }
 
   private fun mayHaveAdditionalConfigurations(project: Project): Boolean {
-    return JpsProjectModelSynchronizer.getInstance(project)?.needToReloadProjectEntities() ?: false
+    return JpsProjectModelSynchronizer.getInstance(project).needToReloadProjectEntities()
   }
 
   internal class MyVirtualFileManagerListener : VirtualFileManagerListener {

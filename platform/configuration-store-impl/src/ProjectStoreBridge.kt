@@ -30,14 +30,14 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.function.Supplier
 
-class ProjectStoreBridge(private val project: Project) : ModuleSavingCustomizer {
+internal class ProjectStoreBridge(private val project: Project) : ModuleSavingCustomizer {
   override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager {
     return ProjectWithModulesSaveSessionProducerManager(project)
   }
 
   override fun saveModules(projectSaveSessionManager: SaveSessionProducerManager, store: IProjectStore) {
     val writer = JpsStorageContentWriter(projectSaveSessionManager as ProjectWithModulesSaveSessionProducerManager, store, project)
-    project.getComponent(JpsProjectModelSynchronizer::class.java).saveChangedProjectEntities(writer)
+    JpsProjectModelSynchronizer.getInstance(project).saveChangedProjectEntities(writer)
   }
 
   override fun commitModuleComponents(projectSaveSessionManager: SaveSessionProducerManager,

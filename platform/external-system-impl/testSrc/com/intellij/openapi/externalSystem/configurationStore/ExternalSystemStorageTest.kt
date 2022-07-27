@@ -597,7 +597,7 @@ class ExternalSystemStorageTest {
   @Test
   fun `external-system-id attributes are not removed from libraries, artifacts and facets on save`() {
     loadModifySaveAndCheck("elementsWithExternalSystemIdAttributes", "elementsWithExternalSystemIdAttributes") { project ->
-      JpsProjectModelSynchronizer.getInstance(project)!!.markAllEntitiesAsDirty()
+      JpsProjectModelSynchronizer.getInstance(project).markAllEntitiesAsDirty()
     }
   }
 
