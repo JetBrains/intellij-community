@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.ReplaceBySourceOperation
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
 
@@ -13,12 +14,21 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
  * -
  */
 
-internal class ReplaceBySourceAsTree(
-  private val thisStorage: MutableEntityStorageImpl,
-  private val replaceWithStorage: AbstractEntityStorage,
-  private val entityFilter: (EntitySource) -> Boolean,
-) {
-  fun replace() {
+internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
+
+  private lateinit var thisStorage: MutableEntityStorageImpl
+  private lateinit var replaceWithStorage: AbstractEntityStorage
+  private lateinit var entityFilter: (EntitySource) -> Boolean
+
+
+  override fun replace(
+    thisStorage: MutableEntityStorageImpl,
+    replaceWithStorage: AbstractEntityStorage,
+    entityFilter: (EntitySource) -> Boolean,
+  ) {
+    this.thisStorage = thisStorage
+    this.replaceWithStorage = replaceWithStorage
+    this.entityFilter = entityFilter
 
     val thisEntitiesToReplace = thisStorage.entitiesBySource(entityFilter)
     val replaceWithEntitiesToReplace = replaceWithStorage.entitiesBySource(entityFilter)
@@ -156,16 +166,20 @@ internal class ReplaceBySourceAsTree(
       val thisEntityData = thisChildrenMap.remove(replaceWithEntityData)
       if (thisEntityData != null) {
         when {
-          entityFilter(thisEntityData.entitySource) && entityFilter(replaceWithEntityData.entitySource) -> replaceWorkspaceData(thisEntityData, replaceWithEntityData)
-          entityFilter(thisEntityData.entitySource) && !entityFilter(replaceWithEntityData.entitySource) -> removeWorkspaceData(thisEntityData)
-          !entityFilter(thisEntityData.entitySource) && entityFilter(replaceWithEntityData.entitySource) -> replaceWorkspaceData(thisEntityData, replaceWithEntityData)
+          entityFilter(thisEntityData.entitySource) && entityFilter(replaceWithEntityData.entitySource) -> replaceWorkspaceData(
+            thisEntityData, replaceWithEntityData)
+          entityFilter(thisEntityData.entitySource) && !entityFilter(replaceWithEntityData.entitySource) -> removeWorkspaceData(
+            thisEntityData)
+          !entityFilter(thisEntityData.entitySource) && entityFilter(replaceWithEntityData.entitySource) -> replaceWorkspaceData(
+            thisEntityData, replaceWithEntityData)
           !entityFilter(thisEntityData.entitySource) && !entityFilter(replaceWithEntityData.entitySource) -> doNothingOn(thisEntityData)
         }
       }
       else {
         when {
           entityFilter(replaceWithEntityData.entitySource) -> addWorkspaceData(replaceWithEntityData)
-          !entityFilter(replaceWithEntityData.entitySource) -> Unit // TODO Should we also track replaceWith store as we do with the local one using `state`?
+          !entityFilter(
+            replaceWithEntityData.entitySource) -> Unit // TODO Should we also track replaceWith store as we do with the local one using `state`?
         }
       }
     }
@@ -173,7 +187,8 @@ internal class ReplaceBySourceAsTree(
     thisChildrenMap.keys.forEach { thisEntityData -> removeWorkspaceData(thisEntityData) }
   }
 
-  private fun replaceWorkspaceData(thisEntityData: WorkspaceEntityData<out WorkspaceEntity>, replaceWithEntityData: WorkspaceEntityData<out WorkspaceEntity>) {
+  private fun replaceWorkspaceData(thisEntityData: WorkspaceEntityData<out WorkspaceEntity>,
+                                   replaceWithEntityData: WorkspaceEntityData<out WorkspaceEntity>) {
     operations[thisEntityData.createEntityId()] = Operation.Relabel(replaceWithEntityData.createEntityId())
     state[thisEntityData.createEntityId()] = ReplaceState.Relabel
   }

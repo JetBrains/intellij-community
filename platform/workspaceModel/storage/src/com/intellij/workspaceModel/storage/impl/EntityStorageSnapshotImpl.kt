@@ -284,6 +284,16 @@ internal class MutableEntityStorageImpl(
     }
   }
 
+  internal var useNewRbs = false
+  private fun getRbsEngine(): ReplaceBySourceOperation {
+    if (useNewRbs) {
+      return ReplaceBySourceAsTree()
+    }
+    else {
+      return ReplaceBySourceAsGraph()
+    }
+  }
+
   /**
    *  TODO  Spacial cases: when source filter returns true for all entity sources.
    */
@@ -291,7 +301,7 @@ internal class MutableEntityStorageImpl(
     try {
       lockWrite()
       replaceWith as AbstractEntityStorage
-      ReplaceBySourceAsGraph.replaceBySourceAsGraph(this, replaceWith, sourceFilter)
+      getRbsEngine().replace(this, replaceWith, sourceFilter)
     }
     finally {
       unlockWrite()

@@ -603,7 +603,7 @@ class ReplaceBySourceTest {
     val anotherParent = replacement.addOoParentWithPidEntity(source = MySource)
     replacement.addOoChildForParentWithPidEntity(anotherParent, source = MySource)
 
-    ReplaceBySourceAsGraph.replaceBySourceAsGraph(builder, replacement, {it is MySource }, true)
+    ReplaceBySourceAsGraph().replaceBySourceAsGraph(builder, replacement, {it is MySource }, true)
 
     builder.assertConsistency()
   }
