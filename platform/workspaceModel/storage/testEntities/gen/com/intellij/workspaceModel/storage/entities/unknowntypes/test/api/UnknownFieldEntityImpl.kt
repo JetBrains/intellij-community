@@ -1,15 +1,18 @@
 package com.intellij.workspaceModel.storage.entities.unknowntypes.test.api
 
 import com.intellij.workspaceModel.storage.EntityInformation
-import com.intellij.workspaceModel.storage.impl.*
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import java.util.Date
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import java.util.Date
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 

@@ -1,16 +1,31 @@
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
-import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntityInformation
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.impl.EntityLink
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.extractOneToAbstractOneChild
+import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
+import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
+import com.intellij.workspaceModel.storage.impl.updateOneToAbstractOneChildOfParent
+import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
