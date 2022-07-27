@@ -3,7 +3,6 @@ package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
@@ -96,7 +95,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
 
   void shutdownAppScheduledExecutorService() {
     // LowMemoryWatcher starts background threads so stop it now to avoid RejectedExecutionException
-    Disposer.dispose(myLowMemoryWatcherManager);
+    myLowMemoryWatcherManager.shutdown();
     doShutdown();
     delayQueue.shutdown(new SchedulingWrapper.MyScheduledFutureTask<Void>(()->{}, null, 0) {
         @Override
