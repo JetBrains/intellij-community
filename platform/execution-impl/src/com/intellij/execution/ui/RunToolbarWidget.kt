@@ -1,6 +1,4 @@
-/*******************************************************************************
- * Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
- ******************************************************************************/
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui
 
 import com.intellij.execution.*
@@ -51,6 +49,7 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.SVGLoader
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.annotations.*
@@ -624,7 +623,19 @@ private class RunDropDownButtonUI : BasicButtonUI() {
         paintArrow(c, g2d, popupBounds)
       }
 
+      val fg = ColorUtil.toHtmlColor(JBColor.namedColor("RunWidget.iconColor", b.foreground))
+      val map: Map<String, String> = mapOf("#ffffff" to fg, "white" to fg)
+      val alpha = HashMap<String, Int>(map.size)
+      map.values.forEach { alpha[it] = 255 }
+      SVGLoader.setContextColorPatcher(object : SVGLoader.SvgElementColorPatcherProvider {
+        override fun forPath(path: String?): SVGLoader.SvgElementColorPatcher? {
+          return SVGLoader.newPatcher(digest = null, map, alpha)
+        }
+      })
+      SVGLoader.isColorRedefinitionContext = true
       paintIcon(g2d, c, iconRect)
+      SVGLoader.isColorRedefinitionContext = false
+      SVGLoader.setContextColorPatcher(null)
       paintText(g2d, c, textRect, text)
     }
     finally {
