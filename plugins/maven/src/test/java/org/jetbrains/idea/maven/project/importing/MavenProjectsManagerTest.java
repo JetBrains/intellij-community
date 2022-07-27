@@ -12,10 +12,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrack
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleTypeId;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -972,6 +969,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test 
   public void testForceReimport() {
+    createProjectSubDir("src/main/java");
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -986,10 +985,15 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     importProject();
     assertModules("project");
 
-    createProjectSubDir("src/main/java");
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableRootModel model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
+
+      ContentEntry contentRoot = model.getContentEntries()[0];
+      for (SourceFolder eachSourceFolders : contentRoot.getSourceFolders()) {
+        contentRoot.removeSourceFolder(eachSourceFolders);
+      }
+
       for (OrderEntry each : model.getOrderEntries()) {
         if (each instanceof LibraryOrderEntry && MavenRootModelAdapter.isMavenLibrary(((LibraryOrderEntry)each).getLibrary())) {
           model.removeOrderEntry(each);

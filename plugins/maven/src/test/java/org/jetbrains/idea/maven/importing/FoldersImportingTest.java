@@ -135,7 +135,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
       assertExcludes("project", "target", "userExcludedFolder");
     }
     else {
-      assertSources("project");
+      assertSources("project", "src/main/java");
       assertExcludes("project", "target");
     }
 
@@ -146,7 +146,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
       assertExcludes("project", "target", "userExcludedFolder");
     }
     else {
-      assertSources("project");
+      assertSources("project", "src/main/java");
       assertExcludes("project", "target");
     }
   }
@@ -1086,7 +1086,9 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testIgnoringFilesRightUnderGeneratedSources() throws Exception {
-    createStdProjectFolders();
+    if (!supportsImportOfNonExistingFolders()) {
+      createStdProjectFolders();
+    }
     createProjectSubFile("target/generated-sources/f.txt");
     createProjectSubFile("target/generated-test-sources/f.txt");
 
@@ -1098,6 +1100,8 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertResources("project", "src/main/resources");
     assertTestSources("project", "src/test/java");
     assertTestResources("project", "src/test/resources");
+
+    assertExcludes("project", "target");
   }
 
   @Test
@@ -1319,6 +1323,10 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testContentRootOutsideOfModuleDir() throws Exception {
+    if (!supportsImportOfNonExistingFolders()) {
+      createStdProjectFolders("m1");
+    }
+
     createProjectSubFile("m1/pom.xml", createPomXml(
       "<artifactId>m1-pom</artifactId>" +
       "<version>1</version>" +
@@ -1362,8 +1370,27 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
     assertModules("project", mn("project", "m1-pom"), mn("project", "m1-custom"));
 
-    assertContentRoots(mn("project", "m1-pom"), getProjectPath() + "/m1", getProjectPath() + "/pom-sources");
-    assertContentRoots(mn("project", "m1-custom"), getProjectPath() + "/custom-sources");
+    assertContentRoots(mn("project", "m1-pom"),
+                       getProjectPath() + "/m1", getProjectPath() + "/pom-sources");
+
+    assertContentRootSources(mn("project", "m1-pom"), getProjectPath() + "/m1");
+    assertContentRootTestSources(mn("project", "m1-pom"), getProjectPath() + "/m1", "src/test/java");
+    assertContentRootSources(mn("project", "m1-pom"), getProjectPath() + "/pom-sources", "");
+    assertContentRootTestSources(mn("project", "m1-pom"), getProjectPath() + "/pom-sources");
+
+    assertContentRoots(mn("project", "m1-custom"),
+                       getProjectPath() + "/custom-sources",
+                       getProjectPath() + "/m1/src/main/resources",
+                       getProjectPath() + "/m1/src/test/java",
+                       getProjectPath() + "/m1/src/test/resources");
+
+    // this is not quite correct behavior, since we have both modules (m1-pom and m2-custom) pointing at the same folders
+    // (Though, it somehow works in IJ, and it's a rare case anyway).
+    // The assertions are only to make sure the behavior is 'stable'. Should be updates once the behavior changes intentionally
+    assertContentRootSources(mn("project", "m1-custom"), getProjectPath() + "/custom-sources", "");
+    assertContentRootTestSources(mn("project", "m1-custom"), getProjectPath() + "/m1/src/test/java", "");
+    assertContentRootResources(mn("project", "m1-custom"), getProjectPath() + "/m1/src/main/resources", "");
+    assertContentRootTestResources(mn("project", "m1-custom"), getProjectPath() + "/m1/src/test/resources", "");
   }
 
   @Test

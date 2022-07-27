@@ -43,14 +43,11 @@ class WorkspaceFolderImporter(
     addCachedFolders(moduleType, cachedFolders, allFolders)
 
     for (root in ContentRootCollector.collect(allFolders)) {
-      if (!File(root.path).exists()) continue
-
       val excludedUrls = root.excludeFolders.map { exclude -> virtualFileUrlManager.fromPath(exclude.path) }
       val contentRootEntity = builder.addContentRootEntity(virtualFileUrlManager.fromPath(root.path),
                                                            excludedUrls,
                                                            emptyList(), module)
       root.sourceFolders.forEach { folder ->
-        if (!File(folder.path).exists()) return@forEach
         registerSourceRootFolder(contentRootEntity, folder)
       }
     }
@@ -197,8 +194,7 @@ class WorkspaceFolderImporter(
     fun addAnnotationSources(dir: File) = doAdd(dir, ContentRootCollector.AnnotationSourceFolder(dir.path, type))
 
     private fun doAdd(dir: File, info: ContentRootCollector.BaseGeneratedSourceFolder) {
-      val isNotEmptyDirectory = !dir.listFiles().isNullOrEmpty()
-      if (isNotEmptyDirectory) {
+      if (dir.isDirectory) {
         result.add(info)
       }
     }
