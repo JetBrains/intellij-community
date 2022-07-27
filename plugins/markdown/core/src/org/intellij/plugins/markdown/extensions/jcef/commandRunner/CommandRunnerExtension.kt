@@ -32,14 +32,13 @@ import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
-import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import java.util.concurrent.ConcurrentHashMap
 
 internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
                                       private val provider: Provider)
-  : MarkdownBrowserPreviewExtension, ResourceProvider, MarkdownEditorWithPreview.SplitLayoutListener {
+  : MarkdownBrowserPreviewExtension, MarkdownEditorWithPreview.SplitLayoutListener {
 
   override val scripts: List<String> = listOf("commandRunner/commandRunner.js")
   override val styles: List<String> = listOf("commandRunner/commandRunner.css")
@@ -75,12 +74,39 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
   }
 
 
-  override val resourceProvider: ResourceProvider = this
+  override val resourceProvider: ResourceProvider = ResourceProvider.aggregating(
+    CommandRunnerResourceProvider(),
+    CommandRunnerIconsResourceProvider()
+  )
 
-  override fun canProvide(resourceName: String): Boolean = resourceName in scripts || resourceName in styles
+  private inner class CommandRunnerResourceProvider: ResourceProvider {
+    override fun canProvide(resourceName: String): Boolean {
+      return resourceName in scripts || resourceName in styles
+    }
 
-  override fun loadResource(resourceName: String): ResourceProvider.Resource? {
-    return ResourceProvider.loadInternalResource(this::class, resourceName)
+    override fun loadResource(resourceName: String): ResourceProvider.Resource? {
+      return ResourceProvider.loadInternalResource<CommandRunnerResourceProvider>(resourceName)
+    }
+  }
+
+  private class CommandRunnerIconsResourceProvider: ResourceProvider {
+    override fun canProvide(resourceName: String): Boolean {
+      return resourceName in icons
+    }
+
+    override fun loadResource(resourceName: String): ResourceProvider.Resource? {
+      val icon = when (resourceName) {
+        RUN_LINE_ICON -> AllIcons.RunConfigurations.TestState.Run
+        RUN_BLOCK_ICON -> AllIcons.RunConfigurations.TestState.Run_run
+        else -> return null
+      }
+      val format = resourceName.substringAfterLast(".")
+      return ResourceProvider.Resource(MarkdownExtensionsUtil.loadIcon(icon, format))
+    }
+
+    companion object {
+      private val icons = setOf(RUN_LINE_ICON, RUN_BLOCK_ICON)
+    }
   }
 
 
@@ -112,8 +138,8 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
 
   private fun getHtmlForLineRunner(insideFence: Boolean, hash: String): String {
     val cssClass = "run-icon hidden" + if (insideFence) " code-block" else ""
-    return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
-           "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_LINE_ICON)}'>" +
+    return "<a class='$cssClass' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
+           "<img src='$RUN_LINE_ICON'>" +
            "</a>"
   }
 
@@ -136,7 +162,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
              "data-commandtype='block'" +
              firstLineData +
              ">" +
-             "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_BLOCK_ICON)}'>" +
+             "<img src='$RUN_BLOCK_ICON'>" +
              "</a>"
     }
     catch (e: Exception) {
@@ -234,12 +260,8 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
   }
 
 
-  class Provider: MarkdownBrowserPreviewExtension.Provider, ResourceProvider {
+  class Provider: MarkdownBrowserPreviewExtension.Provider {
     val extensions = ConcurrentHashMap<VirtualFile, CommandRunnerExtension>()
-
-    init {
-      PreviewStaticServer.instance.registerResourceProvider(this)
-    }
 
     override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
       val virtualFile = panel.virtualFile ?: return null
@@ -248,33 +270,15 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
       }
       return extensions.computeIfAbsent(virtualFile) { CommandRunnerExtension(panel, this) }
     }
-
-    val icons: List<String> = listOf(RUN_LINE_ICON, RUN_BLOCK_ICON)
-
-    override fun canProvide(resourceName: String): Boolean {
-      return resourceName in icons
-    }
-
-    override fun loadResource(resourceName: String): ResourceProvider.Resource? {
-      val icon = when (resourceName) {
-        RUN_LINE_ICON -> AllIcons.RunConfigurations.TestState.Run
-        RUN_BLOCK_ICON -> AllIcons.RunConfigurations.TestState.Run_run
-        else -> return null
-      }
-      val format = resourceName.substringAfterLast(".")
-      return ResourceProvider.Resource(MarkdownExtensionsUtil.loadIcon(icon, format))
-    }
   }
-
-
 
   companion object {
     private const val RUN_LINE_EVENT = "runLine"
     private const val RUN_BLOCK_EVENT = "runBlock"
     private const val PAGE_READY_EVENT = "pageReady"
     private const val LAYOUT_CHANGE_EVENT = "layoutChange"
-    private const val RUN_LINE_ICON = "run.png"
-    private const val RUN_BLOCK_ICON = "runrun.png"
+    private const val RUN_LINE_ICON = "commandRunner/run.png"
+    private const val RUN_BLOCK_ICON = "commandRunner/runrun.png"
 
     const val extensionId = "MarkdownCommandRunnerExtension"
 
