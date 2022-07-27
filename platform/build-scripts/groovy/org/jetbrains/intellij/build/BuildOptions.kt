@@ -283,7 +283,7 @@ class BuildOptions {
   val nonBundledPluginDirectoriesToInclude = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
 
   /**
-   * Specifies [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] build to be bundled with distributions. If `null` then `runtimeBuild` from gradle.properties will be used.
+   * Specifies [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] build to be bundled with distributions. If `null` then `runtimeBuild` from dependencies.properties will be used.
    */
   var bundledRuntimeBuild: String? = System.getProperty("intellij.build.bundled.jre.build")
 

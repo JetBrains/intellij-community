@@ -10,7 +10,7 @@ import kotlin.io.path.appendText
 import kotlin.io.path.inputStream
 
 class DependenciesProperties(context: CompilationContext) {
-  private val propertiesFile = context.paths.communityHomeDir.communityRoot.resolve("build/dependencies/gradle.properties")
+  private val propertiesFile = context.paths.communityHomeDir.communityRoot.resolve("build/dependencies/dependencies.properties")
 
   private val props: Properties by lazy {
     propertiesFile.inputStream().use {

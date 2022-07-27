@@ -73,7 +73,7 @@ final public class BuildDependenciesDownloader {
   }
 
   public static Map<String, String> getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
-    Path propertiesFile = communityRoot.getCommunityRoot().resolve("build").resolve("dependencies").resolve("gradle.properties");
+    Path propertiesFile = communityRoot.getCommunityRoot().resolve("build").resolve("dependencies").resolve("dependencies.properties");
     return BuildDependenciesUtil.loadPropertiesFile(propertiesFile);
   }
 
