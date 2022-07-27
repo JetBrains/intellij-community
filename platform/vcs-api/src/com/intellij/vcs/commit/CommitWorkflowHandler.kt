@@ -7,6 +7,9 @@ import org.jetbrains.annotations.ApiStatus
 interface CommitWorkflowHandler {
   val amendCommitHandler: AmendCommitHandler
 
+  /**
+   * @see CommitExecutor.getId
+   */
   fun getExecutor(executorId: String): CommitExecutor?
   fun isExecutorEnabled(executor: CommitExecutor): Boolean
   fun execute(executor: CommitExecutor)
