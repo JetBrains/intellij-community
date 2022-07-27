@@ -25,6 +25,7 @@ internal object SelectionUtil {
    *
    * @return *unsorted* collection of current carets and their selections.
    */
+  @JvmStatic
   @RequiresBackgroundThread
   fun obtainCaretSnapshots(action: AnAction, event: AnActionEvent): Collection<CaretSnapshot>? {
     val session = Utils.getOrCreateUpdateSession(event)
@@ -37,6 +38,7 @@ internal object SelectionUtil {
   /**
    * Same as [obtainCaretSnapshots] but only for the primary caret.
    */
+  @JvmStatic
   @RequiresBackgroundThread
   fun obtainPrimaryCaretSnapshot(action: AnAction, event: AnActionEvent): CaretSnapshot? {
     val session = Utils.getOrCreateUpdateSession(event)
