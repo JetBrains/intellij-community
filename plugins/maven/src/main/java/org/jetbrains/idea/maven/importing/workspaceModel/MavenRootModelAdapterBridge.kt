@@ -135,7 +135,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
   override fun addExcludedFolder(path: String) {
     getContentRootFor(toUrl(path))?.let {
       builder.modifyEntity(it) {
-        this.excludedUrls = this.excludedUrls + virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(path))
+        this.excludedUrls.add(virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(path)))
       }
     }
 
@@ -164,7 +164,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
 
     val dependency = ModuleDependencyItem.Exportable.ModuleDependency(ModuleId(moduleName), false, toEntityScope(scope), testJar)
     moduleEntity = builder.modifyEntity(moduleEntity) {
-      this.dependencies = this.dependencies + dependency
+      this.dependencies.add(dependency)
     }
   }
 

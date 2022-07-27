@@ -729,7 +729,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
   override fun toString(): String = "ModuleListSerializerImpl($fileUrl)"
 }
 
-fun storeSourceRootsOrder(orderOfItems: List<VirtualFileUrl>,
+fun storeSourceRootsOrder(orderOfItems: MutableList<VirtualFileUrl>,
                           contentRootEntity: ContentRootEntity,
                           builder: MutableEntityStorage) {
   if (orderOfItems.size > 1) {

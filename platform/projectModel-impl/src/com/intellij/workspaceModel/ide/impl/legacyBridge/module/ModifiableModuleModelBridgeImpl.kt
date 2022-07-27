@@ -301,7 +301,7 @@ internal class ModifiableModuleModelBridgeImpl(
     val storage = entityStorageOnDiff.current
     val moduleEntity = storage.findModuleEntity(module as ModuleBridge) ?: error("Could not resolve module entity for $module")
     val moduleGroupEntity = moduleEntity.groupPath
-    val groupPathList = groupPath?.toList()
+    val groupPathList = groupPath?.toMutableList()
 
     // TODO How to deduplicate with ModuleCustomImlDataEntity ?
     if (moduleGroupEntity?.path != groupPathList) {

@@ -460,7 +460,7 @@ class ModuleBridgesTest {
     builder.modifyEntity(moduleEntity) {
       dependencies = listOf(
         ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.persistentId, false, ModuleDependencyItem.DependencyScope.COMPILE)
-      )
+      ).toMutableList()
     }
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toSnapshot()) {

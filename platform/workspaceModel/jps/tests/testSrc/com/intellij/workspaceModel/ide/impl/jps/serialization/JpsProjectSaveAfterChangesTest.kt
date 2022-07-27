@@ -52,11 +52,12 @@ class JpsProjectSaveAfterChangesTest {
 </component>"""
       }
       builder.modifyEntity(utilModule) {
-        dependencies = dependencies.dropLast(2)
+        dependencies.removeLast()
+        dependencies.removeLast()
       }
       builder.modifyEntity(utilModule.contentRoots.first()) {
-        excludedPatterns = emptyList()
-        excludedUrls = emptyList()
+        excludedPatterns = mutableListOf()
+        excludedUrls = mutableListOf()
       }
       builder.modifyEntity(sourceRoot.asJavaSourceRoot()!!) {
         packagePrefix = ""
@@ -127,7 +128,7 @@ class JpsProjectSaveAfterChangesTest {
       val root = LibraryRoot(virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
                              LibraryRootTypeId.COMPILED)
       builder.modifyEntity(junitLibrary) {
-        roots = listOf(root)
+        roots = mutableListOf(root)
       }
     }
   }

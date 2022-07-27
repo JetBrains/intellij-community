@@ -26,8 +26,8 @@ open class VirtualFileUrlWatcher(val project: Project) {
       LibraryEntity::class, LibraryEntity.Builder::class,
       propertyName = LibraryEntity::excludedRoots.name,
       modificator = { oldVirtualFileUrl, newVirtualFileUrl ->
-        excludedRoots = excludedRoots - oldVirtualFileUrl
-        excludedRoots = excludedRoots + newVirtualFileUrl
+        excludedRoots.remove(oldVirtualFileUrl)
+        excludedRoots.add(newVirtualFileUrl)
       }
     ),
     // Content root urls
@@ -41,8 +41,8 @@ open class VirtualFileUrlWatcher(val project: Project) {
       ContentRootEntity::class, ContentRootEntity.Builder::class,
       propertyName = ContentRootEntity::excludedUrls.name,
       modificator = { oldVirtualFileUrl, newVirtualFileUrl ->
-        excludedUrls = excludedUrls - oldVirtualFileUrl
-        excludedUrls = excludedUrls + newVirtualFileUrl
+        excludedUrls.remove(oldVirtualFileUrl)
+        excludedUrls.add(newVirtualFileUrl)
       }
     ),
     // Source roots
@@ -195,8 +195,8 @@ private class LibraryRootFileWatcher : LegacyFileWatcher {
       oldLibraryRoots.forEach { oldLibraryRoot ->
         val newLibraryRoot = LibraryRoot(newVFU, oldLibraryRoot.type, oldLibraryRoot.inclusionOptions)
         diff.modifyEntity(entityWithVFU.entity) {
-          roots = roots - oldLibraryRoot
-          roots = roots + newLibraryRoot
+          roots.remove(oldLibraryRoot)
+          roots.add(newLibraryRoot)
         }
       }
     }
