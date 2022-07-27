@@ -166,6 +166,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   private final List<EditorComposite> myOpenedComposites = new CopyOnWriteArrayList<>();
 
   private final MessageListenerList<FileEditorManagerListener> myListenerList;
+  private boolean myDisposed = false;
 
   public FileEditorManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -215,7 +216,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   private void registerEditor(@NotNull Editor editor) {
     Project project = editor.getProject();
-    if (project == null || project.isDisposed()) {
+    if (project == null || project.isDisposed() || myDisposed) {
       return;
     }
     if (editor instanceof EditorEx) {
@@ -244,7 +245,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
             comp = parent;
           }
         }
-      });
+      }, this);
     }
   }
 
@@ -266,6 +267,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public void dispose() {
+    myDisposed = true;
   }
 
   private void dumbModeFinished(@NotNull Project project) {
