@@ -40,6 +40,4 @@ if (window.__IntelliJTools === undefined) {
       return false;
     }
   });
-  window.addEventListener("IdeReady", () => window.__IntelliJTools.messagePipe.post("pageReady", ""));
-
 })();
