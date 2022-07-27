@@ -26,7 +26,10 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -187,7 +190,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     list.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        panel.updatePopupSelection(list.getSelectedIndices());
+        panel.updatePopupSelection(list.getSelectedValuesList());
       }
     });
 

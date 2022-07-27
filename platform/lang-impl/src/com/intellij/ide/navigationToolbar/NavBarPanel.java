@@ -102,11 +102,11 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   private static class SelectionIndexes {
     private final int myBarIndex;
-    private final int @Nullable [] myNodePopupIndexes;
+    private final @Nullable List<Object> myNodePopupObjects;
 
-    SelectionIndexes(int barIndex, int @Nullable [] nodePopupIndexes) {
+    SelectionIndexes(int barIndex, @Nullable List<Object> nodePopupObjects) {
       myBarIndex = barIndex;
-      myNodePopupIndexes = nodePopupIndexes;
+      myNodePopupObjects = nodePopupObjects;
     }
   }
 
@@ -247,7 +247,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   public void enter() {
     if (isNodePopupActive()) {
       SelectionIndexes indexes = selectionIndexes;
-      List<Object> popupObjects = getPopupObjectsFromSelection(indexes);
+      List<Object> popupObjects = selectionIndexes == null ? null : selectionIndexes.myNodePopupObjects;
       if (popupObjects != null && !popupObjects.isEmpty()) {
         navigateInsideBar(indexes.myBarIndex, popupObjects.get(0), false);
         return;
@@ -731,25 +731,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
   }
 
-  private List<Object> getPopupObjectsFromSelection(SelectionIndexes selectionIndexes) {
-    Object barObject;
-    List<Object> popupObjects = null;
-
-    if (selectionIndexes != null) {
-      barObject = myModel.getElement(selectionIndexes.myBarIndex);
-      if (barObject != null && selectionIndexes.myNodePopupIndexes != null) {
-        popupObjects = new ArrayList<>();
-        List<Object> childObjects = myModel.getChildren(barObject);
-        for (int index: selectionIndexes.myNodePopupIndexes) {
-          if (index < 0 || index >= childObjects.size()) continue;
-          popupObjects.add(childObjects.get(index));
-        }
-      }
-    }
-
-    return popupObjects;
-  }
-
   @Override
   @Nullable
   public Object getData(@NotNull String dataId) {
@@ -758,7 +739,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
     if (selectionIndexes != null) {
       barObject = myModel.getElement(selectionIndexes.myBarIndex);
-      popupObjects = getPopupObjectsFromSelection(selectionIndexes);
+      popupObjects = selectionIndexes.myNodePopupObjects;
     }
 
     if (barObject == null) {
@@ -785,8 +766,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return JBIterable.of(selectedObject).filterMap(myModel::unwrapRaw);
   }
 
-  void updatePopupSelection(int[] indexes) {
-    selectionIndexes = new SelectionIndexes(myModel.getSelectedIndex(), indexes);
+  void updatePopupSelection(List<Object> objects) {
+    selectionIndexes = new SelectionIndexes(myModel.getSelectedIndex(), objects);
   }
 
   void updateSelection() {
