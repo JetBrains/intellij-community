@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl.url
 
 import com.intellij.workspaceModel.storage.impl.IntIdGenerator
@@ -82,7 +82,7 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return VirtualFileUrlImpl(id, manager)
   }
 
-  fun getCachedVirtualFileUrls(): List<VirtualFileUrl> = id2NodeMapping.values.mapNotNull { it.getCachedVirtualFileUrl() }
+  fun getCachedVirtualFileUrls(): List<VirtualFileUrl> = id2NodeMapping.values.mapNotNull(FilePathNode::getCachedVirtualFileUrl)
 
   internal fun add(path: String, parentNode: FilePathNode? = null): VirtualFileUrl {
     val segments = splitNames(path)
