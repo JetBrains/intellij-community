@@ -103,6 +103,12 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun <T : JComponent> cell(component: T, viewComponent: JComponent): CellImpl<T> {
     val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
     cells.add(result)
+
+    if (component is JRadioButton) {
+      @Suppress("UNCHECKED_CAST")
+      registerRadioButton(result as CellImpl<JRadioButton>, null)
+    }
+
     return result
   }
 
@@ -118,6 +124,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(component, JBScrollPane(component))
   }
 
+  @Deprecated("Remove with deprecated collapsibleGroup")
   fun cell(cell: CellBaseImpl<*>) {
     cells.add(cell)
   }
@@ -202,12 +209,10 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun radioButton(text: String, value: Any?): Cell<JBRadioButton> {
-    val buttonsGroup = dialogPanelConfig.context.getButtonsGroup() ?: throw UiDslException(
-      "Button group must be defined before using radio button")
     val result = cell(JBRadioButton(text)).applyToComponent {
       isOpaque = false
     }
-    buttonsGroup.add(result, value)
+    registerRadioButton(result, value)
     return result
   }
 
@@ -461,6 +466,12 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
       cell?.enabledFromParent(isEnabled)
     }
     rowComment?.let { it.isEnabled = isEnabled }
+  }
+
+  private fun registerRadioButton(cell: CellImpl<out JRadioButton>, value: Any?) {
+    val buttonsGroup = dialogPanelConfig.context.getButtonsGroup() ?: throw UiDslException(
+      "Button group must be defined before using radio button")
+    buttonsGroup.add(cell, value)
   }
 }
 

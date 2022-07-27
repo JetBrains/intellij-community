@@ -5,8 +5,11 @@ import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.UiDslException
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
+import javax.swing.JRadioButton
 import kotlin.reflect.KMutableProperty0
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class ButtonsGroupTest {
 
@@ -58,6 +61,42 @@ class ButtonsGroupTest {
     testButtonsGroup("b", "c", ::string)
     testButtonsGroup(Enum1.VALUE1, Enum1.VALUE2, ::enum1)
     testButtonsGroup(Enum2.VALUE1, Enum2.VALUE2, ::enum2)
+  }
+
+  @Test
+  fun testSelectionChange() {
+    var rb1 = JRadioButton()
+    var rb2 = JRadioButton()
+    panel {
+      buttonsGroup {
+        row { rb1 = radioButton("1").component }
+        row { rb2 = radioButton("2").applyToComponent { isSelected = true }.component }
+      }
+    }
+
+    checkChangeSelection(rb1, rb2)
+
+    panel {
+      buttonsGroup {
+        row { rb1 = cell(JRadioButton("1")).component }
+        row { rb2 = cell(JRadioButton("2")).applyToComponent { isSelected = true }.component }
+      }
+    }
+
+    checkChangeSelection(rb1, rb2)
+  }
+
+  /**
+   *  [rb2] is selected by default
+   */
+  private fun checkChangeSelection(rb1: JRadioButton, rb2: JRadioButton) {
+    assertFalse(rb1.isSelected)
+    assertTrue(rb2.isSelected)
+
+    rb1.isSelected = true
+
+    assertTrue(rb1.isSelected)
+    assertFalse(rb2.isSelected)
   }
 
   @Test
