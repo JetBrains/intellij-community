@@ -7,10 +7,10 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.VisibilityUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NonNls;
@@ -130,51 +130,45 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
     }
   }
 
-  public static class ConvertParameterToLocalQuickFix extends BaseConvertToLocalQuickFix<PsiParameter> {
+  private static final class ConvertParameterToLocalQuickFix extends BaseConvertToLocalQuickFix<PsiParameter> {
     @Override
     protected PsiParameter getVariable(@NotNull ProblemDescriptor descriptor) {
       return (PsiParameter)descriptor.getPsiElement().getParent();
-    }
-
-    @Override
-    protected PsiElement applyChanges(@NotNull final Project project,
-                                      @NotNull final String localName,
-                                      @Nullable final PsiExpression initializer,
-                                      @NotNull final PsiParameter parameter,
-                                      @NotNull final Collection<? extends PsiReference> references,
-                                      boolean delete,
-                                      @NotNull final NotNullFunction<? super PsiDeclarationStatement, ? extends PsiElement> action) {
-      final PsiElement scope = parameter.getDeclarationScope();
-      if (scope instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)scope;
-        if (!FileModificationService.getInstance().preparePsiElementsForWrite(method)) return null;
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-
-        final List<ParameterInfoImpl> info = new ArrayList<>();
-        for (int i = 0; i < parameters.length; i++) {
-          PsiParameter psiParameter = parameters[i];
-          if (psiParameter == parameter) continue;
-          info.add(ParameterInfoImpl.create(i).withName(psiParameter.getName()).withType(psiParameter.getType()));
-        }
-        final ParameterInfoImpl[] newParams = info.toArray(new ParameterInfoImpl[0]);
-        final String visibilityModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());
-
-        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-        SmartPsiElementPointer<PsiElement> newDeclaration = SmartPointerManager.createPointer(moveDeclaration(elementFactory, localName, parameter, initializer, action, references));
-        var processor = JavaRefactoringFactory.getInstance(project).createChangeSignatureProcessor(
-          method, false, visibilityModifier, method.getName(), method.getReturnType(), newParams, null, null, null, null
-        );
-
-        processor.run();
-        return newDeclaration.getElement();
-      }
-      return null;
     }
 
     @NotNull
     @Override
     protected String suggestLocalName(@NotNull Project project, @NotNull PsiParameter parameter, @NotNull PsiCodeBlock scope) {
       return parameter.getName();
+    }
+
+    @Override
+    @NotNull
+    protected List<PsiElement> moveDeclaration(@NotNull Project project, @NotNull PsiParameter variable) {
+      final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
+      if (references.isEmpty()) return Collections.emptyList();
+      final PsiElement scope = variable.getDeclarationScope();
+      if (!(scope instanceof PsiMethod)) return Collections.emptyList();
+      final PsiMethod method = (PsiMethod)scope;
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(method)) return Collections.emptyList();
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      final List<ParameterInfoImpl> info = new ArrayList<>();
+      for (int i = 0; i < parameters.length; i++) {
+        PsiParameter psiParameter = parameters[i];
+        if (psiParameter == variable) continue;
+        info.add(ParameterInfoImpl.create(i).withName(psiParameter.getName()).withType(psiParameter.getType()));
+      }
+      final ParameterInfoImpl[] newParams = info.toArray(new ParameterInfoImpl[0]);
+      final String visibilityModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());
+      PsiElement moved = copyVariableToMethodBody(variable, references);
+      if (moved == null) return Collections.emptyList();
+      SmartPsiElementPointer<PsiElement> newDeclaration = SmartPointerManager.createPointer(moved);
+      var processor = JavaRefactoringFactory.getInstance(project).createChangeSignatureProcessor(
+        method, false, visibilityModifier, method.getName(), method.getReturnType(), newParams,
+        null, null, null, null
+      );
+      processor.run();
+      return Collections.singletonList(Objects.requireNonNull(newDeclaration.getElement()));
     }
   }
 }

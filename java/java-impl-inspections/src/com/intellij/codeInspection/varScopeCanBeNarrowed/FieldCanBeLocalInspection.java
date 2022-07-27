@@ -29,6 +29,7 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -395,12 +396,10 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     @NotNull
     private @IntentionName String determineName(@Nullable PsiElement block) {
       if (block instanceof PsiClassInitializer) return JavaBundle.message("inspection.field.can.be.local.quickfix.initializer");
-
       if (block instanceof PsiMethod) {
         if (((PsiMethod)block).isConstructor()) return JavaBundle.message("inspection.field.can.be.local.quickfix.constructor");
         return JavaBundle.message("inspection.field.can.be.local.quickfix.one.method", ((PsiMethod)block).getName());
       }
-
       return getFamilyName();
     }
 
@@ -408,6 +407,21 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     @Override
     public String getName() {
       return myName;
+    }
+
+    @Override
+    @Nullable
+    protected PsiField getVariable(@NotNull ProblemDescriptor descriptor) {
+      return PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiField.class);
+    }
+
+    @NotNull
+    @Override
+    protected String suggestLocalName(@NotNull Project project, @NotNull PsiField field, @NotNull PsiCodeBlock scope) {
+      final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
+      final String propertyName = styleManager.variableNameToPropertyName(field.getName(), VariableKind.FIELD);
+      final String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
+      return CommonJavaRefactoringUtil.suggestUniqueVariableName(localName, scope, field);
     }
 
     @NotNull
@@ -421,32 +435,25 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       if (!groupByCodeBlocks(ReferencesSearch.search(variable, new LocalSearchScope(scope)).findAll(), refs)) return newDeclarations;
       PsiElement declaration;
       for (Collection<PsiReference> psiReferences : refs.values()) {
-        declaration = super.moveDeclaration(project, variable, psiReferences, false);
+        declaration = copyVariableToMethodBody(variable, psiReferences);
         if (declaration != null) newDeclarations.add(declaration);
       }
       return WriteAction.compute(() -> {
         if (!newDeclarations.isEmpty()) {
           final PsiElement lastDeclaration = newDeclarations.get(newDeclarations.size() - 1);
-          deleteSourceVariable(project, variable, lastDeclaration);
+          deleteField(variable, lastDeclaration);
         }
         return newDeclarations;
       });
     }
 
-    @Override
-    @Nullable
-    protected PsiField getVariable(@NotNull ProblemDescriptor descriptor) {
-      return PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiField.class);
-    }
-
-    @NotNull
-    @Override
-    protected String suggestLocalName(@NotNull Project project, @NotNull PsiField field, @NotNull PsiCodeBlock scope) {
-      final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-
-      final String propertyName = styleManager.variableNameToPropertyName(field.getName(), VariableKind.FIELD);
-      final String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
-      return CommonJavaRefactoringUtil.suggestUniqueVariableName(localName, scope, field);
+    private static void deleteField(@NotNull PsiField variable, PsiElement newDeclaration) {
+      CommentTracker tracker = new CommentTracker();
+      WriteAction.run(() -> {
+        variable.normalizeDeclaration();
+        tracker.delete(variable);
+        tracker.insertCommentsBefore(newDeclaration);
+      });
     }
   }
 }
