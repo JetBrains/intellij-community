@@ -235,7 +235,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
     RadComponent component = data.getComponent();
     PsiFile file = data.getContainingFile();
     TextRange range = getComponentRange(component, file);
-    UsageInfo usageInfo = range != null ? new UsageInfo(file, range.getStartOffset(), range.getEndOffset()) : new UsageInfo(file);
+    UsageInfo usageInfo = range != null ? new UsageInfo(file, range, false) : new UsageInfo(file);
     return Collections.singletonList(usageInfo);
   }
 
