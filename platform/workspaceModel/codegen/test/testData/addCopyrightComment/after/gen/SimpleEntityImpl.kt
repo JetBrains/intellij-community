@@ -1,4 +1,4 @@
-//new comment
+//some copyright comment
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.workspaceModel.storage.EntityInformation
@@ -26,13 +26,10 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
 
   }
 
-  override var version: Int = 0
   @JvmField
   var _name: String? = null
   override val name: String
     get() = _name!!
-
-  override var isSimple: Boolean = false
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -64,11 +61,11 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SimpleEntity#entitySource should be initialized")
-      }
       if (!getEntityData().isNameInitialized()) {
         error("Field SimpleEntity#name should be initialized")
+      }
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field SimpleEntity#entitySource should be initialized")
       }
     }
 
@@ -77,12 +74,12 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
     }
 
 
-    override var version: Int
-      get() = getEntityData().version
+    override var name: String
+      get() = getEntityData().name
       set(value) {
         checkModificationAllowed()
-        getEntityData().version = value
-        changedProperty.add("version")
+        getEntityData().name = value
+        changedProperty.add("name")
       }
 
     override var entitySource: EntitySource
@@ -94,35 +91,15 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
 
       }
 
-    override var name: String
-      get() = getEntityData().name
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().name = value
-        changedProperty.add("name")
-      }
-
-    override var isSimple: Boolean
-      get() = getEntityData().isSimple
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().isSimple = value
-        changedProperty.add("isSimple")
-      }
-
     override fun getEntityData(): SimpleEntityData = result ?: super.getEntityData() as SimpleEntityData
     override fun getEntityClass(): Class<SimpleEntity> = SimpleEntity::class.java
   }
 }
 
 class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
-  var version: Int = 0
   lateinit var name: String
-  var isSimple: Boolean = false
-
 
   fun isNameInitialized(): Boolean = ::name.isInitialized
-
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SimpleEntity> {
     val modifiable = SimpleEntityImpl.Builder(null)
@@ -138,9 +115,7 @@ class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
 
   override fun createEntity(snapshot: EntityStorage): SimpleEntity {
     val entity = SimpleEntityImpl()
-    entity.version = version
     entity._name = name
-    entity.isSimple = isSimple
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
@@ -163,10 +138,8 @@ class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
 
     other as SimpleEntityData
 
-    if (this.version != other.version) return false
-    if (this.entitySource != other.entitySource) return false
     if (this.name != other.name) return false
-    if (this.isSimple != other.isSimple) return false
+    if (this.entitySource != other.entitySource) return false
     return true
   }
 
@@ -176,17 +149,13 @@ class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
 
     other as SimpleEntityData
 
-    if (this.version != other.version) return false
     if (this.name != other.name) return false
-    if (this.isSimple != other.isSimple) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + version.hashCode()
     result = 31 * result + name.hashCode()
-    result = 31 * result + isSimple.hashCode()
     return result
   }
 }

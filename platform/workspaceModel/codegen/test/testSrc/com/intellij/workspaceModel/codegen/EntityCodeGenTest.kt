@@ -49,6 +49,10 @@ class EntityCodeGenTest: CodeGenerationTestBase() {
     doTest(keepUnknownFields = true)
   }
 
+  fun testAddCopyrightComment() {
+    doTest(keepUnknownFields = true)
+  }
+
   private fun doTest(keepUnknownFields: Boolean = false) {
     generateAndCompare(getExpectedDir(), getExpectedDir().resolve("gen"), keepUnknownFields)
   }

@@ -27,9 +27,7 @@ import com.intellij.workspaceModel.codegen.engine.impl.CodeGeneratorImpl
 import com.intellij.workspaceModel.codegen.model.convertToObjModules
 import com.intellij.workspaceModel.codegen.utils.Imports
 import com.intellij.workspaceModel.storage.*
-import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.children
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -108,6 +106,7 @@ object CodeWriter {
               val targetDirectory = PsiManager.getInstance(project).findDirectory(packageFolder)!!
               val implImports = Imports(apiFile.packageFqName.asString())
               val implFile = psiFactory.createFile("${code.target.name}Impl.kt", implImports.findAndRemoveFqns(implementationClassText))
+              copyHeaderComment(apiFile, implFile)
               apiClass.containingKtFile.importDirectives.mapNotNull { it.importPath }.forEach { import ->
                 implImports.add(import.pathStr)
               }
@@ -153,6 +152,19 @@ object CodeWriter {
       }, "Generate Code for Workspace Entities in '${sourceFolder.name}'", null)
     } else {
       LOG.info("Not found types for generation")
+    }
+  }
+
+  private fun copyHeaderComment(apiFile: KtFile, implFile: KtFile) {
+    val apiPackageDirectiveNode = apiFile.packageDirective?.node ?: return
+    val fileNode = implFile.node
+    var nodeToCopy = apiPackageDirectiveNode.treePrev
+    var anchorBefore = fileNode.firstChildNode
+    while (nodeToCopy != null) {
+      val copied = nodeToCopy.copyElement()
+      fileNode.addChild(copied, anchorBefore)
+      anchorBefore = copied
+      nodeToCopy = nodeToCopy.treePrev
     }
   }
 

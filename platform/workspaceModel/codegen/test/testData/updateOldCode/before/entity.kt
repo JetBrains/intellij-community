@@ -1,3 +1,4 @@
+//new comment
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.workspaceModel.storage.WorkspaceEntity
