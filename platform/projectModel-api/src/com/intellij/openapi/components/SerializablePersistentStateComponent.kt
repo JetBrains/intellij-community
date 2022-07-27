@@ -44,24 +44,24 @@ abstract class SerializablePersistentStateComponent<T : Any> protected construct
   private var timestamp = 0L
 
   @Suppress("UNCHECKED_CAST")
-  override fun getState(): T = STATE_HANDLE.getVolatile(this) as T
+  final override fun getState(): T = STATE_HANDLE.getVolatile(this) as T
 
   fun setState(newState: T) {
     STATE_HANDLE.setVolatile(this, newState)
   }
 
-  override fun loadState(state: T) {
+  final override fun loadState(state: T) {
     setState(state)
   }
 
-  override fun getStateModificationCount(): Long = TIMESTAMP_HANDLE.getVolatile(this) as Long
+  final override fun getStateModificationCount(): Long = TIMESTAMP_HANDLE.getVolatile(this) as Long
 
   /**
    * See [java.util.concurrent.atomic.AtomicReference.updateAndGet].
    *
    * @param updateFunction a function to merge states
    */
-  protected fun updateState(updateFunction: (currentState: T) -> T) {
+  protected inline fun updateState(updateFunction: (currentState: T) -> T) {
     var prev = getState()
     var next: T? = null
     var haveNext = false
