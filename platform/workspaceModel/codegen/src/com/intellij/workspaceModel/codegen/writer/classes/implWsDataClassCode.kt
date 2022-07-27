@@ -30,8 +30,8 @@ val ObjClass<*>.javaDataName
 
 val ObjClass<*>.isEntityWithPersistentId: Boolean
   get() = superTypes.any { 
-    it is KtInterfaceType && it.shortName == "WorkspaceEntityWithPersistentId" 
-    || it is ObjClass<*> && it.isEntityWithPersistentId 
+    it is KtInterfaceType && it.shortName == WorkspaceEntityWithPersistentId::class.java.simpleName 
+    || it is ObjClass<*> && (it.javaFullName.decoded == WorkspaceEntityWithPersistentId::class.java.name || it.isEntityWithPersistentId) 
   }
 
 fun ObjClass<*>.implWsDataClassCode(): String {
