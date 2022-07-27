@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.runActivity
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -250,16 +251,14 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
   suspend fun restoreEditors(): JPanel? {
     val element = splittersElement ?: return null
-    manager.project.putUserData(OPEN_FILES_ACTIVITY,
-                                StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT,
-                                                              ActivityCategory.DEFAULT))
-    val restoringEditors = StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING)
-    val component = UIBuilder(this).process(element, topPanel)
-    if (component != null) {
-      component.isFocusable = false
+    manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
+    return runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
+      val component = UIBuilder(this).process(element, topPanel)
+      if (component != null) {
+        component.isFocusable = false
+      }
+      component
     }
-    restoringEditors.end()
-    return component
   }
 
   fun addSelectedEditorsTo(result: MutableCollection<FileEditor>) {
@@ -809,7 +808,7 @@ private class MyTransferHandler(private val splitters: EditorsSplitters) : Trans
 
 private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeReader<JPanel> {
   override suspend fun processFiles(fileElements: List<Element>, tabSizeLimit: Int, context: JPanel?): JPanel {
-    val window = withContext(Dispatchers.EDT) {
+    val window = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val editorWindow = context?.let { splitters.findWindowWith(it) } ?: splitters.createEditorWindow()
       splitters.setCurrentWindow(window = editorWindow, requestFocus = false)
       if (tabSizeLimit != 1) {
@@ -894,7 +893,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeRea
       val proportion = element.getAttributeValue("split-proportion").toFloat()
       val firstComponent = process(firstChild!!, null)!!
       val secondComponent = process(secondChild!!, null)!!
-      return withContext(Dispatchers.EDT) {
+      return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         val panel = JPanel(BorderLayout())
         panel.isOpaque = false
         val splitter = EditorsSplitters.createSplitter(orientation = orientation, proportion = proportion, minProp = 0.1f, maxProp = 0.9f)
@@ -908,7 +907,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeRea
 
     var firstComponent: JPanel
     var secondComponent: JPanel
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val component = context.getComponent(0)
       if (component is Splitter) {
         firstComponent = component.firstComponent as JPanel

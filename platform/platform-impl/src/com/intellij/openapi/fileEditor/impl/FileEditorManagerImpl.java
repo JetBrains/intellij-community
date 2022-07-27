@@ -4,7 +4,6 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.MaximizeEditorInSplitAction;
@@ -50,11 +49,9 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -1690,9 +1687,10 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   @ApiStatus.Internal
-  public final void init() {
+  public final @NotNull EditorsSplitters init() {
     //myFocusWatcher.install(myWindows.getComponent ());
-    getMainSplitters().startListeningFocus();
+    EditorsSplitters splitters = initUI();
+    splitters.startListeningFocus();
 
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
@@ -1710,25 +1708,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
     // extends/cuts number of opened tabs. Also updates location of tabs
     connection.subscribe(UISettingsListener.TOPIC, new MyUISettingsListener());
-
-    StartupManager.getInstance(myProject).runAfterOpened(() -> {
-      if (myProject.isDisposed()) {
-        return;
-      }
-
-      ApplicationManager.getApplication().invokeLater(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          Long startTime = myProject.getUserData(ProjectImpl.CREATION_TIME);
-          if (startTime != null) {
-            long time = TimeoutUtil.getDurationMillis(startTime.longValue());
-            LifecycleUsageTriggerCollector.onProjectOpenFinished(myProject, time);
-
-            LOG.info("Project opening took " + time + " ms");
-          }
-        }, myProject.getDisposed());
-        // group 1
-      }, "", null), myProject.getDisposed());
-    });
+    return splitters;
   }
 
   @Override

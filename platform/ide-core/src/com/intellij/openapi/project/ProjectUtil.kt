@@ -252,30 +252,6 @@ fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, ha
   return baseDir.resolve(getProjectCacheFileName(forceNameUse, hashSeparator))
 }
 
-/**
- * Add one-time projectOpened listener.
- */
-fun runWhenProjectOpened(project : Project, handler: Runnable) {
-  runWhenProjectOpened(project) {
-    handler.run()
-  }
-}
-
-/**
- * Add one-time projectOpened listener.
- */
-inline fun runWhenProjectOpened(project: Project? = null, crossinline handler: (project: Project) -> Unit) {
-  val connection = (project ?: ApplicationManager.getApplication()).messageBus.simpleConnect()
-  connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-    override fun projectOpened(eventProject: Project) {
-      if (project == null || project === eventProject) {
-        connection.disconnect()
-        handler(eventProject)
-      }
-    }
-  })
-}
-
 inline fun processOpenedProjects(processor: (Project) -> Unit) {
   for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: return)) {
     if (project.isDisposed || !project.isInitialized) {
