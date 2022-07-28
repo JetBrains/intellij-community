@@ -1915,7 +1915,10 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitDeconstructionPattern(@NotNull PsiDeconstructionPattern deconstructionPattern) {
-    if (myType1 == JavaElementType.DECONSTRUCTION_LIST && myType2 == JavaElementType.DECONSTRUCTION_PATTERN_VARIABLE) {
+    if (myType1 == JavaElementType.TYPE && myType2 == JavaElementType.DECONSTRUCTION_LIST) {
+      createSpaceInCode(myJavaSettings.SPACE_BEFORE_DECONSTRUCTION_LIST);
+    }
+    else if (myType1 == JavaElementType.DECONSTRUCTION_LIST && myType2 == JavaElementType.DECONSTRUCTION_PATTERN_VARIABLE) {
       createSpaceInCode(true);
     }
   }

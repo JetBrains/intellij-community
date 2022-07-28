@@ -134,6 +134,14 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
    */
   public boolean SPACE_WITHIN_DECONSTRUCTION_LIST = false;
 
+  /**
+   * <pre>
+   * case A (int x) -> {}
+   *       ^
+   * </pre>
+   */
+  public boolean SPACE_BEFORE_DECONSTRUCTION_LIST = false;
+
   public boolean useFqNamesInJavadocAlways() {
     return CLASS_NAMES_IN_JAVADOC == FULLY_QUALIFY_NAMES_ALWAYS;
   }
