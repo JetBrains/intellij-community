@@ -23,21 +23,41 @@ abstract class SuspendingReadWriteTest : CancellableReadActionTests() {
   fun context(): Unit = timeoutRunBlocking {
     val application = ApplicationManager.getApplication()
 
-    assertNull(Cancellation.currentJob())
-    assertNull(ProgressManager.getGlobalProgressIndicator())
-    application.assertReadAccessNotAllowed()
+    fun assertEmptyContext() {
+      assertNull(Cancellation.currentJob())
+      assertNull(ProgressManager.getGlobalProgressIndicator())
+      application.assertReadAccessNotAllowed()
+    }
 
-    val result = cra {
+    fun assertReadActionWithCurrentJob() {
       assertNotNull(Cancellation.currentJob())
       assertNull(ProgressManager.getGlobalProgressIndicator())
       application.assertReadAccessAllowed()
+    }
+
+    fun assertReadActionWithoutCurrentJob() {
+      assertNull(Cancellation.currentJob())
+      assertNull(ProgressManager.getGlobalProgressIndicator())
+      application.assertReadAccessAllowed()
+    }
+
+    assertEmptyContext()
+
+    val result = cra {
+      assertReadActionWithCurrentJob()
+      runBlockingCancellable {
+        assertReadActionWithoutCurrentJob() // TODO consider explicitly turning off RA inside runBlockingCancellable
+        withContext(Dispatchers.Default) {
+          assertEmptyContext()
+        }
+        assertReadActionWithoutCurrentJob()
+      }
+      assertReadActionWithCurrentJob()
       42
     }
     assertEquals(42, result)
 
-    assertNull(Cancellation.currentJob())
-    assertNull(ProgressManager.getGlobalProgressIndicator())
-    application.assertReadAccessNotAllowed()
+    assertEmptyContext()
   }
 
   @RepeatedTest(repetitions)
