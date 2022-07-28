@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.unboxing.problem.descriptor");
+    return InspectionGadgetsBundle.message("unnecessary.unboxing.problem.descriptor");
   }
 
   @Override
@@ -85,13 +84,17 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "unnecessary.unboxing.remove.quickfix");
+      return InspectionGadgetsBundle.message("unnecessary.unboxing.remove.quickfix");
     }
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)descriptor.getPsiElement();
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement grandParent = element.getParent().getParent();
+      if (!(grandParent instanceof PsiMethodCallExpression)) {
+        return;
+      }
+      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)grandParent;
       final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       final PsiExpression strippedQualifier = PsiUtil.skipParenthesizedExprDown(qualifier);
@@ -101,9 +104,9 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       CommentTracker commentTracker = new CommentTracker();
       if (strippedQualifier instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)strippedQualifier;
-        final PsiElement element = referenceExpression.resolve();
-        if (element instanceof PsiField) {
-          final PsiField field = (PsiField)element;
+        final PsiElement target = referenceExpression.resolve();
+        if (target instanceof PsiField) {
+          final PsiField field = (PsiField)target;
           final PsiClass containingClass = field.getContainingClass();
           if (containingClass == null) {
             return;
@@ -150,7 +153,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       if (qualifier == null || isUnboxingNecessary(expression, qualifier)) {
         return;
       }
-      registerError(expression);
+      registerMethodCallError(expression);
     }
 
     private boolean isUnboxingNecessary(@NotNull PsiExpression expression, @NotNull PsiExpression unboxedExpression) {

@@ -48,10 +48,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseIn
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    final String replacementString = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker(), false);
-    return InspectionGadgetsBundle.message(
-      "unnecessary.temporary.on.conversion.from.string.problem.descriptor",
-      replacementString);
+    return InspectionGadgetsBundle.message("unnecessary.temporary.on.conversion.from.string.display.name");
   }
 
   @Nullable
@@ -107,7 +104,12 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseIn
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression expression = (PsiMethodCallExpression)descriptor.getPsiElement();
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement grandParent = element.getParent().getParent();
+      if (!(grandParent instanceof PsiMethodCallExpression)) {
+        return;
+      }
+      final PsiMethodCallExpression expression = (PsiMethodCallExpression)grandParent;
       final CommentTracker commentTracker = new CommentTracker();
       final String newExpression = calculateReplacementExpression(expression, commentTracker, true);
       if (newExpression == null) return;
@@ -122,8 +124,6 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseIn
 
   private static class UnnecessaryTemporaryObjectVisitor extends BaseInspectionVisitor {
 
-    /**
-     */
     @NonNls private static final Map<String, String> s_basicTypeMap = new HashMap<>(7);
 
     static {
@@ -145,14 +145,12 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseIn
       if (!basicTypeMap.containsValue(methodName)) {
         return;
       }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (!(qualifier instanceof PsiNewExpression)) {
         return;
       }
       final PsiNewExpression newExpression = (PsiNewExpression)qualifier;
-      final PsiExpressionList argumentList =
-        newExpression.getArgumentList();
+      final PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) {
         return;
       }
@@ -176,7 +174,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseIn
       if (!mappingMethod.equals(methodName)) {
         return;
       }
-      registerError(expression, expression);
+      registerMethodCallError(expression, expression);
     }
   }
 }

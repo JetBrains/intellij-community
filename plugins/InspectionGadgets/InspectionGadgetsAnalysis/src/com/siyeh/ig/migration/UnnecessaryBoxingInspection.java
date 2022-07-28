@@ -61,12 +61,14 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     if (infos.length == 0) {
       return InspectionGadgetsBundle.message("unnecessary.boxing.problem.descriptor");
     }
-    return InspectionGadgetsBundle.message("unnecessary.boxing.inside.value.of.problem.descriptor");
+    PsiType type = (PsiType)infos[0];
+    String parseMethod = (String)infos[1];
+    return InspectionGadgetsBundle.message("unnecessary.boxing.inside.value.of.problem.descriptor", type.getPresentableText(), parseMethod);
   }
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return infos.length == 0 ? new UnnecessaryBoxingFix() : new UnnecessaryBoxingFix((PsiType)infos[0]);
+    return infos.length == 0 ? new UnnecessaryBoxingFix() : new UnnecessaryBoxingFix((PsiType)infos[0], (String)infos[1]);
   }
 
   private static final class UnnecessaryBoxingFix extends InspectionGadgetsFix {
@@ -77,8 +79,8 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       this.name = InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix");
     }
 
-    private UnnecessaryBoxingFix(PsiType retType) {
-      this.name = CommonQuickFixBundle.message("fix.replace.with.x", JavaPsiBoxingUtils.getParseMethod(retType));
+    private UnnecessaryBoxingFix(PsiType retType, String parseMethod) {
+      this.name = CommonQuickFixBundle.message("fix.replace.with.x", retType.getPresentableText() + '.' + parseMethod + "()");
     }
 
     @Override
@@ -89,7 +91,11 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
 
     @Override
     public void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
-      final PsiCallExpression expression = (PsiCallExpression)descriptor.getPsiElement();
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiCallExpression.class);
+      if (expression == null) {
+        return;
+      }
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) {
         return;
@@ -215,7 +221,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
           return;
         }
       }
-      registerError(expression);
+      registerNewExpressionError(expression);
     }
 
     @Override
@@ -249,8 +255,11 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       if (TypeUtils.isJavaLangString(boxedExpressionType)) {
         final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
         final PsiType methodReturnType = method.getReturnType();
-        if (expectedType instanceof PsiPrimitiveType && JavaPsiBoxingUtils.getParseMethod(methodReturnType) != null) {
-          registerError(expression, methodReturnType);
+        if (expectedType instanceof PsiPrimitiveType) {
+          final String parseMethod = JavaPsiBoxingUtils.getParseMethod(methodReturnType);
+          if (parseMethod != null) {
+            registerMethodCallError(expression, methodReturnType, parseMethod);
+          }
         }
         return;
       }
@@ -266,7 +275,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
           return;
         }
       }
-      registerError(expression);
+      registerMethodCallError(expression);
     }
 
     private boolean isBoxingNecessary(PsiExpression boxingExpression, PsiExpression boxedExpression) {
