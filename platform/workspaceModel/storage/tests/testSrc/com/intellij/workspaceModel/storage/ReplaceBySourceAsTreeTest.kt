@@ -3,13 +3,13 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import com.intellij.testFramework.assertInstanceOf
 import com.intellij.workspaceModel.storage.entities.test.api.*
+import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.ReplaceBySourceAsGraph
+import com.intellij.workspaceModel.storage.impl.ReplaceBySourceAsTree
 import com.intellij.workspaceModel.storage.impl.assertConsistency
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -17,6 +17,7 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
+import kotlin.test.assertNotNull
 
 
 /**
@@ -50,6 +51,7 @@ import org.junit.rules.ExpectedException
 class ReplaceBySourceAsTreeTest {
 
   private lateinit var builder: MutableEntityStorageImpl
+  private lateinit var replacement: MutableEntityStorageImpl
 
   @JvmField
   @Rule
@@ -58,26 +60,9 @@ class ReplaceBySourceAsTreeTest {
   @Before
   fun setUp() {
     builder = createEmptyBuilder()
+    replacement = createEmptyBuilder()
     builder.useNewRbs = true
-  }
-
-  private fun MutableEntityStorageImpl.addSampleWpidEntity(
-    stringProperty: String,
-    source: EntitySource = SampleEntitySource("test"),
-    booleanProperty: Boolean = false,
-    stringListProperty: MutableList<String> = ArrayList(),
-    stringSetProperty: MutableSet<String> = LinkedHashSet(),
-    virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
-    fileProperty: VirtualFileUrl = virtualFileManager.fromUrl("file:///tmp"),
-    info: String = "",
-    stringMapProperty: MutableMap<String, String> = HashMap(),
-  ): SampleWithPersistentIdEntity {
-    val entity = SampleWithPersistentIdEntity(booleanProperty, stringProperty, stringListProperty, stringMapProperty, fileProperty,
-                                              source) {
-      this.children = emptyList()
-    }
-    this.addEntity(entity)
-    return entity
+    builder.keepLastRbsEngine = true
   }
 
   @Test
@@ -690,7 +675,120 @@ class ReplaceBySourceAsTreeTest {
     builder.assertConsistency()
   }
 
+  @Test
+  fun `replace with unmatching tree`() {
+    val entity = builder add NamedEntity("Data", MySource) {
+      children = listOf(
+        NamedChildEntity("ChildData", MySource),
+        NamedChildEntity("AnotherChildData", MySource),
+      )
+    }
+
+    val newEntity = replacement add NamedEntity("Data", AnotherSource) {
+      children = listOf(
+        NamedChildEntity("ChildData", AnotherSource),
+        NamedChildEntity("AnotherChildData", AnotherSource),
+      )
+    }
+
+    rbsMySources()
+
+    builder.assertConsistency()
+    assertNoNamedEntities()
+    assertNoNamedChildEntities()
+
+    thisStateCheck {
+      entity assert ReplaceState.Remove
+      entity.children.forEach { child ->
+        child assert ReplaceState.Remove
+      }
+    }
+
+    replaceWithCheck {
+      newEntity assert ReplaceWithState.Processed
+    }
+  }
+
+  @Test
+  fun `no changes in root`() {
+    val entity = builder add NamedEntity("Data", AnotherSource) {
+      children = listOf(
+        NamedChildEntity("data", MySource)
+      )
+    }
+    val newEntity = replacement add NamedEntity("Data", AnotherSource)
+
+    rbsMySources()
+
+    builder.assertConsistency()
+    assertSingleNameEntity("Data")
+    assertNoNamedChildEntities()
+
+    thisStateCheck {
+      entity assert ReplaceState.Relink.NoChange(listOf(NamedChildEntity::class.java))
+    }
+
+    replaceWithCheck {
+      newEntity assert ReplaceWithState.NoChange
+    }
+  }
+
+  private inner class ThisStateChecker {
+    infix fun WorkspaceEntity.assert(state: ReplaceState) {
+      val thisState = engine.thisState[this.base.id]
+      assertNotNull(thisState)
+      if (state is ReplaceState.Relink) {
+        assertEquals(state.javaClass, thisState.javaClass)
+        assertEquals(state.linkedChildren.toHashSet(), (thisState as ReplaceState.Relink).linkedChildren.toHashSet())
+      } else {
+        assertEquals(state, thisState)
+      }
+    }
+  }
+
+  private inner class ReplaceStateChecker {
+    infix fun WorkspaceEntity.assert(state: ReplaceWithState) {
+      assertEquals(state, engine.replaceWithState[this.base.id])
+    }
+  }
+
+  private fun thisStateCheck(checks: ThisStateChecker.() -> Unit) {
+    ThisStateChecker().checks()
+  }
+
+  private fun replaceWithCheck(checks: ReplaceStateChecker.() -> Unit) {
+    ReplaceStateChecker().checks()
+  }
+
+  private val WorkspaceEntity.base: WorkspaceEntityBase
+    get() = this as WorkspaceEntityBase
+
+  private fun assertNoNamedEntities() {
+    assertTrue(builder.entities(NamedEntity::class.java).toList().isEmpty())
+  }
+
+  private fun assertSingleNameEntity(name: String) {
+    val entities = builder.entities(NamedEntity::class.java).toList()
+    assertEquals(1, entities.size)
+    assertEquals(name, entities.single().myName)
+  }
+
+  private fun assertNoNamedChildEntities() {
+    assertTrue(builder.entities(NamedChildEntity::class.java).toList().isEmpty())
+  }
+
+  private fun rbsAllSources() {
+    builder.replaceBySource(trueSources, replacement)
+  }
+
+  private fun rbsMySources() {
+    builder.replaceBySource({ it is MySource }, replacement)
+  }
+
   private fun resetChanges() {
     builder = builder.toSnapshot().toBuilder() as MutableEntityStorageImpl
   }
+
+  private val engine: ReplaceBySourceAsTree
+    get() = builder.engine as ReplaceBySourceAsTree
 }

@@ -284,7 +284,9 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  internal var useNewRbs = false
+  internal var useNewRbs = true
+  internal var keepLastRbsEngine = false
+  internal var engine: ReplaceBySourceOperation? = null
   private fun getRbsEngine(): ReplaceBySourceOperation {
     if (useNewRbs) {
       return ReplaceBySourceAsTree()
@@ -301,7 +303,11 @@ internal class MutableEntityStorageImpl(
     try {
       lockWrite()
       replaceWith as AbstractEntityStorage
-      getRbsEngine().replace(this, replaceWith, sourceFilter)
+      val rbsEngine = getRbsEngine()
+      if (keepLastRbsEngine) {
+        engine = rbsEngine
+      }
+      rbsEngine.replace(this, replaceWith, sourceFilter)
     }
     finally {
       unlockWrite()
