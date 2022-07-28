@@ -70,16 +70,16 @@
         <debugger.positionManagerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManagerFactory"/>
         <debugger.codeFragmentFactory implementation="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentFactory"/>
         <debuggerEditorTextProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.debugger.core.EnclosingKotlinEditorTextProvider"/>
-        <debuggerClassFilterProvider implementation="org.jetbrains.kotlin.idea.debugger.filter.KotlinDebuggerInternalClassesFilterProvider"/>
+        <debuggerClassFilterProvider implementation="org.jetbrains.kotlin.idea.debugger.core.filter.KotlinDebuggerInternalClassesFilterProvider"/>
         <debugger.sourcePositionProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionProvider"/>
         <debugger.sourcePositionHighlighter implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionHighlighter"/>
         <debugger.frameExtraVarsProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinFrameExtraVariablesProvider"/>
-        <debugger.extraSteppingFilter implementation="org.jetbrains.kotlin.idea.debugger.filter.KotlinExtraSteppingFilter"/>
+        <debugger.extraSteppingFilter implementation="org.jetbrains.kotlin.idea.debugger.core.filter.KotlinExtraSteppingFilter"/>
         <xdebugger.settings implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerSettings"/>
         <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType"/>
         <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType" order="first"/>
         <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFunctionBreakpointType"/>
-        <debugger.syntheticProvider implementation="org.jetbrains.kotlin.idea.debugger.filter.KotlinSyntheticTypeComponentProvider"/>
+        <debugger.syntheticProvider implementation="org.jetbrains.kotlin.idea.debugger.core.filter.KotlinSyntheticTypeComponentProvider"/>
         <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFieldBreakpointHandlerFactory"/>
         <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinLineBreakpointHandlerFactory"/>
         <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFunctionBreakpointHandlerFactory"/>
@@ -112,7 +112,7 @@
 
         <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider"/>
 
-        <postStartupActivity implementation="org.jetbrains.kotlin.idea.debugger.filter.JvmDebuggerAddFilterStartupActivity"/>
+        <postStartupActivity implementation="org.jetbrains.kotlin.idea.debugger.core.filter.JvmDebuggerAddFilterStartupActivity"/>
 
         <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilableFileTypesProvider" />
 

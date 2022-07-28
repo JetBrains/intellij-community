@@ -1,22 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger.filter
+package org.jetbrains.kotlin.idea.debugger.core.filter
 
 import com.intellij.debugger.engine.ExtraSteppingFilter
 import com.intellij.debugger.engine.SuspendContext
 import com.intellij.debugger.settings.DebuggerSettings
 import com.sun.jdi.Location
 import com.sun.jdi.request.StepRequest
-import org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider
-import org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManager
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.base.util.safeGetSourcePosition
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
-import org.jetbrains.kotlin.idea.debugger.core.isInSuspendMethod
-import org.jetbrains.kotlin.idea.debugger.core.isKotlinFakeLineNumber
-import org.jetbrains.kotlin.idea.debugger.core.isOnSuspendReturnOrReenter
-import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
+import org.jetbrains.kotlin.idea.debugger.core.*
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 
 class KotlinExtraSteppingFilter : ExtraSteppingFilter {
