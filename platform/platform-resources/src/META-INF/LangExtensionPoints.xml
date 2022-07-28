@@ -393,6 +393,13 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.codeVision.ui.renderers.painters.ICodeVisionEntryBasePainter"/>
     </extensionPoint>
 
+    <extensionPoint name="codeInsight.codeVisionSettingsPreviewLanguage"
+                    beanClass="com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsPreviewLanguage"
+                    dynamic="true">
+      <with attribute="modelId"/>
+      <with attribute="language"/>
+    </extensionPoint>
+
     <extensionPoint name="codeInsight.typeInfo" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ExpressionTypeProvider"/>
     </extensionPoint>

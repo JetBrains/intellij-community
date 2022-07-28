@@ -6,8 +6,6 @@ import com.intellij.codeInsight.hints.codeVision.CodeVisionPass
 import com.intellij.codeInsight.hints.codeVision.CodeVisionProviderAdapter
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
@@ -58,17 +56,12 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
     get() = getCasePreview()
 
   override val previewLanguage: Language?
-    get() {
-      for (provider in providers) {
-        val split = provider.id.split(".")
-        if (split.size != 2) continue
-        val fileType = FileTypeManager.getInstance().getFileTypeByExtension(split[0])
-        if (fileType is LanguageFileType) {
-          return fileType.language
-        }
-      }
-      return Language.findLanguageByID("JAVA")
-    }
+    get() =
+      CodeVisionSettingsPreviewLanguage.EP_NAME.extensionList.asSequence()
+        .filter { it.modelId == id }
+        .map { Language.findLanguageByID(it.language) }
+        .firstOrNull()
+      ?: Language.findLanguageByID("JAVA")
 
   override fun isModified(): Boolean {
     return (isEnabled != (settings.isProviderEnabled(id) && settings.codeVisionEnabled)
