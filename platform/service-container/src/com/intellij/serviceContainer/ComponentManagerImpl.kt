@@ -139,7 +139,7 @@ abstract class ComponentManagerImpl(
   internal var componentContainerIsReadonly: String? = null
 
   private val coroutineScope: CoroutineScope? = when {
-    parent == null -> Main.mainScope?.childScope() ?: CoroutineScope(SupervisorJob())
+    parent == null -> Main.mainScope?.childScope(Dispatchers.Default) ?: CoroutineScope(SupervisorJob())
     parent.parent == null -> parent.coroutineScope!!.childScope()
     else -> null
   }
@@ -1106,11 +1106,6 @@ abstract class ComponentManagerImpl(
   @OptIn(ExperimentalCoroutinesApi::class)
   protected open fun preloadService(service: ServiceDescriptor): Job? {
     val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return null
-    if (adapter.isInitializing) {
-      // already in initialization
-      return null
-    }
-
     val deferred = adapter.getInstanceAsync<Any>(componentManager = this, keyClass = null)
     if (deferred.isCompleted) {
       val instance = deferred.getCompleted()

@@ -381,7 +381,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
         preloadServices(modules, "", scope, false);
         loadComponents();
 
-        ApplicationLoader.callAppInitialized(scope, ApplicationLoader.getAppInitListeners(this));
+        ApplicationLoader.callAppInitialized(scope, ApplicationLoader.getAppInitializedListeners(this), getCoroutineScope());
         return Unit.INSTANCE;
       });
     }

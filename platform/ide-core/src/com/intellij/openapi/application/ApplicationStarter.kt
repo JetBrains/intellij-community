@@ -12,9 +12,6 @@ import kotlin.time.Duration
 @Internal
 @Experimental
 abstract class ModernApplicationStarter : ApplicationStarter {
-  open val timeout: Duration?
-    get() = null
-
   final override val requiredModality: Int
     get() = ApplicationStarter.NOT_IN_EDT
 

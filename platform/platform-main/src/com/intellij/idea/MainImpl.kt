@@ -3,15 +3,13 @@ package com.intellij.idea
 
 import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.Deferred
-import java.util.concurrent.CompletableFuture
 
-class MainImpl : AppStarter {
+internal class MainImpl : AppStarter {
   init {
     PlatformUtils.setDefaultPrefixForCE()
   }
 
-  override fun start(args: List<String>, prepareUiFuture: Deferred<Any>): CompletableFuture<*> {
-    initApplication(args, prepareUiFuture)
-    return CompletableFuture.completedFuture(null)
+  override suspend fun start(args: List<String>, prepareUiFuture: Deferred<Any>) {
+    doInitApplication(args, prepareUiFuture)
   }
 }

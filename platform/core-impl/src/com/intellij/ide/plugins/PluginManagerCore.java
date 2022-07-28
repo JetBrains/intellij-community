@@ -828,7 +828,7 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  static @Nullable Boolean isThirdPartyPluginsNoteAccepted() {
+  public static @Nullable Boolean isThirdPartyPluginsNoteAccepted() {
     Boolean result = thirdPartyPluginsNoteAccepted;
     thirdPartyPluginsNoteAccepted = null;
     return result;
@@ -1122,15 +1122,6 @@ public final class PluginManagerCore {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-
-  /**
-   * @deprecated Use {@link #isDisabled(PluginId)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static boolean isDisabled(@NotNull String pluginId) {
-    return isDisabled(PluginId.getId(pluginId));
-  }
 
   /** @deprecated Use {@link #disablePlugin(PluginId)} */
   @Deprecated

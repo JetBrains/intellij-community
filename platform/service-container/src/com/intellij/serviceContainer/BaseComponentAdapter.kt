@@ -29,9 +29,6 @@ internal sealed class BaseComponentAdapter(@JvmField internal val componentManag
   val pluginId: PluginId
     get() = pluginDescriptor.pluginId
 
-  val isInitializing: Boolean
-    get() = initializing
-
   protected abstract val implementationClassName: String
 
   protected abstract fun isImplementationEqualsToInterface(): Boolean
@@ -140,7 +137,7 @@ internal sealed class BaseComponentAdapter(@JvmField internal val componentManag
   }
 
   fun <T : Any> getInstanceAsync(componentManager: ComponentManagerImpl, keyClass: Class<T>?): Deferred<T> {
-    if (deferred.isCompleted) {
+    if (deferred.isCompleted || initializing) {
       @Suppress("UNCHECKED_CAST")
       return deferred as Deferred<T>
     }

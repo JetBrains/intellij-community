@@ -15,6 +15,7 @@ import com.intellij.ide.gdpr.showDataSharingAgreement
 import com.intellij.ide.gdpr.showEndUserAndDataSharingAgreements
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.idea.SocketLock.ActivationStatus
@@ -23,6 +24,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -71,6 +73,7 @@ import java.util.function.Function
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import javax.swing.*
+import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
 
@@ -95,7 +98,6 @@ internal var shellEnvLoadFuture: Deferred<Boolean?>? = null
   private set
 
 /** Called via reflection from [Main.bootstrap].  */
-@OptIn(ExperimentalCoroutinesApi::class)
 fun start(mainClass: String,
           isHeadless: Boolean,
           setFlagsAgain: Boolean,
@@ -117,27 +119,29 @@ fun start(mainClass: String,
 
   // runBlocking must be used - coroutine's thread is a daemon and doesn't stop application to exit,
   // see ApplicationImpl.preventAwtAutoShutdown
-  runBlocking(StartupAbortedExceptionHandler) {
-    launch {
+  runBlocking {
+    val asyncDispatcher = Dispatchers.Default + StartupAbortedExceptionHandler()
+    launch(asyncDispatcher) {
       val activity = StartUpMeasurer.startActivity("ForkJoin CommonPool configuration")
       IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(isHeadless)
       activity.end()
     }
 
     var activity = StartUpMeasurer.startActivity("main class loading scheduling")
-    val appStarterFuture = async {
+    // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
+    val appStarterFuture = async(asyncDispatcher) {
       val subActivity = StartUpMeasurer.startActivity("main class loading")
       val aClass = AppStarter::class.java.classLoader.loadClass(mainClass)
       subActivity.end()
       MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
     }
 
-    launch(Dispatchers.IO) {
-      // required for DisabledPluginsState and Eua
+    val appInfoDeferred = async(Dispatchers.IO) {
+      // required for DisabledPluginsState and EUA
       ApplicationInfoImpl.getShadowInstance()
     }
 
-    val euaDocumentFuture = if (isHeadless) null else loadEuaDocumentAsync()
+    val euaDocumentFuture = if (isHeadless) null else async(Dispatchers.IO) { loadEuaDocument(appInfoDeferred) }
 
     if (args.isNotEmpty() && (Main.CWM_HOST_COMMAND == args[0] || Main.CWM_HOST_NO_LOBBY_COMMAND == args[0])) {
       activity = activity.endAndStart("cwm host init")
@@ -163,43 +167,37 @@ fun start(mainClass: String,
     activity = activity.endAndStart("LaF init scheduling")
     val busyThread = Thread.currentThread()
     // LookAndFeel type is not specified to avoid class loading
-    val initUiFuture = async { initUi(busyThread = busyThread, isHeadless = isHeadless, mainScope = this) }
-
-    // A splash instance must not be created before base LaF is created.
-    // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
-    // https://youtrack.jetbrains.com/issue/IDEA-286544
-    val splashTaskFuture = if (isHeadless || Main.isLightEdit()) {
-      null
-    }
-    else {
-      async {
-        initUiFuture.join()
-        prepareSplash(args)
-      }
-    }
-
-    activity = activity.endAndStart("java.util.logging configuration")
-    configureJavaUtilLogging()
+    val initUiJob = async(asyncDispatcher) { initUi(busyThread = busyThread, isHeadless = isHeadless, mainScope = this) }
 
     Main.mainScope = this
 
-    activity = activity.endAndStart("eua and splash scheduling")
-    val showEuaIfNeededFuture: Deferred<Boolean> = async {
-      val baseLaF = initUiFuture.await()
-      if (euaDocumentFuture == null) {
-        return@async true
-      }
+    activity = activity.endAndStart("console logger configuration")
+    configureJavaUtilLogging()
 
-      val result = showEuaIfNeeded(euaDocumentFuture.await(), baseLaF)
-      if (splashTaskFuture != null) {
-        launch {
-          val runnable = splashTaskFuture.await()
-          withContext(SwingDispatcher) {
-            runnable?.run()
-          }
+    activity = activity.endAndStart("eua and splash scheduling")
+    val showEuaIfNeededJob: Deferred<Boolean> = async(asyncDispatcher) {
+      if (euaDocumentFuture == null) {
+        true
+      }
+      else {
+        showEuaIfNeeded(euaDocumentFuture.await(), initUiJob.await())
+      }
+    }
+
+    if (!isHeadless && !Main.isLightEdit()) {
+      async(asyncDispatcher) {
+        // A splash instance must not be created before base LaF is created.
+        // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
+        // https://youtrack.jetbrains.com/issue/IDEA-286544
+        initUiJob.join()
+
+        // before showEuaIfNeededJob to prepare during showing EUA dialog
+        val runnable = prepareSplash(args) ?: return@async
+        showEuaIfNeededJob.join()
+        withContext(SwingDispatcher) {
+          runnable.run()
         }
       }
-      result
     }
 
     activity = activity.endAndStart("system dirs checking")
@@ -223,16 +221,16 @@ fun start(mainClass: String,
       })
     }
 
-    launch {
+    launch(asyncDispatcher) {
       setupSystemLibraries()
       withContext(Dispatchers.IO) {
         loadSystemLibraries(log)
       }
 
-      // JNA and Swing are used - invoke only after both are loaded
       if (!isHeadless && SystemInfoRt.isMac) {
+        // JNA and Swing are used - invoke only after both are loaded
         launch {
-          initUiFuture.join()
+          initUiJob.join()
 
           val subActivity = StartUpMeasurer.startActivity("mac app init")
           MacOSApplicationProvider.initApplication(log)
@@ -244,7 +242,6 @@ fun start(mainClass: String,
       }
     }
 
-    // don't load EnvironmentUtil class in the main thread
     shellEnvLoadFuture = async(Dispatchers.IO) {
       EnvironmentUtil.loadEnvironment(StartUpMeasurer.startActivity("environment loading"))
     }
@@ -260,10 +257,8 @@ fun start(mainClass: String,
     }
 
     val mainClassLoadingWaitingActivity = StartUpMeasurer.startActivity("main class loading waiting")
-
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
     val argsAsList = java.util.List.of(*args)
-
     val appStarter = appStarterFuture.await()
     mainClassLoadingWaitingActivity.end()
 
@@ -271,20 +266,26 @@ fun start(mainClass: String,
       importConfig(args = argsAsList,
                    log = log,
                    appStarter = appStarter,
-                   agreementShown = showEuaIfNeededFuture,
-                   initUiFuture = initUiFuture)
+                   agreementShown = showEuaIfNeededJob,
+                   initUiFuture = initUiJob)
     }
 
-    // initApplication uses runBlocking, we cannot change it for non-technical reasons for now
-    withContext(Dispatchers.IO) {
-      appStarter.start(argsAsList, async {
-        showEuaIfNeededFuture.join()
-        initUiFuture.await()
-      })
-    }
+    appStarter.start(argsAsList, async {
+      showEuaIfNeededJob.join()
+      initUiJob.await()
+    })
 
     awaitCancellation()
   }
+}
+
+// separate class for nicer presentation in dumps
+private class StartupAbortedExceptionHandler : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
+  override fun handleException(context: CoroutineContext, exception: Throwable) {
+    StartupAbortedException.processException(exception)
+  }
+
+  override fun toString() = "StartupAbortedExceptionHandler"
 }
 
 // executed not in EDT
@@ -358,22 +359,20 @@ fun getServer(): BuiltInServer? = socketLock?.getServer()
 @Synchronized
 fun getServerFutureAsync(): Deferred<BuiltInServer?> = socketLock?.serverFuture ?: CompletableDeferred(value = null)
 
-private fun CoroutineScope.loadEuaDocumentAsync(): Deferred<Any?> {
-  return async {
-    val vendorAsProperty = System.getProperty("idea.vendor.name", "")
-    if (if (vendorAsProperty.isEmpty()) !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains else "JetBrains" != vendorAsProperty) {
-      return@async null
-    }
-
-    var activity = StartUpMeasurer.startActivity("eua getting")
-    var document: EndUserAgreement.Document? = EndUserAgreement.getLatestDocument()
-    activity = activity.endAndStart("eua is accepted checking")
-    if (document!!.isAccepted) {
-      document = null
-    }
-    activity.end()
-    document
+private suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx>): Any? {
+  val vendorAsProperty = System.getProperty("idea.vendor.name", "")
+  if (if (vendorAsProperty.isEmpty()) !appInfoDeferred.await().isVendorJetBrains else vendorAsProperty != "JetBrains") {
+    return null
   }
+
+  var activity = StartUpMeasurer.startActivity("eua getting")
+  var document: EndUserAgreement.Document? = EndUserAgreement.getLatestDocument()
+  activity = activity.endAndStart("eua is accepted checking")
+  if (document!!.isAccepted) {
+    document = null
+  }
+  activity.end()
+  return document
 }
 
 private fun runPreAppClass(log: Logger, args: Array<String>) {
@@ -588,7 +587,6 @@ private fun updateFrameClassAndWindowIcon() {
 }
 
 private fun configureJavaUtilLogging() {
-  val activity = StartUpMeasurer.startActivity("console logger configuration")
   val rootLogger = java.util.logging.Logger.getLogger("")
   if (rootLogger.handlers.isEmpty()) {
     rootLogger.level = Level.WARNING
@@ -596,7 +594,6 @@ private fun configureJavaUtilLogging() {
     consoleHandler.level = Level.WARNING
     rootLogger.addHandler(consoleHandler)
   }
-  activity.end()
 }
 
 @VisibleForTesting
@@ -607,50 +604,54 @@ fun checkHiDPISettings() {
   }
 }
 
-private fun checkSystemDirs(configPath: Path, systemPath: Path): Boolean {
+private suspend fun checkSystemDirs(configPath: Path, systemPath: Path): Boolean {
   if (configPath == systemPath) {
-    Main.showMessage(BootstrapBundle.message("bootstrap.error.title.invalid.config.or.system.path"),
-                     BootstrapBundle.message("bootstrap.error.message.config.0.and.system.1.paths.must.be.different",
-                                             PathManager.PROPERTY_CONFIG_PATH,
-                                             PathManager.PROPERTY_SYSTEM_PATH), true)
+    withContext(SwingDispatcher) {
+      Main.showMessage(BootstrapBundle.message("bootstrap.error.title.invalid.config.or.system.path"),
+                       BootstrapBundle.message("bootstrap.error.message.config.0.and.system.1.paths.must.be.different",
+                                               PathManager.PROPERTY_CONFIG_PATH,
+                                               PathManager.PROPERTY_SYSTEM_PATH), true)
+    }
     return false
   }
 
-  if (!checkDirectory(directory = configPath,
-                      kind = "Config",
-                      property = PathManager.PROPERTY_CONFIG_PATH,
-                      checkWrite = true,
-                      checkLock = true,
-                      checkExec = false)) {
-    return false
-  }
+  return withContext(Dispatchers.IO) {
+    if (!checkDirectory(directory = configPath,
+                        kind = "Config",
+                        property = PathManager.PROPERTY_CONFIG_PATH,
+                        checkWrite = true,
+                        checkLock = true,
+                        checkExec = false)) {
+      return@withContext false
+    }
 
-  if (!checkDirectory(directory = systemPath,
-                      kind = "System",
-                      property = PathManager.PROPERTY_SYSTEM_PATH,
-                      checkWrite = true,
-                      checkLock = true,
-                      checkExec = false)) {
-    return false
-  }
-
-  val logPath = Path.of(PathManager.getLogPath()).normalize()
-  if (!checkDirectory(directory = logPath,
-                      kind = "Log",
-                      property = PathManager.PROPERTY_LOG_PATH,
-                      checkWrite = !logPath.startsWith(systemPath),
-                      checkLock = false,
-                      checkExec = false)) {
-    return false
-  }
-
-  val tempPath = Path.of(PathManager.getTempPath()).normalize()
-  return checkDirectory(directory = tempPath,
-                        kind = "Temp",
+    if (!checkDirectory(directory = systemPath,
+                        kind = "System",
                         property = PathManager.PROPERTY_SYSTEM_PATH,
-                        checkWrite = !tempPath.startsWith(systemPath),
+                        checkWrite = true,
+                        checkLock = true,
+                        checkExec = false)) {
+      return@withContext false
+    }
+
+    val logPath = Path.of(PathManager.getLogPath()).normalize()
+    if (!checkDirectory(directory = logPath,
+                        kind = "Log",
+                        property = PathManager.PROPERTY_LOG_PATH,
+                        checkWrite = !logPath.startsWith(systemPath),
                         checkLock = false,
-                        checkExec = SystemInfoRt.isUnix && !SystemInfoRt.isMac)
+                        checkExec = false)) {
+      return@withContext false
+    }
+
+    val tempPath = Path.of(PathManager.getTempPath()).normalize()
+    return@withContext checkDirectory(directory = tempPath,
+                                      kind = "Temp",
+                                      property = PathManager.PROPERTY_SYSTEM_PATH,
+                                      checkWrite = !tempPath.startsWith(systemPath),
+                                      checkLock = false,
+                                      checkExec = SystemInfoRt.isUnix && !SystemInfoRt.isMac)
+  }
 }
 
 private fun checkDirectory(directory: Path,
@@ -914,7 +915,7 @@ fun canonicalPath(path: String): Path {
 
 interface AppStarter {
   /* called from IDE init thread */
-  fun start(args: List<String>, prepareUiFuture: Deferred<Any>): CompletableFuture<*>
+  suspend fun start(args: List<String>, prepareUiFuture: Deferred<Any>)
 
   /* called from IDE init thread */
   fun beforeImportConfigs() {}
