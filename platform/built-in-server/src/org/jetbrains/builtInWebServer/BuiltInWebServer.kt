@@ -268,6 +268,8 @@ fun HttpRequest.isSignedRequest(): Boolean {
   return token != null && tokens.getIfPresent(token) != null
 }
 
+private const val FAVICON_PATH = "favicon.ico"
+
 fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boolean): HttpHeaders? {
   if (BuiltInServerOptions.getInstance().allowUnsignedRequests) {
     return EmptyHttpHeaders.INSTANCE
@@ -289,7 +291,7 @@ fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boole
   }
 
   val urlDecoder = QueryStringDecoder(request.uri())
-  if (!urlDecoder.path().endsWith("/favicon.ico")) {
+  if (!urlDecoder.path().endsWith("/$FAVICON_PATH") && !urlDecoder.path().endsWith("/$FAVICON_PATH/")) {
     val url = "${channel.uriScheme}://${request.host!!}${urlDecoder.path()}"
     SwingUtilities.invokeAndWait {
       ProjectUtil.focusProjectWindow(null, true)
