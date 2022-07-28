@@ -37,7 +37,6 @@ import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
-import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -47,16 +46,16 @@ import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.psi.getStartLineOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
-import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
-import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.breakpoints.SourcePositionRefiner
 import org.jetbrains.kotlin.idea.debugger.core.*
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getElementsAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
-import org.jetbrains.kotlin.idea.debugger.stepping.getLineRange
+import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.isSamLambda
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -559,25 +558,6 @@ private fun Location.hasVisibleInlineLambdasOnLines(lines: IntRange): Boolean {
 // Copied from com.jetbrains.jdi.LocalVariableImpl.isVisible
 private fun LocalVariableImpl.isVisible(location: Location): Boolean =
     scopeStart <= location && scopeEnd >= location
-
-internal fun Method.getInlineFunctionAndArgumentVariablesToBordersMap(): Map<LocalVariable, ClosedRange<Location>> {
-    return getInlineFunctionOrArgumentVariables()
-        .mapNotNull {
-            val borders = it.getBorders()
-            if (borders == null)
-                null
-            else
-                it to borders
-        }
-        .toMap()
-}
-
-private fun Method.getInlineFunctionOrArgumentVariables(): Sequence<LocalVariable> {
-    val localVariables = safeVariables() ?: return emptySequence()
-    return localVariables
-        .asSequence()
-        .filter { isFakeLocalVariableForInline(it.name()) }
-}
 
 fun Location.getClassName(): String? {
     val currentLocationFqName = declaringType().name() ?: return null

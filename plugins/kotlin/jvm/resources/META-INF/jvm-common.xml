@@ -75,7 +75,7 @@
         <debugger.sourcePositionHighlighter implementation="org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionHighlighter"/>
         <debugger.frameExtraVarsProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinFrameExtraVariablesProvider"/>
         <debugger.extraSteppingFilter implementation="org.jetbrains.kotlin.idea.debugger.filter.KotlinExtraSteppingFilter"/>
-        <xdebugger.settings implementation="org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings"/>
+        <xdebugger.settings implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerSettings"/>
         <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType"/>
         <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType" order="first"/>
         <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFunctionBreakpointType"/>
@@ -83,8 +83,8 @@
         <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointHandlerFactory"/>
         <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointHandlerFactory"/>
         <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFunctionBreakpointHandlerFactory"/>
-        <debugger.jvmSteppingCommandProvider implementation="org.jetbrains.kotlin.idea.debugger.stepping.KotlinSteppingCommandProvider"/>
-        <debugger.simplePropertyGetterProvider implementation="org.jetbrains.kotlin.idea.debugger.stepping.KotlinSimpleGetterProvider"/>
+        <debugger.jvmSteppingCommandProvider implementation="org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSteppingCommandProvider"/>
+        <debugger.simplePropertyGetterProvider implementation="org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSimpleGetterProvider"/>
         <debugger.dfaAssistProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.debugger.dfaassist.KotlinDfaAssistProvider"/>
 
         <projectService

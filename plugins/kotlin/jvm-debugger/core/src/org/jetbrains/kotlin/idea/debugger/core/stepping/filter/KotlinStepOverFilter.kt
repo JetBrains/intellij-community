@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger.stepping.filter
+package org.jetbrains.kotlin.idea.debugger.core.stepping.filter
 
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
 import com.intellij.debugger.engine.DebugProcessImpl
@@ -9,11 +9,11 @@ import com.intellij.util.Range
 import com.sun.jdi.Location
 import com.sun.jdi.StackFrame
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
-import org.jetbrains.kotlin.idea.debugger.core.isKotlinFakeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeVariables
-import org.jetbrains.kotlin.idea.debugger.stepping.KotlinMethodFilter
+import org.jetbrains.kotlin.idea.debugger.core.isKotlinFakeLineNumber
+import org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinMethodFilter
 
 data class StepOverCallerInfo(val declaringType: String, val methodName: String?, val methodSignature: String?) {
     companion object {

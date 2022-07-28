@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.isInSuspendMethod
 import org.jetbrains.kotlin.idea.debugger.core.isKotlinFakeLineNumber
 import org.jetbrains.kotlin.idea.debugger.core.isOnSuspendReturnOrReenter
-import org.jetbrains.kotlin.idea.debugger.getInlineFunctionAndArgumentVariablesToBordersMap
+import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 
 class KotlinExtraSteppingFilter : ExtraSteppingFilter {

@@ -143,7 +143,6 @@ object DebuggerUtils {
         return range.from..range.to
     }
 
-
     @RequiresReadLock
     @ApiStatus.Internal
     fun getLocationsOfInlinedLine(type: ReferenceType, position: SourcePosition, sourceSearchScope: GlobalSearchScope): List<Location> {

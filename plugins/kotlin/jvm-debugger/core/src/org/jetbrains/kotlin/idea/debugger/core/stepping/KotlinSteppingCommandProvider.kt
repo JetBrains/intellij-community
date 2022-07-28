@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger.stepping
+package org.jetbrains.kotlin.idea.debugger.core.stepping
 
 import com.intellij.debugger.PositionManager
 import com.intellij.debugger.SourcePosition
@@ -16,15 +16,15 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.Range
 import com.sun.jdi.Location
 import com.sun.jdi.Method
-import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
-import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
-import org.jetbrains.kotlin.idea.debugger.getInlineFunctionAndArgumentVariablesToBordersMap
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeStackFrame
-import org.jetbrains.kotlin.idea.debugger.stepping.filter.KotlinStepOverFilter
-import org.jetbrains.kotlin.idea.debugger.stepping.filter.KotlinStepOverParamDefaultImplsMethodFilter
-import org.jetbrains.kotlin.idea.debugger.stepping.filter.LocationToken
+import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
+import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
+import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.KotlinStepOverFilter
+import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.KotlinStepOverParamDefaultImplsMethodFilter
+import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.LocationToken
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName

@@ -23,7 +23,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.compute
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
-import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerSettings
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.psi.KtElement
