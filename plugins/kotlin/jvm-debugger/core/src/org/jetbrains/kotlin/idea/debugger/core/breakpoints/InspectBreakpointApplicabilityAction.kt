@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger.breakpoints
+package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.TextAnnotationGutterProvider
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorFontType
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
-import org.jetbrains.kotlin.idea.debugger.breakpoints.BreakpointChecker.BreakpointType
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.BreakpointChecker.BreakpointType
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
 import java.awt.Color

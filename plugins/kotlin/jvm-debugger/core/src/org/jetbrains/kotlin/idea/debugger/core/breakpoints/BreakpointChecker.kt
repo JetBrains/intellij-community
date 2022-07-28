@@ -1,25 +1,37 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger.breakpoints
+package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import org.jetbrains.debugger.SourceInfo
+import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinBreakpointType
+import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType
+import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerLegacyFacade
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.*
 
 class BreakpointChecker {
     private companion object {
-        private val BREAKPOINT_TYPES = mapOf(
-            KotlinLineBreakpointType::class.java to BreakpointType.Line,
-            KotlinFieldBreakpointType::class.java to BreakpointType.Field,
-            KotlinFunctionBreakpointType::class.java to BreakpointType.Function,
-            JavaLineBreakpointType.LambdaJavaBreakpointVariant::class.java to BreakpointType.Lambda,
-            KotlinLineBreakpointType.LineKotlinBreakpointVariant::class.java to BreakpointType.Line,
-            KotlinLineBreakpointType.KotlinBreakpointVariant::class.java to BreakpointType.All
-        )
+        private val BREAKPOINT_TYPES = initBreakpointTypes()
+
+        private fun initBreakpointTypes(): Map<Class<out Any>, BreakpointType> {
+            val breakpointTypes = mutableMapOf(
+                KotlinLineBreakpointType::class.java to BreakpointType.Line,
+                KotlinFieldBreakpointType::class.java to BreakpointType.Field,
+                JavaLineBreakpointType.LambdaJavaBreakpointVariant::class.java to BreakpointType.Lambda,
+                KotlinLineBreakpointType.LineKotlinBreakpointVariant::class.java to BreakpointType.Line,
+                KotlinLineBreakpointType.KotlinBreakpointVariant::class.java to BreakpointType.All
+            )
+            KotlinDebuggerLegacyFacade.getInstance()?.functionBreakpointTypeClass?.let {
+                breakpointTypes[it] = BreakpointType.Function
+            }
+
+            return breakpointTypes
+        }
     }
 
     enum class BreakpointType(val prefix: String) {

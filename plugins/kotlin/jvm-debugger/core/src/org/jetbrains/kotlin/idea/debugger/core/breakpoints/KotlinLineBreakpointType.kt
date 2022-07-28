@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+// The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger.breakpoints
 
 import com.intellij.debugger.SourcePosition
@@ -26,18 +28,13 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProp
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinReentrantSourcePosition
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ApplicabilityResult
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinLineBreakpoint
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.LineBreakpointExpressionVisitor
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import java.util.*
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isBreakpointApplicable
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getLambdasAtLineIfAny
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isInlineOnly
 
 interface KotlinBreakpointType
 

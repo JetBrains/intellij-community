@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
+// The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger.breakpoints
 
 import com.intellij.debugger.JavaDebuggerBundle
@@ -24,10 +25,9 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
-import org.jetbrains.kotlin.idea.debugger.breakpoints.dialog.AddFieldBreakpointDialog
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ApplicabilityResult
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isBreakpointApplicable
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.dialog.AddFieldBreakpointDialog
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtDeclarationContainer
 import org.jetbrains.kotlin.psi.KtFile

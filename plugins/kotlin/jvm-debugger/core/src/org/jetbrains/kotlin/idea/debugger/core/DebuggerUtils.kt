@@ -106,7 +106,7 @@ object DebuggerUtils {
         return if (Registry.`is`("kotlin.debugger.analysis.api.file.applicability.checker")) {
             FileApplicabilityChecker.chooseMostApplicableFile(files, location)
         } else {
-            KotlinDebuggerLegacyFacade.getInstance()?.kotlinFileSelector?.chooseMostApplicableFile(files, location)
+            KotlinDebuggerLegacyFacade.getInstance()?.fileSelector?.chooseMostApplicableFile(files, location)
                 ?: FileApplicabilityChecker.chooseMostApplicableFile(files, location)
         }
     }

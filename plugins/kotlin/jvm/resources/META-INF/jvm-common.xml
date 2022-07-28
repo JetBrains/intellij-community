@@ -40,7 +40,7 @@
             <add-to-group group-id="XDebugger.Settings" relative-to-action="XDebugger.Inline" anchor="after"/>
         </action>
 
-        <action id="InspectBreakpointApplicability" class="org.jetbrains.kotlin.idea.debugger.breakpoints.InspectBreakpointApplicabilityAction" internal="true">
+        <action id="InspectBreakpointApplicability" class="org.jetbrains.kotlin.idea.debugger.core.breakpoints.InspectBreakpointApplicabilityAction" internal="true">
             <add-to-group group-id="KotlinInternalGroup"/>
         </action>
     </actions>
@@ -76,12 +76,12 @@
         <debugger.frameExtraVarsProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinFrameExtraVariablesProvider"/>
         <debugger.extraSteppingFilter implementation="org.jetbrains.kotlin.idea.debugger.filter.KotlinExtraSteppingFilter"/>
         <xdebugger.settings implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerSettings"/>
-        <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType"/>
+        <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFieldBreakpointType"/>
         <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType" order="first"/>
         <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFunctionBreakpointType"/>
         <debugger.syntheticProvider implementation="org.jetbrains.kotlin.idea.debugger.filter.KotlinSyntheticTypeComponentProvider"/>
-        <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointHandlerFactory"/>
-        <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointHandlerFactory"/>
+        <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFieldBreakpointHandlerFactory"/>
+        <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinLineBreakpointHandlerFactory"/>
         <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFunctionBreakpointHandlerFactory"/>
         <debugger.jvmSteppingCommandProvider implementation="org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSteppingCommandProvider"/>
         <debugger.simplePropertyGetterProvider implementation="org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSimpleGetterProvider"/>

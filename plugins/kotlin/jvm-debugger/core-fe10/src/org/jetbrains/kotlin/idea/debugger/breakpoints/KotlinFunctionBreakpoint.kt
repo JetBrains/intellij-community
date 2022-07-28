@@ -44,12 +44,12 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle.message
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.SourcePositionRefiner
 
-interface SourcePositionRefiner {
-    fun refineSourcePosition(sourcePosition: SourcePosition): SourcePosition
-}
-
-class KotlinFunctionBreakpoint(project: Project, breakpoint: XBreakpoint<*>) : MethodBreakpoint(project, breakpoint), SourcePositionRefiner {
+class KotlinFunctionBreakpoint(
+    project: Project,
+    breakpoint: XBreakpoint<*>
+) : MethodBreakpoint(project, breakpoint), SourcePositionRefiner {
     override fun getPsiClass(): PsiClass? {
         val sourcePosition = sourcePosition
         val declaration = PositionUtil.getPsiElementAt(
