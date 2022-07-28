@@ -1,66 +1,87 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.fileEditor.impl.text;
+package com.intellij.openapi.fileEditor.impl.text
 
-import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorStateLevel;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.ui.EditorNotifications;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diagnostic.ThreadDumper
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileEditorStateLevel
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters.Companion.isOpenedInBulk
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.ui.EditorNotifications
+import com.intellij.util.concurrency.Semaphore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicBoolean
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+class AsyncEditorLoader internal constructor(private val textEditor: TextEditorImpl,
+                                             private val editorComponent: TextEditorComponent,
+                                             private val provider: TextEditorProvider) {
+  private val editor: Editor = textEditor.editor
+  private val project: Project = textEditor.myProject
+  private val delayedActions = ArrayList<Runnable>()
+  private var delayedState: TextEditorState? = null
+  private val loadingFinished = AtomicBoolean()
 
-public final class AsyncEditorLoader {
-  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncEditorLoader Pool", 2);
-  private static final Key<AsyncEditorLoader> ASYNC_LOADER = Key.create("ASYNC_LOADER");
-  private static final int SYNCHRONOUS_LOADING_WAITING_TIME_MS = 200;
-  private static final int DOCUMENT_COMMIT_WAITING_TIME_MS = 5_000;
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val executor: Executor = object : Executor {
+    private val dispatcher = Dispatchers.IO.limitedParallelism(2)
 
-  @NotNull private final Editor myEditor;
-  @NotNull private final Project myProject;
-  @NotNull private final TextEditorImpl myTextEditor;
-  @NotNull private final TextEditorComponent myEditorComponent;
-  @NotNull private final TextEditorProvider myProvider;
-  @NotNull private static final Logger LOG = Logger.getInstance(AsyncEditorLoader.class);
-  private final List<Runnable> myDelayedActions = new ArrayList<>();
-  private TextEditorState myDelayedState;
-  private final AtomicBoolean myLoadingFinished = new AtomicBoolean();
-
-  AsyncEditorLoader(@NotNull TextEditorImpl textEditor, @NotNull TextEditorComponent component, @NotNull TextEditorProvider provider) {
-    myProvider = provider;
-    myTextEditor = textEditor;
-    myProject = textEditor.myProject;
-    myEditorComponent = component;
-
-    myEditor = textEditor.getEditor();
-    myEditor.putUserData(ASYNC_LOADER, this);
-
-    myEditorComponent.getContentPanel().setVisible(false);
+    override fun execute(command: Runnable) {
+      project.coroutineScope.launch(dispatcher) {
+        command.run()
+      }
+    }
   }
 
-  void start() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  init {
+    editor.putUserData(ASYNC_LOADER, this)
+    editorComponent.contentPanel.isVisible = false
+  }
 
-    Future<Runnable> asyncLoading = scheduleLoading();
+  companion object {
+    private val ASYNC_LOADER = Key.create<AsyncEditorLoader>("ASYNC_LOADER")
+    private const val SYNCHRONOUS_LOADING_WAITING_TIME_MS = 200
+    private const val DOCUMENT_COMMIT_WAITING_TIME_MS = 5000
+    private val LOG = Logger.getInstance(AsyncEditorLoader::class.java)
 
-    boolean showProgress = true;
+    private fun <T> resultInTimeOrNull(future: CompletableFuture<T>): T? {
+      try {
+        return future.get(SYNCHRONOUS_LOADING_WAITING_TIME_MS.toLong(), TimeUnit.MILLISECONDS)
+      }
+      catch (ignored: InterruptedException) {
+      }
+      catch (ignored: TimeoutException) {
+      }
+      return null
+    }
+
+    @JvmStatic
+    fun performWhenLoaded(editor: Editor, runnable: Runnable) {
+      ApplicationManager.getApplication().assertIsDispatchThread()
+      val loader = editor.getUserData(ASYNC_LOADER)
+      loader?.delayedActions?.add(runnable) ?: runnable.run()
+    }
+
+    @JvmStatic
+    fun isEditorLoaded(editor: Editor): Boolean {
+      return editor.getUserData(ASYNC_LOADER) == null
+    }
+  }
+
+  fun start() {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val asyncLoading = scheduleLoading()
+    var showProgress = true
     if (worthWaiting()) {
       /*
        * Possible alternatives:
@@ -70,166 +91,125 @@ public final class AsyncEditorLoader {
        * 4. freeze EDT a bit and hope that for small editors it'll suffice and for big ones show "Loading" after that.
        * This strategy seems to produce minimal blinking annoyance.
        */
-      Runnable continuation = resultInTimeOrNull(asyncLoading);
+      val continuation = resultInTimeOrNull(asyncLoading)
       if (continuation != null) {
-        showProgress = false;
-        loadingFinished(continuation);
+        showProgress = false
+        loadingFinished(continuation)
       }
     }
     if (showProgress) {
-      myEditorComponent.startLoading();
+      editorComponent.startLoading()
     }
   }
 
-  private @NotNull Future<Runnable> scheduleLoading() {
-    long commitDeadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(DOCUMENT_COMMIT_WAITING_TIME_MS);
+  private fun scheduleLoading(): CompletableFuture<Runnable> {
+    val commitDeadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(DOCUMENT_COMMIT_WAITING_TIME_MS.toLong())
 
     // we can't return the result of "nonBlocking" call below because it's only finished on EDT later,
     // but we need to get the result of bg calculation in the same EDT event, if it's quick
-    CompletableFuture<Runnable> future = new CompletableFuture<>();
-    ReadAction
-      .nonBlocking(() -> {
-        waitForCommit(commitDeadline);
-        Runnable runnable = ProgressManager.getInstance().computePrioritized(() -> {
-          try {
-            return myTextEditor.loadEditorInBackground();
-          }
-          catch (ProcessCanceledException e) {
-            throw e;
-          }
-          catch (IndexOutOfBoundsException e) {
-            // EA-232290 investigation
-            Attachment filePathAttachment = new Attachment("filePath.txt", myTextEditor.getFile().toString());
-            Attachment threadDumpAttachment = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
-            threadDumpAttachment.setIncluded(true);
-            LOG.error("Error during async editor loading", e,
-                                                              filePathAttachment, threadDumpAttachment);
-            return null;
-          }
-          catch (Exception e) {
-            LOG.error("Error during async editor loading", e);
-            return null;
-          }
-        });
-        future.complete(runnable);
-        return runnable;
-      })
-      .expireWith(myEditorComponent)
-      .expireWith(myProject)
-      .finishOnUiThread(ModalityState.any(), this::loadingFinished)
-      .submit(ourExecutor);
-    return future;
+    val future = CompletableFuture<Runnable>()
+    ReadAction.nonBlocking<Runnable> {
+      waitForCommit(commitDeadline)
+      val runnable = ProgressManager.getInstance().computePrioritized<Runnable, RuntimeException> {
+        try {
+          return@computePrioritized textEditor.loadEditorInBackground()
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: IndexOutOfBoundsException) {
+          // EA-232290 investigation
+          val filePathAttachment = Attachment("filePath.txt", textEditor.file.toString())
+          val threadDumpAttachment = Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString())
+          threadDumpAttachment.isIncluded = true
+          LOG.error("Error during async editor loading", e,
+                    filePathAttachment, threadDumpAttachment)
+          return@computePrioritized null
+        }
+        catch (e: Exception) {
+          LOG.error("Error during async editor loading", e)
+          return@computePrioritized null
+        }
+      }
+      future.complete(runnable)
+      runnable
+    }
+      .expireWith(editorComponent)
+      .expireWith(project)
+      .finishOnUiThread(ModalityState.any(), ::loadingFinished)
+      .submit(executor)
+    return future
   }
 
-  private void waitForCommit(long commitDeadlineNs) {
-    Document document = myEditor.getDocument();
-    PsiDocumentManager pdm = PsiDocumentManager.getInstance(myProject);
+  private fun waitForCommit(commitDeadlineNs: Long) {
+    val document = editor.document
+    val pdm = PsiDocumentManager.getInstance(project)
     if (!pdm.isCommitted(document) && System.nanoTime() < commitDeadlineNs) {
-      Semaphore semaphore = new Semaphore(1);
-      pdm.performForCommittedDocument(document, semaphore::up);
+      val semaphore = Semaphore(1)
+      pdm.performForCommittedDocument(document) { semaphore.up() }
       while (System.nanoTime() < commitDeadlineNs && !semaphore.waitFor(10)) {
-        ProgressManager.checkCanceled();
+        ProgressManager.checkCanceled()
       }
     }
   }
 
-  private boolean isDone() {
-    return myLoadingFinished.get();
-  }
+  private val isDone: Boolean
+    get() = loadingFinished.get()
 
-  private boolean worthWaiting() {
+  private fun worthWaiting(): Boolean {
     // cannot perform commitAndRunReadAction in parallel to EDT waiting
-    return !EditorsSplitters.isOpenedInBulk(myTextEditor.myFile) &&
-           !PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments() &&
-           !ApplicationManager.getApplication().isWriteAccessAllowed();
+    return !isOpenedInBulk(textEditor.myFile) &&
+           !PsiDocumentManager.getInstance(project).hasUncommitedDocuments() &&
+           !ApplicationManager.getApplication().isWriteAccessAllowed
   }
 
-  private static <T> T resultInTimeOrNull(@NotNull Future<T> future) {
-    try {
-      return future.get(SYNCHRONOUS_LOADING_WAITING_TIME_MS, TimeUnit.MILLISECONDS);
+  private fun loadingFinished(continuation: Runnable?) {
+    if (!loadingFinished.compareAndSet(false, true)) {
+      return
     }
-    catch (InterruptedException | TimeoutException ignored) {
+    editor.putUserData(ASYNC_LOADER, null)
+    if (editorComponent.isDisposed) {
+      return
     }
-    catch (ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-    return null;
-  }
-
-  private void loadingFinished(@Nullable Runnable continuation) {
-    if (!myLoadingFinished.compareAndSet(false, true)) {
-      return;
-    }
-    myEditor.putUserData(ASYNC_LOADER, null);
-
-    if (myEditorComponent.isDisposed()) {
-      return;
-    }
-
     if (continuation != null) {
       try {
-        continuation.run();
+        continuation.run()
       }
-      catch (Throwable e) {
-        LOG.error(e);
+      catch (e: Throwable) {
+        LOG.error(e)
       }
     }
-
-    myEditorComponent.loadingFinished();
-
-    if (myDelayedState != null && PsiDocumentManager.getInstance(myProject).isCommitted(myEditor.getDocument())) {
-      TextEditorState state = new TextEditorState();
-      state.RELATIVE_CARET_POSITION = Integer.MAX_VALUE; // don't do any scrolling
-      state.setFoldingState(myDelayedState.getFoldingState());
-      myProvider.setStateImpl(myProject, myEditor, state, true);
-      myDelayedState = null;
+    editorComponent.loadingFinished()
+    if (delayedState != null && PsiDocumentManager.getInstance(project).isCommitted(editor.document)) {
+      val state = TextEditorState()
+      state.RELATIVE_CARET_POSITION = Int.MAX_VALUE // don't do any scrolling
+      state.foldingState = delayedState!!.foldingState
+      provider.setStateImpl(project, editor, state, true)
+      delayedState = null
     }
-
-    for (Runnable runnable : myDelayedActions) {
-      myEditor.getScrollingModel().disableAnimation();
-      runnable.run();
+    for (runnable in delayedActions) {
+      editor.scrollingModel.disableAnimation()
+      runnable.run()
     }
-    myDelayedActions.clear();
-
-    myEditor.getScrollingModel().enableAnimation();
-
-    EditorNotifications.getInstance(myProject).updateNotifications(myTextEditor.myFile);
+    delayedActions.clear()
+    editor.scrollingModel.enableAnimation()
+    EditorNotifications.getInstance(project).updateNotifications(textEditor.myFile)
   }
 
-  public static void performWhenLoaded(@NotNull Editor editor, @NotNull Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    AsyncEditorLoader loader = editor.getUserData(ASYNC_LOADER);
-    if (loader == null) {
-      runnable.run();
+  fun getEditorState(level: FileEditorStateLevel): TextEditorState {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val state = provider.getStateImpl(project, editor, level)
+    if (!isDone && delayedState != null) {
+      state.setDelayedFoldState { delayedState!!.foldingState }
     }
-    else {
-      loader.myDelayedActions.add(runnable);
-    }
+    return state
   }
 
-  @NotNull
-  TextEditorState getEditorState(@NotNull FileEditorStateLevel level) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-
-    TextEditorState state = myProvider.getStateImpl(myProject, myEditor, level);
-    if (!isDone() && myDelayedState != null) {
-      state.setDelayedFoldState(myDelayedState::getFoldingState);
+  fun setEditorState(state: TextEditorState, exactState: Boolean) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    if (!isDone) {
+      delayedState = state
     }
-    return state;
-  }
-
-  void setEditorState(@NotNull final TextEditorState state, boolean exactState) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    if (!isDone()) {
-      myDelayedState = state;
-    }
-
-    myProvider.setStateImpl(myProject, myEditor, state, exactState);
-  }
-
-  public static boolean isEditorLoaded(@NotNull Editor editor) {
-    return editor.getUserData(ASYNC_LOADER) == null;
+    provider.setStateImpl(project, editor, state, exactState)
   }
 }

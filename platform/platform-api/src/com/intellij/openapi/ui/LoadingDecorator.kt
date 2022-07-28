@@ -1,93 +1,102 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.ui;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.ui
 
-import com.intellij.CommonBundle;
-import com.intellij.ide.RemoteDesktopService;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBLayeredPane;
-import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.components.panels.VerticalLayout;
-import com.intellij.util.Alarm;
-import com.intellij.util.ui.*;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.CommonBundle
+import com.intellij.ide.RemoteDesktopService
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.util.Disposer
+import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBLayeredPane
+import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.util.ui.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import org.jetbrains.annotations.Nls
+import java.awt.*
+import java.awt.image.BufferedImage
+import javax.swing.*
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-
-public class LoadingDecorator {
-  public static final Color OVERLAY_BACKGROUND = JBColor.namedColor("BigSpinner.background", JBColor.PanelBackground);
-
-  private Color myOverlayBackground = null;
-
-  JLayeredPane myPane;
-
-  LoadingLayer myLoadingLayer;
-  Animator myFadeOutAnimator;
-
-  int myDelay;
-  Alarm myStartAlarm;
-  boolean myStartRequest;
-
-
-  public LoadingDecorator(JComponent content, @NotNull Disposable parent, int startDelayMs) {
-    this(content, parent, startDelayMs, false);
+@OptIn(FlowPreview::class)
+open class LoadingDecorator @JvmOverloads constructor(content: JComponent?,
+                                                      parent: Disposable,
+                                                      startDelayMs: Int,
+                                                      useMinimumSize: Boolean = false,
+                                                      icon: AsyncProcessIcon = AsyncProcessIcon.Big("Loading")) {
+  companion object {
+    @JvmField
+    val OVERLAY_BACKGROUND: Color = JBColor.namedColor("BigSpinner.background", JBColor.PanelBackground)
   }
 
-  public LoadingDecorator(JComponent content, @NotNull Disposable parent, int startDelayMs, boolean useMinimumSize) {
-    this(content, parent, startDelayMs, useMinimumSize, new AsyncProcessIcon.Big("Loading"));
-  }
+  var overlayBackground: Color? = null
+  var pane: JLayeredPane
+  var loadingLayer: LoadingLayer
+  var fadeOutAnimator: Animator
+  var delay: Int
+  private val startRequests = MutableSharedFlow<Boolean>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private var startRequestsJob: Job? = null
 
-  public LoadingDecorator(JComponent content, @NotNull Disposable parent, int startDelayMs, boolean useMinimumSize, @NotNull AsyncProcessIcon icon) {
-    myPane = new MyLayeredPane(useMinimumSize ? content : null);
-    myLoadingLayer = new LoadingLayer(icon);
-    myDelay = startDelayMs;
-    myStartAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parent);
+  var loadingText: @Nls String?
+    get() = loadingLayer.text.text
+    set(loadingText) {
+      loadingLayer.text.isVisible = !loadingText.isNullOrBlank()
+      loadingLayer.text.text = loadingText
+    }
 
-    setLoadingText(CommonBundle.getLoadingTreeNodeText());
+  val isLoading: Boolean
+    get() = loadingLayer.isLoading
 
-
-    myFadeOutAnimator = new Animator("Loading", 10, RemoteDesktopService.isRemoteSession()? 2500 : 500, false) {
-      @Override
-      public void paintNow(final int frame, final int totalFrames, final int cycle) {
-        myLoadingLayer.setAlpha(1f - ((float)frame) / ((float)totalFrames));
+  init {
+    pane = MyLayeredPane(if (useMinimumSize) content else null)
+    loadingLayer = LoadingLayer(icon)
+    delay = startDelayMs
+    loadingText = CommonBundle.getLoadingTreeNodeText()
+    fadeOutAnimator = object : Animator("Loading", 10, if (RemoteDesktopService.isRemoteSession()) 2500 else 500, false) {
+      override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
+        loadingLayer.setAlpha(1f - frame.toFloat() / totalFrames.toFloat())
       }
 
-      @Override
-      protected void paintCycleEnd() {
-        myLoadingLayer.setAlpha(0); // paint with zero alpha before hiding completely
-        hideLoadingLayer();
-        myLoadingLayer.setAlpha(-1);
-        myPane.repaint();
+      override fun paintCycleEnd() {
+        // paint with zero alpha before hiding completely
+        loadingLayer.setAlpha(0f)
+        hideLoadingLayer()
+        loadingLayer.setAlpha(-1f)
+        pane.repaint()
       }
-    };
-    Disposer.register(parent, myFadeOutAnimator);
-
-
-    myPane.add(content, JLayeredPane.DEFAULT_LAYER, 0);
-
-    Disposer.register(parent, myLoadingLayer.myProgress);
+    }
+    Disposer.register(parent, fadeOutAnimator)
+    pane.add(content, JLayeredPane.DEFAULT_LAYER, 0)
+    Disposer.register(parent, loadingLayer.progress)
+    Disposer.register(parent) {
+      startRequestsJob?.cancel()
+    }
   }
 
-  public Color getOverlayBackground() {
-    return myOverlayBackground;
-  }
-
-  public void setOverlayBackground(@Nullable Color background) {
-    myOverlayBackground = background;
+  private fun startListening() {
+    startRequestsJob = ApplicationManager.getApplication().coroutineScope.launch {
+      startRequests
+        .debounce(200)
+        .collectLatest { takeSnapshot ->
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            doStartLoading(takeSnapshot)
+          }
+        }
+    }
   }
 
   /**
    * Removes a loading layer to restore a blit-accelerated scrolling.
    */
-  private void hideLoadingLayer() {
-    myPane.remove(myLoadingLayer);
-    myLoadingLayer.setVisible(false);
+  private fun hideLoadingLayer() {
+    pane.remove(loadingLayer)
+    loadingLayer.isVisible = false
   }
 
   /* Placing the invisible layer on top of JViewport suppresses blit-accelerated scrolling
@@ -97,210 +106,168 @@ public class LoadingDecorator {
 
      Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
      This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive). */
-  private void addLoadingLayerOnDemand() {
-    if (myPane != myLoadingLayer.getParent()) {
-      myPane.add(myLoadingLayer, JLayeredPane.DRAG_LAYER, 1);
+  private fun addLoadingLayerOnDemand() {
+    if (pane !== loadingLayer.parent) {
+      pane.add(loadingLayer, JLayeredPane.DRAG_LAYER, 1)
     }
   }
 
-  protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
-    parent.setLayout(new GridBagLayout());
-    text.setFont(StartupUiUtil.getLabelFont());
-    text.setForeground(UIUtil.getContextHelpForeground());
-    icon.setBorder(Strings.notNullize(text.getText()).endsWith("...")
-                   ? JBUI.Borders.emptyRight(8)
-                   : JBUI.Borders.empty());
-
-    NonOpaquePanel result = new NonOpaquePanel(new VerticalLayout(6));
-    result.setBorder(JBUI.Borders.empty(10));
-    result.add(icon);
-    result.add(text);
-    parent.add(result);
-    return result;
+  protected open fun customizeLoadingLayer(parent: JPanel, text: JLabel, icon: AsyncProcessIcon): NonOpaquePanel {
+    parent.layout = GridBagLayout()
+    text.font = StartupUiUtil.getLabelFont()
+    text.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+    icon.border = if ((text.text ?: "").endsWith("...")) JBUI.Borders.emptyRight(8) else JBUI.Borders.empty()
+    val result = NonOpaquePanel(VerticalLayout(6))
+    result.border = JBUI.Borders.empty(10)
+    result.add(icon)
+    result.add(text)
+    parent.add(result)
+    return result
   }
 
-  public JComponent getComponent() {
-    return myPane;
-  }
+  val component: JComponent
+    get() = pane
 
-  public void startLoading(final boolean takeSnapshot) {
-    if (isLoading() || myStartRequest || myStartAlarm.isDisposed()) return;
+  open fun startLoading(takeSnapshot: Boolean) {
+    if (isLoading || startRequestsJob != null) {
+      return
+    }
 
-    myStartRequest = true;
-    if (myDelay > 0) {
-      myStartAlarm.addRequest(() -> UIUtil.invokeLaterIfNeeded(() -> {
-        if (!myStartRequest) return;
-        _startLoading(takeSnapshot);
-      }), myDelay);
+    if (delay > 0) {
+      startListening()
+      check(startRequests.tryEmit(takeSnapshot))
     }
     else {
-      _startLoading(takeSnapshot);
+      doStartLoading(takeSnapshot)
     }
   }
 
-  protected void _startLoading(final boolean takeSnapshot) {
-    addLoadingLayerOnDemand();
-    myLoadingLayer.setVisible(true, takeSnapshot);
+  protected fun doStartLoading(takeSnapshot: Boolean) {
+    addLoadingLayerOnDemand()
+    loadingLayer.setVisible(true, takeSnapshot)
   }
 
-  public void stopLoading() {
-    myStartRequest = false;
-    myStartAlarm.cancelAllRequests();
-
-    if (!isLoading()) return;
-
-    myLoadingLayer.setVisible(false, false);
-    myPane.repaint();
+  @OptIn(ExperimentalCoroutinesApi::class)
+  open fun stopLoading() {
+    startRequestsJob?.let {
+      it.cancel()
+      startRequests.resetReplayCache()
+      startRequestsJob = null
+    }
+    if (!isLoading) {
+      return
+    }
+    loadingLayer.setVisible(visible = false, takeSnapshot = false)
+    pane.repaint()
   }
 
+  inner class LoadingLayer internal constructor(processIcon: AsyncProcessIcon) : JPanel() {
+    internal val text = JLabel("", SwingConstants.CENTER)
+    private var snapshot: BufferedImage? = null
+    private var snapshotBg: Color? = null
+    internal val progress: AsyncProcessIcon
+    var isLoading = false
+      private set
+    private var currentAlpha = 0f
+    private val textComponent: NonOpaquePanel
 
-  public String getLoadingText() {
-    return myLoadingLayer.myText.getText();
-  }
-
-  public void setLoadingText(@Nls String loadingText) {
-    myLoadingLayer.myText.setVisible(!Strings.isEmptyOrSpaces(loadingText));
-    myLoadingLayer.myText.setText(loadingText);
-  }
-
-  public boolean isLoading() {
-    return myLoadingLayer.isLoading();
-  }
-
-  private final class LoadingLayer extends JPanel {
-    private final JLabel myText = new JLabel("", SwingConstants.CENTER);
-
-    private BufferedImage mySnapshot;
-    private Color mySnapshotBg;
-
-    private final AsyncProcessIcon myProgress;
-
-    private boolean myVisible;
-
-    private float myCurrentAlpha;
-    private final NonOpaquePanel myTextComponent;
-
-    private LoadingLayer(@NotNull AsyncProcessIcon processIcon) {
-      setOpaque(false);
-      setVisible(false);
-      myProgress = processIcon;
-      myProgress.setOpaque(false);
-      myTextComponent = customizeLoadingLayer(this, myText, myProgress);
-      myProgress.suspend();
+    init {
+      isOpaque = false
+      isVisible = false
+      progress = processIcon
+      progress.isOpaque = false
+      textComponent = customizeLoadingLayer(this, text, progress)
+      progress.suspend()
     }
 
-    public void setVisible(final boolean visible, boolean takeSnapshot) {
-      if (myVisible == visible) return;
+    fun setVisible(visible: Boolean, takeSnapshot: Boolean) {
+      if (isVisible == visible || (visible && currentAlpha != -1f)) {
+        return
+      }
 
-      if (myVisible && myCurrentAlpha != -1) return;
-
-      myVisible = visible;
-      myFadeOutAnimator.reset();
-      if (myVisible) {
-        setVisible(true);
-        myCurrentAlpha = -1;
-
-        if (takeSnapshot && getWidth() > 0 && getHeight() > 0) {
-          mySnapshot = ImageUtil.createImage(getGraphics(), getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
-          final Graphics2D g = mySnapshot.createGraphics();
-          myPane.paint(g);
-          final Component opaque = UIUtil.findNearestOpaque(this);
-          mySnapshotBg = opaque != null ? opaque.getBackground() : UIUtil.getPanelBackground();
-          g.dispose();
+      isVisible = visible
+      fadeOutAnimator.reset()
+      if (visible) {
+        isVisible = true
+        currentAlpha = -1f
+        if (takeSnapshot && width > 0 && height > 0) {
+          snapshot = ImageUtil.createImage(graphics, width, height, BufferedImage.TYPE_INT_RGB)
+          val g = snapshot!!.createGraphics()
+          pane.paint(g)
+          val opaque = UIUtil.findNearestOpaque(this)
+          snapshotBg = if (opaque == null) JBColor.PanelBackground else opaque.background
+          g.dispose()
         }
-        myProgress.resume();
-
-        myFadeOutAnimator.suspend();
+        progress.resume()
+        fadeOutAnimator.suspend()
       }
       else {
-        disposeSnapshot();
-        myProgress.suspend();
-
-        myFadeOutAnimator.resume();
+        disposeSnapshot()
+        progress.suspend()
+        fadeOutAnimator.resume()
       }
     }
 
-    public boolean isLoading() {
-      return myVisible;
-    }
-
-    private void disposeSnapshot() {
-      if (mySnapshot != null) {
-        mySnapshot.flush();
-        mySnapshot = null;
+    private fun disposeSnapshot() {
+      snapshot?.let {
+        it.flush()
+        snapshot = null
       }
     }
 
-    @Override
-    protected void paintComponent(final Graphics g) {
-      if (mySnapshot != null) {
-        if (mySnapshot.getWidth() == getWidth() && mySnapshot.getHeight() == getHeight()) {
-          g.drawImage(mySnapshot, 0, 0, getWidth(), getHeight(), null);
-          g.setColor(new Color(200, 200, 200, 240));
-          g.fillRect(0, 0, getWidth(), getHeight());
-          return;
+    override fun paintComponent(g: Graphics) {
+      if (snapshot != null) {
+        if (snapshot!!.width == width && snapshot!!.height == height) {
+          g.drawImage(snapshot, 0, 0, width, height, null)
+          g.color = Color(200, 200, 200, 240)
+          g.fillRect(0, 0, width, height)
+          return
         }
         else {
-          disposeSnapshot();
+          disposeSnapshot()
         }
       }
-
-      Color background = mySnapshotBg != null ? mySnapshotBg : getOverlayBackground();
+      val background = if (snapshotBg == null) overlayBackground else snapshotBg
       if (background != null) {
-        g.setColor(background);
-        g.fillRect(0, 0, getWidth(), getHeight());
+        g.color = background
+        g.fillRect(0, 0, width, height)
       }
     }
 
-    public void setAlpha(final float alpha) {
-      myCurrentAlpha = alpha;
-      paintImmediately(myTextComponent.getBounds());
+    fun setAlpha(alpha: Float) {
+      currentAlpha = alpha
+      paintImmediately(textComponent.bounds)
     }
 
-    @Override
-    protected void paintChildren(final Graphics g) {
-      if (myCurrentAlpha != -1) {
-        ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myCurrentAlpha));
+    override fun paintChildren(g: Graphics) {
+      if (currentAlpha != -1f) {
+        (g as Graphics2D).composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, currentAlpha)
       }
-      super.paintChildren(g);
+      super.paintChildren(g)
     }
   }
 
-  public interface CursorAware {
+  interface CursorAware
+}
+
+private class MyLayeredPane(private val content: JComponent?) : JBLayeredPane(), LoadingDecorator.CursorAware {
+  override fun getMinimumSize(): Dimension {
+    return if (content != null && !isMinimumSizeSet) content.minimumSize else super.getMinimumSize()
   }
 
-  private static final class MyLayeredPane extends JBLayeredPane implements CursorAware {
-    private final JComponent myContent;
+  override fun getPreferredSize(): Dimension {
+    return if (content != null && !isPreferredSizeSet) content.preferredSize else super.getPreferredSize()
+  }
 
-    private MyLayeredPane(JComponent content) {
-      myContent = content;
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-      return myContent != null && !isMinimumSizeSet()
-             ? myContent.getMinimumSize()
-             : super.getMinimumSize();
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return myContent != null && !isPreferredSizeSet()
-             ? myContent.getPreferredSize()
-             : super.getPreferredSize();
-    }
-
-    @Override
-    public void doLayout() {
-      super.doLayout();
-      for (int i = 0; i < getComponentCount(); i++) {
-        final Component each = getComponent(i);
-        if (each instanceof Icon) {
-          each.setBounds(0, 0, each.getWidth(), each.getHeight());
-        }
-        else {
-          each.setBounds(0, 0, getWidth(), getHeight());
-        }
+  override fun doLayout() {
+    super.doLayout()
+    for (i in 0 until componentCount) {
+      val each = getComponent(i)
+      if (each is Icon) {
+        each.setBounds(0, 0, each.width, each.height)
+      }
+      else {
+        each.setBounds(0, 0, width, height)
       }
     }
   }
