@@ -17,7 +17,7 @@ import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
 private const val repetitions: Int = 100
 
-abstract class SuspendingReadWriteTest : CancellableReadActionTests() {
+abstract class SuspendingReadActionTest : CancellableReadActionTests() {
 
   @RepeatedTest(repetitions)
   fun context(): Unit = timeoutRunBlocking {
@@ -187,7 +187,7 @@ abstract class SuspendingReadWriteTest : CancellableReadActionTests() {
   protected abstract suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T
 }
 
-class NonBlocking : SuspendingReadWriteTest() {
+class NonBlocking : SuspendingReadActionTest() {
 
   override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
     return constrainedReadAction(*constraints, action = action)
@@ -316,7 +316,7 @@ class NonBlocking : SuspendingReadWriteTest() {
   }
 }
 
-class Blocking : SuspendingReadWriteTest() {
+class Blocking : SuspendingReadActionTest() {
 
   override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
     return constrainedReadActionBlocking(*constraints, action = action)
