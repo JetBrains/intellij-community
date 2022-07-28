@@ -1,278 +1,233 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl.welcomeScreen;
+package com.intellij.openapi.wm.impl.welcomeScreen
 
-import com.intellij.CommonBundle;
-import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.impl.ProjectUtilCore;
-import com.intellij.idea.SplashManager;
-import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
-import com.intellij.openapi.wm.impl.IdeMenuBar;
-import com.intellij.openapi.wm.impl.WindowManagerImpl;
-import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
-import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.BalloonLayout;
-import com.intellij.ui.BalloonLayoutImpl;
-import com.intellij.ui.mac.touchbar.TouchbarSupport;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.CommonBundle
+import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.idea.SplashManager
+import com.intellij.internal.statistic.eventLog.getUiEventLogger
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.MnemonicHelper
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.*
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.help.HelpManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.DimensionService
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
+import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.openapi.wm.impl.WindowManagerImpl
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
+import com.intellij.ui.AppUIUtil
+import com.intellij.ui.BalloonLayout
+import com.intellij.ui.BalloonLayoutImpl
+import com.intellij.ui.mac.touchbar.TouchbarSupport
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.AccessibleContextAccessor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
+import javax.accessibility.AccessibleContext
+import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.JRootPane
+import javax.swing.KeyStroke
 
-import javax.accessibility.AccessibleContext;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.concurrent.ForkJoinPool;
+class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
+  private val myScreen: WelcomeScreen
+  private val myBalloonLayout: BalloonLayout
 
-public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
-  public static final ExtensionPointName<WelcomeFrameProvider> EP = new ExtensionPointName<>("com.intellij.welcomeFrameProvider");
-  static final String DIMENSION_KEY = "WELCOME_SCREEN";
-
-  private static IdeFrame ourInstance;
-  private static Disposable ourTouchbar;
-
-  private final WelcomeScreen myScreen;
-  private final BalloonLayout myBalloonLayout;
-
-  public WelcomeFrame() {
-    SplashManager.hideBeforeShow(this);
-
-    JRootPane rootPane = getRootPane();
-    WelcomeScreen screen = createScreen(rootPane);
-
-    IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane);
-    setGlassPane(glassPane);
-    glassPane.setVisible(false);
-    setContentPane(screen.getWelcomePanel());
-    setTitle(ApplicationNamesInfo.getInstance().getFullProductName());
-    AppUIUtil.updateWindowIcon(this);
-
-    Disposable listenerDisposable = Disposer.newDisposable();
-    ApplicationManager.getApplication().getMessageBus().connect(listenerDisposable).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        Disposer.dispose(listenerDisposable);
-        dispose();
-      }
-    });
-
-    myBalloonLayout = new BalloonLayoutImpl(rootPane, JBUI.insets(8));
-
-    myScreen = screen;
-    setupCloseAction(this);
-    MnemonicHelper.init(this);
-    myScreen.setupFrame(this);
-
-    Disposer.register(ApplicationManager.getApplication(), () -> this.dispose());
+  init {
+    SplashManager.hideBeforeShow(this)
+    val rootPane = getRootPane()
+    val screen = createScreen(rootPane)
+    val glassPane = IdeGlassPaneImpl(rootPane)
+    setGlassPane(glassPane)
+    glassPane.isVisible = false
+    contentPane = screen.welcomePanel
+    title = ApplicationNamesInfo.getInstance().fullProductName
+    AppUIUtil.updateWindowIcon(this)
+    val listenerDisposable = Disposer.newDisposable()
+    ApplicationManager.getApplication().messageBus.connect(listenerDisposable).subscribe(ProjectManager.TOPIC,
+                                                                                         object : ProjectManagerListener {
+                                                                                           @Suppress("removal", "OVERRIDE_DEPRECATION")
+                                                                                           override fun projectOpened(project: Project) {
+                                                                                             Disposer.dispose(listenerDisposable)
+                                                                                             dispose()
+                                                                                           }
+                                                                                         })
+    myBalloonLayout = BalloonLayoutImpl(rootPane, JBUI.insets(8))
+    myScreen = screen
+    setupCloseAction(this)
+    MnemonicHelper.init(this)
+    myScreen.setupFrame(this)
+    Disposer.register(ApplicationManager.getApplication(), ::dispose)
   }
 
-  public static IdeFrame getInstance() {
-    return ourInstance;
-  }
+  companion object {
+    @JvmField
+    val EP = ExtensionPointName<WelcomeFrameProvider>("com.intellij.welcomeFrameProvider")
+    const val DIMENSION_KEY = "WELCOME_SCREEN"
 
-  @Override
-  public void dispose() {
-    saveLocation(getBounds());
+    private var instance: IdeFrame? = null
 
-    super.dispose();
+    private var touchbar: Disposable? = null
 
-    Disposer.dispose(myScreen);
+    @JvmStatic
+    fun getInstance(): IdeFrame? = instance
 
-    resetInstance();
-  }
+    private fun saveLocation(location: Rectangle) {
+      val middle = Point(location.x + location.width / 2, location.height / 2.also { location.y = it })
+      DimensionService.getInstance().setLocation(DIMENSION_KEY, middle, null)
+    }
 
-  private static void saveLocation(Rectangle location) {
-    Point middle = new Point(location.x + location.width / 2, location.y = location.height / 2);
-    DimensionService.getInstance().setLocation(DIMENSION_KEY, middle, null);
-  }
-
-  static void setupCloseAction(@NotNull JFrame frame) {
-    frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-    frame.addWindowListener(new WindowAdapter() {
-      @Override
-      public void windowClosing(WindowEvent e) {
-        if (ProjectUtilCore.getOpenProjects().length == 0) {
-          boolean isActiveClone = CloneableProjectsService.getInstance().isCloneActive();
-          if (isActiveClone) {
-            int exitCode = Messages.showOkCancelDialog(ApplicationBundle.message("exit.confirm.prompt.tasks"),
-                                                       ApplicationBundle.message("exit.confirm.title"),
-                                                       ApplicationBundle.message("command.exit"),
-                                                       CommonBundle.getCancelButtonText(),
-                                                       Messages.getQuestionIcon());
-            if (exitCode == Messages.CANCEL) {
-              return;
+    fun setupCloseAction(frame: JFrame) {
+      frame.defaultCloseOperation = DO_NOTHING_ON_CLOSE
+      frame.addWindowListener(object : WindowAdapter() {
+        override fun windowClosing(e: WindowEvent) {
+          if (ProjectUtilCore.getOpenProjects().isEmpty()) {
+            val isActiveClone = CloneableProjectsService.getInstance().isCloneActive()
+            if (isActiveClone) {
+              val exitCode = Messages.showOkCancelDialog(ApplicationBundle.message("exit.confirm.prompt.tasks"),
+                                                         ApplicationBundle.message("exit.confirm.title"),
+                                                         ApplicationBundle.message("command.exit"),
+                                                         CommonBundle.getCancelButtonText(),
+                                                         Messages.getQuestionIcon())
+              if (exitCode == Messages.CANCEL) {
+                return
+              }
             }
+            ApplicationManager.getApplication().exit()
           }
-
-          ApplicationManager.getApplication().exit();
+          else {
+            frame.dispose()
+          }
         }
-        else {
-          frame.dispose();
+      })
+    }
+
+    private fun createScreen(rootPane: JRootPane): WelcomeScreen {
+      for (provider in WelcomeScreenProvider.EP_NAME.extensionList) {
+        if (!provider.isAvailable) {
+          continue
         }
-      }
-    });
-  }
-
-  private static @NotNull WelcomeScreen createScreen(JRootPane rootPane) {
-    for (WelcomeScreenProvider provider : WelcomeScreenProvider.EP_NAME.getExtensionList()) {
-      if (!provider.isAvailable()) {
-        continue;
-      }
-
-      WelcomeScreen screen = provider.createWelcomeScreen(rootPane);
-      if (screen != null) {
-        return screen;
-      }
-    }
-    return new NewWelcomeScreen();
-  }
-
-  public static void resetInstance() {
-    ourInstance = null;
-    if (ourTouchbar != null) {
-      Disposer.dispose(ourTouchbar);
-      ourTouchbar = null;
-    }
-  }
-
-  public static void showNow() {
-    Runnable show = prepareToShow();
-    if (show != null) {
-      show.run();
-    }
-  }
-
-  public static @Nullable Runnable prepareToShow() {
-    if (ourInstance != null) {
-      return null;
-    }
-
-    // ActionManager is used on Welcome Frame, but should be initialized in a pooled thread and not in EDT.
-    ForkJoinPool.commonPool().execute(() -> {
-      ActionManager.getInstance();
-      if (SystemInfoRt.isMac) {
-        TouchbarSupport.initialize();
-      }
-    });
-
-    return () -> {
-      if (ourInstance != null) {
-        return;
-      }
-
-      IdeFrame frame = EP.computeSafeIfAny(WelcomeFrameProvider::createFrame);
-      if (frame == null) {
-        throw new IllegalStateException("No implementation of `com.intellij.welcomeFrameProvider` extension point");
-      }
-
-      JFrame jFrame = (JFrame)frame;
-
-      registerKeyboardShortcuts(jFrame.getRootPane());
-
-      jFrame.setVisible(true);
-
-      IdeMenuBar.installAppMenuIfNeeded(jFrame);
-      ourInstance = frame;
-      if (SystemInfoRt.isMac) {
-        ourTouchbar = TouchbarSupport.showWindowActions(frame.getComponent());
-      }
-    };
-  }
-
-  private static void registerKeyboardShortcuts(@NotNull JRootPane rootPane) {
-    ActionListener helpAction = e -> {
-      FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(WelcomeFrame.class.getName(), WelcomeFrame.class);
-      HelpManager.getInstance().invokeHelp("welcome");
-    };
-
-    ActionUtil.registerForEveryKeyboardShortcut(rootPane, helpAction, CommonShortcuts.getContextHelp());
-    rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-  }
-
-  public static void showIfNoProjectOpened() {
-    showIfNoProjectOpened(null);
-  }
-
-  public static void showIfNoProjectOpened(@Nullable AppLifecycleListener lifecyclePublisher) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-
-    Runnable show = prepareToShow();
-    if (show == null) {
-      return;
-    }
-
-    ApplicationManager.getApplication().invokeLater(() -> {
-      WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
-      windowManager.disposeRootFrame();
-      if (windowManager.getProjectFrameHelpers().isEmpty()) {
-        show.run();
-        if (lifecyclePublisher != null) {
-          lifecyclePublisher.welcomeScreenDisplayed();
+        provider.createWelcomeScreen(rootPane)?.let {
+          return it
         }
       }
-    }, ModalityState.NON_MODAL);
+      return NewWelcomeScreen()
+    }
+
+    fun resetInstance() {
+      instance = null
+      touchbar?.let {
+        Disposer.dispose(it)
+        touchbar = null
+      }
+    }
+
+    @JvmStatic
+    fun showNow() {
+      prepareToShow()?.run()
+    }
+
+    fun prepareToShow(): Runnable? {
+      if (instance != null) {
+        return null
+      }
+
+      // ActionManager is used on Welcome Frame, but should be initialized in a pooled thread and not in EDT.
+      ApplicationManager.getApplication().coroutineScope.launch {
+        ActionManager.getInstance()
+        if (SystemInfoRt.isMac) {
+          TouchbarSupport.initialize()
+        }
+      }
+
+      return Runnable {
+        if (instance != null) {
+          return@Runnable
+        }
+        val frame = EP.computeSafeIfAny(WelcomeFrameProvider::createFrame)
+                    ?: throw IllegalStateException("No implementation of `com.intellij.welcomeFrameProvider` extension point")
+        val jFrame = frame as JFrame
+        registerKeyboardShortcuts(jFrame.rootPane)
+        jFrame.isVisible = true
+        IdeMenuBar.installAppMenuIfNeeded(jFrame)
+        instance = frame
+        if (SystemInfoRt.isMac) {
+          touchbar = TouchbarSupport.showWindowActions(frame.component)
+        }
+      }
+    }
+
+    private fun registerKeyboardShortcuts(rootPane: JRootPane) {
+      val helpAction = ActionListener {
+        getUiEventLogger().logClickOnHelpDialog(WelcomeFrame::class.java.name, WelcomeFrame::class.java)
+        HelpManager.getInstance().invokeHelp("welcome")
+      }
+      ActionUtil.registerForEveryKeyboardShortcut(rootPane, helpAction, CommonShortcuts.getContextHelp())
+      rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW)
+    }
+
+    @JvmOverloads
+    @JvmStatic
+    fun showIfNoProjectOpened(lifecyclePublisher: AppLifecycleListener? = null) {
+      val app = ApplicationManager.getApplication()
+      if (app.isUnitTestMode) {
+        return
+      }
+
+      val show = prepareToShow() ?: return
+      app.coroutineScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+        val windowManager = WindowManager.getInstance() as WindowManagerImpl
+        windowManager.disposeRootFrame()
+        if (windowManager.projectFrameHelpers.isEmpty()) {
+          show.run()
+          lifecyclePublisher?.welcomeScreenDisplayed()
+        }
+      }
+    }
   }
 
-  @Override
-  public @Nullable StatusBar getStatusBar() {
-    Container pane = getContentPane();
-    return pane instanceof JComponent ? UIUtil.findComponentOfType((JComponent)pane, IdeStatusBarImpl.class) : null;
+  override fun dispose() {
+    saveLocation(bounds)
+    super.dispose()
+    Disposer.dispose(myScreen)
+    resetInstance()
   }
 
-  @Override
-  public @Nullable BalloonLayout getBalloonLayout() {
-    return myBalloonLayout;
+  override fun getStatusBar(): StatusBar? {
+    val pane = contentPane
+    return if (pane is JComponent) UIUtil.findComponentOfType(pane, IdeStatusBarImpl::class.java) else null
   }
 
-  @Override
-  public @NotNull Rectangle suggestChildFrameBounds() {
-    return getBounds();
+  override fun getBalloonLayout(): BalloonLayout = myBalloonLayout
+
+  override fun suggestChildFrameBounds(): Rectangle = bounds
+
+  override fun getProject(): Project = ProjectManager.getInstance().defaultProject
+
+  override fun setFrameTitle(title: String) {
+    setTitle(title)
   }
 
-  @Override
-  public @NotNull Project getProject() {
-    return ProjectManager.getInstance().getDefaultProject();
-  }
+  override fun getComponent(): JComponent = getRootPane()
 
-  @Override
-  public void setFrameTitle(String title) {
-    setTitle(title);
-  }
-
-  @Override
-  public JComponent getComponent() {
-    return getRootPane();
-  }
-
-  @Override
-  public AccessibleContext getCurrentAccessibleContext() {
-    return accessibleContext;
-  }
+  override fun getCurrentAccessibleContext(): AccessibleContext = accessibleContext
 }
