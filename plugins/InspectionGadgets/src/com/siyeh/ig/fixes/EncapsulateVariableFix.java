@@ -109,7 +109,7 @@ public class EncapsulateVariableFix extends RefactoringInspectionGadgetsFix impl
     }
 
     @Override
-    public UsageInfo @NotNull [] findUsages() {
+    protected UsageInfo @NotNull [] findUsages() {
       ArrayList<EncapsulateFieldUsageInfo> array = new ArrayList<>();
       for (PsiReference reference : findReferences(myFieldDescriptor.getField())) {
         checkReference(reference, myFieldDescriptor, array);
