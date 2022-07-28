@@ -31,12 +31,15 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SuppressWarnings({"SSBasedInspection", "UnstableApiUsage"})
 @ApiStatus.Internal
 final public class BuildDependenciesDownloader {
+  private static final Logger LOG = Logger.getLogger(BuildDependenciesDownloader.class.getName());
+
   private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length";
   private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
     .version(HttpClient.Version.HTTP_1_1).build();
@@ -56,21 +59,6 @@ final public class BuildDependenciesDownloader {
   @SuppressWarnings("StaticNonFinalField")
   @NotNull
   public static BuildDependenciesTracer TRACER = BuildDependenciesNoopTracer.INSTANCE;
-
-  public static void debug(String message) {
-    //noinspection UseOfSystemOutOrSystemErr
-    System.out.println(message);
-  }
-
-  public static void info(String message) {
-    //noinspection UseOfSystemOutOrSystemErr
-    System.out.println(message);
-  }
-
-  public static void warn(String message) {
-    //noinspection UseOfSystemOutOrSystemErr
-    System.out.println("WARNING: " + message);
-  }
 
   public static Map<String, String> getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
     Path propertiesFile = communityRoot.getCommunityRoot().resolve("build").resolve("dependencies").resolve("dependencies.properties");
@@ -203,7 +191,7 @@ final public class BuildDependenciesDownloader {
                                                       BuildDependenciesExtractOptions[] options)
     throws Exception {
     if (checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
-      debug("Skipping extract to " + targetDirectory + " since flag file " + flagFile + " is correct");
+      LOG.fine("Skipping extract to " + targetDirectory + " since flag file " + flagFile + " is correct");
 
       // Update file modification time to maintain FIFO caches i.e.
       // in persistent cache folder on TeamCity agent
@@ -222,7 +210,7 @@ final public class BuildDependenciesDownloader {
       BuildDependenciesUtil.cleanDirectory(targetDirectory);
     }
 
-    info(" * Extracting " + archiveFile + " to " + targetDirectory);
+    LOG.info(" * Extracting " + archiveFile + " to " + targetDirectory);
     extractCount.incrementAndGet();
 
     Files.createDirectories(targetDirectory);
@@ -345,7 +333,7 @@ final public class BuildDependenciesDownloader {
             .setHeader("User-Agent", "Build Script Downloader")
             .build();
 
-          info(" * Downloading " + uri + " -> " + target);
+          LOG.info(" * Downloading " + uri + " -> " + target);
 
           HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
           if (response.statusCode() != 200) {
@@ -425,7 +413,7 @@ final public class BuildDependenciesDownloader {
       StringWriter writer = new StringWriter();
       t.printStackTrace(new PrintWriter(writer));
 
-      warn("Cleaning up failed for the directory '" + cachesDir + "'\n" + writer);
+      LOG.warning("Cleaning up failed for the directory '" + cachesDir + "'\n" + writer);
     }
   }
 
