@@ -152,14 +152,18 @@ public class MavenProjectResolver {
 
       if (mavenProjectCandidate == null) continue;
 
-      MavenProjectChanges changes = mavenProjectCandidate
+      MavenProject.Snapshot snapshot = mavenProjectCandidate.getSnapshot();
+      mavenProjectCandidate
         .set(result, generalSettings, false, MavenProjectReaderResult.shouldResetDependenciesAndFolders(result), false);
-      mavenProjectCandidate.getProblems(); // need for fill problem cache
       if (result.nativeMavenProject != null) {
         for (MavenImporter eachImporter : MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
           eachImporter.resolve(project, mavenProjectCandidate, result.nativeMavenProject, embedder, context);
         }
       }
+      // project may be modified by MavenImporters, so we need to collect the changes after them:
+      MavenProjectChanges changes = mavenProjectCandidate.getChangesSinceSnapshot(snapshot);
+
+      mavenProjectCandidate.getProblems(); // need for fill problem cache
       myTree.fireProjectResolved(Pair.create(mavenProjectCandidate, changes), result.nativeMavenProject);
     }
   }

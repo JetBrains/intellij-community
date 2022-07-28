@@ -171,6 +171,28 @@ public class MavenProject {
     return changes;
   }
 
+  private void updateState(Consumer<State> updater) {
+    State newState = myState.clone();
+    updater.consume(newState);
+    myState = newState;
+  }
+
+  static class Snapshot {
+    @NotNull private final State myState;
+
+    private Snapshot(@NotNull State state) {
+      myState = state;
+    }
+  }
+
+  @NotNull Snapshot getSnapshot() {
+    return new Snapshot(myState);
+  }
+
+  MavenProjectChanges getChangesSinceSnapshot(@NotNull Snapshot snapshot) {
+    return snapshot.myState.getChanges(myState);
+  }
+
   private static void doSetResolvedAttributes(State state,
                                               MavenProjectReaderResult readerResult,
                                               boolean reset) {
@@ -895,21 +917,15 @@ public class MavenProject {
   }
 
   public void addDependency(@NotNull MavenArtifact dependency) {
-    State state = myState;
-    List<MavenArtifact> dependenciesCopy = new ArrayList<>(state.myDependencies);
-    dependenciesCopy.add(dependency);
-    state.myDependencies = dependenciesCopy;
+    addDependencies(List.of(dependency));
+  }
 
-    state.myCache.clear();
+  public void addDependencies(@NotNull Collection<MavenArtifact> dependencies) {
+    updateState(newState -> newState.myDependencies.addAll(dependencies));
   }
 
   public void addAnnotationProcessors(@NotNull Collection<MavenArtifact> annotationProcessors) {
-    State state = myState;
-    List<MavenArtifact> annotationProcessorsCopy = new ArrayList<>(state.myAnnotationProcessors);
-    annotationProcessorsCopy.addAll(annotationProcessors);
-    state.myAnnotationProcessors = annotationProcessorsCopy;
-
-    state.myUnresolvedAnnotationProcessors = null;
+    updateState(newState -> newState.myAnnotationProcessors.addAll(annotationProcessors));
   }
 
   public @NotNull List<MavenArtifact> findDependencies(@NotNull MavenProject depProject) {
@@ -1249,28 +1265,28 @@ public class MavenProject {
       myCache.clear();
     }
 
-    public MavenProjectChanges getChanges(State other) {
+    public MavenProjectChanges getChanges(State newState) {
       if (myLastReadStamp == 0) return MavenProjectChanges.ALL;
 
       MavenProjectChangesBuilder result = new MavenProjectChangesBuilder();
 
-      result.setHasPackagingChanges(!Objects.equals(myPackaging, other.myPackaging));
+      result.setHasPackagingChanges(!Objects.equals(myPackaging, newState.myPackaging));
 
-      result.setHasOutputChanges(!Objects.equals(myFinalName, other.myFinalName)
-                                 || !Objects.equals(myBuildDirectory, other.myBuildDirectory)
-                                 || !Objects.equals(myOutputDirectory, other.myOutputDirectory)
-                                 || !Objects.equals(myTestOutputDirectory, other.myTestOutputDirectory));
+      result.setHasOutputChanges(!Objects.equals(myFinalName, newState.myFinalName)
+                                 || !Objects.equals(myBuildDirectory, newState.myBuildDirectory)
+                                 || !Objects.equals(myOutputDirectory, newState.myOutputDirectory)
+                                 || !Objects.equals(myTestOutputDirectory, newState.myTestOutputDirectory));
 
-      result.setHasSourceChanges(!Comparing.equal(mySources, other.mySources)
-                                 || !Comparing.equal(myTestSources, other.myTestSources)
-                                 || !Comparing.equal(myResources, other.myResources)
-                                 || !Comparing.equal(myTestResources, other.myTestResources));
+      result.setHasSourceChanges(!Comparing.equal(mySources, newState.mySources)
+                                 || !Comparing.equal(myTestSources, newState.myTestSources)
+                                 || !Comparing.equal(myResources, newState.myResources)
+                                 || !Comparing.equal(myTestResources, newState.myTestResources));
 
-      boolean repositoryChanged = !Comparing.equal(myLocalRepository, other.myLocalRepository);
+      boolean repositoryChanged = !Comparing.equal(myLocalRepository, newState.myLocalRepository);
 
-      result.setHasDependencyChanges(repositoryChanged || !Comparing.equal(myDependencies, other.myDependencies));
-      result.setHasPluginChanges(repositoryChanged || !Comparing.equal(myPlugins, other.myPlugins));
-      result.setHasPropertyChanges(!Comparing.equal(myProperties, other.myProperties));
+      result.setHasDependencyChanges(repositoryChanged || !Comparing.equal(myDependencies, newState.myDependencies));
+      result.setHasPluginChanges(repositoryChanged || !Comparing.equal(myPlugins, newState.myPlugins));
+      result.setHasPropertyChanges(!Comparing.equal(myProperties, newState.myProperties));
       return result;
     }
 
