@@ -65,5 +65,5 @@ class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsP
 
 internal fun KtBinaryExpression.isRangeExpression(): Boolean =
     with(operationReference.getReferencedNameAsName().asString()) {
-        return this == ".." || this == "rangeTo" || this == "downTo" || this == "until"
+        return this == ".." || this == "downTo" || this == "until"
     }
