@@ -16,10 +16,18 @@ import org.jetbrains.kotlin.types.typeUtil.builtIns
 
 object IdeDescriptorRenderers {
     @JvmField
-    val APPROXIMATE_FLEXIBLE_TYPES: (KotlinType) -> KotlinType = { it.approximateFlexibleTypes(preferNotNull = false) }
+    val APPROXIMATE_FLEXIBLE_TYPES: (KotlinType) -> KotlinType = {
+        it.approximateFlexibleTypes(preferNotNull = false)
+    }
 
     @JvmField
-    val APPROXIMATE_FLEXIBLE_TYPES_NOT_NULL: (KotlinType) -> KotlinType = { it.approximateFlexibleTypes(preferNotNull = true) }
+    val APPROXIMATE_FLEXIBLE_TYPES_NOT_NULL: (KotlinType) -> KotlinType = {
+        it.approximateFlexibleTypes(preferNotNull = true)
+    }
+
+    val APPROXIMATE_FLEXIBLE_TYPES_FOR_COLLECTIONS: (KotlinType) -> KotlinType = {
+        it.approximateFlexibleTypes(preferNotNull = true, preferUpperBoundsForCollections = true )
+    }
 
     private fun unwrapAnonymousType(type: KotlinType): KotlinType {
         if (type.isDynamic()) return type
@@ -67,6 +75,14 @@ object IdeDescriptorRenderers {
     val SOURCE_CODE_TYPES: DescriptorRenderer = BASE.withOptions {
         classifierNamePolicy = ClassifierNamePolicy.SOURCE_CODE_QUALIFIED
         typeNormalizer = { APPROXIMATE_FLEXIBLE_TYPES(unwrapAnonymousType(it)) }
+        annotationFilter = { it !is BuiltInAnnotationDescriptor && it.fqName?.isRedundantJvmAnnotation != true }
+        parameterNamesInFunctionalTypes = false
+    }
+
+    @JvmField
+    val SOURCE_CODE_TYPES_FOR_SAM_CONVERSION: DescriptorRenderer = BASE.withOptions {
+        classifierNamePolicy = ClassifierNamePolicy.SOURCE_CODE_QUALIFIED
+        typeNormalizer = { APPROXIMATE_FLEXIBLE_TYPES_FOR_COLLECTIONS(unwrapAnonymousType(it)) }
         annotationFilter = { it !is BuiltInAnnotationDescriptor && it.fqName?.isRedundantJvmAnnotation != true }
         parameterNamesInFunctionalTypes = false
     }

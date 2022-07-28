@@ -1,6 +1,6 @@
 // FILE: first.before.kt
 // "Import" "true"
-// ERROR: Type inference failed: Not enough information to infer parameter T in fun <T> foo(): Unit<br>Please specify it explicitly.<br>
+// ERROR: Not enough information to infer type variable T
 // ACTION: Create type parameter in function 'shade'
 
 package pack_one
@@ -17,7 +17,7 @@ fun foo() {}
 
 // FILE: first.after.kt
 // "Import" "true"
-// ERROR: Type inference failed: Not enough information to infer parameter T in fun <T> foo(): Unit<br>Please specify it explicitly.<br>
+// ERROR: Not enough information to infer type variable T
 // ACTION: Create type parameter in function 'shade'
 
 package pack_one

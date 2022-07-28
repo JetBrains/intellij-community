@@ -12408,11 +12408,6 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/lambdaToAnonymousFunction/fullyQualified.kt");
         }
 
-        @TestMetadata("fullyQualified_ni.kt")
-        public void testFullyQualified_ni() throws Exception {
-            runTest("testData/intentions/lambdaToAnonymousFunction/fullyQualified_ni.kt");
-        }
-
         @TestMetadata("hasComment.kt")
         public void testHasComment() throws Exception {
             runTest("testData/intentions/lambdaToAnonymousFunction/hasComment.kt");
@@ -17146,11 +17141,6 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/samConversionToAnonymousObject/labeledReturn.kt");
         }
 
-        @TestMetadata("labeledReturn_ni.kt")
-        public void testLabeledReturn_ni() throws Exception {
-            runTest("testData/intentions/samConversionToAnonymousObject/labeledReturn_ni.kt");
-        }
-
         @TestMetadata("nestedClass.kt")
         public void testNestedClass() throws Exception {
             runTest("testData/intentions/samConversionToAnonymousObject/nestedClass.kt");
@@ -17219,16 +17209,6 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("typeArgument7.kt")
         public void testTypeArgument7() throws Exception {
             runTest("testData/intentions/samConversionToAnonymousObject/typeArgument7.kt");
-        }
-
-        @TestMetadata("typeArgument_ni.kt")
-        public void testTypeArgument_ni() throws Exception {
-            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument_ni.kt");
-        }
-
-        @TestMetadata("typeArgument_ni2.kt")
-        public void testTypeArgument_ni2() throws Exception {
-            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument_ni2.kt");
         }
 
         @TestMetadata("underScoreParameters.kt")
