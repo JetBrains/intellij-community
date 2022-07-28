@@ -39,12 +39,14 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     headerPanel.add(header)
     headerPanel.add(Box.createHorizontalGlue())
 
-    val closeIcons = IconButton(null, AllIcons.Actions.Close, AllIcons.Actions.CloseDarkGrey)
-    val closeButton = InplaceButton(closeIcons) {
-      //TODO("Not yet implemented")
+    closeAction?.let { closeAction ->
+      val closeIcons = IconButton(null, AllIcons.Actions.Close, AllIcons.Actions.CloseDarkGrey)
+      val closeButton = InplaceButton(closeIcons) {
+        closeAction(rPanel)
+      }
+      closeButton.maximumSize = Dimension(16, 16)
+      headerPanel.add(closeButton)
     }
-    closeButton.maximumSize = Dimension(16, 16)
-    headerPanel.add(closeButton)
 
     vPanel.add(headerPanel)
     vPanel.add(rigid(0, 4))
@@ -119,6 +121,8 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
   protected abstract val actionLabel: @Nls String
   protected abstract val description: @Nls String
   protected abstract val promoImage: Icon
+
+  protected open val closeAction: ((promoPanel: JPanel) -> Unit)? = null
 
   protected abstract fun runAction()
 }
