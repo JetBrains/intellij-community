@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.DebuggingRunnerData
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunnerSettings
-import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerSettings
+import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
 
 class CoroutineDebugConfigurationExtension : RunConfigurationExtension() {
     override fun <T : RunConfigurationBase<*>> updateJavaParameters(

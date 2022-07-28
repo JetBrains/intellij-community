@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.ui.tree.render.CompoundRendererProvider
 import com.sun.jdi.Type
+import org.jetbrains.kotlin.idea.debugger.KotlinClassRenderer
 import java.util.function.Function
 
 class KotlinClassRendererProvider : CompoundRendererProvider() {

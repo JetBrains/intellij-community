@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.idea.checkers.CompilerTestLanguageVersionSettings;
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories;
 import org.jetbrains.kotlin.codegen.state.GenerationState;
 import org.jetbrains.kotlin.config.*;
-import org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManager;
+import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager;
 import org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManagerFactory;
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockLocation;
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockVirtualMachine;

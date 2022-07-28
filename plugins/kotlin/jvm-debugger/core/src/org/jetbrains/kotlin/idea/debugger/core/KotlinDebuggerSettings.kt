@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger.core
-
+// The package directive doesn't match the file location to prevent API breakage
+package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -12,6 +12,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory
 import com.intellij.xdebugger.settings.XDebuggerSettings
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDelegatedPropertyRendererConfigurableUi
 import org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSteppingConfigurableUi
 
 @State(name = "KotlinDebuggerSettings", storages = [Storage("kotlin_debug.xml")])

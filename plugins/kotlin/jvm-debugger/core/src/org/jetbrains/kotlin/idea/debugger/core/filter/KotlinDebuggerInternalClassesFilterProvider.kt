@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.core.filter
 
 import com.intellij.ui.classFilter.ClassFilter
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider
-import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerSettings
+import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
 
 class KotlinDebuggerInternalClassesFilterProvider : DebuggerClassFilterProvider {
     private companion object {

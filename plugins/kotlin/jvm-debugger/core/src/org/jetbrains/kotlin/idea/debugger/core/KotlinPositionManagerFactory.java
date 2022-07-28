@@ -6,6 +6,7 @@ import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.PositionManagerFactory;
 import com.intellij.debugger.engine.DebugProcess;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager;
 
 public class KotlinPositionManagerFactory extends PositionManagerFactory {
     @Override

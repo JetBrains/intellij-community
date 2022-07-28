@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger.core
+// The package directive doesn't match the file location to prevent API breakage
+package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.debugger.MultiRequestPositionManager
 import com.intellij.debugger.NoDataException
@@ -35,9 +36,7 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME

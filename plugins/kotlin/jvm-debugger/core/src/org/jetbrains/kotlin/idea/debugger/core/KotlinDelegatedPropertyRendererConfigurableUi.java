@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.core;
 
 import com.intellij.openapi.options.ConfigurableUi;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerSettings;
+import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings;
 
 import javax.swing.*;
 
