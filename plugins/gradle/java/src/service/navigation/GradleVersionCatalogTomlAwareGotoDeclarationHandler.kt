@@ -39,7 +39,7 @@ class GradleVersionCatalogTomlAwareGotoDeclarationHandler : GotoDeclarationHandl
         return arrayOf(toml)
       }
     }
-    if (resolved is PsiMethod && resolved.containingFile.name.startsWith("LibrariesFor")) {
+    if (resolved is PsiMethod && resolved.containingFile?.name?.startsWith("LibrariesFor") == true) {
       val actualMethod = findFinishingNode(sourceElement) ?: resolved
       return actualMethod.resolveInToml(sourceElement)?.let { arrayOf(it) }
     }
