@@ -575,6 +575,11 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "      }\n" +
     "    }\n" +
     "    while (true);\n" +
+    "    \n" +
+    "    switch (o) {\n" +
+    "      case Rec(String s, int i) r -> {}\n" +
+    "    }\n" +
+    "\n" +
     "  }\n" +
     "  void bar(){{return;}}\n" +
     "}\n" +
@@ -583,9 +588,10 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "        return null;\n" +
     "    }\n" +
     "}\n" +
-    "interface Abba {}";
+    "interface Abba {}\n" +
+    "record Rec(String s, int i) {}";
 
-  private static final String WRAPPING_CODE_SAMPLE =
+  @org.intellij.lang.annotations.Language("JAVA") private static final String WRAPPING_CODE_SAMPLE =
     "/*\n" +
     " * This is a sample file.\n" +
     " */\n" +
