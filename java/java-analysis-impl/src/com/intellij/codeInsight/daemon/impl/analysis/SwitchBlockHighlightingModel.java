@@ -475,7 +475,7 @@ public class SwitchBlockHighlightingModel {
         if (mySelectorType instanceof PsiPrimitiveType && !isNullType(mySelector)) {
           HighlightInfo error = createError(label, JavaErrorBundle.message("incompatible.switch.null.type", "null",
                                                                            JavaHighlightUtil.formatType(mySelectorType)));
-          return listOfNotNull(error);
+          return ContainerUtil.packNullables(error);
         }
         return Collections.emptyList();
       }
@@ -498,17 +498,17 @@ public class SwitchBlockHighlightingModel {
             IntentionAction fix = getFixFactory().createReplacePrimitiveWithBoxedTypeAction(mySelectorType, typeElement);
             QuickFixAction.registerQuickFixAction(info, fix);
           }
-          return listOfNotNull(info);
+          return ContainerUtil.packNullables(info);
         }
         if (!TypeConversionUtil.areTypesConvertible(mySelectorType, patternType)) {
           HighlightInfo error =
             HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, elementToReport.getTextRange(), 0);
-          return listOfNotNull(error);
+          return ContainerUtil.packNullables(error);
         }
         else if (JavaGenericsUtil.isUncheckedCast(patternType, mySelectorType)) {
           String message = JavaErrorBundle.message("unsafe.cast.in.instanceof", JavaHighlightUtil.formatType(mySelectorType),
                                                    JavaHighlightUtil.formatType(patternType));
-          return listOfNotNull(createError(elementToReport, message));
+          return ContainerUtil.packNullables(createError(elementToReport, message));
         }
         PsiDeconstructionPattern deconstructionPattern = JavaPsiPatternUtil.findDeconstructionPattern(elementToReport);
         return PatternHighlightingModel.createDeconstructionErrors(deconstructionPattern);
@@ -516,35 +516,27 @@ public class SwitchBlockHighlightingModel {
       else if (label instanceof PsiExpression) {
         PsiExpression expr = (PsiExpression)label;
         HighlightInfo info = HighlightUtil.checkAssignability(mySelectorType, expr.getType(), expr, expr);
-        if (info != null) return listOfNotNull(info);
+        if (info != null) return List.of(info);
         if (label instanceof PsiReferenceExpression) {
           String enumConstName = evaluateEnumConstantName((PsiReferenceExpression)label);
           if (enumConstName != null) {
             HighlightInfo error = createQualifiedEnumConstantInfo((PsiReferenceExpression)label);
-            return listOfNotNull(error);
+            return ContainerUtil.packNullables(error);
           }
         }
         Object constValue = evaluateConstant(expr);
         if (constValue == null) {
           HighlightInfo error = createError(expr, JavaErrorBundle.message("constant.expression.required"));
-          return listOfNotNull(error);
+          return ContainerUtil.packNullables(error);
         }
         if (ConstantExpressionUtil.computeCastTo(constValue, mySelectorType) == null) {
           HighlightInfo error = HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), label.getTextRange(), 0);
-          return listOfNotNull(error);
+          return ContainerUtil.packNullables(error);
         }
         return Collections.emptyList();
       }
       HighlightInfo error = createError(label, JavaErrorBundle.message("switch.constant.expression.required"));
-      return listOfNotNull(error);
-    }
-
-    private static <T> List<@NotNull T> listOfNotNull(T... elements) {
-      List<T> list = new SmartList<>();
-      for (T element : elements) {
-        if (element != null) list.add(element);
-      }
-      return list;
+      return ContainerUtil.packNullables(error);
     }
 
     @Override
