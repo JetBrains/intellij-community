@@ -15,11 +15,11 @@ internal class ReplaceBySourceAsGraph : ReplaceBySourceOperation {
   private lateinit var entityFilter: (EntitySource) -> Boolean
 
   override fun replace(
-    thisStorage: MutableEntityStorageImpl,
+    targetStorage: MutableEntityStorageImpl,
     replaceWithStorage: AbstractEntityStorage,
     entityFilter: (EntitySource) -> Boolean,
   ) {
-    replaceBySourceAsGraph(thisStorage, replaceWithStorage, entityFilter)
+    replaceBySourceAsGraph(targetStorage, replaceWithStorage, entityFilter)
   }
 
   /**

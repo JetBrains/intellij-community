@@ -9,9 +9,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Ignore
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import kotlin.test.assertNotNull
 
 
@@ -795,7 +793,7 @@ class ReplaceBySourceAsTreeTest {
 
   private inner class ThisStateChecker {
     infix fun WorkspaceEntity.assert(state: ReplaceState) {
-      val thisState = engine.thisState[this.base.id]
+      val thisState = engine.targetState[this.base.id]
       assertNotNull(thisState)
       if (state is ReplaceState.Relink) {
         assertEquals(state.javaClass, thisState.javaClass)

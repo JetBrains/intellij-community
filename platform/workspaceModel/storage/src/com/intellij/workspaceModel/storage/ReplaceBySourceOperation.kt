@@ -6,7 +6,7 @@ import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 
 internal interface ReplaceBySourceOperation {
   fun replace(
-    thisStorage: MutableEntityStorageImpl,
+    targetStorage: MutableEntityStorageImpl,
     replaceWithStorage: AbstractEntityStorage,
     entityFilter: (EntitySource) -> Boolean,
   )
