@@ -154,7 +154,7 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     try {
       action.invoke()
     } catch (e: Throwable) {
-      log.error("Exception at Workspace Model event handling", e)
+      log.warn("Exception at Workspace Model event handling", e)
     }
   }
 
