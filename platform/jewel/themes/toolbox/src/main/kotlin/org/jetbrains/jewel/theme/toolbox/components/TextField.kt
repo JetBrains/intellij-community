@@ -21,10 +21,10 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
-import kotlinx.coroutines.flow.collect
 import org.jetbrains.jewel.components.state.TextFieldState
 import org.jetbrains.jewel.shape
 import org.jetbrains.jewel.styles.LocalTextStyle
@@ -125,15 +125,17 @@ fun TextField(
 
     @OptIn(ExperimentalComposeUiApi::class)
     val pointerModifier = when {
-        enabled -> Modifier.pointerMoveFilter(
-            onEnter = {
+        enabled -> Modifier.onPointerEvent(
+            PointerEventType.Move
+        ) {
+        }
+            .onPointerEvent(PointerEventType.Enter) {
                 inputState = inputState.copy(hovered = true)
-                false
-            },
-            onExit = {
+            }
+            .onPointerEvent(PointerEventType.Exit) {
                 inputState = inputState.copy(hovered = false)
-                false
-            })
+            }
+
         else -> Modifier
     }
 

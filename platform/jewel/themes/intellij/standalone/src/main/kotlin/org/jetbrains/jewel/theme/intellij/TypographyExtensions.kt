@@ -18,7 +18,7 @@ val TextStyle.Companion.IntelliJLight
 
 val TextStyle.Companion.IntelliJDark
     get() = TextStyle(
-        color = Color.IntelliJWhite,
+        color = Color(0xFFBBBBBB),
         fontSize = 12.sp,
         fontWeight = FontWeight.Normal,
         fontStyle = FontStyle.Normal,

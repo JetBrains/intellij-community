@@ -27,7 +27,8 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.semantics.Role
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -133,17 +134,15 @@ fun Button(
         Modifier
 
     val pointerModifier = if (enabled)
-        Modifier.pointerMoveFilter(
-            onEnter = {
+        Modifier
+            .onPointerEvent(PointerEventType.Enter) {
                 isHovered = true
                 buttonState = buttonState.copy(mouse = ButtonMouseState.Hovered)
-                false
-            },
-            onExit = {
+            }
+            .onPointerEvent(PointerEventType.Exit) {
                 isHovered = false
                 buttonState = buttonState.copy(mouse = ButtonMouseState.None)
-                false
-            })
+            }
     else
         Modifier
 

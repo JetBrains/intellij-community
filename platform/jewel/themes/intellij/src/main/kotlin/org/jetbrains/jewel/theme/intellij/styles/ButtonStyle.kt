@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.Insets
 import org.jetbrains.jewel.ShapeStroke
@@ -72,16 +73,19 @@ enum class IntelliJButtonStyleVariations {
 fun ButtonStyle(
     palette: IntelliJPalette,
     metrics: IntelliJMetrics,
-    controlTextStyle: TextStyle
+    controlTextStyle: TextStyle,
+    contentPadding: PaddingValues = metrics.button.padding,
+    shape: Shape = RoundedCornerShape(metrics.button.arc),
+    minSize: DpSize = DpSize(72.dp, 16.dp),
 ) = ButtonStyle {
     val focusHaloStroke = ShapeStroke.SolidColor(metrics.controlFocusHaloWidth, palette.controlFocusHalo)
     val defaultAppearance = ButtonAppearance(
         textStyle = controlTextStyle.copy(palette.button.foreground),
         background = palette.button.background,
-        shape = RoundedCornerShape(metrics.button.arc),
-        contentPadding = metrics.button.padding,
-        minWidth = 72.dp,
-        minHeight = 16.dp,
+        shape = shape,
+        contentPadding = contentPadding,
+        minWidth = minSize.width,
+        minHeight = minSize.height,
         shapeStroke = ShapeStroke.Brush(metrics.button.strokeWidth, palette.button.stroke, Insets(metrics.button.strokeWidth)),
         haloStroke = null
     )

@@ -26,15 +26,17 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 /**
- * Icon component that draws [imageVector] using [tint], defaulting to [Color.Black].
+ * Icon component that draws [imageVector] using [tint], defaulting to
+ * [Color.Black].
  *
  * @param imageVector [ImageVector] to draw inside this Icon
- * @param contentDescription text used by accessibility services to describe what this icon
- * represents. This should always be provided unless this icon is used for decorative purposes,
- * and does not represent a meaningful action that a user can take.
+ * @param contentDescription text used by accessibility services to
+ *     describe what this icon represents. This should always be
+ *     provided unless this icon is used for decorative purposes, and
+ *     does not represent a meaningful action that a user can take.
  * @param modifier optional [Modifier] for this Icon
- * @param tint tint to be applied to [imageVector]. If [Color.Unspecified] is provided, then no
- *  tint is applied
+ * @param tint tint to be applied to [imageVector]. If [Color.Unspecified]
+ *     is provided, then no tint is applied
  */
 @Composable
 fun Icon(
@@ -52,15 +54,17 @@ fun Icon(
 }
 
 /**
- * Icon component that draws [bitmap] using [tint], defaulting to [Color.Black].
+ * Icon component that draws [bitmap] using [tint], defaulting to
+ * [Color.Black].
  *
  * @param bitmap [ImageBitmap] to draw inside this Icon
- * @param contentDescription text used by accessibility services to describe what this icon
- * represents. This should always be provided unless this icon is used for decorative purposes,
- * and does not represent a meaningful action that a user can take.
+ * @param contentDescription text used by accessibility services to
+ *     describe what this icon represents. This should always be
+ *     provided unless this icon is used for decorative purposes, and
+ *     does not represent a meaningful action that a user can take.
  * @param modifier optional [Modifier] for this Icon
- * @param tint tint to be applied to [bitmap]. If [Color.Unspecified] is provided, then no
- *  tint is applied
+ * @param tint tint to be applied to [bitmap]. If [Color.Unspecified] is
+ *     provided, then no tint is applied
  */
 @Composable
 fun Icon(
@@ -79,15 +83,17 @@ fun Icon(
 }
 
 /**
- * Icon component that draws a [painter] using [tint], defaulting to [Color.Black]
+ * Icon component that draws a [painter] using [tint], defaulting to
+ * [Color.Black]
  *
  * @param painter [Painter] to draw inside this Icon
- * @param contentDescription text used by accessibility services to describe what this icon
- * represents. This should always be provided unless this icon is used for decorative purposes,
- * and does not represent a meaningful action that a user can take.
+ * @param contentDescription text used by accessibility services to
+ *     describe what this icon represents. This should always be
+ *     provided unless this icon is used for decorative purposes, and
+ *     does not represent a meaningful action that a user can take.
  * @param modifier optional [Modifier] for this Icon
- * @param tint tint to be applied to [painter]. If [Color.Unspecified] is provided, then no
- *  tint is applied
+ * @param tint tint to be applied to [painter]. If [Color.Unspecified] is
+ *     provided, then no tint is applied
  */
 @Composable
 fun Icon(
@@ -106,7 +112,8 @@ fun Icon(
         Modifier
     }
     Box(
-        modifier.toolingGraphicsLayer().defaultSizeFor(painter)
+        modifier.toolingGraphicsLayer()
+            .defaultSizeFor(painter)
             .paint(
                 painter,
                 colorFilter = colorFilter,

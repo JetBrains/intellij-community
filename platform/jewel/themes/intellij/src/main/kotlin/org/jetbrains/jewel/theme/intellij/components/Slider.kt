@@ -65,4 +65,3 @@ private fun Orientation.toSwingInt() = when (this) {
     Orientation.Horizontal -> SwingConstants.HORIZONTAL
     Orientation.Vertical -> SwingConstants.VERTICAL
 }
-

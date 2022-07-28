@@ -27,13 +27,13 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
-import kotlinx.coroutines.flow.collect
 import org.jetbrains.jewel.components.state.ButtonMouseState
 import org.jetbrains.jewel.shape
 import org.jetbrains.jewel.styles.LocalTextStyle
@@ -82,17 +82,18 @@ fun RadioButtonImpl(
 
     @OptIn(ExperimentalComposeUiApi::class)
     val pointerModifier = if (enabled)
-        Modifier.pointerMoveFilter(
-            onEnter = {
+        Modifier.onPointerEvent(
+            PointerEventType.Move
+        ) {
+        }
+            .onPointerEvent(PointerEventType.Enter) {
                 isHovered = true
                 interactionState = interactionState.copy(mouse = ButtonMouseState.Hovered)
-                false
-            },
-            onExit = {
+            }
+            .onPointerEvent(PointerEventType.Exit) {
                 isHovered = false
                 interactionState = interactionState.copy(mouse = ButtonMouseState.None)
-                false
-            })
+            }
     else
         Modifier
 

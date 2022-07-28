@@ -2,12 +2,13 @@ package org.jetbrains.jewel.theme.intellij
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.isMacOs
 
 val IntelliJMetrics.Button.Companion.default
     get() = IntelliJMetrics.Button(
-        strokeWidth = 1.dp,
+        strokeWidth = Dp.Hairline,
         arc = CornerSize(3.dp),
         padding = PaddingValues(horizontal = 14.dp, vertical = 4.dp)
     )
@@ -16,7 +17,7 @@ val IntelliJMetrics.Companion.default
     get() = IntelliJMetrics(
         singlePadding = 8.dp,
         controlFocusHaloWidth = 2.dp,
-        controlFocusHaloArc = 1.dp,
+        controlFocusHaloArc = Dp.Hairline,
         controlArc = 3.dp,
         button = IntelliJMetrics.Button.default,
         separator = IntelliJMetrics.Separator.default,
@@ -45,4 +46,4 @@ val IntelliJMetrics.Scrollbar.Companion.macOs
     )
 
 val IntelliJMetrics.Separator.Companion.default
-    get() = IntelliJMetrics.Separator(strokeWidth = 1.dp)
+    get() = IntelliJMetrics.Separator(strokeWidth = Dp.Hairline)

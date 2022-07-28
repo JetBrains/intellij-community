@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -12,9 +13,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -25,16 +28,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.useResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.singleWindowApplication
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.application
+import androidx.compose.ui.window.rememberWindowState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
+import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.jewel.Orientation
 import org.jetbrains.jewel.components.Icon
+import org.jetbrains.jewel.isMacOs
 import org.jetbrains.jewel.theme.intellij.IntelliJTheme
 import org.jetbrains.jewel.theme.intellij.components.Button
 import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
@@ -52,21 +67,47 @@ import org.jetbrains.jewel.theme.intellij.components.Tree
 import org.jetbrains.jewel.theme.intellij.components.TreeLayout
 import org.jetbrains.jewel.theme.intellij.components.asTree
 import org.jetbrains.jewel.theme.intellij.components.rememberTabContainerState
+import org.jetbrains.jewel.theme.intellij.pxToDp
+import org.jetbrains.jewel.theme.intellij.styles.ButtonStyle
+import org.jetbrains.jewel.theme.intellij.styles.IntelliJButtonStyleVariations
 import org.jetbrains.jewel.theme.intellij.styles.SliderStyle
 import org.jetbrains.jewel.theme.toolbox.components.Divider
+import org.jetbrains.jewel.theme.toolbox.styles.DividerAppearance
+import org.jetbrains.jewel.theme.toolbox.styles.DividerStyle
+import java.awt.Cursor
+import java.awt.Dimension
 import java.awt.event.WindowEvent
 import java.io.File
 import java.nio.file.Paths
 import java.util.Optional
 
-private const val WIZARD_PAGE_COUNT = 2
-
-fun main() {
-    singleWindowApplication {
+fun main() = application {
+    val state = rememberWindowState(size = DpSize(1020.dp, 680.dp))
+    Window(
+        onCloseRequest = ::exitApplication,
+        title = "Asset Studio",
+        icon = useResource("images/android-head.svg") { loadSvgPainter(it, Density(1f)) },
+        state = state
+    ) {
         Wizard(onFinish = {
             window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING))
         })
+
+        window.minimumSize = Dimension(814, 607)
     }
+}
+
+private enum class WizardPage(
+    val index: Int,
+    val title: String,
+) {
+
+    CONFIGURE(index = 0, title = "Configure Image Asset"),
+    CONFIRM(index = 1, title = "Confirm Icon Path");
+
+    fun nextPage() = values().find { it.index == index + 1 }
+
+    fun previousPage() = values().find { it.index == index - 1 }
 }
 
 @Composable
@@ -74,15 +115,19 @@ fun Wizard(onFinish: () -> Unit) {
     IntelliJTheme(true) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column {
-                val currentPage = mutableStateOf(1) // 1-based
-                WizardHeader(currentPage = currentPage)
+                var currentPage by remember { mutableStateOf(WizardPage.CONFIGURE) }
+                WizardHeader(currentPage, Modifier.fillMaxWidth())
+
                 WizardMainContent(
-                    modifier = Modifier.weight(1f),
-                    currentPage = currentPage
+                    currentPage = currentPage,
+                    modifier = Modifier.weight(1f)
                 )
+
                 WizardFooter(
                     currentPage = currentPage,
-                    onFinish = onFinish
+                    onPageChange = { currentPage = it },
+                    onFinish = onFinish,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -90,66 +135,61 @@ fun Wizard(onFinish: () -> Unit) {
 }
 
 @Composable
-fun WizardHeader(modifier: Modifier = Modifier, currentPage: MutableState<Int>) {
-    Box(
-        modifier
-            .background(Color(0xFF616161))
-            .height(100.dp)
-            .fillMaxWidth()
+private fun WizardHeader(currentPage: WizardPage, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .background(Color(if (IntelliJTheme.palette.isLight) 0xFF616161 else 0xFF4B4B4B))
+            .height(112.dp)
+            .padding(horizontal = 16.pxToDp(), vertical = 20.pxToDp()),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.pxToDp(), Alignment.Start)
     ) {
-        Row(modifier = modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                modifier = modifier
-                    .height(64.dp)
-                    .padding(10.dp),
-                painter = painterResource("imageasset/android-studio.svg"),
-                contentDescription = "logo",
-                tint = Color.Unspecified
-            )
-            Text(
-                text = when (currentPage.value) {
-                    1 -> "Configure Image Asset"
-                    2 -> "Confirm Icon Path"
-                    else -> "Assets Wizard"
-                },
-                fontSize = 24.sp
-            )
-        }
-    }
-}
-
-@Composable
-fun WizardMainContent(modifier: Modifier = Modifier, currentPage: MutableState<Int>) {
-    if (currentPage.value == 1) {
-        FirstPage(
-            modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
+        Icon(
+            painter = painterResource("images/android-studio.svg"),
+            contentDescription = "logo",
+            tint = Color.Unspecified
         )
-    } else if (currentPage.value == 2) {
-        ConfirmIconPathPage(modifier)
+        Text(
+            text = currentPage.title,
+            fontSize = 24.sp,
+            color = Color.White
+        )
     }
 }
 
 @Composable
-fun WizardFooter(modifier: Modifier = Modifier, currentPage: MutableState<Int>, onFinish: () -> Unit) {
+private fun WizardMainContent(currentPage: WizardPage, modifier: Modifier = Modifier) {
+    when (currentPage) {
+        WizardPage.CONFIGURE -> ConfigurePage(modifier)
+        WizardPage.CONFIRM -> ConfirmIconPathPage(modifier)
+    }
+}
+
+@Composable
+private fun WizardFooter(
+    currentPage: WizardPage,
+    modifier: Modifier = Modifier,
+    onPageChange: (WizardPage) -> Unit,
+    onFinish: () -> Unit
+) {
     Box(
-        modifier
-            .height(50.dp)
-            .fillMaxWidth()
+        modifier = modifier.height(47.pxToDp())
     ) {
-        Divider()
+        Divider(style = DividerStyle(DividerAppearance(color = Color(if (IntelliJTheme.palette.isLight) 0xFFC0C0C0 else 0xFF323232))))
+
         Row(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp),
+            modifier = Modifier.fillMaxSize().padding(horizontal = 14.pxToDp(), vertical = 12.pxToDp()),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(6.pxToDp())
         ) {
-            HelpIcon()
+            HelpButton(Modifier.size(24.pxToDp(), 24.pxToDp()))
+
+            Spacer(Modifier.weight(1f))
+
             WizardControls(
                 currentPage = currentPage,
-                onFinish = onFinish
+                onPageChange = onPageChange,
+                onFinish = onFinish,
             )
         }
     }
@@ -174,7 +214,6 @@ fun DirectorySelection(modifier: Modifier = Modifier) {
 
 @Composable
 fun ResDirectoryLabelComboBox(modifier: Modifier = Modifier, outputDir: MutableState<String>) {
-
     Row(
         modifier
             .height(30.dp)
@@ -292,38 +331,101 @@ fun TextFieldWithLabel(modifier: Modifier = Modifier, label: String, textFieldTe
 }
 
 @Composable
-fun HelpIcon(modifier: Modifier = Modifier) {
+fun HelpButton(modifier: Modifier = Modifier) {
     val uriHandler = LocalUriHandler.current
+
     IconButton(
         modifier = modifier,
         onClick = { uriHandler.openUri("https://developer.android.com/studio/write/image-asset-studio") },
+        style = ButtonStyle(
+            IntelliJTheme.palette,
+            IntelliJTheme.metrics,
+            IntelliJTheme.typography.button,
+            shape = CircleShape,
+            contentPadding = PaddingValues(),
+            minSize = DpSize(0.dp, 0.dp)
+        )
     ) {
-        val helpIconPath = if (IntelliJTheme.palette.isLight) "imageasset/help.svg" else "imageasset/help_dark.svg"
+        val helpIconPath = if (IntelliJTheme.palette.isLight) "images/help.svg" else "images/help_dark.svg"
         Icon(
             painterResource(helpIconPath), // Help icon requires adding a new dependency, so we're using info instead
-            contentDescription = "help button",
-            tint = Color.Unspecified // FIXME: tint is being applied regardless
+            contentDescription = "Show help contents",
+            tint = IntelliJTheme.typography.button.color
         )
     }
 }
 
 @Composable
-fun WizardControls(modifier: Modifier = Modifier, currentPage: MutableState<Int>, onFinish: () -> Unit) {
+private fun WizardControls(
+    currentPage: WizardPage,
+    modifier: Modifier = Modifier,
+    onPageChange: (WizardPage) -> Unit,
+    onFinish: () -> Unit
+) {
+    fun changePage(newPageOrNull: WizardPage?) {
+        checkNotNull(newPageOrNull) { "The page we're trying to navigate to is null" }
+        onPageChange(newPageOrNull)
+    }
+
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.pxToDp())
     ) {
-        Button(onClick = onFinish) {
-            Text("Cancel")
+        val buttonHeight = 26.pxToDp()
+        val buttonStyle = ButtonStyle(
+            IntelliJTheme.palette,
+            IntelliJTheme.metrics,
+            IntelliJTheme.typography.button,
+            contentPadding = PaddingValues(),
+            minSize = DpSize(72.pxToDp(), buttonHeight)
+        )
+
+        val previousPage = currentPage.previousPage()
+        val nextPage = currentPage.nextPage()
+
+        @Composable
+        fun CancelButton() {
+            Button(onClick = onFinish, style = buttonStyle) {
+                Text("Cancel")
+            }
         }
-        Button(onClick = { currentPage.value-- }, enabled = currentPage.value > 1) {
-            Text("Previous")
+
+        @Composable
+        fun PreviousButton() {
+            Button(onClick = { changePage(previousPage) }, enabled = previousPage != null, style = buttonStyle) {
+                Text("Previous")
+            }
         }
-        Button(onClick = { currentPage.value++ }, enabled = currentPage.value < WIZARD_PAGE_COUNT) {
-            Text("Next")
+
+        @Composable
+        fun NextButton() {
+            Button(
+                onClick = { changePage(nextPage) },
+                variation = IntelliJButtonStyleVariations.DefaultButton,
+                enabled = nextPage != null,
+                style = buttonStyle
+            ) {
+                Text("Next", fontWeight = FontWeight.Bold)
+            }
         }
-        Button(onClick = onFinish, enabled = currentPage.value == WIZARD_PAGE_COUNT) {
-            Text("Finish")
+
+        @Composable
+        fun FinishButton() {
+            Button(onClick = onFinish, enabled = nextPage == null, style = buttonStyle) {
+                Text("Finish")
+            }
+        }
+
+        if (isMacOs()) {
+            CancelButton()
+            PreviousButton()
+            NextButton()
+            FinishButton()
+        } else {
+            PreviousButton()
+            NextButton()
+            CancelButton()
+            FinishButton()
         }
     }
 }
@@ -386,6 +488,7 @@ fun AssetTypeSpecificOptions(assetType: AssetType, subLabelModifier: Modifier, r
             Text("Path:", modifier = subLabelModifier)
             TextField(value = "some_path", onValueChange = {}, modifier = Modifier.fillMaxWidth())
         }
+
         AssetType.CLIP_ART -> {
             Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
                 Text("Clip Art:", modifier = subLabelModifier)
@@ -394,6 +497,7 @@ fun AssetTypeSpecificOptions(assetType: AssetType, subLabelModifier: Modifier, r
                 Text("Color:", modifier = subLabelModifier)
             }
         }
+
         AssetType.TEXT -> {
             Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
                 Text("Text:", modifier = subLabelModifier)
@@ -404,6 +508,7 @@ fun AssetTypeSpecificOptions(assetType: AssetType, subLabelModifier: Modifier, r
                 Text("Color:", modifier = subLabelModifier)
             }
         }
+
         AssetType.COLOR -> Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             Text("Color:", modifier = subLabelModifier)
         }
@@ -547,20 +652,22 @@ enum class OptionTabs {
     OPTIONS
 }
 
+@OptIn(ExperimentalSplitPaneApi::class)
 @Composable
-fun FirstPage(modifier: Modifier = Modifier) {
-    Row(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .width(400.dp)
-                .padding(all = 20.dp)
-        ) {
+fun ConfigurePage(modifier: Modifier = Modifier) {
+    val minSizeLeft = 354.pxToDp()
+    val minSizeRight = 391.pxToDp()
+
+    HorizontalSplitPane(modifier = modifier.padding(24.pxToDp())) {
+        first(minSize = minSizeLeft) {
             Column {
-                val labelModifier = Modifier.width(100.dp)
+                val labelModifier = Modifier.width(80.pxToDp())
+
                 Row(Modifier.height(30.dp)) {
                     Text("Icon type:", modifier = labelModifier.align(alignment = Alignment.CenterVertically))
                     // TextField(value = layerNameState.value, onValueChange = { })
                 }
+
                 Row(Modifier.height(30.dp)) {
                     Text("Name:", modifier = labelModifier.align(Alignment.CenterVertically))
                     TextField(
@@ -584,8 +691,9 @@ fun FirstPage(modifier: Modifier = Modifier) {
                 }
             }
         }
-        Box(modifier = Modifier.padding(top = 20.dp)) {
-            Column {
+
+        second(minSize = minSizeRight) {
+            Column(modifier = Modifier.padding(top = 20.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     GroupHeader("Preview", modifier = Modifier.weight(1.0f))
                     TextField(value = "", onValueChange = {}, modifier = Modifier.width(50.dp))
@@ -612,9 +720,26 @@ fun FirstPage(modifier: Modifier = Modifier) {
                         .padding(20.dp)
                         .background(color = Color.Green)
                         .fillMaxSize()
-                ) {
+                )
+            }
+        }
 
-                }
+        splitter {
+            visiblePart {
+                Box(
+                    Modifier
+                        .width(10.pxToDp())
+                        .fillMaxHeight()
+                )
+            }
+            handle {
+                Box(
+                    Modifier
+                        .markAsHandle()
+                        .pointerHoverIcon(PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
+                        .width(10.pxToDp())
+                        .fillMaxHeight()
+                )
             }
         }
     }

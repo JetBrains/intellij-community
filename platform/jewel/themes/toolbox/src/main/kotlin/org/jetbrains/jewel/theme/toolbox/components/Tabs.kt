@@ -30,7 +30,8 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.semantics.Role
 import org.jetbrains.jewel.Orientation
 import org.jetbrains.jewel.components.state.TabState
@@ -149,19 +150,20 @@ fun <T : Any> TabScope<T>.Tab(
                 onClick = { state.select(key) },
                 enabled = enabled,
                 role = Role.Tab,
-/*
-                interactionSource = interactionSource,
-                indication = null
-*/
-            ).pointerMoveFilter(
-                onEnter = {
-                    isHovered = true
-                    false
-                },
-                onExit = {
-                    isHovered = false
-                    false
-                })
+                /*
+                                interactionSource = interactionSource,
+                                indication = null
+                */
+            ).onPointerEvent(
+                PointerEventType.Move
+            ) {
+            }
+            .onPointerEvent(PointerEventType.Enter) {
+                isHovered = true
+            }
+            .onPointerEvent(PointerEventType.Exit) {
+                isHovered = false
+            }
             .then(sizeModifier)
             .then(shapeModifier)
             .then(adornmentModifier)
