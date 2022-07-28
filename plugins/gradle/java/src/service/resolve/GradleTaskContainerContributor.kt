@@ -44,9 +44,6 @@ class GradleTaskContainerContributor : NonCodeMembersContributor() {
 
     val staticTasks = getStaticPluginModel(file).tasks.filter { if (name == null) it.name !in taskNames else it.name == name }
 
-    if (tasks.isEmpty()) return
-
-
     for (task in tasks) {
       if (!processTask(task.name, task.description, task.typeFqn, file, processProperties, processor, state, processMethods)) return
     }
