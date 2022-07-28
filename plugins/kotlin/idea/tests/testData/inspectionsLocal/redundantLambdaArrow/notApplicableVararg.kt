@@ -1,4 +1,4 @@
-// PROBLEM: none
+// PROBLEM: Redundant lambda arrow
 // WITH_RUNTIME
 
 fun main() {

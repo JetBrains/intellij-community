@@ -1,6 +1,6 @@
 // "Replace with 'New'" "true"
 // WITH_RUNTIME
-// ERROR: Type inference failed: Not enough information to infer parameter T in constructor New<T>()<br>Please specify it explicitly.<br>
+// ERROR: Not enough information to infer type variable T
 
 abstract class Main<T>
 

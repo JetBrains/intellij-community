@@ -3,7 +3,7 @@ fun <K, V> testMutableMapEntry(<warning>map</warning>: MutableMap<K, V>, <warnin
 }
 
 fun foo() {
-    <error>testMutableMapEntry</error>(hashMap(1 to 'a'), 'b'<error>)</error>
+    testMutableMapEntry(hashMap(1 to 'a'), 'b'<error>)</error>
 }
 
 //extract from library
