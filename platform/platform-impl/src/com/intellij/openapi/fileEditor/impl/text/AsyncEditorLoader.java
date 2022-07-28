@@ -139,9 +139,9 @@ public final class AsyncEditorLoader {
 
   private boolean worthWaiting() {
     // cannot perform commitAndRunReadAction in parallel to EDT waiting
-    return !PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments() &&
-           !ApplicationManager.getApplication().isWriteAccessAllowed() &&
-           !EditorsSplitters.isOpenedInBulk(myTextEditor.myFile);
+    return !EditorsSplitters.isOpenedInBulk(myTextEditor.myFile) &&
+           !PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments() &&
+           !ApplicationManager.getApplication().isWriteAccessAllowed();
   }
 
   private static <T> T resultInTimeOrNull(@NotNull Future<T> future) {

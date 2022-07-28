@@ -3,8 +3,8 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
@@ -95,14 +95,17 @@ open class FileEditorManagerExImpl(project: Project) : FileEditorManagerImpl(pro
       builders = null
     }
 
-    // NON_MODAL - write-safe context
-    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+    withContext(Dispatchers.EDT) {
       if (!file.isValid) {
         return@withContext
       }
 
-      runBulkTabChange(window.owner) {
-        composite = openFileImpl4Edt(window, file, entry, options, newProviders, builders)
+      // execute as part of project open process - maybe under modal progress, maybe not,
+      // so, we cannot use NON_MODAL to get write-safe context, because it will lead to a deadlock
+      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+        runBulkTabChange(window.owner) {
+          composite = openFileImpl4Edt(window, file, entry, options, newProviders, builders)
+        }
       }
     }
 
