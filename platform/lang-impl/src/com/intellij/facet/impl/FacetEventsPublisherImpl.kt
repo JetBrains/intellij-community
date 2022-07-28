@@ -14,8 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
-@Service
-internal class FacetEventsPublisher(private val project: Project) {
+internal class FacetEventsPublisherImpl(private val project: Project): FacetEventsPublisher {
   private val facetsByType: MutableMap<FacetTypeId<*>, MutableMap<Facet<*>, Boolean>> = HashMap()
   private val manuallyRegisteredListeners = ContainerUtil.createConcurrentList<Pair<FacetTypeId<*>?, ProjectFacetListener<*>>>()
 
@@ -38,9 +37,6 @@ internal class FacetEventsPublisher(private val project: Project) {
   }
 
   companion object {
-    @JvmStatic
-    fun getInstance(project: Project): FacetEventsPublisher = project.service()
-
     @JvmField
     internal val LISTENER_EP = ExtensionPointName<ProjectFacetListenerEP>("com.intellij.projectFacetListener")
     private val LISTENER_EP_CACHE_KEY = java.util.function.Function<ProjectFacetListenerEP, String> { it.facetTypeId }
@@ -55,34 +51,34 @@ internal class FacetEventsPublisher(private val project: Project) {
     manuallyRegisteredListeners -= Pair(type, listener)
   }
 
-  fun fireBeforeFacetAdded(facet: Facet<*>) {
+  override fun fireBeforeFacetAdded(facet: Facet<*>) {
     getPublisher(facet.module).beforeFacetAdded(facet)
   }
 
-  fun fireBeforeFacetRemoved(facet: Facet<*>) {
+  override fun fireBeforeFacetRemoved(facet: Facet<*>) {
     getPublisher(facet.module).beforeFacetRemoved(facet)
     onFacetRemoved(facet, true)
   }
 
-  fun fireBeforeFacetRenamed(facet: Facet<*>) {
+  override fun fireBeforeFacetRenamed(facet: Facet<*>) {
     getPublisher(facet.module).beforeFacetRenamed(facet)
   }
 
-  fun fireFacetAdded(facet: Facet<*>) {
+  override fun fireFacetAdded(facet: Facet<*>) {
     getPublisher(facet.module).facetAdded(facet)
     onFacetAdded(facet)
   }
 
-  fun fireFacetRemoved(module: Module, facet: Facet<*>) {
+  override fun fireFacetRemoved(module: Module, facet: Facet<*>) {
     getPublisher(module).facetRemoved(facet)
     onFacetRemoved(facet, false)
   }
 
-  fun fireFacetRenamed(facet: Facet<*>, newName: String) {
+  override fun fireFacetRenamed(facet: Facet<*>, newName: String) {
     getPublisher(facet.module).facetRenamed(facet, newName)
   }
 
-  fun fireFacetConfigurationChanged(facet: Facet<*>) {
+  override fun fireFacetConfigurationChanged(facet: Facet<*>) {
     getPublisher(facet.module).facetConfigurationChanged(facet)
     onFacetChanged(facet)
   }

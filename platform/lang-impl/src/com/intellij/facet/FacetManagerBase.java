@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet;
 
-import com.intellij.facet.impl.FacetEventsPublisher;
+import com.intellij.facet.impl.FacetEventsPublisherImpl;
 import com.intellij.facet.impl.FacetLoadingErrorDescription;
 import com.intellij.facet.impl.invalid.InvalidFacet;
 import com.intellij.facet.impl.invalid.InvalidFacetConfiguration;

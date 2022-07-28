@@ -10,6 +10,9 @@
     <extensionPoint name="workspaceModel.customModuleComponentSerializer"
                     interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleComponentSerializer"
                     dynamic="true"/>
+    <extensionPoint name="workspaceModel.customModuleRelatedEntitySerializer"
+                    interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleRelatedEntitySerializer"
+                    dynamic="true"/>
     <extensionPoint name="workspaceModel.preUpdateHandler"
                     interface="com.intellij.workspaceModel.ide.WorkspaceModelPreUpdateHandler"
                     dynamic="true"/>

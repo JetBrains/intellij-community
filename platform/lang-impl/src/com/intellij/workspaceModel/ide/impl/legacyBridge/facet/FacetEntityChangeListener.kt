@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
+import com.intellij.facet.FacetEventsPublisher
 import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetManagerBase
-import com.intellij.facet.impl.FacetEventsPublisher
+import com.intellij.facet.impl.FacetEventsPublisherImpl
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager

@@ -316,6 +316,8 @@
 
     <projectService serviceInterface="com.intellij.facet.FacetFinder" serviceImplementation="com.intellij.facet.impl.FacetFinderImpl"/>
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener"/>
+    <projectService serviceInterface="com.intellij.facet.FacetEventsPublisher"
+                    serviceImplementation="com.intellij.facet.impl.FacetEventsPublisherImpl"/>
 
     <projectService serviceInterface="com.intellij.facet.ProjectFacetManager"
                     serviceImplementation="com.intellij.facet.impl.ProjectFacetManagerImpl"/>
