@@ -929,15 +929,14 @@ final class ComponentPanelTestAction extends DumbAwareAction {
       return panel;
     }
 
-    @NotNull
-    private JComponent createComboBoxTab() {
+    private @NotNull JComponent createComboBoxTab() {
       JPanel pane = new JPanel(new MigLayout("fillx, debug, novisualpadding, ins 0, gap 5"));
       pane.add(new JLabel("Shows a combobox with custom JBPopup and multiple layers of items"), "baseline, wrap");
 
       class Item {
         final Icon myIcon;
         final String myText;
-        final ImmutableList<Item> myChildren;
+        final List<Item> myChildren;
 
         Item(@NotNull Icon icon, @NotNull @NlsContexts.ListItem String text) {
           this(icon, text, ImmutableList.of());
@@ -946,7 +945,7 @@ final class ComponentPanelTestAction extends DumbAwareAction {
         Item(@NotNull Icon icon, @NotNull @NlsContexts.ListItem String text, @NotNull List<Item> myChildren) {
           this.myIcon = icon;
           this.myText = text;
-          this.myChildren = ImmutableList.copyOf(myChildren);
+          this.myChildren = List.copyOf(myChildren);
         }
       }
 
