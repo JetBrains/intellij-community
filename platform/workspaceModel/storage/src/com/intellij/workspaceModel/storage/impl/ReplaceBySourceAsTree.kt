@@ -51,16 +51,12 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   }
 
   private fun processReplaceWithEntity(replaceWithEntity: WorkspaceEntity) {
-    val replaceWithId = (replaceWithEntity as WorkspaceEntityBase).id
-
+    replaceWithEntity as WorkspaceEntityBase
 
     val replaceWithEntitiesTrack = ArrayList<WorkspaceEntityBase>()
     val replaceWithRootEntity = buildRootTrack(replaceWithEntity, replaceWithEntitiesTrack, replaceWithStorage)
 
     processReplaceWithRootEntity(replaceWithRootEntity, replaceWithEntitiesTrack)
-
-    val children = replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithId.asParent())
-    require(children.isEmpty())
   }
 
   private fun processReplaceWithRootEntity(replaceWithRootEntity: WorkspaceEntityBase,
@@ -79,7 +75,16 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     val thisRoot = thisStorage.resolve(replaceWithRootEntity.persistentId)!!
 
     for (replaceWithEntity in replaceWithEntitiesTrack.reversed()) {
-      addOperations += AddSubtree((thisRoot as WorkspaceEntityBase).id, replaceWithEntity.id)
+      val thisRootEntityId = (thisRoot as WorkspaceEntityBase).id
+      val replaceWithCurrentState = replaceWithState[replaceWithEntity.id]
+      when (replaceWithCurrentState) {
+        ReplaceWithState.NoChange -> TODO()
+        ReplaceWithState.Relabel -> continue
+        ReplaceWithState.SubtreeMoved -> continue
+        null -> {}
+      }
+      addOperations += AddSubtree(thisRootEntityId, replaceWithEntity.id)
+      replaceWithState[thisRootEntityId] = ReplaceWithState.SubtreeMoved
     }
   }
 
@@ -111,22 +116,35 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     }
 
     for (addOperation in addOperations) {
-      val entityData = replaceWithStorage.entityDataByIdOrDie(addOperation.replaceWithSource).clone()
+      addSubtree(addOperation.thisParent, addOperation.replaceWithSource)
+    }
+  }
 
-      val cloneAndAdd = thisStorage.entitiesByType.cloneAndAdd(entityData, entityData.createEntityId().clazz)
-      // TODO: 27.07.2022 UPDATE INDEXESSSS!!!
-      thisStorage.indexes.entitySourceIndex.index(cloneAndAdd.createEntityId(), cloneAndAdd.entitySource)
-      thisStorage.indexes.persistentIdIndex.index(cloneAndAdd.createEntityId(), cloneAndAdd.persistentId())
-      // TODO: 27.07.2022 CreatE eEVENT!!
+  private fun addSubtree(parent: EntityId?, replaceWithDataSource: EntityId) {
+    val entityData = replaceWithStorage.entityDataByIdOrDie(replaceWithDataSource).clone()
 
-      if (addOperation.parent != null) {
-        val thisParent = thisStorage.entityDataByIdOrDie(addOperation.parent).createEntity(thisStorage)
-        val thisAddedEntity = cloneAndAdd.createEntity(thisStorage)
-        thisStorage.modifyEntity(ModifiableWorkspaceEntity::class.java, thisAddedEntity) {
-          val property = this::class.memberProperties.single { it.name == "parentEntity" } as KMutableProperty1<WorkspaceEntity, Any>
-          property.set(this, thisParent)
-        }
-      }
+    val thisNewCreatedEntityData = thisStorage.entitiesByType.cloneAndAdd(entityData, entityData.createEntityId().clazz)
+    // TODO: 27.07.2022 UPDATE INDEXESSSS!!!
+    thisStorage.indexes.entitySourceIndex.index(thisNewCreatedEntityData.createEntityId(), thisNewCreatedEntityData.entitySource)
+    thisStorage.indexes.persistentIdIndex.index(thisNewCreatedEntityData.createEntityId(), thisNewCreatedEntityData.persistentId())
+    // TODO: 27.07.2022 CreatE eEVENT!!
+
+    if (parent != null) {
+      connectChildToParent(parent, thisNewCreatedEntityData.createEntity(thisStorage))
+    }
+
+    replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithDataSource.asParent()).values.flatten().forEach {
+      val replaceWithChildEntityData = replaceWithStorage.entityDataByIdOrDie(it.id)
+      if (!entityFilter(replaceWithChildEntityData.entitySource)) return@forEach
+      addSubtree(thisNewCreatedEntityData.createEntityId(), it.id)
+    }
+  }
+
+  private fun connectChildToParent(parentEntityId: EntityId, childEntity: WorkspaceEntity) {
+    val thisParent = thisStorage.entityDataByIdOrDie(parentEntityId).createEntity(thisStorage)
+    thisStorage.modifyEntity(ModifiableWorkspaceEntity::class.java, childEntity) {
+      val property = this::class.memberProperties.single { it.name == "parentEntity" } as KMutableProperty1<WorkspaceEntity, Any>
+      property.set(this, thisParent)
     }
   }
 
@@ -284,6 +302,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
                                    replaceWithEntityData: WorkspaceEntityData<out WorkspaceEntity>) {
     operations[thisEntityData.createEntityId()] = Operation.Relabel(replaceWithEntityData.createEntityId())
     thisState[thisEntityData.createEntityId()] = ReplaceState.Relabel
+    replaceWithState[replaceWithEntityData.createEntityId()] = ReplaceWithState.Relabel
   }
 
   private fun removeWorkspaceData(thisEntityData: WorkspaceEntityData<out WorkspaceEntity>) {
@@ -293,7 +312,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
   private fun addWorkspaceData(thisParent: WorkspaceEntityBase, replaceWithEntityData: WorkspaceEntityData<out WorkspaceEntity>) {
     addOperations.add(AddSubtree(thisParent.id, replaceWithEntityData.createEntityId()))
-    // TODO: 27.07.2022 Mark replaceWith child that it was already processed
+    replaceWithState[replaceWithEntityData.createEntityId()] = ReplaceWithState.SubtreeMoved
   }
 
   private fun doNothingOn(thisEntityData: WorkspaceEntityData<out WorkspaceEntity>) {
@@ -319,6 +338,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       entityFilter(thisRootEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
         operations[(thisRootEntity as WorkspaceEntityBase).id] = Operation.Relabel((replaceWithEntity as WorkspaceEntityBase).id)
         thisState[(thisRootEntity as WorkspaceEntityBase).id] = ReplaceState.Relabel
+        replaceWithState[(replaceWithEntity as WorkspaceEntityBase).id] = ReplaceWithState.Relabel
         return true
       }
       entityFilter(thisRootEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
@@ -329,6 +349,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       !entityFilter(thisRootEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
         operations[(thisRootEntity as WorkspaceEntityBase).id] = Operation.Relabel((replaceWithEntity as WorkspaceEntityBase).id)
         thisState[(thisRootEntity as WorkspaceEntityBase).id] = ReplaceState.Relabel
+        replaceWithState[(replaceWithEntity as WorkspaceEntityBase).id] = ReplaceWithState.Relabel
         return true
       }
       !entityFilter(thisRootEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
@@ -341,6 +362,15 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   }
 
   private fun findAndReplaceReplaceWithRootEntity(replaceWithRootEntity: WorkspaceEntityWithPersistentId): Boolean {
+
+    val currentState = replaceWithState[(replaceWithRootEntity as WorkspaceEntityBase).id]
+    when (currentState) {
+      is ReplaceWithState.SubtreeMoved -> return false
+      ReplaceWithState.NoChange -> return true
+      ReplaceWithState.Relabel -> return true
+      null -> Unit
+    }
+
     val persistentId = replaceWithRootEntity.persistentId
     val thisEntity = thisStorage.resolve(persistentId)
     if (thisEntity == null) {
@@ -353,6 +383,20 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         replaceWithState[(replaceWithRootEntity as WorkspaceEntityBase).id] = ReplaceWithState.NoChange
         return false
       }
+    }
+
+    val thisCurrentState = thisState[(thisEntity as WorkspaceEntityBase).id]
+    when (thisCurrentState) {
+      ReplaceState.NoChange -> return true
+      ReplaceState.Relabel -> return true
+      is ReplaceState.Relink -> {
+        when (thisCurrentState) {
+          is ReplaceState.Relink.Relabel -> return true
+          is ReplaceState.Relink.NoChange -> return true
+        }
+      }
+      ReplaceState.Remove -> return false
+      null -> Unit
     }
 
     when {
@@ -384,8 +428,12 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   private fun childrenProcessed(id: EntityId, clazz: Class<out WorkspaceEntity>) {
     val replaceState = thisState[id]
     when (replaceState) {
-      is ReplaceState.Relabel -> thisState[id] = ReplaceState.RelabelAndRelink(listOf(clazz))
-      is ReplaceState.RelabelAndRelink -> thisState[id] = ReplaceState.RelabelAndRelink(replaceState.linkedChildren + listOf(clazz))
+      is ReplaceState.Relabel -> thisState[id] = ReplaceState.Relink.Relabel(listOf(clazz))
+      is ReplaceState.Relink -> when (replaceState) {
+        is ReplaceState.Relink.Relabel -> thisState[id] = ReplaceState.Relink.Relabel(replaceState.linkedChildren + listOf(clazz))
+        is ReplaceState.Relink.NoChange -> thisState[id] = ReplaceState.Relink.NoChange(replaceState.linkedChildren + listOf(clazz))
+      }
+      is ReplaceState.NoChange -> thisState[id] = ReplaceState.Relink.NoChange(listOf(clazz))
       else -> error("")
     }
   }
@@ -395,13 +443,16 @@ sealed interface Operation {
   object Remove : Operation
   class Relabel(val replaceWithEntityId: EntityId) : Operation
 }
-class AddSubtree(val parent: EntityId?, val replaceWithSource: EntityId)
+private class AddSubtree(val thisParent: EntityId?, val replaceWithSource: EntityId)
 
 sealed interface ReplaceState {
   object Relabel : ReplaceState
   object NoChange : ReplaceState
   object Remove : ReplaceState
-  class RelabelAndRelink(val linkedChildren: List<Class<out WorkspaceEntity>>) : ReplaceState
+  abstract class Relink(val linkedChildren: List<Class<out WorkspaceEntity>>) : ReplaceState {
+    class Relabel(linkedChildren: List<Class<out WorkspaceEntity>>) : Relink(linkedChildren)
+    class NoChange(linkedChildren: List<Class<out WorkspaceEntity>>) : Relink(linkedChildren)
+  }
 }
 
 sealed interface ReplaceWithState {

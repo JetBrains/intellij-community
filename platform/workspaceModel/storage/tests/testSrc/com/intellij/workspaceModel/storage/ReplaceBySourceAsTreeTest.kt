@@ -236,8 +236,10 @@ class ReplaceBySourceAsTreeTest {
 
   @Test
   fun `child and parent - modify child`() {
-    val parent = builder.addParentEntity("myProperty")
-    val child = builder.addChildEntity(parent, "myChild")
+    val parent = builder add NamedEntity("myProperty", MySource)
+    val child = builder add NamedChildEntity("myChild", MySource) {
+      this.parentEntity = parent
+    }
 
     val replacement = createBuilderFrom(builder)
     replacement.modifyEntity(child) {
@@ -246,32 +248,36 @@ class ReplaceBySourceAsTreeTest {
 
     builder.replaceBySource(trueSources, replacement)
 
-    val updatedChild = assertOneElement(builder.entities(XChildEntity::class.java).toList())
+    val updatedChild = assertOneElement(builder.entities(NamedChildEntity::class.java).toList())
     assertEquals("newProperty", updatedChild.childProperty)
-    assertEquals(updatedChild, assertOneElement(builder.entities(XParentEntity::class.java).toList()).children.single())
+    assertEquals(updatedChild, assertOneElement(builder.entities(NamedEntity::class.java).toList()).children.single())
     builder.assertConsistency()
   }
 
   @Test
   fun `child and parent - remove parent`() {
-    val parent = builder.addParentEntity("myProperty")
-    val child = builder.addChildEntity(parent, "myChild")
+    val parent = builder add NamedEntity("myProperty", MySource)
+    builder add NamedChildEntity("myChild", MySource) {
+      parentEntity = parent
+    }
 
     val replacement = createBuilderFrom(builder)
     replacement.removeEntity(parent)
 
     builder.replaceBySource(trueSources, replacement)
 
-    assertEmpty(builder.entities(XChildEntity::class.java).toList())
-    assertEmpty(builder.entities(XParentEntity::class.java).toList())
+    assertEmpty(builder.entities(NamedChildEntity::class.java).toList())
+    assertEmpty(builder.entities(NamedEntity::class.java).toList())
     builder.assertConsistency()
   }
 
   @Test
   fun `child and parent - change parent for child`() {
-    val parent = builder.addParentEntity("myProperty")
-    val parent2 = builder.addParentEntity("anotherProperty")
-    val child = builder.addChildEntity(parent, "myChild")
+    val parent = builder add NamedEntity("myProperty", MySource)
+    val parent2 = builder add NamedEntity("anotherProperty", MySource)
+    val child = builder add NamedChildEntity("myChild", MySource) {
+      this.parentEntity = parent
+    }
 
     val replacement = createBuilderFrom(builder)
     replacement.modifyEntity(child) {
@@ -281,18 +287,18 @@ class ReplaceBySourceAsTreeTest {
     builder.replaceBySource(trueSources, replacement)
 
     builder.assertConsistency()
-    val parents = builder.entities(XParentEntity::class.java).toList()
-    assertTrue(parents.single { it.parentProperty == "myProperty" }.children.none())
-    assertEquals(child, parents.single { it.parentProperty == "anotherProperty" }.children.single())
+    val parents = builder.entities(NamedEntity::class.java).toList()
+    assertTrue(parents.single { it.myName == "myProperty" }.children.none())
+    assertEquals(child.childProperty, parents.single { it.myName == "anotherProperty" }.children.single().childProperty)
   }
 
   @Test
   fun `child and parent - change parent for child - 2`() {
-    expectedException.expectCause(isA(ReplaceBySourceException::class.java))
-
-    val parent = builder.addParentEntity("myProperty", source = AnotherSource)
-    val parent2 = builder.addParentEntity("anotherProperty", source = MySource)
-    val child = builder.addChildEntity(parent2, "myChild", source = AnotherSource)
+    val parent = builder add NamedEntity("myProperty", AnotherSource)
+    val parent2 = builder add NamedEntity("anotherProperty", MySource)
+    val child = builder add NamedChildEntity("myChild", AnotherSource) {
+      this.parentEntity = parent2
+    }
 
     val replacement = createBuilderFrom(builder)
     replacement.modifyEntity(child) {
@@ -300,14 +306,18 @@ class ReplaceBySourceAsTreeTest {
     }
 
     builder.replaceBySource({ it is MySource }, replacement)
+
+    builder.assertConsistency()
   }
 
   @Test
   fun `child and parent - change parent for child - 3`() {
     // Difference with the test above: different initial parent
-    val parent = builder.addParentEntity("myProperty", source = AnotherSource)
-    val parent2 = builder.addParentEntity("anotherProperty", source = MySource)
-    val child = builder.addChildEntity(parent, "myChild", source = AnotherSource)
+    val parent = builder add NamedEntity("myProperty", AnotherSource)
+    val parent2 = builder add NamedEntity("anotherProperty", MySource)
+    val child = builder add NamedChildEntity("myChild", AnotherSource) {
+      this.parentEntity = parent
+    }
 
     val replacement = createBuilderFrom(builder)
     replacement.modifyEntity(child) {
@@ -317,50 +327,59 @@ class ReplaceBySourceAsTreeTest {
     builder.replaceBySource({ it is MySource }, replacement)
 
     builder.assertConsistency()
-    val parents = builder.entities(XParentEntity::class.java).toList()
-    assertTrue(parents.single { it.parentProperty == "anotherProperty" }.children.none())
-    assertEquals(child, parents.single { it.parentProperty == "myProperty" }.children.single())
+    val parents = builder.entities(NamedEntity::class.java).toList()
+    assertTrue(parents.single { it.myName == "anotherProperty" }.children.none())
+    assertEquals(child, parents.single { it.myName == "myProperty" }.children.single())
   }
 
   @Test
   fun `child and parent - remove child`() {
-    val parent = builder.addParentEntity("myProperty")
-    val child = builder.addChildEntity(parent, "myChild")
+    val parent = builder add NamedEntity("myProperty", MySource)
+    val child = builder add NamedChildEntity("myChild", MySource) {
+      this.parentEntity = parent
+    }
 
     val replacement = createBuilderFrom(builder)
     replacement.removeEntity(child)
 
     builder.replaceBySource(trueSources, replacement)
 
-    assertEmpty(builder.entities(XChildEntity::class.java).toList())
-    assertOneElement(builder.entities(XParentEntity::class.java).toList())
-    assertEmpty(builder.entities(XParentEntity::class.java).single().children.toList())
+    assertEmpty(builder.entities(NamedChildEntity::class.java).toList())
+    assertOneElement(builder.entities(NamedEntity::class.java).toList())
+    assertEmpty(builder.entities(NamedEntity::class.java).single().children.toList())
     builder.assertConsistency()
   }
 
   @Test
   fun `fail - child and parent - different source for parent`() {
-    expectedException.expectCause(isA(ReplaceBySourceException::class.java))
-
     val replacement = createBuilderFrom(builder)
-    val parent = replacement.addParentEntity("myProperty", source = AnotherSource)
-    val child = replacement.addChildEntity(parent, "myChild")
+    val parent = replacement add NamedEntity("myProperty", AnotherSource)
+    replacement add NamedChildEntity("myChild", MySource) {
+      this.parentEntity = parent
+    }
 
     builder.replaceBySource({ it is MySource }, replacement)
+
+    assertTrue(builder.entities(NamedEntity::class.java).toList().isEmpty())
+    assertTrue(builder.entities(NamedChildEntity::class.java).toList().isEmpty())
   }
 
   @Test
   fun `child and parent - two children of different sources`() {
-    val parent = builder.addParentEntity(source = AnotherSource)
-    builder.addChildEntity(parent, "MySourceChild", source = MySource)
+    val parent = builder add NamedEntity("Property", AnotherSource)
+    builder add NamedChildEntity("MySourceChild", MySource) {
+      this.parentEntity = parent
+    }
     val replacement = createBuilderFrom(builder)
-    replacement.addChildEntity(parent, "AnotherSourceChild", source = AnotherSource)
+    replacement add NamedChildEntity("AnotherSourceChild", AnotherSource) {
+      this.parentEntity = parent
+    }
 
     builder.replaceBySource({ it is MySource }, replacement)
 
     builder.assertConsistency()
-    assertOneElement(builder.entities(XParentEntity::class.java).toList())
-    val child = assertOneElement(builder.entities(XChildEntity::class.java).toList())
+    assertOneElement(builder.entities(NamedEntity::class.java).toList())
+    val child = assertOneElement(builder.entities(NamedChildEntity::class.java).toList())
     assertEquals("MySourceChild", child.childProperty)
   }
 
@@ -572,7 +591,7 @@ class ReplaceBySourceAsTreeTest {
     assertEquals("foo", child.parentEntity.additionalProperty)
   }
 
-  private infix fun <T: WorkspaceEntity> MutableEntityStorage.add(entity: T): T {
+  private infix fun <T : WorkspaceEntity> MutableEntityStorage.add(entity: T): T {
     this.addEntity(entity)
     return entity
   }
