@@ -68,8 +68,8 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
   }
 
   private static void registerUpdaters(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onUpdate) {
-    ScratchFileService scratchFileService = ScratchFileService.getInstance();
     VirtualFileManager.getInstance().addAsyncFileListener(events -> {
+      ScratchFileService scratchFileService = ScratchFileService.getInstance();
       boolean update = JBIterable.from(events).find(e -> {
         ProgressManager.checkCanceled();
         VirtualFile parent = getNewParent(e);
