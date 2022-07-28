@@ -100,6 +100,18 @@ class A {
       |}
     """.trimMargin(), JavaReferencesCodeVisionProvider.ID)
 
+  fun testClassAfterPackageStatement() = doTest("""
+package com.company;
+
+<# block [1 usage] #>
+class A{}
+class B {
+ void use() {
+   new A();
+ }
+}
+""", JavaReferencesCodeVisionProvider.ID)
+
   private fun doTest(text: String, vararg enabledProviderIds: String) {
     testProviders(text, "test.java", *enabledProviderIds)
   }
