@@ -1,4 +1,5 @@
 val range = 0<# ≤ #>..<# ≤ #>10
+val rangeUntil = 0<# ≤ #>..<<# < #>10
 
 fun foo() {
     for (index in 0.rangeTo(100)) {}
@@ -8,6 +9,14 @@ fun foo() {
     for (index in 0<# ≤ #> .. <# ≤ #>100) {}
     for (index in 'a'<# ≤ #> .. <# ≤ #>'z') {}
     for (index in 0L<# ≤ #> .. <# ≤ #>100L) {}
+
+    for (index in 0<# ≤ #> ..< <# < #>100) {}
+    for (index in 'a'<# ≤ #> ..< <# < #>'z') {}
+    for (index in 0L<# ≤ #> ..< <# < #>100L) {}
+
+    for (index in 0.rangeUntil(100)) {}
+    for (index in 'a'.rangeUntil('z')) {}
+    for (index in 0L.rangeUntil(100L)) {}
 
     for (index in 0<# ≤ #> until <# < #>100) {}
     for (index in 'a'<# ≤ #> until <# < #>'z') {}
@@ -25,8 +34,10 @@ fun foo() {
 
         for (i in left.rangeTo(right)) {}
         for (i in left<# ≤ #> .. <# ≤ #>right) {}
+        for (i in left<# ≤ #> ..< <# < #>right) {}
         for (i in left<# ≤ #> until <# < #>right) {}
         for (index in right<# ≥ #> downTo <# ≥ #>left) {}
+        for (index in left.rangeUntil(right)) {}
     }
 
     for (index in someVeryVeryLongLongLongLongFunctionName(0)<# ≤ #> .. <# ≤ #>someVeryVeryLongLongLongLongFunctionName(100)) {}

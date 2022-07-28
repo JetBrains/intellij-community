@@ -181,9 +181,13 @@ enum class HintType(
                 "kotlin.ranges.until" -> {
                     KotlinBundle.message("hints.ranges.until.left") to KotlinBundle.message("hints.ranges.until.right")
                 }
-                else -> {
-                    if (operation in rangeToTypes) KotlinBundle.message("hints.ranges.rangeTo.left") to KotlinBundle.message("hints.ranges.rangeTo.right") else return emptyList()
+                in rangeToTypes -> {
+                    KotlinBundle.message("hints.ranges.rangeTo.left") to KotlinBundle.message("hints.ranges.rangeTo.right")
                 }
+                "kotlin.ranges.rangeUntil" -> {
+                    KotlinBundle.message("hints.ranges.rangeUntil.left") to KotlinBundle.message("hints.ranges.rangeUntil.right")
+                }
+                else -> return emptyList()
             }
             val leftInfo = InlayInfo(text = leftText, offset = leftExp.endOffset)
             val rightInfo = InlayInfo(text = rightText, offset = rightExp.startOffset)
