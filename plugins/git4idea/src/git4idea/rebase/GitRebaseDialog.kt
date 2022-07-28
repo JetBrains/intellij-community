@@ -111,6 +111,8 @@ internal class GitRebaseDialog(private val project: Project,
     isAutoAdjustable = false
 
     init()
+    window.minimumSize = JBDimension(200, 60)
+
     updateUi()
     validate()
     pack()
