@@ -3,13 +3,8 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.testFramework.assertInstanceOf
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.*
-import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
-import com.intellij.workspaceModel.storage.impl.ReplaceBySourceAsGraph
-import com.intellij.workspaceModel.storage.impl.ReplaceBySourceAsTree
-import com.intellij.workspaceModel.storage.impl.assertConsistency
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -102,13 +97,17 @@ class ReplaceBySourceAsTreeTest {
     val sourceA1 = SampleEntitySource("a1")
     val sourceA2 = SampleEntitySource("a2")
     val sourceB = SampleEntitySource("b")
-    builder add NamedEntity("a", sourceA1)
+    val parent1 = builder add NamedEntity("a", sourceA1)
     builder add NamedEntity("b", sourceB)
     val replacement = createEmptyBuilder()
-    replacement add NamedEntity("new", sourceA2)
+    val parent3 = replacement add NamedEntity("new", sourceA2)
     builder.replaceBySource({ it is SampleEntitySource && it.name.startsWith("a") }, replacement)
     assertEquals(setOf("b", "new"), builder.entities(NamedEntity::class.java).mapTo(HashSet()) { it.myName })
     builder.assertConsistency()
+    thisStateCheck {
+      parent1 assert ReplaceState.Remove
+    }
+    replaceWithCheck { parent3 assert ReplaceWithState.SubtreeMoved }
   }
 
   @Test
@@ -138,8 +137,8 @@ class ReplaceBySourceAsTreeTest {
 
   @Test
   fun `replace with empty storage`() {
-    builder add NamedEntity("data1", MySource)
-    builder add NamedEntity("data2", MySource)
+    val parent1 = builder add NamedEntity("data1", MySource)
+    val parent2 = builder add NamedEntity("data2", MySource)
     resetChanges()
     val originalStorage = builder.toSnapshot()
 
@@ -149,7 +148,12 @@ class ReplaceBySourceAsTreeTest {
     assertEquals(2, collectChanges.values.single().size)
     assertTrue(collectChanges.values.single().all { it is EntityChange.Removed<*> })
     builder.assertConsistency()
-    assertTrue(builder.entities(NamedEntity::class.java).toList().isEmpty())
+
+    assertNoNamedEntities()
+    thisStateCheck {
+      parent1 assert ReplaceState.Remove
+      parent2 assert ReplaceState.Remove
+    }
   }
 
   @Test
@@ -168,12 +172,22 @@ class ReplaceBySourceAsTreeTest {
   fun `entity modification`() {
     val entity = builder add NamedEntity("hello2", MySource)
     val replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(entity) {
+    val modified = replacement.modifyEntity(entity) {
       myName = "Hello Alex"
     }
-    builder.replaceBySource(trueSources, replacement)
-    assertEquals(setOf("Hello Alex"), builder.entities(NamedEntity::class.java).mapTo(HashSet()) { it.myName })
+
+    rbsAllSources()
+
     builder.assertConsistency()
+    assertSingleNameEntity("Hello Alex")
+
+    thisStateCheck {
+      entity assert ReplaceState.Remove
+    }
+
+    replaceWithCheck {
+      modified assert ReplaceWithState.SubtreeMoved
+    }
   }
 
   @Test
@@ -191,8 +205,10 @@ class ReplaceBySourceAsTreeTest {
     val replacement = createBuilderFrom(builder)
     replacement.removeEntity(entity)
     builder.replaceBySource(trueSources, replacement)
-    assertTrue(builder.entities(NamedEntity::class.java).toList().isEmpty())
+
     builder.assertConsistency()
+    assertNoNamedEntities()
+    thisStateCheck { entity assert ReplaceState.Remove }
   }
 
   @Test
@@ -245,11 +261,15 @@ class ReplaceBySourceAsTreeTest {
     val replacement = createBuilderFrom(builder)
     replacement.removeEntity(parent)
 
-    builder.replaceBySource(trueSources, replacement)
+    rbsAllSources()
 
-    assertEmpty(builder.entities(NamedChildEntity::class.java).toList())
-    assertEmpty(builder.entities(NamedEntity::class.java).toList())
     builder.assertConsistency()
+    assertNoNamedEntities()
+    assertNoNamedChildEntities()
+    thisStateCheck {
+      parent assert ReplaceState.Remove
+      parent.children.single() assert ReplaceState.Remove
+    }
   }
 
   @Test
@@ -271,6 +291,15 @@ class ReplaceBySourceAsTreeTest {
     val parents = builder.entities(NamedEntity::class.java).toList()
     assertTrue(parents.single { it.myName == "myProperty" }.children.none())
     assertEquals(child.childProperty, parents.single { it.myName == "anotherProperty" }.children.single().childProperty)
+    thisStateCheck {
+      parent assert ReplaceState.Relink.Relabel(listOf(NamedChildEntity::class.java))
+      parent2 assert ReplaceState.Relabel
+      child assert ReplaceState.Remove
+    }
+    replaceWithCheck {
+      child assert ReplaceWithState.SubtreeMoved
+      parent2 assert ReplaceWithState.Relabel
+    }
   }
 
   @Test
@@ -374,10 +403,14 @@ class ReplaceBySourceAsTreeTest {
     replacement.removeEntity(parentEntity)
 
     builder.replaceBySource({ it is AnotherSource }, replacement)
-    builder.assertConsistency()
 
-    assertEmpty(builder.entities(NamedEntity::class.java).toList())
-    assertEmpty(builder.entities(NamedChildEntity::class.java).toList())
+    builder.assertConsistency()
+    assertNoNamedEntities()
+    assertNoNamedChildEntities()
+
+    thisStateCheck {
+      parentEntity assert ReplaceState.Remove
+    }
   }
 
   @Test
@@ -659,20 +692,18 @@ class ReplaceBySourceAsTreeTest {
     builder.replaceBySource({ it is MySource }, replacement)
 
     builder.assertConsistency()
-  }
 
-  @Test
-  fun `replace oneToOne connection with partial move and pid directly via replacer`() {
-    val parentEntity = builder.addOoParentWithPidEntity(source = AnotherSource)
-    builder.addOoChildForParentWithPidEntity(parentEntity, source = MySource)
+    assertNotNull(builder.entities(OoParentWithPidEntity::class.java).single().childOne)
 
-    val replacement = createEmptyBuilder()
-    val anotherParent = replacement.addOoParentWithPidEntity(source = MySource)
-    replacement.addOoChildForParentWithPidEntity(anotherParent, source = MySource)
+    thisStateCheck {
+      parentEntity assert ReplaceState.Relink.Relabel(listOf(OoChildForParentWithPidEntity::class.java))
+      parentEntity.childOne!! assert ReplaceState.Relabel
+    }
 
-    ReplaceBySourceAsGraph().replaceBySourceAsGraph(builder, replacement, { it is MySource }, true)
-
-    builder.assertConsistency()
+    replaceWithCheck {
+      anotherParent assert ReplaceWithState.Relabel
+      anotherParent assert ReplaceWithState.Relabel
+    }
   }
 
   @Test
@@ -740,7 +771,8 @@ class ReplaceBySourceAsTreeTest {
       if (state is ReplaceState.Relink) {
         assertEquals(state.javaClass, thisState.javaClass)
         assertEquals(state.linkedChildren.toHashSet(), (thisState as ReplaceState.Relink).linkedChildren.toHashSet())
-      } else {
+      }
+      else {
         assertEquals(state, thisState)
       }
     }
@@ -787,6 +819,8 @@ class ReplaceBySourceAsTreeTest {
 
   private fun resetChanges() {
     builder = builder.toSnapshot().toBuilder() as MutableEntityStorageImpl
+    builder.useNewRbs = true
+    builder.keepLastRbsEngine = true
   }
 
   private val engine: ReplaceBySourceAsTree

@@ -90,7 +90,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         null -> {}
       }
       addOperations += AddSubtree(thisRootEntityId, replaceWithEntity)
-      replaceWithState[thisRootEntityId] = ReplaceWithState.SubtreeMoved
+      replaceWithState[replaceWithEntity] = ReplaceWithState.SubtreeMoved
     }
   }
 
