@@ -304,6 +304,7 @@ Includes the following features:</p>
     <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
     <lang.formatter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.formatter.MarkdownFormattingModelBuilder"/>
     <postFormatProcessor implementation="org.intellij.plugins.markdown.lang.formatter.BlockQuotePostFormatProcessor"/>
+    <postFormatProcessor implementation="org.intellij.plugins.markdown.lang.formatter.TablePostFormatProcessor"/>
     <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
 
     <lang.commenter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownCommenter"/>
