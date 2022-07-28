@@ -11,7 +11,6 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
@@ -73,7 +72,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
   }
 
-  fun reloadProjectEntities() {
+  suspend fun reloadProjectEntities() {
     if (StoreReloadManager.getInstance().isReloadBlocked()) {
       LOG.debug("Skip reloading because it's blocked")
       return
@@ -97,8 +96,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     LOG.debugValues("Changed entity sources", changedSources)
     if (changedSources.isEmpty() && builder.isEmpty()) return
 
-    ApplicationManager.getApplication().invokeAndWait(Runnable {
-      runWriteAction {
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().runWriteAction {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
           val storage = builder.toSnapshot()
           updater.replaceBySource({ it in changedSources || (it is JpsImportedEntitySource && !it.storedExternally && it.internalFile in changedSources)
@@ -107,10 +106,10 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         }
         sourcesToSave.removeAll(changedSources)
       }
-    })
+    }
   }
 
-  private fun <T> loadAndReportErrors(action: (ErrorReporter) -> T): T {
+  private inline fun <T> loadAndReportErrors(action: (ErrorReporter) -> T): T {
     val reporter = IdeErrorReporter(project)
     val result = action(reporter)
     val errors = reporter.errors
@@ -186,8 +185,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     })
   }
 
-  fun loadProjectToEmptyStorage(project: Project): Pair<EntityStorage, List<EntitySource>>? {
-    val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
+  suspend fun loadProjectToEmptyStorage(project: Project): Pair<EntityStorage, List<EntitySource>>? {
+    val configLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
     activity = startActivity("project files loading", ActivityCategory.DEFAULT)
     childActivity = activity?.startChild("serializers creation")

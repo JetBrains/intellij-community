@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
 
 private class ProjectRunConfigurationInitializer : ProjectServiceContainerInitializedListener {
-  override suspend fun serviceCreated(project: Project) {
+  override suspend fun containerConfigured(project: Project) {
     if (IS_RUN_MANAGER_INITIALIZED.get(project) == true) {
       return
     }

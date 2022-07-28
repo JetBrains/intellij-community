@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
-import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -10,17 +9,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import kotlin.system.measureTimeMillis
 
 class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
-  override val cache: WorkspaceModelCache?
-    get() = WorkspaceModelCache.getInstance(project)
-
   @Volatile
   var loadedFromCache = false
     private set
@@ -30,9 +26,6 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
   val entityTracer: EntityTracingLogger = EntityTracingLogger()
 
   init {
-    // TODO It's possible to load this cache from the moment we know project path
-    //  Like in ProjectLifecycleListener or something
-
     log.debug { "Loading workspace model" }
 
     val initialContent = WorkspaceModelInitialTestContent.pop()
@@ -40,18 +33,20 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     val projectEntities: EntityStorageSnapshot = when {
       initialContent != null -> initialContent
       cache != null -> {
-        val activity = startActivity("cache loading", ActivityCategory.DEFAULT)
+        val activity = startActivity("cache loading")
         val previousStorage: EntityStorage?
         val loadingCacheTime = measureTimeMillis {
           previousStorage = cache.loadCache()
         }
-        val storage = if (previousStorage != null) {
+        val storage = if (previousStorage == null) {
+          MutableEntityStorage.create().toSnapshot()
+        }
+        else {
           log.info("Load workspace model from cache in $loadingCacheTime ms")
           loadedFromCache = true
           entityTracer.printInfoAboutTracedEntity(previousStorage, "cache")
           previousStorage.toSnapshot()
         }
-        else MutableEntityStorage.create().toSnapshot()
         activity.end()
         storage
       }

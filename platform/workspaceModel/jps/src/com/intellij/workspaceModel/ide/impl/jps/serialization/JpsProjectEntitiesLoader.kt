@@ -30,7 +30,7 @@ object JpsProjectEntitiesLoader {
   }
 
   @TestOnly
-  fun loadProject(configLocation: JpsProjectConfigLocation, builder: MutableEntityStorage,
+  suspend fun loadProject(configLocation: JpsProjectConfigLocation, builder: MutableEntityStorage,
                   externalStoragePath: Path, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager,
                   fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty(),
                   externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): JpsProjectSerializers {

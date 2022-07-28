@@ -18,6 +18,7 @@ import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -29,6 +30,8 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
@@ -64,6 +67,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -1100,7 +1104,7 @@ private suspend fun initProject(file: Path,
       preloadServicesAndCreateComponents(project, preloadServices)
       projectInitListeners {
         launchAndMeasure(it.javaClass.simpleName) {
-          it.serviceCreated(project)
+          it.containerConfigured(project)
         }
       }
 
@@ -1191,4 +1195,39 @@ internal suspend inline fun projectInitListeners(crossinline executor: suspend (
       LOG.error(e)
     }
   }
+}
+
+internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
+  val id = descriptor.pluginId
+  return id == PluginManagerCore.CORE_ID ||
+         // K/N Platform Deps is a repackaged Java plugin
+         id.idString == "com.intellij.kotlinNative.platformDeps"
+}
+
+/**
+ * Usage requires IJ Platform team approval (including plugin into white-list).
+ */
+@ApiStatus.Internal
+interface ProjectServiceContainerInitializedListener {
+  /**
+   * Invoked after container configured.
+   */
+  suspend fun containerConfigured(project: Project)
+}
+
+@TestOnly
+interface ProjectServiceContainerCustomizer {
+  companion object {
+    @TestOnly
+    fun getEp(): ExtensionPointImpl<ProjectServiceContainerCustomizer> {
+      return (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
+        .getExtensionPoint("com.intellij.projectServiceContainerCustomizer")
+    }
+  }
+
+  /**
+   * Invoked after implementation classes for project's components were determined (and loaded),
+   * but before components are instantiated.
+   */
+  fun serviceRegistered(project: Project)
 }

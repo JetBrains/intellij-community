@@ -14,10 +14,7 @@ import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
-import com.intellij.util.io.basicAttributesIfExists
-import com.intellij.util.io.exists
-import com.intellij.util.io.inputStream
-import com.intellij.util.io.write
+import com.intellij.util.io.*
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
@@ -38,7 +35,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
   override val enabled = forceEnableCaching || !ApplicationManager.getApplication().isUnitTestMode
 
   private val cacheFile by lazy { initCacheFile() }
-  private val invalidateProjectCacheMarkerFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate").toFile() }
+  private val invalidateProjectCacheMarkerFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate") }
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager,
                                                                                 WorkspaceModelCacheImpl::collectExternalCacheVersions)
@@ -89,7 +86,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
     }
 
     if (cachesInvalidated.get()) {
-      FileUtil.delete(cacheFile)
+      Files.deleteIfExists(cacheFile)
     }
   }
 
@@ -111,7 +108,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
       val cacheFileAttributes = cacheFile.basicAttributesIfExists() ?: return null
       val invalidateCachesMarkerFileAttributes = invalidateCachesMarkerFile.basicAttributesIfExists()
       if ((invalidateCachesMarkerFileAttributes != null && cacheFileAttributes.lastModifiedTime() < invalidateCachesMarkerFileAttributes.lastModifiedTime()) ||
-          invalidateProjectCacheMarkerFile.exists() && cacheFileAttributes.lastModifiedTime().toMillis() < invalidateProjectCacheMarkerFile.lastModified()) {
+          invalidateProjectCacheMarkerFile.exists() && cacheFileAttributes.lastModifiedTime() < invalidateProjectCacheMarkerFile.lastModified()) {
         LOG.info("Skipping project model cache since '$invalidateCachesMarkerFile' is present and newer than cache file '$cacheFile'")
         Files.deleteIfExists(cacheFile)
         return null
@@ -161,8 +158,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
     cachesInvalidated.set(true)
 
     try {
-      FileUtil.createParentDirs(invalidateProjectCacheMarkerFile)
-      FileUtil.writeToFile(invalidateProjectCacheMarkerFile, System.currentTimeMillis().toString())
+      invalidateProjectCacheMarkerFile.write(System.currentTimeMillis().toString())
     }
     catch (t: Throwable) {
       LOG.warn("Cannot update the project invalidation marker file", t)

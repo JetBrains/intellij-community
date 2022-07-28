@@ -68,8 +68,11 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     val externalStorageEnabled = externalStorageConfigurationManager?.isEnabled ?: false
     if (!externalStorageEnabled) {
       val moduleEntity = loadModuleEntity(reader, builder, errorReporter, virtualFileManager)
-      if (moduleEntity != null) createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
-    } else {
+      if (moduleEntity != null) {
+        createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
+      }
+    }
+    else {
       val externalSerializer = externalModuleListSerializer?.createSerializer(internalEntitySource, fileUrl, modulePath.group) as ModuleImlFileEntitiesSerializer?
       val moduleEntity = externalSerializer?.loadModuleEntity(reader, builder, errorReporter, virtualFileManager)
                          ?: loadModuleEntity(reader, builder, errorReporter, virtualFileManager)
@@ -84,7 +87,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                builder: MutableEntityStorage,
                                errorReporter: ErrorReporter,
                                virtualFileManager: VirtualFileUrlManager): ModuleEntity? {
-    if (skipLoadingIfFileDoesNotExist && !fileUrl.toPath().exists()) return null
+    if (skipLoadingIfFileDoesNotExist && !fileUrl.toPath().exists()) {
+      return null
+    }
 
     val moduleOptions: Map<String?, String?>
     val customRootsSerializer: CustomModuleRootsSerializer?
@@ -109,10 +114,12 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val externalSystemEntitySource = createEntitySource(externalSystemId)
       val moduleEntitySource = customRootsSerializer?.createEntitySource(fileUrl, internalEntitySource, customDir, virtualFileManager)
                                 ?: externalSystemEntitySource
-      if (moduleEntitySource is DummyParentEntitySource)
+      if (moduleEntitySource is DummyParentEntitySource) {
         Pair(moduleEntitySource, externalSystemEntitySource)
-      else
+      }
+      else {
         Pair(moduleEntitySource, moduleEntitySource)
+      }
     }
     catch (e: JDOMException) {
       builder.addModuleEntity(modulePath.moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency), internalEntitySource)

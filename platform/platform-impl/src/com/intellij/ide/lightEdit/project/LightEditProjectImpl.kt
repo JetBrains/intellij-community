@@ -37,7 +37,7 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) : Pro
       coroutineScope {
         preloadServicesAndCreateComponents(project = this@LightEditProjectImpl, preloadServices = true)
         projectInitListeners {
-          it.serviceCreated(this@LightEditProjectImpl)
+          it.containerConfigured(this@LightEditProjectImpl)
         }
       }
     }

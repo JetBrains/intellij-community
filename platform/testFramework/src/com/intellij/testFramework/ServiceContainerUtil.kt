@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ServiceContainerUtil")
 package com.intellij.testFramework
 
@@ -65,8 +65,8 @@ fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Cla
 
 @TestOnly
 @JvmOverloads
-fun ComponentManager.registerComponentImplementation(componentInterface: Class<*>, componentImplementation: Class<*>, shouldBeRegistered: Boolean = false) {
-  (this as ComponentManagerImpl).registerComponentImplementation(componentInterface, componentImplementation, shouldBeRegistered)
+fun ComponentManager.registerComponentImplementation(key: Class<*>, implementation: Class<*>, shouldBeRegistered: Boolean = false) {
+  (this as ComponentManagerImpl).registerComponentImplementation(key, implementation, shouldBeRegistered)
 }
 
 @TestOnly

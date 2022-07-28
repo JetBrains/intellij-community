@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.openapi.Disposable
@@ -8,12 +8,15 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.CompletableDeferred
 
-internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
-                                       pluginDescriptor: PluginDescriptor,
-                                       componentManager: ComponentManagerImpl,
-                                       implementationClass: Class<*>? = null,
-                                       initializedInstance: Any? = null) : BaseComponentAdapter(componentManager, pluginDescriptor, initializedInstance, implementationClass) {
+internal class ServiceComponentAdapter(
+  @JvmField val descriptor: ServiceDescriptor,
+  pluginDescriptor: PluginDescriptor,
+  componentManager: ComponentManagerImpl,
+  implementationClass: Class<*>? = null,
+  deferred: CompletableDeferred<Any> = CompletableDeferred()
+) : BaseComponentAdapter(componentManager, pluginDescriptor, deferred, implementationClass) {
   companion object {
     private val isDebugEnabled = LOG.isDebugEnabled
   }
@@ -27,7 +30,9 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
 
   override fun getActivityCategory(componentManager: ComponentManagerImpl) = componentManager.getActivityCategory(isExtension = false)
 
-  override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T {
+  override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl,
+                                          implementationClass: Class<T>,
+                                          indicator: ProgressIndicator?): T {
     if (isDebugEnabled) {
       val app = componentManager.getApplication()
       if (app != null && app.isWriteAccessAllowed && !app.isUnitTestMode &&

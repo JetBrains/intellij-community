@@ -18,6 +18,7 @@ import com.intellij.workspaceModel.storage.checkConsistency
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.toBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.junit.*
 import java.io.File
@@ -116,7 +117,9 @@ class ImlReplaceBySourceTest {
 
     val storageBuilder2 = MutableEntityStorage.create()
     val reader = CachingJpsFileContentReader(projectFile.asConfigLocation(virtualFileManager))
-    data.loadAll(reader, storageBuilder2, TestErrorReporter, null)
+    runBlocking {
+      data.loadAll(reader, storageBuilder2, TestErrorReporter, null)
+    }
 
     val before = storageBuilder1.toSnapshot()
     storageBuilder1 = before.toBuilder()

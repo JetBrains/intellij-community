@@ -83,7 +83,9 @@ class EditorHistoryManagerTest {
   private fun useRealFileEditorManager() {
     ProjectServiceContainerCustomizer.getEp().maskAll(listOf(object : ProjectServiceContainerCustomizer {
       override fun serviceRegistered(project: Project) {
-        project.registerComponentImplementation(FileEditorManager::class.java, PsiAwareFileEditorManagerImpl::class.java, false)
+        project.registerComponentImplementation(key = FileEditorManager::class.java,
+                                                implementation = PsiAwareFileEditorManagerImpl::class.java,
+                                                shouldBeRegistered = false)
       }
     }), disposable.disposable, false)
   }

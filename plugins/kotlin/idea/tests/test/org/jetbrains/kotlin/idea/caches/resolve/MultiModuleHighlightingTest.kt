@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceIn
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinModuleOutOfCodeBlockModificationTracker
-import org.jetbrains.kotlin.idea.completion.test.withServiceRegistered
+import org.jetbrains.kotlin.idea.completion.test.withComponentRegistered
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
@@ -80,7 +80,7 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
     fun testLazyResolvers() {
         val tracker = ResolverTracker()
 
-        project.withServiceRegistered<ResolverForModuleComputationTracker, Unit>(tracker) {
+        project.withComponentRegistered<ResolverForModuleComputationTracker, Unit>(tracker) {
             val module1 = module("m1")
             val module2 = module("m2")
             val module3 = module("m3")
@@ -115,7 +115,7 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
     fun testRecomputeResolversOnChange() {
         val tracker = ResolverTracker()
 
-        project.withServiceRegistered<ResolverForModuleComputationTracker, Unit>(tracker) {
+        project.withComponentRegistered<ResolverForModuleComputationTracker, Unit>(tracker) {
             val module1 = module("m1")
             val module2 = module("m2")
             val module3 = module("m3")
