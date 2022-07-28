@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -22,7 +23,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -33,6 +36,7 @@ import com.intellij.xml.impl.schema.XsdNsDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 class CreateXmlElementIntentionAction implements IntentionAction {
@@ -87,12 +91,19 @@ class CreateXmlElementIntentionAction implements IntentionAction {
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final XmlTag rootTag = myTargetFile.getDocument().getRootTag();
 
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(
-      project,
-      myTargetFile.getVirtualFile(),
-      rootTag.getValue().getTextRange().getEndOffset()
-    );
-    Editor targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+    Editor targetEditor;
+    if (myTargetFile.getVirtualFile() == null) {
+      targetEditor = editor;
+      targetEditor.getDocument().setText("");
+      targetEditor.getCaretModel().moveToOffset(0);
+    }
+    else {
+      targetEditor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(
+        project,
+        myTargetFile.getVirtualFile(),
+        rootTag.getValue().getTextRange().getEndOffset()
+      ), true);
+    }
     TemplateManager manager = TemplateManager.getInstance(project);
     final Template template = manager.createTemplate("", "");
 
@@ -118,5 +129,16 @@ class CreateXmlElementIntentionAction implements IntentionAction {
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiElement copy = PsiTreeUtil.findSameElementInCopy(myRef.getElement(), target);
+    PsiReference reference = copy.getReference();
+
+    CreateXmlElementIntentionAction intentionAction =
+      new CreateXmlElementIntentionAction(myMessageKey, myDeclarationTagName, (TypeOrElementOrAttributeReference)reference);
+    intentionAction.myTargetFile = (XmlFile)target;
+    return intentionAction;
   }
 }
