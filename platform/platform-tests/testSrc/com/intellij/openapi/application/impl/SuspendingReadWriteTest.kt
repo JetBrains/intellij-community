@@ -9,15 +9,17 @@ import com.intellij.testFramework.LeakHunter
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
 import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
+private const val repetitions: Int = 100
+
 abstract class SuspendingReadWriteTest : CancellableReadActionTests() {
 
-  @Test
+  @RepeatedTest(repetitions)
   fun context(): Unit = timeoutRunBlocking {
     val application = ApplicationManager.getApplication()
 
@@ -38,7 +40,7 @@ abstract class SuspendingReadWriteTest : CancellableReadActionTests() {
     application.assertReadAccessNotAllowed()
   }
 
-  @Test
+  @RepeatedTest(repetitions)
   fun cancellation(): Unit = timeoutRunBlocking {
     launch {
       assertThrows<CancellationException> {
@@ -51,7 +53,7 @@ abstract class SuspendingReadWriteTest : CancellableReadActionTests() {
     }
   }
 
-  @Test
+  @RepeatedTest(repetitions)
   fun rethrow(): Unit = timeoutRunBlocking {
     testRethrow(object : Throwable() {})
     testRethrow(CancellationException())
@@ -81,7 +83,7 @@ abstract class SuspendingReadWriteTest : CancellableReadActionTests() {
   /**
    * @see NonBlockingReadActionTest.testSyncExecutionHonorsConstraints
    */
-  @Test
+  @RepeatedTest(repetitions)
   fun `read action honors constraints`(): Unit = timeoutRunBlocking {
     val scheduled = KSemaphore(1, 1)
     lateinit var constraintRunnable: Runnable
@@ -105,7 +107,7 @@ abstract class SuspendingReadWriteTest : CancellableReadActionTests() {
     constraintRunnable.run() // retry with satisfied constraint
   }
 
-  @Test
+  @RepeatedTest(repetitions)
   fun `read action with unsatisfiable constraint is cancellable`(): Unit = timeoutRunBlocking {
     val scheduled = KSemaphore(1, 1)
     lateinit var constraintRunnable: Runnable
@@ -130,7 +132,7 @@ abstract class SuspendingReadWriteTest : CancellableReadActionTests() {
   /**
    * @see NonBlockingReadActionTest.testSyncExecutionWorksInsideReadAction
    */
-  @Test
+  @RepeatedTest(repetitions)
   fun `read action works if already obtained`(): Unit = timeoutRunBlocking {
     cra {
       runBlockingCancellable {
@@ -144,7 +146,7 @@ abstract class SuspendingReadWriteTest : CancellableReadActionTests() {
   /**
    * @see NonBlockingReadActionTest.testSyncExecutionFailsInsideReadActionWhenConstraintsAreNotSatisfied
    */
-  @Test
+  @RepeatedTest(repetitions)
   fun `read action with unsatisfiable constraint fails if already obtained`(): Unit = timeoutRunBlocking {
     val unsatisfiableConstraint = object : ReadConstraint {
       override fun toString(): String = "unsatisfiable constraint"
@@ -171,7 +173,7 @@ class NonBlocking : SuspendingReadWriteTest() {
     return constrainedReadAction(*constraints, action = action)
   }
 
-  @Test
+  @RepeatedTest(repetitions)
   fun `current job`(): Unit = timeoutRunBlocking {
     val coroutineJob = coroutineContext.job
     readAction {
@@ -180,7 +182,7 @@ class NonBlocking : SuspendingReadWriteTest() {
     }
   }
 
-  @Test
+  @RepeatedTest(repetitions)
   fun `read action is cancelled by write but not restarted because finished`(): Unit = timeoutRunBlocking {
     var attempt = false
     readAction {
@@ -193,7 +195,7 @@ class NonBlocking : SuspendingReadWriteTest() {
     }
   }
 
-  @Test
+  @RepeatedTest(repetitions)
   fun `read action is cancelled by write and restarted`(): Unit = timeoutRunBlocking {
     var attempts = 0
     readAction {
@@ -216,7 +218,7 @@ class NonBlocking : SuspendingReadWriteTest() {
     }
   }
 
-  @Test
+  @RepeatedTest(repetitions)
   fun `read action with constraints is cancelled by write and restarted`(): Unit = timeoutRunBlocking {
     val constraintScheduled = KSemaphore(1, 1)
     lateinit var constraintRunnable: Runnable
@@ -271,7 +273,7 @@ class NonBlocking : SuspendingReadWriteTest() {
   /**
    * @see NonBlockingReadActionTest.testSyncExecutionIsCancellable
    */
-  @Test
+  @RepeatedTest(repetitions)
   fun `read action with concurrent write actions`(): Unit = timeoutRunBlocking {
     val limit = 10
     val attempts = AtomicInteger()
@@ -300,7 +302,7 @@ class Blocking : SuspendingReadWriteTest() {
     return constrainedReadActionBlocking(*constraints, action = action)
   }
 
-  @Test
+  @RepeatedTest(repetitions)
   fun `current job`(): Unit = timeoutRunBlocking {
     val coroutineJob = coroutineContext.job
     readActionBlocking {
@@ -309,7 +311,7 @@ class Blocking : SuspendingReadWriteTest() {
     }
   }
 
-  @Test
+  @RepeatedTest(repetitions)
   fun `blocking read action is not cancelled by write`(): Unit = timeoutRunBlocking {
     var attempt = false
     readActionBlocking {
