@@ -65,7 +65,7 @@ object CodeWriter {
       module.addPsiFile(vfu.name, vfu) { document.text }
     }
     val result = module.build()
-    val objModules = convertToObjModules(result.typeDefs.filter { it.name !in SKIPPED_TYPES }, result.simpleTypes, result.extFields)
+    val objModules = convertToObjModules(result.typeDefs, result.simpleTypes, result.extFields)
     val codeGenerator = CodeGeneratorImpl()
     val generated = objModules.flatMap { codeGenerator.generate(it) }
     if (generated.isNotEmpty()) {
