@@ -316,6 +316,10 @@ public class SwitchBlockHighlightingModel {
     return element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType());
   }
 
+  private static <T> List<T> dropFirst(List<T> list) {
+    return list.subList(1, list.size());
+  }
+
   void checkEnumCompleteness(@NotNull PsiClass selectorClass, @NotNull List<String> enumElements, @NotNull List<HighlightInfo> results) {
     LinkedHashSet<String> missingConstants =
       StreamEx.of(selectorClass.getFields()).select(PsiEnumConstant.class).map(PsiField::getName).toCollection(LinkedHashSet::new);
@@ -918,7 +922,7 @@ public class SwitchBlockHighlightingModel {
       return info;
     }
 
-    private static boolean checkRecordExhaustiveness(@NotNull List<PsiCaseLabelElement> caseElements) {
+    private static boolean checkRecordExhaustiveness(@NotNull List<? extends PsiCaseLabelElement> caseElements) {
       List<PsiDeconstructionPattern> deconstructions =
         ContainerUtil.mapNotNull(caseElements, element -> findUnconditionalDeconstruction(element));
       MultiMap<PsiType, PsiDeconstructionPattern> deconstructionGroups =
@@ -931,14 +935,16 @@ public class SwitchBlockHighlightingModel {
         PsiClass selectorClass = resolve.getElement();
         PsiSubstitutor substitutor = resolve.getSubstitutor();
         if (selectorClass == null) continue;
-        List<PsiType> types =
+        List<PsiType> recordTypes =
           ContainerUtil.map(selectorClass.getRecordComponents(), component -> substitutor.substitute(component.getType()));
 
-        List<List<PsiType>> deconstructionGroupTypes = ContainerUtil.map(entry.getValue(), deconstruction -> {
-          return ContainerUtil.map(deconstruction.getDeconstructionList().getDeconstructionComponents(),
-                                   component -> JavaPsiPatternUtil.getPatternType(component));
+        List<List<PsiPattern>> deconstructionComponentsGroup = ContainerUtil.map(entry.getValue(), deconstruction -> {
+          return Arrays.asList(deconstruction.getDeconstructionList().getDeconstructionComponents());
         });
-        if (!isExhaustiveInGroup(types, deconstructionGroupTypes)) { //todo check exhaustiveness only on completed
+        if (ContainerUtil.exists(deconstructionComponentsGroup, group -> group.size() != recordTypes.size())) {
+          return true;
+        }
+        if (!isExhaustiveInGroup(recordTypes, deconstructionComponentsGroup)) { //todo check exhaustiveness only on completed
           return false;
         }
       }
@@ -963,19 +969,24 @@ public class SwitchBlockHighlightingModel {
       }
     }
 
-    private static boolean isExhaustiveInGroup(List<PsiType> recordTypes, List<List<PsiType>> deconstructions) {
+    private static boolean isExhaustiveInGroup(List<PsiType> recordTypes, List<List<PsiPattern>> deconstructions) {
       if (recordTypes.isEmpty()) return true;
       PsiType typeToCheck = recordTypes.get(0);
 
-      MultiMap<PsiType, List<PsiType>> deconstructionGroups = ContainerUtil.groupBy(deconstructions, deconstructionComponents -> {
-        return deconstructionComponents.get(0);
+      MultiMap<PsiType, List<PsiPattern>> deconstructionGroups = ContainerUtil.groupBy(deconstructions, deconstructionComponents -> {
+        return JavaPsiPatternUtil.getPatternType(deconstructionComponents.get(0));
       });
 
-      List<Map.Entry<PsiType, Collection<List<PsiType>>>> exhaustiveGroups =
+      List<Map.Entry<PsiType, Collection<List<PsiPattern>>>> exhaustiveGroups =
         ContainerUtil.filter(deconstructionGroups.entrySet(), deconstructionGroup -> {
+          List<PsiPattern> firstElements = ContainerUtil.map(deconstructionGroup.getValue(), it -> it.get(0));
+          if (ContainerUtil.exists(firstElements, pattern -> pattern instanceof PsiDeconstructionPattern)) {
+            if (!checkRecordExhaustiveness(firstElements)) return false;
+          }
           return isExhaustiveInGroup(
-            recordTypes.stream().skip(1).collect(Collectors.toList()),
-            ContainerUtil.map(deconstructionGroup.getValue(), it -> it.stream().skip(1).collect(Collectors.toList())));
+            SwitchBlockHighlightingModel.dropFirst(recordTypes),
+            ContainerUtil.map(deconstructionGroup.getValue(), SwitchBlockHighlightingModel::dropFirst)
+          );
         });
 
       List<PsiType> exhaustiveTypes = ContainerUtil.map(exhaustiveGroups, it -> it.getKey());
@@ -983,7 +994,7 @@ public class SwitchBlockHighlightingModel {
       return isExhaustive(typeToCheck, exhaustiveTypes);
     }
 
-    private static boolean isExhaustive(PsiType typeToCheck, List<PsiType> types) { //generic types?
+    private static boolean isExhaustive(PsiType typeToCheck, List<PsiType> types) {
       if (types.isEmpty()) return false;
 
       for (PsiType psiType : types) {

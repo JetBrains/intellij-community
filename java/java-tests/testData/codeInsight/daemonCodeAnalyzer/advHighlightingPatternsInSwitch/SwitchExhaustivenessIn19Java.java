@@ -16,6 +16,9 @@ final class C implements I {}
 final class D implements I {}
 record Pair<T>(T x, T y) {}
 
+record Top(Child c1, Child c2) {}
+record Child(I x, I y){}
+
 public class Basic {
 
   String o;
@@ -84,6 +87,32 @@ public class Basic {
     }
     switch (genericC) {
       case Generic<C>(C i) -> {}
+    }
+  }
+
+  void testNested(Top t){
+    switch (<error descr="'switch' statement does not cover all possible input values">t</error>){
+      case Top(Child(I x1, C y1) c1, Child(C x2, I y2) c2) -> {}
+      case Top(Child(I x1, D y1) c1, Child(I x2, C y2) c2) -> {}
+    }
+    switch (t){
+      case Top(Child(I x1, C y1) c1, Child c2) -> {}
+      case Top(Child(I x1, D y1) c1, Child c2) -> {}
+    }
+    switch (t){
+      case Top(Child(I x1, C y1) c1, Child(I x2, I y2) c2) -> {}
+      case Top(Child(I x1, D y1) c1, Child(I x2, I y2) c2) -> {}
+    }
+    switch (<error descr="'switch' statement does not cover all possible input values">t</error>){
+      case Top(Child c1, Child(C x2, I y2) c2) -> {}
+      case Top(Child c1, Child(I x2, C y2) c2) -> {}
+    }
+    switch (<error descr="'switch' statement does not cover all possible input values">t</error>){
+      case Top(Child(I x1, C y1) c1, Child(I x2, I y2) c2) -> {}
+      case Top(Child(C x1, I y1) c1, Child(I x2, I y2) c2) -> {}
+    }
+    switch (t){
+      case Top(Child(I x1, I y1) c1, Child(I x2, I y2) c2) -> {}
     }
   }
 
