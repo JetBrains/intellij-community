@@ -1,173 +1,154 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.fileEditor.impl;
+@file:Suppress("ReplaceGetOrSet")
 
-import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorPolicy;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
-import com.intellij.openapi.fileEditor.WeighedFileEditorProvider;
-import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SlowOperations;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+package com.intellij.openapi.fileEditor.impl
 
-import java.util.*;
+import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorPolicy
+import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.WeighedFileEditorProvider
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.SlowOperations.GENERIC
+import com.intellij.util.SlowOperations.allowSlowOperations
+import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.TestOnly
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-@State(
-  name = "FileEditorProviderManager",
-  storages = @Storage(value = "fileEditorProviderManager.xml", roamingType = RoamingType.DISABLED)
-)
-public class FileEditorProviderManagerImpl extends FileEditorProviderManager
-  implements PersistentStateComponent<FileEditorProviderManagerImpl> {
+@State(name = "FileEditorProviderManager",
+       storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)])
+class FileEditorProviderManagerImpl : FileEditorProviderManager,
+                                      SerializablePersistentStateComponent<FileEditorProviderManagerImpl.FileEditorProviderManagerState>(FileEditorProviderManagerState()) {
+  companion object {
+    fun getInstanceImpl(): FileEditorProviderManagerImpl = FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl
 
-  public static @NotNull FileEditorProviderManagerImpl getInstanceImpl() {
-    return (FileEditorProviderManagerImpl)getInstance();
+    private val LOG = logger<FileEditorProviderManagerImpl>()
+
+    private fun computeKey(providers: List<FileEditorProvider>) = providers.joinToString(separator = ",") { it.editorTypeId }
   }
 
-  private static final @NotNull Logger LOG = Logger.getInstance(FileEditorProviderManagerImpl.class);
+  @Serializable
+  data class FileEditorProviderManagerState(val selectedProviders: Map<String, String> = emptyMap())
 
-  @Override
-  public FileEditorProvider @NotNull [] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
-    // Collect all possible editors
-    List<FileEditorProvider> sharedProviders = new ArrayList<>();
-    boolean hideDefaultEditor = false;
-    boolean hasHighPriorityEditors = false;
-    for (final FileEditorProvider provider : FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getExtensionList()) {
-      if (SlowOperations.allowSlowOperations(() -> ReadAction.compute(() -> {
-        if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
-          return false;
-        }
-        if (!provider.accept(project, file)) {
-          return false;
-        }
-        for (FileEditorProviderSuppressor suppressor : FileEditorProviderSuppressor.EP_NAME.getExtensionList()) {
-          if (suppressor.isSuppressed(project, file, provider)) {
-            LOG.info(String.format("FileEditorProvider %s for VirtualFile %s was suppressed by FileEditorProviderSuppressor %s",
-                                   provider.getClass(), file, suppressor.getClass()));
-            return false;
-          }
-        }
-        return true;
-      }))) {
-        sharedProviders.add(provider);
-        hideDefaultEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
-        hasHighPriorityEditors |= provider.getPolicy() == FileEditorPolicy.HIDE_OTHER_EDITORS;
-        if (provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR && !DumbService.isDumbAware(provider)) {
-          String message = "HIDE_DEFAULT_EDITOR is supported only for DumbAware providers; " + provider.getClass() + " is not DumbAware.";
-          LOG.error(PluginException.createByClass(message, null, provider.getClass()));
+  private inline fun doGetProviders(providerChecker: (FileEditorProvider) -> Boolean): List<FileEditorProvider> {
+    // collect all possible editors
+    val sharedProviders = ArrayList<FileEditorProvider>()
+    var hideDefaultEditor = false
+    var hasHighPriorityEditors = false
+    for (provider in FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList) {
+      val result = allowSlowOperations(GENERIC).use {
+        providerChecker(provider)
+      }
+
+      if (result) {
+        sharedProviders.add(provider)
+        hideDefaultEditor = hideDefaultEditor or (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR)
+        hasHighPriorityEditors = hasHighPriorityEditors or (provider.policy == FileEditorPolicy.HIDE_OTHER_EDITORS)
+        if (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR && !DumbService.isDumbAware(provider)) {
+          val message = "HIDE_DEFAULT_EDITOR is supported only for DumbAware providers; " + provider.javaClass + " is not DumbAware."
+          LOG.error(PluginException.createByClass(message, null, provider.javaClass))
         }
       }
     }
 
-    // Throw out default editors provider if necessary
+    // throw out default editors provider if necessary
     if (hideDefaultEditor) {
-      ContainerUtil.retainAll(sharedProviders, provider -> !(provider instanceof DefaultPlatformFileEditorProvider));
+      sharedProviders.removeIf { it is DefaultPlatformFileEditorProvider }
     }
-
     if (hasHighPriorityEditors) {
-      ContainerUtil.retainAll(sharedProviders, provider -> provider.getPolicy() == FileEditorPolicy.HIDE_OTHER_EDITORS);
+      sharedProviders.removeIf { it.policy != FileEditorPolicy.HIDE_OTHER_EDITORS }
     }
 
     // Sort editors according policies
-    sharedProviders.sort(MyComparator.ourInstance);
-    return sharedProviders.toArray(FileEditorProvider.EMPTY_ARRAY);
+    sharedProviders.sortWith(MyComparator)
+    return sharedProviders
   }
 
-  @Override
-  @Nullable
-  public FileEditorProvider getProvider(@NotNull String editorTypeId) {
-    for (FileEditorProvider provider : FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getExtensionList()) {
-      if (provider.getEditorTypeId().equals(editorTypeId)) {
-        return provider;
+  private fun checkProvider(project: Project, file: VirtualFile, provider: FileEditorProvider): Boolean {
+    if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
+      return false
+    }
+    if (!provider.accept(project, file)) {
+      return false
+    }
+
+    for (suppressor in FileEditorProviderSuppressor.EP_NAME.extensionList) {
+      if (suppressor.isSuppressed(project, file, provider)) {
+        LOG.info("FileEditorProvider ${provider.javaClass} for VirtualFile $file " +
+                 "was suppressed by FileEditorProviderSuppressor ${suppressor.javaClass}")
+        return false
       }
     }
-    return null;
+    return true
   }
 
-  @NotNull
-  @Override
-  public FileEditorProviderManagerImpl getState() {
-    return this;
-  }
-
-  @Override
-  public void loadState(@NotNull FileEditorProviderManagerImpl state) {
-    mySelectedProviders.clear();
-    mySelectedProviders.putAll(state.mySelectedProviders);
-  }
-
-  private final Map<String, String> mySelectedProviders = new HashMap<>();
-
-  void providerSelected(@NotNull EditorComposite composite) {
-    List<FileEditorProvider> providers = composite.getAllProviders();
-    if (providers.size() < 2) return;
-    mySelectedProviders.put(computeKey(providers), composite.getSelectedWithProvider().getProvider().getEditorTypeId());
-  }
-
-  private static @NotNull String computeKey(List<FileEditorProvider> providers) {
-    return StringUtil.join(ContainerUtil.map(providers, FileEditorProvider::getEditorTypeId), ",");
-  }
-
-  @Nullable
-  FileEditorProvider getSelectedFileEditorProvider(EditorComposite composite) {
-    EditorHistoryManager editorHistoryManager = EditorHistoryManager.getInstance(composite.getProject());
-    FileEditorProvider provider = editorHistoryManager.getSelectedProvider(composite.getFile());
-
-    List<FileEditorProvider> providers = composite.getAllProviders();
-    if (provider != null || providers.size() < 2) {
-      return provider;
+  override fun getProviderList(project: Project, file: VirtualFile): List<FileEditorProvider> {
+    return doGetProviders { provider ->
+      ReadAction.compute<Boolean, RuntimeException> {
+        checkProvider(project, file, provider)
+      }
     }
-    String id = mySelectedProviders.get(computeKey(providers));
-    return id == null ? null : getProvider(id);
   }
 
-  @MapAnnotation
-  public Map<String, String> getSelectedProviders() {
-    return mySelectedProviders;
+  override suspend fun getProvidersAsync(project: Project, file: VirtualFile): List<FileEditorProvider> {
+    return doGetProviders { provider ->
+      readAction {
+        checkProvider(project, file, provider)
+      }
+    }
   }
 
-  @SuppressWarnings("unused")
-  public void setSelectedProviders(Map<String, String> selectedProviders) {
-    mySelectedProviders.clear();
-    mySelectedProviders.putAll(selectedProviders);
+  override fun getProvider(editorTypeId: String): FileEditorProvider? {
+    return FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList.firstOrNull { it.editorTypeId == editorTypeId }
+  }
+
+  fun providerSelected(composite: EditorComposite) {
+    val providers = composite.allProviders
+    if (providers.size < 2) {
+      return
+    }
+
+    updateState {
+      FileEditorProviderManagerState(it.selectedProviders + (computeKey(providers) to composite.selectedWithProvider.provider.editorTypeId))
+    }
+  }
+
+  fun getSelectedFileEditorProvider(composite: EditorComposite): FileEditorProvider? {
+    val editorHistoryManager = EditorHistoryManager.getInstance(composite.project)
+    val provider = editorHistoryManager.getSelectedProvider(composite.file)
+    val providers = composite.allProviders
+    if (provider != null || providers.size < 2) {
+      return provider
+    }
+    return getProvider(state.selectedProviders.get(computeKey(providers)) ?: return null)
   }
 
   @TestOnly
-  public void clearSelectedProviders() {
-    mySelectedProviders.clear();
+  fun clearSelectedProviders() {
+    updateState {
+      FileEditorProviderManagerState()
+    }
+  }
+}
+
+private object MyComparator : Comparator<FileEditorProvider> {
+  private fun getWeight(provider: FileEditorProvider): Double {
+    return if (provider is WeighedFileEditorProvider) provider.weight else Double.MAX_VALUE
   }
 
-  private static final class MyComparator implements Comparator<FileEditorProvider> {
-    public static final MyComparator ourInstance = new MyComparator();
-
-    private static double getWeight(FileEditorProvider provider) {
-      return provider instanceof WeighedFileEditorProvider
-             ? ((WeighedFileEditorProvider)provider).getWeight()
-             : Double.MAX_VALUE;
-    }
-
-    @Override
-    public int compare(FileEditorProvider provider1, FileEditorProvider provider2) {
-      int c = provider1.getPolicy().compareTo(provider2.getPolicy());
-      if (c != 0) return c;
-      final double value = getWeight(provider1) - getWeight(provider2);
-      return value > 0 ? 1 : value < 0 ? -1 : 0;
-    }
+  override fun compare(provider1: FileEditorProvider, provider2: FileEditorProvider): Int {
+    val c = provider1.policy.compareTo(provider2.policy)
+    if (c != 0) return c
+    val value = getWeight(provider1) - getWeight(provider2)
+    return if (value > 0) 1 else if (value < 0) -1 else 0
   }
 }

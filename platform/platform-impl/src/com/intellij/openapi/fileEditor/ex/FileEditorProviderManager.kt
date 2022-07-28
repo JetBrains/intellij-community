@@ -1,31 +1,34 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.fileEditor.ex;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.fileEditor.ex
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class FileEditorProviderManager {
-  public static FileEditorProviderManager getInstance() {
-    return ApplicationManager.getApplication().getService(FileEditorProviderManager.class);
+interface FileEditorProviderManager {
+  companion object {
+    @JvmStatic
+    fun getInstance(): FileEditorProviderManager = service()
   }
 
-  /**
-   * @return All providers that can create editor for the specified {@code file} or empty array if there are none.
-   * Please note that returned array is constructed with respect to editor policies.
-   */
-  public abstract FileEditorProvider @NotNull [] getProviders(@NotNull Project project, @NotNull VirtualFile file);
+  @Deprecated(message = "Use getProviderList", replaceWith = ReplaceWith("getProviderList(project, file)"))
+  fun getProviders(project: Project, file: VirtualFile): Array<FileEditorProvider> = getProviderList(project, file).toTypedArray()
 
   /**
-   * @return {@code null} if no provider with specified {@code editorTypeId} exists.
+   * @return All providers that can create editor for the specified `file` or empty array if there are none.
+   * Please note that returned array is constructed with respect to editor policies.
    */
-  @Nullable
-  public abstract FileEditorProvider getProvider(@NotNull String editorTypeId);
+  fun getProviderList(project: Project, file: VirtualFile): List<FileEditorProvider>
+
+  suspend fun getProvidersAsync(project: Project, file: VirtualFile): List<FileEditorProvider>
+
+  /**
+   * @return `null` if no provider with specified `editorTypeId` exists.
+   */
+  fun getProvider(editorTypeId: String): FileEditorProvider?
 }

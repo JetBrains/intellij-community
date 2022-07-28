@@ -166,18 +166,16 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       val editorSplitters = fileEditorManager.init()
 
       // not as a part of a project modal dialog
-      project.coroutineScope.scheduleUi(editorSplitters, fileEditorManager, frameHelper, project)
+      project.coroutineScope.buildUi(editorSplitters, fileEditorManager, frameHelper, project)
     }
   }
 
-  private fun CoroutineScope.scheduleUi(editorSplitters: EditorsSplitters,
-                                        fileEditorManager: FileEditorManagerImpl,
-                                        frameHelper: ProjectFrameHelper,
-                                        project: Project): Job {
-    val reopeningEditorJob = launch {
-      runActivity("editor reopening") {
-        restoreOpenedFiles(fileEditorManager, editorSplitters, project)
-      }
+  private fun CoroutineScope.buildUi(editorSplitters: EditorsSplitters,
+                                     fileEditorManager: FileEditorManagerImpl,
+                                     frameHelper: ProjectFrameHelper,
+                                     project: Project): Job {
+    val reopeningEditorJob = launchAndMeasure("editor reopening") {
+      restoreOpenedFiles(fileEditorManager, editorSplitters, project)
     }
 
     launchAndMeasure("tool window pane creation") {

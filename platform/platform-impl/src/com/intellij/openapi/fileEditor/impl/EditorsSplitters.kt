@@ -802,7 +802,7 @@ private class MyTransferHandler(private val splitters: EditorsSplitters) : Trans
 
 private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeReader<JPanel> {
   override suspend fun processFiles(fileElements: List<Element>, tabSizeLimit: Int, context: JPanel?): JPanel {
-    val window = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    val window = withContext(Dispatchers.EDT) {
       val editorWindow = context?.let { splitters.findWindowWith(it) } ?: splitters.createEditorWindow()
       splitters.setCurrentWindow(window = editorWindow, requestFocus = false)
       if (tabSizeLimit != 1) {
@@ -872,7 +872,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeRea
     }
     else {
       fileEditorManager.addSelectionRecord(focusedFile, window)
-      fileEditorManager.project.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      fileEditorManager.project.coroutineScope.launch(Dispatchers.EDT) {
         window.getComposite(focusedFile)?.let {
           window.setComposite(it, true)
         }
@@ -887,7 +887,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeRea
       val proportion = element.getAttributeValue("split-proportion").toFloat()
       val firstComponent = process(firstChild!!, null)!!
       val secondComponent = process(secondChild!!, null)!!
-      return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      return withContext(Dispatchers.EDT) {
         val panel = JPanel(BorderLayout())
         panel.isOpaque = false
         val splitter = EditorsSplitters.createSplitter(orientation = orientation, proportion = proportion, minProp = 0.1f, maxProp = 0.9f)
@@ -901,7 +901,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeRea
 
     var firstComponent: JPanel
     var secondComponent: JPanel
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    withContext(Dispatchers.EDT) {
       val component = context.getComponent(0)
       if (component is Splitter) {
         firstComponent = component.firstComponent as JPanel

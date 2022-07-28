@@ -74,17 +74,5 @@ public interface FileEditorManagerListener extends EventListener {
 
     default void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     }
-
-    /**
-     * @deprecated use {@link Before} directly
-     */
-    @Deprecated(forRemoval = true)
-    class Adapter implements Before {
-      @Override
-      public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) { }
-
-      @Override
-      public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) { }
-    }
   }
 }
