@@ -10,9 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Internal utils to support intention preview feature
+ * Utils to support intention preview feature
  */
-@ApiStatus.Internal
 public class IntentionPreviewUtils {
   private static final Key<Boolean> PREVIEW_MARKER = Key.create("PREVIEW_MARKER");
   private static final ThreadLocal<Editor> PREVIEW_EDITOR = new ThreadLocal<>();
@@ -21,6 +20,7 @@ public class IntentionPreviewUtils {
    * @param file file to get the preview copy
    * @return a preview copy of the file
    */
+  @ApiStatus.Internal
   public static @NotNull PsiFile obtainCopyForPreview(@NotNull PsiFile file) {
     PsiFile copy = (PsiFile)file.copy();
     copy.putUserData(PREVIEW_MARKER, true);
@@ -41,6 +41,7 @@ public class IntentionPreviewUtils {
    * @param editor preview editor to use
    * @param runnable action to execute
    */
+  @ApiStatus.Internal
   public static void previewSession(@NotNull Editor editor, @NotNull Runnable runnable) {
     PREVIEW_EDITOR.set(editor);
     try {
