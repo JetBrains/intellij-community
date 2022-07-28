@@ -1,22 +1,24 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.inspections">
   <extensions defaultExtensionNs="com.intellij">
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.RedundantUnitReturnTypeInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                     language="kotlin"
-                     key="inspection.redundant.unit.return.type.display.name" bundle="messages.KotlinBundle"/>
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.RedundantUnitReturnTypeInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+            enabledByDefault="true"
+            cleanupTool="true"
+            level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+            language="kotlin"
+            key="inspection.redundant.unit.return.type.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.RedundantVisibilityModifierInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                     language="kotlin"
-                     key="inspection.redundant.visibility.modifier.display.name" bundle="messages.KotlinBundle"/>
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.RedundantVisibilityModifierInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+            enabledByDefault="true"
+            cleanupTool="true"
+            level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+            language="kotlin"
+            key="inspection.redundant.visibility.modifier.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinUnusedImportInspection"
                      groupPath="Kotlin"
@@ -52,6 +54,15 @@
                      language="kotlin"
                      suppressId="DoubleNegation"
                      key="inspection.kotlin.double.negation.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RemoveSingleExpressionStringTemplateInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+            enabledByDefault="true"
+            level="WARNING"
+            language="kotlin"
+            key="inspection.remove.single.expression.string.template.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ReplaceGetOrSetInspection"
                      groupPath="Kotlin"
