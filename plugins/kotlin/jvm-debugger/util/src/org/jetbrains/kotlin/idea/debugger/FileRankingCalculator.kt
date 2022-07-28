@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companio
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.MINOR
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.NORMAL
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.ZERO
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinFileSelector
 import org.jetbrains.kotlin.idea.debugger.base.util.safeArguments
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -32,10 +33,10 @@ object FileRankingCalculatorForIde : FileRankingCalculator() {
     override fun analyze(element: KtElement) = element.analyze(BodyResolveMode.PARTIAL)
 }
 
-abstract class FileRankingCalculator(private val checkClassFqName: Boolean = true) {
+abstract class FileRankingCalculator(private val checkClassFqName: Boolean = true) : KotlinFileSelector {
     abstract fun analyze(element: KtElement): BindingContext
 
-    fun findMostAppropriateSource(files: Collection<KtFile>, location: Location): KtFile {
+    override fun chooseMostApplicableFile(files: List<KtFile>, location: Location): KtFile {
         val fileWithRankings: Map<KtFile, Int> = rankFiles(files, location)
         val fileWithMaxScore = fileWithRankings.maxByOrNull { it.value }!!
         return fileWithMaxScore.key

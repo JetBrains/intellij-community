@@ -10,7 +10,11 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
-object FileApplicabilityChecker {
+interface KotlinFileSelector {
+    fun chooseMostApplicableFile(files: List<KtFile>, location: Location): KtFile
+}
+
+object FileApplicabilityChecker : KotlinFileSelector {
     enum class Applicability {
         NO, UNCERTAIN, YES
     }
@@ -20,7 +24,7 @@ object FileApplicabilityChecker {
         val classNames: Map<KtElement, String>
     )
 
-    fun findApplicable(files: Collection<KtFile>, location: Location): KtFile {
+    override fun chooseMostApplicableFile(files: List<KtFile>, location: Location): KtFile {
         if (files.size == 1) {
             return files.first()
         }
