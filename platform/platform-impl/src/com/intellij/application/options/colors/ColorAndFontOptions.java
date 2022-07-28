@@ -35,7 +35,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -818,20 +817,19 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       myColorKey = colorKey;
       myKind = kind;
       ColorKey fallbackKey = myColorKey.getFallbackColorKey();
-      Color fallbackColor = null;
       if (fallbackKey != null) {
-        fallbackColor = scheme.getColor(fallbackKey);
         myBaseAttributeDescriptor = ColorSettingsPages.getInstance().getColorDescriptor(fallbackKey);
         if (myBaseAttributeDescriptor == null) {
           @NlsSafe String fallbackKeyExternalName = fallbackKey.getExternalName();
           myBaseAttributeDescriptor = Pair.create(null, new ColorDescriptor(fallbackKeyExternalName, fallbackKey, myKind));
         }
+        Color fallbackColor = scheme.getColor(fallbackKey);
         myFallbackAttributes = new TextAttributes(myKind == ColorDescriptor.Kind.FOREGROUND ? fallbackColor : null,
                                                   myKind == ColorDescriptor.Kind.BACKGROUND ? fallbackColor : null,
                                                   null, null, Font.PLAIN);
       }
       myColor = scheme.getColor(myColorKey);
-      myInitialColor = ObjectUtils.chooseNotNull(fallbackColor, myColor);
+      myInitialColor = myColor;
 
       myIsInheritedInitial = scheme.isInherited(myColorKey);
       setInherited(myIsInheritedInitial);
