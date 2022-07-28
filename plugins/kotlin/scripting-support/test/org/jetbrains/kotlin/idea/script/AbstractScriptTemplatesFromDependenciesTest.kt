@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.actions.MarkRootActionBase
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -87,7 +88,7 @@ abstract class AbstractScriptTemplatesFromDependenciesTest : HeavyPlatformTestCa
         val provider = ScriptDefinitionContributor.find<ScriptTemplatesFromDependenciesProvider>(project)
             ?: error("Cannot find ScriptTemplatesFromDependenciesProvider")
 
-        val (templates, classpath) = provider.getTemplateClassPath(roots.toList())
+        val (templates, classpath) = provider.getTemplateClassPath(roots.toList(), EmptyProgressIndicator())
 
         checkTemplateNames(fileText, templates)
         checkTemplateClasspath(fileText, classpath)
