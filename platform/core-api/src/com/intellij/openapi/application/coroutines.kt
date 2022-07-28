@@ -3,7 +3,6 @@ package com.intellij.openapi.application
 
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -107,14 +106,3 @@ fun ModalityState.asContextElement(): CoroutineContext = coroutineSupport().asCo
 val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().edtDispatcher()
 
 private fun coroutineSupport() = ApplicationManager.getApplication().getService(CoroutineSupport::class.java)
-
-@ApiStatus.Internal
-@ApiStatus.Experimental
-fun createSupervisorCoroutineScope(parentScope: CoroutineScope, dispatcher: CoroutineDispatcher? = null): CoroutineScope {
-  val parentContext = parentScope.coroutineContext
-  var context = parentContext + SupervisorJob(parent = parentContext.job)
-  if (dispatcher != null) {
-    context += dispatcher
-  }
-  return CoroutineScope(context)
-}
