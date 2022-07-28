@@ -234,7 +234,7 @@ public final class HighlightUtil {
     PsiPrimaryPattern pattern = expression.getPattern();
     if (pattern instanceof PsiDeconstructionPattern) {
       PsiDeconstructionPattern deconstruction = (PsiDeconstructionPattern)pattern;
-      return SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.createDeconstructionErrors(deconstruction);
+      return PatternHighlightingModel.createDeconstructionErrors(deconstruction);
     }
     return Collections.emptyList();
   }
