@@ -3,7 +3,9 @@ package org.jetbrains.kotlin.idea.debugger.base.util
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.util.parents
 import com.sun.jdi.*
+import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -66,14 +68,15 @@ object FileApplicabilityChecker {
             return getApplicabilityByClassName(rangeOfLine, declaringType, KtClassOrObject::class.java)
         }
 
-        val callableClasses = arrayOf(
-            KtCallableDeclaration::class.java,
-            KtPropertyAccessor::class.java
-        )
-
-        for (declaration in file.findElementsOfTypeInRange(rangeOfLine, *callableClasses)) {
-            val callableParent = findCallableParent(declaration) ?: file
-            if (classNames[callableParent] != declaringType.name()) {
+        val lineStartOffset = file.getLineStartOffset(sourceLineNumber) ?: return Applicability.NO
+        val elementAt = file.findElementAt(lineStartOffset) ?: return Applicability.NO
+        val callableParents = elementAt.parents(withSelf = true).filter {
+            it is KtCallableDeclaration || it is KtPropertyAccessor
+        }
+        for (declaration in callableParents) {
+            if (declaration !is KtDeclaration) continue
+            val classParent = findClassParent(declaration) ?: file
+            if (classNames[classParent] != declaringType.name()) {
                 return Applicability.NO
             }
 
@@ -92,7 +95,7 @@ object FileApplicabilityChecker {
         return Applicability.UNCERTAIN
     }
 
-    private fun findCallableParent(declaration: KtDeclaration): KtElement? {
+    private fun findClassParent(declaration: KtDeclaration): KtElement? {
         val parent = declaration.getParentOfType<KtClassOrObject>(strict = true) ?: return null
         if (parent is KtObjectDeclaration && parent.name == null) {
             return (parent.parent as? KtObjectLiteralExpression) ?: parent
