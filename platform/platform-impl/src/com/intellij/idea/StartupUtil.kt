@@ -42,7 +42,6 @@ import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
-import kotlinx.coroutines.debug.DebugProbes
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.io.BuiltInServer
 import sun.awt.AWTAutoShutdown
@@ -255,8 +254,7 @@ fun start(mainClass: String,
 
     if (java.lang.Boolean.getBoolean("idea.enable.coroutine.dump")) {
       launchAndMeasure("coroutine debug probes init") {
-        DebugProbes.enableCreationStackTraces = false
-        DebugProbes.install()
+        enableCoroutineDump()
       }
     }
 

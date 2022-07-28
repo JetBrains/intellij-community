@@ -17,6 +17,11 @@ import java.nio.charset.StandardCharsets
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
+fun enableCoroutineDump() {
+  DebugProbes.enableCreationStackTraces = false
+  DebugProbes.install()
+}
+
 fun dumpCoroutines(): String? {
   if (!DebugProbes.isInstalled) {
     return null
