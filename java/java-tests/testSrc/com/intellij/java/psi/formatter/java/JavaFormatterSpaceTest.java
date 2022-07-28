@@ -892,4 +892,27 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "return o instanceof Rec(int i)r",
       "return o instanceof Rec(int i) r");
   }
+
+  public void testDeconstructionPatternSpacing() {
+    doMethodTest(
+      "switch (a) {\n" +
+      " case R  ( int x , String y  , char [ ] chs, List < A > list) -> {}\n" +
+      "}",
+      "switch (a) {\n" +
+      "    case R(int x, String y, char[] chs, List<A> list) -> {\n" +
+      "    }\n" +
+      "}");
+  }
+
+  public void testDeconstructionPatternSpacingBeforeComma() {
+    getSettings().SPACE_BEFORE_COMMA = true;
+    doMethodTest(
+      "switch (a) {\n" +
+      " case R  (int x,String y,char [ ] chs,List < A > list) -> {}\n" +
+      "}",
+      "switch (a) {\n" +
+      "    case R(int x , String y , char[] chs , List<A> list) -> {\n" +
+      "    }\n" +
+      "}");
+  }
 }
