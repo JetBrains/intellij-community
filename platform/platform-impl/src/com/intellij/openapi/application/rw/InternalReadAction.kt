@@ -18,20 +18,11 @@ internal class InternalReadAction<T>(
 
   private val application: ApplicationEx = ApplicationManager.getApplication() as ApplicationEx
 
-  suspend fun runReadAction(): T {
-    check(!application.isDispatchThread) {
-      "Must not call from EDT"
+  suspend fun runReadAction(): T = withContext(Dispatchers.Default) {
+    check(!application.isReadAccessAllowed) {
+      "This thread unexpectedly holds the read lock"
     }
-    if (application.isReadAccessAllowed) {
-      val unsatisfiedConstraint = findUnsatisfiedConstraint()
-      check(unsatisfiedConstraint == null) {
-        "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
-      }
-      return blockingContext(action)
-    }
-    return coroutineScope {
-      readLoop()
-    }
+    readLoop()
   }
 
   private fun findUnsatisfiedConstraint(): ReadConstraint? {

@@ -43,6 +43,8 @@ suspend fun <T> smartReadAction(project: Project, action: () -> T): T {
  * The function returns when given [action] was completed fully.
  * To support cancellation, the [action] must regularly invoke [com.intellij.openapi.progress.ProgressManager.checkCanceled].
  *
+ * The [action] is dispatched to [Dispatchers.Default], because a read action is expected to be a CPU-bound task.
+ *
  * @see constrainedReadActionBlocking
  */
 suspend fun <T> constrainedReadAction(vararg constraints: ReadConstraint, action: () -> T): T {
@@ -82,6 +84,8 @@ suspend fun <T> smartReadActionBlocking(project: Project, action: () -> T): T {
  *
  * The function returns when given [action] was completed fully.
  * To support cancellation, the [action] must regularly invoke [com.intellij.openapi.progress.ProgressManager.checkCanceled].
+ *
+ * The [action] is dispatched to [Dispatchers.Default], because a read action is expected to be a CPU-bound task.
  *
  * @see constrainedReadAction
  */
