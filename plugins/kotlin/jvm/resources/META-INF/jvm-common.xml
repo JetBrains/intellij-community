@@ -36,7 +36,7 @@
         </group>
 
         <action id="Kotlin.XDebugger.ToggleKotlinVariableView"
-                class="org.jetbrains.kotlin.idea.debugger.ToggleKotlinVariablesView">
+                class="org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesView">
             <add-to-group group-id="XDebugger.Settings" relative-to-action="XDebugger.Inline" anchor="after"/>
         </action>
 
@@ -56,7 +56,7 @@
 
         <projectService serviceImplementation="org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState"/>
 
-        <applicationService serviceImplementation="org.jetbrains.kotlin.idea.debugger.ToggleKotlinVariablesState"/>
+        <applicationService serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState"/>
 
         <applicationService serviceInterface="org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade"
                           serviceImplementation="org.jetbrains.kotlin.idea.debugger.KotlinJvmDebuggerFacadeImpl"/>

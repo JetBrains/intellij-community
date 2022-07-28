@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger.stackFrame
+package org.jetbrains.kotlin.idea.debugger.core.stackFrame
 
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.JavaStackFrame
@@ -21,11 +21,9 @@ import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAM
 import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.idea.debugger.*
-import org.jetbrains.kotlin.idea.debugger.base.util.dropInlineSuffix
-import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
-import org.jetbrains.kotlin.idea.debugger.base.util.isSubtype
-import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariables
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluator
+import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.KotlinDebuggerEvaluator
+import org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState
 
 @Suppress("EqualsOrHashCode")
 open class KotlinStackFrame(
@@ -182,7 +180,7 @@ open class KotlinStackFrame(
         return _visibleVariables
     }
 
-    protected fun List<LocalVariableProxyImpl>.remapInKotlinView(): List<LocalVariableProxyImpl> {
+    private fun List<LocalVariableProxyImpl>.remapInKotlinView(): List<LocalVariableProxyImpl> {
         val (thisVariables, otherVariables) = filter { variable ->
                 val name = variable.name()
                 !isFakeLocalVariableForInline(name) &&

@@ -18,8 +18,8 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBund
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinVariableNameFinder
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.safeCoroutineStackFrameProxy
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
-import org.jetbrains.kotlin.idea.debugger.stackFrame.InlineStackTraceCalculator
-import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
 
 /**
  * Coroutine exit frame represented by a stack frames

@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger.stackFrame
+package org.jetbrains.kotlin.idea.debugger.core.stackFrame
 
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.ui.impl.watch.ThisDescriptorImpl

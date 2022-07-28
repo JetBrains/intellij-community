@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.KotlinDebuggerEvaluator
 import org.jetbrains.kotlin.idea.statistics.FUSEventGroups
 import org.jetbrains.kotlin.idea.statistics.KotlinFUSLogger
 

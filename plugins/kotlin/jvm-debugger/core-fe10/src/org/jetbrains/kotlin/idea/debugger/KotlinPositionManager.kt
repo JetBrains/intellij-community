@@ -54,8 +54,8 @@ import org.jetbrains.kotlin.idea.debugger.breakpoints.SourcePositionRefiner
 import org.jetbrains.kotlin.idea.debugger.core.*
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getElementsAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getLambdasAtLineIfAny
-import org.jetbrains.kotlin.idea.debugger.stackFrame.InlineStackTraceCalculator
-import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.stepping.getLineRange
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.isSamLambda
 import org.jetbrains.kotlin.idea.util.application.runReadAction
