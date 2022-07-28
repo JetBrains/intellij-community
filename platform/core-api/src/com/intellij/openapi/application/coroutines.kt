@@ -1,8 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Experimental
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -84,6 +87,29 @@ suspend fun <T> smartReadActionBlocking(project: Project, action: () -> T): T {
  */
 suspend fun <T> constrainedReadActionBlocking(vararg constraints: ReadConstraint, action: () -> T): T {
   return readActionSupport().executeReadAction(constraints.toList(), blocking = true, action)
+}
+
+/**
+ * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction].
+ *
+ * Currently, the [action] is dispatched by [Dispatchers.EDT] within the [context modality state][asContextElement].
+ * If the calling coroutine is already executed by [Dispatchers.EDT], then no re-dispatch happens.
+ * Acquiring the write-lock happens in blocking manner,
+ * i.e. [runWriteAction][com.intellij.openapi.application.Application.runWriteAction] call will block
+ * until all currently running read actions are finished.
+ *
+ * NB This function is an API stub.
+ * The implementation will change once running write actions would be allowed on other threads.
+ * This function exists to make it possible to use it in suspending contexts
+ * before the platform is ready to handle write actions differently.
+ */
+@Experimental
+suspend fun <T> writeAction(action: () -> T): T {
+  return withContext(Dispatchers.EDT) {
+    blockingContext {
+      ApplicationManager.getApplication().runWriteAction(Computable(action))
+    }
+  }
 }
 
 private fun readActionSupport() = ApplicationManager.getApplication().getService(ReadActionSupport::class.java)
