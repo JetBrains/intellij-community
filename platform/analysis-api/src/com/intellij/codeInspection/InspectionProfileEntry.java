@@ -46,7 +46,7 @@ import java.util.*;
 public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   private static final Logger LOG = Logger.getInstance(InspectionProfileEntry.class);
 
-  private static Set<String> ourBlackList;
+  private volatile static Set<String> ourBlackList;
   private static final Object BLACK_LIST_LOCK = new Object();
   private Boolean myUseNewSerializer;
 
@@ -397,13 +397,14 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return myUseNewSerializer;
   }
 
-  private static void loadBlackList() {
-    ourBlackList = new HashSet<>();
+  @NotNull
+  private static Set<String> loadBlackList() {
+    Set<String> blackList = new HashSet<>();
 
     URL url = InspectionProfileEntry.class.getResource("inspection-black-list.txt");
     if (url == null) {
       LOG.error("Resource not found");
-      return;
+      return blackList;
     }
 
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
@@ -411,22 +412,27 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       while ((line = reader.readLine()) != null) {
         line = line.trim();
         if (!line.isEmpty()) {
-          ourBlackList.add(line);
+          blackList.add(line);
         }
       }
     }
     catch (IOException e) {
       LOG.error("Unable to load resource: " + url, e);
     }
+    return Collections.unmodifiableSet(blackList);
   }
 
   public static @NotNull Collection<String> getBlackList() {
-    synchronized (BLACK_LIST_LOCK) {
-      if (ourBlackList == null) {
-        loadBlackList();
+    Set<String> blackList = ourBlackList;
+    if (blackList == null) {
+      synchronized (BLACK_LIST_LOCK) {
+        blackList = ourBlackList;
+        if (blackList == null) {
+          ourBlackList = blackList = loadBlackList();
+        }
       }
-      return ourBlackList;
     }
+    return blackList;
   }
 
   /**
