@@ -4,6 +4,7 @@ package com.intellij.codeInspection.varScopeCanBeNarrowed;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionName;
@@ -449,11 +450,17 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
 
     private static void deleteField(@NotNull PsiField variable, PsiElement newDeclaration) {
       CommentTracker tracker = new CommentTracker();
-      WriteAction.run(() -> {
-        variable.normalizeDeclaration();
-        tracker.delete(variable);
-        tracker.insertCommentsBefore(newDeclaration);
-      });
+      variable.normalizeDeclaration();
+      tracker.delete(variable);
+      tracker.insertCommentsBefore(newDeclaration);
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      PsiField field = getVariable(previewDescriptor);
+      if (field == null) return IntentionPreviewInfo.EMPTY;
+      field.delete();
+      return IntentionPreviewInfo.DIFF;
     }
   }
 }
