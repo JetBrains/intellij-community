@@ -6,9 +6,10 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -48,31 +49,39 @@ internal class MainMenuButton {
         .apply { setMinimumSize(Dimension(JBUI.CurrentTheme.CustomFrameDecorations.menuPopupMinWidth(), 0)) }
     }
   }
-
-  companion object {
-    private fun createMenuButton(action: AnAction): ActionButton {
-      val button = object: ActionButton(action, PresentationFactory().getPresentation(action),
-                                ActionPlaces.MAIN_MENU_IN_POPUP, Dimension(40, 40)) {
-        override fun getDataContext(): DataContext {
-          return DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200) ?: super.getDataContext()
-        }
-      }
-      button.setLook(HeaderToolbarButtonLook())
-      return button
-    }
-  }
 }
 
-class MainMenuMnemonicHandler(val action: AnAction) : Disposable {
+private fun createMenuButton(action: AnAction): ActionButton {
+  val button = object : ActionButton(action, PresentationFactory().getPresentation(action),
+                                     ActionPlaces.MAIN_MENU_IN_POPUP, Dimension(40, 40)) {
+    override fun getDataContext(): DataContext {
+      return DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200) ?: super.getDataContext()
+    }
+  }
+  button.setLook(HeaderToolbarButtonLook())
+  return button
+}
 
+class MainMenuMnemonicHandler(private val action: AnAction) : Disposable {
   private var disposable: CheckedDisposable? = null
 
   fun registerShortcuts(component: JComponent) {
+    if (disposable?.isDisposed != false) {
+      disposable = Disposer.newCheckedDisposable()
+    }
 
-    if (disposable?.isDisposed != false) disposable = Disposer.newCheckedDisposable()
+    ActionManagerEx.withLazyActionManager(null) { actionManager ->
+      if (disposable?.isDisposed != false) {
+        return@withLazyActionManager
+      }
 
-    val shortcutSet = ActionUtil.getShortcutSet("MainMenuButton.ShowMenu")
-    action.registerCustomShortcutSet(shortcutSet, component, disposable)
+      val showMenuAction = actionManager.getAction("MainMenuButton.ShowMenu")
+      if (showMenuAction == null) {
+        thisLogger().warn("Cannot find action by id ${"MainMenuButton.ShowMenu"}")
+      }
+      val shortcutSet = showMenuAction?.shortcutSet ?: CustomShortcutSet.EMPTY
+      action.registerCustomShortcutSet(shortcutSet, component, disposable)
+    }
   }
 
   fun unregisterShortcuts() {
