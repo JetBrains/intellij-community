@@ -2,12 +2,12 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.actions.OpenInRightSplitAction;
-import com.intellij.ide.impl.DelegatingDataProvider;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.ide.ui.NavBarLocation;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DependentTransientComponent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
@@ -20,7 +20,6 @@ import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -46,7 +45,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   private final int myItemIndex;
 
   public NavBarPopup(final NavBarPanel panel, int sourceItemIndex, Object[] siblings, int itemIndex, final int selectedIndex) {
-    super(createPopupContent(panel, sourceItemIndex, siblings));
+    super(createPopupContent(panel, siblings));
     myPanel = panel;
     myIndex = selectedIndex;
     myItemIndex = itemIndex;
@@ -157,16 +156,15 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   public void dispose() {
   }
 
-  private static JComponent createPopupContent(NavBarPanel panel, int sourceItemIndex, Object[] siblings) {
-    class MyList<E> extends JBList<E> implements DelegatingDataProvider, Queryable {
+  private static JComponent createPopupContent(@NotNull NavBarPanel panel, Object @NotNull [] siblings) {
+    class MyList<E> extends JBList<E> implements DependentTransientComponent, Queryable {
       @Override
       public void putInfo(@NotNull Map<? super String, ? super String> info) {
         panel.putInfo(info);
       }
 
-      @Nullable
       @Override
-      public Component getDelegatedDataProviderComponent() {
+      public @NotNull Component getPermanentComponent() {
         return panel;
       }
     }
