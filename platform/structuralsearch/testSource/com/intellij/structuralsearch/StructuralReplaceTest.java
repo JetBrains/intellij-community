@@ -2817,4 +2817,18 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals("keep newline in modifier list",
                  expected, replace(in, what, replacement, true));
   }
+
+  public void testTypeParameterReplacement() {
+    final String in = "class Util {\n" +
+                      "  @SafeVarargs\n" +
+                      "  @Contract(pure=true)\n" +
+                      "  public static <T> T @NotNull [] ar(T @NotNull ... elements) {\n" +
+                      "    return elements;\n" +
+                      "  }\n" +
+                      "}";
+    final String what = "$RT$ ar($T$ $p$);";
+    final String replacement = "$RT$ ar($T$ $p$);";
+    assertEquals("keep method type parameters",
+                 in, replace(in, what, replacement, true));
+  }
 }
