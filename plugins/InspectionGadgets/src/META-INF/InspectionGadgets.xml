@@ -2762,6 +2762,10 @@
                      bundle="messages.InspectionGadgetsBundle" key="inspection.suspicious.date.format.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
                      implementationClass="com.siyeh.ig.bugs.SuspiciousDateFormatInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="IncorrectDateTimeFormat" enabledByDefault="true" level="WARNING"
+                     bundle="messages.InspectionGadgetsBundle" key="inspection.incorrect.date.format.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     implementationClass="com.siyeh.ig.bugs.IncorrectDateTimeFormatInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConstantExpression" enabledByDefault="true" level="INFORMATION"
                      bundle="messages.InspectionGadgetsBundle" key="inspection.constant.expression.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
