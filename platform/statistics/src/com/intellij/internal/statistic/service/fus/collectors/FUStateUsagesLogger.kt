@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "UnstableApiUsage")
+@file:Suppress("ReplaceGetOrSet", "UnstableApiUsage", "ReplacePutWithAssignment")
 
 package com.intellij.internal.statistic.service.fus.collectors
 
@@ -20,7 +20,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.concurrency.resolvedPromise
-import java.util.concurrent.CompletableFuture
 
 /**
  * Called by a scheduler once a day and records IDE/project state. <br></br>
@@ -126,35 +125,6 @@ class FUStateUsagesLogger : UsagesCollectorConsumer {
     fun logStateEvent(group: EventLogGroup, event: String, data: FeatureUsageData) {
       logState(group, event, data.build())
       logState(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED)
-    }
-
-    /**
-     *
-     *
-     * Low-level API to record IDE/project state.
-     * Using it directly is error-prone because you'll need to think about metric baseline.
-     * **Don't** use it unless absolutely necessary.
-     *
-     * <br></br>
-     *
-     *
-     * Consider using counter events [CounterUsagesCollector] or
-     * state events recorded by a scheduler [ApplicationUsagesCollector] or [ProjectUsagesCollector]
-     *
-     */
-    fun logStateEventsAsync(group: EventLogGroup, events: Collection<MetricEvent>): CompletableFuture<Void> {
-      val futures: MutableList<CompletableFuture<Void>> = ArrayList()
-      val logger = getEventLogProvider(group.recorder).logger
-      for (event in events) {
-        futures.add(logger.logAsync(group, event.eventId, event.data.build(), true))
-      }
-      futures.add(logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, true))
-      return CompletableFuture.allOf(*futures.toTypedArray<CompletableFuture<*>>())
-    }
-
-    @JvmStatic
-    fun logStateEvents(group: EventLogGroup, events: Collection<MetricEvent>) {
-      logStateEventsAsync(group, events)
     }
   }
 
