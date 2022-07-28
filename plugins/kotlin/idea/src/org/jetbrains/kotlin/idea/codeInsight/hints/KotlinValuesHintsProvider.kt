@@ -63,7 +63,18 @@ class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsP
         get() = KotlinBundle.message("inlay.kotlin.values.hints")
 }
 
-internal fun KtBinaryExpression.isRangeExpression(): Boolean =
-    with(operationReference.getReferencedNameAsName().asString()) {
-        return this == ".." || this == "..<" || this == "downTo" || this == "until"
+internal fun KtBinaryExpression.isRangeExpression(): Boolean = getRangeBinaryExpressionType() != null
+
+fun KtBinaryExpression.getRangeBinaryExpressionType() =
+    when (operationReference.getReferencedNameAsName().asString()) {
+        ".." -> RangeBinaryKtExpressionType.rangeTo
+        "..<" -> RangeBinaryKtExpressionType.rangeUntil
+        "downTo" -> RangeBinaryKtExpressionType.downTo
+        "until" -> RangeBinaryKtExpressionType.until
+        else -> null
     }
+
+@Suppress("EnumEntryName")
+enum class RangeBinaryKtExpressionType {
+    rangeTo, rangeUntil, downTo, until
+}
