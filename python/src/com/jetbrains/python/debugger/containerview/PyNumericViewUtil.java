@@ -23,7 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PyNumericViewUtil {
-  private static final Pattern PY_COMPLEX_NUMBER = Pattern.compile("([+-]?[.\\d]*(?:[eE][+-]?\\d*)?j?)?([+-]?[.\\d]*(?:[eE][+-]?\\d*)?j)?");
+  private static final Pattern PY_COMPLEX_NUMBER = Pattern.compile("([+-]?[.\\d^j]*)([+-]?[e.\\d]*j)?");
 
   /**
    * @return double presentation from [0:1] range
