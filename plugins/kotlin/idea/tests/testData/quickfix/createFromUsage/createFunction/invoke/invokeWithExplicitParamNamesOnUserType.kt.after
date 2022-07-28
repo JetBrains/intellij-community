@@ -1,7 +1,7 @@
 // "Create member function 'A.invoke'" "true"
 
 class A<T>(val n: T) {
-    operator fun invoke(abc: T, ghi: A<T>, def: String): A<T> {
+    operator fun invoke(abc: T, ghi: A<Any?>, def: String): A<T> {
         TODO("Not yet implemented")
     }
 }

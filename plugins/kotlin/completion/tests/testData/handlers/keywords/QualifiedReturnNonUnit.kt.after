@@ -1,9 +1,8 @@
-// FIR_IDENTICAL
 // FIR_COMPARISON
 
 fun foo() {
     takeHandler1 {
-        takeHandler2({ return@takeHandler2 <caret> })
+        takeHandler2({ return@takeHandler2<caret> })
     }
 }
 
