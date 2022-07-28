@@ -21,7 +21,7 @@ object ExternalPluginBundler {
                  additionalParams = emptyList())
       .run("Downloading $pluginName plugin...", "setup${buildTaskName}Plugin")
     val properties = Properties()
-    Files.newInputStream(dependenciesProjectDir.resolve("dependencies.properties")).use {
+    Files.newInputStream(dependenciesProjectDir.resolve("gradle.properties")).use {
       properties.load(it)
     }
 
