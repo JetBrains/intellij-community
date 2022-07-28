@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
@@ -23,6 +24,17 @@ import java.awt.event.MouseEvent;
  */
 public class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory {
   private static final String ID = "PowerSaveMode";
+
+  public PowerSaveStatusWidgetFactory() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(PowerSaveMode.TOPIC, () -> {
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+        if (statusBar != null) {
+          statusBar.updateWidget(getId());
+        }
+      }
+    });
+  }
 
   @Override
   public @NotNull String getId() {
@@ -42,10 +54,6 @@ public class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory {
 
   @Override
   public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-    if (statusBar != null) {
-      ApplicationManager.getApplication().getMessageBus().connect().subscribe(PowerSaveMode.TOPIC, () -> statusBar.updateWidget(getId()));
-    }
     return new PowerWidget();
   }
 
