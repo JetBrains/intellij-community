@@ -26,8 +26,7 @@ import org.jetbrains.kotlin.idea.base.util.findLibrary
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.facet.KotlinFacetType
-import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
+import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -58,7 +57,19 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         assertEquals(LanguageFeature.State.ENABLED, inlineClassesSupport)
     }
 
-    fun testIncreaseLangLevel() {
+    fun testModuleLanguageVersion() {
+        configureRuntime("mockRuntime11")
+        resetProjectSettings(LanguageVersion.KOTLIN_1_0)
+        myFixture.configureByText("foo.kt", "val x get() = 1")
+        // create facet to trigger "Set module language version" instead of "Set project language version"
+        configureKotlinFacet(module)
+
+        assertEquals(LanguageVersion.KOTLIN_1_0, module.languageVersionSettings.languageVersion)
+        myFixture.launchAction(myFixture.findSingleIntention("Set module language version to 1.1"))
+        assertEquals(LanguageVersion.KOTLIN_1_1, module.languageVersionSettings.languageVersion)
+    }
+
+    fun testProjectLanguageVersion() {
         configureRuntime("mockRuntime11")
         resetProjectSettings(LanguageVersion.KOTLIN_1_0)
         myFixture.configureByText("foo.kt", "val x get() = 1")

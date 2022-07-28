@@ -50,13 +50,14 @@ sealed class EnableUnsupportedFeatureFix(
      * Tests:
      * [org.jetbrains.kotlin.idea.maven.MavenUpdateConfigurationQuickFixTest12]
      * [org.jetbrains.kotlin.idea.codeInsight.gradle.GradleUpdateConfigurationQuickFixTest]
+     * [org.jetbrains.kotlin.idea.quickfix.UpdateConfigurationQuickFixTest.testModuleLanguageVersion]
      */
     class InModule(element: PsiElement, feature: LanguageFeature, apiVersionOnly: Boolean) :
         EnableUnsupportedFeatureFix(element, feature, apiVersionOnly, isModule = true) {
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {
             val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return
 
-            val facetSettings = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(module)
+            val facetSettings = KotlinFacetSettingsProvider.getInstance(project)?.getSettings(module)
             val targetApiLevel = facetSettings?.apiLevel?.let { apiLevel ->
                 if (ApiVersion.createByLanguageVersion(apiLevel) < feature.sinceApiVersion)
                     feature.sinceApiVersion.versionString
@@ -87,6 +88,10 @@ sealed class EnableUnsupportedFeatureFix(
         }
     }
 
+    /**
+     * Tests:
+     * [org.jetbrains.kotlin.idea.quickfix.UpdateConfigurationQuickFixTest.testProjectLanguageVersion]
+     */
     class InProject(element: PsiElement, feature: LanguageFeature, apiVersionOnly: Boolean) :
         EnableUnsupportedFeatureFix(element, feature, apiVersionOnly, isModule = false) {
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {
