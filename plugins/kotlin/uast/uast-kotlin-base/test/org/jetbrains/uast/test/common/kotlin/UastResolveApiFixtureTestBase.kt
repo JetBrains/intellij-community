@@ -564,6 +564,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         myFixture.configureByText(
             "main.kt", """
             fun foo(map: MutableMap<String, String>) {
+              map.getOrDefault("a", null)
               map.getOrDefault("a", "b")
               map.remove("a", "b")
             }
@@ -571,8 +572,23 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         )
         val uFile = myFixture.file.toUElement()!!
 
-        val getOrDefault = uFile.findElementByTextFromPsi<UCallExpression>("getOrDefault", strict = false)
+        // https://issuetracker.google.com/234358370 (null key)
+        // https://issuetracker.google.com/221280939 (null default value)
+        val getOrDefaultExt = uFile.findElementByTextFromPsi<UCallExpression>("getOrDefault(\"a\", null)", strict = false)
             .orFail("cant convert to UCallExpression")
+        TestCase.assertEquals(2, getOrDefaultExt.valueArgumentCount)
+        TestCase.assertEquals("a", getOrDefaultExt.valueArguments[0].evaluate())
+        TestCase.assertEquals(null, getOrDefaultExt.valueArguments[1].evaluate())
+        val getOrDefaultExtResolved = getOrDefaultExt.resolve()
+            .orFail("cant resolve from $getOrDefaultExt")
+        TestCase.assertEquals("getOrDefault", getOrDefaultExtResolved.name)
+        TestCase.assertEquals("Map", getOrDefaultExtResolved.containingClass?.name)
+
+        val getOrDefault = uFile.findElementByTextFromPsi<UCallExpression>("getOrDefault(\"a\", \"b\")", strict = false)
+            .orFail("cant convert to UCallExpression")
+        TestCase.assertEquals(2, getOrDefault.valueArgumentCount)
+        TestCase.assertEquals("a", getOrDefault.valueArguments[0].evaluate())
+        TestCase.assertEquals("b", getOrDefault.valueArguments[1].evaluate())
         val getOrDefaultResolved = getOrDefault.resolve()
             .orFail("cant resolve from $getOrDefault")
         TestCase.assertEquals("getOrDefault", getOrDefaultResolved.name)
