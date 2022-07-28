@@ -1,4 +1,4 @@
-// "Replace URL with HTML link" "true"
+// "Replace URL with HTML link" "true-preview"
 
 /**
  * @see <caret>https://www.nowhere.net

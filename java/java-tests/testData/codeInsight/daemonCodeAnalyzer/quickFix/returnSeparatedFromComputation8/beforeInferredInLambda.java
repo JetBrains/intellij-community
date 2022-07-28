@@ -1,4 +1,4 @@
-// "Move 'return' closer to computation of the value of 'r'" "true"
+// "Move 'return' closer to computation of the value of 'r'" "true-preview"
 import java.util.stream.Stream;
 
 class T {

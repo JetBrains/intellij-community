@@ -1,4 +1,4 @@
-// "Qualify the call with 'A.B.this'" "true"
+// "Qualify the call with 'A.B.this'" "true-preview"
 class A {
   static class B {
     class C {

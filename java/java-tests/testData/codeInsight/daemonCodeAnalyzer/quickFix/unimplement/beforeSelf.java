@@ -1,4 +1,4 @@
-// "Unimplement Class" "true"
+// "Unimplement Class" "true-preview"
 class A implements A<caret> {
   public String toString() {
     return super.toString();

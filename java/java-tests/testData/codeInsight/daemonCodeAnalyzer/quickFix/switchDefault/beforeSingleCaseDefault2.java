@@ -1,4 +1,4 @@
-// "Unwrap 'switch'" "true"
+// "Unwrap 'switch'" "true-preview"
 class Test {
   void foo(Object obj) {
     int answer = sw<caret>itch (obj) {

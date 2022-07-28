@@ -1,15 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,6 +26,7 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -47,6 +47,18 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     if (myFixType == -1) return;
 
     getVariablesToFix().add(variable);
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiElement context = PsiTreeUtil.findSameElementInCopy(myContext, target);
+    VariableAccessFromInnerClassFix fix = new VariableAccessFromInnerClassFix(
+      PsiTreeUtil.findSameElementInCopy(myVariable, target), context);
+    Collection<PsiVariable> targetVars = fix.getVariablesToFix();
+    for (PsiVariable sourceVar : getVariablesToFix()) {
+      targetVars.add(PsiTreeUtil.findSameElementInCopy(sourceVar, target));
+    }
+    return fix;
   }
 
   @Override
@@ -90,28 +102,25 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(myContext, myVariable)) return;
-    WriteAction.run(() -> {
-      try {
-        switch (myFixType) {
-          case MAKE_FINAL:
-            makeFinal();
-            break;
-          case MAKE_ARRAY:
-            makeArray();
-            break;
-          case COPY_TO_FINAL:
-            copyToFinal(myVariable, myContext);
-            break;
-        }
+    try {
+      switch (myFixType) {
+        case MAKE_FINAL:
+          makeFinal();
+          break;
+        case MAKE_ARRAY:
+          makeArray();
+          break;
+        case COPY_TO_FINAL:
+          copyToFinal(myVariable, myContext);
+          break;
       }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-      finally {
-        getVariablesToFix().clear();
-      }
-    });
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    finally {
+      getVariablesToFix().clear();
+    }
   }
 
   private void makeArray() {
@@ -163,20 +172,20 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
     PsiDeclarationStatement variableDeclarationStatement;
     PsiExpression initializer = variable.getInitializer();
+    PsiExpression init;
     if (initializer == null) {
-      String expression = "[1]";
+      StringBuilder expression = new StringBuilder("[1]");
       while (type instanceof PsiArrayType) {
-        expression += "[1]";
+        expression.append("[1]");
         type = ((PsiArrayType) type).getComponentType();
       }
-      PsiExpression init = factory.createExpressionFromText("new " + type.getCanonicalText() + expression, variable);
-      variableDeclarationStatement = factory.createVariableDeclarationStatement(variable.getName(), newType, init);
+      init = factory.createExpressionFromText("new " + type.getCanonicalText() + expression, variable);
     }
     else {
       String explicitArrayDeclaration = JavaGenericsUtil.isReifiableType(type) ? "" : "new " + TypeConversionUtil.erasure(type).getCanonicalText() + "[]";
-      PsiExpression init = factory.createExpressionFromText(explicitArrayDeclaration + "{ " + initializer.getText() + " }", variable);
-      variableDeclarationStatement = factory.createVariableDeclarationStatement(variable.getName(), newType, init);
+      init = factory.createExpressionFromText(explicitArrayDeclaration + "{ " + initializer.getText() + " }", variable);
     }
+    variableDeclarationStatement = factory.createVariableDeclarationStatement(variable.getName(), newType, init);
     PsiVariable newVariable = (PsiVariable)variableDeclarationStatement.getDeclaredElements()[0];
     PsiUtil.setModifierProperty(newVariable, PsiModifier.FINAL, true);
     PsiElement newExpression = factory.createExpressionFromText(variable.getName() + "[0]", variable);
@@ -347,7 +356,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   @Override
   public boolean startInWriteAction() {
-    return false;
+    return true;
   }
 
   public static void fixAccess(@NotNull PsiVariable variable, @NotNull PsiElement context) {

@@ -35,24 +35,6 @@ public class MethodReturnTest extends LightQuickFixParameterizedTestCase {
   }
 
   public static class PreviewTest extends LightJavaCodeInsightFixtureTestCase {
-    public void testSameFile() {
-      myFixture.configureByText("Test.java", "class Test {\n" +
-                                             "void test() {\n" +
-                                             "  int x = <caret>anotherMethod();\n" +
-                                             "}\n" +
-                                             "void anotherMethod() {}\n" +
-                                             "}");
-      IntentionAction action = myFixture.findSingleIntention("Make 'anotherMethod' return 'int'");
-      assertNotNull(action);
-      String text = IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor());
-      assertEquals(text, "class Test {\n" +
-                         "void test() {\n" +
-                         "  int x = anotherMethod();\n" +
-                         "}\n" +
-                         "int anotherMethod() {}\n" +
-                         "}");
-    }
-
     public void testAnotherFile() {
       myFixture.addClass("class Another {static void test(int x) {}}");
       myFixture.configureByText("Test.java", "class Test {\n" +

@@ -1,4 +1,4 @@
-// "Change '"' to "\"" (to String literal)" "true"
+// "Change '"' to "\"" (to String literal)" "true-preview"
 class Quotes {
     void m1(String s) {}
 

@@ -1,4 +1,4 @@
-// "Replace with qualifier" "true"
+// "Replace with qualifier" "true-preview"
 import java.util.function.Consumer;
 
 class Test {

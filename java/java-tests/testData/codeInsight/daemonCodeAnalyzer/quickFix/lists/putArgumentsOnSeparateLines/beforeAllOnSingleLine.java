@@ -1,4 +1,4 @@
-// "Put arguments on separate lines" "true"
+// "Put arguments on separate lines" "true-preview"
 
 class A {
   void foo(int a1, int a2, int a3) {

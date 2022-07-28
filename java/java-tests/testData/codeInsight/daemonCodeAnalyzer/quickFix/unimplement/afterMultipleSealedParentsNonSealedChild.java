@@ -1,4 +1,4 @@
-// "Unimplement Class" "true"
+// "Unimplement Class" "true-preview"
 public sealed interface A permits B {}
 
 class C {}
