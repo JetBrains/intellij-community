@@ -1591,6 +1591,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/addStarProjections/checkType/array.kt");
             }
 
+            @TestMetadata("arrayInWhen.kt")
+            public void testArrayInWhen() throws Exception {
+                runTest("testData/quickfix/addStarProjections/checkType/arrayInWhen.kt");
+            }
+
             @TestMetadata("changeToStarProjectionMultipleParameters.kt")
             public void testChangeToStarProjectionMultipleParameters() throws Exception {
                 runTest("testData/quickfix/addStarProjections/checkType/changeToStarProjectionMultipleParameters.kt");

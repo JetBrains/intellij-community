@@ -95,7 +95,9 @@ class ChangeToStarProjectionFix(element: KtTypeElement) : KotlinQuickFixAction<K
         }
 
         private fun Diagnostic.isArrayInstanceCheck(): Boolean =
-            factory == Errors.CANNOT_CHECK_FOR_ERASED && Errors.CANNOT_CHECK_FOR_ERASED.cast(this).a.isArrayOrNullableArray()
+            factory == Errors.CANNOT_CHECK_FOR_ERASED
+                    && Errors.CANNOT_CHECK_FOR_ERASED.cast(this).a.isArrayOrNullableArray()
+                    && psiElement.parent is KtIsExpression
 
         private fun PsiElement.isOnJvm(): Boolean = safeAs<KtElement>()?.platform.isJvm()
 
