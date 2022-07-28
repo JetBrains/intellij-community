@@ -422,7 +422,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return Collections.unmodifiableSet(blackList);
   }
 
-  public static @NotNull Collection<String> getBlackList() {
+  static @NotNull Collection<String> getBlackList() {
     Set<String> blackList = ourBlackList;
     if (blackList == null) {
       synchronized (BLACK_LIST_LOCK) {
