@@ -987,11 +987,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/addGenericUpperBound/inferenceTwoParams.kt");
         }
 
-        @TestMetadata("kClassRuntime.kt")
-        public void testKClassRuntime() throws Exception {
-            runTest("testData/quickfix/addGenericUpperBound/kClassRuntime.kt");
-        }
-
         @TestMetadata("paramAsBound.kt")
         public void testParamAsBound() throws Exception {
             runTest("testData/quickfix/addGenericUpperBound/paramAsBound.kt");
