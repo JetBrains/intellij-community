@@ -1,22 +1,36 @@
 val range = 0<# ≤ #>..<# ≤ #>10
 val rangeUntil = 0<# ≤ #>..<<# < #>10
 
+class Foo : Comparable<Foo> {
+    override fun compareTo(other: Foo): Int = TODO("Not yet implemented")
+}
+
 fun foo() {
     for (index in 0.rangeTo(100)) {}
     for (index in 'a'.rangeTo('z')) {}
     for (index in 0L.rangeTo(100L)) {}
+    for (index in Foo().rangeTo(Foo())) {}
+    for (index in 0.0.rangeTo(100.0)) {}
+    for (index in 0f.rangeTo(100f)) {}
 
     for (index in 0<# ≤ #> .. <# ≤ #>100) {}
     for (index in 'a'<# ≤ #> .. <# ≤ #>'z') {}
     for (index in 0L<# ≤ #> .. <# ≤ #>100L) {}
+    for (index in Foo()<# ≤ #> .. <# ≤ #>Foo()) {}
+    for (index in 0.0<# ≤ #> .. <# ≤ #>100.0) {}
+    for (index in 0f<# ≤ #> .. <# ≤ #>100f) {}
 
     for (index in 0<# ≤ #> ..< <# < #>100) {}
     for (index in 'a'<# ≤ #> ..< <# < #>'z') {}
-    for (index in 0L<# ≤ #> ..< <# < #>100L) {}
+    for (index in 0.0<# ≤ #> ..< <# < #>100.0) {}
+    for (index in 0f<# ≤ #> ..< <# < #>100f) {}
 
     for (index in 0.rangeUntil(100)) {}
     for (index in 'a'.rangeUntil('z')) {}
     for (index in 0L.rangeUntil(100L)) {}
+    for (index in Foo().rangeUntil(Foo())) {}
+    for (index in 0.0.rangeUntil(100.0)) {}
+    for (index in 0f.rangeUntil(100f)) {}
 
     for (index in 0<# ≤ #> until <# < #>100) {}
     for (index in 'a'<# ≤ #> until <# < #>'z') {}

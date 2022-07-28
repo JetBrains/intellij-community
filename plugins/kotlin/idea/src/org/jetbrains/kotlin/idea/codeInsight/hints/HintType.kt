@@ -231,5 +231,6 @@ private val rangeToTypes = setOf(
     "kotlin.Int.rangeTo",
     "kotlin.Long.rangeTo",
     "kotlin.UInt.rangeTo",
-    "kotlin.ULong.rangeTo"
+    "kotlin.ULong.rangeTo",
+    "kotlin.ranges.rangeTo",
 )
