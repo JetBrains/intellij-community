@@ -4,6 +4,7 @@ package com.intellij.codeInspection.javaDoc;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -296,6 +297,19 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
           LookupManager.getInstance(project).showLookup(editor, items.toArray(LookupElement.EMPTY_ARRAY));
         }
       });
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      String firstUnbound = myUnboundParams.stream().findFirst().orElse(null);
+      if (firstUnbound == null) return IntentionPreviewInfo.EMPTY;
+      PsiElement reference = previewDescriptor.getPsiElement();
+      PsiElement firstUnboundReference = PsiElementFactory.getInstance(project)
+        .createDocTagFromText("@param " + firstUnbound)
+        .getValueElement();
+      if (firstUnboundReference == null) return IntentionPreviewInfo.EMPTY;
+      reference.replace(firstUnboundReference);
+      return IntentionPreviewInfo.DIFF;
     }
   }
 
