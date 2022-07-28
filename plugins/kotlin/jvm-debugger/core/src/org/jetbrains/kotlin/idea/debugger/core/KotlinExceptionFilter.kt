@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger
+package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.execution.filters.*
 import com.intellij.execution.filters.impl.HyperlinkInfoFactoryImpl
@@ -12,9 +12,6 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinSourceMapCache
 import org.jetbrains.kotlin.idea.debugger.base.util.isInlineFrameLineNumber
-import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils
-import org.jetbrains.kotlin.idea.debugger.core.SourceLineKind
-import org.jetbrains.kotlin.idea.debugger.core.mapStacktraceLineToSource
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import java.lang.Math.max

@@ -1,13 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger
+package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.SourcePosition
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -21,8 +23,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.caching.ConcurrentFactoryCache
+import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getLambdasAtLineIfAny
-import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -32,9 +34,6 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.ArrayList
-import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
-import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 
 class ClassNameProvider(
     private val project: Project,
@@ -145,6 +144,12 @@ class ClassNameProvider(
         }
 
         return result
+    }
+
+    private fun PsiNamedElement.isInterfaceClass(): Boolean = when (this) {
+        is KtClass -> isInterface()
+        is PsiClass -> isInterface
+        else -> false
     }
 
     private fun findInlinedCalls(declaration: KtDeclaration, alreadyVisited: Set<PsiElement>): List<String> {

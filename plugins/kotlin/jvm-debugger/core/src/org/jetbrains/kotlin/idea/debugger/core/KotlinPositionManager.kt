@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger
+package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.MultiRequestPositionManager
 import com.intellij.debugger.NoDataException
@@ -35,6 +35,10 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
@@ -46,17 +50,20 @@ import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.psi.getStartLineOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
+import org.jetbrains.kotlin.idea.debugger.KotlinReentrantSourcePosition
+import org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionWithEntireLineHighlighted
 import org.jetbrains.kotlin.idea.debugger.base.util.*
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.SourcePositionRefiner
 import org.jetbrains.kotlin.idea.debugger.core.*
+import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getResolvedFunctionCall
+import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getValueArgumentForExpression
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.SourcePositionRefiner
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getElementsAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
-import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.isSamLambda
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
@@ -612,4 +619,16 @@ private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: In
     }
 
     return targetClasses
+}
+
+private fun KtFunction.isSamLambda(): Boolean {
+    if (this !is KtFunctionLiteral && this !is KtNamedFunction) return false
+    return analyze(this) {
+        val parentCall = KtPsiUtil.getParentCallIfPresent(this@isSamLambda) as? KtCallExpression ?: return false
+        val call = getResolvedFunctionCall(parentCall) ?: return false
+        val valueArgument = parentCall.getValueArgumentForExpression(this@isSamLambda) ?: return false
+        val argument = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
+
+        return argument.returnType is KtUsualClassType
+    }
 }

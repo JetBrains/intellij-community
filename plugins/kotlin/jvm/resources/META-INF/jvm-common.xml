@@ -59,24 +59,24 @@
         <applicationService serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState"/>
 
         <applicationService serviceInterface="org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade"
-                          serviceImplementation="org.jetbrains.kotlin.idea.debugger.KotlinJvmDebuggerFacadeImpl"/>
+                          serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.KotlinJvmDebuggerFacadeImpl"/>
 
         <applicationService serviceInterface="org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerLegacyFacade"
                           serviceImplementation="org.jetbrains.kotlin.idea.debugger.fe10.core.Fe10KotlinDebuggerLegacyFacade"/>
 
         <debugger.asyncStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
-        <debugger.compoundRendererProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinClassRendererProvider"/>
+        <debugger.compoundRendererProvider implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinClassRendererProvider"/>
         <debugger.jvmSmartStepIntoHandler implementation="org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler"/>
-        <debugger.positionManagerFactory implementation="org.jetbrains.kotlin.idea.debugger.KotlinPositionManagerFactory"/>
+        <debugger.positionManagerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManagerFactory"/>
         <debugger.codeFragmentFactory implementation="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentFactory"/>
         <debuggerEditorTextProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.debugger.core.EnclosingKotlinEditorTextProvider"/>
         <debuggerClassFilterProvider implementation="org.jetbrains.kotlin.idea.debugger.filter.KotlinDebuggerInternalClassesFilterProvider"/>
         <debugger.sourcePositionProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionProvider"/>
-        <debugger.sourcePositionHighlighter implementation="org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionHighlighter"/>
+        <debugger.sourcePositionHighlighter implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionHighlighter"/>
         <debugger.frameExtraVarsProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinFrameExtraVariablesProvider"/>
         <debugger.extraSteppingFilter implementation="org.jetbrains.kotlin.idea.debugger.filter.KotlinExtraSteppingFilter"/>
         <xdebugger.settings implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerSettings"/>
-        <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFieldBreakpointType"/>
+        <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType"/>
         <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType" order="first"/>
         <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFunctionBreakpointType"/>
         <debugger.syntheticProvider implementation="org.jetbrains.kotlin.idea.debugger.filter.KotlinSyntheticTypeComponentProvider"/>
@@ -88,7 +88,7 @@
         <debugger.dfaAssistProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.debugger.dfaassist.KotlinDfaAssistProvider"/>
 
         <projectService
-                serviceInterface="org.jetbrains.kotlin.idea.debugger.StackFrameInterceptor"
+                serviceInterface="org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor"
                 serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineStackFrameInterceptor"/>
 
         <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
@@ -116,13 +116,13 @@
 
         <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilableFileTypesProvider" />
 
-        <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinAlternativeSourceNotificationProvider"/>
+        <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinAlternativeSourceNotificationProvider"/>
 
         <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.inspections.JavaOutsideModuleDetector"/>
 
         <consoleFilterProvider implementation="org.jetbrains.kotlin.idea.run.KotlinConsoleFilterProvider"/>
 
-        <exceptionFilter implementation="org.jetbrains.kotlin.idea.debugger.KotlinExceptionFilterFactory" order="first"/>
+        <exceptionFilter implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinExceptionFilterFactory" order="first"/>
 
         <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.configuration.KotlinExternalSystemSyncListener"/>
 
@@ -204,7 +204,7 @@
         <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10NativeIdePlatformKindTooling"/>
         <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10CommonIdePlatformKindTooling"/>
 
-        <diagnosticSuppressor implementation="org.jetbrains.kotlin.idea.debugger.DiagnosticSuppressorForDebugger"/>
+        <diagnosticSuppressor implementation="org.jetbrains.kotlin.idea.debugger.core.DiagnosticSuppressorForDebugger"/>
         <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
 
         <declarationAttributeAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.IdeAllOpenDeclarationAttributeAltererExtension"/>

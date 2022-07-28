@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger
+package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
@@ -20,11 +20,10 @@ import com.intellij.openapi.project.Project
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.safeFields
 import org.jetbrains.kotlin.idea.debugger.base.util.safeType
-import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
-import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSourcesAsync
+import org.jetbrains.kotlin.idea.debugger.base.util.isLateinitVariableGetter
+import org.jetbrains.kotlin.idea.debugger.base.util.isSimpleGetter
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
-import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 
 class KotlinClassRenderer : ClassRenderer() {
     init {
