@@ -42,6 +42,8 @@ class CloseTab(c: JComponent,
                  parentDisposable)
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
   override fun update(e: AnActionEvent) {
     val pinned = isPinned()
 
