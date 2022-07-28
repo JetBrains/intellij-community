@@ -33,7 +33,6 @@ com.jetbrains.php.lang.inspections.phpdoc.PhpMissingDocCommentInspection
 com.jetbrains.python.inspections.PyCompatibilityInspection
 com.jetbrains.python.inspections.PyPackageRequirementsInspection
 com.jetbrains.python.inspections.PyRedundantParenthesesInspection
-com.jetbrains.python.inspections.PyUnusedLocalInspection
 com.jetbrains.rest.inspections.RestRoleInspection
 com.sixrr.inspectjs.bitwise.PointlessBitwiseExpressionJSInspection
 com.sixrr.inspectjs.confusing.EmptyStatementBodyJSInspection
@@ -112,11 +111,8 @@ com.siyeh.ig.encapsulation.UseOfAnotherObjectsPrivateFieldInspection
 com.siyeh.ig.errorhandling.BadExceptionCaughtInspection
 com.siyeh.ig.errorhandling.BadExceptionDeclaredInspection
 com.siyeh.ig.errorhandling.BadExceptionThrownInspection
-com.siyeh.ig.errorhandling.EmptyCatchBlockInspection
 com.siyeh.ig.errorhandling.ExceptionFromCatchWhichDoesntWrapInspection
 com.siyeh.ig.errorhandling.ThrowCaughtLocallyInspection
-com.siyeh.ig.errorhandling.UnusedCatchParameterInspection
-com.siyeh.ig.finalization.FinalizeCallsSuperFinalizeInspection
 com.siyeh.ig.finalization.FinalizeInspection
 com.siyeh.ig.inheritance.InterfaceNeverImplementedInspection
 com.siyeh.ig.inheritance.MissingOverrideAnnotationInspection
@@ -161,8 +157,6 @@ com.siyeh.ig.naming.PackageNamingConventionInspection
 com.siyeh.ig.naming.ParameterNameDiffersFromOverriddenParameterInspection
 com.siyeh.ig.naming.ParameterNamingConventionInspection
 com.siyeh.ig.naming.QuestionableNameInspection
-com.siyeh.ig.naming.StaticMethodNamingConventionInspection
-com.siyeh.ig.naming.StaticVariableNamingConventionInspection
 com.siyeh.ig.numeric.CastThatLosesPrecisionInspection
 com.siyeh.ig.numeric.ImplicitNumericConversionInspection
 com.siyeh.ig.numeric.IntegerMultiplicationImplicitCastToLongInspection
@@ -174,7 +168,6 @@ com.siyeh.ig.packaging.PackageWithTooManyClassesInspection
 com.siyeh.ig.performance.CallToSimpleGetterInClassInspection
 com.siyeh.ig.performance.CallToSimpleSetterInClassInspection
 com.siyeh.ig.performance.MethodMayBeStaticInspection
-com.siyeh.ig.performance.SizeReplaceableByIsEmptyInspection
 com.siyeh.ig.performance.StringConcatenationInLoopsInspection
 com.siyeh.ig.performance.StringReplaceableByStringBufferInspection
 com.siyeh.ig.portability.HardcodedFileSeparatorsInspection
@@ -185,20 +178,17 @@ com.siyeh.ig.resources.JDBCResourceInspection
 com.siyeh.ig.resources.JNDIResourceInspection
 com.siyeh.ig.resources.SocketResourceInspection
 com.siyeh.ig.serialization.NonSerializableFieldInSerializableClassInspection
-com.siyeh.ig.serialization.SerializableHasSerialVersionUIDFieldInspection
 com.siyeh.ig.serialization.SerializableHasSerializationMethodsInspection
 com.siyeh.ig.serialization.SerializableInnerClassHasSerialVersionUIDFieldInspection
 com.siyeh.ig.serialization.SerializableInnerClassWithNonSerializableOuterClassInspection
 com.siyeh.ig.style.ChainedMethodCallInspection
 com.siyeh.ig.style.ImplicitCallToSuperInspection
 com.siyeh.ig.style.MissortedModifiersInspection
-com.siyeh.ig.style.MultipleDeclarationInspection
 com.siyeh.ig.style.NestedMethodCallInspection
 com.siyeh.ig.style.RedundantImplementsInspection
 com.siyeh.ig.style.UnnecessarilyQualifiedInnerClassAccessInspection
 com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection
 com.siyeh.ig.style.UnnecessaryBlockStatementInspection
-com.siyeh.ig.style.UnnecessaryFinalOnParameterInspection
 com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection
 com.siyeh.ig.style.UnnecessaryParenthesesInspection
 com.siyeh.ig.style.UnqualifiedInnerClassAccessInspection
