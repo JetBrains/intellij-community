@@ -21,17 +21,18 @@ com.intellij.codeInspection.visibility.VisibilityInspection
 com.intellij.lang.javascript.inspections.JSMismatchedCollectionQueryUpdateInspection
 com.intellij.lang.javascript.inspections.JSPotentiallyInvalidConstructorUsageInspection
 com.intellij.lang.javascript.inspections.JSSuspiciousNameCombinationInspection
+com.intellij.lang.javascript.inspections.UnterminatedStatementJSInspection
 com.intellij.psi.css.inspections.CssUnknownPropertyInspection
 com.intellij.spellchecker.inspections.SpellCheckingInspection
 com.intellij.spring.model.highlighting.config.SpringFacetInspection
-com.jetbrains.php.lang.inspections.controlFlow.PhpUnusedLocalVariableInspection
-com.jetbrains.php.lang.inspections.phpdoc.PhpMissingDocCommentInspection
 com.jetbrains.php.lang.inspections.PhpUndefinedClassInspection
 com.jetbrains.php.lang.inspections.PhpUndefinedVariableInspection
 com.jetbrains.php.lang.inspections.PhpUnusedParameterInspection
+com.jetbrains.php.lang.inspections.controlFlow.PhpUnusedLocalVariableInspection
+com.jetbrains.php.lang.inspections.phpdoc.PhpMissingDocCommentInspection
 com.jetbrains.python.inspections.PyCompatibilityInspection
-com.jetbrains.python.inspections.PyRedundantParenthesesInspection
 com.jetbrains.python.inspections.PyPackageRequirementsInspection
+com.jetbrains.python.inspections.PyRedundantParenthesesInspection
 com.jetbrains.python.inspections.PyUnusedLocalInspection
 com.jetbrains.rest.inspections.RestRoleInspection
 com.sixrr.inspectjs.bitwise.PointlessBitwiseExpressionJSInspection
@@ -50,7 +51,6 @@ com.sixrr.inspectjs.functionmetrics.StatementsPerFunctionJSInspection
 com.sixrr.inspectjs.naming.FunctionNamingConventionJSInspection
 com.sixrr.inspectjs.naming.LocalVariableNamingConventionJSInspection
 com.sixrr.inspectjs.naming.ParameterNamingConventionJSInspection
-com.intellij.lang.javascript.inspections.UnterminatedStatementJSInspection
 com.siyeh.ig.abstraction.DeclareCollectionAsInterfaceInspection
 com.siyeh.ig.abstraction.FeatureEnvyInspection
 com.siyeh.ig.abstraction.InstanceofChainInspection
@@ -70,7 +70,6 @@ com.siyeh.ig.bugs.ReturnNullInspection
 com.siyeh.ig.classlayout.EmptyClassInspection
 com.siyeh.ig.classlayout.InnerClassOnInterfaceInspection
 com.siyeh.ig.classlayout.ListenerMayUseAdapterInspection
-com.siyeh.ig.inheritance.MissingOverrideAnnotationInspection
 com.siyeh.ig.classlayout.UtilityClassInspection
 com.siyeh.ig.classlayout.UtilityClassWithoutPrivateConstructorInspection
 com.siyeh.ig.classmetrics.AnonymousClassComplexityInspection
@@ -95,9 +94,9 @@ com.siyeh.ig.controlflow.NegatedIfElseInspection
 com.siyeh.ig.controlflow.OverlyComplexBooleanExpressionInspection
 com.siyeh.ig.controlflow.PointlessBooleanExpressionInspection
 com.siyeh.ig.controlflow.SwitchStatementDensityInspection
-com.siyeh.ig.controlflow.SwitchStatementsWithoutDefaultInspection
 com.siyeh.ig.controlflow.SwitchStatementWithTooFewBranchesInspection
 com.siyeh.ig.controlflow.SwitchStatementWithTooManyBranchesInspection
+com.siyeh.ig.controlflow.SwitchStatementsWithoutDefaultInspection
 com.siyeh.ig.dataflow.LawOfDemeterInspection
 com.siyeh.ig.dataflow.TooBroadScopeInspection
 com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection
@@ -120,6 +119,7 @@ com.siyeh.ig.errorhandling.UnusedCatchParameterInspection
 com.siyeh.ig.finalization.FinalizeCallsSuperFinalizeInspection
 com.siyeh.ig.finalization.FinalizeInspection
 com.siyeh.ig.inheritance.InterfaceNeverImplementedInspection
+com.siyeh.ig.inheritance.MissingOverrideAnnotationInspection
 com.siyeh.ig.inheritance.NonProtectedConstructorInAbstractClassInspection
 com.siyeh.ig.inheritance.RefusedBequestInspection
 com.siyeh.ig.initialization.InstanceVariableInitializationInspection
@@ -185,8 +185,8 @@ com.siyeh.ig.resources.JDBCResourceInspection
 com.siyeh.ig.resources.JNDIResourceInspection
 com.siyeh.ig.resources.SocketResourceInspection
 com.siyeh.ig.serialization.NonSerializableFieldInSerializableClassInspection
-com.siyeh.ig.serialization.SerializableHasSerializationMethodsInspection
 com.siyeh.ig.serialization.SerializableHasSerialVersionUIDFieldInspection
+com.siyeh.ig.serialization.SerializableHasSerializationMethodsInspection
 com.siyeh.ig.serialization.SerializableInnerClassHasSerialVersionUIDFieldInspection
 com.siyeh.ig.serialization.SerializableInnerClassWithNonSerializableOuterClassInspection
 com.siyeh.ig.style.ChainedMethodCallInspection
@@ -218,8 +218,8 @@ org.intellij.lang.xpath.validation.inspections.ImplicitTypeConversion
 org.intellij.lang.xpath.validation.inspections.RedundantTypeConversion
 org.intellij.plugins.intelliLang.inject.java.validation.LanguageMismatch
 org.intellij.plugins.intelliLang.pattern.PatternValidator
-org.jetbrains.java.generate.inspection.ClassHasNoToStringMethodInspection
 org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection
+org.jetbrains.java.generate.inspection.ClassHasNoToStringMethodInspection
 org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignmentCanBeOperatorAssignmentInspection
 org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyOverlyComplexArithmeticExpressionInspection
 org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyOverlyComplexBooleanExpressionInspection
