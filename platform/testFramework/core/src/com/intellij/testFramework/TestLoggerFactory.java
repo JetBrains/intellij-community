@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AssumptionViolatedException;
@@ -264,6 +265,7 @@ public final class TestLoggerFactory implements Logger.Factory {
       factory.myTestStartedMillis = 0;
       factory.dumpLogBuffer(success, testName);
     }
+    LogToStdoutJulHandler.flushAllInstances();
   }
 
   public static void logTestFailure(@NotNull Throwable t) {
@@ -484,9 +486,18 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   private static class LogToStdoutJulHandler extends StreamHandler {
+    private static final @NotNull WeakList<LogToStdoutJulHandler> ourInstances = new WeakList<>();
+
     LogToStdoutJulHandler() {
       super(System.out, new WithTimeSinceTestStartedJulFormatter());
       setLevel(Level.ALL);
+      ourInstances.add(this);
+    }
+
+    static void flushAllInstances() {
+      for (LogToStdoutJulHandler instance : ourInstances) {
+        instance.flush();
+      }
     }
   }
 
