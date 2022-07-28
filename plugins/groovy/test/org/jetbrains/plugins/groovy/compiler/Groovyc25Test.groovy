@@ -62,7 +62,7 @@ class Groovyc25Test extends GroovycTestBase {
   @Override
   void "test extend groovy classes with additional dependencies"() {
     ModuleRootModificationUtil.updateModel(module) { model ->
-      MavenDependencyUtil.addFromMaven(model, "org.codehaus.groovy:groovy-test:2.5.11", false)
+      MavenDependencyUtil.addFromMaven(model, "org.codehaus.groovy:groovy-test:2.5.17", false)
     }
     super.'test extend groovy classes with additional dependencies'()
   }
