@@ -36,7 +36,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
 
   static final PersistentFS ourPersistence = PersistentFS.getInstance();
-  private static final boolean UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
 
   @ApiStatus.Internal
   public static void markAllFilesAsUnindexed() {
@@ -115,7 +114,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @NotNull
-  public VfsData getVfsData() {
+  VfsData getVfsData() {
     VfsData data = getSegment().vfsData;
     if (!((PersistentFSImpl)ourPersistence).isOwnData(data)) {
       throw new AssertionError("Alien file!");
@@ -123,7 +122,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return data;
   }
 
-  VfsData.@NotNull Segment getSegment() {
+  @NotNull
+  VfsData.Segment getSegment() {
     VfsData.Segment segment = mySegment;
     if (segment.replacement != null) {
       segment = updateSegmentAndParent(segment);
