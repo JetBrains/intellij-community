@@ -29,6 +29,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,17 +111,13 @@ public class EncapsulateVariableFix extends RefactoringInspectionGadgetsFix impl
 
     @Override
     protected UsageInfo @NotNull [] findUsages() {
+      PsiField field = myFieldDescriptor.getField();
       ArrayList<EncapsulateFieldUsageInfo> array = new ArrayList<>();
-      for (PsiReference reference : findReferences(myFieldDescriptor.getField())) {
+      for (PsiReference reference : VariableAccessUtils.getVariableReferences(field, field.getContainingFile())) {
         checkReference(reference, myFieldDescriptor, array);
       }
       UsageInfo[] usageInfos = array.toArray(UsageInfo.EMPTY_ARRAY);
       return UsageViewUtil.removeDuplicatedUsages(usageInfos);
-    }
-
-    @NotNull
-    private static Iterable<PsiReference> findReferences(PsiField field) {
-      return SyntaxTraverser.psiTraverser(field.getContainingFile()).filter(PsiReference.class).filter(ref -> ref.isReferenceTo(field));
     }
   }
 
