@@ -216,7 +216,7 @@ public final class URLUtil {
 
   public static @NotNull String decode(@NotNull String string) {
     try {
-      return URLDecoder.decode(string.replaceAll("\\+", "%2b"), StandardCharsets.UTF_8.name());
+      return URLDecoder.decode(string, StandardCharsets.UTF_8.name());
     }
     catch (UnsupportedEncodingException ignore) {
       //noinspection deprecation
