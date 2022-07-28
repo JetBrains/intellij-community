@@ -21,7 +21,7 @@ class IdeaJUnit5ExampleTest {
   fun openGradleJitPack() {
 
     val testContext = context
-      .initializeTestRunner(testInfo.hyphenateWithClass(), TestCases.IC.GradleJitPackSimple)
+      .initializeTestContext(testInfo.hyphenateWithClass(), TestCases.IC.GradleJitPackSimple)
       .prepareProjectCleanImport()
       .skipIndicesInitialization()
       .setSharedIndexesDownload(enable = true)
@@ -44,7 +44,7 @@ class IdeaJUnit5ExampleTest {
   fun openMavenProject() {
 
     val testContext = context
-      .initializeTestRunner(testInfo.hyphenateWithClass(), TestCases.IC.MavenSimpleApp)
+      .initializeTestContext(testInfo.hyphenateWithClass(), TestCases.IC.MavenSimpleApp)
       .prepareProjectCleanImport()
       .skipIndicesInitialization()
       .setSharedIndexesDownload(enable = true)

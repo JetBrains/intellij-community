@@ -19,10 +19,11 @@ fun initStarterRule(): JUnit4StarterRule = JUnit4StarterRule(useLatestDownloaded
 
 class JUnit4StarterRule(
   override var useLatestDownloadedIdeBuild: Boolean,
-  override var allContexts: MutableList<IDETestContext> = mutableListOf(),
   override val setupHooks: MutableList<IDETestContext.() -> IDETestContext> = mutableListOf(),
   override val ciServer: CIServer = di.direct.instance()
 ) : ExternalResource(), TestContainer<JUnit4StarterRule> {
+
+  override lateinit var testContext: IDETestContext
 
   private lateinit var testDescription: Description
 
@@ -43,9 +44,7 @@ class JUnit4StarterRule(
   }
 
   override fun close() {
-    for (context in allContexts) {
-      catchAll { context.paths.close() }
-    }
+    catchAll { testContext.paths.close() }
   }
 
   override fun after() {
