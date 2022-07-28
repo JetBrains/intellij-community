@@ -250,6 +250,11 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
 
     @Override
+    public boolean isDumbAware() {
+      return true;
+    }
+
+    @Override
     public final void update(@NotNull AnActionEvent event) {
       ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
       boolean available = proxy != null && available(proxy);
