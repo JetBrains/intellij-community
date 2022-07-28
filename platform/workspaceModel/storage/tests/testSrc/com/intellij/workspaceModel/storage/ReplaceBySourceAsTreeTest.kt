@@ -48,10 +48,6 @@ class ReplaceBySourceAsTreeTest {
   private lateinit var builder: MutableEntityStorageImpl
   private lateinit var replacement: MutableEntityStorageImpl
 
-  @JvmField
-  @Rule
-  val expectedException = ExpectedException.none()
-
   @Before
   fun setUp() {
     builder = createEmptyBuilder()

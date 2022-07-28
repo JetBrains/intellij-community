@@ -326,13 +326,13 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
   private fun replaceWorkspaceData(thisEntityData: WorkspaceEntityData<out WorkspaceEntity>,
                                    replaceWithEntityData: WorkspaceEntityData<out WorkspaceEntity>) {
-    operations[thisEntityData.createEntityId()] = Operation.Relabel(replaceWithEntityData.createEntityId())
+    thisEntityData.createEntityId() operation Operation.Relabel(replaceWithEntityData.createEntityId())
     thisEntityData.createEntityId().addState(ReplaceState.Relabel)
     replaceWithEntityData.createEntityId().addState(ReplaceWithState.Relabel)
   }
 
   private fun removeWorkspaceData(thisEntityData: WorkspaceEntityData<out WorkspaceEntity>) {
-    operations[thisEntityData.createEntityId()] = Operation.Remove
+    thisEntityData.createEntityId() operation Operation.Remove
     thisEntityData.createEntityId().addState(ReplaceState.Remove)
   }
 
@@ -362,7 +362,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     val replaceWithEntity = replaceWithStorage.resolve(persistentId)
     if (replaceWithEntity == null) {
       if (entityFilter(thisRootEntity.entitySource)) {
-        operations[thisRootEntityId] = Operation.Remove
+        thisRootEntityId operation Operation.Remove
         thisRootEntityId.addState(ReplaceState.Remove)
         return false
       }
@@ -376,19 +376,19 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     replaceWithEntity as WorkspaceEntityBase
     when {
       entityFilter(thisRootEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
-        operations[thisRootEntity.id] = Operation.Relabel(replaceWithEntity.id)
+        thisRootEntity.id operation Operation.Relabel(replaceWithEntity.id)
         thisRootEntity.id.addState(ReplaceState.Relabel)
         replaceWithEntity.id.addState(ReplaceWithState.Relabel)
         return true
       }
       entityFilter(thisRootEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
-        operations[thisRootEntity.id] = Operation.Remove
+        thisRootEntity.id operation Operation.Remove
         thisRootEntity.id.addState(ReplaceState.Remove)
         replaceWithEntity.id.addState(ReplaceWithState.Processed)
         return false
       }
       !entityFilter(thisRootEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
-        operations[thisRootEntity.id] = Operation.Relabel(replaceWithEntity.id)
+        thisRootEntity.id operation Operation.Relabel(replaceWithEntity.id)
         thisRootEntity.id.addState(ReplaceState.Relabel)
         replaceWithEntity.id.addState(ReplaceWithState.Relabel)
         return true
@@ -447,7 +447,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         error("This branch should be already processed because we process 'this' entities first")
       }
       entityFilter(replaceWithRootEntity.entitySource) && !entityFilter(thisEntity.entitySource) -> {
-        operations[(thisEntity as WorkspaceEntityBase).id] = Operation.Relabel((replaceWithRootEntity as WorkspaceEntityBase).id)
+        (thisEntity as WorkspaceEntityBase).id operation Operation.Relabel((replaceWithRootEntity as WorkspaceEntityBase).id)
         (replaceWithRootEntity as WorkspaceEntityBase).id.addState(ReplaceWithState.Relabel)
         return true
       }
@@ -473,6 +473,12 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     val currentState = replaceWithState[this]
     require(currentState == null)
     replaceWithState[this] = state
+  }
+
+  private infix fun EntityId.operation(state: Operation) {
+    val currentState = operations[this]
+    require(currentState == null)
+    operations[this] = state
   }
 
   private fun EntityId.updateStateLinkProcessed(clazz: Class<out WorkspaceEntity>) {
