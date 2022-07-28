@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -28,7 +29,7 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
   }
 
   private static IntPredicate setOf(int... numbers) {
-    return  count -> IntOpenHashSet.of(numbers).contains(count);
+    return  count -> ArrayUtil.indexOf(numbers, count) >= 0;
   }
 
   private static final Map<Character, IntPredicate> ALLOWED_DATE_TIME_FORMATTER = Map.ofEntries(
