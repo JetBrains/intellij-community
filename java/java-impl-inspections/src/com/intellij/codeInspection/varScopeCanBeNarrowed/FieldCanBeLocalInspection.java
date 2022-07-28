@@ -435,7 +435,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       if (!groupByCodeBlocks(ReferencesSearch.search(variable, new LocalSearchScope(scope)).findAll(), refs)) return newDeclarations;
       PsiElement declaration;
       for (Collection<PsiReference> psiReferences : refs.values()) {
-        declaration = copyVariableToMethodBody(variable, psiReferences);
+        declaration = WriteAction.compute(() -> copyVariableToMethodBody(variable, psiReferences));
         if (declaration != null) newDeclarations.add(declaration);
       }
       return WriteAction.compute(() -> {

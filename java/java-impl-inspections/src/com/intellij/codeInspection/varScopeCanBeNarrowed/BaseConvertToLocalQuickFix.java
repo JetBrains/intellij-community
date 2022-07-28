@@ -123,24 +123,22 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     }
     final PsiElementFactory psiFactory = JavaPsiFacade.getElementFactory(variable.getProject());
     final PsiDeclarationStatement declaration = psiFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer);
-    return WriteAction.compute(() -> {
-      if (references.stream()
-        .map(PsiReference::getElement)
-        .anyMatch(element -> element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element))
-      ) PsiUtil.setModifierProperty((PsiLocalVariable)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
-      final PsiElement newDeclaration;
-      if (anchorAssignmentExpression != null && isVariableAssignment(anchorAssignmentExpression, variable)) {
-        newDeclaration = new CommentTracker().replaceAndRestoreComments(anchor, declaration);
-      } else if (anchorBlock.getParent() instanceof PsiSwitchStatement) {
-        PsiElement parent = anchorBlock.getParent();
-        PsiElement switchContainer = parent.getParent();
-        newDeclaration = switchContainer.addBefore(declaration, parent);
-      } else {
-        newDeclaration =  anchorBlock.addBefore(declaration, anchor);
-      }
-      retargetReferences(psiFactory, localName, references);
-      return newDeclaration;
-    });
+    if (references.stream()
+      .map(PsiReference::getElement)
+      .anyMatch(element -> element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element))
+    ) PsiUtil.setModifierProperty((PsiLocalVariable)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
+    final PsiElement newDeclaration;
+    if (anchorAssignmentExpression != null && isVariableAssignment(anchorAssignmentExpression, variable)) {
+      newDeclaration = new CommentTracker().replaceAndRestoreComments(anchor, declaration);
+    } else if (anchorBlock.getParent() instanceof PsiSwitchStatement) {
+      PsiElement parent = anchorBlock.getParent();
+      PsiElement switchContainer = parent.getParent();
+      newDeclaration = switchContainer.addBefore(declaration, parent);
+    } else {
+      newDeclaration =  anchorBlock.addBefore(declaration, anchor);
+    }
+    retargetReferences(psiFactory, localName, references);
+    return newDeclaration;
   }
 
   @Nullable

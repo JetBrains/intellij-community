@@ -2,8 +2,10 @@
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -160,7 +162,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
       }
       final ParameterInfoImpl[] newParams = info.toArray(new ParameterInfoImpl[0]);
       final String visibilityModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());
-      PsiElement moved = copyVariableToMethodBody(variable, references);
+      PsiElement moved = WriteAction.compute(() -> copyVariableToMethodBody(variable, references));
       if (moved == null) return Collections.emptyList();
       SmartPsiElementPointer<PsiElement> newDeclaration = SmartPointerManager.createPointer(moved);
       var processor = JavaRefactoringFactory.getInstance(project).createChangeSignatureProcessor(
@@ -169,6 +171,16 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
       );
       processor.run();
       return Collections.singletonList(Objects.requireNonNull(newDeclaration.getElement()));
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      PsiParameter parameter = getVariable(previewDescriptor);
+      if (parameter == null) return IntentionPreviewInfo.EMPTY;
+      final Collection<PsiReference> references = ReferencesSearch.search(parameter).findAll();
+      copyVariableToMethodBody(parameter, references);
+      parameter.delete();
+      return IntentionPreviewInfo.DIFF;
     }
   }
 }
