@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
@@ -382,7 +381,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     ComponentRef(@Nullable Component component) {
       ref = component == null ? null : new WeakReference<>(component);
       modalityState = component == null ? ModalityState.NON_MODAL : ModalityState.stateForComponent(component);
-      modalContext = component == null ? null : IdeKeyEventDispatcher.isModalContext(component);
+      modalContext = component == null ? null : Utils.isModalContext(component);
     }
   }
 }
