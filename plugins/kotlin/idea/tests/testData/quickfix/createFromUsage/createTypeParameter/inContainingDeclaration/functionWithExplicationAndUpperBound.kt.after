@@ -6,6 +6,6 @@ fun <X : List<Int>> foo(x: A<X>) {
 }
 
 fun test() {
-    foo<List<Int>>(A())
+    foo(A())
     foo(A<List<Int>>())
 }

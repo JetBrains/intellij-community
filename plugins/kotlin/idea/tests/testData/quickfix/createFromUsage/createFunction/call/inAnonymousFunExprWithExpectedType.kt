@@ -1,4 +1,5 @@
 // "Create function 'bar'" "true"
+// DISABLE-ERRORS
 
 class A<T>(val t: T)
 
