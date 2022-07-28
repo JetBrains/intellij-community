@@ -15,7 +15,6 @@ import com.intellij.ide.gdpr.showDataSharingAgreement
 import com.intellij.ide.gdpr.showEndUserAndDataSharingAgreements
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.idea.SocketLock.ActivationStatus
@@ -118,9 +117,7 @@ fun start(mainClass: String,
 
   // runBlocking must be used - coroutine's thread is a daemon and doesn't stop application to exit,
   // see ApplicationImpl.preventAwtAutoShutdown
-  runBlocking(CoroutineExceptionHandler { _, error ->
-    StartupAbortedException.processException(error)
-  }) {
+  runBlocking(StartupAbortedExceptionHandler) {
     launch {
       val activity = StartUpMeasurer.startActivity("ForkJoin CommonPool configuration")
       IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(isHeadless)
