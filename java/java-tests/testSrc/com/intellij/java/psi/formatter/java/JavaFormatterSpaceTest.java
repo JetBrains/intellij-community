@@ -915,4 +915,16 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "    }\n" +
       "}");
   }
+
+  public void testDeconstructionPatternSpacingWithin() {
+    getJavaSettings().SPACE_WITHIN_DECONSTRUCTION_LIST = true;
+    doMethodTest(
+      "switch (a) {\n" +
+      " case R(int x,String y) -> {}\n" +
+      "}",
+      "switch (a) {\n" +
+      "    case R( int x, String y ) -> {\n" +
+      "    }\n" +
+      "}");
+  }
 }

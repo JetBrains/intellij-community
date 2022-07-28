@@ -80,6 +80,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 JavaBundle.message("checkbox.spaces.around.annotation.eq"), getInstance().SPACES_OTHER);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_WITHIN_RECORD_HEADER",
                                 JavaBundle.message("checkbox.spaces.record.header"), getInstance().SPACES_WITHIN);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_WITHIN_DECONSTRUCTION_LIST",
+                                JavaBundle.message("checkbox.spaces.within.deconstruction.list"), getInstance().SPACES_WITHIN);
 
       String groupName = getInstance().SPACES_IN_TYPE_ARGUMENTS;
       consumer.moveStandardOption("SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS", groupName);
