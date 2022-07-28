@@ -185,7 +185,7 @@ class EntityStorageSerializerImpl(
 
   // TODO Dedup with OCSerializer
   private inline fun <reified T : Any> registerFieldSerializer(kryo: Kryo, type: Class<T> = T::class.java, crossinline create: () -> T) =
-    registerSerializer(kryo, type, FieldSerializer(kryo, type), ObjectInstantiator { create() })
+    registerSerializer(kryo, type, FieldSerializer(kryo, type)) { create() }
 
   @JvmSynthetic
   private inline fun registerSingletonSerializer(kryo: Kryo, crossinline getter: () -> Any) {

@@ -9,19 +9,20 @@ import java.util.concurrent.atomic.AtomicReference
  */
 class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T> {
   private val computedValue = AtomicReference(notYetInitialized())
-  companion object {
-    val NOT_YET_INITIALIZED = ObjectUtils.sentinel("Not yet initialized")
-  }
 
   @Suppress("UNCHECKED_CAST")
   private fun notYetInitialized(): T = NOT_YET_INITIALIZED as T
+
   private fun nullize(t: T): T? = if (isInitialized(t)) t else null
+
   private fun isInitialized(t: T?): Boolean = t !== NOT_YET_INITIALIZED
 
+  companion object {
+    private val NOT_YET_INITIALIZED = ObjectUtils.sentinel("Not yet initialized")
+  }
+
   val valueIfInitialized: T?
-    get() {
-      return nullize(computedValue.get())
-    }
+    get() = nullize(computedValue.get())
 
   override var value: T
     get() {
@@ -46,11 +47,7 @@ class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T> {
 
   override fun toString() = computedValue.toString()
 
-  fun drop(): T? {
-    return nullize(computedValue.getAndSet(notYetInitialized()))
-  }
+  fun drop(): T? = nullize(computedValue.getAndSet(notYetInitialized()))
 
-  fun compareAndDrop(expectedValue: T): Boolean {
-    return computedValue.compareAndSet(expectedValue, notYetInitialized())
-  }
+  fun compareAndDrop(expectedValue: T): Boolean = computedValue.compareAndSet(expectedValue, notYetInitialized())
 }
