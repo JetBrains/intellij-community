@@ -1110,6 +1110,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
         JBValue radius =
           cornerType == PopupCornerType.RoundedTooltip ? JBUI.CurrentTheme.Tooltip.CORNER_RADIUS : IdeaPopupMenuUI.CORNER_RADIUS;
         myContent.getRootPane().putClientProperty("apple.awt.windowCornerRadius", Float.valueOf(radius.getFloat()));
+        myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
       }
     }
 
