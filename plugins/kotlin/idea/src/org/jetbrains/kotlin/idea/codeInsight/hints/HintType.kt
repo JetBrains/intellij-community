@@ -6,12 +6,15 @@ import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.Option
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.parameterInfo.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
+import org.jetbrains.kotlin.lexer.KtKeywordToken
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -171,14 +174,17 @@ enum class HintType(
             val binaryExpression = e.safeAs<KtBinaryExpression>() ?: return emptyList()
             val leftExp = binaryExpression.left ?: return emptyList()
             val rightExp = binaryExpression.right ?: return emptyList()
-
-            val resolvedCall = binaryExpression.operationReference.resolveToCall()
-            val operation = resolvedCall?.candidateDescriptor?.fqNameSafe?.asString() ?: return emptyList()
+            val operationReference: KtOperationReferenceExpression = binaryExpression.operationReference
+            val operation = operationReference.resolveToCall()?.candidateDescriptor?.fqNameSafe?.asString() ?: return emptyList()
             val (leftText, rightText) = when (operation) {
                 "kotlin.ranges.downTo" -> {
+                    if (operationReference.hasIllegalLiteralPrefixOrSuffix()) return emptyList()
+
                     KotlinBundle.message("hints.ranges.downTo.left") to KotlinBundle.message("hints.ranges.downTo.right")
                 }
                 "kotlin.ranges.until" -> {
+                    if (operationReference.hasIllegalLiteralPrefixOrSuffix()) return emptyList()
+
                     KotlinBundle.message("hints.ranges.until.left") to KotlinBundle.message("hints.ranges.until.right")
                 }
                 in rangeToTypes -> {
@@ -203,6 +209,19 @@ enum class HintType(
 
         fun resolve(e: PsiElement): List<HintType> =
             values.filter { it.isApplicable(e) }
+
+        private fun KtOperationReferenceExpression.hasIllegalLiteralPrefixOrSuffix(): Boolean {
+            val prevLeaf = PsiTreeUtil.prevLeaf(this)
+            val nextLeaf = PsiTreeUtil.nextLeaf(this)
+            return prevLeaf?.illegalLiteralPrefixOrSuffix() == true || nextLeaf?.illegalLiteralPrefixOrSuffix() == true
+        }
+        private fun PsiElement.illegalLiteralPrefixOrSuffix(): Boolean {
+            val elementType = this.node.elementType
+            return (elementType === KtTokens.IDENTIFIER) ||
+                    (elementType === KtTokens.INTEGER_LITERAL) ||
+                    (elementType === KtTokens.FLOAT_LITERAL) ||
+                    elementType is KtKeywordToken
+        }
 
     }
 

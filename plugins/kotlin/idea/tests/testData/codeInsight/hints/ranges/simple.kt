@@ -1,6 +1,8 @@
 val range = 0<# ≤ #>..<# ≤ #>10
 val rangeUntil = 0<# ≤ #>..<<# < #>10
 
+val errorRange = 4downTo 0
+
 class Foo : Comparable<Foo> {
     override fun compareTo(other: Foo): Int = TODO("Not yet implemented")
 }
