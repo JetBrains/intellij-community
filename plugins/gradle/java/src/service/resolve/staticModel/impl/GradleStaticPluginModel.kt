@@ -10,6 +10,7 @@ import org.jetbrains.plugins.gradle.codeInspection.GradlePluginDslStructureInspe
 import org.jetbrains.plugins.gradle.service.resolve.getLinkedGradleProjectPath
 import org.jetbrains.plugins.gradle.service.resolve.staticModel.api.GradleStaticPluginDescriptor
 import org.jetbrains.plugins.gradle.service.resolve.staticModel.api.GradleStaticPluginEntry
+import org.jetbrains.plugins.gradle.service.resolve.staticModel.api.GradleStaticPluginEntry.*
 import org.jetbrains.plugins.gradle.service.resolve.staticModel.impl.plugins.*
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -27,7 +28,8 @@ internal fun getStaticPluginModel(file: PsiFile): GradleStaticPluginModel {
     val pluginsStatements = getPluginsBlock(file)
     if (pluginsStatements.isEmpty()) {
       CachedValueProvider.Result(EMPTY, PsiModificationTracker.MODIFICATION_COUNT)
-    } else {
+    }
+    else {
       CachedValueProvider.Result(computeStaticPluginModel(pluginsStatements), PsiModificationTracker.MODIFICATION_COUNT)
     }
   }
@@ -47,17 +49,31 @@ internal data class GradleStaticPluginModel(
 
 private val EMPTY = GradleStaticPluginModel(emptyList(), emptyList(), emptyList())
 
-private val allDescriptors: List<GradleStaticPluginDescriptor> = GradleStaticPluginEntry.values().map { when(it) {
-  GradleStaticPluginEntry.LIFECYCLE_BASE -> LifecycleBasePluginDescriptor()
-  GradleStaticPluginEntry.BASE -> LifecycleBasePluginDescriptor()
-  GradleStaticPluginEntry.JVM_ECOSYSTEM -> JvmEcosystemPluginDescriptor()
-  GradleStaticPluginEntry.JVM_TOOLCHAINS -> JvmToolchainsPluginDescriptor()
-  GradleStaticPluginEntry.REPORTING_BASE -> ReportingBasePluginDescriptor()
-  GradleStaticPluginEntry.JAVA_BASE -> JavaBasePluginDescriptor()
-  GradleStaticPluginEntry.JAVA -> JavaPluginDescriptor()
-} }
+private val allDescriptors: List<GradleStaticPluginDescriptor> = values().map {
+  when (it) {
+    LIFECYCLE_BASE -> LifecycleBasePluginDescriptor()
+    BASE -> LifecycleBasePluginDescriptor()
+    JVM_ECOSYSTEM -> JvmEcosystemPluginDescriptor()
+    JVM_TOOLCHAINS -> JvmToolchainsPluginDescriptor()
+    REPORTING_BASE -> ReportingBasePluginDescriptor()
+    JAVA_BASE -> JavaBasePluginDescriptor()
+    JAVA -> JavaPluginDescriptor()
+    JAVA_LIBRARY -> JavaLibraryPluginDescriptor()
+    VERSION_CATALOG -> VersionCatalogPluginDescriptor()
+    WAR -> WarPluginDescriptor()
+    GROOVY_BASE -> GroovyBasePluginDescriptor()
+    GROOVY -> GroovyPluginDescriptor()
+    DISTRIBUTION -> DistributionPluginDescriptor()
+    APPLICATION -> ApplicationPluginDescriptor()
+    SCALA_BASE -> ScalaBasePluginDescriptor()
+    SCALA -> ScalaPluginDescriptor()
+    PUBLISHING -> PublishingPluginDescriptor()
+    MAVEN_PUBLISH -> MavenPublishPluginDescriptor()
+    IDEA -> IdeaPluginDescriptor()
+  }
+}
 
-private fun computeStaticPluginModel(statements: Array<GrStatement>) : GradleStaticPluginModel {
+private fun computeStaticPluginModel(statements: Array<GrStatement>): GradleStaticPluginModel {
   val context = statements[0]
   val gradleVersion = GradleSettings.getInstance(context.project).getLinkedProjectSettings(context.getLinkedGradleProjectPath() ?: return EMPTY)?.resolveGradleVersion() ?: return EMPTY
   val extensions = allDescriptors.associateBy { it.pluginEntry.pluginName }
@@ -74,7 +90,7 @@ private fun computeStaticPluginModel(statements: Array<GrStatement>) : GradleSta
 }
 
 private fun sortPlugins(usedPluginDescriptorsList: List<GradleStaticPluginDescriptor>,
-                        map: Map<GradleStaticPluginEntry, GradleStaticPluginDescriptor>) : List<GradleStaticPluginDescriptor> {
+                        map: Map<GradleStaticPluginEntry, GradleStaticPluginDescriptor>): List<GradleStaticPluginDescriptor> {
   val sorted = mutableListOf<GradleStaticPluginDescriptor>()
   val processed = mutableSetOf<GradleStaticPluginEntry>()
   for (descriptor in usedPluginDescriptorsList) {
@@ -86,7 +102,10 @@ private fun sortPlugins(usedPluginDescriptorsList: List<GradleStaticPluginDescri
   return sorted
 }
 
-private fun doSortPlugins(root: GradleStaticPluginDescriptor, map: Map<GradleStaticPluginEntry, GradleStaticPluginDescriptor>, collector: MutableList<GradleStaticPluginDescriptor>, visited: MutableSet<GradleStaticPluginEntry>) {
+private fun doSortPlugins(root: GradleStaticPluginDescriptor,
+                          map: Map<GradleStaticPluginEntry, GradleStaticPluginDescriptor>,
+                          collector: MutableList<GradleStaticPluginDescriptor>,
+                          visited: MutableSet<GradleStaticPluginEntry>) {
   visited.add(root.pluginEntry)
   for (subClass in root.dependencies) {
     val nestedClass = map[subClass] ?: continue
@@ -98,8 +117,10 @@ private fun doSortPlugins(root: GradleStaticPluginDescriptor, map: Map<GradleSta
   collector.add(root)
 }
 
-private fun getPluginsBlock(file: GroovyFileBase) : Array<GrStatement> {
-  return file.statements.firstOrNull { it is GrMethodCall && it.invokedExpression.text == "plugins" }?.castSafelyTo<GrMethodCall>()?.let { GradlePluginDslStructureInspection.getStatements(it) } ?: emptyArray()
+private fun getPluginsBlock(file: GroovyFileBase): Array<GrStatement> {
+  return file.statements.firstOrNull { it is GrMethodCall && it.invokedExpression.text == "plugins" }?.castSafelyTo<GrMethodCall>()?.let {
+    GradlePluginDslStructureInspection.getStatements(it)
+  } ?: emptyArray()
 }
 
 private fun extractPluginName(statement: GrStatement): String? {
