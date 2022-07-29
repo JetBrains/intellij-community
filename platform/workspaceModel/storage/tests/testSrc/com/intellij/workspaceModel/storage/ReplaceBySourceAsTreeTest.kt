@@ -465,7 +465,7 @@ class ReplaceBySourceAsTreeTest {
 
     replacement = createBuilderFrom(builder)
     replacement.modifyEntity(linked) {
-      this.links = emptyList()
+      this.links = mutableListOf()
     }
 
     replacement.assertConsistency()

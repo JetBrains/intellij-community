@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.workspaceModel.storage.*
 import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 /**
@@ -55,21 +54,10 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       for ((id, operation) in operations) {
         when (operation) {
           is Operation.Relabel -> {
-            // TODO: Terrible modification using reflection, but it's simpler to use it now
-            val targetEntityData = targetStorage.entityDataByIdOrDie(id)
-            val targetEntity = targetEntityData.createEntity(targetStorage)
+            val targetEntity = targetStorage.entityDataByIdOrDie(id).createEntity(targetStorage)
             val replaceWithEntity = replaceWithStorage.entityDataByIdOrDie(operation.replaceWithEntityId).createEntity(replaceWithStorage)
-            val fieldsToUpdate = targetEntityData::class.memberProperties.map { it.name }
             targetStorage.modifyEntity(ModifiableWorkspaceEntity::class.java, targetEntity) {
-              val myInterface = this::class.java.interfaces.single()
-              val myInterfaceSnapshot = targetEntity::class.java.interfaces.single()
-              myInterface.kotlin.memberProperties.filter { it.name in fieldsToUpdate }
-                .filterIsInstance<KMutableProperty1<WorkspaceEntity, Any>>()
-                .forEach {
-                  val newValue = myInterfaceSnapshot.kotlin.memberProperties
-                    .filterIsInstance<KProperty1<WorkspaceEntity, Any>>().single { sn -> sn.name == it.name }.get(replaceWithEntity)
-                  it.set(this, newValue)
-                }
+              (this as ModifiableWorkspaceEntityBase<*>).relabel(replaceWithEntity)
             }
           }
           Operation.Remove -> {
