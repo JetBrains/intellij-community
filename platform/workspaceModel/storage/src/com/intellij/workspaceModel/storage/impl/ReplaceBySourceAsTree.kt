@@ -2,8 +2,6 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.workspaceModel.storage.*
-import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.full.memberProperties
 
 /**
  * # Replace By Source as a tree
@@ -72,31 +70,18 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     }
 
     private fun addSubtree(parent: EntityId?, replaceWithDataSource: EntityId) {
-      val entityData = replaceWithStorage.entityDataByIdOrDie(replaceWithDataSource).clone()
-
-      val targetNewCreatedEntityData = targetStorage.entitiesByType.cloneAndAdd(entityData, entityData.createEntityId().clazz)
-      // TODO: 27.07.2022 UPDATE INDEXESSSS!!!
-      targetStorage.indexes.entitySourceIndex.index(targetNewCreatedEntityData.createEntityId(), targetNewCreatedEntityData.entitySource)
-      targetStorage.indexes.persistentIdIndex.index(targetNewCreatedEntityData.createEntityId(), targetNewCreatedEntityData.persistentId())
-      // TODO: 27.07.2022 CreatE eEVENT!!
-
+      val targetParents = mutableListOf<WorkspaceEntity>()
       if (parent != null) {
-        connectChildToParent(parent, targetNewCreatedEntityData.createEntity(targetStorage))
+        targetParents += targetStorage.entityDataByIdOrDie(parent).createEntity(targetStorage)
       }
+
+      val entityData = replaceWithStorage.entityDataByIdOrDie(replaceWithDataSource).createDetachedEntity(targetParents)
+      targetStorage.addEntity(entityData)
 
       replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithDataSource.asParent()).values.flatten().forEach {
         val replaceWithChildEntityData = replaceWithStorage.entityDataByIdOrDie(it.id)
         if (!entityFilter(replaceWithChildEntityData.entitySource)) return@forEach
-        addSubtree(targetNewCreatedEntityData.createEntityId(), it.id)
-      }
-    }
-
-    private fun connectChildToParent(parentEntityId: EntityId, childEntity: WorkspaceEntity) {
-      val targetParent = targetStorage.entityDataByIdOrDie(parentEntityId).createEntity(targetStorage)
-      targetStorage.modifyEntity(ModifiableWorkspaceEntity::class.java, childEntity) {
-        @Suppress("UNCHECKED_CAST")
-        val property = this::class.memberProperties.single { it.name == "parentEntity" } as KMutableProperty1<WorkspaceEntity, Any>
-        property.set(this, targetParent)
+        addSubtree((entityData as WorkspaceEntityBase).id, it.id)
       }
     }
   }
