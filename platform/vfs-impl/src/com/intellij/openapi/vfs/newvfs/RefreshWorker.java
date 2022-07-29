@@ -475,7 +475,7 @@ final class RefreshWorker {
       }
     }
     events.add(new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children));
-    VFileEvent event = VfsImplUtil.generateCaseSensitivityChangedEventForUnknownCase(parent, childName);
+    VFileEvent event = VirtualDirectoryImpl.generateCaseSensitivityChangedEventForUnknownCase(parent, childName);
     if (event != null) {
       events.add(event);
     }
