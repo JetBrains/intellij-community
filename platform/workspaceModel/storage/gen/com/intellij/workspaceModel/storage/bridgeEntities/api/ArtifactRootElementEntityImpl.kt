@@ -275,8 +275,11 @@ class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEnt
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ArtifactRootElementEntity(entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ArtifactRootElementEntity(entitySource) {
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+      this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

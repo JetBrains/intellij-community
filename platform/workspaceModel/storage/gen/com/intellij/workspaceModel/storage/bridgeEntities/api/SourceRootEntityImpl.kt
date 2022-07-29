@@ -388,8 +388,10 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return SourceRootEntity(url, rootType, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return SourceRootEntity(url, rootType, entitySource) {
+      this.contentRoot = parents.filterIsInstance<ContentRootEntity>().single()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

@@ -198,8 +198,10 @@ class ArtifactExternalSystemIdEntityData : WorkspaceEntityData<ArtifactExternalS
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ArtifactExternalSystemIdEntity(externalSystemId, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ArtifactExternalSystemIdEntity(externalSystemId, entitySource) {
+      this.artifactEntity = parents.filterIsInstance<ArtifactEntity>().single()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

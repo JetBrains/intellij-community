@@ -182,8 +182,10 @@ class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return SoftLinkReferencedChild(entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return SoftLinkReferencedChild(entitySource) {
+      this.parentEntity = parents.filterIsInstance<EntityWithSoftLinks>().single()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

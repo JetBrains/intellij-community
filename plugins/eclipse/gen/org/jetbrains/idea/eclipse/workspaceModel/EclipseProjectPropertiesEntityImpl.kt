@@ -346,9 +346,11 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return EclipseProjectPropertiesEntity(variablePaths, eclipseUrls, unknownCons, knownCons, forceConfigureJdk, expectedModuleSourcePlace,
-                                          srcPlace, entitySource)
+                                          srcPlace, entitySource) {
+      this.module = parents.filterIsInstance<ModuleEntity>().single()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

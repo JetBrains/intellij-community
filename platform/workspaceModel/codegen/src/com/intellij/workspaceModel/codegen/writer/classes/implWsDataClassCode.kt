@@ -8,11 +8,13 @@ import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.deft.meta.impl.KtInterfaceType
 import com.intellij.workspaceModel.codegen.fields.implWsDataFieldCode
 import com.intellij.workspaceModel.codegen.fields.implWsDataFieldInitializedCode
+import com.intellij.workspaceModel.codegen.fields.javaType
 import com.intellij.workspaceModel.codegen.utils.fqn
 import com.intellij.workspaceModel.codegen.utils.fqn7
 import com.intellij.workspaceModel.codegen.utils.lines
 import com.intellij.workspaceModel.codegen.writer.allFields
 import com.intellij.workspaceModel.codegen.writer.hasSetter
+import com.intellij.workspaceModel.codegen.writer.type
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
@@ -139,21 +141,24 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         //InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, DeserializationVisitor(this@sectionNl))
       }
 
-      sectionNl("override fun createDetachedEntity(): WorkspaceEntity") {
+      sectionNl("override fun createDetachedEntity(parents: List<${WorkspaceEntity::class.fqn}>): ${WorkspaceEntity::class.fqn}") {
         val noRefs = allFields.noRefs().noPersistentId()
         val mandatoryFields = allFields.mandatoryFields()
         val constructor = mandatoryFields.joinToString(", ") { it.name }.let { if (it.isNotBlank()) "($it)" else "" }
         val optionalFields = noRefs.filterNot { it in mandatoryFields }
 
-        if (optionalFields.isNotEmpty()) {
-          section("return $javaFullName$constructor") {
-            optionalFields.forEach {
-              line("this.${it.name} = this@$javaDataName.${it.name}")
+        section("return $javaFullName$constructor") {
+          optionalFields.forEach {
+            line("this.${it.name} = this@$javaDataName.${it.name}")
+          }
+          allRefsFields.filterNot { it.type.getRefType().child }.forEach {
+            val parentType = it.type
+            if (parentType is ValueType.Optional) {
+              line("this.${it.name} = parents.filterIsInstance<${parentType.type.javaType}>().singleOrNull()")
+            } else {
+              line("this.${it.name} = parents.filterIsInstance<${parentType.javaType}>().single()")
             }
           }
-        }
-        else {
-          line("return $javaFullName$constructor")
         }
       }
 

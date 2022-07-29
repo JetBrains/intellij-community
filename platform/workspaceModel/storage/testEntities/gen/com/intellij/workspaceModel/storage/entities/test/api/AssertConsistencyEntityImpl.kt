@@ -134,8 +134,9 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return AssertConsistencyEntity(passCheck, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return AssertConsistencyEntity(passCheck, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

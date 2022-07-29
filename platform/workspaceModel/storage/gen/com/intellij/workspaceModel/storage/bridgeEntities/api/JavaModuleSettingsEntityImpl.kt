@@ -256,11 +256,12 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return JavaModuleSettingsEntity(inheritedCompilerOutput, excludeOutput, entitySource) {
       this.compilerOutput = this@JavaModuleSettingsEntityData.compilerOutput
       this.compilerOutputForTests = this@JavaModuleSettingsEntityData.compilerOutputForTests
       this.languageLevelId = this@JavaModuleSettingsEntityData.languageLevelId
+      this.module = parents.filterIsInstance<ModuleEntity>().single()
     }
   }
 

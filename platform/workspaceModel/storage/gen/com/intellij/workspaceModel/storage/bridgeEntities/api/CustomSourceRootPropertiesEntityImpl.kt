@@ -200,8 +200,10 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return CustomSourceRootPropertiesEntity(propertiesXmlTag, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return CustomSourceRootPropertiesEntity(propertiesXmlTag, entitySource) {
+      this.sourceRoot = parents.filterIsInstance<SourceRootEntity>().single()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

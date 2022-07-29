@@ -195,8 +195,10 @@ class ChildNullableEntityData : WorkspaceEntityData<ChildNullableEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ChildNullableEntity(childData, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ChildNullableEntity(childData, entitySource) {
+      this.parentEntity = parents.filterIsInstance<ParentNullableEntity>().single()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

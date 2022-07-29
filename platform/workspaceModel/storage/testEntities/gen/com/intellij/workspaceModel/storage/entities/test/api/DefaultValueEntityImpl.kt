@@ -168,7 +168,7 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return DefaultValueEntity(name, entitySource) {
       this.isGenerated = this@DefaultValueEntityData.isGenerated
       this.anotherName = this@DefaultValueEntityData.anotherName

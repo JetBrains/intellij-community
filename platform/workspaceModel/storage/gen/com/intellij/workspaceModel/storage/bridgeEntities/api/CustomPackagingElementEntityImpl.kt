@@ -315,8 +315,11 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return CustomPackagingElementEntity(typeId, propertiesXmlTag, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return CustomPackagingElementEntity(typeId, propertiesXmlTag, entitySource) {
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+      this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

@@ -143,8 +143,9 @@ class ChildWithNullsMultipleData : WorkspaceEntityData<ChildWithNullsMultiple>()
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ChildWithNullsMultiple(childData, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ChildWithNullsMultiple(childData, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

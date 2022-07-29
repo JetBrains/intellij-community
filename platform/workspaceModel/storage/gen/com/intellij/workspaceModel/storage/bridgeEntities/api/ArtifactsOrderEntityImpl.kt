@@ -161,8 +161,9 @@ class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ArtifactsOrderEntity(orderOfArtifacts, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ArtifactsOrderEntity(orderOfArtifacts, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

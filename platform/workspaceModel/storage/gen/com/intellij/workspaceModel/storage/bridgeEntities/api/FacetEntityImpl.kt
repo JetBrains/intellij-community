@@ -346,9 +346,11 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return FacetEntity(name, facetType, moduleId, entitySource) {
       this.configurationXmlTag = this@FacetEntityData.configurationXmlTag
+      this.module = parents.filterIsInstance<ModuleEntity>().single()
+      this.underlyingFacet = parents.filterIsInstance<FacetEntity>().singleOrNull()
     }
   }
 

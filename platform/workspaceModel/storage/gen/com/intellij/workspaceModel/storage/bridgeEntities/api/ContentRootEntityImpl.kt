@@ -376,8 +376,10 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ContentRootEntity(url, excludedUrls, excludedPatterns, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ContentRootEntity(url, excludedUrls, excludedPatterns, entitySource) {
+      this.module = parents.filterIsInstance<ModuleEntity>().single()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

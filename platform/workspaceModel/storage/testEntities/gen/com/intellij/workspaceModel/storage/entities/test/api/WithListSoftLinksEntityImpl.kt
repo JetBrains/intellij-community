@@ -238,8 +238,9 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return WithListSoftLinksEntity(myName, links, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return WithListSoftLinksEntity(myName, links, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

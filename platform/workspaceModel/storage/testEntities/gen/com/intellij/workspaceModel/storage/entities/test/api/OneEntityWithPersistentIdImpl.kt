@@ -149,8 +149,9 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return OneEntityWithPersistentId(myName, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return OneEntityWithPersistentId(myName, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

@@ -193,8 +193,10 @@ class ChildWpidSampleEntityData : WorkspaceEntityData<ChildWpidSampleEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ChildWpidSampleEntity(data, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ChildWpidSampleEntity(data, entitySource) {
+      this.parentEntity = parents.filterIsInstance<SampleWithPersistentIdEntity>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

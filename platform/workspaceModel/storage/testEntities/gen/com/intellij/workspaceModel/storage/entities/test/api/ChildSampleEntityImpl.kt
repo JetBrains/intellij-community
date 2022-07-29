@@ -192,8 +192,10 @@ class ChildSampleEntityData : WorkspaceEntityData<ChildSampleEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ChildSampleEntity(data, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ChildSampleEntity(data, entitySource) {
+      this.parentEntity = parents.filterIsInstance<SampleEntity>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

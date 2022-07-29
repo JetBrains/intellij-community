@@ -217,8 +217,10 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return SourceRootOrderEntity(orderOfSourceRoots, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return SourceRootOrderEntity(orderOfSourceRoots, entitySource) {
+      this.contentRootEntity = parents.filterIsInstance<ContentRootEntity>().single()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

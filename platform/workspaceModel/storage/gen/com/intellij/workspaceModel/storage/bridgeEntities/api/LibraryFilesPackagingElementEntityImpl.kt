@@ -247,9 +247,10 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return LibraryFilesPackagingElementEntity(entitySource) {
       this.library = this@LibraryFilesPackagingElementEntityData.library
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
     }
   }
 

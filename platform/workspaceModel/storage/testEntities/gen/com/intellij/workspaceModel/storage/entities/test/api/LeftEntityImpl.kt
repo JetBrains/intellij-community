@@ -226,8 +226,10 @@ class LeftEntityData : WorkspaceEntityData<LeftEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return LeftEntity(entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return LeftEntity(entitySource) {
+      this.parentEntity = parents.filterIsInstance<CompositeBaseEntity>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

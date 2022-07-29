@@ -208,8 +208,9 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ComposedIdSoftRefEntity(myName, link, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ComposedIdSoftRefEntity(myName, link, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

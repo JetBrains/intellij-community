@@ -215,8 +215,10 @@ class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>()
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return JavaResourceRootEntity(generated, relativeOutputPath, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return JavaResourceRootEntity(generated, relativeOutputPath, entitySource) {
+      this.sourceRoot = parents.filterIsInstance<SourceRootEntity>().single()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

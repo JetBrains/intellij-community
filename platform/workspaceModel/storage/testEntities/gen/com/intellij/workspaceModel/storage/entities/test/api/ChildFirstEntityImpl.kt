@@ -220,8 +220,10 @@ class ChildFirstEntityData : WorkspaceEntityData<ChildFirstEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ChildFirstEntity(commonData, firstData, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ChildFirstEntity(commonData, firstData, entitySource) {
+      this.parentEntity = parents.filterIsInstance<ParentAbEntity>().single()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

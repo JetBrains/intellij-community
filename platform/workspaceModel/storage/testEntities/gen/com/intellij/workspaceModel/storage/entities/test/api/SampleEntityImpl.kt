@@ -329,7 +329,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return SampleEntity(booleanProperty, stringProperty, stringListProperty, stringMapProperty, fileProperty, entitySource) {
       this.nullableData = this@SampleEntityData.nullableData
       this.randomUUID = this@SampleEntityData.randomUUID

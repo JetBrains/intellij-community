@@ -190,8 +190,10 @@ class ChildWithNullsOppositeMultipleData : WorkspaceEntityData<ChildWithNullsOpp
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ChildWithNullsOppositeMultiple(childData, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ChildWithNullsOppositeMultiple(childData, entitySource) {
+      this.parentEntity = parents.filterIsInstance<ParentWithNullsOppositeMultiple>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

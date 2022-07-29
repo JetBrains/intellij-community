@@ -187,8 +187,10 @@ class AttachedEntityListData : WorkspaceEntityData<AttachedEntityList>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return AttachedEntityList(data, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return AttachedEntityList(data, entitySource) {
+      this.ref = parents.filterIsInstance<MainEntityList>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

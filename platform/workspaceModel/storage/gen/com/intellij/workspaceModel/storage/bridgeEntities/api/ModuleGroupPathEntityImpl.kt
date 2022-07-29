@@ -215,8 +215,10 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ModuleGroupPathEntity(path, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ModuleGroupPathEntity(path, entitySource) {
+      this.module = parents.filterIsInstance<ModuleEntity>().single()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

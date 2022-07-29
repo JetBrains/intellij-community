@@ -215,9 +215,10 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return LibraryPropertiesEntity(libraryType, entitySource) {
       this.propertiesXmlTag = this@LibraryPropertiesEntityData.propertiesXmlTag
+      this.library = parents.filterIsInstance<LibraryEntity>().single()
     }
   }
 

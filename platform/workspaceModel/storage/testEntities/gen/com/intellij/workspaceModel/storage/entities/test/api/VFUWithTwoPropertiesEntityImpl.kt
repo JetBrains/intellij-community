@@ -191,8 +191,9 @@ class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesE
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return VFUWithTwoPropertiesEntity(data, fileProperty, secondFileProperty, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return VFUWithTwoPropertiesEntity(data, fileProperty, secondFileProperty, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

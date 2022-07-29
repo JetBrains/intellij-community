@@ -135,7 +135,7 @@ class OptionalIntEntityData : WorkspaceEntityData<OptionalIntEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return OptionalIntEntity(entitySource) {
       this.data = this@OptionalIntEntityData.data
     }

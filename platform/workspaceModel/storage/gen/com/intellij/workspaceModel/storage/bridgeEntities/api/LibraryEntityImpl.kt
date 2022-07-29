@@ -480,8 +480,9 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return LibraryEntity(name, tableId, roots, excludedRoots, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return LibraryEntity(name, tableId, roots, excludedRoots, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

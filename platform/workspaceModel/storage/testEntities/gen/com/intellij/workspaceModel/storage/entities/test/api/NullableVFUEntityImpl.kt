@@ -164,7 +164,7 @@ class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return NullableVFUEntity(data, entitySource) {
       this.fileProperty = this@NullableVFUEntityData.fileProperty
     }

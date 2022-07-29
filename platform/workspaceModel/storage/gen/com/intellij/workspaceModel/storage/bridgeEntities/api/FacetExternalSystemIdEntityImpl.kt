@@ -197,8 +197,10 @@ class FacetExternalSystemIdEntityData : WorkspaceEntityData<FacetExternalSystemI
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return FacetExternalSystemIdEntity(externalSystemId, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return FacetExternalSystemIdEntity(externalSystemId, entitySource) {
+      this.facet = parents.filterIsInstance<FacetEntity>().single()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

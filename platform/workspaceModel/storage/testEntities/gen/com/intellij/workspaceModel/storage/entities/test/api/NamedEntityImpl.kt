@@ -223,7 +223,7 @@ class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEnti
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return NamedEntity(myName, entitySource) {
       this.additionalProperty = this@NamedEntityData.additionalProperty
     }

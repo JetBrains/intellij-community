@@ -247,9 +247,10 @@ class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOut
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ArtifactOutputPackagingElementEntity(entitySource) {
       this.artifact = this@ArtifactOutputPackagingElementEntityData.artifact
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
     }
   }
 

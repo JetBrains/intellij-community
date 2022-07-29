@@ -197,8 +197,10 @@ class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCop
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return DirectoryCopyPackagingElementEntity(filePath, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return DirectoryCopyPackagingElementEntity(filePath, entitySource) {
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

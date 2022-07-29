@@ -214,8 +214,10 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return FacetsOrderEntity(orderOfFacets, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return FacetsOrderEntity(orderOfFacets, entitySource) {
+      this.moduleEntity = parents.filterIsInstance<ModuleEntity>().single()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

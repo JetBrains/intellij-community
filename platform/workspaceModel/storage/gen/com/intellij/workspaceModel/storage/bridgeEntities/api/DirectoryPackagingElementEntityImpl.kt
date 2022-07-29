@@ -297,8 +297,11 @@ class DirectoryPackagingElementEntityData : WorkspaceEntityData<DirectoryPackagi
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return DirectoryPackagingElementEntity(directoryName, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return DirectoryPackagingElementEntity(directoryName, entitySource) {
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+      this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

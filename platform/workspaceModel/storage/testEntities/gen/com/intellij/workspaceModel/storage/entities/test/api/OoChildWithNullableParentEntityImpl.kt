@@ -168,8 +168,10 @@ class OoChildWithNullableParentEntityData : WorkspaceEntityData<OoChildWithNulla
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return OoChildWithNullableParentEntity(entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return OoChildWithNullableParentEntity(entitySource) {
+      this.parentEntity = parents.filterIsInstance<OoParentEntity>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

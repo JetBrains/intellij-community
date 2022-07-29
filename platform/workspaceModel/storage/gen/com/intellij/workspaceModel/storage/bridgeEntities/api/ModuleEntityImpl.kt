@@ -633,7 +633,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ModuleEntity(name, dependencies, entitySource) {
       this.type = this@ModuleEntityData.type
     }

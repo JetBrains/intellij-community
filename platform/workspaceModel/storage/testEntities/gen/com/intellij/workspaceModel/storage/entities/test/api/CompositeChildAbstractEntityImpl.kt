@@ -282,8 +282,11 @@ class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeChildAbstr
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return CompositeChildAbstractEntity(entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return CompositeChildAbstractEntity(entitySource) {
+      this.parentInList = parents.filterIsInstance<CompositeAbstractEntity>().single()
+      this.parentEntity = parents.filterIsInstance<ParentChainEntity>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

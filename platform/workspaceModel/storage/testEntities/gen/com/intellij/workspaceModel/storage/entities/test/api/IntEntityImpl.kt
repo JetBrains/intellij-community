@@ -135,8 +135,9 @@ class IntEntityData : WorkspaceEntityData<IntEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return IntEntity(data, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return IntEntity(data, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

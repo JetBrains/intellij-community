@@ -1110,7 +1110,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return EntityWithSoftLinks(link, manyLinks, inContainer, inContainerList, deepContainer, sealedContainer, listSealedContainer,
                                justProperty, justListProperty, deepSealedClass, entitySource) {
       this.optionalLink = this@EntityWithSoftLinksData.optionalLink

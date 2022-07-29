@@ -190,8 +190,10 @@ class XChildWithOptionalParentEntityData : WorkspaceEntityData<XChildWithOptiona
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return XChildWithOptionalParentEntity(childProperty, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return XChildWithOptionalParentEntity(childProperty, entitySource) {
+      this.optionalParent = parents.filterIsInstance<XParentEntity>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

@@ -184,8 +184,9 @@ class ParentNullableEntityData : WorkspaceEntityData<ParentNullableEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ParentNullableEntity(parentData, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ParentNullableEntity(parentData, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

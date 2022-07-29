@@ -184,8 +184,9 @@ class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(), SoftLi
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return WithSoftLinkEntity(link, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return WithSoftLinkEntity(link, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

@@ -217,8 +217,10 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ExtractedDirectoryPackagingElementEntity(filePath, pathInArchive, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ExtractedDirectoryPackagingElementEntity(filePath, pathInArchive, entitySource) {
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

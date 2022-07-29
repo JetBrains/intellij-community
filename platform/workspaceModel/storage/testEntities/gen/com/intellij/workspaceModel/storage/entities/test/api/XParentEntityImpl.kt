@@ -317,8 +317,9 @@ class XParentEntityData : WorkspaceEntityData<XParentEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return XParentEntity(parentProperty, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return XParentEntity(parentProperty, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

@@ -211,9 +211,10 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return FileCopyPackagingElementEntity(filePath, entitySource) {
       this.renamedOutputFileName = this@FileCopyPackagingElementEntityData.renamedOutputFileName
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
     }
   }
 

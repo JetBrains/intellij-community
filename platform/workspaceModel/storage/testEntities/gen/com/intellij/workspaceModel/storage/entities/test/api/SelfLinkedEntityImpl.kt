@@ -169,8 +169,10 @@ class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return SelfLinkedEntity(entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return SelfLinkedEntity(entitySource) {
+      this.parentEntity = parents.filterIsInstance<SelfLinkedEntity>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

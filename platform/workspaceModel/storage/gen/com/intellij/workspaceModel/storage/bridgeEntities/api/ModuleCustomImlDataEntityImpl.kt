@@ -214,9 +214,10 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ModuleCustomImlDataEntity(customModuleOptions, entitySource) {
       this.rootManagerTagCustomData = this@ModuleCustomImlDataEntityData.rootManagerTagCustomData
+      this.module = parents.filterIsInstance<ModuleEntity>().single()
     }
   }
 

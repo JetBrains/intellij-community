@@ -186,8 +186,9 @@ class OoParentWithoutPidEntityData : WorkspaceEntityData<OoParentWithoutPidEntit
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return OoParentWithoutPidEntity(parentProperty, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return OoParentWithoutPidEntity(parentProperty, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

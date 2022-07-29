@@ -247,9 +247,10 @@ class ModuleSourcePackagingElementEntityData : WorkspaceEntityData<ModuleSourceP
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ModuleSourcePackagingElementEntity(entitySource) {
       this.module = this@ModuleSourcePackagingElementEntityData.module
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
     }
   }
 

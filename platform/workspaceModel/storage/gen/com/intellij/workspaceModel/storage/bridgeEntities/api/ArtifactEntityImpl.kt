@@ -362,7 +362,7 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ArtifactEntity(name, artifactType, includeInProjectBuild, entitySource) {
       this.outputUrl = this@ArtifactEntityData.outputUrl
     }

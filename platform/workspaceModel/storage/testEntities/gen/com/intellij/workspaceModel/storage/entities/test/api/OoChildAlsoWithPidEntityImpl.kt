@@ -201,8 +201,10 @@ class OoChildAlsoWithPidEntityData : WorkspaceEntityData.WithCalculablePersisten
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return OoChildAlsoWithPidEntity(childProperty, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return OoChildAlsoWithPidEntity(childProperty, entitySource) {
+      this.parentEntity = parents.filterIsInstance<OoParentWithPidEntity>().single()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

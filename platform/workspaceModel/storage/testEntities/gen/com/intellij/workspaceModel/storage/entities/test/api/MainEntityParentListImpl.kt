@@ -200,8 +200,9 @@ class MainEntityParentListData : WorkspaceEntityData<MainEntityParentList>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return MainEntityParentList(x, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return MainEntityParentList(x, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

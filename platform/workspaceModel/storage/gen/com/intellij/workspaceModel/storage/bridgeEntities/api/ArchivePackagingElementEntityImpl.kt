@@ -295,8 +295,11 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ArchivePackagingElementEntity(fileName, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ArchivePackagingElementEntity(fileName, entitySource) {
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+      this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {

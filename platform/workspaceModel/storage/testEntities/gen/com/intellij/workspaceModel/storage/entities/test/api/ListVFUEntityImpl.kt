@@ -184,8 +184,9 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ListVFUEntity(data, fileProperty, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ListVFUEntity(data, fileProperty, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

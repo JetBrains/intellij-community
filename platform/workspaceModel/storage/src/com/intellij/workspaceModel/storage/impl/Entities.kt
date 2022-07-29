@@ -567,7 +567,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
     return "${this::class.simpleName}($fields, id=${this.id})"
   }
 
-  open fun createDetachedEntity(): WorkspaceEntity {
+  open fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     throw NotImplementedError()
   }
 

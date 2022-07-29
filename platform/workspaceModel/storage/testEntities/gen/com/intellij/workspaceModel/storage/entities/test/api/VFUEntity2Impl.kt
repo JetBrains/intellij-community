@@ -223,7 +223,7 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return VFUEntity2(data, directoryPath, notNullRoots, entitySource) {
       this.filePath = this@VFUEntity2Data.filePath
     }

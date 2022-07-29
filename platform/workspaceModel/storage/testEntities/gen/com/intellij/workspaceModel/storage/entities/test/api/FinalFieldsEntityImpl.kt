@@ -170,7 +170,7 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return FinalFieldsEntity(descriptor, entitySource) {
       this.description = this@FinalFieldsEntityData.description
       this.anotherVersion = this@FinalFieldsEntityData.anotherVersion

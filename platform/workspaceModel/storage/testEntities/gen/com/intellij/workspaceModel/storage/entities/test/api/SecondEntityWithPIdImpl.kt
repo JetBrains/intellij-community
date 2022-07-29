@@ -146,8 +146,9 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<S
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return SecondEntityWithPId(data, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return SecondEntityWithPId(data, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

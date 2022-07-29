@@ -179,8 +179,9 @@ class ParentAbEntityData : WorkspaceEntityData<ParentAbEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return ParentAbEntity(entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ParentAbEntity(entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

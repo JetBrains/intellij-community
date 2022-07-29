@@ -219,9 +219,10 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ArtifactPropertiesEntity(providerType, entitySource) {
       this.propertiesXmlTag = this@ArtifactPropertiesEntityData.propertiesXmlTag
+      this.artifact = parents.filterIsInstance<ArtifactEntity>().single()
     }
   }
 

@@ -190,8 +190,10 @@ class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(): WorkspaceEntity {
-    return MiddleEntity(property, entitySource)
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return MiddleEntity(property, entitySource) {
+      this.parentEntity = parents.filterIsInstance<CompositeBaseEntity>().singleOrNull()
+    }
   }
 
   override fun equals(other: Any?): Boolean {
