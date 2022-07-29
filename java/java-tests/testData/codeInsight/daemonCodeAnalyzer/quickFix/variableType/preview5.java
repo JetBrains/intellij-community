@@ -1,7 +1,7 @@
 // "Change parameter 'i' type to 'String'" "true-preview"
 
 class Base {
- void foo(String i) {}
+ void foo(int i) {}
 }
 
 class Ex extends Base {

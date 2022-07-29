@@ -41,6 +41,13 @@ public class WrapExpressionFix implements IntentionAction {
     myMethodPresentation = getMethodPresentation(myExpression, myExpectedType, myPrimitiveExpected);
   }
 
+  private WrapExpressionFix(PsiExpression expression, PsiClassType expectedType, boolean primitiveExpected, String methodPresentation) {
+    myExpression = expression;
+    myExpectedType = expectedType;
+    myPrimitiveExpected = primitiveExpected;
+    myMethodPresentation = methodPresentation;
+  }
+
   @Nullable
   private static PsiClassType getClassType(PsiType type, PsiElement place) {
     if (type instanceof PsiClassType) {
@@ -195,6 +202,9 @@ public class WrapExpressionFix implements IntentionAction {
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new WrapExpressionFix(myExpectedType, PsiTreeUtil.findSameElementInCopy(myExpression, target));
+    return new WrapExpressionFix(PsiTreeUtil.findSameElementInCopy(myExpression, target),
+                                 myExpectedType,
+                                 myPrimitiveExpected,
+                                 myMethodPresentation);
   }
 }

@@ -1,4 +1,4 @@
-// "Replace 'var' with explicit type" "true"
+// "Replace 'var' with explicit type" "true-preview"
 import java.lang.annotation.*;
 class Main {
     {

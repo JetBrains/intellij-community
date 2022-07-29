@@ -1,4 +1,4 @@
-// "Replace iteration with bulk 'Map.putAll()' call" "true"
+// "Replace iteration with bulk 'Map.putAll()' call" "true-preview"
 import java.util.*;
 
 class Main {
