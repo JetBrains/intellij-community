@@ -74,7 +74,6 @@ interface MavenWorkspaceConfigurator {
    * but not yet applied to [com.intellij.workspaceModel.ide.WorkspaceModel].
    *
    * * Called on a background thread.
-   * * Implementations are responsible for taking readActions (preferably cancelable).
    * * WriteActions are not allowed.
    * * Side-effects other than changing [ModuleEntity]-related entities are not allowed.
    */
@@ -89,7 +88,6 @@ interface MavenWorkspaceConfigurator {
    * but not yet applied to [com.intellij.workspaceModel.ide.WorkspaceModel].
    *
    * * Called on a background thread.
-   * * Implementations are responsible for taking readActions (preferably cancelable).
    * * WriteActions are not allowed.
    * * Side-effects other than changing [MutableEntityStorage] are not allowed
    */
