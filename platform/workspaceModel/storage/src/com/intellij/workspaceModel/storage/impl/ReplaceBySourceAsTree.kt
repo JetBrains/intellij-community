@@ -106,6 +106,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     private fun connectChildToParent(parentEntityId: EntityId, childEntity: WorkspaceEntity) {
       val targetParent = targetStorage.entityDataByIdOrDie(parentEntityId).createEntity(targetStorage)
       targetStorage.modifyEntity(ModifiableWorkspaceEntity::class.java, childEntity) {
+        @Suppress("UNCHECKED_CAST")
         val property = this::class.memberProperties.single { it.name == "parentEntity" } as KMutableProperty1<WorkspaceEntity, Any>
         property.set(this, targetParent)
       }
@@ -139,6 +140,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
       for (replaceWithEntity in replaceWithEntitiesTrack.reversed()) {
         val targetRootEntityId = (targetRoot as WorkspaceEntityBase).id
+
+        @Suppress("MoveVariableDeclarationIntoWhen")
         val replaceWithCurrentState = replaceWithState[replaceWithEntity]
         when (replaceWithCurrentState) {
           ReplaceWithState.NoChange -> TODO()
@@ -154,6 +157,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
     private fun findAndReplaceRootEntity(replaceWithRootEntity: WorkspaceEntityWithPersistentId): Boolean {
 
+      @Suppress("MoveVariableDeclarationIntoWhen")
       val currentState = replaceWithState[(replaceWithRootEntity as WorkspaceEntityBase).id]
       when (currentState) {
         is ReplaceWithState.SubtreeMoved -> return false
@@ -177,6 +181,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         }
       }
 
+      @Suppress("MoveVariableDeclarationIntoWhen")
       val targetCurrentState = targetState[(targetEntity as WorkspaceEntityBase).id]
       when (targetCurrentState) {
         ReplaceState.NoChange -> return true
@@ -196,15 +201,14 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           error("This branch should be already processed because we process 'target' entities first")
         }
         entityFilter(replaceWithRootEntity.entitySource) && !entityFilter(targetEntity.entitySource) -> {
-          (targetEntity as WorkspaceEntityBase).id operation Operation.Relabel((replaceWithRootEntity as WorkspaceEntityBase).id)
-          (replaceWithRootEntity as WorkspaceEntityBase).id.addState(ReplaceWithState.Relabel)
+          replaceWorkspaceData((targetEntity as WorkspaceEntityBase).id, (replaceWithRootEntity as WorkspaceEntityBase).id)
           return true
         }
         !entityFilter(replaceWithRootEntity.entitySource) && entityFilter(targetEntity.entitySource) -> {
           error("This branch should be already processed because we process 'target' entities first")
         }
         !entityFilter(replaceWithRootEntity.entitySource) && !entityFilter(targetEntity.entitySource) -> {
-          (replaceWithRootEntity as WorkspaceEntityBase).id.addState(ReplaceWithState.NoChange)
+          doNothingOn((targetEntity as WorkspaceEntityBase).id, (replaceWithRootEntity as WorkspaceEntityBase).id)
           return true
         }
       }
@@ -340,26 +344,19 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       replaceWithEntity as WorkspaceEntityBase
       when {
         entityFilter(targetRootEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
-          targetRootEntity.id operation Operation.Relabel(replaceWithEntity.id)
-          targetRootEntity.id.addState(ReplaceState.Relabel)
-          replaceWithEntity.id.addState(ReplaceWithState.Relabel)
+          replaceWorkspaceData(targetRootEntity.id, replaceWithEntity.id)
           return true
         }
         entityFilter(targetRootEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
-          targetRootEntity.id operation Operation.Remove
-          targetRootEntity.id.addState(ReplaceState.Remove)
-          replaceWithEntity.id.addState(ReplaceWithState.Processed)
+          removeWorkspaceData(targetRootEntity.id, replaceWithEntity.id)
           return false
         }
         !entityFilter(targetRootEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
-          targetRootEntity.id operation Operation.Relabel(replaceWithEntity.id)
-          targetRootEntity.id.addState(ReplaceState.Relabel)
-          replaceWithEntity.id.addState(ReplaceWithState.Relabel)
+          replaceWorkspaceData(targetRootEntity.id, replaceWithEntity.id)
           return true
         }
         !entityFilter(targetRootEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
-          targetRootEntity.id.addState(ReplaceState.NoChange)
-          replaceWithEntity.id.addState(ReplaceWithState.NoChange)
+          doNothingOn(targetRootEntity.id, replaceWithEntity.id)
           return true
         }
       }
@@ -409,10 +406,14 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           val targetSourceMatches = entityFilter(targetEntityData.entitySource)
           @Suppress("KotlinConstantConditions")
           when {
-            targetSourceMatches && replaceWithSourceMatches -> replaceWorkspaceData(targetEntityData, replaceWithEntityData)
-            targetSourceMatches && !replaceWithSourceMatches -> removeWorkspaceData(targetEntityData)
-            !targetSourceMatches && replaceWithSourceMatches -> replaceWorkspaceData(targetEntityData, replaceWithEntityData)
-            !targetSourceMatches && !replaceWithSourceMatches -> doNothingOn(targetEntityData)
+            targetSourceMatches && replaceWithSourceMatches -> replaceWorkspaceData(targetEntityData.createEntityId(),
+                                                                                    replaceWithEntityData.createEntityId())
+            targetSourceMatches && !replaceWithSourceMatches -> removeWorkspaceData(targetEntityData.createEntityId(),
+                                                                                    replaceWithEntityData.createEntityId())
+            !targetSourceMatches && replaceWithSourceMatches -> replaceWorkspaceData(targetEntityData.createEntityId(),
+                                                                                     replaceWithEntityData.createEntityId())
+            !targetSourceMatches && !replaceWithSourceMatches -> doNothingOn(targetEntityData.createEntityId(),
+                                                                             replaceWithEntityData.createEntityId())
           }
         }
         else {
@@ -424,31 +425,32 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         }
       }
 
-      targetChildrenMap.keys.forEach { targetEntityData -> removeWorkspaceData(targetEntityData) }
+      targetChildrenMap.keys.forEach { targetEntityData -> removeWorkspaceData(targetEntityData.createEntityId(), null) }
 
       targetRootEntity.id.updateStateLinkProcessed(childClassEntityId.clazz.findWorkspaceEntity())
     }
+  }
 
-    private fun replaceWorkspaceData(targetEntityData: WorkspaceEntityData<out WorkspaceEntity>,
-                                     replaceWithEntityData: WorkspaceEntityData<out WorkspaceEntity>) {
-      targetEntityData.createEntityId() operation Operation.Relabel(replaceWithEntityData.createEntityId())
-      targetEntityData.createEntityId().addState(ReplaceState.Relabel)
-      replaceWithEntityData.createEntityId().addState(ReplaceWithState.Relabel)
-    }
+  private fun replaceWorkspaceData(targetEntityId: EntityId, replaceWithEntityId: EntityId) {
+    targetEntityId operation Operation.Relabel(replaceWithEntityId)
+    targetEntityId.addState(ReplaceState.Relabel)
+    replaceWithEntityId.addState(ReplaceWithState.Relabel)
+  }
 
-    private fun removeWorkspaceData(targetEntityData: WorkspaceEntityData<out WorkspaceEntity>) {
-      targetEntityData.createEntityId() operation Operation.Remove
-      targetEntityData.createEntityId().addState(ReplaceState.Remove)
-    }
+  private fun removeWorkspaceData(targetEntityId: EntityId, replaceWithEntityId: EntityId?) {
+    targetEntityId operation Operation.Remove
+    targetEntityId.addState(ReplaceState.Remove)
+    replaceWithEntityId?.addState(ReplaceWithState.Processed)
+  }
 
-    private fun addWorkspaceData(targetParent: WorkspaceEntityBase, replaceWithEntityData: WorkspaceEntityData<out WorkspaceEntity>) {
-      addOperations.add(AddSubtree(targetParent.id, replaceWithEntityData.createEntityId()))
-      replaceWithEntityData.createEntityId().addState(ReplaceWithState.SubtreeMoved)
-    }
+  private fun addWorkspaceData(targetParent: WorkspaceEntityBase, replaceWithEntityData: WorkspaceEntityData<out WorkspaceEntity>) {
+    addOperations.add(AddSubtree(targetParent.id, replaceWithEntityData.createEntityId()))
+    replaceWithEntityData.createEntityId().addState(ReplaceWithState.SubtreeMoved)
+  }
 
-    private fun doNothingOn(targetEntityData: WorkspaceEntityData<out WorkspaceEntity>) {
-      targetEntityData.createEntityId().addState(ReplaceState.NoChange)
-    }
+  private fun doNothingOn(targetEntityId: EntityId, replaceWithEntityId: EntityId) {
+    targetEntityId.addState(ReplaceState.NoChange)
+    replaceWithEntityId.addState(ReplaceWithState.NoChange)
   }
 
   private fun EntityId.addState(state: ReplaceState) {
