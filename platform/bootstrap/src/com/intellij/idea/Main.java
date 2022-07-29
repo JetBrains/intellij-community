@@ -118,10 +118,10 @@ public final class Main {
 
     WindowsCommandLineProcessor.ourMainRunnerClass = mainClass;
     MethodHandles.lookup()
-      .findStatic(mainClass, "start", MethodType.methodType(void.class, String.class,
+      .findStatic(mainClass, "start", MethodType.methodType(void.class,
                                                             boolean.class, boolean.class,
                                                             String[].class, LinkedHashMap.class))
-      .invokeExact(Main.class.getName() + "Impl", isHeadless, newClassLoader != Main.class.getClassLoader(), args, startupTimings);
+      .invokeExact(isHeadless, newClassLoader != Main.class.getClassLoader(), args, startupTimings);
   }
 
   @SuppressWarnings("HardCodedStringLiteral")

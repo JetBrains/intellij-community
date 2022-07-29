@@ -98,8 +98,7 @@ internal var shellEnvLoadFuture: Deferred<Boolean?>? = null
   private set
 
 /** Called via reflection from [Main.bootstrap].  */
-fun start(mainClass: String,
-          isHeadless: Boolean,
+fun start(isHeadless: Boolean,
           setFlagsAgain: Boolean,
           args: Array<String>,
           startupTimings: LinkedHashMap<String, Long>) {
@@ -131,7 +130,7 @@ fun start(mainClass: String,
     // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
     val appStarterFuture = async(asyncDispatcher) {
       val subActivity = StartUpMeasurer.startActivity("main class loading")
-      val aClass = AppStarter::class.java.classLoader.loadClass(mainClass)
+      val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
       subActivity.end()
       MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
     }
