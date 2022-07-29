@@ -93,9 +93,6 @@ class CompilationContextImpl private constructor(model: JpsModel,
     if (!options.useCompiledClassesFromProjectOutput) {
       messages.info("Incremental compilation: ${options.incrementalCompilation}")
     }
-    if (options.incrementalCompilation) {
-      System.setProperty("kotlin.incremental.compilation", "true")
-    }
     suppressWarnings(project)
     flush()
     setPathRoot(paths.buildOutputDir)

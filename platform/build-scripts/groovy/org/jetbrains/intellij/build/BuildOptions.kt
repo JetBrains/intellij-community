@@ -227,6 +227,10 @@ class BuildOptions {
    * If `true` the project modules will be compiled incrementally
    */
   var incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", false)
+    set(value) {
+      System.setProperty("kotlin.incremental.compilation", "$value")
+      field = value
+    }
 
   /**
    * By default, some build steps are executed in parallel threads. Set this property to `false` to disable this.
