@@ -543,12 +543,10 @@ private suspend fun showEuaIfNeeded(euaDocument: Any?, baseLaF: Any): Boolean {
   val document = euaDocument as EndUserAgreement.Document?
   EndUserAgreement.updateCachedContentToLatestBundledVersion()
   val result = if (document != null) {
-    val job = CompletableDeferred<Any?>()
     withContext(SwingDispatcher) {
       setLafToShowPreAppStartUpDialogIfNeeded(baseLaF)
       showEndUserAndDataSharingAgreements(document)
     }
-    job.join()
     true
   }
   else if (ConsentOptions.needToShowUsageStatsConsent()) {
