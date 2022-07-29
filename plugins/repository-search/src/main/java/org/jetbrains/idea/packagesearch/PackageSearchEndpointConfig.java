@@ -1,4 +1,4 @@
-package org.jetbrains.idea.kpmsearch;
+package org.jetbrains.idea.packagesearch;
 
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;

@@ -21,19 +21,19 @@ object PublicIdeDownloader : IdeDownloader {
     if (filteringParams.majorVersion.isNotBlank()) return sorted.first { it.majorVersion == filteringParams.majorVersion }
 
     // find latest release / eap, if no specific params were provided
-    if (filteringParams.version.isBlank() && filteringParams.build.isBlank()) return sorted.first()
+    if (filteringParams.versionNumber.isBlank() && filteringParams.buildNumber.isBlank()) return sorted.first()
 
-    if (filteringParams.version.isNotBlank()) return sorted.first { it.version == filteringParams.version }
-    if (filteringParams.build.isNotBlank()) return sorted.first { it.build == filteringParams.build }
+    if (filteringParams.versionNumber.isNotBlank()) return sorted.first { it.version == filteringParams.versionNumber }
+    if (filteringParams.buildNumber.isNotBlank()) return sorted.first { it.build == filteringParams.buildNumber }
 
     throw NoSuchElementException("Couldn't find specified release by parameters $filteringParams")
   }
 
   override fun downloadIdeInstaller(ideInfo: IdeInfo, installerDirectory: Path): IdeInstaller {
-    val params = ProductInfoRequestParameters(code = ideInfo.productCode,
-                                              type = ideInfo.buildType,
-                                              build = ideInfo.buildNumber,
-                                              version = ideInfo.version)
+    val params = ProductInfoRequestParameters(type = ideInfo.productCode,
+                                              snapshot = ideInfo.buildType,
+                                              buildNumber = ideInfo.buildNumber,
+                                              versionNumber = ideInfo.version)
 
     val releaseInfoMap = JetBrainsDataServiceClient.getReleases(params)
     if (releaseInfoMap.size != 1) throw RuntimeException("Only one product can be downloaded at once. Found ${releaseInfoMap.keys}")

@@ -16,6 +16,7 @@ import com.intellij.ide.starter.report.publisher.ReportPublisher
 import com.intellij.ide.starter.report.publisher.impl.ConsoleTestResultPublisher
 import com.intellij.ide.starter.report.publisher.impl.QodanaTestResultPublisher
 import com.intellij.ide.starter.runner.CodeBuilderHost
+import com.intellij.ide.starter.runner.CurrentTestMethod
 import com.intellij.ide.starter.utils.logOutput
 import org.kodein.di.DI
 import org.kodein.di.bindFactory
@@ -40,7 +41,7 @@ var di = DI {
   bindFactory { testContext: IDETestContext -> PluginConfigurator(testContext) }
   bindSingleton<IdeDownloader> { PublicIdeDownloader }
   bindFactory<IdeInfo, IdeInstallator> { ideInfo ->
-    if (ideInfo.productCode == "AI") {
+    if (ideInfo.productCode == IdeProductProvider.AI.productCode) {
       AndroidInstaller()
     }
     else {
@@ -50,6 +51,7 @@ var di = DI {
   bindFactory<IDETestContext, BuildToolProvider> { testContext: IDETestContext -> BuildToolDefaultProvider(testContext) }
   bindSingleton<List<ReportPublisher>> { listOf(ConsoleTestResultPublisher, QodanaTestResultPublisher) }
   bindSingleton<IdeProduct> { IdeProductImp }
+  bindSingleton<CurrentTestMethod> { CurrentTestMethod }
 }.apply {
   logOutput("DI was initialized")
 }

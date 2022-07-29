@@ -27,7 +27,6 @@ import org.jetbrains.packagesearch.api.v2.ApiRepositoriesResponse
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 
 internal object ServerURLs {
-
     const val base = "https://package-search.services.jetbrains.com/api"
 }
 
