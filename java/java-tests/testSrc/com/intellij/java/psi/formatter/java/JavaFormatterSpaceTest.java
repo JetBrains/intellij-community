@@ -939,4 +939,34 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "    }\n" +
       "}");
   }
+
+  public void testDeconstructionPatternNewLineAfterLpar() {
+    getJavaSettings().NEW_LINE_AFTER_LPAREN_IN_DECONSTRUCTION_PATTERN = true;
+    getJavaSettings().DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doMethodTest(
+      "switch (a) {\n" +
+      " case R(int x, String y) -> {}\n" +
+      "}",
+      "switch (a) {\n" +
+      "    case R(\n" +
+      "            int x,\n" +
+      "            String y) -> {\n" +
+      "    }\n" +
+      "}");
+  }
+
+  public void testDeconstructionPatternNewLineBeforeRpar() {
+    getJavaSettings().RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN = true;
+    getJavaSettings().DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doMethodTest(
+      "switch (a) {\n" +
+      " case R(int x, String y) -> {}\n" +
+      "}",
+      "switch (a) {\n" +
+      "    case R(int x,\n" +
+      "           String y\n" +
+      "    ) -> {\n" +
+      "    }\n" +
+      "}");
+  }
 }

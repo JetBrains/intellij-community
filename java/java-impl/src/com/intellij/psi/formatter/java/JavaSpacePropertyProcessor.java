@@ -1260,8 +1260,11 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   @Override
   public void visitDeconstructionList(@NotNull PsiDeconstructionList deconstructionList) {
     super.visitDeconstructionList(deconstructionList);
-    if (myType1 == JavaTokenType.LPARENTH || myType2 == JavaTokenType.RPARENTH) {
-      createSpaceInCode(myJavaSettings.SPACE_WITHIN_DECONSTRUCTION_LIST);
+    if (myType2 == JavaTokenType.RPARENTH) {
+      createParenthSpace(myJavaSettings.RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN, myJavaSettings.SPACE_WITHIN_DECONSTRUCTION_LIST);
+    }
+    else if (myType1 == JavaTokenType.LPARENTH) {
+      createParenthSpace(myJavaSettings.NEW_LINE_AFTER_LPAREN_IN_DECONSTRUCTION_PATTERN, myJavaSettings.SPACE_WITHIN_DECONSTRUCTION_LIST);
     }
     else if (myType1 == JavaTokenType.COMMA) {
       createSpaceInCode(mySettings.SPACE_AFTER_COMMA);

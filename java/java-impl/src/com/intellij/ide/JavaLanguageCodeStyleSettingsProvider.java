@@ -272,6 +272,15 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "ALIGN_MULTILINE_DECONSTRUCTION_LIST_COMPONENTS",
                                 ApplicationBundle.message("wrapping.align.when.multiline"),
                                 deconstructionComponentsGroup);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "NEW_LINE_AFTER_LPAREN_IN_DECONSTRUCTION_PATTERN",
+                                ApplicationBundle.message("wrapping.new.line.after.lpar"),
+                                deconstructionComponentsGroup);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN",
+                                ApplicationBundle.message("wrapping.rpar.on.new.line"),
+                                deconstructionComponentsGroup);
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();

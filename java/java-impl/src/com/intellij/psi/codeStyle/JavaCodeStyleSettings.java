@@ -126,21 +126,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public int CLASS_NAMES_IN_JAVADOC = FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED;
   public boolean SPACE_BEFORE_COLON_IN_FOREACH = true;
   public boolean SPACE_INSIDE_ONE_LINE_ENUM_BRACES = false;
-  /**
-   * <pre>
-   * case A( int x ) -> {}
-   *        ^     ^
-   * </pre>
-   */
-  public boolean SPACE_WITHIN_DECONSTRUCTION_LIST = false;
 
-  /**
-   * <pre>
-   * case A (int x) -> {}
-   *       ^
-   * </pre>
-   */
-  public boolean SPACE_BEFORE_DECONSTRUCTION_LIST = false;
 
   public boolean useFqNamesInJavadocAlways() {
     return CLASS_NAMES_IN_JAVADOC == FULLY_QUALIFY_NAMES_ALWAYS;
@@ -180,6 +166,23 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   @WrapConstant
   public int DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
   public boolean ALIGN_MULTILINE_DECONSTRUCTION_LIST_COMPONENTS = true;
+  public boolean NEW_LINE_AFTER_LPAREN_IN_DECONSTRUCTION_PATTERN = false;
+  public boolean RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN = false;
+  /**
+   * <pre>
+   * case A( int x ) -> {}
+   *        ^     ^
+   * </pre>
+   */
+  public boolean SPACE_WITHIN_DECONSTRUCTION_LIST = false;
+
+  /**
+   * <pre>
+   * case A (int x) -> {}
+   *       ^
+   * </pre>
+   */
+  public boolean SPACE_BEFORE_DECONSTRUCTION_LIST = false;
 
   @WrapConstant
   public int MULTI_CATCH_TYPES_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
