@@ -46,13 +46,13 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
   @NotNull
   @Override
   protected List<PsiMethod> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode searchMode) {
-    final Project project = myRef.getProject();
+    Project project = myRef.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    final PsiMethodCallExpression element = myRef.getElement();
+    PsiMethodCallExpression element = myRef.getElement();
     PsiReferenceExpression reference = element == null ? null : element.getMethodExpression();
     String name = reference == null ? null : reference.getReferenceName();
     if (name == null) return Collections.emptyList();
-    final StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element, toAddStaticImports(), searchMode);
+    StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element, toAddStaticImports(), searchMode);
     cache.processMethodsWithName(name, element.getResolveScope(), processor);
     return processor.getMembersToImport(applicableOnly);
   }
@@ -77,14 +77,14 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
   @Nullable
   @Override
   protected PsiElement getQualifierExpression() {
-    final PsiMethodCallExpression element = myRef.getElement();
+    PsiMethodCallExpression element = myRef.getElement();
     return element != null ? element.getMethodExpression().getQualifierExpression() : null;
   }
 
   @Nullable
   @Override
   protected PsiElement resolveRef() {
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)getElement();
+    PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)getElement();
     return methodCallExpression != null ? methodCallExpression.resolveMethod() : null;
   }
 
@@ -97,12 +97,12 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
     @Override
     protected boolean isApplicable(PsiMethod method, PsiElement place) {
       ProgressManager.checkCanceled();
-      final PsiExpressionList argumentList = ((PsiMethodCallExpression)place).getArgumentList();
-      final MethodCandidateInfo candidateInfo =
+      PsiExpressionList argumentList = ((PsiMethodCallExpression)place).getArgumentList();
+      MethodCandidateInfo candidateInfo =
         new MethodCandidateInfo(method, PsiSubstitutor.EMPTY, false, false, argumentList, null, argumentList.getExpressionTypes(), null);
       PsiSubstitutor substitutorForMethod = candidateInfo.getSubstitutor();
       if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
-        final PsiType returnType = substitutorForMethod.substitute(method.getReturnType());
+        PsiType returnType = substitutorForMethod.substitute(method.getReturnType());
         if (returnType == null) return true;
         return isApplicableFor(returnType);
       }

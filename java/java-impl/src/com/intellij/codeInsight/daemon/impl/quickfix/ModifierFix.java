@@ -38,7 +38,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
   private volatile @IntentionName String myName;
   private final boolean myStartInWriteAction;
 
-  public ModifierFix(PsiModifierList modifierList,
+  public ModifierFix(@NotNull PsiModifierList modifierList,
                      @PsiModifier.ModifierConstant @NotNull String modifier,
                      boolean shouldHave,
                      boolean showContainingClass) {
@@ -70,7 +70,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
     myStartInWriteAction = !(owner instanceof PsiMethod) || AccessModifier.fromPsiModifier(modifier) == null;
   }
 
-  private @IntentionName String format(PsiVariable variable, PsiModifierList modifierList, boolean showContainingClass) {
+  private @IntentionName @NotNull String format(PsiVariable variable, PsiModifierList modifierList, boolean showContainingClass) {
     String name = null;
     PsiElement parent = variable != null ? variable : modifierList != null ? modifierList.getParent() : null;
     if (parent instanceof PsiClass) {

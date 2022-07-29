@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-// will import elements of type T which are referenced by elements of type R (e.g. will import PsiMethods referenced by PsiMethodCallExpression)
+// will import elements of type T which are referenced by elements of type R (e.g., will import PsiMethods referenced by PsiMethodCallExpression)
 public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> implements IntentionAction, HintAction {
   private final List<SmartPsiElementPointer<T>> myApplicableCandidates;
   private final List<T> candidates;
@@ -45,7 +45,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
   }
 
   @NotNull
-  protected IntentionPreviewInfo generatePreview(@NotNull PsiFile file, BiConsumer<PsiElement, T> consumer) {
+  IntentionPreviewInfo generatePreview(@NotNull PsiFile file, @NotNull BiConsumer<? super PsiElement, ? super T> consumer) {
     PsiElement copy = PsiTreeUtil.findSameElementInCopy(getElement(), file);
     if (copy == null) return IntentionPreviewInfo.EMPTY;
     if (candidates.isEmpty()) return IntentionPreviewInfo.EMPTY;
@@ -65,9 +65,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
   @Override
   @NotNull
   public String getText() {
-    return getBaseText() +
-           (candidates == null || candidates.size() != 1 ? "..." :
-            " '" + getMemberPresentableText(candidates.get(0)) + "'");
+    return getBaseText() + (candidates == null || candidates.size() != 1 ? "..." : " '" + getMemberPresentableText(candidates.get(0)) + "'");
   }
 
   @Override
@@ -113,14 +111,16 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
   protected abstract PsiElement resolveRef();
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(() -> {
       List<T> applicableCandidates = ContainerUtil.mapNotNull(myApplicableCandidates, SmartPsiElementPointer::getElement);
-      final List<T> methodsToImport = !applicableCandidates.isEmpty() ? applicableCandidates 
-                                                                      : getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_100_MEMBERS);
-      if (methodsToImport.isEmpty()) return;
-      createQuestionAction(methodsToImport, project, editor).execute();
+      List<T> methodsToImport = applicableCandidates.isEmpty() ?
+                                getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_100_MEMBERS)
+                                                               : applicableCandidates;
+      if (!methodsToImport.isEmpty()) {
+        createQuestionAction(methodsToImport, project, editor).execute();
+      }
     });
   }
 
@@ -134,7 +134,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
       return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
     }
 
-    final PsiElement element = getElement();
+    PsiElement element = getElement();
     if (element == null) {
       return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
     }
@@ -145,11 +145,11 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
       return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
     }
 
-    final QuestionAction action = createQuestionAction(candidates, element.getProject(), editor);
+    QuestionAction action = createQuestionAction(candidates, element.getProject(), editor);
     String hintText = ShowAutoImportPass.getMessage(candidates.size() > 1, getMemberPresentableText(candidates.get(0)));
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()
         && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
-      final TextRange textRange = element.getTextRange();
+      TextRange textRange = element.getTextRange();
       HintManager.getInstance().showQuestionHint(editor, hintText,
                                                  textRange.getStartOffset(),
                                                  textRange.getEndOffset(), action);
@@ -166,7 +166,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
 
   @Override
   public boolean showHint(@NotNull Editor editor) {
-    final PsiElement callExpression = getElement();
+    PsiElement callExpression = getElement();
     if (callExpression == null || 
         getQualifierExpression() != null) {
       return false;

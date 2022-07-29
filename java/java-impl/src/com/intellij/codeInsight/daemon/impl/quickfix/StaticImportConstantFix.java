@@ -46,9 +46,9 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
   @NotNull
   @Override
   protected List<PsiField> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode searchMode) {
-    final Project project = myRef.getProject();
+    Project project = myRef.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    final PsiJavaCodeReferenceElement element = myRef.getElement();
+    PsiJavaCodeReferenceElement element = myRef.getElement();
     String name = element != null ? element.getReferenceName() : null;
     if (name == null) return Collections.emptyList();
     if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element) ||
@@ -56,7 +56,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
         element.getParent() instanceof PsiAnnotation) {
       return Collections.emptyList();
     }
-    final StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<>(element, toAddStaticImports(), searchMode) {
+    StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<>(element, toAddStaticImports(), searchMode) {
       @Override
       protected boolean isApplicable(PsiField field, PsiElement place) {
         ProgressManager.checkCanceled();
@@ -89,14 +89,14 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
   @Nullable
   @Override
   protected PsiElement getQualifierExpression() {
-    final PsiJavaCodeReferenceElement element = myRef.getElement();
+    PsiJavaCodeReferenceElement element = myRef.getElement();
     return element != null ? element.getQualifier() : null;
   }
 
   @Nullable
   @Override
   protected PsiElement resolveRef() {
-    final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)getElement();
+    PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)getElement();
     return referenceElement != null ? referenceElement.advancedResolve(true).getElement() : null;
   }
 
