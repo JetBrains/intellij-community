@@ -138,7 +138,6 @@ class MacDistributionBuilder(override val context: BuildContext,
       val directories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDist)
       val extraFiles = context.getDistFiles()
       val compressionLevel = if (publishSit || publishZipOnly) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED
-      val errorsConsumer = context.messages::warning
       if (context.options.buildMacArtifactsWithRuntime) {
         buildMacZip(
           targetFile = macZip,
@@ -148,8 +147,7 @@ class MacDistributionBuilder(override val context: BuildContext,
           directories = directories,
           extraFiles = extraFiles,
           executableFilePatterns = generateExecutableFilesPatterns(true),
-          compressionLevel = compressionLevel,
-          errorsConsumer = errorsConsumer
+          compressionLevel = compressionLevel
         )
       }
       if (context.options.buildMacArtifactsWithoutRuntime) {
@@ -160,8 +158,7 @@ class MacDistributionBuilder(override val context: BuildContext,
           directories = directories - runtimeDist,
           extraFiles = extraFiles,
           executableFilePatterns = generateExecutableFilesPatterns(false),
-          compressionLevel = compressionLevel,
-          errorsConsumer = errorsConsumer
+          compressionLevel = compressionLevel
         )
       }
       if (publishZipOnly) {
@@ -451,23 +448,18 @@ private fun MacDistributionBuilder.buildMacZip(targetFile: Path,
                                                directories: List<Path>,
                                                extraFiles: Collection<Map.Entry<Path, String>>,
                                                executableFilePatterns: List<String>,
-                                               compressionLevel: Int,
-                                               errorsConsumer: (String) -> Unit) {
+                                               compressionLevel: Int) {
   spanBuilder("build zip archive for macOS")
     .setAttribute("file", targetFile.toString())
     .setAttribute("zipRoot", zipRoot)
     .setAttribute(AttributeKey.stringArrayKey("executableFilePatterns"), executableFilePatterns)
     .use {
-      val fs = targetFile.fileSystem
-      val patterns = executableFilePatterns.map { fs.getPathMatcher("glob:$it") }
-
-      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, relativePath ->
-        when {
-          patterns.any { it.matches(Path.of(relativePath)) } -> entry.unixMode = executableFileUnixMode
-          SystemInfoRt.isUnix && PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions (file) -> {
-            errorsConsumer("Executable permissions of $relativePath won't be set in $targetFile. " +
-                           "Please make sure that executable file patterns are updated.")
-          }
+      for (dir in directories) {
+        updateExecutablePermissions(dir, executableFilePatterns)
+      }
+      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, _ ->
+        if (SystemInfoRt.isUnix && PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions(file)) {
+          entry.unixMode = executableFileUnixMode
         }
       }
 
