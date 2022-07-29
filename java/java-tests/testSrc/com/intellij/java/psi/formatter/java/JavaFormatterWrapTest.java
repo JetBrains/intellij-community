@@ -1142,4 +1142,41 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testDeconstructionPatternWrapping() {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 40;
+    getJavaSettings().DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+
+    doMethodTest(
+      "switch (a) {\n" +
+      "  case Rec(String s, int i) -> {}\n" +
+      "}",
+
+      "switch (a) {\n" +
+      "    case Rec(String s,\n" +
+      "             int i) -> {\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testDeconstructionPatternWrappingNotAligned() {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 40;
+    getJavaSettings().DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getJavaSettings().ALIGN_MULTILINE_DECONSTRUCTION_LIST_COMPONENTS = false;
+
+    doMethodTest(
+      "switch (a) {\n" +
+      "  case Rec(String s, int i) -> {}\n" +
+      "}",
+
+      "switch (a) {\n" +
+      "    case Rec(String s,\n" +
+      "            int i) -> {\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }

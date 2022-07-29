@@ -170,6 +170,17 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
    */
   public boolean SPACE_WITHIN_RECORD_HEADER = false;
 
+
+  /**
+   * <pre>
+   * case Rec(int x, int y, int z) -> {}
+   *               ^      ^
+   * </pre>
+   */
+  @WrapConstant
+  public int DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+  public boolean ALIGN_MULTILINE_DECONSTRUCTION_LIST_COMPONENTS = true;
+
   @WrapConstant
   public int MULTI_CATCH_TYPES_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
   public boolean ALIGN_TYPES_IN_MULTI_CATCH = true;

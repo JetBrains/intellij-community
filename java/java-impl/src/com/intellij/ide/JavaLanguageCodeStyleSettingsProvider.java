@@ -250,6 +250,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 recordComponentsGroup);
 
+      // Try statement
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "MULTI_CATCH_TYPES_WRAP",
                                 JavaBundle.message("wrapping.multi.catch.types"),
@@ -259,6 +260,18 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "ALIGN_TYPES_IN_MULTI_CATCH",
                                 JavaBundle.message("align.types.in.multi.catch"),
                                 ApplicationBundle.message("wrapping.try.statement"));
+
+      // Deconstruction patterns
+      String deconstructionComponentsGroup = JavaBundle.message("wrapping.deconstruction.patterns");
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "DECONSTRUCTION_LIST_WRAP",
+                                deconstructionComponentsGroup,
+                                null,
+                                getInstance().WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ALIGN_MULTILINE_DECONSTRUCTION_LIST_COMPONENTS",
+                                ApplicationBundle.message("wrapping.align.when.multiline"),
+                                deconstructionComponentsGroup);
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();
