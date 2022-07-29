@@ -17,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene Zhuravlev
  */
 public class ChangeBoundFieldTypeFix implements IntentionAction {
-  private final PsiField myField;
-  private final PsiType myTypeToSet;
+  @SafeFieldForPreview private final PsiField myField;
+  @SafeFieldForPreview private final PsiType myTypeToSet;
 
   public ChangeBoundFieldTypeFix(PsiField field, PsiType typeToSet) {
     myField = field;
