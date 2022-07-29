@@ -165,9 +165,6 @@
     <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$Resource"/>
     <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$TestResource"/>
 
-    <lang.psiStructureViewFactory
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.structureView.KotlinStructureViewFactory"/>
 
     <structureViewBuilder
             order="first"

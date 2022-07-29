@@ -133,6 +133,9 @@
     <codeInsight.template.postfixTemplateProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.postfix.KtPostfixTemplateProvider"/>
+    <lang.psiStructureViewFactory
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.structureView.KotlinStructureViewFactory"/>
   </extensions>
 
   <!-- Line markers -->

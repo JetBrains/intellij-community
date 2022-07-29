@@ -13,7 +13,7 @@ import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
-import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
+import org.jetbrains.kotlin.idea.KotlinIdeaBundle
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -75,7 +75,7 @@ internal class KotlinStructureElementPresentation(
 
     private fun getElementText(navigatablePsiElement: NavigatablePsiElement, descriptor: DeclarationDescriptor?): String? {
         if (navigatablePsiElement is KtObjectDeclaration && navigatablePsiElement.isObjectLiteral()) {
-            return KotlinIdeaAnalysisBundle.message("object.0", (navigatablePsiElement.getSuperTypeList()?.text?.let { " : $it" } ?: ""))
+            return KotlinIdeaBundle.message("object.0", (navigatablePsiElement.getSuperTypeList()?.text?.let { " : $it" } ?: ""))
         }
 
         if (descriptor != null) {
@@ -88,7 +88,7 @@ internal class KotlinStructureElementPresentation(
         }
 
         if (navigatablePsiElement is KtAnonymousInitializer) {
-            return KotlinIdeaAnalysisBundle.message("class.initializer")
+            return KotlinIdeaBundle.message("class.initializer")
         }
 
         return null
