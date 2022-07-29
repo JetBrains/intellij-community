@@ -120,7 +120,8 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -1452,7 +1453,7 @@ public final class BuildManager implements Disposable {
       }
     }
 
-    cmdLine.addParameter("-D" + "ide.propagate.context=false");
+    cmdLine.addParameter("-Dide.propagate.context=false");
 
     @SuppressWarnings("UnnecessaryFullyQualifiedName")
     final Class<?> launcherClass = org.jetbrains.jps.cmdline.Launcher.class;
