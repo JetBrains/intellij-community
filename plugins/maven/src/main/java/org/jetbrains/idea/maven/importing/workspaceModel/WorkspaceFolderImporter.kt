@@ -15,9 +15,11 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.BuildHelperMavenPluginUtil
 import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.importing.MavenModuleType
+import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder.*
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.statistics.MavenImportCollector
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -26,17 +28,18 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import java.io.File
 
-class WorkspaceFolderImporter(
+internal class WorkspaceFolderImporter(
   private val builder: MutableEntityStorage,
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val importingSettings: MavenImportingSettings,
   private val importingContext: FolderImportingContext) {
 
-  fun createContentRoots(mavenProject: MavenProject, moduleType: MavenModuleType, module: ModuleEntity): CachedProjectFolders {
+  fun createContentRoots(mavenProject: MavenProject, moduleType: MavenModuleType, module: ModuleEntity,
+                         configuratorTimings: ConfiguratorTimings): CachedProjectFolders {
     val allFolders = mutableListOf<ContentRootCollector.ImportedFolder>()
 
     val cachedFolders = importingContext.projectToCachedFolders.getOrPut(mavenProject) {
-      collectMavenFolders(mavenProject)
+      collectMavenFolders(mavenProject, configuratorTimings)
     }
 
     addContentRoot(cachedFolders, allFolders)
@@ -113,16 +116,20 @@ class WorkspaceFolderImporter(
     }
   }
 
-  private fun collectMavenFolders(mavenProject: MavenProject): CachedProjectFolders {
-    fun toAbsolutePath(path: String) = MavenUtil.toPath(mavenProject, path).path
-
-    val outputPath = toAbsolutePath(mavenProject.outputDirectory)
-    val testOutputPath = toAbsolutePath(mavenProject.testOutputDirectory)
-    val targetDirPath = toAbsolutePath(mavenProject.buildDirectory)
-
+  private fun collectMavenFolders(mavenProject: MavenProject, configuratorTimings: ConfiguratorTimings): CachedProjectFolders {
     val folders = mutableListOf<ContentRootCollector.ImportedFolder>()
 
-    collectSourceFolders(mavenProject, folders)
+    val configuratorContext = object : MavenWorkspaceConfigurator.FoldersContext {
+      override val mavenProject = mavenProject
+    }
+    val legacyImporters = MavenImporter.getSuitableImporters(mavenProject, true)
+
+    collectSourceFolders(mavenProject, folders, configuratorContext, legacyImporters, configuratorTimings)
+    collectGeneratedFolders(folders, mavenProject)
+
+    val outputPath = mavenProject.toAbsolutePath(mavenProject.outputDirectory)
+    val testOutputPath = mavenProject.toAbsolutePath(mavenProject.testOutputDirectory)
+    val targetDirPath = mavenProject.toAbsolutePath(mavenProject.buildDirectory)
 
     if (importingSettings.isExcludeTargetFolder) {
       folders.add(ContentRootCollector.ExcludedFolder(targetDirPath))
@@ -134,15 +141,26 @@ class WorkspaceFolderImporter(
       folders.add(ContentRootCollector.ExcludedFolder(testOutputPath))
     }
 
-    for (each in MavenImporter.getSuitableImporters(mavenProject)) {
+    for (each in legacyImporters) {
       val excludes = mutableListOf<String>()
       each.collectExcludedFolders(mavenProject, excludes)
-      excludes.forEach { folders.add(ContentRootCollector.ExcludedFolderAndPreventSubfolders(toAbsolutePath(it))) }
+      excludes.forEach { folders.add(ContentRootCollector.ExcludedFolderAndPreventSubfolders(mavenProject.toAbsolutePath(it))) }
+    }
+    for (each in WORKSPACE_CONFIGURATOR_EP.extensionList) {
+      configuratorTimings.record(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
+        each.getFoldersToExclude(configuratorContext)
+      }.forEach {
+        folders.add(ContentRootCollector.ExcludedFolderAndPreventSubfolders(mavenProject.toAbsolutePath(it)))
+      }
     }
 
+    return CachedProjectFolders(mavenProject.directory, outputPath, testOutputPath, folders)
+  }
 
+  private fun collectGeneratedFolders(folders: MutableList<ContentRootCollector.ImportedFolder>,
+                                      mavenProject: MavenProject) {
     val generatedFolderSetting = importingSettings.generatedSourcesFolder
-    if (generatedFolderSetting != MavenImportingSettings.GeneratedSourcesFolder.IGNORE) {
+    if (generatedFolderSetting != IGNORE) {
       val mainCollector = GeneratedFoldersCollector(folders, generatedFolderSetting, JavaSourceRootType.SOURCE)
       val testCollector = GeneratedFoldersCollector(folders, generatedFolderSetting, JavaSourceRootType.TEST_SOURCE)
 
@@ -152,15 +170,16 @@ class WorkspaceFolderImporter(
       testCollector.addAnnotationFolder(testAnnotationsDir)
 
       val toSkip = FileCollectionFactory.createCanonicalFileSet(listOf(mainAnnotationsDir, testAnnotationsDir))
-      mainCollector.collectGeneratedFolders(File(toAbsolutePath(mavenProject.getGeneratedSourcesDirectory(false))), toSkip)
-      testCollector.collectGeneratedFolders(File(toAbsolutePath(mavenProject.getGeneratedSourcesDirectory(true))), toSkip)
+      mainCollector.collectGeneratedFolders(File(mavenProject.toAbsolutePath(mavenProject.getGeneratedSourcesDirectory(false))), toSkip)
+      testCollector.collectGeneratedFolders(File(mavenProject.toAbsolutePath(mavenProject.getGeneratedSourcesDirectory(true))), toSkip)
     }
-
-    return CachedProjectFolders(mavenProject.directory, outputPath, testOutputPath, folders)
   }
 
-
-  private fun collectSourceFolders(mavenProject: MavenProject, result: MutableList<ContentRootCollector.ImportedFolder>) {
+  private fun collectSourceFolders(mavenProject: MavenProject,
+                                   result: MutableList<ContentRootCollector.ImportedFolder>,
+                                   configuratorContext: MavenWorkspaceConfigurator.FoldersContext,
+                                   legacyImporters: List<MavenImporter>,
+                                   configuratorTimings: ConfiguratorTimings) {
     fun toAbsolutePath(path: String) = MavenUtil.toPath(mavenProject, path).path
 
     mavenProject.sources.forEach { result.add(ContentRootCollector.SourceFolder(it, JavaSourceRootType.SOURCE)) }
@@ -169,26 +188,43 @@ class WorkspaceFolderImporter(
     mavenProject.testSources.forEach { result.add(ContentRootCollector.SourceFolder(it, JavaSourceRootType.TEST_SOURCE)) }
     mavenProject.testResources.forEach { result.add(ContentRootCollector.SourceFolder(it.directory, JavaResourceRootType.TEST_RESOURCE)) }
 
-    for (each in MavenImporter.getSuitableImporters(mavenProject)) {
+    val buildHelperPlugin = BuildHelperMavenPluginUtil.findPlugin(mavenProject)
+    if (buildHelperPlugin != null) {
+      BuildHelperMavenPluginUtil.addBuilderHelperPaths(buildHelperPlugin, "add-source") { path ->
+        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaSourceRootType.SOURCE))
+      }
+      BuildHelperMavenPluginUtil.addBuilderHelperResourcesPaths(buildHelperPlugin, "add-resource") { path ->
+        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaResourceRootType.RESOURCE))
+      }
+
+      BuildHelperMavenPluginUtil.addBuilderHelperPaths(buildHelperPlugin, "add-test-source") { path ->
+        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaSourceRootType.TEST_SOURCE))
+      }
+      BuildHelperMavenPluginUtil.addBuilderHelperResourcesPaths(buildHelperPlugin, "add-test-resource") { path ->
+        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaResourceRootType.TEST_RESOURCE))
+      }
+    }
+
+    for (each in WORKSPACE_CONFIGURATOR_EP.extensionList) {
+      configuratorTimings.record(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
+        each.getAdditionalSourceFolders(configuratorContext)
+      }.forEach {
+        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(it), JavaSourceRootType.SOURCE))
+      }
+      configuratorTimings.record(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
+        each.getAdditionalTestSourceFolders(configuratorContext)
+      }.forEach {
+        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(it), JavaSourceRootType.TEST_SOURCE))
+      }
+    }
+    for (each in legacyImporters) {
       each.collectSourceRoots(mavenProject) { path: String, type: JpsModuleSourceRootType<*> ->
         result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), type))
       }
     }
-
-    BuildHelperMavenPluginUtil.addBuilderHelperPaths(mavenProject, "add-source") { path ->
-      result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaSourceRootType.SOURCE))
-    }
-    BuildHelperMavenPluginUtil.addBuilderHelperResourcesPaths(mavenProject, "add-resource") { path ->
-      result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaResourceRootType.RESOURCE))
-    }
-
-    BuildHelperMavenPluginUtil.addBuilderHelperPaths(mavenProject, "add-test-source") { path ->
-      result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaSourceRootType.TEST_SOURCE))
-    }
-    BuildHelperMavenPluginUtil.addBuilderHelperResourcesPaths(mavenProject, "add-test-resource") { path ->
-      result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaResourceRootType.TEST_RESOURCE))
-    }
   }
+
+  private fun MavenProject.toAbsolutePath(path: String) = MavenUtil.toPath(this, path).path
 
   private class GeneratedFoldersCollector(val result: MutableList<ContentRootCollector.ImportedFolder>,
                                           val setting: MavenImportingSettings.GeneratedSourcesFolder,

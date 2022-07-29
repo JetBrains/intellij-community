@@ -16,7 +16,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 
 class RemoteRepositoriesImporter : MavenImporter("", ""),
-                                   MavenConfigurator {
+                                   MavenWorkspaceConfigurator {
   private val COLLECTED_REPOSITORIES = Key.create<MutableSet<RemoteRepositoryDescription>>("COLLECTED_REPOSITORIES")
 
   override fun processChangedModulesOnly(): Boolean = false
@@ -29,13 +29,13 @@ class RemoteRepositoriesImporter : MavenImporter("", ""),
     return true
   }
 
-  override fun beforeModelApplied(context: MavenConfigurator.MutableModelContext) {
+  override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
     val mavenProjects = context.mavenProjectsWithModules.map { it.mavenProject }
     val repositories = collectRepositoriesForMavenProjects(context.project, mavenProjects)
     COLLECTED_REPOSITORIES.set(context, repositories)
   }
 
-  override fun afterModelApplied(context: MavenConfigurator.AppliedModelContext) {
+  override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
     COLLECTED_REPOSITORIES.get(context)?.let { applyRepositories(context.project, it) }
   }
 

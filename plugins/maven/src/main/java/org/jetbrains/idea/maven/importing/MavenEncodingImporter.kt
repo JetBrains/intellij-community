@@ -25,7 +25,7 @@ import java.nio.charset.UnsupportedCharsetException
 /**
  * @author Sergey Evdokimov
  */
-class MavenEncodingImporter : MavenImporter("", ""), MavenConfigurator {
+class MavenEncodingImporter : MavenImporter("", ""), MavenWorkspaceConfigurator {
   private val PREPARED_MAPPER = Key.create<EncodingMapper>("ENCODING_MAPPER")
 
   override fun isApplicable(mavenProject: MavenProject): Boolean {
@@ -36,13 +36,13 @@ class MavenEncodingImporter : MavenImporter("", ""), MavenConfigurator {
     return true
   }
 
-  override fun beforeModelApplied(context: MavenConfigurator.MutableModelContext) {
+  override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
     val allMavenProjects = context.mavenProjectsWithModules.filter { it.changes.hasChanges() }.map { it.mavenProject }
     val mapper = mapEncodings(allMavenProjects, context.project)
     PREPARED_MAPPER.set(context, mapper)
   }
 
-  override fun afterModelApplied(context: MavenConfigurator.AppliedModelContext) {
+  override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
     PREPARED_MAPPER.get(context)?.applyCollectedInfo()
   }
 

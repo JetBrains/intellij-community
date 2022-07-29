@@ -28,14 +28,15 @@ import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.utils.MavenLog
 
-class WorkspaceModuleImporter(
+internal class WorkspaceModuleImporter(
   private val project: Project,
   private val importData: MavenTreeModuleImportData,
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val builder: MutableEntityStorage,
   private val importingSettings: MavenImportingSettings,
   private val dependenciesImportingContext: DependenciesImportingContext,
-  private val folderImportingContext: WorkspaceFolderImporter.FolderImportingContext
+  private val folderImportingContext: WorkspaceFolderImporter.FolderImportingContext,
+  private val configuratorTimings: ConfiguratorTimings
 ) {
   private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(EXTERNAL_SOURCE_ID)
 
@@ -74,7 +75,8 @@ class WorkspaceModuleImporter(
                                     moduleEntity: ModuleEntity,
                                     folderImportingContext: WorkspaceFolderImporter.FolderImportingContext) {
     val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings, folderImportingContext)
-    val importFolderHolder = folderImporter.createContentRoots(importData.mavenProject, importData.moduleData.type, moduleEntity)
+    val importFolderHolder = folderImporter.createContentRoots(importData.mavenProject, importData.moduleData.type, moduleEntity,
+                                                               configuratorTimings)
 
     when (importData.moduleData.type) {
       MavenModuleType.MAIN_ONLY -> importJavaSettingsMain(moduleEntity, importData, importFolderHolder)

@@ -19,7 +19,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.tasks.TasksBundle
 
 class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin"),
-                                    MavenConfigurator {
+                                    MavenWorkspaceConfigurator {
 
   private val myProcessedLibraries = hashSetOf<MavenArtifact>()
 
@@ -27,7 +27,7 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
 
   override fun isMigratedToConfigurator(): Boolean = true
 
-  override fun afterModelApplied(context: MavenConfigurator.AppliedModelContext) {
+  override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
     if (!shouldRun(context.project)) return
     val projectsWithChanges = context.mavenProjectsWithModules.filter { it.changes.hasChanges() }.map { it.mavenProject }
 
