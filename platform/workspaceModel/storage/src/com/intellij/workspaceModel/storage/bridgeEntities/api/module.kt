@@ -53,8 +53,8 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
                         init: (Builder.() -> Unit)? = null): ModuleEntity {
       val builder = builder()
       builder.name = name
-      builder.entitySource = entitySource
       builder.dependencies = dependencies.toMutableWorkspaceList()
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -91,8 +91,8 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): ModuleCustomImlDataEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.customModuleOptions = customModuleOptions
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -123,8 +123,8 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
   companion object : Type<ModuleGroupPathEntity, Builder>() {
     operator fun invoke(path: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleGroupPathEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.path = path.toMutableWorkspaceList()
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -165,9 +165,9 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): JavaModuleSettingsEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.inheritedCompilerOutput = inheritedCompilerOutput
       builder.excludeOutput = excludeOutput
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

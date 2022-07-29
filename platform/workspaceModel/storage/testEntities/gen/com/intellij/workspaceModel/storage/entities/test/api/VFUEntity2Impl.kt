@@ -223,6 +223,12 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return VFUEntity2(data, directoryPath, notNullRoots, entitySource) {
+      this.filePath = this@VFUEntity2Data.filePath
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

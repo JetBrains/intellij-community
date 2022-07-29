@@ -293,6 +293,18 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return ExternalSystemModuleOptionsEntity(entitySource) {
+      this.externalSystem = this@ExternalSystemModuleOptionsEntityData.externalSystem
+      this.externalSystemModuleVersion = this@ExternalSystemModuleOptionsEntityData.externalSystemModuleVersion
+      this.linkedProjectPath = this@ExternalSystemModuleOptionsEntityData.linkedProjectPath
+      this.linkedProjectId = this@ExternalSystemModuleOptionsEntityData.linkedProjectId
+      this.rootProjectPath = this@ExternalSystemModuleOptionsEntityData.rootProjectPath
+      this.externalSystemModuleGroup = this@ExternalSystemModuleOptionsEntityData.externalSystemModuleGroup
+      this.externalSystemModuleType = this@ExternalSystemModuleOptionsEntityData.externalSystemModuleType
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

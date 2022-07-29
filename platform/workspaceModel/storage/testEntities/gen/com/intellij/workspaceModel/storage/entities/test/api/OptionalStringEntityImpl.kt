@@ -138,6 +138,12 @@ class OptionalStringEntityData : WorkspaceEntityData<OptionalStringEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return OptionalStringEntity(entitySource) {
+      this.data = this@OptionalStringEntityData.data
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

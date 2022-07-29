@@ -170,6 +170,13 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return FinalFieldsEntity(descriptor, entitySource) {
+      this.description = this@FinalFieldsEntityData.description
+      this.anotherVersion = this@FinalFieldsEntityData.anotherVersion
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

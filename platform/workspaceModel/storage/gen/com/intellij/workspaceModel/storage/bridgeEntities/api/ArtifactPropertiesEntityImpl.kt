@@ -219,6 +219,12 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return ArtifactPropertiesEntity(providerType, entitySource) {
+      this.propertiesXmlTag = this@ArtifactPropertiesEntityData.propertiesXmlTag
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

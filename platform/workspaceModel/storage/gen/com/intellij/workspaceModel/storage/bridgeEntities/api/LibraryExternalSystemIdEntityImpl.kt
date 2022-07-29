@@ -198,6 +198,10 @@ class LibraryExternalSystemIdEntityData : WorkspaceEntityData<LibraryExternalSys
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return LibraryExternalSystemIdEntity(externalSystemId, entitySource)
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

@@ -206,6 +206,10 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<Link
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return LinkedListEntity(myName, next, entitySource)
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

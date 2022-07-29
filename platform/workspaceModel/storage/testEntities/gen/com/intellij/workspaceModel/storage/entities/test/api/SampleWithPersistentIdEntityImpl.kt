@@ -317,6 +317,13 @@ class SampleWithPersistentIdEntityData : WorkspaceEntityData.WithCalculablePersi
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return SampleWithPersistentIdEntity(booleanProperty, stringProperty, stringListProperty, stringMapProperty, fileProperty,
+                                        entitySource) {
+      this.nullableData = this@SampleWithPersistentIdEntityData.nullableData
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

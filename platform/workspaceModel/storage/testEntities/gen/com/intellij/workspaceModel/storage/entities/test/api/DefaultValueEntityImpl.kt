@@ -168,6 +168,13 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return DefaultValueEntity(name, entitySource) {
+      this.isGenerated = this@DefaultValueEntityData.isGenerated
+      this.anotherName = this@DefaultValueEntityData.anotherName
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

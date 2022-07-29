@@ -146,6 +146,10 @@ class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<Fi
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return FirstEntityWithPId(data, entitySource)
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

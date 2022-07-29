@@ -1110,6 +1110,15 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return EntityWithSoftLinks(link, manyLinks, inContainer, inContainerList, deepContainer, sealedContainer, listSealedContainer,
+                               justProperty, justListProperty, deepSealedClass, entitySource) {
+      this.optionalLink = this@EntityWithSoftLinksData.optionalLink
+      this.inOptionalContainer = this@EntityWithSoftLinksData.inOptionalContainer
+      this.justNullableProperty = this@EntityWithSoftLinksData.justNullableProperty
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

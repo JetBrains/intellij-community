@@ -214,6 +214,12 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return ModuleCustomImlDataEntity(customModuleOptions, entitySource) {
+      this.rootManagerTagCustomData = this@ModuleCustomImlDataEntityData.rootManagerTagCustomData
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

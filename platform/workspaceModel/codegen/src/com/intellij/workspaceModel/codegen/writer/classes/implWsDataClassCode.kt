@@ -139,6 +139,24 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         //InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, DeserializationVisitor(this@sectionNl))
       }
 
+      sectionNl("override fun createDetachedEntity(): WorkspaceEntity") {
+        val noRefs = allFields.noRefs().noPersistentId()
+        val mandatoryFields = allFields.mandatoryFields()
+        val constructor = mandatoryFields.joinToString(", ") { it.name }.let { if (it.isNotBlank()) "($it)" else "" }
+        val optionalFields = noRefs.filterNot { it in mandatoryFields }
+
+        if (optionalFields.isNotEmpty()) {
+          section("return $javaFullName$constructor") {
+            optionalFields.forEach {
+              line("this.${it.name} = this@$javaDataName.${it.name}")
+            }
+          }
+        }
+        else {
+          line("return $javaFullName$constructor")
+        }
+      }
+
       // --- equals
       sectionNl("override fun equals(other: Any?): Boolean") {
         line("if (other == null) return false")

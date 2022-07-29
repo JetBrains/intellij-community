@@ -247,6 +247,12 @@ class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTes
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return ModuleTestOutputPackagingElementEntity(entitySource) {
+      this.module = this@ModuleTestOutputPackagingElementEntityData.module
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

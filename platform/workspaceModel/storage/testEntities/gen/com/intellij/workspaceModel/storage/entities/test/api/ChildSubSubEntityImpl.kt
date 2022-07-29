@@ -194,6 +194,10 @@ class ChildSubSubEntityData : WorkspaceEntityData<ChildSubSubEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return ChildSubSubEntity(childData, entitySource)
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

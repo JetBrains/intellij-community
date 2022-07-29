@@ -256,6 +256,14 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return JavaModuleSettingsEntity(inheritedCompilerOutput, excludeOutput, entitySource) {
+      this.compilerOutput = this@JavaModuleSettingsEntityData.compilerOutput
+      this.compilerOutputForTests = this@JavaModuleSettingsEntityData.compilerOutputForTests
+      this.languageLevelId = this@JavaModuleSettingsEntityData.languageLevelId
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

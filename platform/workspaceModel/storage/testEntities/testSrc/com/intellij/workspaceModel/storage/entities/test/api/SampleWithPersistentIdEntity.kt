@@ -48,11 +48,11 @@ interface SampleWithPersistentIdEntity : WorkspaceEntityWithPersistentId {
                         init: (Builder.() -> Unit)? = null): SampleWithPersistentIdEntity {
       val builder = builder()
       builder.booleanProperty = booleanProperty
-      builder.entitySource = entitySource
       builder.stringProperty = stringProperty
       builder.stringListProperty = stringListProperty.toMutableWorkspaceList()
       builder.stringMapProperty = stringMapProperty
       builder.fileProperty = fileProperty
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

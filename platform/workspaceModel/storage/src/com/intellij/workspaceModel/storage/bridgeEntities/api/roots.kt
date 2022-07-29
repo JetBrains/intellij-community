@@ -44,10 +44,10 @@ interface ContentRootEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): ContentRootEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.url = url
       builder.excludedUrls = excludedUrls.toMutableWorkspaceList()
       builder.excludedPatterns = excludedPatterns.toMutableWorkspaceList()
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -89,9 +89,9 @@ interface SourceRootEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): SourceRootEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.url = url
       builder.rootType = rootType
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -123,8 +123,8 @@ interface SourceRootOrderEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): SourceRootOrderEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.orderOfSourceRoots = orderOfSourceRoots.toMutableWorkspaceList()
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -156,8 +156,8 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): CustomSourceRootPropertiesEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.propertiesXmlTag = propertiesXmlTag
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -193,9 +193,9 @@ interface JavaSourceRootEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): JavaSourceRootEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.generated = generated
       builder.packagePrefix = packagePrefix
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -230,9 +230,9 @@ interface JavaResourceRootEntity: WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): JavaResourceRootEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.generated = generated
       builder.relativeOutputPath = relativeOutputPath
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

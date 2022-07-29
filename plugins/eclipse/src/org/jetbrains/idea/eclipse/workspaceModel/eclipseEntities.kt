@@ -62,7 +62,6 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): EclipseProjectPropertiesEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.variablePaths = variablePaths
       builder.eclipseUrls = eclipseUrls.toMutableWorkspaceList()
       builder.unknownCons = unknownCons.toMutableWorkspaceList()
@@ -70,6 +69,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
       builder.forceConfigureJdk = forceConfigureJdk
       builder.expectedModuleSourcePlace = expectedModuleSourcePlace
       builder.srcPlace = srcPlace
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

@@ -567,6 +567,10 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
     return "${this::class.simpleName}($fields, id=${this.id})"
   }
 
+  open fun createDetachedEntity(): WorkspaceEntity {
+    throw NotImplementedError()
+  }
+
   /**
    * Temporally solution.
    * Get persistent Id without creating of TypedEntity. Should be in sync with TypedEntityWithPersistentId.

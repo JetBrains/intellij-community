@@ -171,6 +171,12 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return SampleEntity2(data, boolData, entitySource) {
+      this.optionalData = this@SampleEntity2Data.optionalData
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

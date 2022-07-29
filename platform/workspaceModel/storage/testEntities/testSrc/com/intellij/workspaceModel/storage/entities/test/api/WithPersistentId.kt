@@ -136,7 +136,6 @@ interface EntityWithSoftLinks : WorkspaceEntity {
                         init: (Builder.() -> Unit)? = null): EntityWithSoftLinks {
       val builder = builder()
       builder.link = link
-      builder.entitySource = entitySource
       builder.manyLinks = manyLinks.toMutableWorkspaceList()
       builder.inContainer = inContainer
       builder.inContainerList = inContainerList.toMutableWorkspaceList()
@@ -146,6 +145,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
       builder.justProperty = justProperty
       builder.justListProperty = justListProperty.toMutableWorkspaceList()
       builder.deepSealedClass = deepSealedClass
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

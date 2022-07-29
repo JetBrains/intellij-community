@@ -184,6 +184,10 @@ class ComposedLinkEntityData : WorkspaceEntityData<ComposedLinkEntity>(), SoftLi
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return ComposedLinkEntity(link, entitySource)
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

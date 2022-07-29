@@ -200,6 +200,10 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return CustomSourceRootPropertiesEntity(propertiesXmlTag, entitySource)
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

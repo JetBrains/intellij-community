@@ -220,6 +220,10 @@ class ChildFirstEntityData : WorkspaceEntityData<ChildFirstEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return ChildFirstEntity(commonData, firstData, entitySource)
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

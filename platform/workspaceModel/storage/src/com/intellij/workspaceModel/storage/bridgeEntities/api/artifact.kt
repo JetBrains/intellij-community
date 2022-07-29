@@ -48,9 +48,9 @@ interface ArtifactEntity : WorkspaceEntityWithPersistentId {
                         init: (Builder.() -> Unit)? = null): ArtifactEntity {
       val builder = builder()
       builder.name = name
-      builder.entitySource = entitySource
       builder.artifactType = artifactType
       builder.includeInProjectBuild = includeInProjectBuild
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -85,8 +85,8 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
   companion object : Type<ArtifactPropertiesEntity, Builder>() {
     operator fun invoke(providerType: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArtifactPropertiesEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.providerType = providerType
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -547,8 +547,8 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
                         init: (Builder.() -> Unit)? = null): CustomPackagingElementEntity {
       val builder = builder()
       builder.typeId = typeId
-      builder.entitySource = entitySource
       builder.propertiesXmlTag = propertiesXmlTag
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

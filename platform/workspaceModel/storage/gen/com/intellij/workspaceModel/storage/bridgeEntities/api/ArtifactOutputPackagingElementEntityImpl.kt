@@ -247,6 +247,12 @@ class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOut
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return ArtifactOutputPackagingElementEntity(entitySource) {
+      this.artifact = this@ArtifactOutputPackagingElementEntityData.artifact
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false

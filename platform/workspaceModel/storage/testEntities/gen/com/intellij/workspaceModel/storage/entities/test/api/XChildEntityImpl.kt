@@ -275,6 +275,12 @@ class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(): WorkspaceEntity {
+    return XChildEntity(childProperty, entitySource) {
+      this.dataClass = this@XChildEntityData.dataClass
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
