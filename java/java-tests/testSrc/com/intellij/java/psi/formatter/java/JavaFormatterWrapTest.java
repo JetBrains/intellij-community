@@ -1129,4 +1129,17 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testPermitsListWrapping() {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 40;
+
+    doTextTest(
+      "class A permits Class1, Class2, Class3, Class4, Class5 {}",
+
+      "class A permits Class1, Class2,\n" +
+      "        Class3, Class4, Class5 {\n" +
+      "}"
+    );
+  }
 }
