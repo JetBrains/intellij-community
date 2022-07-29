@@ -49,8 +49,9 @@ public class MakeMethodFinalFix extends InspectionGadgetsFix {
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    PsiMethod method = findMethodToFix(previewDescriptor.getPsiElement().getParent());
-    if (method != null) {
+    PsiElement parent = previewDescriptor.getPsiElement().getParent();
+    PsiMethod method = findMethodToFix(parent);
+    if (method != null && parent.getContainingFile() == method.getContainingFile()) {
       method.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
       return IntentionPreviewInfo.DIFF;
     }
