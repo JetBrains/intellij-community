@@ -28,7 +28,11 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return generatePreview(file, (expression, field) -> QualifyStaticMethodCallFix.qualifyStatically(field, project, (PsiReferenceExpression)expression));
+    return generatePreview(file, (expression, field) -> {
+      if (expression instanceof PsiReferenceExpression) {
+        QualifyStaticMethodCallFix.qualifyStatically(field, project, (PsiReferenceExpression)expression);
+      }
+    });
   }
 
   @NotNull
@@ -47,10 +51,8 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
       protected void doImport(PsiField toImport) {
         PsiJavaCodeReferenceElement element = myRef.getElement();
         if (!(element instanceof PsiReferenceExpression)) return;
-        WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("qualify.static.access.command.name"), null, 
-                                                 () -> {
-                                                   QualifyStaticMethodCallFix.qualifyStatically(toImport, project, (PsiReferenceExpression)element);
-                                                 }
+        WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("qualify.static.access.command.name"), null,
+                                                 () -> QualifyStaticMethodCallFix.qualifyStatically(toImport, project, (PsiReferenceExpression)element)
         );
       }
     };
