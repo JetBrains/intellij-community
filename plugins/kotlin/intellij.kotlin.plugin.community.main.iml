@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="kotlin.base.util" exported="" />
     <orderEntry type="module" module-name="kotlin.base.plugin" exported="" />
     <orderEntry type="module" module-name="kotlin.base.indices" exported="" />
+    <orderEntry type="module" module-name="kotlin.navigation" exported="" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" exported="" />
     <orderEntry type="module" module-name="kotlin.base.psi" exported="" />
     <orderEntry type="module" module-name="kotlin.base.kdoc" exported="" />

@@ -80,5 +80,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.navigation" scope="TEST" />
   </component>
 </module>

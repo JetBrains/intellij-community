@@ -48,6 +48,7 @@ internal fun generateTests(isUpToDateCheck: Boolean = false) {
 private fun assembleWorkspace(): TWorkspace = workspace {
     generateK2CodeInsightTests()
     generateK2Fe10BindingsTests()
+    generateK2NavigationTests()
 
     testGroup("base/fir/analysis-api-providers") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
