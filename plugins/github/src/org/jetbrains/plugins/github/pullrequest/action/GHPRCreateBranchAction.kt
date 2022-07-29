@@ -42,7 +42,8 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
       val remote = GithubGitHelper.getInstance().findRemote(repository, httpUrl, sshUrl)
       if (remote != null) {
         val localBranch = GithubGitHelper.getInstance().findLocalBranch(repository, remote, isFork, headRefName)
-        if (repository.currentBranchName == localBranch) {
+        val currentBranch = repository.currentBranchName
+        if (currentBranch != null && currentBranch == localBranch) {
           e.presentation.isEnabled = false
           return
         }
