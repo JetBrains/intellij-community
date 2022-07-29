@@ -19,9 +19,9 @@ val GRADLE_SYSTEM_ID: ProjectSystemId
     get() = org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 
 @Deprecated(
-    "Moved to the org.jetbrains.kotlin.idea.configuration package.",
+    "Moved to the 'org.jetbrains.kotlin.idea.base.util' package.",
     level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith("org.jetbrains.kotlin.idea.configuration.isGradleModule()")
+    replaceWith = ReplaceWith("org.jetbrains.kotlin.idea.base.util.isGradleModule()")
 )
 fun Module.isGradleModule(): Boolean {
     return ExternalSystemApiUtil.isExternalSystemAwareModule(GRADLE_SYSTEM_ID, this)
