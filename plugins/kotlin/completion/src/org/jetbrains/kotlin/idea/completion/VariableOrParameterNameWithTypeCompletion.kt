@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -94,6 +94,7 @@ class VariableOrParameterNameWithTypeCompletion(
         resolutionFacade: ResolutionFacade,
         visibilityFilter: (DeclarationDescriptor) -> Boolean
     ) {
+        val positionParameter = position.parent as? KtParameter
         val lookupElementToCount = LinkedHashMap<LookupElement, Pair<Int, String>>()
         position.containingFile.forEachDescendantOfType<KtParameter>(
             canGoInside = { it !is KtExpression || it is KtDeclaration } // we analyze parameters inside bodies to not resolve too much
@@ -101,7 +102,7 @@ class VariableOrParameterNameWithTypeCompletion(
             ProgressManager.checkCanceled()
 
             val name = parameter.name
-            if (name != null && prefixMatcher.isStartMatch(name)) {
+            if (name != null && positionParameter !== parameter && prefixMatcher.isStartMatch(name)) {
                 val descriptor = resolutionFacade.analyze(parameter)[BindingContext.VALUE_PARAMETER, parameter]
                 if (descriptor != null) {
                     val parameterType = descriptor.type
