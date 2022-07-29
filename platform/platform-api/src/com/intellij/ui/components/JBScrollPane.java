@@ -282,7 +282,7 @@ public class JBScrollPane extends JScrollPane {
    */
   private static @NotNull MouseWheelEvent withShiftModifier(@NotNull MouseWheelEvent event) {
     return MouseEventAdapter.convert(event, (JComponent)event.getSource(), event.getID(), event.getWhen(),
-                                     event.getModifiers() | event.getModifiersEx() | InputEvent.SHIFT_DOWN_MASK,
+                                     UIUtil.getAllModifiers(event) | InputEvent.SHIFT_DOWN_MASK,
                                      event.getX(), event.getY());
   }
 
