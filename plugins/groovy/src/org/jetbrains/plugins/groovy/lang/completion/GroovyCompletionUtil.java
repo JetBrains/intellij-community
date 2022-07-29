@@ -354,6 +354,9 @@ public final class GroovyCompletionUtil {
                                                  @Nullable PsiElement position) {
     builder = builder.withIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS))
       .withInsertHandler(GroovyInsertHandler.INSTANCE);
+    if (element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED)) {
+      builder = builder.strikeout();
+    }
     builder = setTailText(element, builder, substitutor);
     builder = setTypeText(element, builder, substitutor, position);
     return builder;
