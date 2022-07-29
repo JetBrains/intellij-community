@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMember
 import com.intellij.util.castSafelyTo
+import org.jetbrains.plugins.gradle.service.resolve.DECLARATION_ALTERNATIVES
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 
 class GradleLookupWeigher : LookupElementWeigher("gradleWeigher", true, false) {
@@ -20,7 +21,10 @@ class GradleLookupWeigher : LookupElementWeigher("gradleWeigher", true, false) {
       completionElement.castSafelyTo<UserDataHolder>()
       ?: completionElement.castSafelyTo<GroovyResolveResult>()?.element
       ?: return 0
-    return holder.getUserData(COMPLETION_PRIORITY) ?: getFallbackCompletionPriority(holder)
+
+    val comparable: Int = holder.getUserData(COMPLETION_PRIORITY) ?: getFallbackCompletionPriority(holder)
+    val deprecationMultiplier = if (element.psiElement?.getUserData(DECLARATION_ALTERNATIVES) != null) 0.9 else 1.0
+    return (comparable.toDouble() * deprecationMultiplier).toInt()
   }
 
   private fun getFallbackCompletionPriority(holder: UserDataHolder): Int {
@@ -40,6 +44,6 @@ class GradleLookupWeigher : LookupElementWeigher("gradleWeigher", true, false) {
       element.putUserData(COMPLETION_PRIORITY, priority)
     }
 
-    private val COMPLETION_PRIORITY = Key.create<Int>("grouping priority for gradle completion results")
+    private val COMPLETION_PRIORITY: Key<Int> = Key.create("grouping priority for gradle completion results")
   }
 }

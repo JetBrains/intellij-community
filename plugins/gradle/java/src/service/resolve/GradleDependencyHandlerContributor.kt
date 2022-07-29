@@ -75,6 +75,7 @@ class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
       setBaseIcon(GradleIcons.Gradle)
       if (declarationAlternatives.isNotEmpty()) {
         putUserData(DECLARATION_ALTERNATIVES, declarationAlternatives)
+        modifierList.addAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED)
       }
       putUserData(NonCodeMembersHolder.DOCUMENTATION, description)
       if (worthLifting(place)) {

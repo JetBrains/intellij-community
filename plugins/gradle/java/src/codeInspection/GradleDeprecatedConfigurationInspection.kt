@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.util.containers.map2Array
 import org.jetbrains.plugins.gradle.service.resolve.DECLARATION_ALTERNATIVES
+import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor
 import org.jetbrains.plugins.groovy.intentions.GrReplaceMethodCallQuickFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -20,12 +21,14 @@ class GradleDeprecatedConfigurationInspection : GradleBaseInspection() {
         val resolved = referenceExpression.resolve() ?: return
         val alternatives = resolved.getUserData(DECLARATION_ALTERNATIVES)?.takeIf { it.isNotEmpty() } ?: return
 
+        val knownConfigurations = GradleExtensionsContributor.getExtensionsFor(referenceExpression)?.configurations?.keys ?: emptyList()
+
         val descriptor = InspectionManager.getInstance(referenceExpression.project)
           .createProblemDescriptor(
             referenceNameElement,
             GradleInspectionBundle.message("inspection.message.configuration.is.deprecated", referenceNameElement.text),
             false,
-            alternatives.map2Array { GrReplaceMethodCallQuickFix(referenceNameElement.text, it) },
+            alternatives.filter { it in knownConfigurations }.map2Array { GrReplaceMethodCallQuickFix(referenceNameElement.text, it) },
             ProblemHighlightType.LIKE_DEPRECATED)
 
         holder.registerProblem(descriptor)
