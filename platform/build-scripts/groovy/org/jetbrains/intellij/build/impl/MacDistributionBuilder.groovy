@@ -26,6 +26,7 @@ import java.util.function.BiConsumer
 import java.util.zip.Deflater
 
 import static org.jetbrains.intellij.build.TraceManager.spanBuilder
+import static org.jetbrains.intellij.build.impl.BuildTasksImplKt.updateExecutablePermissions
 
 @CompileStatic
 final class MacDistributionBuilder implements OsSpecificDistributionBuilder {
@@ -162,6 +163,9 @@ final class MacDistributionBuilder implements OsSpecificDistributionBuilder {
     Path macZip = ((publishArchive || customizer.publishArchive) ? context.paths.artifactDir : context.paths.tempDir)
       .resolve(baseName + ".mac.${arch.name()}.zip")
     String zipRoot = getZipRoot(context, customizer)
+    def executableFilePatterns = getExecutableFilePatterns(customizer)
+    updateExecutablePermissions(context.paths.distAllDir, executableFilePatterns)
+    updateExecutablePermissions(osAndArchSpecificDistPath, executableFilePatterns)
     MacKt.buildMacZip(
       macZip,
       zipRoot,
@@ -169,9 +173,9 @@ final class MacDistributionBuilder implements OsSpecificDistributionBuilder {
       context.paths.distAllDir,
       osAndArchSpecificDistPath,
       context.getDistFiles(),
-      getExecutableFilePatterns(customizer),
-      publishArchive ? Deflater.DEFAULT_COMPRESSION : Deflater.BEST_SPEED,
-      { context.messages.warning(it) })
+      executableFilePatterns,
+      publishArchive ? Deflater.DEFAULT_COMPRESSION : Deflater.BEST_SPEED
+    )
     ProductInfoValidatorKt.checkInArchive(context, macZip, "$zipRoot/Resources")
 
     if (publishArchive) {
