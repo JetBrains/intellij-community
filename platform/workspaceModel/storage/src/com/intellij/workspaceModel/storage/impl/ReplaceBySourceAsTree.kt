@@ -43,7 +43,6 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     }
 
     for (replaceWithEntityToReplace in replaceWithEntitiesToReplace.values.flatMap { it.values }.flatten()) {
-      // TODO: 27.07.2022 Check state of replaceWith entities
       ReplaceWithProcessor().processEntity(replaceWithEntityToReplace)
     }
 
@@ -220,7 +219,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       targetEntityToReplace as WorkspaceEntityBase
 
       val (targetRootEntity, targetPathToRoot) = buildRootTrack(targetEntityToReplace.id, targetStorage)
-      TargetProcessor().processRoot(targetRootEntity, targetPathToRoot)
+      processRoot(targetRootEntity, targetPathToRoot)
     }
 
     private fun processRoot(targetRootEntity: WorkspaceEntityBase, targetRootTrack: MutableList<EntityId>) {
