@@ -57,13 +57,25 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   private final boolean mySuggestSuperTypes;
   private final String myName;
   private final String myCanonicalText;
+  private final String myDisplayName;
 
   public MethodReturnTypeFix(@NotNull PsiMethod method, @NotNull PsiType returnType, boolean fixWholeHierarchy) {
-    this(method, returnType, fixWholeHierarchy, false);
+    this(method, returnType, fixWholeHierarchy, false, false);
   }
 
   public MethodReturnTypeFix(@NotNull PsiMethod method, @NotNull PsiType returnType, boolean fixWholeHierarchy, boolean suggestSuperTypes) {
+    this(method, returnType, fixWholeHierarchy, suggestSuperTypes, false);
+  }
+
+  public MethodReturnTypeFix(@NotNull PsiMethod method, @NotNull PsiType returnType, boolean fixWholeHierarchy, boolean suggestSuperTypes,
+                             boolean showClassName) {
     super(method);
+    myDisplayName =
+      PsiFormatUtil.formatMethod(
+      method,
+      PsiSubstitutor.EMPTY, showClassName ? PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS : PsiFormatUtilBase.SHOW_NAME,
+      0
+    );
     myReturnTypePointer = SmartTypePointerManager.getInstance(method.getProject()).createSmartTypePointer(returnType);
     myFixWholeHierarchy = fixWholeHierarchy;
     mySuggestSuperTypes = suggestSuperTypes;
@@ -84,10 +96,10 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   @NotNull
   @Override
   public String getText() {
-    if (!mySuggestSuperTypes) return QuickFixBundle.message("fix.return.type.text", myName, myCanonicalText);
+    if (!mySuggestSuperTypes) return QuickFixBundle.message("fix.return.type.text", myDisplayName, myCanonicalText);
     PsiType type = Objects.requireNonNull(myReturnTypePointer.getType());
     boolean hasPredecessor = type.getSuperTypes().length != 0;
-    return QuickFixBundle.message(hasPredecessor ? "fix.return.type.or.predecessor.text" : "fix.return.type.text", myName, myCanonicalText);
+    return QuickFixBundle.message(hasPredecessor ? "fix.return.type.or.predecessor.text" : "fix.return.type.text", myDisplayName, myCanonicalText);
   }
 
   @Override

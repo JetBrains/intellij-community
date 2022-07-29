@@ -463,7 +463,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createSuperMethodReturnFix(@NotNull PsiMethod superMethod, @NotNull PsiType superMethodType) {
-    return new SuperMethodReturnFix(superMethod, superMethodType);
+    return new MethodReturnTypeFix(superMethod, superMethodType, false, false, true);
   }
 
   @NotNull
