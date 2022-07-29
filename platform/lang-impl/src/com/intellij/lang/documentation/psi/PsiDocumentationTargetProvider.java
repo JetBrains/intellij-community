@@ -2,7 +2,6 @@
 package com.intellij.lang.documentation.psi;
 
 import com.intellij.lang.documentation.DocumentationTarget;
-import com.intellij.lang.documentation.symbol.SymbolDocumentationTargetProvider;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus.Experimental;
@@ -14,7 +13,8 @@ import org.jetbrains.annotations.Nullable;
  * Implement this interface and register as {@code com.intellij.lang.psiDocumentation} extension
  * to provide a {@link DocumentationTarget} implementation by a {@link PsiElement}.
  *
- * @see SymbolDocumentationTargetProvider
+ * @see com.intellij.lang.documentation.DocumentationTargetProvider
+ * @see com.intellij.lang.documentation.symbol.SymbolDocumentationTargetProvider
  */
 @Experimental
 public interface PsiDocumentationTargetProvider {

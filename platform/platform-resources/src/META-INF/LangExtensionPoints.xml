@@ -639,6 +639,8 @@
     <extensionPoint name="readerModeMatcher" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeMatcher"/>
     <extensionPoint name="lang.documentationLinkHandler" dynamic="true"
                     interface="com.intellij.lang.documentation.DocumentationLinkHandler"/>
+    <extensionPoint name="lang.documentation" dynamic="true"
+                    interface="com.intellij.lang.documentation.DocumentationTargetProvider"/>
     <extensionPoint name="lang.symbolDocumentation" dynamic="true"
                     interface="com.intellij.lang.documentation.symbol.SymbolDocumentationTargetProvider"/>
     <extensionPoint name="lang.psiDocumentation" dynamic="true"

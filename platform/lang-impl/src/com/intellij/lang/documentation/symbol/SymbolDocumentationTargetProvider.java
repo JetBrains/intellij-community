@@ -2,7 +2,6 @@
 package com.intellij.lang.documentation.symbol;
 
 import com.intellij.lang.documentation.DocumentationTarget;
-import com.intellij.lang.documentation.psi.PsiDocumentationTargetProvider;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -19,7 +18,8 @@ import org.jetbrains.annotations.Nullable;
  * <li>implement {@link DocumentationTarget} directly in a Symbol</li>
  * </ul>
  *
- * @see PsiDocumentationTargetProvider
+ * @see com.intellij.lang.documentation.DocumentationTargetProvider
+ * @see com.intellij.lang.documentation.psi.PsiDocumentationTargetProvider
  */
 @Experimental
 public interface SymbolDocumentationTargetProvider {

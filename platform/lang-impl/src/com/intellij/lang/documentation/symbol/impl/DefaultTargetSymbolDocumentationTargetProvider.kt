@@ -2,6 +2,7 @@
 package com.intellij.lang.documentation.symbol.impl
 
 import com.intellij.lang.documentation.DocumentationTarget
+import com.intellij.lang.documentation.DocumentationTargetProvider
 import com.intellij.lang.documentation.symbol.DocumentationSymbol
 import com.intellij.lang.documentation.symbol.SymbolDocumentationTargetProvider
 import com.intellij.model.Symbol
@@ -9,7 +10,17 @@ import com.intellij.model.psi.impl.targetSymbols
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 
-internal fun symbolDocumentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {
+/**
+ * A [DocumentationTargetProvider] which delegates to [SymbolDocumentationTargetProvider]
+ */
+internal class DefaultTargetSymbolDocumentationTargetProvider : DocumentationTargetProvider {
+
+  override fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {
+    return symbolDocumentationTargets(file, offset)
+  }
+}
+
+private fun symbolDocumentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {
   val symbols = targetSymbols(file, offset)
   return symbolDocumentationTargets(file.project, symbols)
 }
