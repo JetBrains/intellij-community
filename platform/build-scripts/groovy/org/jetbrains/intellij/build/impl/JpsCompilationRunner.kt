@@ -71,6 +71,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
                                  context.options.resolveDependenciesMaxAttempts.toString())
     setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY,
                                  TimeUnit.MINUTES.toMillis(15).toString())
+    setSystemPropertyIfUndefined("kotlin.incremental.compilation", "${context.options.incrementalCompilation}")
   }
 
   fun buildModules(modules: List<JpsModule>) {
