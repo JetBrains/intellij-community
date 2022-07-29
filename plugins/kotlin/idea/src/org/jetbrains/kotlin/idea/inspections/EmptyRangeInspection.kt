@@ -30,7 +30,7 @@ class EmptyRangeInspection : AbstractRangeInspection() {
         }
     }
 
-    override fun visitUntil(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
+    override fun visitUntilOrRangeUntil(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
         expression.startAndEndValueSignedOrNull(context)?.let { (startValue, endValue) ->
             when {
                 startValue > endValue -> holder.registerProblem(expression, downTo = true)

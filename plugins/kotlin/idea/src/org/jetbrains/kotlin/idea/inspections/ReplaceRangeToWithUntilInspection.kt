@@ -29,7 +29,7 @@ class ReplaceRangeToWithUntilInspection : AbstractRangeInspection() {
         )
     }
 
-    override fun visitUntil(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
+    override fun visitUntilOrRangeUntil(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
     }
 
     override fun visitDownTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {

@@ -33,15 +33,14 @@ abstract class AbstractRangeInspection : AbstractKotlinInspection() {
         val context = lazy { expression.analyze(BodyResolveMode.PARTIAL) }
         when (expression.getRangeBinaryExpressionType(context) ?: return) {
             RangeKtExpressionType.rangeTo -> visitRangeTo(expression, context.value, holder)
-            RangeKtExpressionType.rangeUntil -> Unit
+            RangeKtExpressionType.until, RangeKtExpressionType.rangeUntil -> visitUntilOrRangeUntil(expression, context.value, holder)
             RangeKtExpressionType.downTo -> visitDownTo(expression, context.value, holder)
-            RangeKtExpressionType.until -> visitUntil(expression, context.value, holder)
         }
     }
 
     abstract fun visitRangeTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder)
 
-    abstract fun visitUntil(expression: KtExpression, context: BindingContext, holder: ProblemsHolder)
+    abstract fun visitUntilOrRangeUntil(expression: KtExpression, context: BindingContext, holder: ProblemsHolder)
 
     abstract fun visitDownTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder)
 
