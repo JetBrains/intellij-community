@@ -108,8 +108,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       lastStripe = it
       // The returned button might not be showing if stripes are hidden. This is not supported for new UI
       initialStripeButton = if (it.isShowing || !it.isNewStripes) it.getButtonFor(toolWindow.id) else null
-      floatingWindowSize.size = toolWindow.windowInfo.floatingBounds?.size
-                                ?: if (isNewUi) JBUI.size(500, 400) else getDefaultFloatingToolWindowSize(toolWindow)
+      floatingWindowSize.size = toolWindow.windowInfo.floatingBounds?.size ?: getDefaultFloatingToolWindowSize(toolWindow)
     }
 
     val dragImageComponent = initialStripeButton?.getComponent() ?: clickedComponent
