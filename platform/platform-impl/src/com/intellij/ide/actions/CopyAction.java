@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.CopyProvider;
@@ -37,7 +37,7 @@ public class CopyAction extends AnAction implements DumbAware, LightEditCompatib
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    updateWithProvider(event, event.getData(PlatformDataKeys.COPY_PROVIDER), provider -> {
+    updateWithProvider(event, event.getData(PlatformDataKeys.COPY_PROVIDER), false, provider -> {
       boolean isEditorPopup = event.getPlace().equals(ActionPlaces.EDITOR_POPUP);
       event.getPresentation().setEnabled(provider.isCopyEnabled(event.getDataContext()));
       event.getPresentation().setVisible(!isEditorPopup || provider.isCopyVisible(event.getDataContext()));
@@ -46,9 +46,11 @@ public class CopyAction extends AnAction implements DumbAware, LightEditCompatib
 
   static <T extends ActionUpdateThreadAware> void updateWithProvider(@NotNull AnActionEvent event,
                                                                      @Nullable T provider,
+                                                                     boolean checkDumbAwareness,
                                                                      @NotNull Consumer<T> consumer) {
     Project project = event.getData(CommonDataKeys.PROJECT);
-    if (provider == null || project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
+    if (provider == null ||
+        (checkDumbAwareness && project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(provider))) {
       event.getPresentation().setEnabled(false);
       event.getPresentation().setVisible(true);
       return;

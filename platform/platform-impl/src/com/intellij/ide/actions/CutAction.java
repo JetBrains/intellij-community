@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.CutProvider;
@@ -42,7 +42,7 @@ public class CutAction extends DumbAwareAction implements LightEditCompatible {
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    CopyAction.updateWithProvider(event, event.getData(PlatformDataKeys.CUT_PROVIDER), provider -> {
+    CopyAction.updateWithProvider(event, event.getData(PlatformDataKeys.CUT_PROVIDER), true, provider -> {
       boolean isEditorPopup = event.getPlace().equals(ActionPlaces.EDITOR_POPUP);
       event.getPresentation().setEnabled(provider.isCutEnabled(event.getDataContext()));
       event.getPresentation().setVisible(!isEditorPopup || provider.isCutVisible(event.getDataContext()));
