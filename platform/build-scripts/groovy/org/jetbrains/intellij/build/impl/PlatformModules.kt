@@ -73,7 +73,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
   "intellij.platform.workspaceModel.storage",
   "intellij.platform.workspaceModel.jps",
   "intellij.platform.lvcs.impl",
-  "intellij.platform.vfs.impl",
   "intellij.platform.ide.impl",
   "intellij.platform.projectModel.impl",
   "intellij.platform.macro",
