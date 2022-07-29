@@ -52,6 +52,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.basicAttributesIfExists
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -682,4 +683,18 @@ inline fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: S
       task()
     }
   }, title, true, project)
+}
+
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Internal
+@Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
+fun Project.executeOnPooledThread(task: Runnable) {
+  coroutineScope.launch { task.run() }
+}
+
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Internal
+@Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
+fun Project.executeOnPooledIoThread(task: Runnable) {
+  coroutineScope.launch(Dispatchers.IO) { task.run() }
 }

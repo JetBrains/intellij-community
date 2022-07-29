@@ -205,7 +205,7 @@ final class DefaultProject extends UserDataHolderBase implements Project {
 
   @Override
   public CoroutineScope getCoroutineScope() {
-    throw new IllegalStateException("Default project doesn't have coroutineScope");
+    return ApplicationManager.getApplication().getCoroutineScope();
   }
 
   @Override

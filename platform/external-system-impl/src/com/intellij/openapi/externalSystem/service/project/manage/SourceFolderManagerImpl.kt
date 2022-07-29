@@ -35,6 +35,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRoot
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.toBuilder
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -143,7 +145,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
         }
 
         val application = ApplicationManager.getApplication()
-        val future = application.executeOnPooledThread { updateSourceFolders(sourceFoldersToChange) }
+        val future = project.coroutineScope.async { updateSourceFolders(sourceFoldersToChange) }.asCompletableFuture()
         if (application.isUnitTestMode) {
           ApplicationManager.getApplication().assertIsDispatchThread()
           operationsStates.removeIf { it.isDone }

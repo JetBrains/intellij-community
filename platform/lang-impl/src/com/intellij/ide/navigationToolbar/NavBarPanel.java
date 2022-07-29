@@ -7,6 +7,7 @@ import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.TransferableWrapper;
+import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.ide.navigationToolbar.ui.NavBarUI;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.ide.projectView.ProjectView;
@@ -447,7 +448,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     else {
       final NavBarItem item = new NavBarItem(this, null, 0, null);
       final Dimension size = item.getPreferredSize();
-      ApplicationManager.getApplication().executeOnPooledThread(() -> Disposer.dispose(item));
+      //noinspection deprecation
+      ProjectUtilKt.executeOnPooledThread(myProject, () -> Disposer.dispose(item));
       return size;
     }
   }

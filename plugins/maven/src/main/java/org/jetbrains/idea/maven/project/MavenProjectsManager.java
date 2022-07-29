@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
+import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
@@ -216,15 +217,14 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       return;
     }
 
-    Runnable runnable = () -> {
+    //noinspection deprecation
+    ProjectUtilKt.executeOnPooledThread(myProject, () -> {
       boolean wasMavenized = !myState.originalFiles.isEmpty();
       if (!wasMavenized) {
         return;
       }
       initMavenized();
-    };
-
-    ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    });
   }
 
   private void initMavenized() {
