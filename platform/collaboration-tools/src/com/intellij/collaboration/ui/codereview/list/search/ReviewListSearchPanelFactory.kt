@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.*
 import com.intellij.ui.components.GradientViewport
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBThinOverlappingScrollBar
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.scale.JBUIScale
@@ -60,6 +61,8 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, VM : Revi
         verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER
         horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
         horizontalScrollBar = JBThinOverlappingScrollBar(Adjustable.HORIZONTAL)
+
+        ClientProperty.put(this, JBScrollPane.FORCE_HORIZONTAL_SCROLL, true)
       }
     }
 
