@@ -283,7 +283,9 @@ private fun KtAnalysisSession.renderKDoc(
         declaration.getContainingClassOrObject().findKDoc()?.let {
             stringBuilder.renderKDoc(it.contentTag, it.sections)
         }
-    } else if (declaration is KtFunction) {
+    } else if (declaration is KtFunction && 
+        symbol is KtCallableSymbol && 
+        symbol.getAllOverriddenSymbols().any { it.psi is PsiMethod }) {
         LightClassUtil.getLightClassMethod(declaration)?.let {
             stringBuilder.insert(KDocTemplate.DescriptionBodyTemplate.FromJava()) {
                 body = generateJavadoc(it)

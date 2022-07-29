@@ -4,4 +4,4 @@ fun <caret>lol() {
 }
 
 //INFO: <div class='definition'><pre>@Deprecated(message = &quot;lol no more mainstream&quot;, replaceWith = kotlin/ReplaceWith(expression = &quot;kek()&quot;, ))
-//INFO: fun lol(): Unit</pre></div></pre></div><table class='sections'><p></table><div class='bottom'><icon src="file"/>&nbsp;DeprecationWithReplaceInfo.kt<br/></div>
+//INFO: fun lol(): Unit</pre></div><div class='bottom'><icon src="file"/>&nbsp;DeprecationWithReplaceInfo.kt<br/></div>
