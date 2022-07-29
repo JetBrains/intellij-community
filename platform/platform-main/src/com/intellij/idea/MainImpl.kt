@@ -3,6 +3,8 @@ package com.intellij.idea
 
 import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal class MainImpl : AppStarter {
   init {
@@ -10,6 +12,8 @@ internal class MainImpl : AppStarter {
   }
 
   override suspend fun start(args: List<String>, prepareUiFuture: Deferred<Any>) {
-    doInitApplication(args, prepareUiFuture)
+    withContext(Dispatchers.Default) {
+      doInitApplication(args, prepareUiFuture)
+    }
   }
 }
