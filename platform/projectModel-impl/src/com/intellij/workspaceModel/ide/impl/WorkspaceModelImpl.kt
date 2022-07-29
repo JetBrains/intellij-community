@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
+import org.jetbrains.annotations.TestOnly
 import kotlin.system.measureTimeMillis
 
 class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
@@ -24,6 +25,9 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
   override val entityStorage: VersionedEntityStorageImpl
 
   val entityTracer: EntityTracingLogger = EntityTracingLogger()
+
+  var userWarningLoggingLevel = false
+    @TestOnly set
 
   init {
     log.debug { "Loading workspace model" }
@@ -149,7 +153,12 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     try {
       action.invoke()
     } catch (e: Throwable) {
-      log.warn("Exception at Workspace Model event handling", e)
+      val message = "Exception at Workspace Model event handling"
+      if (userWarningLoggingLevel) {
+        log.warn(message, e)
+      } else {
+        log.error(message, e)
+      }
     }
   }
 
