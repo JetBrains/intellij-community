@@ -3,7 +3,7 @@ package com.intellij.lang.documentation.symbol.impl
 
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.symbol.DocumentationSymbol
-import com.intellij.lang.documentation.symbol.SymbolDocumentationTargetFactory
+import com.intellij.lang.documentation.symbol.SymbolDocumentationTargetProvider
 import com.intellij.model.Symbol
 import com.intellij.model.psi.impl.targetSymbols
 import com.intellij.openapi.project.Project
@@ -21,8 +21,8 @@ internal fun symbolDocumentationTargets(project: Project, targetSymbols: Collect
 }
 
 internal fun symbolDocumentationTarget(project: Project, symbol: Symbol): DocumentationTarget? {
-  for (factory in SymbolDocumentationTargetFactory.EP_NAME.extensionList) {
-    return factory.documentationTarget(project, symbol) ?: continue
+  for (ext in SymbolDocumentationTargetProvider.EP_NAME.extensionList) {
+    return ext.documentationTarget(project, symbol) ?: continue
   }
   if (symbol is DocumentationSymbol) {
     return symbol.documentationTarget

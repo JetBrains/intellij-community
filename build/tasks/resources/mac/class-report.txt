@@ -28619,7 +28619,7 @@ com/intellij/lang/parameterInfo/ParameterInfoUtils.class:lib/app.jar
 com/intellij/openapi/util/ExtensionsKt.class:lib/app.jar
 com/intellij/lang/documentation/psi/UtilKt.class:lib/app.jar
 com/intellij/lang/documentation/psi/PsiDocumentationTargetFactory.class:lib/app.jar
-com/intellij/database/psi/documentation/DbDocumentationTargetFactory.class:plugins/DatabaseTools/lib/database-plugin.jar
+com/intellij/database/psi/documentation/DbDocumentationTargetProvider.class:plugins/DatabaseTools/lib/database-plugin.jar
 com/intellij/database/model/DasSynonym.class:plugins/DatabaseTools/lib/database-plugin.jar
 com/intellij/database/model/PsiTable.class:plugins/DatabaseTools/lib/database-plugin.jar
 com/intellij/database/symbols/DasTableSymbol.class:plugins/DatabaseTools/lib/database-plugin.jar

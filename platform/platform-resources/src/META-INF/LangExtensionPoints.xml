@@ -640,9 +640,9 @@
     <extensionPoint name="lang.documentationLinkHandler" dynamic="true"
                     interface="com.intellij.lang.documentation.DocumentationLinkHandler"/>
     <extensionPoint name="lang.symbolDocumentation" dynamic="true"
-                    interface="com.intellij.lang.documentation.symbol.SymbolDocumentationTargetFactory"/>
+                    interface="com.intellij.lang.documentation.symbol.SymbolDocumentationTargetProvider"/>
     <extensionPoint name="lang.psiDocumentation" dynamic="true"
-                    interface="com.intellij.lang.documentation.psi.PsiDocumentationTargetFactory"/>
+                    interface="com.intellij.lang.documentation.psi.PsiDocumentationTargetProvider"/>
     <extensionPoint qualifiedName="com.intellij.properties.files.provider"
                     interface="com.intellij.properties.provider.PropertiesProvider" dynamic="true"/>
   </extensionPoints>
