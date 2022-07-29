@@ -78,6 +78,13 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleConfigurationAvoidanceInspection"/>
 
+    <localInspection language="Groovy" groupPath="Gradle" shortName="DeprecatedConfigurations"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.deprecated.configurations" groupKey="inspection.validity" groupBundle="messages.GroovyBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleDeprecatedConfigurationInspection"/>
+
+
 
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer"
                               order="last"/>

@@ -48,12 +48,12 @@ class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
 
     for (configuration in configurations) {
       val configurationName = configuration.name ?: continue
-      if (!addMethod(manager, configurationName, clazz, place, objectVarargType, configuration.getDescription(), processor, state)) return
+      if (!addMethod(manager, configurationName, clazz, place, objectVarargType, configuration.getDescription(), processor, state, configuration.declarationAlternatives)) return
     }
 
     for (staticConfiguration in staticConfigurations) {
       val configurationName = staticConfiguration.name
-      if (!addMethod(manager, configurationName, clazz, place, objectVarargType, staticConfiguration.description, processor, state)) return
+      if (!addMethod(manager, configurationName, clazz, place, objectVarargType, staticConfiguration.description, processor, state, emptyList())) return
     }
   }
 
@@ -64,7 +64,8 @@ class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
                 objectVarargType: PsiEllipsisType,
                 description: String?,
                 processor: PsiScopeProcessor,
-                state: ResolveState): Boolean {
+                state: ResolveState,
+                declarationAlternatives: List<String>): Boolean {
     val method = GrLightMethodBuilder(manager, configurationName).apply {
       methodKind = dependencyMethodKind
       containingClass = clazz
@@ -72,6 +73,9 @@ class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
       originInfo = DEPENDENCY_NOTATION
       addParameter("dependencyNotation", objectVarargType)
       setBaseIcon(GradleIcons.Gradle)
+      if (declarationAlternatives.isNotEmpty()) {
+        putUserData(DECLARATION_ALTERNATIVES, declarationAlternatives)
+      }
       putUserData(NonCodeMembersHolder.DOCUMENTATION, description)
       if (worthLifting(place)) {
         GradleLookupWeigher.setGradleCompletionPriority(this, 10)

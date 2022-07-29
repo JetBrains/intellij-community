@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -147,6 +147,7 @@ public class GradleExtensionsSettings {
           gradleConfiguration.description = configuration.getDescription();
           gradleConfiguration.visible = configuration.isVisible();
           gradleConfiguration.scriptClasspath = configuration.isScriptClasspathConfiguration();
+          gradleConfiguration.declarationAlternatives = configuration.getDeclarationAlternatives();
           if (gradleConfiguration.scriptClasspath) {
             extensionsData.buildScriptConfigurations.put(configuration.getName(), gradleConfiguration);
           }
@@ -318,6 +319,7 @@ public class GradleExtensionsSettings {
     public boolean visible = true;
     public boolean scriptClasspath;
     public String description;
+    public List<String> declarationAlternatives;
   }
 
   @Nullable
