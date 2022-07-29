@@ -41,6 +41,13 @@ public final class RemoveUnusedVariableUtil {
     return !writes.isEmpty();
   }
 
+  public static RemoveMode getModeForPreview(PsiExpression element, @Nullable PsiVariable variableToIgnore) {
+    List<PsiElement> sideEffects = new ArrayList<>();
+    boolean hasSideEffects = checkSideEffects(element, variableToIgnore, sideEffects);
+    if (!hasSideEffects || sideEffects.isEmpty()) return RemoveMode.DELETE_ALL;
+    return RemoveMode.MAKE_STATEMENT;
+  }
+
   public static PsiElement replaceElementWithExpression(PsiExpression expression,
                                                         PsiElementFactory factory,
                                                         PsiElement element) throws IncorrectOperationException {
