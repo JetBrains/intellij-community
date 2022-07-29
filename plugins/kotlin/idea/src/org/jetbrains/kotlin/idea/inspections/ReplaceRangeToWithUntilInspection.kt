@@ -8,14 +8,19 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.typeUtil.isDouble
+import org.jetbrains.kotlin.types.typeUtil.isFloat
+import org.jetbrains.kotlin.types.typeUtil.isPrimitiveNumberType
 
 class ReplaceRangeToWithUntilInspection : AbstractRangeInspection() {
     override fun visitRangeTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
-        if (!isApplicable(expression)) return
+        if (!isApplicable(expression, context)) return
         holder.registerProblem(
             expression,
             KotlinBundle.message("inspection.replace.range.to.with.until.display.name"),
@@ -43,11 +48,15 @@ class ReplaceRangeToWithUntilInspection : AbstractRangeInspection() {
 
     companion object {
         fun applyFixIfApplicable(expression: KtExpression) {
-            if (isApplicable(expression)) applyFix(expression)
+            if (isApplicable(expression, expression.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL))) applyFix(expression)
         }
 
-        private fun isApplicable(expression: KtExpression): Boolean {
-            return expression.getArguments()?.second?.deparenthesize()?.isMinusOne() == true
+        private fun isApplicable(expression: KtExpression, context: BindingContext): Boolean {
+            val (left, right) = expression.getArguments() ?: return false
+            // `until` isn't available for floating point numbers
+            fun KtExpression.isIntegerType() = context.getType(this)
+                ?.let { it.isPrimitiveNumberType() && !it.isDouble() && !it.isFloat() }
+            return right?.deparenthesize()?.isMinusOne() == true && left?.isIntegerType() == true && right.isIntegerType() == true
         }
 
         private fun applyFix(element: KtExpression) {

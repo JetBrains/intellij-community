@@ -168,7 +168,7 @@ enum class HintType(
         KotlinBundle.message("hints.settings.dont.show.ranges"),
         true
     ) {
-        override fun isApplicable(e: PsiElement): Boolean = e is KtBinaryExpression && e.isRangeExpression()
+        override fun isApplicable(e: PsiElement): Boolean = e is KtBinaryExpression && e.isRangeExpression(context = null)
 
         override fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> {
             val binaryExpression = e.safeAs<KtBinaryExpression>() ?: return emptyList()

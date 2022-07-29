@@ -1,10 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
-import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.ChangeListener
+import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.ui.layout.*
+import com.intellij.util.castSafelyTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
+import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import javax.swing.JComponent
 
 class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsProvider.Settings>() {
@@ -63,18 +75,26 @@ class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsP
         get() = KotlinBundle.message("inlay.kotlin.values.hints")
 }
 
-internal fun KtBinaryExpression.isRangeExpression(): Boolean = getRangeBinaryExpressionType() != null
+internal fun KtExpression.isRangeExpression(context: Lazy<BindingContext>?): Boolean = getRangeBinaryExpressionType(context) != null
 
-fun KtBinaryExpression.getRangeBinaryExpressionType() =
-    when (operationReference.getReferencedNameAsName().asString()) {
-        ".." -> RangeBinaryKtExpressionType.rangeTo
-        "..<" -> RangeBinaryKtExpressionType.rangeUntil
-        "downTo" -> RangeBinaryKtExpressionType.downTo
-        "until" -> RangeBinaryKtExpressionType.until
+internal fun KtExpression.getRangeBinaryExpressionType(context: Lazy<BindingContext>?): RangeKtExpressionType? {
+    val name = castSafelyTo<KtBinaryExpression>()?.operationReference?.getReferencedNameAsName()?.asString()
+        ?: castSafelyTo<KtDotQualifiedExpression>()?.callExpression?.calleeExpression?.text
+    return when (name) {
+        ".." -> RangeKtExpressionType.rangeTo
+        "rangeTo" -> RangeKtExpressionType.rangeTo
+        "..<" -> RangeKtExpressionType.rangeUntil
+        "rangeUntil" -> RangeKtExpressionType.rangeUntil
+        "downTo" -> RangeKtExpressionType.downTo
+        "until" -> RangeKtExpressionType.until
         else -> null
+    }?.takeIf {
+        val notNullContext = context?.value ?: safeAnalyze(BodyResolveMode.PARTIAL)
+        getResolvedCall(notNullContext)?.resultingDescriptor?.fqNameOrNull()?.asString()?.startsWith("kotlin.") == true
     }
+}
 
 @Suppress("EnumEntryName")
-enum class RangeBinaryKtExpressionType {
+enum class RangeKtExpressionType {
     rangeTo, rangeUntil, downTo, until
 }

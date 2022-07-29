@@ -41,8 +41,7 @@ import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeBinaryKtExpressionType
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeBinaryKtExpressionType.*
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.codeInsight.hints.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
@@ -960,7 +959,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 }
                 is KtBinaryExpression -> {
                     val (leftRelation, rightRelation) =
-                        range.getRangeBinaryExpressionType()?.getRelationType() ?: (null to null)
+                        range.getRangeBinaryExpressionType(context = null)?.getRelationType() ?: (null to null)
                     if (leftRelation != null && rightRelation != null) {
                         val left = range.left
                         val right = range.right
@@ -1277,7 +1276,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processInCheck(kotlinType: KotlinType?, range: KtExpression?, anchor: KotlinAnchor, negated: Boolean) {
         if (kotlinType != null && (kotlinType.isInt() || kotlinType.isLong())) {
             if (range is KtBinaryExpression) {
-                val type = range.getRangeBinaryExpressionType()
+                val type = range.getRangeBinaryExpressionType(context = null)
                 val pair = when (type) {
                     rangeTo, until, rangeUntil -> range.left to range.right
                     null, downTo -> null

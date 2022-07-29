@@ -15,6 +15,11 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.constants.*
 
+/**
+ * Tests:
+ * [org.jetbrains.kotlin.idea.codeInsight.InspectionTestGenerated.Inspections.testEmptyRange_inspectionData_Inspections_test]
+ * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.EmptyRange]
+ */
 class EmptyRangeInspection : AbstractRangeInspection() {
     override fun visitRangeTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
         expression.startAndEndValueSignedOrNull(context)?.let { (startValue, endValue) ->
