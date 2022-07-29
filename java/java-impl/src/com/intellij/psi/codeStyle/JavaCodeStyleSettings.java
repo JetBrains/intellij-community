@@ -166,8 +166,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   @WrapConstant
   public int DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
   public boolean ALIGN_MULTILINE_DECONSTRUCTION_LIST_COMPONENTS = true;
-  public boolean NEW_LINE_AFTER_LPAREN_IN_DECONSTRUCTION_PATTERN = false;
-  public boolean RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN = false;
+  public boolean NEW_LINE_AFTER_LPAREN_IN_DECONSTRUCTION_PATTERN = true;
+  public boolean RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN = true;
   /**
    * <pre>
    * case A( int x ) -> {}
