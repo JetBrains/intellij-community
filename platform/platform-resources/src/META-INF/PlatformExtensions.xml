@@ -1,7 +1,10 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <extensions defaultExtensionNs="com.intellij">
-    <!-- must be first - adds activity listener (to track, when reporting should be stopped) -->
-    <startupActivity id="performanceReporter" implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter" order="first"/>
+    <applicationService
+      serviceInterface="com.intellij.diagnostic.StartUpPerformanceService"
+      serviceImplementation="com.intellij.diagnostic.IdeStartUpPerformanceService"
+      headlessImplementation="com.intellij.diagnostic.startUpPerformanceReporter.HeadlessStartUpPerformanceService"
+    />
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <appStarter id="save" implementation="com.intellij.openapi.application.SaveStarter"/>

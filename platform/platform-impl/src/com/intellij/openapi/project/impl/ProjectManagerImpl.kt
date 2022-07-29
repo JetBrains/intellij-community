@@ -10,6 +10,7 @@ import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.*
 import com.intellij.diagnostic.opentelemetry.TraceManager
+import com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
@@ -67,7 +68,6 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -664,6 +664,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         }
 
         reopeningEditorJob = async {
+          service<StartUpPerformanceService>().addActivityListener(project)
           frameAllocator.projectLoaded(project)
         }
 
@@ -1312,7 +1313,7 @@ internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
 /**
  * Usage requires IJ Platform team approval (including plugin into white-list).
  */
-@ApiStatus.Internal
+@Internal
 interface ProjectServiceContainerInitializedListener {
   /**
    * Invoked after container configured.

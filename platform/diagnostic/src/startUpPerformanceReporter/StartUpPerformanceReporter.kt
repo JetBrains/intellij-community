@@ -17,7 +17,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
@@ -34,20 +33,16 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
-class StartUpPerformanceReporter : InitProjectActivity, StartUpPerformanceService {
-  init {
-    val app = ApplicationManager.getApplication()
-    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
-      throw ExtensionNotApplicableException.create()
-    }
-  }
-
+open class StartUpPerformanceReporter : StartUpPerformanceService {
   private var pluginCostMap: Map<String, Object2LongMap<String>>? = null
 
   private var lastReport: ByteBuffer? = null
   private var lastMetrics: Object2IntMap<String>? = null
 
   companion object {
+    @JvmStatic
+    protected val perfFilePath = System.getProperty("idea.log.perf.stats.file")?.takeIf(String::isNotEmpty)
+
     internal val LOG = logger<StartUpMeasurer>()
 
     internal const val VERSION = "38"
@@ -66,7 +61,7 @@ class StartUpPerformanceReporter : InitProjectActivity, StartUpPerformanceServic
     }
 
     fun logStats(projectName: String) {
-      doLogStats(projectName)
+      doLogStats(projectName, perfFilePath)
     }
   }
 
@@ -76,13 +71,15 @@ class StartUpPerformanceReporter : InitProjectActivity, StartUpPerformanceServic
 
   override fun getLastReport() = lastReport
 
-  override suspend fun run(project: Project) {
-    if (ActivityImpl.listener != null) {
-      return
+  override fun addActivityListener(project: Project) {
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
     }
 
-    val projectName = project.name
-    ActivityImpl.listener = ActivityListener(projectName)
+    if (ActivityImpl.listener == null) {
+      ActivityImpl.listener = ActivityListener(project.name)
+    }
   }
 
   private inner class ActivityListener(private val projectName: String) : Consumer<ActivityImpl> {
@@ -140,14 +137,14 @@ class StartUpPerformanceReporter : InitProjectActivity, StartUpPerformanceServic
 
   @Synchronized
   private fun keepAndLogStats(projectName: String) {
-    val params = doLogStats(projectName)
+    val params = doLogStats(projectName, perfFilePath)
     pluginCostMap = params.pluginCostMap
     lastReport = params.lastReport
     lastMetrics = params.lastMetrics
   }
 }
 
-private fun doLogStats(projectName: String): StartUpPerformanceReporterValues {
+private fun doLogStats(projectName: String, perfFilePath: String?): StartUpPerformanceReporterValues {
   val instantEvents = mutableListOf<ActivityImpl>()
   // write activity category in the same order as first reported
   val activities = LinkedHashMap<String, MutableList<ActivityImpl>>()
@@ -206,8 +203,7 @@ private fun doLogStats(projectName: String): StartUpPerformanceReporterValues {
     w.writeToLog(StartUpPerformanceReporter.LOG)
   }
 
-  val perfFilePath = System.getProperty("idea.log.perf.stats.file")
-  if (!perfFilePath.isNullOrBlank()) {
+  if (perfFilePath != null) {
     StartUpPerformanceReporter.LOG.info("StartUp Measurement report was written to: $perfFilePath")
     Path.of(perfFilePath).write(currentReport)
     currentReport.flip()
@@ -297,4 +293,18 @@ private fun generateJarAccessLog(outFile: Path) {
   }
   Files.createDirectories(outFile.parent)
   Files.writeString(outFile, builder)
+}
+
+private class HeadlessStartUpPerformanceService : StartUpPerformanceService {
+  override fun reportStatistics(project: Project) {
+  }
+
+  override fun getPluginCostMap(): Map<String, Object2LongMap<String>> = emptyMap()
+
+  override fun getMetrics(): Object2IntMap<String>? = null
+
+  override fun getLastReport(): ByteBuffer? = null
+
+  override fun addActivityListener(project: Project) {
+  }
 }
